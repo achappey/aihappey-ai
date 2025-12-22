@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>OPENAI001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+      <PackageReference Include="Mscc.GenerativeAI" Version="2.9.8" />
+      <PackageReference Include="Anthropic.SDK" Version="5.8.0" />
+      <PackageReference Include="OpenAI" Version="2.8.0" />
+      <PackageReference Include="Microsoft.Identity.Web" Version="4.2.0" />
+
+  </ItemGroup>
+
+</Project>

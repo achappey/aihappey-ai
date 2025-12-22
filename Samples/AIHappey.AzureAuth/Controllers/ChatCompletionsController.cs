@@ -1,0 +1,80 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
+using AIHappey.Core.AI;
+using AIHappey.Common.Model.ChatCompletions;
+
+namespace AIHappey.AzureAuth.Controllers;
+
+[ApiController]
+[Route("chat/completions")]
+public class ChatCompletionsController(AIModelProviderResolver resolver) : ControllerBase
+{
+    private readonly AIModelProviderResolver _resolver = resolver;
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Post([FromBody] ChatCompletionOptions requestDto, CancellationToken cancellationToken)
+    {
+        if (requestDto == null || requestDto.Messages == null || string.IsNullOrWhiteSpace(requestDto.Model))
+            return BadRequest(new { error = "'messages' array and 'model' are required fields" });
+
+        var provider = await _resolver.Resolve(requestDto.Model, cancellationToken);
+        if (provider == null)
+            return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
+
+        requestDto.Model = requestDto.Model.SplitModelId().Model;
+
+        if (requestDto.Stream == true)
+        {
+            Response.ContentType = "text/event-stream";
+            await using var writer = new StreamWriter(Response.Body);
+
+            // Stream tokens or chunks, whatever your provider yields!
+            await foreach (var chunk in provider.CompleteChatStreamingAsync(requestDto, cancellationToken))
+            {
+                // Each chunk is a string of text (token or partial content)
+                var streamChunk = new
+                {
+                    id = Guid.NewGuid().ToString(),
+                    @object = "chat.completion.chunk",
+                    choices = new[] {
+                        new {
+                            delta = new { content = chunk },
+                            index = 0,
+                            finish_reason = (string?)null
+                        }
+                    }
+                };
+                await writer.WriteAsync($"data: {JsonSerializer.Serialize(streamChunk)}\n\n");
+                await writer.FlushAsync();
+            }
+
+            // Final finish chunk
+            var doneChunk = new
+            {
+                id = Guid.NewGuid().ToString(),
+                @object = "chat.completion.chunk",
+                choices = new[] {
+                    new {
+                        delta = new { content = (string?)null },
+                        index = 0,
+                        finish_reason = "stop"
+                    }
+                }
+            };
+            await writer.WriteAsync($"data: {JsonSerializer.Serialize(doneChunk)}\n\n");
+            await writer.WriteAsync("data: [DONE]\n\n");
+            await writer.FlushAsync();
+            return new EmptyResult();
+        }
+        else
+        {
+            // Non-streaming: collect output
+            var content = await provider.CompleteChatAsync(requestDto, cancellationToken);
+
+            return Ok(content);
+        }
+    }
+}
+
