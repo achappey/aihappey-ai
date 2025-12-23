@@ -1,7 +1,7 @@
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 
-namespace AIHappey.AzureAuth.MCP.Users;
+namespace AIHappey.Telemetry.MCP.Users;
 
 [McpServerPromptType]
 public class UserPrompts

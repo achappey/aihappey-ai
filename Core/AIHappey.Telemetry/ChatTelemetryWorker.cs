@@ -75,7 +75,8 @@ public record ChatTelemetryRecord(
 
 
 public class ChatTelemetryQueue
-{ private readonly Channel<ChatTelemetryRecord> _channel =
+{
+    private readonly Channel<ChatTelemetryRecord> _channel =
         Channel.CreateBounded<ChatTelemetryRecord>(new BoundedChannelOptions(10_000)
         {
             SingleReader = true,
@@ -88,7 +89,7 @@ public class ChatTelemetryQueue
     public IAsyncEnumerable<ChatTelemetryRecord> ReadAllAsync(CancellationToken ct)
         => _channel.Reader.ReadAllAsync(ct);
 
-        
+
 
     // Fallback (still don't pass the HTTP token!)
     public ValueTask QueueAsync(ChatTelemetryRecord record)

@@ -4,12 +4,13 @@ using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using NJsonSchema;
 using NJsonSchema.Generation;
 
-namespace AIHappey.AzureAuth.MCP.ProviderMetadata;
+namespace AIHappey.Core.MCP.Provider;
 
 [McpServerToolType]
 public class ProviderTools
@@ -92,7 +93,7 @@ public class ProviderTools
          IServiceProvider services,
          CancellationToken cancellationToken)
     {
-        var resolver = services.GetRequiredService<AIModelProviderResolver>();
+        var resolver = services.GetRequiredService<IAIModelProviderResolver>();
 
         return await resolver.ResolveModels(cancellationToken);
     }

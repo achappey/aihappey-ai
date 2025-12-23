@@ -1,44 +1,20 @@
 using System.ComponentModel;
 using System.Net.Mime;
 using System.Text.Json;
-using AIHappey.Core.AI;
-using AIHappey.Telemetry;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
-namespace AIHappey.AzureAuth.MCP.Models;
+namespace AIHappey.Telemetry.MCP.Models;
 
 [McpServerToolType]
 public class ModelTools
 {
-    // -------------------------
-    // Helpers
-    // -------------------------
+    // Helpers (private)
     private static StatsWindow Days(int days) => StatsWindow.LastDaysUtc(days <= 0 ? 1 : days);
 
     private static TopOrder ParseOrder(string? order) =>
         string.Equals(order, "tokens", StringComparison.OrdinalIgnoreCase) ? TopOrder.Tokens : TopOrder.Requests;
-
-    [Description("List all available models.")]
-    [McpServerTool(Title = "AI models", Name = "ai_models_list", Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIModels_List(
-           IServiceProvider services,
-           RequestContext<CallToolRequestParams> _,
-           CancellationToken ct = default)
-    {
-        var s = services.GetRequiredService<AIModelProviderResolver>();
-        var res = await s.ResolveModels(ct);
-
-        return new EmbeddedResourceBlock()
-        {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://models",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
-        };
-    }
 
     // -------------------------
     // TELEMETRY: Top Models

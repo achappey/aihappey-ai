@@ -1,11 +1,11 @@
 using System.ComponentModel;
 using System.Net.Mime;
 using System.Text.Json;
-using AIHappey.Telemetry;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
-namespace AIHappey.AzureAuth.MCP.Users;
+namespace AIHappey.Telemetry.MCP.Users;
 
 [McpServerToolType]
 public class UserTools
@@ -156,4 +156,3 @@ public class UserTools
     }
 
 }
-

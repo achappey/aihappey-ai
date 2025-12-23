@@ -1,11 +1,11 @@
 using System.ComponentModel;
 using System.Net.Mime;
 using System.Text.Json;
-using AIHappey.Telemetry;
+using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
-namespace AIHappey.AzureAuth.MCP.Requests;
+namespace AIHappey.Telemetry.MCP.Requests;
 
 [McpServerToolType]
 public class RequestTools

@@ -2,6 +2,8 @@
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.HeaderAuth;
+using AIHappey.Common.MCP;
+using AIHappey.Core.MCP;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,19 +28,23 @@ builder.Services.AddCors(options =>
               .WithExposedHeaders("Mcp-Session-Id");
     });
 });
+
 builder.Services.AddSingleton<IAIModelProviderResolver, AIModelProviderResolver>();
 builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
 builder.Services.AddProviders();
 builder.Services.AddHttpClient();
+builder.Services.AddMcpServers(CoreMcpDefinitions.GetDefinitions());
 
 builder.Services.AddControllers().AddJsonOptions(o =>
   {
       o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-  });;
+  }); ;
 
 var app = builder.Build();
 
 app.UseCors();
+app.MapMcpEndpoints(CoreMcpDefinitions.GetDefinitions(), false);
+app.MapMcpRegistry(CoreMcpDefinitions.GetDefinitions());
 app.MapControllers();
 
 app.Run();

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using AIHappey.Telemetry;
-using AIHappey.AzureAuth.AI;
 using AIHappey.AzureAuth;
 using AIHappey.Core.AI;
+using AIHappey.Common.MCP;
+using AIHappey.Core.MCP;
+using AIHappey.Telemetry.MCP;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,7 +48,19 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IApiKeyResolver, ConfigKeyResolver>();
 builder.Services.AddProviders();
 //builder.Services.AddMemoryCache();
-builder.Services.AddMcpServers();
+
+var allMcpServers = CoreMcpDefinitions.GetDefinitions()
+    .Concat(TelemetryMcpDefinitions.GetDefinitions())
+    .GroupBy(d => d.Name)
+    .Select(g => new McpServerDefinition(
+        g.Key,
+        g.First().Description,
+        g.SelectMany(d => d.PromptTypes ?? []).ToArray(),
+        g.SelectMany(d => d.ToolTypes ?? []).ToArray()
+    ))
+    .ToList();
+
+builder.Services.AddMcpServers(allMcpServers);
 
 //BACKGROUND WORKER TELEMETRY
 //builder.Services.AddSingleton<ChatTelemetryQueue>();
@@ -68,8 +82,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-app.AddMcpMappings();
-app.AddMcpRegistry([new { src = builder.Configuration.GetValue<string>("DarkIcon"), theme = "dark" },
+app.MapMcpEndpoints(allMcpServers, true);
+app.MapMcpRegistry(allMcpServers, [new { src = builder.Configuration.GetValue<string>("DarkIcon"), theme = "dark" },
     new { src = builder.Configuration.GetValue<string>("LightIcon"), theme = "light" }]);
 
 app.Run();
