@@ -22,7 +22,7 @@ var telemetryDb = builder.Configuration.GetSection("TelemetryDatabase").Get<stri
 
 builder.Services.AddTelemetryServices(telemetryDb!);
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<CachedModelProviderResolver>();
+builder.Services.AddSingleton<IAIModelProviderResolver, CachedModelProviderResolver>();
 // Add authentication/authorization
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
@@ -58,7 +58,7 @@ builder.Services.AddControllers();
 builder.Services.AddControllers().AddJsonOptions(o =>
   {
       o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-  });;
+  }); ;
 
 
 var app = builder.Build();

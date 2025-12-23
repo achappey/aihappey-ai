@@ -1,10 +1,9 @@
 using System.Net.Http.Json;
 using AIHappey.Core.Models;
-using Microsoft.AspNetCore.Http;
 
 namespace AIHappey.Core.AI;
 
-public class AICachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
+public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
     IEnumerable<IModelProvider> providers,
     IHttpClientFactory httpClientFactory) : IAIModelProviderResolver
 {

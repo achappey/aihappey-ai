@@ -10,9 +10,9 @@ namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
 [Route("sampling")]
-public class SamplingController(AIModelProviderResolver resolver, IChatTelemetryService chatTelemetryService) : ControllerBase
+public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetryService chatTelemetryService) : ControllerBase
 {
-    private readonly AIModelProviderResolver _resolver = resolver;
+    private readonly IAIModelProviderResolver _resolver = resolver;
 
     [HttpPost]
     [Authorize]

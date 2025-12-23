@@ -8,9 +8,9 @@ namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
 [Route("chat/completions")]
-public class ChatCompletionsController(AIModelProviderResolver resolver) : ControllerBase
+public class ChatCompletionsController(IAIModelProviderResolver resolver) : ControllerBase
 {
-    private readonly AIModelProviderResolver _resolver = resolver;
+    private readonly IAIModelProviderResolver _resolver = resolver;
 
     [HttpPost]
     [Authorize]

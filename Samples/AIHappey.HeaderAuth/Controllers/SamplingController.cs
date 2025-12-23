@@ -6,9 +6,9 @@ namespace AIHappey.HeaderAuth.Controllers;
 
 [ApiController]
 [Route("sampling")]
-public class SamplingController(AIModelProviderResolver resolver) : ControllerBase
+public class SamplingController(IAIModelProviderResolver resolver) : ControllerBase
 {
-    private readonly AIModelProviderResolver _resolver = resolver;
+    private readonly IAIModelProviderResolver _resolver = resolver;
 
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] CreateMessageRequestParams requestDto, CancellationToken cancellationToken)

@@ -26,7 +26,7 @@ builder.Services.AddCors(options =>
               .WithExposedHeaders("Mcp-Session-Id");
     });
 });
-builder.Services.AddSingleton<AIModelProviderResolver>();
+builder.Services.AddSingleton<IAIModelProviderResolver, AIModelProviderResolver>();
 builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
 builder.Services.AddProviders();
 builder.Services.AddHttpClient();

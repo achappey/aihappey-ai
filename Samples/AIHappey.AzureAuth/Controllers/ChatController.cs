@@ -10,9 +10,9 @@ namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
 [Route("api/chat")]
-public class ChatController(AIModelProviderResolver resolver, IChatTelemetryService chatTelemetryService) : ControllerBase
+public class ChatController(IAIModelProviderResolver resolver, IChatTelemetryService chatTelemetryService) : ControllerBase
 {
-    private readonly AIModelProviderResolver _resolver = resolver;
+    private readonly IAIModelProviderResolver _resolver = resolver;
 
     [HttpPost]
     [Authorize]

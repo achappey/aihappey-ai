@@ -7,9 +7,9 @@ namespace AIHappey.HeaderAuth.Controllers;
 
 [ApiController]
 [Route("api/chat")]
-public class ChatController(AIModelProviderResolver resolver) : ControllerBase
+public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
 {
-    private readonly AIModelProviderResolver _resolver = resolver;
+    private readonly IAIModelProviderResolver _resolver = resolver;
 
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
