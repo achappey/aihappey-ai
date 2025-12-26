@@ -54,15 +54,27 @@ public partial class PollinationsProvider : IModelProvider
         ? [new Model()
             {
                 OwnedBy = nameof(Pollinations),
-                Name = nameof(OpenAI),
+                Name = "Pollinations " + nameof(OpenAI),
                 Type = "language",
                 Id = nameof(OpenAI).ToLowerInvariant().ToModelId(GetIdentifier())
             }, new Model()
             {
                 OwnedBy = nameof(Pollinations),
                 Type = "language",
-                Name = nameof(Mistral),
+                Name = "Pollinations " + nameof(Mistral),
                 Id = nameof(Mistral).ToLowerInvariant().ToModelId(GetIdentifier())
+            }, new Model()
+            {
+                OwnedBy = nameof(Pollinations),
+                Type = "image",
+                Name = "Pollinations Flux",
+                Id = "flux".ToModelId(GetIdentifier())
+            }, new Model()
+            {
+                OwnedBy = nameof(Pollinations),
+                Type = "image",
+                Name = "Pollinations Turbo",
+                Id = "turbo".ToModelId(GetIdentifier())
             }] : []);
 
     public async Task<CreateMessageResult> SamplingAsync(

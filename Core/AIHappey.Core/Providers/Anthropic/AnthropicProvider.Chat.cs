@@ -396,4 +396,9 @@ public partial class AnthropicProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

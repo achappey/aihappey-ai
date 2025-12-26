@@ -20,6 +20,11 @@ public partial class GroqProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,
           [EnumeratorCancellation] CancellationToken cancellationToken = default)

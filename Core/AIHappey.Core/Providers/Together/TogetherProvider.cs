@@ -7,6 +7,7 @@ using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using System.Globalization;
 using OpenAI.Responses;
+using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -142,6 +143,11 @@ public partial class TogetherProvider : IModelProvider
     }
 
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

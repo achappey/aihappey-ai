@@ -89,7 +89,7 @@ public static partial class AnthropicExtensions
             "max_tokens" => "length",
             "model_context_window_exceeded" => "length",
             "tool_use" => "tool-call",
-            _ => "unknown"
+            _ => "stop"
         };
 
 }

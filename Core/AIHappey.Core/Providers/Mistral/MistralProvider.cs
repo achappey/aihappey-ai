@@ -5,6 +5,7 @@ using MIS = Mistral.SDK;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
+using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -79,6 +80,11 @@ public partial class MistralProvider : IModelProvider
     }
 
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

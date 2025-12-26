@@ -343,4 +343,9 @@ public class GoogleAIProvider(IApiKeyResolver keyResolver, ILogger<GoogleAIProvi
     {
         throw new NotImplementedException();
     }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -5,6 +5,9 @@ using OAI = OpenAI;
 using OpenAI.Containers;
 using OpenAI.Files;
 using OpenAI.Responses;
+using AIHappey.Common.Model;
+using OpenAI.Images;
+using System.ComponentModel.Design;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
