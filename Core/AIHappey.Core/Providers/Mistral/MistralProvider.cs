@@ -5,7 +5,6 @@ using MIS = Mistral.SDK;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
-using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -45,17 +44,29 @@ public partial class MistralProvider : IModelProvider
         var models = await client.Models
             .GetModelsAsync(cancellationToken: cancellationToken);
 
+        List<Model> imageModels = [new Model()
+            {
+                Id = "mistral-medium-latest".ToModelId(GetIdentifier()),
+                Name = "mistral-medium-latest",
+                OwnedBy = GetName(),
+                Type = "image"
+            }, new Model()
+            {
+                Id = "mistral-large-latest".ToModelId(GetIdentifier()),
+                Name = "mistral-large-latest",
+                OwnedBy = GetName(),
+                Type = "image"
+            }];
+
         return models.Data
             .Select(a => new Model()
             {
                 Id = a.Id.ToModelId(GetIdentifier()),
                 Name = a.Id,
                 OwnedBy = GetName(),
-             //   Created = a.Created,
-                // /                Publisher = GetName()
             })
-            .OrderByDescending(a => a.Created)
-            .DistinctBy(r => r.Id);
+            .Concat(imageModels)
+            .OrderByDescending(a => a.Created);
     }
 
     public Task<OAIC.ChatCompletion> CompleteChatAsync(OAIC.ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -84,8 +95,5 @@ public partial class MistralProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+
 }

@@ -5,7 +5,6 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
-using System.Globalization;
 using OpenAI.Responses;
 using AIHappey.Common.Model;
 
@@ -131,9 +130,9 @@ public partial class TogetherProvider : IModelProvider
                 models.Add(model);
         }
 
-        return models.Where(a => a.Type != "rerank" 
-            && a.Type != "moderation" 
-            && a.Type != "transcribe" 
+        return models.Where(a => a.Type != "rerank"
+            && a.Type != "moderation"
+            && a.Type != "transcribe"
             && a.Type != "code");
     }
 
@@ -147,8 +146,4 @@ public partial class TogetherProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

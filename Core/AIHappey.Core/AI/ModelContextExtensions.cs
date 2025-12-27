@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;

@@ -4,6 +4,34 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.Providers;
 
+
+public class OpenAiImageProviderMetadata
+{
+    [JsonPropertyName("background")]
+    public string? Background { get; set; }
+
+    [JsonPropertyName("moderation")]
+    public string? Moderation { get; set; }
+
+    [JsonPropertyName("quality")]
+    public string? Quality { get; set; }
+
+}
+
+
+public class OpenAiImageEditProviderMetadata
+{
+    [JsonPropertyName("background")]
+    public string? Background { get; set; }
+
+    [JsonPropertyName("quality")]
+    public string? Quality { get; set; }
+
+    [JsonPropertyName("input_fidelity")]
+    public string? InputFidelity { get; set; }
+
+}
+
 public class OpenAiProviderMetadata
 {
     public OpenAiReasoning? Reasoning { get; set; }

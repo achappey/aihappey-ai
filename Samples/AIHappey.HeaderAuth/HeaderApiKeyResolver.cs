@@ -13,6 +13,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["google"] = "X-Google-Key",
             ["perplexity"] = "X-Perplexity-Key",
             ["cohere"] = "X-Cohere-Key",
+            ["runway"] = "X-Runway-Key",
             ["jina"] = "X-Jina-Key",
             ["xai"] = "X-xAI-Key",
             ["groq"] = "X-Groq-Key",

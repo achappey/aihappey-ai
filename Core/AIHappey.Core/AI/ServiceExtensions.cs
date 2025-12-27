@@ -7,6 +7,7 @@ using AIHappey.Core.Providers.Mistral;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Providers.Perplexity;
 using AIHappey.Core.Providers.Pollinations;
+using AIHappey.Core.Providers.Runway;
 using AIHappey.Core.Providers.Together;
 using AIHappey.Core.Providers.xAI;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TogetherProvider>();
         services.AddSingleton<IModelProvider, PollinationsProvider>();
         services.AddSingleton<IModelProvider, XAIProvider>();
+        services.AddSingleton<IModelProvider, RunwayProvider>();
 
         
     }

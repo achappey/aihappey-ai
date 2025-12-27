@@ -23,11 +23,16 @@ public class ImageController(IAIModelProviderResolver resolver) : ControllerBase
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
+        try
+        {
+            var content = await provider.ImageRequest(requestDto, cancellationToken);
 
-        var content = await provider.ImageRequest(requestDto, cancellationToken);
-
-        return Ok(content);
-
+            return Ok(content);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }
 

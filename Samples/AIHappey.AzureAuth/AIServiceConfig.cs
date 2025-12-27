@@ -13,6 +13,7 @@ public class AIServiceConfig
     public ProviderConfig? Together { get; set; }
     public ProviderConfig? Cohere { get; set; }
     public ProviderConfig? Jina { get; set; }
+    public ProviderConfig? Runway { get; set; }
 }
 
 public class ProviderConfig

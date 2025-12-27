@@ -29,7 +29,6 @@ public partial class XAIProvider : IModelProvider
             var id = item.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
             if (string.IsNullOrWhiteSpace(id)) continue;
 
-            //     DateTimeOffset? createdAt = null;\
             long? createdAt = null;
             if (item.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
             {

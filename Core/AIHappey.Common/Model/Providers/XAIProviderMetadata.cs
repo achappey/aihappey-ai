@@ -3,6 +3,12 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.Providers;
 
+public class XAIImageProviderMetadata
+{
+    [JsonPropertyName("quality")]
+    public string? Quality { get; set; }
+}
+
 public class XAIProviderMetadata
 {
     [JsonPropertyName("web_search")]

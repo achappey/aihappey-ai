@@ -9,6 +9,10 @@ namespace AIHappey.Common.Extensions;
 
 public static class VercelExtensions
 {
+    public static string ToDataUrl(
+        this string data, string mimeType) => $"data:{mimeType};base64,{data}";
+
+    public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
 
     public static int? GetImageWidth(this ImageRequest request)
     {
@@ -34,18 +38,13 @@ public static class VercelExtensions
         return int.TryParse(parts[1], out var width) ? width : null;
     }
 
-
-    public static T? GetProviderMetadata<T>(this ChatRequest chatRequest, string providerId)
+    public static T? GetImageProviderMetadata<T>(this ImageRequest chatRequest, string providerId)
     {
-        if (chatRequest.ProviderMetadata is null)
+        if (chatRequest.ProviderOptions is null)
             return default;
 
-        if (!chatRequest.ProviderMetadata.ContainsKey(providerId))
+        if (!chatRequest.ProviderOptions.TryGetValue(providerId, out JsonElement element))
             return default;
-
-        var element = chatRequest.ProviderMetadata[providerId];
-
-        //   var el = element.Value;
 
         if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
             return default;
@@ -54,30 +53,18 @@ public static class VercelExtensions
     }
 
 
-    public static T? GetProviderMetadata2222<T>(this JsonElement? element, JsonSerializerOptions? options = null)
+    public static T? GetProviderMetadata<T>(this ChatRequest chatRequest, string providerId)
     {
-        if (element is null)
+        if (chatRequest.ProviderMetadata is null)
             return default;
 
-        var el = element.Value;
-
-        if (el.ValueKind == JsonValueKind.Null || el.ValueKind == JsonValueKind.Undefined)
+        if (!chatRequest.ProviderMetadata.TryGetValue(providerId, out JsonElement element))
             return default;
 
-        return el.Deserialize<T>(options ?? JsonSerializerOptions.Web);
+        if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
+            return default;
+
+        return element.Deserialize<T>(JsonSerializerOptions.Web);
     }
 
-    public static T? GetProviderMetadata2<T>(this object metadata)
-    {
-        if (metadata == null)
-            return default;
-
-        if (metadata is T item)
-            return item;
-
-        if (metadata is ChatRequest chatRequest && chatRequest.ProviderMetadata is T itemData)
-            return itemData;
-
-        return default;
-    }
 }

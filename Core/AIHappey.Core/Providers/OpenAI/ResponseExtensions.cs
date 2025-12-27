@@ -6,6 +6,7 @@ using OpenAI.Containers;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Net.Mime;
 using AIHappey.Core.AI;
+using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

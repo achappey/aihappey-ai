@@ -33,7 +33,7 @@ public class ImageFile
 
     public string MediaType { get; set; } = null!;
 
-    public object? Data { get; set; }
+    public string Data { get; set; } = null!;
 }
 
 
@@ -52,10 +52,11 @@ public class ImageResponse
 
     public IEnumerable<object>? Images { get; set; }
 
+    public IEnumerable<object> Warnings { get; set; } = [];
+
     public ImageResponseData Response { get; set; } = default!;
 
 }
-
 
 public class ImageResponseData
 {

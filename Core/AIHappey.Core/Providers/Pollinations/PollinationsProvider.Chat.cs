@@ -31,9 +31,11 @@ public partial class PollinationsProvider : IModelProvider
         var start = DateTime.UtcNow;
 
         var query = new List<string>();
-
+        var metadata = imageRequest.GetImageProviderMetadata<PollinationsImageProviderMetadata>(GetIdentifier());
         if (!string.IsNullOrWhiteSpace(imageRequest.Model))
             query.Add($"model={Uri.EscapeDataString(imageRequest.Model)}");
+
+        List<object> warnings = [];
 
         var imageWidth = imageRequest.GetImageWidth();
         if (imageWidth is not null)
@@ -47,14 +49,11 @@ public partial class PollinationsProvider : IModelProvider
         if (imageRequest.Seed.HasValue)
             query.Add($"seed={imageRequest.Seed.Value}");
 
-        //        if (imageRequest.Enhance == true)
-        query.Add("enhance=true");
+        if (metadata?.Enhance == true)
+            query.Add("enhance=true");
 
-        //     if (imageRequest.Private == true)
-        query.Add("private=true");
-
-        //  if (imageRequest.NoLogo == true)
-        //     query.Add("nologo=true");
+        if (metadata?.Private == true)
+            query.Add("private=true");
 
         var url = $"https://image.pollinations.ai/prompt/{prompt}";
         if (query.Count > 0)
@@ -76,9 +75,19 @@ public partial class PollinationsProvider : IModelProvider
         var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
         var mime = resp.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
 
+        if (imageRequest.Mask is not null)
+        {
+            warnings.Add(new
+            {
+                type = "unsupported",
+                feature = "mask"
+            });
+        }
+
         return new ImageResponse
         {
             Images = [$"data:{mime};base64,{Convert.ToBase64String(bytes)}"],
+            Warnings = warnings,
             Response = new ImageResponseData()
             {
                 Timestamp = start,

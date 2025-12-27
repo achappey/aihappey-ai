@@ -1,4 +1,5 @@
 using System.Net.Mime;
+using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 
 namespace AIHappey.Core.AI;
@@ -45,8 +46,6 @@ public static class UIMessagePartExtensions
         return (provider, model);
     }
 
-    public static string ToDataUrl(
-        this string data, string mimeType) => $"data:{mimeType};base64,{data}";
 
     public static FileUIPart ToFileUIPart(this byte[] bytes, string mimeType)
         => new()

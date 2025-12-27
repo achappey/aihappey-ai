@@ -16,6 +16,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "google" => _config.Google?.ApiKey,
             "cohere" => _config.Cohere?.ApiKey,
             "together" => _config.Together?.ApiKey,
+            "runway" => _config.Runway?.ApiKey,
             "xai" => _config.XAI?.ApiKey,
             "perplexity" => _config.Perplexity?.ApiKey,
             "jina" => _config.Jina?.ApiKey,
