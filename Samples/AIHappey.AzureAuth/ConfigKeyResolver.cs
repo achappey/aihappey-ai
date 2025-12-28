@@ -17,6 +17,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "cohere" => _config.Cohere?.ApiKey,
             "together" => _config.Together?.ApiKey,
             "runway" => _config.Runway?.ApiKey,
+            "aiml" => _config.AIML?.ApiKey,
             "xai" => _config.XAI?.ApiKey,
             "perplexity" => _config.Perplexity?.ApiKey,
             "jina" => _config.Jina?.ApiKey,

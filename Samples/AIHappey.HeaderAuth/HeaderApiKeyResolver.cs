@@ -14,6 +14,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["perplexity"] = "X-Perplexity-Key",
             ["cohere"] = "X-Cohere-Key",
             ["runway"] = "X-Runway-Key",
+            ["aiml"] = "X-AIML-Key",
             ["jina"] = "X-Jina-Key",
             ["xai"] = "X-xAI-Key",
             ["groq"] = "X-Groq-Key",

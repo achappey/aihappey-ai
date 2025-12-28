@@ -1,3 +1,4 @@
+using AIHappey.Core.Providers.AIML;
 using AIHappey.Core.Providers.Anthropic;
 using AIHappey.Core.Providers.Cohere;
 using AIHappey.Core.Providers.Google;
@@ -30,6 +31,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PollinationsProvider>();
         services.AddSingleton<IModelProvider, XAIProvider>();
         services.AddSingleton<IModelProvider, RunwayProvider>();
+        services.AddSingleton<IModelProvider, AIMLProvider>();
 
         
     }
