@@ -50,7 +50,7 @@ public class ImageResponse
 {
     public Dictionary<string, JsonElement>? ProviderMetadata { get; set; }
 
-    public IEnumerable<object>? Images { get; set; }
+    public IEnumerable<string>? Images { get; set; }
 
     public IEnumerable<object> Warnings { get; set; } = [];
 

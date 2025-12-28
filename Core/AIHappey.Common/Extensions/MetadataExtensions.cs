@@ -1,41 +1,24 @@
-using System.Security.Claims;
 using System.Text.Json;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Identity.Web;
 
 namespace AIHappey.Common.Extensions;
 
-public static class VercelExtensions
+public static class MetadataExtensions
 {
-    public static string ToDataUrl(
-        this string data, string mimeType) => $"data:{mimeType};base64,{data}";
 
-    public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
-
-    public static int? GetImageWidth(this ImageRequest request)
+    public static ResponseFormat? GetJSONSchema(this object? structured)
     {
-        if (string.IsNullOrWhiteSpace(request?.Size))
+        if (structured == null)
             return null;
 
-        var parts = request.Size.Split('x', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0)
+        try
+        {
+            return JsonSerializer.Deserialize<ResponseFormat>(JsonSerializer.Serialize(structured));
+        }
+        catch
+        {
             return null;
-
-        return int.TryParse(parts[0], out var width) ? width : null;
-    }
-
-    public static int? GetImageHeight(this ImageRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request?.Size))
-            return null;
-
-        var parts = request.Size.Split('x', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 2)
-            return null;
-
-        return int.TryParse(parts[1], out var width) ? width : null;
+        }
     }
 
     public static T? GetImageProviderMetadata<T>(this ImageRequest chatRequest, string providerId)

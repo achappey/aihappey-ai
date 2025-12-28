@@ -17,89 +17,18 @@ public partial class PollinationsProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public async Task<ImageResponse> ImageRequest(
-       ImageRequest imageRequest,
-       CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        if (string.IsNullOrWhiteSpace(imageRequest.Prompt))
-            throw new ArgumentException("Prompt is required", nameof(imageRequest));
-
-        // Build URL
-        var prompt = Uri.EscapeDataString(imageRequest.Prompt);
-        var start = DateTime.UtcNow;
-
-        var query = new List<string>();
-        var metadata = imageRequest.GetImageProviderMetadata<PollinationsImageProviderMetadata>(GetIdentifier());
-        if (!string.IsNullOrWhiteSpace(imageRequest.Model))
-            query.Add($"model={Uri.EscapeDataString(imageRequest.Model)}");
-
-        List<object> warnings = [];
-
-        var imageWidth = imageRequest.GetImageWidth();
-        if (imageWidth is not null)
-            query.Add($"width={imageWidth}");
-
-        var imageHeight = imageRequest.GetImageHeight();
-
-        if (imageHeight is > 0)
-            query.Add($"height={imageHeight}");
-
-        if (imageRequest.Seed.HasValue)
-            query.Add($"seed={imageRequest.Seed.Value}");
-
-        if (metadata?.Enhance == true)
-            query.Add("enhance=true");
-
-        if (metadata?.Private == true)
-            query.Add("private=true");
-
-        var url = $"https://image.pollinations.ai/prompt/{prompt}";
-        if (query.Count > 0)
-            url += "?" + string.Join("&", query);
-
-        using var req = new HttpRequestMessage(HttpMethod.Get, url);
-
-        using var resp = await _client.SendAsync(
-            req,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException($"Pollinations image error: {err}");
-        }
-
-        var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
-        var mime = resp.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
-
-        if (imageRequest.Mask is not null)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "mask"
-            });
-        }
-
-        return new ImageResponse
-        {
-            Images = [$"data:{mime};base64,{Convert.ToBase64String(bytes)}"],
-            Warnings = warnings,
-            Response = new ImageResponseData()
-            {
-                Timestamp = start,
-                ModelId = imageRequest.Model
-            }
-        };
-    }
-
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        if (await IsPollinationsImageModel(chatRequest.Model, cancellationToken))
+        {
+            await foreach (var p in StreamImageAsync(chatRequest, chatRequest.Model, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
 
         var messages = chatRequest.Messages.ToPollinationMessages();
         var metadata = chatRequest.GetProviderMetadata<PollinationsProviderMetadata>(GetIdentifier());

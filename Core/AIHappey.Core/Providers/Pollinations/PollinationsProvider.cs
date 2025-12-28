@@ -49,6 +49,17 @@ public partial class PollinationsProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Pollinations).ToLowerInvariant();
 
+
+    private async Task<bool> IsPollinationsImageModel(string? model, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(model)) return false;
+        model = model.Trim().ToLowerInvariant();
+
+        var models = await ListModels(cancellationToken);
+        // keep this strict to avoid "gpt-4-turbo" being treated as image
+        return models.Any(a => a.Id.EndsWith(model) && a.Type == "image");
+    }
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default) =>
         await Task.FromResult<IEnumerable<Model>>(_context.HttpContext?.User?.Identity?.IsAuthenticated != true
         ? [new Model()
