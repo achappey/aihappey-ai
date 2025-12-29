@@ -137,6 +137,19 @@ public class ReasoningEndUIPart : UIMessagePart
 }
 
 
+public class ToolApprovalRequestPart : UIMessagePart
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "tool-approval-request";
+
+    [JsonPropertyName("toolCallId")]
+    public string ToolCallId { get; init; } = default!;
+
+    [JsonPropertyName("approvalId")]
+    public string ApprovalId { get; init; } = default!;
+}
+
+
 public class ToolCallPart : UIMessagePart
 {
     [JsonPropertyName("type")]
@@ -256,6 +269,18 @@ public class ToolOutputErrorPart : UIMessagePart
     public bool? Dynamic { get; init; }
 }
 
+public class ToolApproval
+{
+    [JsonPropertyName("approved")]
+    public bool? Approved { get; init; }
+
+    [JsonPropertyName("Id")]
+    public string Id { get; init; } = default!;
+
+    [JsonPropertyName("reason")]
+    public string? Reason { get; init; }
+}
+
 public class ToolInvocationPart : UIMessagePart
 {
     [JsonPropertyName("toolCallId")]
@@ -272,7 +297,7 @@ public class ToolInvocationPart : UIMessagePart
     public string State { get; init; } = default!;
 
     [JsonPropertyName("output")]
-    public object Output { get; init; } = default!;
+    public object Output { get; set; } = default!;
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = default!;
@@ -280,6 +305,11 @@ public class ToolInvocationPart : UIMessagePart
     [JsonPropertyName("providerExecuted")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? ProviderExecuted { get; init; }
+
+    [JsonPropertyName("approval")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ToolApproval? Approval { get; init; }
+
 }
 
 public class SourceUIPart : UIMessagePart

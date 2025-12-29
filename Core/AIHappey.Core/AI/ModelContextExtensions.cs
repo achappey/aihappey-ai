@@ -51,6 +51,11 @@ public static class ModelContextExtensions
 
    public static string ExcludeMeta(this ToolInvocationPart tip)
    {
+      if(tip.State == "approval-responded" && tip.Approval?.Approved == false)
+      {
+         tip.Output = tip.Approval;
+      }
+
       try
       {
          var json = tip.Output.ToString();

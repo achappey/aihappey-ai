@@ -369,6 +369,12 @@ public static class StreamingUpdateExtensions
                 ToolName = toolName,
                 Input = JsonSerializer.Deserialize<object>(args)!
             };
+
+            yield return new ToolApprovalRequestPart
+            {
+                ToolCallId = callId,
+                ApprovalId = Guid.NewGuid().ToString(),
+            };
         }
 
         if (update is StreamingResponseCompletedUpdate completedUpdate)

@@ -46,20 +46,37 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
             if (_modelProviderMap != null && DateTimeOffset.UtcNow < _expiresAt)
                 return;
 
-            var providerResults = new Dictionary<IModelProvider, List<Model>>();
+            var providerArray = providers as IModelProvider[] ?? providers.ToArray();
 
-            foreach (var provider in providers)
+            var tasks = providerArray.Select(async provider =>
             {
                 try
                 {
                     var models = await provider.ListModels(ct);
-                    providerResults[provider] = [.. models];
+                    return (Provider: provider, Models: models?.ToList());
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch
                 {
                     // provider temporarily down → ignore
+                    return (Provider: provider, Models: (List<Model>?)null);
                 }
+            });
+
+            var resolved = await Task.WhenAll(tasks);
+
+            var providerResults = new Dictionary<IModelProvider, List<Model>>();
+
+            foreach (var r in resolved)
+            {
+                if (r.Models is { Count: > 0 })
+                    providerResults[r.Provider] = r.Models;
             }
+
+
 
             var hasAnyModels = providerResults.Values.Any(v => v.Count > 0);
 
