@@ -3,7 +3,6 @@ using OAIC = OpenAI.Chat;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text;
-using System.Net.Http.Json;
 using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.OpenAI;
@@ -35,6 +34,8 @@ public partial class OpenAIProvider
         if (!_client.DefaultRequestHeaders.Contains("Authorization"))
             _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetKey());
 
+        chatRequest.ParallelToolCalls ??= true;
+
         var json = JsonSerializer.Serialize(chatRequest, JsonSerializerOptions.Web);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -46,9 +47,12 @@ public partial class OpenAIProvider
             content,
             cancellationToken);
 
-       // resp.EnsureSuccessStatusCode();
+        var result = await resp.Content.ReadAsStringAsync(cancellationToken);
 
-        var respJson = await resp.Content.ReadFromJsonAsync<ChatCompletion>(cancellationToken);
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception(result);
+
+        var respJson = JsonSerializer.Deserialize<ChatCompletion>(result);
         return respJson ?? throw new Exception("Something went wrong");
     }
 }

@@ -70,10 +70,16 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
         }
         else
         {
-            // Non-streaming: collect output
-            var content = await provider.CompleteChatAsync(requestDto, cancellationToken);
+            try
+            {
+                var content = await provider.CompleteChatAsync(requestDto, cancellationToken);
 
-            return Ok(content);
+                return Ok(content);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
     }
 }

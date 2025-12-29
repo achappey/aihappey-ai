@@ -21,6 +21,8 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
         if (provider == null)
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
 
+        requestDto.Model = requestDto.Model.SplitModelId().Model;
+
         if (requestDto.Stream == true)
         {
             Response.ContentType = "text/event-stream";
@@ -66,38 +68,16 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
         }
         else
         {
-            // Non-streaming: collect output
-            var content = await provider.CompleteChatAsync(requestDto, cancellationToken);
+            try
+            {
+                var content = await provider.CompleteChatAsync(requestDto, cancellationToken);
 
-            /*      var text = string.Join("\n\n", content.Content
-                      .Where(a => !string.IsNullOrEmpty(a.Text))
-                      .Select(a => a.Text));
-
-                  var response = new
-                  {
-                      id = Guid.NewGuid().ToString(),
-                      @object = "chat.completion",
-                      created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                      model = content.Model,
-                      choices = new[] {
-                          new {
-                              index = 0,
-                              message = new {
-                                  role = "assistant",
-                                  content = text
-                              },
-                              finish_reason = "stop"
-                          }
-                      },
-                      usage = new
-                      {
-                          prompt_tokens = 0,
-                          completion_tokens = 0,
-                          total_tokens = 0
-                      }
-                  };*/
-
-            return Ok(content);
+                return Ok(content);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
     }
 }

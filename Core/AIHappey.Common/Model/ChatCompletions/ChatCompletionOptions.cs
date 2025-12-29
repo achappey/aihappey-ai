@@ -1,4 +1,5 @@
 
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.ChatCompletions;
@@ -16,7 +17,7 @@ public class ChatCompletionOptions
     public bool? ParallelToolCalls { get; set; }
 
     [JsonPropertyName("stream")]
-    public bool Stream { get; set; } = true;
+    public bool? Stream { get; set; }
 
     [JsonPropertyName("messages")]
     public IEnumerable<ChatMessage> Messages { get; set; } = [];
@@ -42,7 +43,7 @@ public class ChatMessage
     public string? ToolCallId { get; set; }
 
     [JsonPropertyName("content")]
-    public IEnumerable<object> Content { get; set; } = [];
+    public JsonElement Content { get; set; }
 
     [JsonPropertyName("tool_calls")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -55,5 +56,6 @@ public class ChatMessageContent
     public string Type { get; set; } = default!;
 
     [JsonPropertyName("text")]
-    public string Text { get; set; } = default!;
+    public string Text { get; set; } = default!;    
 }
+
