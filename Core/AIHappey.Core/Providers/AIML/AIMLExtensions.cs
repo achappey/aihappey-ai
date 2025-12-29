@@ -1,14 +1,18 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.AIML;
 
 public static class AIMLExtensions
 {
+    public static string GetIdentifier() => nameof(AIML).ToLowerInvariant();
+
     public static object GetImageRequestPayload(this ImageRequest imageRequest)
     {
         var width = imageRequest.GetImageWidth();
         var height = imageRequest.GetImageHeight();
+        var metadata = imageRequest.GetImageProviderMetadata<AIMLImageProviderMetadata>(GetIdentifier());
 
         return imageRequest.Model switch
         {
@@ -53,6 +57,17 @@ public static class AIMLExtensions
                 prompt = imageRequest.Prompt,
                 model = imageRequest.Model,
                 seed = imageRequest.Seed,
+                negative_prompt = metadata?.Hunyuan?.NegativePrompt,
+                enable_prompt_expansion = metadata?.Hunyuan?.EnablePromptExpansion,
+                enable_safety_checker = metadata?.Hunyuan?.EnableSafetyChecker,
+                guidance_scale = metadata?.Hunyuan?.GuidanceScale,
+                num_inference_steps = metadata?.Hunyuan?.NumInferenceSteps,
+                image_size = width.HasValue && height.HasValue
+                    ? new
+                    {
+                        width,
+                        height
+                    } : null,
                 num_images = imageRequest.N,
                 sync_mode = true
             },

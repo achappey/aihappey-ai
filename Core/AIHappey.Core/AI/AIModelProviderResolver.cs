@@ -8,7 +8,15 @@ public class AIModelProviderResolver(
     IEnumerable<IModelProvider> providers,
     IHttpClientFactory httpClientFactory) : IAIModelProviderResolver
 {
-    private async Task<IEnumerable<Model>?> FetchVercelModels(CancellationToken ct)
+    // ---- Vercel models cache (in-memory) ----
+    private readonly SemaphoreSlim _vercelCacheLock = new(1, 1);
+    private IReadOnlyList<Model>? _vercelModelsCache;
+    private DateTimeOffset _vercelModelsCacheExpiresAt = DateTimeOffset.MinValue;
+
+    private static readonly TimeSpan VercelCacheTtl = TimeSpan.FromHours(6);
+    private static readonly TimeSpan VercelNegativeCacheTtl = TimeSpan.FromMinutes(5);
+
+    private async Task<IReadOnlyList<Model>?> FetchVercelModels(CancellationToken ct)
     {
         try
         {
@@ -16,7 +24,11 @@ public class AIModelProviderResolver(
             var json = await http.GetFromJsonAsync<ModelReponse>(
                 "https://ai-gateway.vercel.sh/v1/models", ct);
 
-            return json?.Data;
+            return json?.Data?.ToList();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
@@ -24,30 +36,82 @@ public class AIModelProviderResolver(
         }
     }
 
+    private async Task<IReadOnlyList<Model>?> GetVercelModelsCached(CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        if (_vercelModelsCache != null && now < _vercelModelsCacheExpiresAt)
+            return _vercelModelsCache;
+
+        await _vercelCacheLock.WaitAsync(ct);
+        try
+        {
+            now = DateTimeOffset.UtcNow;
+
+            if (_vercelModelsCache != null && now < _vercelModelsCacheExpiresAt)
+                return _vercelModelsCache;
+
+            var fresh = await FetchVercelModels(ct);
+
+            if (fresh is { Count: > 0 })
+            {
+                _vercelModelsCache = fresh;
+                _vercelModelsCacheExpiresAt = now.Add(VercelCacheTtl);
+            }
+            else
+            {
+                // negative-cache so we don't spam Vercel when it's down
+                _vercelModelsCache ??= null;
+                _vercelModelsCacheExpiresAt = now.Add(VercelNegativeCacheTtl);
+            }
+
+            return _vercelModelsCache;
+        }
+        finally
+        {
+            _vercelCacheLock.Release();
+        }
+    }
+
     private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> LoadModels(
         CancellationToken ct)
     {
-        var result = new Dictionary<string, (Model, IModelProvider)>(
-            StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<string, (Model, IModelProvider)>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var provider in providers)
+        // ---- 1) resolve all provider models in parallel ----
+        var providerArray = providers as IModelProvider[] ?? providers.ToArray();
+
+        var tasks = providerArray.Select(async provider =>
         {
             try
             {
                 var models = await provider.ListModels(ct);
-                foreach (var model in models)
-                    result[model.Id] = (model, provider);
+                return (Provider: provider, Models: models);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch
             {
                 // provider down → skip
+                return (Provider: provider, Models: Enumerable.Empty<Model>());
             }
+        });
+
+        var all = await Task.WhenAll(tasks);
+
+        foreach (var (provider, models) in all)
+        {
+            foreach (var model in models)
+                result[model.Id] = (model, provider);
         }
 
         if (result.Count == 0)
             throw new InvalidOperationException("No models resolved from any provider.");
 
-        var vercelModels = await FetchVercelModels(ct);
+        // ---- 2) Vercel enrichment via cached lookup ----
+        var vercelModels = await GetVercelModelsCached(ct);
 
         foreach (var key in result.Keys.ToList())
         {
@@ -74,17 +138,14 @@ public class AIModelProviderResolver(
         return result;
     }
 
-    public async Task<IModelProvider> Resolve(
-        string model,
-        CancellationToken ct = default)
+    public async Task<IModelProvider> Resolve(string model, CancellationToken ct = default)
     {
         var map = await LoadModels(ct);
 
         if (map.TryGetValue(model, out var entry))
             return entry.Provider;
 
-        var key = map.Keys
-            .FirstOrDefault(k => k.SplitModelId().Model == model);
+        var key = map.Keys.FirstOrDefault(k => k.SplitModelId().Model == model);
 
         if (key != null && map.TryGetValue(key, out var backEntry))
             return backEntry.Provider;

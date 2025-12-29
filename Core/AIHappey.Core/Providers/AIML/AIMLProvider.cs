@@ -119,7 +119,7 @@ public partial class AIMLProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public string GetIdentifier() => "aiml";
+    public string GetIdentifier() => AIMLExtensions.GetIdentifier();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
