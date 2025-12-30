@@ -3,10 +3,7 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text;
-using System.Dynamic;
-using System.Net.Mime;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -18,59 +15,7 @@ public partial class XAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var tools = new List<dynamic>();
-        var metadata = chatRequest.GetProviderMetadata<XAIProviderMetadata>(GetIdentifier());
-        if (metadata?.XSearch != null)
-        {
-            tools.Add(metadata.XSearch);
-        }
-
-        if (metadata?.WebSearch != null)
-        {
-            tools.Add(metadata.WebSearch);
-        }
-
-        if (metadata?.CodeExecution != null)
-        {
-            tools.Add(metadata.CodeExecution);
-        }
-
-        foreach (var tool in chatRequest.Tools ?? [])
-        {
-            tools.Add(new
-            {
-                type = "function",
-                name = tool.Name,
-                description = tool.Description,
-                parameters = tool.InputSchema
-            });
-        }
-
-        dynamic payload = new ExpandoObject();
-        payload.model = chatRequest.Model;
-        payload.stream = true;
-        payload.temperature = chatRequest.Temperature;
-        payload.reasoning = metadata?.Reasoning;
-        payload.instructions = metadata?.Instructions;
-        payload.store = false;
-        payload.parallel_tool_calls = metadata?.ParallelToolCalls;
-        payload.input = chatRequest.Messages.BuildResponsesInput();
-        payload.tools = tools;
-
-        if (chatRequest.ResponseFormat != null)
-        {
-            payload.text = new { format = chatRequest.ResponseFormat };
-        }
-
-        if (tools.Count > 0)
-            payload.tool_choice = "auto";
-
-        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/responses")
-        {
-            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
+        using var req = chatRequest.BuildXAIStreamRequest(GetIdentifier());
 
         // ---------- 2) Send and read SSE ----------
         using var resp = await _client.SendAsync(
@@ -230,12 +175,7 @@ public partial class XAIProvider : IModelProvider
                     }
 
                 case "response.reasoning_summary_text.done":
-                    //    case "response.reasoning_text.done":
                     {
-                        // payload often shapes like { "delta": "text..." } or { "output_text": { "delta": "..." }}
-                        //                        string? delta = TryGetDeltaText(root);
-                        //     if (!string.IsNullOrEmpty(delta))
-                        //    {
                         if (currentStreamId is not null)
                         {
                             yield return new ReasoningEndUIPart
@@ -249,34 +189,16 @@ public partial class XAIProvider : IModelProvider
                         break;
                     }
 
-                // Completed output_text section (good moment to close the text stream)
-                //  case "response.output_text.done":
-                ///   case "response.text.completed":
-                //  {
-                //  if (currentStreamId is not null)
-                //       yield return new TextEndUIMessageStreamPart { Id = currentStreamId };
-                //   break;
-                //     }
                 case "response.output_item.done":
                     {
-                        // payload often shapes like { "delta": "text..." } or { "output_text": { "delta": "..." }}
-                        //                        string? delta = TryGetDeltaText(root);
-                        //     if (!string.IsNullOrEmpty(delta))
-                        //    {
-                        // var toolCallPart = ReadToolCallPart(root);
                         var providerExecuted = !(chatRequest.Tools?.Count > 0);
 
-                        foreach (var part in ReadToolCallPart(root, providerExecuted))
+                        foreach (var part in ReadToolCallPart(root, providerExecuted, chatRequest.Tools ?? []))
                         {
                             clientToolsCalls = !providerExecuted;
                             yield return part;
                         }
 
-                        //                        if (toolCallPart is not null)
-                        //                       {
-                        //                          yield return toolCallPart;
-                        //                     }
-                        //  }
                         break;
                     }
                 // Final completion event for the whole response

@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
 using OAIC = OpenAI.Chat;
+using Tool = AIHappey.Common.Model.Tool;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -69,7 +70,7 @@ public partial class XAIProvider : IModelProvider
     }
     private readonly HashSet<string> _startedIds = new(StringComparer.Ordinal);
 
-    private static IEnumerable<UIMessagePart> ReadToolCallPart(JsonElement el, bool providerExecuted)
+    private static IEnumerable<UIMessagePart> ReadToolCallPart(JsonElement el, bool providerExecuted, IEnumerable<Tool> tools)
     {
         if (el.ValueKind != JsonValueKind.Object)
             yield break;
@@ -101,6 +102,7 @@ public partial class XAIProvider : IModelProvider
         {
             ToolCallId = toolCallId,
             ToolName = toolName,
+            Title = tools?.FirstOrDefault(a => a.Name == toolName)?.Title,
             ProviderExecuted = providerExecuted,
             Input = !string.IsNullOrEmpty(input)
                 ? JsonSerializer.Deserialize<object>(input!)!
@@ -119,6 +121,14 @@ public partial class XAIProvider : IModelProvider
                     IsError = false,
                     Content = ["Server-side tool call outputs are not returned in the API response. The agent uses these outputs internally to formulate its final response, but they are not exposed here.".ToTextContentBlock()]
                 }
+            };
+        }
+        else
+        {
+            yield return new ToolApprovalRequestPart
+            {
+                ToolCallId = toolCallId,
+                ApprovalId = Guid.NewGuid().ToString(),
             };
         }
     }

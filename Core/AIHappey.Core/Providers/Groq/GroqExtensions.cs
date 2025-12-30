@@ -147,9 +147,9 @@ public static class GroqExtensions
 
     private static string ToRole(this AIHappey.Common.Model.Role role) => role switch
     {
-        AIHappey.Common.Model.Role.system => "system",
-        AIHappey.Common.Model.Role.assistant => "assistant",
-        AIHappey.Common.Model.Role.user => "user",
+        Common.Model.Role.system => "system",
+        Common.Model.Role.assistant => "assistant",
+        Common.Model.Role.user => "user",
         _ => "user"
     };
 

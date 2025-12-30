@@ -59,7 +59,6 @@ public partial class GroqProvider : IModelProvider
                 {
                     Id = id.ToModelId(GetIdentifier()),
                     Name = id,
-                   // Provider = nameof(Groq),
                     OwnedBy = ownedBy!,
                     Created = created
                 };

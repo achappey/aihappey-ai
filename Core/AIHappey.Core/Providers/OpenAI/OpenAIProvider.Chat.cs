@@ -1,6 +1,5 @@
 using OpenAI.Responses;
 using AIHappey.Common.Model;
-using AIHappey.Core.AI;
 using OpenAI.Files;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Common.Model.Providers;
@@ -104,8 +103,15 @@ public partial class OpenAIProvider
 
         await foreach (var update in stream.WithCancellation(cancellationToken))
         {
-            await foreach (var responseUpdate in update.ToStreamingResponseUpdate(containerClient, chatRequest.ResponseFormat))
+            await foreach (var responseUpdate in update.ToStreamingResponseUpdate(containerClient,
+                chatRequest.ResponseFormat))
             {
+                if (responseUpdate is ToolCallStreamingStartPart toolCallStreamingStartPart)
+                    toolCallStreamingStartPart.Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == toolCallStreamingStartPart.ToolName)?.Title;
+
+                if (responseUpdate is ToolCallPart toolCallPart)
+                    toolCallPart.Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == toolCallPart.ToolName)?.Title;
+
                 yield return responseUpdate;
             }
         }

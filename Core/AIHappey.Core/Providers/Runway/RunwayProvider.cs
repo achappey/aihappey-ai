@@ -207,7 +207,6 @@ public partial class RunwayProvider : IModelProvider
     /// Polls a Runway task until completion and uploads all output URLs to MCP storage.
     /// </summary>
     public async Task<IEnumerable<string>> WaitForTaskAndUploadAsync(
-    //    this HttpC client,
         string taskId,
         CancellationToken ct = default)
     {
@@ -231,9 +230,6 @@ public partial class RunwayProvider : IModelProvider
                 var outputs = json?["output"]?.AsArray();
                 if (outputs == null || outputs.Count == 0)
                     throw new Exception("No outputs returned by Runway API.");
-
-                //   var downloadService = sp.GetRequiredService<DownloadService>();
-                //  var uploadedResources = new List<ContentBlock>();
 
                 foreach (var output in outputs)
                 {

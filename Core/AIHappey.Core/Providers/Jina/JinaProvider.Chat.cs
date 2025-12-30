@@ -175,7 +175,6 @@ public partial class JinaProvider : IModelProvider
                         };
                     }
                 }
-
             }
         }
 

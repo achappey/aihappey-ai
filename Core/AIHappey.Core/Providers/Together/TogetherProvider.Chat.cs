@@ -131,8 +131,15 @@ public partial class TogetherProvider : IModelProvider
                 {
                     ToolCallId = key,
                     ToolName = toolName!,
+                    Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == toolName)?.Title,
                     ProviderExecuted = false,
                     Input = inputObj
+                };
+
+                yield return new ToolApprovalRequestPart
+                {
+                    ToolCallId = key,
+                    ApprovalId = Guid.NewGuid().ToString(),
                 };
 
                 toolBuffers.Remove(key);
@@ -156,6 +163,7 @@ public partial class TogetherProvider : IModelProvider
             if (data is "[DONE]" or "[done]") break;
 
             JsonDocument doc = JsonDocument.Parse(data);
+
             var root = doc.RootElement;
 
             // ---------- Parse token usage if present ----------
@@ -234,6 +242,7 @@ public partial class TogetherProvider : IModelProvider
                                     yield return new ToolCallStreamingStartPart
                                     {
                                         ToolCallId = key,
+                                        Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == buf.ToolName)?.Title,
                                         ToolName = buf.ToolName!,
                                         ProviderExecuted = false
                                     };

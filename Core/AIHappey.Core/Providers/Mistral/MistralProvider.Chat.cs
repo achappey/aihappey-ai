@@ -273,8 +273,15 @@ public partial class MistralProvider : IModelProvider
                             {
                                 ToolCallId = toolStreamId,
                                 ToolName = streamingToolName,
+                                Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == streamingToolName)?.Title,
                                 Input = JsonSerializer.Deserialize<object>(toolInput ?? "{}")!,
                                 ProviderExecuted = false
+                            };
+
+                            yield return new ToolApprovalRequestPart
+                            {
+                                ToolCallId = toolStreamId,
+                                ApprovalId = Guid.NewGuid().ToString(),
                             };
 
                             toolStreamId = null;
@@ -333,6 +340,7 @@ public partial class MistralProvider : IModelProvider
                         {
                             ToolCallId = toolId,
                             ToolName = toolName,
+                            Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == toolName)?.Title,
                             ProviderExecuted = toolName == "code_interpreter"
                                 || toolName == "image_generation"
                         };
@@ -392,6 +400,34 @@ public partial class MistralProvider : IModelProvider
                     {
                         toolStreamId = deltaId;
                         streamingToolName = argDeltaName;
+
+                        yield return new ToolCallStreamingStartPart
+                        {
+                            ToolCallId = deltaId,
+                            ToolName = argDeltaName,
+                            ProviderExecuted = false
+                        };
+                    }
+                    else if (toolStreamId != deltaId)
+                    {
+                        yield return new ToolCallPart()
+                        {
+                            ToolCallId = toolStreamId,
+                            ToolName = streamingToolName,
+                            Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == streamingToolName)?.Title,
+                            Input = JsonSerializer.Deserialize<object>(toolInput ?? "{}")!,
+                            ProviderExecuted = false
+                        };
+
+                        yield return new ToolApprovalRequestPart
+                        {
+                            ToolCallId = toolStreamId,
+                            ApprovalId = Guid.NewGuid().ToString(),
+                        };
+
+                        toolStreamId = deltaId;
+                        streamingToolName = argDeltaName;
+                        toolInput = string.Empty;
 
                         yield return new ToolCallStreamingStartPart
                         {

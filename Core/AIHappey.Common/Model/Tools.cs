@@ -11,6 +11,9 @@ public class Tool
     [JsonPropertyName("description")]
     public string? Description { get; set; }
 
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
     [JsonPropertyName("inputSchema")]
     public ToolInputSchema? InputSchema { get; set; }
 }

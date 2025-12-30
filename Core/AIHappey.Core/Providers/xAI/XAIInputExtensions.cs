@@ -1,105 +1,13 @@
 using System.Text.Json;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.xAI.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.xAI;
 
-public static partial class XAIExtensions
+public static partial class XAIInputExtensions
 {
-    public const string XAIIdentifier = "xai";
-
-    public static XAIReasoning? ToReasoning(this JsonElement? element)
-    {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("reasoning", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return JsonSerializer.Deserialize<XAIReasoning>(webSearch.GetRawText());
-    }
-
-    public static XAIXCodeExecution? ToCodeExecution(this JsonElement? element)
-    {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("code_execution", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return JsonSerializer.Deserialize<XAIXCodeExecution>(webSearch.GetRawText());
-    }
-
-    public static XAIXSearch? ToXSearchTool(this JsonElement? element)
-    {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("x_search", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return JsonSerializer.Deserialize<XAIXSearch>(webSearch.GetRawText());
-    }
-
-
-    public static XAIWebSearch? ToWebSearchTool(this JsonElement? element)
-    {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("web_search", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return JsonSerializer.Deserialize<XAIWebSearch>(webSearch.GetRawText());
-    }
-
-
-    public static List<dynamic> GetTools(this CreateMessageRequestParams chatRequest)
-    {
-
-        List<dynamic> allTools = [];
-        XAIWebSearch? searchTool = chatRequest.Metadata.ToWebSearchTool();
-        if (searchTool != null)
-        {
-            allTools.Add(searchTool);
-        }
-
-        XAIXSearch? xSearch = chatRequest.Metadata.ToXSearchTool();
-        if (xSearch != null)
-        {
-            allTools.Add(xSearch);
-        }
-
-        XAIXCodeExecution? codeExecution = chatRequest.Metadata.ToCodeExecution();
-        if (codeExecution != null)
-        {
-            allTools.Add(codeExecution);
-        }
-
-        return allTools;
-    }
-
-
-    public static Dictionary<string, object> ToProviderMetadata(this Dictionary<string, object> metadata)
-        => new()
-        { { XAIIdentifier, metadata } };
-
-
-    /// Builds xAI/OpenAI Responses API "input" array from UI messages (stateless rebuild).
-    /// - Message items => { type:"message", role, content:[ {input_text|output_text|input_image}... ] }
-    /// - Tool calls    => { type:"function_call", id, call_id, name, arguments (JSON string), status }
-    /// - Tool outputs  => { type:"function_call_output", call_id, output (JSON string) }
     public static List<object> BuildResponsesInput(this List<UIMessage> uiMessages)
     {
         var items = new List<object>();
@@ -178,11 +86,11 @@ public static partial class XAIExtensions
            };
 
     public static string ToRole(
-               this AIHappey.Common.Model.Role role) => role switch
+               this Common.Model.Role role) => role switch
                {
-                   AIHappey.Common.Model.Role.system => "system",
-                   AIHappey.Common.Model.Role.user => "user",
-                   AIHappey.Common.Model.Role.assistant => "assistant",
+                   Common.Model.Role.system => "system",
+                   Common.Model.Role.user => "user",
+                   Common.Model.Role.assistant => "assistant",
                    _ => "user"
                };
 

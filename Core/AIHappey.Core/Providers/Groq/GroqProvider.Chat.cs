@@ -233,6 +233,7 @@ public partial class GroqProvider : IModelProvider
                     {
                         ToolCallId = toolId,
                         ToolName = currentToolName,
+                        Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == currentToolName)?.Title,
                         ProviderExecuted = false
                     };
 
@@ -297,8 +298,15 @@ public partial class GroqProvider : IModelProvider
                     {
                         ToolCallId = toolId,
                         ToolName = currentToolName ?? string.Empty,
+                        Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == currentToolName)?.Title,
                         Input = JsonSerializer.Deserialize<object>(args) ?? new { },
                         ProviderExecuted = false
+                    };
+
+                    yield return new ToolApprovalRequestPart
+                    {
+                        ToolCallId = toolId,
+                        ApprovalId = Guid.NewGuid().ToString(),
                     };
 
                     currentToolId = null;

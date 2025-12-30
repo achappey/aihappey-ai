@@ -6,7 +6,7 @@ namespace AIHappey.Core.Providers.xAI;
 
 public partial class XAIProvider : IModelProvider
 {
-    public string GetIdentifier() => XAIExtensions.XAIIdentifier;
+    public string GetIdentifier() => XAIRequestExtensions.XAIIdentifier;
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

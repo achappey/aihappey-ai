@@ -25,7 +25,8 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
         Response.Headers["x-vercel-ai-ui-message-stream"] = "v1";
         chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
-
+        chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
+        
         FinishUIPart? finishUIPart = null;
 
         try

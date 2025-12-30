@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
+using AIHappey.Common.Extensions;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -22,6 +23,8 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
 
         FinishUIPart? finishUIPart = null;
+
+        chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
 
         try
         {

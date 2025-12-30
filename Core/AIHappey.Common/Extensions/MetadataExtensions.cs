@@ -50,4 +50,22 @@ public static class MetadataExtensions
         return element.Deserialize<T>(JsonSerializerOptions.Web);
     }
 
+
+    public static List<UIMessage> EnsureApprovals(this List<UIMessage> uIMessages) =>
+   [.. uIMessages.Select(a =>
+            {
+                a.Parts = [.. a.Parts.Select(z =>
+                {
+                    if(z is ToolInvocationPart toolInvocationPart) {
+                    if(toolInvocationPart.State == "approval-responded" && toolInvocationPart.Approval?.Approved == false)
+                            {
+                                toolInvocationPart.Output = toolInvocationPart.Approval;
+                            }
+                    }
+                return z;
+                })];
+
+                return a;
+            })];
+
 }

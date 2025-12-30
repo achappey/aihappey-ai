@@ -74,7 +74,6 @@ public partial class CohereProvider : IModelProvider
             {
                 Id = name!.ToModelId(GetIdentifier()),
                 Name = name!,
-                //Publisher = nameof(Cohere),
                 OwnedBy = nameof(Cohere),
                 Created = createdAt?.ToUnixTimeSeconds()
             });

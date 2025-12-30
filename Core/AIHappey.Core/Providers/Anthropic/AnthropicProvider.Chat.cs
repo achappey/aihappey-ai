@@ -36,7 +36,7 @@ public partial class AnthropicProvider : IModelProvider
             GetKey(),
             client: _client
         );
-     
+
         IEnumerable<Message> inputItems = chatRequest.Messages
             .ToMessages();
 
@@ -347,15 +347,29 @@ public partial class AnthropicProvider : IModelProvider
                                     inputObject = JsonSerializer.Deserialize<object>(json)!;
                                 }
 
+                                var providerExecuted = state.ProviderExecuted
+                                                            || state.Id.StartsWith("srvtoolu_")
+                                                            || state.Id.StartsWith("mcptoolu_");
+
+                                var toolName = state.Name ?? state.Id;
+
                                 yield return new ToolCallPart
                                 {
                                     ToolCallId = state.Id,
-                                    ToolName = state.Name ?? state.Id,
+                                    ToolName = toolName,
+                                    Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == toolName)?.Title,
                                     Input = inputObject,
-                                    ProviderExecuted = state.ProviderExecuted
-                                        || state.Id.StartsWith("srvtoolu_")
-                                        || state.Id.StartsWith("mcptoolu_")
+                                    ProviderExecuted = providerExecuted
                                 };
+
+                                if (!providerExecuted)
+                                {
+                                    yield return new ToolApprovalRequestPart
+                                    {
+                                        ToolCallId = state.Id,
+                                        ApprovalId = Guid.NewGuid().ToString(),
+                                    };
+                                }
                             }
 
                             toolCalls.Clear();

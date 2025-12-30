@@ -17,7 +17,7 @@ public class UIMessage
 
     public Role Role { get; init; }
 
-    public List<UIMessagePart> Parts { get; init; } = new();
+    public List<UIMessagePart> Parts { get; set; } = [];
 
     public Dictionary<string, object>? Metadata { get; init; }
 }
@@ -170,7 +170,7 @@ public class ToolCallPart : UIMessagePart
 
     [JsonPropertyName("title")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Title { get; init; }
+    public string? Title { get; set; }
 
     public static ToolCallPart CreateProviderExecuted(string id, string toolName, object input) =>
         new()
@@ -199,7 +199,7 @@ public class ToolCallStreamingStartPart : UIMessagePart
 
     [JsonPropertyName("title")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Title { get; init; }
+    public string? Title { get; set; }
 
     public static ToolCallStreamingStartPart CreateProviderExecuted(string id, string toolName) =>
         new()
