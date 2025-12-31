@@ -1,13 +1,4 @@
-using System.ClientModel;
-using System.ClientModel.Primitives;
-using System.Net.Mime;
-using System.Text;
-using AIHappey.Core.AI;
-using AIHappey.Core.Models;
-using Microsoft.AspNetCore.StaticFiles;
-using OpenAI.Containers;
 using OpenAI.Images;
-using OpenAI.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -26,6 +17,4 @@ public static class OpenAIImageModelExtensions
            "1792x1024" => GeneratedImageSize.W1792xH1024,
            _ => null
        };
-
-
 }

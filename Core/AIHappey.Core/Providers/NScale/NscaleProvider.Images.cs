@@ -3,12 +3,11 @@ using AIHappey.Common.Model;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using System.Text;
-using AIHappey.Common.Model.Providers;
 using System.Text.Json.Serialization;
 
-namespace AIHappey.Core.Providers.Together;
+namespace AIHappey.Core.Providers.Nscale;
 
-public partial class TogetherProvider : IModelProvider
+public partial class NscaleProvider : IModelProvider
 {
 
     private static readonly JsonSerializerOptions imageSettings = new(JsonSerializerDefaults.Web)
@@ -21,27 +20,18 @@ public partial class TogetherProvider : IModelProvider
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        var metadata = imageRequest.GetImageProviderMetadata<TogetherImageProviderMetadata>(GetIdentifier());
         // Step 2: Build JSON payload
         var jsonBody = JsonSerializer.Serialize(new
         {
             prompt = imageRequest.Prompt,
             model = imageRequest.Model,
             n = imageRequest.N,
-            steps = metadata?.Steps,
-            height = imageRequest.GetImageHeight() ?? 1024,
-            width = imageRequest.GetImageWidth() ?? 1024,
-            guidance_scale = metadata?.GuidanceScale,
-            negative_prompt = metadata?.NegativePrompt,
-            disable_safety_checker = metadata?.DisableSafetyChecker,
-            seed = imageRequest.Seed,
-            response_format = "base64",
-            output_format = "png"
+            size = imageRequest.Size,
         }, imageSettings);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "https://api.together.xyz/v1/images/generations"
+            "v1/images/generations"
         )
         {
             Content = new StringContent(
@@ -54,14 +44,33 @@ public partial class TogetherProvider : IModelProvider
         // Step 3: Send request
         using var resp = await _client.SendAsync(request, cancellationToken);
         var jsonResponse = await resp.Content.ReadAsStringAsync(cancellationToken);
+
         if (!resp.IsSuccessStatusCode)
-            throw new Exception($"{resp.StatusCode}: {jsonResponse}");
+        {
+            try
+            {
+
+                using var errorDoc = JsonDocument.Parse(jsonResponse);
+                var message = errorDoc.RootElement
+                    .GetProperty("error")
+                    .GetProperty("message")
+                    .GetString();
+
+                throw new Exception(message ?? jsonResponse);
+            }
+            catch (JsonException)
+            {
+                // fallback als het geen geldige JSON is
+                throw new Exception(jsonResponse);
+            }
+        }
+
         List<string> images = [];
         List<object> warnings = [];
         using var doc = JsonDocument.Parse(jsonResponse);
 
         if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
-            throw new Exception("No image data array returned from Together API.");
+            throw new Exception("No image data array returned from Nscale API.");
 
         foreach (var item in data.EnumerateArray())
         {
@@ -76,7 +85,7 @@ public partial class TogetherProvider : IModelProvider
         }
 
         if (images.Count == 0)
-            throw new Exception("No valid image data returned from Together API.");
+            throw new Exception("No valid image data returned from Nscale API.");
 
         if (imageRequest.Mask is not null)
         {
@@ -84,6 +93,15 @@ public partial class TogetherProvider : IModelProvider
             {
                 type = "unsupported",
                 feature = "mask"
+            });
+        }
+
+        if (imageRequest.Seed is not null)
+        {
+            warnings.Add(new
+            {
+                type = "unsupported",
+                feature = "seed"
             });
         }
 

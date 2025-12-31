@@ -19,6 +19,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "runway" => _config.Runway?.ApiKey,
             "aiml" => _config.AIML?.ApiKey,
             "xai" => _config.XAI?.ApiKey,
+            "nscale" => _config.Nscale?.ApiKey,
             "perplexity" => _config.Perplexity?.ApiKey,
             "jina" => _config.Jina?.ApiKey,
             "anthropic" => _config.Anthropic?.ApiKey,

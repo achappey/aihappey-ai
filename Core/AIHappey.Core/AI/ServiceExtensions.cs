@@ -5,6 +5,7 @@ using AIHappey.Core.Providers.Google;
 using AIHappey.Core.Providers.Groq;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
+using AIHappey.Core.Providers.Nscale;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Providers.Perplexity;
 using AIHappey.Core.Providers.Pollinations;
@@ -32,6 +33,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, XAIProvider>();
         services.AddSingleton<IModelProvider, RunwayProvider>();
         services.AddSingleton<IModelProvider, AIMLProvider>();
+        services.AddSingleton<IModelProvider, NscaleProvider>();
 
         
     }
