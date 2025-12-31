@@ -121,7 +121,11 @@ public partial class PollinationsProvider : IModelProvider
         var resp = await _client.SendAsync(req, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
 
-        // expected shape: { id, model, choices: [ { message: { content } } ] }
+        if (!resp.IsSuccessStatusCode)
+        {
+            throw new Exception(raw);
+        }
+
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
 

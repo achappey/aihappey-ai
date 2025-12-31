@@ -6,7 +6,6 @@ using OpenAI.Containers;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Net.Mime;
 using AIHappey.Core.AI;
-using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -20,7 +19,7 @@ public static class ResponseExtensions
 
     public static FileUIPart ToFileUIPart(this ImageGenerationCallResponseItem imageGenerationCallResponseItem) => new()
     {
-        Url = Convert.ToBase64String(imageGenerationCallResponseItem.ImageResultBytes).ToDataUrl(MediaTypeNames.Image.Png),
+        Url = Convert.ToBase64String(imageGenerationCallResponseItem.ImageResultBytes),
         MediaType = MediaTypeNames.Image.Png
     };
 

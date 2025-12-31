@@ -93,7 +93,7 @@ public static class StreamingUpdateExtensions
             }
 
             if (streamingResponseOutputItemDoneUpdate.Item
-                          is FileSearchCallResponseItem fileSearchCallResponseItem)
+                is FileSearchCallResponseItem fileSearchCallResponseItem)
             {
                 yield return new ToolOutputAvailablePart()
                 {

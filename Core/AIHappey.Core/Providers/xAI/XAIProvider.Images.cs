@@ -17,15 +17,11 @@ public partial class XAIProvider : IModelProvider
         ApplyAuthHeader();
         var now = DateTime.UtcNow;
 
-        var metadata = imageRequest.GetImageProviderMetadata<XAIImageProviderMetadata>(GetIdentifier());
-
-        // 2) Build request payload
         var payload = new
         {
             model = imageRequest.Model,
             prompt = imageRequest.Prompt,
             n = imageRequest.N,
-            quality = metadata?.Quality,
             response_format = "b64_json"
         };
 
