@@ -78,15 +78,16 @@ public class AIModelProviderResolver(
     {
         var result = new Dictionary<string, (Model, IModelProvider)>(StringComparer.OrdinalIgnoreCase);
 
-        // ---- 1) resolve all provider models in parallel ----
-        var providerArray = providers as IModelProvider[] ?? providers.ToArray();
+        // ---- 1) resolve all provider models SEQUENTIALLY ----
+        var providerArray = providers as IModelProvider[] ?? [.. providers];
 
-        var tasks = providerArray.Select(async provider =>
+        foreach (var provider in providerArray)
         {
+            IEnumerable<Model> models;
+
             try
             {
-                var models = await provider.ListModels(ct);
-                return (Provider: provider, Models: models);
+                models = await provider.ListModels(ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -95,14 +96,9 @@ public class AIModelProviderResolver(
             catch
             {
                 // provider down → skip
-                return (Provider: provider, Models: Enumerable.Empty<Model>());
+                models = Enumerable.Empty<Model>();
             }
-        });
 
-        var all = await Task.WhenAll(tasks);
-
-        foreach (var (provider, models) in all)
-        {
             foreach (var model in models)
                 result[model.Id] = (model, provider);
         }

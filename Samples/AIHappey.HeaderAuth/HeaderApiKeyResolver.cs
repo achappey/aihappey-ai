@@ -18,6 +18,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["jina"] = "X-Jina-Key",
             ["xai"] = "X-xAI-Key",
             ["nscale"] = "X-Nscale-Key",
+            ["stabilityai"] = "X-StabilityAI-Key",
             ["groq"] = "X-Groq-Key",
             ["together"] = "X-Together-Key",
         };

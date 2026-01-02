@@ -16,6 +16,7 @@ public class AIServiceConfig
     public ProviderConfig? Runway { get; set; }
     public ProviderConfig? AIML { get; set; }
     public ProviderConfig? Nscale { get; set; }
+    public ProviderConfig? StabilityAI { get; set; }
 }
 
 public class ProviderConfig

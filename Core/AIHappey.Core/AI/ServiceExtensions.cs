@@ -10,6 +10,7 @@ using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Providers.Perplexity;
 using AIHappey.Core.Providers.Pollinations;
 using AIHappey.Core.Providers.Runway;
+using AIHappey.Core.Providers.StabilityAI;
 using AIHappey.Core.Providers.Together;
 using AIHappey.Core.Providers.xAI;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RunwayProvider>();
         services.AddSingleton<IModelProvider, AIMLProvider>();
         services.AddSingleton<IModelProvider, NscaleProvider>();
+        services.AddSingleton<IModelProvider, StabilityAIProvider>();
 
         
     }

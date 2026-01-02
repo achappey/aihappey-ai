@@ -20,6 +20,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "aiml" => _config.AIML?.ApiKey,
             "xai" => _config.XAI?.ApiKey,
             "nscale" => _config.Nscale?.ApiKey,
+            "stabilityai" => _config.StabilityAI?.ApiKey,
             "perplexity" => _config.Perplexity?.ApiKey,
             "jina" => _config.Jina?.ApiKey,
             "anthropic" => _config.Anthropic?.ApiKey,
