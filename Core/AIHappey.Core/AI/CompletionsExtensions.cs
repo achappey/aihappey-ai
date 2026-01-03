@@ -17,6 +17,7 @@ public static class CompletionsExtensions
 
     public static async IAsyncEnumerable<UIMessagePart> CompletionsStreamAsync(this HttpClient client, ChatRequest chatRequest,
         Dictionary<string, object?>? metadata = null,
+        string url = "v1/chat/completions",
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
@@ -53,26 +54,9 @@ public static class CompletionsExtensions
                 payload[kv.Key] = kv.Value;
         }
 
-        /*
-                // ---------- 1) Build request payload ----------
-                var payload = new
-                {
-                    model = chatRequest.Model,
-                    stream = true,
-                    stream_options = new
-                    {
-                        include_usage = true,
-                    },
-                    max_tokens = chatRequest.MaxTokens,
-                    temperature = chatRequest.Temperature,
-                    response_format = chatRequest.ResponseFormat,
-                    tools = tools?.Any() == true ? tools : null,
-                    messages,
-                };
-        */
         var json = JsonSerializer.Serialize(payload, completionOptions);
 
-        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+        using var req = new HttpRequestMessage(HttpMethod.Post, url)
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
