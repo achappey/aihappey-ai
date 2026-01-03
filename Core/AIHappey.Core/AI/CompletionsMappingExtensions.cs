@@ -4,7 +4,7 @@ using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.NScale;
 
-public static class NScaleMessageMappingExtensions
+public static class CompletionsMappingExtensions
 {
     private static readonly JsonSerializerOptions J = JsonSerializerOptions.Web;
 
@@ -15,7 +15,7 @@ public static class NScaleMessageMappingExtensions
     ///              then emits an assistant message with tool_calls; if tool output present,
     ///              appends a separate role:"tool" message with tool_call_id + serialized content.
     /// </summary>
-    public static IEnumerable<object> ToNScaleMessages(this IEnumerable<UIMessage> uiMessages)
+    public static IEnumerable<object> ToCompletionMessages(this IEnumerable<UIMessage> uiMessages)
     {
         foreach (var msg in uiMessages)
         {
@@ -23,7 +23,7 @@ public static class NScaleMessageMappingExtensions
             {
                 case Role.system:
                     {
-                        var parts = msg.Parts.ToNscaleContentParts().ToList();
+                        var parts = msg.Parts.ToCompletionContentParts().ToList();
                         if (parts.Count > 0)
                             yield return new { role = "system", content = parts };
                         break;
@@ -31,7 +31,7 @@ public static class NScaleMessageMappingExtensions
 
                 case Role.user:
                     {
-                        var parts = msg.Parts.ToNscaleContentParts().ToList();
+                        var parts = msg.Parts.ToCompletionContentParts().ToList();
                         if (parts.Count > 0)
                             yield return new { role = "user", content = parts };
                         break;
@@ -49,7 +49,7 @@ public static class NScaleMessageMappingExtensions
                                 // -------- text/image parts → keep order as content array --------
                                 case TextUIPart:
                                     {
-                                        var mapped = MapPartToNscaleContent(part);
+                                        var mapped = MapPartToCompletionContent(part);
                                         if (mapped is not null)
                                             buffer.Add(mapped);
                                         break;
@@ -120,11 +120,11 @@ public static class NScaleMessageMappingExtensions
         }
     }
 
-    public static IEnumerable<object> ToNscaleContentParts(this IEnumerable<UIMessagePart> parts)
+    public static IEnumerable<object> ToCompletionContentParts(this IEnumerable<UIMessagePart> parts)
     {
         foreach (var p in parts)
         {
-            var mapped = MapPartToNscaleContent(p);
+            var mapped = MapPartToCompletionContent(p);
             if (mapped is not null)
                 yield return mapped;
         }
@@ -132,7 +132,7 @@ public static class NScaleMessageMappingExtensions
 
     // --- helpers -------------------------------------------------------------
 
-    private static object? MapPartToNscaleContent(UIMessagePart part)
+    private static object? MapPartToCompletionContent(UIMessagePart part)
     {
         return part switch
         {

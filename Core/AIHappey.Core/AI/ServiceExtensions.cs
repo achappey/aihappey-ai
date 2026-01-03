@@ -5,11 +5,14 @@ using AIHappey.Core.Providers.Google;
 using AIHappey.Core.Providers.Groq;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
+using AIHappey.Core.Providers.Novita;
 using AIHappey.Core.Providers.Nscale;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Providers.Perplexity;
 using AIHappey.Core.Providers.Pollinations;
 using AIHappey.Core.Providers.Runway;
+using AIHappey.Core.Providers.SambaNova;
+using AIHappey.Core.Providers.Scaleway;
 using AIHappey.Core.Providers.StabilityAI;
 using AIHappey.Core.Providers.Together;
 using AIHappey.Core.Providers.xAI;
@@ -36,8 +39,11 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AIMLProvider>();
         services.AddSingleton<IModelProvider, NscaleProvider>();
         services.AddSingleton<IModelProvider, StabilityAIProvider>();
+        services.AddSingleton<IModelProvider, NovitaProvider>();
+        services.AddSingleton<IModelProvider, ScalewayProvider>();
+        services.AddSingleton<IModelProvider, SambaNovaProvider>();
 
-        
+
     }
 
 }

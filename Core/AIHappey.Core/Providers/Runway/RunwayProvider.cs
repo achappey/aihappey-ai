@@ -107,6 +107,7 @@ public partial class RunwayProvider : IModelProvider
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        
         var now = DateTime.UtcNow;
         var metadata = imageRequest.GetImageProviderMetadata<RunwayImageProviderMetadata>(GetIdentifier());
         var payload = new

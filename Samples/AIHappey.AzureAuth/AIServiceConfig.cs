@@ -16,6 +16,9 @@ public class AIServiceConfig
     public ProviderConfig? Runway { get; set; }
     public ProviderConfig? AIML { get; set; }
     public ProviderConfig? Nscale { get; set; }
+    public ProviderConfig? Novita { get; set; }
+    public ProviderConfig? SambaNova { get; set; }
+    public ProviderConfig? Scaleway { get; set; }
     public ProviderConfig? StabilityAI { get; set; }
 }
 

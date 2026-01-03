@@ -17,9 +17,12 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["aiml"] = "X-AIML-Key",
             ["jina"] = "X-Jina-Key",
             ["xai"] = "X-xAI-Key",
+            ["scaleway"] = "X-Scaleway-Key",
             ["nscale"] = "X-Nscale-Key",
+            ["sambanova"] = "X-SambaNova-Key",
             ["stabilityai"] = "X-StabilityAI-Key",
             ["groq"] = "X-Groq-Key",
+            ["novita"] = "X-Novita-Key",
             ["together"] = "X-Together-Key",
         };
 

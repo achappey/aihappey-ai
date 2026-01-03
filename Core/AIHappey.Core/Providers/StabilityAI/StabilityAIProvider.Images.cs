@@ -4,6 +4,8 @@ using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using System.Globalization;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
@@ -13,6 +15,7 @@ public partial class StabilityAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        var metadata = imageRequest.GetImageProviderMetadata<StabilityAIImageProviderMetadata>(GetIdentifier());
         ArgumentNullException.ThrowIfNull(imageRequest);
         if (string.IsNullOrWhiteSpace(imageRequest.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(imageRequest));
@@ -49,6 +52,12 @@ public partial class StabilityAIProvider : IModelProvider
         if (imageRequest.Seed is not null)
             form.Add(NamedField("seed", imageRequest.Seed.Value.ToString(CultureInfo.InvariantCulture)));
 
+        if (!string.IsNullOrEmpty(metadata?.NegativePrompt))
+            form.Add(NamedField("negative_prompt", metadata.NegativePrompt));
+
+        if (!string.IsNullOrEmpty(metadata?.StylePreset))
+            form.Add(NamedField("style_preset", metadata.StylePreset));
+
         // sanity check (copy from MCP)
         foreach (var part in form)
         {
@@ -56,7 +65,6 @@ public partial class StabilityAIProvider : IModelProvider
             if (cd?.Name is null)
                 throw new InvalidOperationException($"Form part missing name. Headers: {part.Headers}");
         }
-
 
         _client.DefaultRequestHeaders.Accept.Clear();
         _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("image/*"));
@@ -75,7 +83,7 @@ public partial class StabilityAIProvider : IModelProvider
 
         return new ImageResponse
         {
-            Images = new List<string> { dataUrl },
+            Images = [dataUrl],
             Warnings = warnings,
             Response = new()
             {

@@ -1,0 +1,135 @@
+using AIHappey.Core.AI;
+using OAIC = OpenAI.Chat;
+using ModelContextProtocol.Protocol;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using AIHappey.Core.Models;
+using AIHappey.Common.Model.ChatCompletions;
+using OpenAI.Responses;
+using AIHappey.Common.Model;
+
+namespace AIHappey.Core.Providers.SambaNova;
+
+public partial class SambaNovaProvider : IModelProvider
+{
+    private readonly IApiKeyResolver _keyResolver;
+
+    private readonly HttpClient _client;
+
+    public SambaNovaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    {
+        _keyResolver = keyResolver;
+        _client = httpClientFactory.CreateClient();
+        _client.BaseAddress = new Uri("https://api.sambanova.ai/");
+    }
+
+
+    private void ApplyAuthHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException($"No {nameof(SambaNova)} API key.");
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+    public float? GetPriority() => 1;
+
+    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public string GetIdentifier() => nameof(SambaNova).ToLowerInvariant();
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+        using var resp = await _client.SendAsync(req, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new Exception($"API error: {err}");
+        }
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        var models = new List<Model>();
+        var root = doc.RootElement;
+
+        // ✅ root is already an array
+        var arr = root.ValueKind == JsonValueKind.Array
+            ? root.EnumerateArray()
+            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                ? dataEl.EnumerateArray()
+                : Enumerable.Empty<JsonElement>();
+
+        foreach (var el in arr)
+        {
+            if (!el.TryGetProperty("id", out var idEl))
+                continue;
+
+            var id = idEl.GetString();
+            if (string.IsNullOrEmpty(id))
+                continue;
+
+            var model = new Model
+            {
+                Id = id.ToModelId(GetIdentifier()),
+                Name = id,
+                Type = "language",
+                OwnedBy = el.TryGetProperty("owned_by", out var ownedByEl)
+                    ? ownedByEl.GetString() ?? ""
+                    : "",
+            };
+
+            if (el.TryGetProperty("context_length", out var ctxEl) && ctxEl.ValueKind == JsonValueKind.Number)
+                model.ContextWindow = ctxEl.GetInt32();
+
+            if (el.TryGetProperty("max_completion_tokens", out var maxTokEl) && maxTokEl.ValueKind == JsonValueKind.Number)
+                model.MaxTokens = maxTokEl.GetInt32();
+
+            if (el.TryGetProperty("pricing", out var pricingEl) && pricingEl.ValueKind == JsonValueKind.Object)
+            {
+                model.Pricing = new ModelPricing
+                {
+                    Input = pricingEl.TryGetProperty("prompt", out var inEl)
+                        ? inEl.GetRawText()
+                        : "0",
+                    Output = pricingEl.TryGetProperty("completion", out var outEl)
+                        ? outEl.GetRawText()
+                        : "0"
+                };
+            }
+
+            models.Add(model);
+        }
+
+        return models;
+    }
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+}

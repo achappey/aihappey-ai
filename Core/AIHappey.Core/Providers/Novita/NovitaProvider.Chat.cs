@@ -1,29 +1,24 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers;
 
-namespace AIHappey.Core.Providers.Nscale;
+namespace AIHappey.Core.Providers.Novita;
 
-public partial class NscaleProvider : IModelProvider
+public partial class NovitaProvider : IModelProvider
 {
-    private static readonly JsonSerializerOptions options = new(JsonSerializerOptions.Web)
-    {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        var metadata = chatRequest.GetProviderMetadata<NscaleProviderMetadata>(GetIdentifier());
-        
+        var metadata = chatRequest.GetProviderMetadata<NovitaProviderMetadata>(GetIdentifier());
+
         Dictionary<string, object?> payload = new()
         {
-            ["reasoning_effort"] = metadata?.ReasoningEffort ?? "medium",
+            ["enable_thinking"] = metadata?.EnableThinking,
+            ["separate_reasoning"] = metadata?.SeparateReasoning
         };
 
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
