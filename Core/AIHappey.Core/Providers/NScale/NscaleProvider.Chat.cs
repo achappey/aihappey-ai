@@ -20,11 +20,13 @@ public partial class NscaleProvider : IModelProvider
         ApplyAuthHeader();
 
         var metadata = chatRequest.GetProviderMetadata<NscaleProviderMetadata>(GetIdentifier());
-        
-        Dictionary<string, object?> payload = new()
+
+        Dictionary<string, object?> payload = [];
+
+        if (!string.IsNullOrEmpty(metadata?.ReasoningEffort))
         {
-            ["reasoning_effort"] = metadata?.ReasoningEffort ?? "medium",
-        };
+            payload["reasoning_effort"] = metadata?.ReasoningEffort;
+        }
 
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
             payload,

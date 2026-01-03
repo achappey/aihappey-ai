@@ -11,8 +11,12 @@ public partial class HyperbolicProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            cancellationToken: cancellationToken))
-            yield return update;
+        if (HyperbolicImageModels.Any(a => a.Id.Equals($"{GetIdentifier()}/{chatRequest.Model}")))
+            await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken))
+                yield return update;
+        else
+            await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
+                cancellationToken: cancellationToken))
+                yield return update;
     }
 }
