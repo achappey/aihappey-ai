@@ -35,14 +35,19 @@ This repo is the “backend” counterpart of [`aihappey-chat`](https://github.c
 
 ```mermaid
 flowchart LR
-  client[Clients<br/>aihappey-chat / other UIs] -->|POST /api/chat<br/>Vercel UI message stream (SSE)| host[Sample Host<br/>ASP.NET]
-  host -->|resolve model -> provider| resolver[Model provider resolver]
-  resolver --> providers[Providers<br/>OpenAI / Anthropic / Google / ...]
-  host -->|GET /v0.1/servers| mcpRegistry[MCP Registry]
-  host -->|/{server}<br/>streamable-http| mcpServers[MCP servers]
-  host -->|optional| telemetry[(Telemetry DB)]
+  client["Clients<br/>aihappey-chat / other UIs"]
+    -->|"POST /api/chat<br/>Vercel UI message stream (SSE)"|
+    host["Sample Host<br/>ASP.NET"]
 
-  resolver -. implemented in .-> implResolver[AIModelProviderResolver]
+  host -->|"resolve model → provider"| resolver["Model provider resolver"]
+  resolver --> providers["Providers<br/>OpenAI / Anthropic / Google / ..."]
+
+  host -->|"GET /v0.1/servers"| mcpRegistry["MCP Registry"]
+  host -->|"/{server}<br/>streamable-http"| mcpServers["MCP servers"]
+
+  host -->|"optional"| telemetry[(Telemetry DB)]
+
+  resolver -. "implemented in" .-> implResolver["AIModelProviderResolver"]
   implResolver --- resolver
 ```
 
