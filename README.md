@@ -3,7 +3,7 @@
 A multi-provider **.NET 9 AI backend** that exposes:
 
 - a **Vercel AI SDK UI message stream** compatible endpoint (`POST /api/chat`)
-- **OpenAI-style** endpoints (chat completions, models, images)
+- **OpenAI-style** endpoints (chat completions, models, images, audio)
 - hosted **Model Context Protocol (MCP)** servers (streamable-http + registry)
 
 This repo is the “backend” counterpart of [`aihappey-chat`](https://github.com/achappey/aihappey-chat) and can also be used as a downstream AI endpoint for [`aihappey-agents`](https://github.com/achappey/aihappey-agents).
@@ -22,8 +22,9 @@ This repo is the “backend” counterpart of [`aihappey-chat`](https://github.c
   - OpenAI-style chat completions: `POST /chat/completions` (SSE or JSON)
   - Models list: `GET /v1/models`
   - Images generation: `POST /v1/images/generations`
+  - Speech (text-to-speech): `POST /v1/audio/speech`
+  - Transcriptions (speech-to-text): `POST /v1/audio/transcriptions`
   - MCP sampling: `POST /sampling`
-  - Transcription: `POST /api/Transcription/transcribe`
 - **MCP server hosting** (streamable-http)
   - Registry: `GET /v0.1/servers` via [`McpCommonExtensions.MapMcpRegistry()`](Core/AIHappey.Common/MCP/McpCommonExtensions.cs:121)
   - Server endpoints: `/{server}` via [`McpCommonExtensions.MapMcpEndpoints()`](Core/AIHappey.Common/MCP/McpCommonExtensions.cs:109)
@@ -182,17 +183,61 @@ Returns the aggregated model list from all configured providers (see [`ModelsCon
 
 Routes an image request to the provider backing the selected `model` (see [`ImageController`](Samples/AIHappey.HeaderAuth/Controllers/ImageController.cs:7)).
 
+### Speech (text-to-speech)
+
+`POST /v1/audio/speech`
+
+- Request model: [`SpeechRequest`](Core/AIHappey.Common/Model/SpeechRequest.cs:6)
+- Response model: [`SpeechResponse`](Core/AIHappey.Common/Model/SpeechRequest.cs:34)
+
+Example request:
+
+```json
+{
+  "model": "openai:gpt-4o-mini-tts",
+  "text": "Hello from AIHappey.",
+  "voice": "alloy",
+  "outputFormat": "mp3",
+  "instructions": "Speak clearly and friendly.",
+  "speed": 1.0,
+  "language": "en",
+  "providerOptions": {}
+}
+```
+
+Notes:
+
+- `model` uses the same provider-prefixed selector pattern as chat/images (resolved via [`AIModelProviderResolver.Resolve()`](Core/AIHappey.Core/AI/AIModelProviderResolver.cs:137)).
+- `audio` in the response is typically either a data-url (`data:audio/...;base64,...`) or raw base64 (see [`SpeechTools.AI_SpeechGenerate()`](Core/AIHappey.Core/MCP/Media/SpeechTools.cs:22) for how outputs are interpreted).
+
 ### MCP Sampling
 
 `POST /sampling`
 
 Implements MCP “sampling” (`createMessage`) by selecting a provider based on model hints (see [`SamplingController`](Samples/AIHappey.HeaderAuth/Controllers/SamplingController.cs:7)).
 
-### Transcription
+### Transcriptions (speech-to-text)
 
-`POST /api/Transcription/transcribe`
+`POST /v1/audio/transcriptions`
 
-Multipart form upload that uses OpenAI transcription APIs (see [`TranscriptionController`](Samples/AIHappey.HeaderAuth/Controllers/TranscriptionController.cs:7)).
+- Request model: [`TranscriptionRequest`](Core/AIHappey.Common/Model/TranscriptionRequest.cs:5)
+- Response model: [`TranscriptionResponse`](Core/AIHappey.Common/Model/TranscriptionRequest.cs:18)
+
+Example request:
+
+```json
+{
+  "model": "openai:whisper-1",
+  "mediaType": "audio/mpeg",
+  "audio": "data:audio/mpeg;base64,AAAA...",
+  "providerOptions": {}
+}
+```
+
+Notes:
+
+- `mediaType` is required and must match the provided audio payload.
+- `audio` is accepted as a JSON value and is expected to be a data-url or base64 (providers convert to a multipart file upload downstream; see e.g. [`OpenAIProvider.TranscriptionRequest()`](Core/AIHappey.Core/Providers/OpenAI/OpenAIProvider.Transcriptions.cs:13)).
 
 ## 🧰 MCP (Model Context Protocol)
 
@@ -210,9 +255,13 @@ MCP servers are hosted at:
 
 For example, core definitions include:
 
-- `AI-Models` and `AI-Providers` from [`CoreMcpDefinitions.GetDefinitions()`](Core/AIHappey.Core/MCP/CoreMcpDefinitions.cs:9)
+- `AI-Models`, `AI-Providers`, `AI-Images`, `AI-Speech` from [`CoreMcpDefinitions.GetDefinitions()`](Core/AIHappey.Core/MCP/CoreMcpDefinitions.cs:10)
+  - Image generation tool: [`ImageTools.AI_ImageGenerate()`](Core/AIHappey.Core/MCP/Media/ImageTools.cs:22) (`ai_images_generate`)
+  - Speech generation tool: [`SpeechTools.AI_SpeechGenerate()`](Core/AIHappey.Core/MCP/Media/SpeechTools.cs:22) (`ai_speech_generate`)
 
-AzureAuth also adds telemetry MCP servers (e.g. `AI-Users`, `AI-Requests`) from [`TelemetryMcpDefinitions.GetDefinitions()`](Core/AIHappey.Telemetry/MCP/TelemetryMcpDefinitions.cs:11).
+AzureAuth also adds telemetry MCP servers (e.g. `AI-Telemetry-Users`, `AI-Telemetry-Requests`) from [`TelemetryMcpDefinitions.GetDefinitions()`](Core/AIHappey.Telemetry/MCP/TelemetryMcpDefinitions.cs:11).
+
+Transcriptions are currently exposed via HTTP (`POST /v1/audio/transcriptions`); there is no dedicated MCP transcription tool/server yet.
 
 ## 🔐 Security model (samples)
 
