@@ -78,7 +78,7 @@ public partial class OpenAIProvider : IModelProvider
                 : string.Join(" ", segments.Select(a => a.Text)),
 
             Segments = segments,
-            Response = new ImageResponseData
+            Response = new ()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,
@@ -119,7 +119,7 @@ public partial class OpenAIProvider : IModelProvider
                 StartSecond = a.StartTime.TotalSeconds,
                 EndSecond = a.EndTime.TotalSeconds
             }),
-            Response = new ImageResponseData()
+            Response = new ()
             {
                 Timestamp = now,
                 ModelId = request.Model,

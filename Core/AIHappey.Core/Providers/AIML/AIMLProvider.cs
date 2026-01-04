@@ -81,7 +81,7 @@ public partial class AIMLProvider : IModelProvider
                 var type = typeEl.GetString();
                 model.Type = type == "chat-completion" ? "language" :
                     type == "responses" ? "language" :
-                    type == "tts" ? "audio" :
+                    type == "tts" ? "speech" :
                     type == "stt" ? "transcription"
                     : type ?? "";
             }

@@ -14,6 +14,10 @@ namespace AIHappey.Core.Providers.Groq;
 
 public partial class GroqProvider : IModelProvider
 {
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,

@@ -69,6 +69,11 @@ public partial class ZaiProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> ZaiLanguageModels =>
 [
     new()

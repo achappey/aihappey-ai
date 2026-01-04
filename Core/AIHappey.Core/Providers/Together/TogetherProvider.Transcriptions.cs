@@ -114,7 +114,7 @@ public partial class TogetherProvider : IModelProvider
                 ? lang.GetString()
                 : null,
 
-            Response = new ImageResponseData
+            Response = new ()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,

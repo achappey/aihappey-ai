@@ -16,6 +16,9 @@ public static class UIMessagePartExtensions
             || modelId.Contains("voxtral"))
             return "transcription";
 
+        if (modelId.Contains("tts") || modelId.Contains("canopy"))
+            return "speech";
+
         if (modelId.Contains("embed"))
             return "embedding";
 
@@ -31,7 +34,7 @@ public static class UIMessagePartExtensions
         if (modelId.Contains("openai/sora-") || modelId.Contains("veo-"))
             return "video";
 
-        if (modelId.Contains("tts") || modelId.Contains("realtime"))
+        if (modelId.Contains("realtime"))
             return "audio";
 
         return "language";

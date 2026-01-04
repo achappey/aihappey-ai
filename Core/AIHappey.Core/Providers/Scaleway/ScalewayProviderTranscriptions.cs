@@ -73,7 +73,7 @@ public partial class ScalewayProvider : IModelProvider
             // Scaleway does not return segments
             Segments = [],
 
-            Response = new ImageResponseData
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,

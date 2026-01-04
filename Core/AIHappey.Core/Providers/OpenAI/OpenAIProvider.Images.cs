@@ -139,7 +139,7 @@ public partial class OpenAIProvider : IModelProvider
         {
             Images = results,
             Warnings = warnings,
-            Response = new ImageResponseData()
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = imageRequest.Model

@@ -183,7 +183,7 @@ public partial class PollinationsProvider : IModelProvider
         {
             Images = [$"data:{mime};base64,{Convert.ToBase64String(bytes)}"],
             Warnings = warnings,
-            Response = new ImageResponseData()
+            Response = new ()
             {
                 Timestamp = start,
                 ModelId = imageRequest.Model

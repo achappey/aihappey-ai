@@ -62,4 +62,8 @@ public partial class AIMLProvider : IModelProvider
         };
     }
 
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

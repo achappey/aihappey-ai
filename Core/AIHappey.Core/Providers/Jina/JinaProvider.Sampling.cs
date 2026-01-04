@@ -114,6 +114,11 @@ public partial class JinaProvider : IModelProvider
         };
     }
 
+    public Task<Common.Model.SpeechResponse> SpeechRequest(Common.Model.SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task<Common.Model.TranscriptionResponse> TranscriptionRequest(Common.Model.TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

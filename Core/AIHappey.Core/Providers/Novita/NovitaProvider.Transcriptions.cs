@@ -62,7 +62,7 @@ public partial class NovitaProvider : IModelProvider
             // Novita returns no segments
             Segments = [],
 
-            Response = new ImageResponseData
+            Response = new ()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = "glm-asr-2512",

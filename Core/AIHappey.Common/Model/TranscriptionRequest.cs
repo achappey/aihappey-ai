@@ -29,19 +29,10 @@ public class TranscriptionResponse
 
     public IEnumerable<TranscriptionSegment> Segments { get; set; } = null!;
 
-    public ImageResponseData Response { get; set; } = default!;
+    public ResponseData Response { get; set; } = default!;
 
 }
 
-public class TranscriptionResponseData
-{
-    public string ModelId { get; set; } = null!;
-
-    public DateTime Timestamp { get; set; }
-
-
-
-}
 
 public class TranscriptionSegment
 {

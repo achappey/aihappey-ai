@@ -26,6 +26,9 @@ public interface IModelProvider
     Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default);
 
     Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default);
+
+    Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default);
+
 }
 
 public interface IApiKeyResolver

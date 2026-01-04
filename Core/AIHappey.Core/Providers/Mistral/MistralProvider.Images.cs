@@ -170,7 +170,7 @@ public partial class MistralProvider : IModelProvider
         return new()
         {
             Images = images,
-            Response = new ImageResponseData()
+            Response = new ()
             {
                 Timestamp = now,
                 ModelId = resolvedModel

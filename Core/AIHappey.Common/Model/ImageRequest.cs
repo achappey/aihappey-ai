@@ -54,18 +54,16 @@ public class ImageResponse
 
     public IEnumerable<object> Warnings { get; set; } = [];
 
-    public ImageResponseData Response { get; set; } = default!;
+    public ResponseData Response { get; set; } = default!;
 
 }
 
-public class ImageResponseData
+public class ResponseData
 {
     public string ModelId { get; set; } = null!;
 
     public DateTime Timestamp { get; set; }
 
     public object? Body { get; set; }
-
-
 
 }

@@ -69,7 +69,7 @@ public partial class MistralProvider : IModelProvider
             Segments = segments,
             Language = root.TryGetProperty("language", out var languageEl)
                     ? languageEl.GetString() ?? null : null,
-            Response = new ImageResponseData
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = root.TryGetProperty("model", out var modelEl)
@@ -79,4 +79,8 @@ public partial class MistralProvider : IModelProvider
         };
     }
 
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

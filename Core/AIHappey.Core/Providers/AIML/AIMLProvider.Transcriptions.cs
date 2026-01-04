@@ -118,7 +118,7 @@ public partial class AIMLProvider : IModelProvider
         {
             Text = text,
             Segments = segments,
-            Response = new ImageResponseData
+            Response = new ()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,

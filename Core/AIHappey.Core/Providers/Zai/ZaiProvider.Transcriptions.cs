@@ -73,7 +73,7 @@ public partial class ZaiProvider : IModelProvider
             // Z.AI sync response has no segments
             Segments = [],
 
-            Response = new ImageResponseData
+            Response = new ()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = root.TryGetProperty("model", out var m)

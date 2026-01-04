@@ -8,6 +8,11 @@ namespace AIHappey.Core.Providers.SambaNova;
 
 public partial class SambaNovaProvider : IModelProvider
 {
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {

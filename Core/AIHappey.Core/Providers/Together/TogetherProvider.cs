@@ -6,6 +6,7 @@ using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
+using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -99,6 +100,12 @@ public partial class TogetherProvider : IModelProvider
             if (model.Type == "transcribe")
                 model.Type = "transcription";
 
+            if (model.Type == "audio")
+                model.Type = "speech";
+
+            if (model.Type == "rerank")
+                model.Type = "reranking";
+
             if (el.TryGetProperty("organization", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
 
@@ -141,8 +148,7 @@ public partial class TogetherProvider : IModelProvider
                  Type = "transcription"
              });*/
 
-        return models.Where(a => a.Type != "rerank"
-            && a.Type != "moderation"
+        return models.Where(a => a.Type != "moderation"
             && a.Type != "code");
     }
 
@@ -152,6 +158,11 @@ public partial class TogetherProvider : IModelProvider
     }
 
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -95,7 +95,7 @@ public partial class HyperbolicProvider : IModelProvider
         return new ImageResponse
         {
             Images = images,
-            Response = new ImageResponseData
+            Response = new ()
             {
                 ModelId = imageRequest.Model,
                 Timestamp = now
