@@ -6,6 +6,7 @@ using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
+using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Nscale;
 
@@ -134,4 +135,8 @@ public partial class NscaleProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -10,7 +10,7 @@ namespace AIHappey.Core.Providers.AIML;
 
 public partial class AIMLProvider : IModelProvider
 {
-    
+
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

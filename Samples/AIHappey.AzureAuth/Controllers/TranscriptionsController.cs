@@ -6,22 +6,23 @@ using Microsoft.AspNetCore.Authorization;
 namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
-[Route("v1/images/generations")]
-public class ImageController(IAIModelProviderResolver resolver) : ControllerBase
+[Route("v1/audio/transcriptions")]
+public class TranscriptionsController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Post([FromBody] ImageRequest requestDto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Post([FromBody] TranscriptionRequest requestDto, CancellationToken cancellationToken)
     {
         var provider = await resolver.Resolve(requestDto.Model, cancellationToken);
-        
+
         if (provider == null)
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
+
         try
         {
-            var content = await provider.ImageRequest(requestDto, cancellationToken);
+            var content = await provider.TranscriptionRequest(requestDto, cancellationToken);
 
             return Ok(content);
         }

@@ -1,5 +1,6 @@
+using System.Net.Http.Headers;
 using System.Net.Mime;
-using System.Runtime.CompilerServices;
+using System.Text;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 
@@ -10,6 +11,11 @@ public static class UIMessagePartExtensions
     public static string GuessModelType(
         this string modelId)
     {
+        if (modelId.Contains("whisper")
+            || modelId.Contains("transcribe")
+            || modelId.Contains("voxtral"))
+            return "transcription";
+
         if (modelId.Contains("embed"))
             return "embedding";
 
@@ -157,4 +163,38 @@ public static class UIMessagePartExtensions
             FinishReason = finishReason
         };
     }
+
+    public static string GetAudioExtension(this string mimeType)
+    {
+        return mimeType.ToLowerInvariant() switch
+        {
+            "audio/mpeg" => ".mp3",
+            "audio/mp3" => ".mp3",
+            "audio/wav" => ".wav",
+            "audio/x-wav" => ".wav",
+            "audio/wave" => ".wav",
+            "audio/webm" => ".webm",
+            "audio/ogg" => ".ogg",
+            "audio/opus" => ".opus",
+            "audio/aac" => ".aac",
+            "audio/flac" => ".flac",
+            "audio/mp4" => ".m4a",
+            "audio/x-m4a" => ".m4a",
+            "audio/3gpp" => ".3gp",
+            "audio/3gpp2" => ".3g2",
+            _ => throw new NotSupportedException(mimeType)
+        };
+    }
+
+    public static StringContent NamedField(this string name, string value)
+    {
+        var c = new StringContent(value ?? string.Empty, Encoding.UTF8);
+        c.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+        {
+            // quoting avoids odd parsers; .NET will keep the quotes
+            Name = $"\"{name}\""
+        };
+        return c;
+    }
+
 }

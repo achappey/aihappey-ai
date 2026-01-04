@@ -1,0 +1,55 @@
+using System.Text.Json;
+
+namespace AIHappey.Common.Model;
+
+public class TranscriptionRequest
+{
+
+    public string Model { get; set; } = null!;
+
+    public object Audio { get; set; } = null!;
+
+    public string MediaType { get; set; } = null!;
+
+    public Dictionary<string, JsonElement>? ProviderOptions { get; set; }
+
+}
+
+public class TranscriptionResponse
+{
+    public Dictionary<string, JsonElement>? ProviderMetadata { get; set; }
+
+    public string Text { get; set; } = null!;
+
+    public string? Language { get; set; }
+
+    public double? DurationInSeconds { get; set; }
+
+    public IEnumerable<object> Warnings { get; set; } = [];
+
+    public IEnumerable<TranscriptionSegment> Segments { get; set; } = null!;
+
+    public ImageResponseData Response { get; set; } = default!;
+
+}
+
+public class TranscriptionResponseData
+{
+    public string ModelId { get; set; } = null!;
+
+    public DateTime Timestamp { get; set; }
+
+
+
+}
+
+public class TranscriptionSegment
+{
+    public string Text { get; set; } = null!;
+
+    public double StartSecond { get; set; }
+
+    public double EndSecond { get; set; }
+
+
+}

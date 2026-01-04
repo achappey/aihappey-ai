@@ -311,4 +311,9 @@ public partial class PollinationsProvider : IModelProvider
             temperature: chatRequest.Temperature
         );
     }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

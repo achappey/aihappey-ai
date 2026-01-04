@@ -84,7 +84,9 @@ public partial class ScalewayProvider : IModelProvider
                 model.Name = idEl.GetString() ?? "";
             }
 
-            model.Type = "language";
+            model.Type = model.Id.Contains("voxtral")
+                | model.Id.Contains("whisper")
+                ? "transcription" : "language";
 
             if (el.TryGetProperty("owned_by", out var ownedByEl))
                 model.OwnedBy = ownedByEl.GetString() ?? "";
@@ -116,4 +118,5 @@ public partial class ScalewayProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
 }

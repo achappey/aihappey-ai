@@ -64,6 +64,8 @@ public class ImageResponseData
 
     public DateTime Timestamp { get; set; }
 
+    public object? Body { get; set; }
+
 
 
 }

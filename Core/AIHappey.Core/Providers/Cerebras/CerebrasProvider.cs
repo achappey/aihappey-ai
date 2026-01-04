@@ -119,4 +119,9 @@ public partial class CerebrasProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -42,7 +42,6 @@ public partial class XAIProvider : IModelProvider
                 Id = id!.ToModelId(GetIdentifier()),
                 Name = id!,
                 Created = createdAt,
-                //                Publisher = nameof(xAI),
                 OwnedBy = nameof(xAI)
             });
         }

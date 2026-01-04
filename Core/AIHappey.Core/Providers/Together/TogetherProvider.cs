@@ -6,7 +6,6 @@ using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
-using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -97,6 +96,9 @@ public partial class TogetherProvider : IModelProvider
             if (model.Type == "chat")
                 model.Type = "language";
 
+            if (model.Type == "transcribe")
+                model.Type = "transcription";
+
             if (el.TryGetProperty("organization", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
 
@@ -130,9 +132,17 @@ public partial class TogetherProvider : IModelProvider
                 models.Add(model);
         }
 
+        /* if (!models.Any(a => a.Id.EndsWith("mistralai/Voxtral-Mini-3B-2507")))
+             models.Add(new()
+             {
+                 Id = "mistralai/Voxtral-Mini-3B-2507".ToModelId(GetIdentifier()),
+                 Name = "Voxtral Mini 3B",
+                 OwnedBy = "Mistral",
+                 Type = "transcription"
+             });*/
+
         return models.Where(a => a.Type != "rerank"
             && a.Type != "moderation"
-            && a.Type != "transcribe"
             && a.Type != "code");
     }
 
@@ -145,5 +155,4 @@ public partial class TogetherProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
-
 }

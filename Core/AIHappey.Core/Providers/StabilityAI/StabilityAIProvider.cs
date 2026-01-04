@@ -116,4 +116,9 @@ public partial class StabilityAIProvider : IModelProvider
             yield return update;
 
     }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

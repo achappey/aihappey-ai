@@ -9,21 +9,11 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.Providers;
 using AIHappey.Common.Extensions;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Groq;
 
 public partial class GroqProvider : IModelProvider
 {
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,
@@ -356,5 +346,4 @@ public partial class GroqProvider : IModelProvider
             reasoningTokens);
 
     }
-
 }

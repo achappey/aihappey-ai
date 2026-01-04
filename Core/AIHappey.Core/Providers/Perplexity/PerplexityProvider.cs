@@ -197,5 +197,10 @@ public class PerplexityProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

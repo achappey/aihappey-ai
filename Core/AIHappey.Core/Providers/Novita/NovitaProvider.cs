@@ -84,7 +84,7 @@ public partial class NovitaProvider : IModelProvider
             if (el.TryGetProperty("context_size", out var contextLengthEl))
                 model.ContextWindow = contextLengthEl.GetInt32();
 
-            model.Type = "language";
+            model.Type = model.Id.Contains("glm-asr") ? "transcription" : "language";
 
             if (el.TryGetProperty("display_name", out var orgEl))
                 model.Name = orgEl.GetString() ?? "";
@@ -117,6 +117,13 @@ public partial class NovitaProvider : IModelProvider
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);
         }
+
+        models.Add(new Model()
+        {
+            Id = "glm-asr".ToModelId(GetIdentifier()),
+            Name = "GLM-ASR-2512",
+            Type = "transcription"
+        });
 
         return models;
     }

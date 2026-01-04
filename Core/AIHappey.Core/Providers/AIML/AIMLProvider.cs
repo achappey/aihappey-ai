@@ -81,7 +81,8 @@ public partial class AIMLProvider : IModelProvider
                 var type = typeEl.GetString();
                 model.Type = type == "chat-completion" ? "language" :
                     type == "responses" ? "language" :
-                    type == "tts" ? "audio"
+                    type == "tts" ? "audio" :
+                    type == "stt" ? "transcription"
                     : type ?? "";
             }
 
@@ -102,8 +103,8 @@ public partial class AIMLProvider : IModelProvider
         }
 
         return models.Where(a => a.Type != "document"
-            && a.Type != "language-completion"
-            && a.Type != "stt");
+            && a.Type != "language-completion");
+        //  && a.Type != "stt");
     }
 
 

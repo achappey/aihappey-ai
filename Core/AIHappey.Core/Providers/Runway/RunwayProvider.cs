@@ -206,4 +206,8 @@ public partial class RunwayProvider : IModelProvider
         throw new TimeoutException($"Runway task {taskId} did not complete.");
     }
 
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

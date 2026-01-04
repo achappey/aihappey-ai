@@ -4,6 +4,7 @@ using AIHappey.Core.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using OAIC = OpenAI.Chat;
+using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -79,4 +80,17 @@ public partial class GroqProvider : IModelProvider
     }
 
     public float? GetPriority() => 1;
+
+    public Task<Common.Model.ImageResponse> ImageRequest(Common.Model.ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+
+
 }

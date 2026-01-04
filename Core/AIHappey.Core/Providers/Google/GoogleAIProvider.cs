@@ -47,4 +47,9 @@ public partial class GoogleAIProvider(IApiKeyResolver keyResolver, ILogger<Googl
     {
         throw new NotImplementedException();
     }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

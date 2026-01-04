@@ -87,7 +87,8 @@ public partial class SambaNovaProvider : IModelProvider
             {
                 Id = id.ToModelId(GetIdentifier()),
                 Name = id,
-                Type = "language",
+                Type = id.Contains("whisper", StringComparison.OrdinalIgnoreCase)
+                    ? "transcription" : "language",
                 OwnedBy = el.TryGetProperty("owned_by", out var ownedByEl)
                     ? ownedByEl.GetString() ?? ""
                     : "",

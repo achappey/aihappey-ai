@@ -21,7 +21,6 @@ public static class OpenAIModelExtensions
         Id = source.Id.ToModelId(Constants.OpenAI),
         Name = source.Id,
         Created = source.CreatedAt.ToUnixTimeSeconds(),
-        // Publisher = nameof(OpenAI),
         OwnedBy = nameof(OpenAI),
     };
 

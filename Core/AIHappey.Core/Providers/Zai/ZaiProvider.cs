@@ -68,6 +68,7 @@ public partial class ZaiProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
     public static IReadOnlyList<Model> ZaiLanguageModels =>
 [
     new()
@@ -141,7 +142,13 @@ public partial class ZaiProvider : IModelProvider
         Type = "image",
         OwnedBy = "z.ai"
     },
+    new()
+    {
+        Id = "zai/glm-asr-2512",
+        Name = "glm-asr-2512",
+        Type = "transcription",
+        OwnedBy = "z.ai"
+    },
 ];
-
 
 }

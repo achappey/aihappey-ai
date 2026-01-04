@@ -111,6 +111,10 @@ public partial class FireworksProvider : IModelProvider
             // ===== OpenAI OSS =====
             new() { Id = "fireworks/accounts/fireworks/models/gpt-oss-120b", Name = "GPT-OSS 120B", Type = "language", OwnedBy = "openai" },
             new() { Id = "fireworks/accounts/fireworks/models/gpt-oss-20b",  Name = "GPT-OSS 20B",  Type = "language", OwnedBy = "openai" },
+
+            new() { Id = "fireworks/whisper-v3", Name = "Whisper v3", Type = "transcription", OwnedBy = "openai" },
+            new() { Id = "fireworks/whisper-v3-turbo",  Name = "Whisper v3 Turbo",  Type = "transcription", OwnedBy = "openai" },
+
         ];
 
 }

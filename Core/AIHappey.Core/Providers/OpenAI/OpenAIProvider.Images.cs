@@ -4,6 +4,9 @@ using OpenAI.Images;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers;
+using OpenAI.Audio;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -143,5 +146,4 @@ public partial class OpenAIProvider : IModelProvider
             }
         };
     }
-
 }
