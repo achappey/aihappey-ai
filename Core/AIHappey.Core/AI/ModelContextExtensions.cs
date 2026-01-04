@@ -34,21 +34,6 @@ public static class ModelContextExtensions
 
    public static string GetToolName(this ToolInvocationPart tip) => tip.Type.Replace("tool-", string.Empty);
 
-   public static string ExcludeMeta2(this ToolInvocationPart tip)
-   {
-      if (tip.Output is CallToolResult callToolResult)
-      {
-         return JsonSerializer.Serialize(new CallToolResult()
-         {
-            Content = callToolResult!.Content,
-            StructuredContent = callToolResult.StructuredContent,
-            IsError = callToolResult.IsError,
-         }, JsonSerializerOptions.Web);
-      }
-
-      return JsonSerializer.Serialize(tip.Output, JsonSerializerOptions.Web);
-   }
-
    public static string ExcludeMeta(this ToolInvocationPart tip)
    {
       try

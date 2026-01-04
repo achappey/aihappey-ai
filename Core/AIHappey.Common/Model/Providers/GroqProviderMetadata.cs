@@ -2,6 +2,16 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.Providers;
 
+
+public class GroqSpeechProviderMetadata
+{
+    [JsonPropertyName("voice")]
+    public string? Voice { get; set; }
+
+    [JsonPropertyName("response_format")]
+    public string? ResponseFormat { get; set; }
+}
+
 public class GroqProviderMetadata
 {
     [JsonPropertyName("reasoning")]

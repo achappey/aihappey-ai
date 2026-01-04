@@ -97,8 +97,8 @@ public partial class TogetherProvider : IModelProvider
                 .Select(seg => new TranscriptionSegment
                 {
                     Text = seg.GetProperty("text").GetString() ?? "",
-                    StartSecond = seg.GetProperty("start").GetDouble(),
-                    EndSecond = seg.GetProperty("end").GetDouble()
+                    StartSecond = (float)seg.GetProperty("start").GetDouble(),
+                    EndSecond = (float)seg.GetProperty("end").GetDouble()
                 })
                 .ToList()
             : [];
@@ -114,7 +114,7 @@ public partial class TogetherProvider : IModelProvider
                 ? lang.GetString()
                 : null,
 
-            Response = new ()
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,

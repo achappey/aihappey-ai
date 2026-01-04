@@ -108,8 +108,8 @@ public partial class AIMLProvider : IModelProvider
                 segments.Add(new TranscriptionSegment
                 {
                     Text = w.GetProperty("word").GetString() ?? "",
-                    StartSecond = w.GetProperty("start").GetDouble(),
-                    EndSecond = w.GetProperty("end").GetDouble()
+                    StartSecond = (float)w.GetProperty("start").GetDouble(),
+                    EndSecond = (float)w.GetProperty("end").GetDouble()
                 });
             }
         }

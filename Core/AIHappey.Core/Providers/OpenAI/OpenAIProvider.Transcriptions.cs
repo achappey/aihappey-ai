@@ -65,8 +65,8 @@ public partial class OpenAIProvider : IModelProvider
                 .Select(seg => new TranscriptionSegment
                 {
                     Text = seg.GetProperty("text").GetString() ?? "",
-                    StartSecond = seg.GetProperty("start").GetDouble(),
-                    EndSecond = seg.GetProperty("end").GetDouble()
+                    StartSecond = (float)seg.GetProperty("start").GetDouble(),
+                    EndSecond = (float)seg.GetProperty("end").GetDouble()
                 })
                 .ToList()
             : [];
@@ -116,8 +116,8 @@ public partial class OpenAIProvider : IModelProvider
             Segments = result.Value.Segments.Select(a => new TranscriptionSegment()
             {
                 Text = a.Text,
-                StartSecond = a.StartTime.TotalSeconds,
-                EndSecond = a.EndTime.TotalSeconds
+                StartSecond = (float)a.StartTime.TotalSeconds,
+                EndSecond = (float)a.EndTime.TotalSeconds
             }),
             Response = new ()
             {
@@ -127,7 +127,7 @@ public partial class OpenAIProvider : IModelProvider
             },
             Language = result.Value.Language,
             DurationInSeconds = result.Value.Duration.HasValue
-                ? result.Value.Duration.Value.TotalSeconds : null
+                ? (float)result.Value.Duration.Value.TotalSeconds : null
         };
     }
 }

@@ -21,7 +21,7 @@ public class SpeechRequest
     public string? Instructions { get; set; }
 
     [JsonPropertyName("speed")]
-    public double? Speed { get; set; }
+    public float? Speed { get; set; }
 
     [JsonPropertyName("language")]
     public string? Language { get; set; }

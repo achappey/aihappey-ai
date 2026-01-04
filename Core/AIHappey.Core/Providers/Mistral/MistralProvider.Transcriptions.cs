@@ -54,8 +54,8 @@ public partial class MistralProvider : IModelProvider
                 .Select(seg => new TranscriptionSegment
                 {
                     Text = seg.GetProperty("text").GetString() ?? "",
-                    StartSecond = seg.GetProperty("start").GetDouble(),
-                    EndSecond = seg.GetProperty("end").GetDouble()
+                    StartSecond = (float)seg.GetProperty("start").GetDouble(),
+                    EndSecond = (float)seg.GetProperty("end").GetDouble()
                 })
                 .ToList()
             : [];

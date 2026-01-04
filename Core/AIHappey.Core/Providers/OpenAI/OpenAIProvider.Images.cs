@@ -31,12 +31,20 @@ public partial class OpenAIProvider : IModelProvider
         if (imageRequest.Files?.Any() == true)
         {
             var metadata = imageRequest.GetImageProviderMetadata<OpenAiImageEditProviderMetadata>(GetIdentifier());
-            var quality = !string.IsNullOrEmpty(metadata?.Quality)
-                                                    ? new GeneratedImageQuality(metadata?.Quality) : null;
 
-            var background = !string.IsNullOrEmpty(metadata?.Background)
-                                                    ? new GeneratedImageBackground(metadata?.Background) : null;
+            GeneratedImageQuality? quality = null;
 
+            if (!string.IsNullOrEmpty(metadata?.Quality))
+            {
+                quality = new GeneratedImageQuality(metadata.Quality);
+            }
+
+            GeneratedImageBackground? background = null;
+
+            if (!string.IsNullOrEmpty(metadata?.Background))
+            {
+                background = new GeneratedImageBackground(metadata.Background);
+            }
 
             var provider = new FileExtensionContentTypeProvider();
             var file = imageRequest.Files.First();
@@ -68,14 +76,25 @@ public partial class OpenAIProvider : IModelProvider
         else
         {
             var metadata = imageRequest.GetImageProviderMetadata<OpenAiImageProviderMetadata>(GetIdentifier());
-            var quality = !string.IsNullOrEmpty(metadata?.Quality)
-                                           ? new GeneratedImageQuality(metadata?.Quality) : null;
+            GeneratedImageQuality? quality = null;
 
-            var background = !string.IsNullOrEmpty(metadata?.Background)
-                                           ? new GeneratedImageBackground(metadata?.Background) : null;
+            if (!string.IsNullOrEmpty(metadata?.Quality))
+            {
+                quality = new GeneratedImageQuality(metadata.Quality);
+            }
 
-            var moderation = !string.IsNullOrEmpty(metadata?.Moderation)
-                                           ? new GeneratedImageModerationLevel(metadata?.Moderation) : null;
+            GeneratedImageBackground? background = null;
+
+            if (!string.IsNullOrEmpty(metadata?.Background))
+            {
+                background = new GeneratedImageBackground(metadata.Background);
+            }
+
+            GeneratedImageModerationLevel? moderation = null;
+            if (!string.IsNullOrEmpty(metadata?.Moderation))
+            {
+                moderation = new GeneratedImageModerationLevel(metadata.Moderation);
+            }
 
             if (imageRequest.N.HasValue && imageRequest.N.Value > 1)
             {

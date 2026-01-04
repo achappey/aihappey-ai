@@ -2,6 +2,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using OpenAI.Audio;
 using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -14,13 +15,25 @@ public partial class OpenAIProvider : IModelProvider
                GetKey()
            );
 
+        var metadata = request.GetSpeechProviderMetadata<OpenAiSpeechProviderMetadata>(GetIdentifier());
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
+        var voice = !string.IsNullOrEmpty(request.Voice) ? new GeneratedSpeechVoice(request.Voice)
+            : !string.IsNullOrEmpty(metadata?.Voice)
+            ? new GeneratedSpeechVoice(metadata?.Voice) : GeneratedSpeechVoice.Alloy;
+
+        var format = !string.IsNullOrEmpty(request.OutputFormat) ? new GeneratedSpeechFormat(request.OutputFormat)
+                  : !string.IsNullOrEmpty(metadata?.ResponseFormat)
+            ? new GeneratedSpeechFormat(metadata?.ResponseFormat) : GeneratedSpeechFormat.Mp3;
+
         var result = await audioClient.GenerateSpeechAsync(request.Text,
-            GeneratedSpeechVoice.Alloy,
+            voice,
             new SpeechGenerationOptions()
             {
+                SpeedRatio = request.Speed ?? metadata?.Speed,
+                Instructions = request.Instructions ?? metadata?.Instructions,
+                ResponseFormat = format
             },
             cancellationToken);
 
@@ -34,7 +47,6 @@ public partial class OpenAIProvider : IModelProvider
             {
                 Timestamp = now,
                 ModelId = request.Model,
-                Body = result.GetRawResponse().Content.ToString(),
             },
         };
     }

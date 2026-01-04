@@ -23,7 +23,7 @@ public class TranscriptionResponse
 
     public string? Language { get; set; }
 
-    public double? DurationInSeconds { get; set; }
+    public float? DurationInSeconds { get; set; }
 
     public IEnumerable<object> Warnings { get; set; } = [];
 
@@ -38,9 +38,9 @@ public class TranscriptionSegment
 {
     public string Text { get; set; } = null!;
 
-    public double StartSecond { get; set; }
+    public float StartSecond { get; set; }
 
-    public double EndSecond { get; set; }
+    public float EndSecond { get; set; }
 
 
 }

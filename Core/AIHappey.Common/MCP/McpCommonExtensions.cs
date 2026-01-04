@@ -11,7 +11,8 @@ namespace AIHappey.Common.MCP;
 
 public static class McpCommonExtensions
 {
-    public static IServiceCollection AddMcpServers(this IServiceCollection services, IEnumerable<McpServerDefinition> definitions)
+    public static IServiceCollection AddMcpServers(this IServiceCollection services,
+        IEnumerable<McpServerDefinition> definitions)
     {
         services
             .AddMcpServer()
@@ -32,7 +33,8 @@ public static class McpCommonExtensions
                         {
                             Version = "1.0.0",
                             Name = GetReversedHostFromPath(ctx.Request) + "/" + serverDef.Name,
-                            Title = serverDef.Name.Replace("-", " ")
+                            Title = serverDef.Title ?? serverDef.Name.Replace("-", " "),
+                            Description = serverDef.Description
                         };
 
                         // Build Prompts
@@ -113,8 +115,8 @@ public static class McpCommonExtensions
         {
             if (requireAuth)
                 app.MapMcp($"/{def.Name}").RequireAuthorization();
-            else 
-            app.MapMcp($"/{def.Name}");
+            else
+                app.MapMcp($"/{def.Name}");
         }
     }
 

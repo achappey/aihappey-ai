@@ -84,7 +84,7 @@ public partial class NovitaProvider : IModelProvider
             if (el.TryGetProperty("context_size", out var contextLengthEl))
                 model.ContextWindow = contextLengthEl.GetInt32();
 
-            model.Type = model.Id.Contains("glm-asr") ? "transcription" : "language";
+            model.Type = "language";
 
             if (el.TryGetProperty("display_name", out var orgEl))
                 model.Name = orgEl.GetString() ?? "";
@@ -123,6 +123,64 @@ public partial class NovitaProvider : IModelProvider
             Id = "glm-asr".ToModelId(GetIdentifier()),
             Name = "GLM-ASR-2512",
             Type = "transcription"
+        });
+
+        models.Add(new Model()
+        {
+            Id = "glm-tts".ToModelId(GetIdentifier()),
+            Name = "glm-tts",
+            Type = "speech"
+        });
+
+        models.Add(new Model()
+        {
+            Id = "async/txt2speech".ToModelId(GetIdentifier()),
+            Name = "txt2speech",
+            Type = "speech"
+        });
+
+        models.Add(new Model()
+        {
+            Id = "minimax-speech-2.5-turbo-preview".ToModelId(GetIdentifier()),
+            Name = "minimax-speech-2.5-turbo-preview",
+            Type = "speech"
+        });
+
+        models.Add(new Model()
+        {
+            Id = "minimax-speech-2.6-turbo".ToModelId(GetIdentifier()),
+            Name = "minimax-speech-2.6-turbo",
+            Type = "speech"
+        });
+
+
+        models.Add(new Model()
+        {
+            Id = "minimax-speech-2.6-hd".ToModelId(GetIdentifier()),
+            Name = "minimax-speech-2.6-hd",
+            Type = "speech"
+        });
+
+
+        models.Add(new Model()
+        {
+            Id = "minimax-speech-2.5-hd-preview".ToModelId(GetIdentifier()),
+            Name = "minimax-speech-2.5-hd-preview",
+            Type = "speech"
+        });
+
+        models.Add(new Model()
+        {
+            Id = "minimax-speech-02-turbo".ToModelId(GetIdentifier()),
+            Name = "minimax-speech-02-turbo",
+            Type = "speech"
+        });
+
+        models.Add(new Model()
+        {
+            Id = "minimax-speech-02-hd".ToModelId(GetIdentifier()),
+            Name = "minimax-speech-02-hd",
+            Type = "speech"
         });
 
         return models;

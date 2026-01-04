@@ -55,6 +55,7 @@ var allMcpServers = CoreMcpDefinitions.GetDefinitions()
     .Select(g => new McpServerDefinition(
         g.Key,
         g.First().Description,
+        g.First().Title,
         g.SelectMany(d => d.PromptTypes ?? []).ToArray(),
         g.SelectMany(d => d.ToolTypes ?? []).ToArray()
     ))
