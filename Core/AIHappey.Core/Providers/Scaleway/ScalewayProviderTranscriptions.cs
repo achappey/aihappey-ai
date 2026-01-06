@@ -2,6 +2,9 @@ using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
+using System.Globalization;
 
 namespace AIHappey.Core.Providers.Scaleway;
 
@@ -14,7 +17,7 @@ public partial class ScalewayProvider : IModelProvider
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-
+        var metadata = request.GetTranscriptionProviderMetadata<ScalewayTranscriptionProviderMetadata>(GetIdentifier());
         using var form = new MultipartFormDataContent();
 
         // file (required)
@@ -29,22 +32,22 @@ public partial class ScalewayProvider : IModelProvider
         // required
         form.Add(new StringContent(request.Model), "model");
 
-        // optional
-    /*    if (!string.IsNullOrWhiteSpace(request.Language))
-            form.Add(new StringContent(request.Language), "language");
+        if (!string.IsNullOrWhiteSpace(metadata?.Language))
+            form.Add(new StringContent(metadata.Language), "language");
 
-        if (!string.IsNullOrWhiteSpace(request.Prompt))
-            form.Add(new StringContent(request.Prompt), "prompt");*/
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            form.Add(new StringContent(metadata.Prompt), "prompt");
 
-        // only supported format
-    /*    form.Add(new StringContent("json"), "response_format");
-
-        // temperature (0–2)
-        form.Add(new StringContent(
-            request.Temperature
-                .ToString(System.Globalization.CultureInfo.InvariantCulture)),
-            "temperature"
-        );*/
+        // temperature (optional)
+        if (metadata?.Temperature is not null)
+        {
+            form.Add(
+                new StringContent(
+                    metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)
+                ),
+                "temperature"
+            );
+        }
 
         var url = "v1/audio/transcriptions";
 

@@ -13,6 +13,12 @@ public class OpenAiTranscriptionProviderMetadata
     [JsonPropertyName("prompt")]
     public string? Prompt { get; set; }
 
+    [JsonPropertyName("temperature")]
+    public float? Temperature { get; set; }
+
+    [JsonPropertyName("timestamp_granularities")]
+    public IEnumerable<string>? TimestampGranularities { get; set; }
+
     [JsonPropertyName("known_speaker_references")]
     public IEnumerable<string>? KnownSpeakerReferences { get; set; }
 

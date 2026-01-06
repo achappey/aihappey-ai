@@ -121,7 +121,7 @@ public partial class NovitaProvider : IModelProvider
         models.Add(new Model()
         {
             Id = "glm-asr".ToModelId(GetIdentifier()),
-            Name = "GLM-ASR-2512",
+            Name = "glm-asr-2512",
             Type = "transcription"
         });
 

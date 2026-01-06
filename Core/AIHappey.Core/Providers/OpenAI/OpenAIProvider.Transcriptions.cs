@@ -157,6 +157,21 @@ public partial class OpenAIProvider : IModelProvider
             options.Prompt = metadata?.Prompt;
         }
 
+        options.Temperature = metadata?.Temperature;
+
+        if (metadata?.TimestampGranularities?.Any() == true)
+        {
+            options.TimestampGranularities = (metadata.TimestampGranularities.Contains("word")
+                                && metadata.TimestampGranularities.Contains("segment"))
+                                ? AudioTimestampGranularities.Word | AudioTimestampGranularities.Segment
+                                : metadata.TimestampGranularities.Contains("word")
+                                    ? AudioTimestampGranularities.Word
+                                    : metadata.TimestampGranularities.Contains("segment")
+                                        ? AudioTimestampGranularities.Segment
+                                        : default;
+            options.ResponseFormat = AudioTranscriptionFormat.Verbose;
+        }
+
         var result = await audioClient.TranscribeAudioAsync(memStream,
             "audio" + request.MediaType.GetAudioExtension(),
             options,

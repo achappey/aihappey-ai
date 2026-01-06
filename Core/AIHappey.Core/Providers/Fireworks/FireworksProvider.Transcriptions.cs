@@ -2,6 +2,9 @@ using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
+using System.Globalization;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -12,6 +15,8 @@ public partial class FireworksProvider : IModelProvider
        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        var metadata = request.GetTranscriptionProviderMetadata<FireworksTranscriptionProviderMetadata>(GetIdentifier());
 
         // Fireworks docs: model = whisper-v3 or whisper-v3-turbo
         var baseUrl = request.Model.Equals("whisper-v3-turbo", StringComparison.OrdinalIgnoreCase)
@@ -37,29 +42,56 @@ public partial class FireworksProvider : IModelProvider
         // model (optional, but we send it)
         form.Add(new StringContent(request.Model), "model");
 
-        // optional fields (safe)
-        //    if (!string.IsNullOrWhiteSpace(request.Language))
-        //       form.Add(new StringContent(request.Language), "language");
-
         // Always ask for verbose_json so you get segments back (your converter supports it)
-        form.Add(new StringContent("verbose_json"), "response_format");
-        form.Add(new StringContent("0"), "temperature");
+
+        if (metadata?.Diarize == true || metadata?.TimestampGranularities?.Any() == true)
+            form.Add(new StringContent("verbose_json"), "response_format");
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Language))
+            form.Add(new StringContent(metadata.Language), "language");
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            form.Add(new StringContent(metadata.Prompt), "prompt");
+
+        // temperature (optional)
+        if (metadata?.Temperature is not null)
+        {
+            form.Add(
+                new StringContent(
+                    metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)
+                ),
+                "temperature"
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Preprocessing))
+            form.Add(new StringContent("preprocessing"), metadata.Preprocessing);
+
+        if (!string.IsNullOrWhiteSpace(metadata?.VadModel))
+            form.Add(new StringContent("vad_model"), metadata.VadModel);
+
+        if (!string.IsNullOrWhiteSpace(metadata?.AlignmentModel))
+            form.Add(new StringContent("alignment_model"), metadata.AlignmentModel);
+
+        if (metadata?.TimestampGranularities != null && metadata.TimestampGranularities.Any())
+        {
+            foreach (var g in metadata.TimestampGranularities)
+            {
+                form.Add(new StringContent(g), "timestamp_granularities[]");
+            }
+        }
 
         // If diarize is requested, Fireworks requires verbose_json + word timestamps
-        /*    if (request.Diarize == true)
-            {
-                form.Add(new StringContent("true"), "diarize");
+        if (metadata?.Diarize == true)
+        {
+            form.Add(new StringContent("true"), "diarize");
 
-                // repeat fields => works as list[string] in multipart
-                form.Add(new StringContent("word"), "timestamp_granularities");
-                form.Add(new StringContent("segment"), "timestamp_granularities");
+            if (metadata?.MinSpeakers is int min)
+                form.Add(new StringContent(min.ToString(CultureInfo.InvariantCulture)), "min_speakers");
 
-                if (request.MinSpeakers is int min)
-                    form.Add(new StringContent(min.ToString(System.Globalization.CultureInfo.InvariantCulture)), "min_speakers");
-
-                if (request.MaxSpeakers is int max)
-                    form.Add(new StringContent(max.ToString(System.Globalization.CultureInfo.InvariantCulture)), "max_speakers");
-            }*/
+            if (metadata?.MaxSpeakers is int max)
+                form.Add(new StringContent(max.ToString(CultureInfo.InvariantCulture)), "max_speakers");
+        }
 
         using var resp = await _client.PostAsync(url, form, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -99,7 +131,7 @@ public partial class FireworksProvider : IModelProvider
                 ? lang.GetString()
                 : null,
 
-            Response = new ()
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,

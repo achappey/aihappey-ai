@@ -2,6 +2,9 @@ using System.Text.Json;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using AIHappey.Core.AI;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
+using System.Globalization;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -18,7 +21,7 @@ public partial class GroqProvider : IModelProvider
             : request.Model;
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-
+        var metadata = request.GetTranscriptionProviderMetadata<GroqTranscriptionProviderMetadata>(GetIdentifier());
         using var form = new MultipartFormDataContent();
 
         // file (Groq accepts per-part Content-Type)
@@ -34,22 +37,32 @@ public partial class GroqProvider : IModelProvider
         form.Add(new StringContent(model), "model");
 
         // optional
-        /*       if (!string.IsNullOrWhiteSpace(request.Language))
-                   form.Add(new StringContent(request.Language), "language");
+        if (!string.IsNullOrWhiteSpace(metadata?.Language))
+            form.Add(new StringContent(metadata.Language), "language");
 
-               if (!string.IsNullOrWhiteSpace(request.Prompt))
-                   form.Add(new StringContent(request.Prompt), "prompt");*/
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            form.Add(new StringContent(metadata.Prompt), "prompt");
 
-        // ask for verbose_json so segments exist
-        form.Add(new StringContent("json"), "response_format");
+        // temperature (optional)
+        if (metadata?.Temperature is not null)
+        {
+            form.Add(
+                new StringContent(
+                    metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)
+                ),
+                "temperature"
+            );
+        }
 
-        /*   form.Add(new StringContent(
-               request.Temperature.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-               "temperature"
-           );*/
+        if (metadata?.TimestampGranularities != null && metadata.TimestampGranularities.Any())
+        {
+            foreach (var g in metadata.TimestampGranularities)
+            {
+                form.Add(new StringContent(g), "timestamp_granularities[]");
+            }
 
-        // timestamps only valid for verbose_json
-      //  form.Add(new StringContent("segment"), "timestamp_granularities");
+            form.Add(new StringContent("verbose_json"), "response_format");
+        }
 
         using var resp = await _client.PostAsync(
             "https://api.groq.com/openai/v1/audio/transcriptions",
@@ -99,7 +112,7 @@ public partial class GroqProvider : IModelProvider
                 ? lang.GetString()
                 : null,
 
-            Response = new ()
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,
