@@ -43,8 +43,6 @@ public partial class FireworksProvider : IModelProvider
 
         // Always ask for verbose_json so you get segments back (your converter supports it)
         form.Add(new StringContent("verbose_json"), "response_format");
-
-        // Default temp 0
         form.Add(new StringContent("0"), "temperature");
 
         // If diarize is requested, Fireworks requires verbose_json + word timestamps
@@ -78,7 +76,6 @@ public partial class FireworksProvider : IModelProvider
         var root = doc.RootElement;
 
         var segmentsEl = root.TryGetProperty("segments", out var s) ? s : default;
-
         var segments = segmentsEl.ValueKind == JsonValueKind.Array
             ? segmentsEl.EnumerateArray()
                 .Select(seg => new TranscriptionSegment

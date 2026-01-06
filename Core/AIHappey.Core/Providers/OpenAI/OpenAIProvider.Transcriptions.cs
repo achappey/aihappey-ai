@@ -3,6 +3,8 @@ using AIHappey.Common.Model;
 using OpenAI.Audio;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -13,6 +15,7 @@ public partial class OpenAIProvider : IModelProvider
         CancellationToken ct = default)
     {
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
+        var metadata = request.GetTranscriptionProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
 
         using var http = new HttpClient();
         http.DefaultRequestHeaders.Authorization =
@@ -32,19 +35,44 @@ public partial class OpenAIProvider : IModelProvider
         form.Add(new StringContent("diarized_json"), "response_format");
         form.Add(new StringContent("auto"), "chunking_strategy");
 
-        // optional known speakers
-        // form.Add(new StringContent("agent"), "known_speaker_names[]");
-        // form.Add(new StringContent("data:audio/wav;base64,AAA..."),
-        //          "known_speaker_references[]");
+        if (!string.IsNullOrEmpty(metadata?.Language))
+        {
+            form.Add(new StringContent("language"), metadata.Language);
+        }
+
+        var names = metadata?.KnownSpeakerNames?.ToList();
+        var refs = metadata?.KnownSpeakerReferences?.ToList();
+
+        // case 1: names + references
+        if (names?.Count > 0 && refs?.Count > 0)
+        {
+            if (names.Count != refs.Count)
+                throw new InvalidOperationException(
+                    "known_speaker_names and known_speaker_references must have equal length"
+                );
+
+            for (var i = 0; i < names.Count; i++)
+            {
+                form.Add(new StringContent(names[i]), "known_speaker_names[]");
+                form.Add(new StringContent(refs[i]), "known_speaker_references[]");
+            }
+        }
+        // case 2: only names (NO references)
+        else if (names?.Count > 0)
+        {
+            foreach (var name in names)
+                form.Add(new StringContent(name), "known_speaker_names[]");
+        }
 
         using var resp = await http.PostAsync(
             "https://api.openai.com/v1/audio/transcriptions",
             form,
             ct);
 
-        resp.EnsureSuccessStatusCode();
-
         var json = await resp.Content.ReadAsStringAsync(ct);
+
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception(json);
 
         return ConvertDiarizedJson(json, request.Model);
     }
@@ -62,14 +90,28 @@ public partial class OpenAIProvider : IModelProvider
 
         var segments = segmentsEl.ValueKind == JsonValueKind.Array
             ? segmentsEl.EnumerateArray()
-                .Select(seg => new TranscriptionSegment
+                .Select(seg =>
                 {
-                    Text = seg.GetProperty("text").GetString() ?? "",
-                    StartSecond = (float)seg.GetProperty("start").GetDouble(),
-                    EndSecond = (float)seg.GetProperty("end").GetDouble()
+                    var text = seg.GetProperty("text").GetString() ?? "";
+
+                    if (seg.TryGetProperty("speaker", out var speakerEl) &&
+                        speakerEl.ValueKind == JsonValueKind.String)
+                    {
+                        var speaker = speakerEl.GetString();
+                        if (!string.IsNullOrWhiteSpace(speaker))
+                            text = $"{speaker}: {text}";
+                    }
+
+                    return new TranscriptionSegment
+                    {
+                        Text = text,
+                        StartSecond = (float)seg.GetProperty("start").GetDouble(),
+                        EndSecond = (float)seg.GetProperty("end").GetDouble()
+                    };
                 })
                 .ToList()
             : [];
+
 
         return new TranscriptionResponse
         {
@@ -78,7 +120,7 @@ public partial class OpenAIProvider : IModelProvider
                 : string.Join(" ", segments.Select(a => a.Text)),
 
             Segments = segments,
-            Response = new ()
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,
@@ -102,12 +144,22 @@ public partial class OpenAIProvider : IModelProvider
         List<object> warnings = [];
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
         using var memStream = new MemoryStream(bytes, writable: false);
+        var metadata = request.GetTranscriptionProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
+        var options = new AudioTranscriptionOptions();
+
+        if (!string.IsNullOrEmpty(metadata?.Language))
+        {
+            options.Language = metadata?.Language;
+        }
+
+        if (!string.IsNullOrEmpty(metadata?.Prompt))
+        {
+            options.Prompt = metadata?.Prompt;
+        }
 
         var result = await audioClient.TranscribeAudioAsync(memStream,
             "audio" + request.MediaType.GetAudioExtension(),
-            new AudioTranscriptionOptions()
-            {
-            },
+            options,
             cancellationToken);
 
         return new TranscriptionResponse()
@@ -119,7 +171,7 @@ public partial class OpenAIProvider : IModelProvider
                 StartSecond = (float)a.StartTime.TotalSeconds,
                 EndSecond = (float)a.EndTime.TotalSeconds
             }),
-            Response = new ()
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,
