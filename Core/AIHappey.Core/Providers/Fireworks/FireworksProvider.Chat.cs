@@ -11,6 +11,14 @@ public partial class FireworksProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (chatRequest.Model.Contains("whisper"))
+        {
+            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         var metadata = chatRequest.GetProviderMetadata<FireworksProviderMetadata>(GetIdentifier());

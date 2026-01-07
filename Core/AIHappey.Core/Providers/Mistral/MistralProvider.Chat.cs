@@ -17,6 +17,14 @@ public partial class MistralProvider : IModelProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (chatRequest.Model.Contains("voxtral"))
+        {
+            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         var url = "/v1/conversations";
 
         ApplyAuthHeader();

@@ -2,6 +2,8 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
@@ -13,6 +15,8 @@ public partial class SambaNovaProvider : IModelProvider
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        var metadata = request.GetTranscriptionProviderMetadata<SambaNovaTranscriptionProviderMetadata>(GetIdentifier());
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
 
@@ -31,11 +35,11 @@ public partial class SambaNovaProvider : IModelProvider
         form.Add(new StringContent(request.Model), "model");
 
         // optional
-        /*  if (!string.IsNullOrWhiteSpace(request.Language))
-              form.Add(new StringContent(request.Language), "language");
+        if (!string.IsNullOrWhiteSpace(metadata?.Language))
+            form.Add(new StringContent(metadata.Language), "language");
 
-          if (!string.IsNullOrWhiteSpace(request.Prompt))
-              form.Add(new StringContent(request.Prompt), "prompt");*/
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            form.Add(new StringContent(metadata.Prompt), "prompt");
 
         // default: json (matches your pipeline)
         form.Add(new StringContent("json"), "response_format");

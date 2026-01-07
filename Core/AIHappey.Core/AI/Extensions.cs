@@ -71,6 +71,9 @@ public static class UIMessagePartExtensions
     public static bool IsImage(this UIMessagePart? part)
         => part is FileUIPart fileUIPart && fileUIPart.MediaType.StartsWith("image/");
 
+    public static bool IsAudio(this UIMessagePart? part)
+        => part is FileUIPart fileUIPart && fileUIPart.MediaType.StartsWith("audio/");
+
     public static IEnumerable<FileUIPart> GetPdfFiles(this IEnumerable<UIMessagePart>? parts)
         => parts?.OfType<FileUIPart>()
             .Where(a => a.MediaType.Equals(MediaTypeNames.Application.Pdf, StringComparison.OrdinalIgnoreCase)) ?? [];

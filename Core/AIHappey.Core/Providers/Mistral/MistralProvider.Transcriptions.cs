@@ -2,6 +2,8 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -12,7 +14,7 @@ public partial class MistralProvider : IModelProvider
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-
+        var metadata = request.GetTranscriptionProviderMetadata<MistralTranscriptionProviderMetadata>(GetIdentifier());
         using var form = new MultipartFormDataContent();
 
         // audio file
@@ -24,7 +26,17 @@ public partial class MistralProvider : IModelProvider
 
         // REQUIRED diarization fields
         form.Add(new StringContent(request.Model), "model");
-        //form.Add(new StringContent("segment"), "timestamp_granularities");
+
+        if (metadata?.TimestampGranularities != null && metadata.TimestampGranularities.Any())
+        {
+            foreach (var g in metadata.TimestampGranularities)
+            {
+                form.Add(new StringContent(g), "timestamp_granularities[]");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Language))
+            form.Add(new StringContent(metadata.Language), "language");
 
         using var resp = await _client.PostAsync(
             "https://api.mistral.ai/v1/audio/transcriptions",

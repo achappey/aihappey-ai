@@ -4,6 +4,7 @@ using OpenAI.Files;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Common.Model.Providers;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -14,6 +15,22 @@ public partial class OpenAIProvider
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var model = chatRequest.Model!;
+
+        if (model?.Contains("image") == true)
+        {
+            await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
+        if (model?.Contains("transcribe") == true || model?.Contains("whisper") == true)
+        {
+            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
 
         IEnumerable<ResponseItem> inputItems = chatRequest.Messages.SelectMany(a => a.ToResponseItems());
 

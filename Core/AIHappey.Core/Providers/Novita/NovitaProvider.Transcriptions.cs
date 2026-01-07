@@ -2,6 +2,8 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Common.Model;
 using System.Text;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -12,6 +14,9 @@ public partial class NovitaProvider : IModelProvider
            CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        var metadata = request.GetTranscriptionProviderMetadata<NovitaTranscriptionProviderMetadata>(GetIdentifier());
+
         // Novita expects:
         // - file: base64 string OR URL
         // - application/json (not multipart)
@@ -22,11 +27,11 @@ public partial class NovitaProvider : IModelProvider
                 ?? throw new InvalidOperationException("Audio is required"),
         };
 
-    /*    if (!string.IsNullOrWhiteSpace(request.Prompt))
-            payload["prompt"] = request.Prompt;
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            payload["prompt"] = metadata.Prompt;
 
-        if (request.Hotwords?.Any() == true)
-            payload["hotwords"] = request.Hotwords.Take(100).ToArray();*/
+        if (metadata?.Hotwords?.Any() == true)
+            payload["hotwords"] = metadata.Hotwords.ToArray();
 
         using var content = new StringContent(
             JsonSerializer.Serialize(payload),
@@ -62,7 +67,7 @@ public partial class NovitaProvider : IModelProvider
             // Novita returns no segments
             Segments = [],
 
-            Response = new ()
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = "glm-asr-2512",

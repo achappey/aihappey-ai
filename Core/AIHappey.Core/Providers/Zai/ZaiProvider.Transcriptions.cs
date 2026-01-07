@@ -2,6 +2,8 @@ using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers;
 
 namespace AIHappey.Core.Providers.Zai;
 
@@ -14,6 +16,7 @@ public partial class ZaiProvider : IModelProvider
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
+        var metadata = request.GetTranscriptionProviderMetadata<ZaiTranscriptionProviderMetadata>(GetIdentifier());
 
         using var form = new MultipartFormDataContent();
 
@@ -30,15 +33,15 @@ public partial class ZaiProvider : IModelProvider
         form.Add(new StringContent(request.Model), "model");
 
         // optional
-        //   if (!string.IsNullOrWhiteSpace(request.Prompt))
-        //      form.Add(new StringContent(request.Prompt), "prompt");
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            form.Add(new StringContent(metadata.Prompt), "prompt");
 
         // hotwords → repeated field
-        /*  if (request.Hotwords?.Any() == true)
-          {
-              foreach (var hw in request.Hotwords.Take(100))
-                  form.Add(new StringContent(hw), "hotwords");
-          }*/
+        if (metadata?.Hotwords?.Any() == true)
+        {
+            foreach (var hw in metadata.Hotwords)
+                form.Add(new StringContent(hw), "hotwords");
+        }
 
         // sync mode (default, but explicit)
         form.Add(new StringContent("false"), "stream");
@@ -73,7 +76,7 @@ public partial class ZaiProvider : IModelProvider
             // Z.AI sync response has no segments
             Segments = [],
 
-            Response = new ()
+            Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = root.TryGetProperty("model", out var m)
