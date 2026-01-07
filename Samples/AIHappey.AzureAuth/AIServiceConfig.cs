@@ -26,6 +26,7 @@ public class AIServiceConfig
     public ProviderConfig? StabilityAI { get; set; }
     public ProviderConfig? ElevenLabs { get; set; }
     public ProviderConfig? Telnyx { get; set; }
+    public ProviderConfig? Alibaba { get; set; }
 }
 
 public class ProviderConfig

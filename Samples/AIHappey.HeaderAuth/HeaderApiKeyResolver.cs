@@ -30,6 +30,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["novita"] = "X-Novita-Key",
             ["together"] = "X-Together-Key",
             ["telnyx"] = "X-Telnyx-Key",
+            ["alibaba"] = "X-Alibaba-Key",
         };
 
     public string? Resolve(string provider)

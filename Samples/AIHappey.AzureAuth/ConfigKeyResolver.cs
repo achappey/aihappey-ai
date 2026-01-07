@@ -33,6 +33,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "anthropic" => _config.Anthropic?.ApiKey,
             "elevenlabs" => _config.ElevenLabs?.ApiKey,
             "telnyx" => _config.Telnyx?.ApiKey,
+            "alibaba" => _config.Alibaba?.ApiKey,
             _ => null
         };
 }

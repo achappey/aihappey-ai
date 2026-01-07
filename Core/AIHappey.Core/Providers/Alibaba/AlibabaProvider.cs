@@ -1,0 +1,105 @@
+using System.Net.Http.Headers;
+using AIHappey.Common.Model;
+using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Models;
+using ModelContextProtocol.Protocol;
+using OAIC = OpenAI.Chat;
+using OpenAI.Responses;
+
+namespace AIHappey.Core.Providers.Alibaba;
+
+public partial class AlibabaProvider : IModelProvider
+{
+    private readonly IApiKeyResolver _keyResolver;
+
+    private readonly HttpClient _client;
+
+    public AlibabaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    {
+        _keyResolver = keyResolver;
+        _client = httpClientFactory.CreateClient();
+        _client.BaseAddress = new Uri("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/");
+    }
+
+    private void ApplyAuthHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException("No Alibaba (DashScope) API key.");
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+    public string GetIdentifier() => "alibaba";
+
+    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        // Alibaba DashScope does not expose a public list-models endpoint for compatible-mode.
+        // We hardcode common Qwen "flagship" model names.
+        ApplyAuthHeader();
+
+        return Task.FromResult<IEnumerable<Model>>(
+        [
+            new()
+            {
+                Id = "qwen-max".ToModelId(GetIdentifier()),
+                Name = "qwen-max",
+                Type = "language",
+                OwnedBy = "Alibaba",
+                ContextWindow = 262144,
+                Pricing = new ModelPricing { Input = "1.2", Output = "6" }
+            },
+            new()
+            {
+                Id = "qwen-plus".ToModelId(GetIdentifier()),
+                Name = "qwen-plus",
+                Type = "language",
+                OwnedBy = "Alibaba",
+                ContextWindow = 1000000,
+                Pricing = new ModelPricing { Input = "0.4", Output = "1.2" }
+            },
+            new()
+            {
+                Id = "qwen-flash".ToModelId(GetIdentifier()),
+                Name = "qwen-flash",
+                Type = "language",
+                OwnedBy = "Alibaba",
+                ContextWindow = 1000000,
+                Pricing = new ModelPricing { Input = "0.05", Output = "0.4" }
+            },
+            new()
+            {
+                Id = "qwen-coder".ToModelId(GetIdentifier()),
+                Name = "qwen-coder",
+                Type = "language",
+                OwnedBy = "Alibaba",
+                ContextWindow = 1000000,
+                Pricing = new ModelPricing { Input = "0.3", Output = "1.5" }
+            }
+        ]);
+    }
+}
+

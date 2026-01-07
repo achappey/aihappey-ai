@@ -122,6 +122,7 @@ No appsettings keys are required for providers. Instead send headers like:
 - `X-Google-Key`
 - `X-Groq-Key`
 - `X-xAI-Key`
+- `X-Alibaba-Key`
 
 The full mapping is defined in [`HeaderApiKeyResolver`](Samples/AIHappey.HeaderAuth/HeaderApiKeyResolver.cs:5).
 
@@ -140,9 +141,10 @@ Minimal shape (placeholders):
     "Audience": "<audience>"
   },
   "AIServices": {
-    "OpenAI": { "ModelId": "gpt-4.1", "ApiKey": "" },
-    "Anthropic": { "ModelId": "claude-3-5-sonnet-20241022", "ApiKey": "" },
-    "Google": { "ModelId": "gemini-2.5-pro", "ApiKey": "" }
+    "OpenAI": { "ApiKey": "" },
+    "Anthropic": { "ApiKey": "" },
+    "Google": { "ApiKey": "" },
+    "Alibaba": { "ApiKey": "" }
   },
   "TelemetryDatabase": "<connection-string>",
   "DarkIcon": "<optional-icon-url>",
