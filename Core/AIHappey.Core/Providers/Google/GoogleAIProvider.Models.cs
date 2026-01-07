@@ -15,7 +15,6 @@ public partial class GoogleAIProvider
         string[] excludedSubstrings = [
             "embedding",
             "native",
-            "tts",
         ];
 
         return models
@@ -28,7 +27,6 @@ public partial class GoogleAIProvider
                 return new Model()
                 {
                     Name = a.DisplayName!,
-                    //Publisher = Google,
                     OwnedBy = Google,
                     Id = id.ToModelId(GetIdentifier()),
                     Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null

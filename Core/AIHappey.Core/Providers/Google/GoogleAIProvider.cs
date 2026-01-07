@@ -52,9 +52,4 @@ public partial class GoogleAIProvider(IApiKeyResolver keyResolver, ILogger<Googl
     {
         throw new NotImplementedException();
     }
-
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
