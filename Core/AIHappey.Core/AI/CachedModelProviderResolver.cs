@@ -176,9 +176,7 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
     }
 
     public IModelProvider GetProvider() => providers
-            .Where(p => !string.IsNullOrEmpty(apiKeyResolver.Resolve(p.GetIdentifier())))
-            .OrderByDescending(p => p.GetPriority() ?? 0f)
-            .FirstOrDefault()
+            .FirstOrDefault(p => !string.IsNullOrEmpty(apiKeyResolver.Resolve(p.GetIdentifier())))
             ?? providers.FirstOrDefault(a => a.GetIdentifier() == "pollinations")
             ?? throw new NotSupportedException($"No providers found");
 

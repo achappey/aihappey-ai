@@ -151,9 +151,7 @@ public class AIModelProviderResolver(
 
     public IModelProvider GetProvider() =>
         providers
-            .Where(p => !string.IsNullOrEmpty(apiKeyResolver.Resolve(p.GetIdentifier())))
-            .OrderByDescending(p => p.GetPriority() ?? 0f)
-            .FirstOrDefault()
+            .FirstOrDefault(p => !string.IsNullOrEmpty(apiKeyResolver.Resolve(p.GetIdentifier())))
         ?? providers.FirstOrDefault(p => p.GetIdentifier() == "pollinations")
         ?? throw new NotSupportedException("No providers found.");
 

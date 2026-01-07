@@ -19,11 +19,11 @@ public static class UIMessagePartExtensions
         if (modelId.Contains("tts") || modelId.Contains("canopy"))
             return "speech";
 
+        if (modelId.Contains("rerank"))
+            return "reranking";
+
         if (modelId.Contains("embed"))
             return "embedding";
-
-        if (modelId.Contains("rerank"))
-            return "rerank";
 
         if (modelId.Contains("image")
             || modelId.Contains("flux")

@@ -31,5 +31,12 @@ public static class VercelHelpers
             ErrorText = error
         };
 
+    public static AbortUIPart ToAbortUIPart(this string reason)
+   => new()
+   {
+       Reason = reason
+   };
+
+
 
 }

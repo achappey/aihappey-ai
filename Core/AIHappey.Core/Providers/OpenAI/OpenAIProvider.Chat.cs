@@ -24,6 +24,14 @@ public partial class OpenAIProvider
             yield break;
         }
 
+        if (model?.Contains("tts") == true)
+        {
+            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         if (model?.Contains("transcribe") == true || model?.Contains("whisper") == true)
         {
             await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))

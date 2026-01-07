@@ -26,7 +26,7 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
         chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
         chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
-        
+
         FinishUIPart? finishUIPart = null;
 
         try
@@ -44,6 +44,11 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
                     await Response.Body.FlushAsync(cancellationToken);
                 }
             }
+        }
+        catch (TaskCanceledException e)
+        {
+            await Response.WriteAsync($"data: {JsonSerializer.Serialize(e.Message.ToAbortUIPart(), JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
         }
         catch (Exception e)
         {

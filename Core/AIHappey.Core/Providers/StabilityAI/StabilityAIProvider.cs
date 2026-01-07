@@ -34,7 +34,7 @@ public partial class StabilityAIProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public float? GetPriority() => 1;
+
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -95,6 +95,20 @@ public partial class StabilityAIProvider : IModelProvider
                 Type = "image",
                 Name = "Stable Diffusion 3.5 Flash",
                 Id = "sd3.5-flash".ToModelId(GetIdentifier())
+            },
+            new Model()
+            {
+                OwnedBy = nameof(StabilityAI),
+                Type = "speech",
+                Name = "Stable Audio 2.0",
+                Id = "stable-audio-2".ToModelId(GetIdentifier())
+            },
+            new Model()
+            {
+                OwnedBy = nameof(StabilityAI),
+                Type = "speech",
+                Name = "Stable Audio 2.5",
+                Id = "stable-audio-2.5".ToModelId(GetIdentifier())
             }
         ];
     }
@@ -112,9 +126,16 @@ public partial class StabilityAIProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (chatRequest.Model.Contains("audio") == true)
+        {
+            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken: cancellationToken))
             yield return update;
-
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

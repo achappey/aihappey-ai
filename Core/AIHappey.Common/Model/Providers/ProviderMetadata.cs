@@ -13,4 +13,5 @@ public class ProviderMetadata
     public GroqProviderMetadata? Groq { get; set; }
     public PollinationsProviderMetadata? Pollinations { get; set; }
     public JinaProviderMetadata? Jina { get; set; }
+    public ElevenLabsProviderMetadata? ElevenLabs { get; set; }
 }

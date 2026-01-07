@@ -222,8 +222,5 @@ public partial class StabilityAIProvider : IModelProvider
         return raw;
     }
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+
 }

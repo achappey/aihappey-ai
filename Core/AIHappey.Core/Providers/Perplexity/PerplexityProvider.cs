@@ -75,7 +75,7 @@ public class PerplexityProvider : IModelProvider
         };
     }
 
-    public float? GetPriority() => 1;
+    
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

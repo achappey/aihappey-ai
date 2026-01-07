@@ -24,7 +24,7 @@ public partial class GoogleAIProvider(IApiKeyResolver keyResolver, ILogger<Googl
 
     private static readonly string Google = "Google";
 
-    public float? GetPriority() => 1;
+    
 
     public async Task<UIMessagePart> CompleteAsync(ChatCompletionOptions request, CancellationToken cancellationToken = default)
     {

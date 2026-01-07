@@ -9,7 +9,6 @@ namespace AIHappey.Core.AI;
 public interface IModelProvider
 {
     string GetIdentifier();
-    float? GetPriority();
 
     Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default);
 

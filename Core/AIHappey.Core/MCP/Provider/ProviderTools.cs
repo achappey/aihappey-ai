@@ -49,6 +49,7 @@ public class ProviderTools
                 "jina" => generator.Generate(typeof(JinaProviderMetadata)),
                 "groq" => generator.Generate(typeof(GroqProviderMetadata)),
                 "together" => generator.Generate(typeof(TogetherProviderMetadata)),
+                "elevenlabs" => generator.Generate(typeof(ElevenLabsProviderMetadata)),
                 _ => throw new Exception($"Provider {aiProviderId} not supported. Available providers: {JsonSerializer
                     .Serialize(new
                     {

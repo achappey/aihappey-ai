@@ -24,14 +24,12 @@ public class AIServiceConfig
     public ProviderConfig? Zai { get; set; }
     public ProviderConfig? Scaleway { get; set; }
     public ProviderConfig? StabilityAI { get; set; }
+    public ProviderConfig? ElevenLabs { get; set; }
+    public ProviderConfig? Telnyx { get; set; }
 }
 
 public class ProviderConfig
 {
-    public string? ModelId { get; set; }
     public string ApiKey { get; set; } = null!;
-    public string? Endpoint { get; set; }
-    public string? DeploymentName { get; set; }
-    public float? Priority { get; set; }
 }
 

@@ -35,7 +35,7 @@ public partial class CohereProvider : IModelProvider
 
     public string GetIdentifier() => CohereExtensions.CohereIdentifier;
 
-    public float? GetPriority() => 1;
+    
 
     public async Task<IEnumerable<Model>> ListModels(
         CancellationToken cancellationToken = default)
@@ -60,6 +60,7 @@ public partial class CohereProvider : IModelProvider
             var name = item.TryGetProperty("name", out var nameEl)
                 ? nameEl.GetString()
                 : null;
+                
             if (string.IsNullOrWhiteSpace(name)) continue;
 
             DateTimeOffset? createdAt = null;

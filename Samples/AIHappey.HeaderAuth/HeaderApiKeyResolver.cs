@@ -26,8 +26,10 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["zai"] = "X-Zai-Key",
             ["stabilityai"] = "X-StabilityAI-Key",
             ["groq"] = "X-Groq-Key",
+            ["elevenlabs"] = "X-ElevenLabs-Key",
             ["novita"] = "X-Novita-Key",
             ["together"] = "X-Together-Key",
+            ["telnyx"] = "X-Telnyx-Key",
         };
 
     public string? Resolve(string provider)

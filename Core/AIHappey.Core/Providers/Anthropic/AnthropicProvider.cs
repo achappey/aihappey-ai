@@ -63,7 +63,7 @@ public partial class AnthropicProvider : IModelProvider
                 //   Publisher = nameof(Anthropic)
             });
     }
-    public float? GetPriority() => 1;
+    
 
       private readonly IEnumerable<string> DeprecatedModels = [
         "claude-3-7-sonnet-20250219",

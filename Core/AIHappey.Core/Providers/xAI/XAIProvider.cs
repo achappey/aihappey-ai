@@ -34,7 +34,7 @@ public partial class XAIProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public float? GetPriority() => 1;
+    
 
     // Helper: extract delta text from a variety of Responses event payload shapes
     private static string? TryGetDeltaText(JsonElement root)

@@ -79,8 +79,6 @@ public partial class GroqProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public float? GetPriority() => 1;
-
     public Task<Common.Model.ImageResponse> ImageRequest(Common.Model.ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

@@ -108,7 +108,7 @@ public partial class AIMLProvider : IModelProvider
     }
 
 
-    public float? GetPriority() => 1;
+    
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

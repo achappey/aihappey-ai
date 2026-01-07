@@ -49,7 +49,7 @@ public partial class OpenAIProvider : IModelProvider
             .ToModels();
     }
 
-    public float? GetPriority() => 1;
+    
 
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
     {

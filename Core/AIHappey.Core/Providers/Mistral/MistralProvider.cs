@@ -79,7 +79,7 @@ public partial class MistralProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
-    public float? GetPriority() => 1;
+    
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

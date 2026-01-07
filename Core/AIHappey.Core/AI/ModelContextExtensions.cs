@@ -8,8 +8,6 @@ namespace AIHappey.Core.AI;
 
 public static class ModelContextExtensions
 {
-
-
    public static async Task<CallToolResult?> WithExceptionCheck(this RequestContext<CallToolRequestParams> requestContext, Func<Task<CallToolResult?>> func)
    {
       try
@@ -21,7 +19,6 @@ public static class ModelContextExtensions
          return e.Message.ToErrorCallToolResponse();
       }
    }
-
 
    public static CallToolResult ToErrorCallToolResponse(this string content)
         => new()

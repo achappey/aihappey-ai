@@ -18,6 +18,15 @@ public partial class GroqProvider : IModelProvider
           ChatRequest chatRequest,
           [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+
+        if (chatRequest.Model.Contains("canopylabs/orpheus") == true)
+        {
+            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         if (chatRequest.Model.Contains("whisper"))
         {
             await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))

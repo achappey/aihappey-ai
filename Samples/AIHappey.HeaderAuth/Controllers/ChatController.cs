@@ -21,9 +21,6 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
         Response.Headers["x-vercel-ai-ui-message-stream"] = "v1";
         chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
-
-        FinishUIPart? finishUIPart = null;
-
         chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
 
         try
@@ -32,16 +29,16 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
             {
                 if (response != null)
                 {
-                    if (response is FinishUIPart finishUIPart1)
-                    {
-                        finishUIPart = finishUIPart1;
-                    }
-
                     await Response.WriteAsync($"data: {JsonSerializer.Serialize(response, JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
 
                     await Response.Body.FlushAsync(cancellationToken);
                 }
             }
+        }
+        catch (TaskCanceledException e)
+        {
+            await Response.WriteAsync($"data: {JsonSerializer.Serialize(e.Message.ToAbortUIPart(), JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
         }
         catch (Exception e)
         {

@@ -31,6 +31,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "perplexity" => _config.Perplexity?.ApiKey,
             "jina" => _config.Jina?.ApiKey,
             "anthropic" => _config.Anthropic?.ApiKey,
+            "elevenlabs" => _config.ElevenLabs?.ApiKey,
+            "telnyx" => _config.Telnyx?.ApiKey,
             _ => null
         };
 }

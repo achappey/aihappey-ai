@@ -6,6 +6,7 @@ using AIHappey.Core.Providers.Fireworks;
 using AIHappey.Core.Providers.Google;
 using AIHappey.Core.Providers.Groq;
 using AIHappey.Core.Providers.Hyperbolic;
+using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
 using AIHappey.Core.Providers.Novita;
@@ -18,6 +19,7 @@ using AIHappey.Core.Providers.SambaNova;
 using AIHappey.Core.Providers.Scaleway;
 using AIHappey.Core.Providers.StabilityAI;
 using AIHappey.Core.Providers.Together;
+using AIHappey.Core.Providers.Telnyx;
 using AIHappey.Core.Providers.xAI;
 using AIHappey.Core.Providers.Zai;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +52,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FireworksProvider>();
         services.AddSingleton<IModelProvider, HyperbolicProvider>();
         services.AddSingleton<IModelProvider, ZaiProvider>();
+        services.AddSingleton<IModelProvider, ElevenLabsProvider>();
+        services.AddSingleton<IModelProvider, TelnyxProvider>();
 
     }
 

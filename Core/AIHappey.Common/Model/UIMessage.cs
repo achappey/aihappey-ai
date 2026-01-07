@@ -439,6 +439,10 @@ public class AbortUIPart : UIMessagePart
 {
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "abort";
+
+    [JsonPropertyName("reason")]
+    public string? Reason { get; init; }
+
 }
 
 
