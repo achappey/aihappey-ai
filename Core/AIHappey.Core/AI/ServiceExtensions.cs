@@ -8,6 +8,7 @@ using AIHappey.Core.Providers.Fireworks;
 using AIHappey.Core.Providers.Google;
 using AIHappey.Core.Providers.Groq;
 using AIHappey.Core.Providers.Hyperbolic;
+using AIHappey.Core.Providers.Inferencenet;
 using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
@@ -34,6 +35,7 @@ public static class ServiceExtensions
     {
         services.AddSingleton<IModelProvider, OpenAIProvider>();
         services.AddSingleton<IModelProvider, CanopyWaveProvider>();
+        services.AddSingleton<IModelProvider, InferencenetProvider>();
         services.AddSingleton<IModelProvider, AlibabaProvider>();
         services.AddSingleton<IModelProvider, CohereProvider>();
         services.AddSingleton<IModelProvider, MistralProvider>();

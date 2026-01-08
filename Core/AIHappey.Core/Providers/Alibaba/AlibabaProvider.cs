@@ -129,6 +129,34 @@ public partial class AlibabaProvider : IModelProvider
                 Type = "image",
                 OwnedBy = "Alibaba",
                 Pricing = new ModelPricing { Input = "0.035", Output = "0" }
+            },
+
+            // ---- Image generation (Tongyi Z-Image) ----
+            new()
+            {
+                Id = "z-image-turbo".ToModelId(GetIdentifier()),
+                Name = "z-image-turbo",
+                Type = "image",
+                OwnedBy = "Alibaba",
+                Pricing = new ModelPricing { Input = "0", Output = "0" }
+            },
+
+            // ---- Image generation (Wan 2.6) ----
+            new()
+            {
+                Id = "wan2.6-image".ToModelId(GetIdentifier()),
+                Name = "wan2.6-image",
+                Type = "image",
+                OwnedBy = "Alibaba",
+                Pricing = new ModelPricing { Input = "0", Output = "0" }
+            },
+            new()
+            {
+                Id = "wan2.6-t2i".ToModelId(GetIdentifier()),
+                Name = "wan2.6-t2i",
+                Type = "image",
+                OwnedBy = "Alibaba",
+                Pricing = new ModelPricing { Input = "0", Output = "0" }
             }
         ]);
     }

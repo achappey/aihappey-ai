@@ -16,18 +16,9 @@ public partial class AlibabaProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    // Qwen-Image (sync) endpoint (Singapore / intl)
+    // DashScope (sync) endpoint (Singapore / intl)
     private const string DefaultDashScopeBaseUrl = "https://dashscope-intl.aliyuncs.com";
     private const string QwenImageSyncPath = "/api/v1/services/aigc/multimodal-generation/generation";
-
-    private static readonly HashSet<string> AllowedSizes =
-    [
-        "1664*928",  // 16:9 (default)
-        "1472*1104", // 4:3
-        "1328*1328", // 1:1
-        "1104*1472", // 3:4
-        "928*1664"   // 9:16
-    ];
 
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
@@ -40,10 +31,15 @@ public partial class AlibabaProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
+        var providerMetadata = imageRequest.GetImageProviderMetadata<AlibabaImageProviderMetadata>(GetIdentifier());
+
+        var modelName = NormalizeAlibabaModelName(imageRequest.Model);
+
+        if (IsWan26Model(modelName))
+            return await Wan26ImageRequest(imageRequest, providerMetadata?.Wan, modelName, warnings, now, cancellationToken);
+
         if (imageRequest.N is > 1)
-        {
             warnings.Add(new { type = "unsupported", feature = "n", details = "DashScope Qwen-Image returns exactly 1 image." });
-        }
 
         if (imageRequest.Files?.Any() == true)
             warnings.Add(new { type = "unsupported", feature = "files" });
@@ -51,16 +47,12 @@ public partial class AlibabaProvider
         if (imageRequest.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        var providerMetadata = imageRequest.GetImageProviderMetadata<AlibabaImageProviderMetadata>(GetIdentifier());
+        // NOTE: per requirements, we do not validate/limit sizes.
+        // We only reshape "WxH" => "W*H" for DashScope.
+        var dashScopeSize = MapGenericSizeToDashScope(imageRequest.Size);
 
-        var modelName = NormalizeAlibabaModelName(imageRequest.Model);
-
-        var effectiveSize = CoerceSize(
-            providerMetadata?.Size,
-            MapGenericSizeToDashScope(imageRequest.Size),
-            warnings);
-
-        var effectiveSeed = providerMetadata?.Seed ?? imageRequest.Seed;
+        // Route providerOptions based on model family.
+        var (promptExtend, negativePrompt, watermark) = ResolveDashScopeParams(modelName, providerMetadata);
 
         var payload = new
         {
@@ -78,17 +70,19 @@ public partial class AlibabaProvider
             },
             parameters = new
             {
-                negative_prompt = providerMetadata?.NegativePrompt,
-                prompt_extend = providerMetadata?.PromptExtend,
-                watermark = providerMetadata?.Watermark,
-                size = effectiveSize,
-                seed = effectiveSeed
+                // qwen-only (ignored by tongyi z-image)
+                negative_prompt = negativePrompt,
+                watermark,
+
+                // shared
+                prompt_extend = promptExtend,
+                size = dashScopeSize,
+                seed = imageRequest.Seed
             }
         };
 
-        var baseUrl = !string.IsNullOrWhiteSpace(providerMetadata?.BaseUrl)
-            ? providerMetadata!.BaseUrl!.TrimEnd('/')
-            : DefaultDashScopeBaseUrl;
+        // Singapore-only: always use intl base.
+        var baseUrl = DefaultDashScopeBaseUrl;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, new Uri($"{baseUrl}{QwenImageSyncPath}"))
         {
@@ -101,8 +95,11 @@ public partial class AlibabaProvider
         if (!resp.IsSuccessStatusCode)
             throw new Exception($"{resp.StatusCode}: {raw}");
 
-        var imageUrl = ExtractImageUrlFromSyncResponse(raw);
-        var bytes = await _client.GetByteArrayAsync(imageUrl, cancellationToken);
+        var (imageUrls, _) = ExtractImagesAndTextFromSyncResponse(raw);
+        if (imageUrls.Count == 0)
+            throw new Exception("DashScope response did not contain an image URL.");
+
+        var bytes = await _client.GetByteArrayAsync(imageUrls[0], cancellationToken);
         var b64 = Convert.ToBase64String(bytes);
 
         return new ImageResponse
@@ -140,42 +137,26 @@ public partial class AlibabaProvider
         return genericSize.Trim().ToLowerInvariant().Replace('x', '*');
     }
 
-    private static string CoerceSize(string? providerSize, string? mappedGenericSize, List<object> warnings)
+    private static (bool? PromptExtend, string? NegativePrompt, bool? Watermark) ResolveDashScopeParams(
+        string modelName,
+        AlibabaImageProviderMetadata? metadata)
     {
-        var candidate = providerSize ?? mappedGenericSize ?? "1664*928";
-        candidate = candidate.Trim();
+        ArgumentException.ThrowIfNullOrWhiteSpace(modelName);
 
-        if (AllowedSizes.Contains(candidate))
-            return candidate;
-
-        warnings.Add(new
+        // Tongyi Z-Image models (text-to-image)
+        if (string.Equals(modelName, "z-image-turbo", StringComparison.OrdinalIgnoreCase))
         {
-            type = "unsupported",
-            feature = "size",
-            details = $"Requested size '{candidate}' not supported by DashScope Qwen-Image. Falling back to 1664*928."
-        });
+            return (
+                metadata?.Tongyi?.PromptExtend,
+                null,
+                null);
+        }
 
-        return "1664*928";
-    }
-
-    private static string ExtractImageUrlFromSyncResponse(string rawJson)
-    {
-        using var doc = JsonDocument.Parse(rawJson);
-        var root = doc.RootElement;
-
-        // output.choices[0].message.content[0].image
-        var url = root
-            .GetProperty("output")
-            .GetProperty("choices")[0]
-            .GetProperty("message")
-            .GetProperty("content")[0]
-            .GetProperty("image")
-            .GetString();
-
-        if (string.IsNullOrWhiteSpace(url))
-            throw new Exception("DashScope response did not contain an image URL.");
-
-        return url;
+        // Default to Qwen Image behavior.
+        return (
+            metadata?.Qwen?.PromptExtend,
+            metadata?.Qwen?.NegativePrompt,
+            metadata?.Qwen?.Watermark);
     }
 }
 

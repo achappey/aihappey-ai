@@ -136,6 +136,12 @@ public class AIModelProviderResolver(
 
     public async Task<IModelProvider> Resolve(string model, CancellationToken ct = default)
     {
+        var provKey = model.SplitModelId().Provider;
+        var currentProv = providers.FirstOrDefault(a => a.GetIdentifier() == provKey);
+
+        if (currentProv != null)
+            return currentProv;
+
         var map = await LoadModels(ct);
 
         if (map.TryGetValue(model, out var entry))
