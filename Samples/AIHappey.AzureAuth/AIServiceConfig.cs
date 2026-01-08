@@ -27,6 +27,8 @@ public class AIServiceConfig
     public ProviderConfig? ElevenLabs { get; set; }
     public ProviderConfig? Telnyx { get; set; }
     public ProviderConfig? Alibaba { get; set; }
+    public ProviderConfig? CanopyWave { get; set; }
+    public ProviderConfig? Inferencenet { get; set; }
 }
 
 public class ProviderConfig

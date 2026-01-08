@@ -34,6 +34,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "elevenlabs" => _config.ElevenLabs?.ApiKey,
             "telnyx" => _config.Telnyx?.ApiKey,
             "alibaba" => _config.Alibaba?.ApiKey,
+            "canopywave" => _config.CanopyWave?.ApiKey,
+            "inferencenet" => _config.Inferencenet?.ApiKey,
             _ => null
         };
 }

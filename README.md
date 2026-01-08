@@ -339,6 +339,43 @@ Providers are implemented under [`Core/AIHappey.Core/Providers/`](Core/AIHappey.
 
 The default sample DI registration includes (non-exhaustive): OpenAI, Anthropic, Google, Mistral, Groq, xAI, Together, Cohere, Jina, Runway, and more (see [`ServiceExtensions.AddProviders()`](Core/AIHappey.Core/AI/ServiceExtensions.cs:29)).
 
+### Alibaba (DashScope) Qwen-Image (text-to-image)
+
+Alibaba DashScope **Qwen-Image** models are supported via the Singapore (intl) synchronous API.
+
+**Models** (use provider-prefixed model ids):
+
+- `alibaba/qwen-image-max`
+- `alibaba/qwen-image-max-2025-12-30`
+- `alibaba/qwen-image-plus`
+- `alibaba/qwen-image`
+
+**Supported sizes** (provider constraint):
+
+- `1664x928` (maps to DashScope `1664*928`, default)
+- `1472x1104` (maps to `1472*1104`)
+- `1328x1328` (maps to `1328*1328`)
+- `1104x1472` (maps to `1104*1472`)
+- `928x1664` (maps to `928*1664`)
+
+If an unsupported size is requested, the provider falls back to `1664*928` and returns a warning.
+
+**Provider options** (in `providerOptions["alibaba"]`) are deserialized to [`AlibabaImageProviderMetadata`](Core/AIHappey.Common/Model/Providers/Alibaba/AlibabaImageProviderMetadata.cs:3).
+
+Common fields:
+
+- `negativePrompt` (string)
+- `promptExtend` (bool)
+- `watermark` (bool)
+- `size` (string, DashScope format like `1664*928`)
+- `seed` (int)
+- `baseUrl` (string, optional override; default is `https://dashscope-intl.aliyuncs.com`)
+
+Notes:
+
+- DashScope Qwen-Image returns **exactly 1** image per request (`n > 1` is treated as unsupported and produces a warning).
+- The response is normalized to `data:image/png;base64,...`.
+
 ## 🧪 Status / roadmap (lightweight)
 
 - Add a dedicated **OpenAI Responses** HTTP endpoint (`POST /v1/responses`) matching OpenAI’s streaming semantics.

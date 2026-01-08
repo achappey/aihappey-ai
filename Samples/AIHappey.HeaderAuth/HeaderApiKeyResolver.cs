@@ -31,6 +31,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["together"] = "X-Together-Key",
             ["telnyx"] = "X-Telnyx-Key",
             ["alibaba"] = "X-Alibaba-Key",
+            ["canopywave"] = "X-CanopyWave-Key",
+            ["inferencenet"] = "X-Inferencenet-Key",
         };
 
     public string? Resolve(string provider)

@@ -46,9 +46,6 @@ public partial class AlibabaProvider : IModelProvider
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
@@ -98,6 +95,40 @@ public partial class AlibabaProvider : IModelProvider
                 OwnedBy = "Alibaba",
                 ContextWindow = 1000000,
                 Pricing = new ModelPricing { Input = "0.3", Output = "1.5" }
+            },
+
+            // ---- Image generation (Qwen-Image) ----
+            new()
+            {
+                Id = "qwen-image-max".ToModelId(GetIdentifier()),
+                Name = "qwen-image-max",
+                Type = "image",
+                OwnedBy = "Alibaba",
+                Pricing = new ModelPricing { Input = "0.075", Output = "0" }
+            },
+            new()
+            {
+                Id = "qwen-image-max-2025-12-30".ToModelId(GetIdentifier()),
+                Name = "qwen-image-max-2025-12-30",
+                Type = "image",
+                OwnedBy = "Alibaba",
+                Pricing = new ModelPricing { Input = "0.075", Output = "0" }
+            },
+            new()
+            {
+                Id = "qwen-image-plus".ToModelId(GetIdentifier()),
+                Name = "qwen-image-plus",
+                Type = "image",
+                OwnedBy = "Alibaba",
+                Pricing = new ModelPricing { Input = "0.03", Output = "0" }
+            },
+            new()
+            {
+                Id = "qwen-image".ToModelId(GetIdentifier()),
+                Name = "qwen-image",
+                Type = "image",
+                OwnedBy = "Alibaba",
+                Pricing = new ModelPricing { Input = "0.035", Output = "0" }
             }
         ]);
     }

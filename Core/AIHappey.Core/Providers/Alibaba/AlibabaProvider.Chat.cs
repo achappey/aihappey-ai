@@ -10,6 +10,15 @@ public partial class AlibabaProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+
+        if (chatRequest.Model.Contains("image") == true)
+        {
+            await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         // DashScope OpenAI-compatible endpoint:

@@ -3,6 +3,7 @@ using AIHappey.Core.Providers.Alibaba;
 using AIHappey.Core.Providers.Anthropic;
 using AIHappey.Core.Providers.Cerebras;
 using AIHappey.Core.Providers.Cohere;
+using AIHappey.Core.Providers.CanopyWave;
 using AIHappey.Core.Providers.Fireworks;
 using AIHappey.Core.Providers.Google;
 using AIHappey.Core.Providers.Groq;
@@ -32,6 +33,7 @@ public static class ServiceExtensions
     public static void AddProviders(this IServiceCollection services)
     {
         services.AddSingleton<IModelProvider, OpenAIProvider>();
+        services.AddSingleton<IModelProvider, CanopyWaveProvider>();
         services.AddSingleton<IModelProvider, AlibabaProvider>();
         services.AddSingleton<IModelProvider, CohereProvider>();
         services.AddSingleton<IModelProvider, MistralProvider>();
