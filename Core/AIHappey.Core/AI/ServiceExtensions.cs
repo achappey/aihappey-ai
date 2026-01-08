@@ -13,6 +13,7 @@ using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
 using AIHappey.Core.Providers.Novita;
+using AIHappey.Core.Providers.Nvidia;
 using AIHappey.Core.Providers.Nscale;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Providers.Perplexity;
@@ -34,6 +35,7 @@ public static class ServiceExtensions
     public static void AddProviders(this IServiceCollection services)
     {
         services.AddSingleton<IModelProvider, OpenAIProvider>();
+        services.AddSingleton<IModelProvider, NvidiaProvider>();
         services.AddSingleton<IModelProvider, CanopyWaveProvider>();
         services.AddSingleton<IModelProvider, InferencenetProvider>();
         services.AddSingleton<IModelProvider, AlibabaProvider>();

@@ -339,6 +339,15 @@ Providers are implemented under [`Core/AIHappey.Core/Providers/`](Core/AIHappey.
 
 The default sample DI registration includes (non-exhaustive): OpenAI, Anthropic, Google, Mistral, Groq, xAI, Together, Cohere, Jina, Runway, and more (see [`ServiceExtensions.AddProviders()`](Core/AIHappey.Core/AI/ServiceExtensions.cs:29)).
 
+### NVIDIA (NIM for LLMs)
+
+- Provider id: `nvidia`
+- Base URL: `https://integrate.api.nvidia.com/`
+- Endpoints used:
+  - `GET /v1/models`
+  - `POST /v1/chat/completions` (OpenAI Chat Completions compatible)
+- Auth header: `Authorization: Bearer $NVIDIA_API_KEY`
+
 ### Alibaba (DashScope) Qwen-Image (text-to-image)
 
 Alibaba DashScope **Qwen-Image** models are supported via the Singapore (intl) synchronous API.

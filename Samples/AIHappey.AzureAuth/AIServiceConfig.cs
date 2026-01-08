@@ -28,6 +28,7 @@ public class AIServiceConfig
     public ProviderConfig? Telnyx { get; set; }
     public ProviderConfig? Alibaba { get; set; }
     public ProviderConfig? CanopyWave { get; set; }
+    public ProviderConfig? NVIDIA { get; set; }
     public ProviderConfig? Inferencenet { get; set; }
 }
 
