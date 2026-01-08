@@ -18,6 +18,7 @@ using AIHappey.Core.Providers.Nscale;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Providers.Perplexity;
 using AIHappey.Core.Providers.Pollinations;
+using AIHappey.Core.Providers.Runware;
 using AIHappey.Core.Providers.Runway;
 using AIHappey.Core.Providers.SambaNova;
 using AIHappey.Core.Providers.Scaleway;
@@ -50,6 +51,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PollinationsProvider>();
         services.AddSingleton<IModelProvider, XAIProvider>();
         services.AddSingleton<IModelProvider, RunwayProvider>();
+        services.AddSingleton<IModelProvider, RunwareProvider>();
         services.AddSingleton<IModelProvider, AIMLProvider>();
         services.AddSingleton<IModelProvider, NscaleProvider>();
         services.AddSingleton<IModelProvider, StabilityAIProvider>();
