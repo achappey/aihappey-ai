@@ -1,5 +1,5 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Anthropic;
 using AIHappey.Core.AI;
 using ANT = Anthropic.SDK;
 

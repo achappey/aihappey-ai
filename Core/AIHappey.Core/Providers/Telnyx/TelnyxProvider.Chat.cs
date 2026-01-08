@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Telnyx;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Telnyx;

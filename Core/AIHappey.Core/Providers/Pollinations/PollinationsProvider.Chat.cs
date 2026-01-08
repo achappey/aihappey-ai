@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Pollinations;
 using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Pollinations;

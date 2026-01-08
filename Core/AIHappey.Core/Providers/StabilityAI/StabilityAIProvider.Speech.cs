@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.StabilityAI;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.StabilityAI;

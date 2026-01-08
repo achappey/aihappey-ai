@@ -6,8 +6,8 @@ using System.Text.Json.Nodes;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Net.Mime;
-using AIHappey.Common.Model.Providers;
 using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers.Cohere;
 
 namespace AIHappey.Core.Providers.Cohere;
 

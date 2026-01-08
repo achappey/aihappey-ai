@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AIHappey.Common.Model.Providers;
 using Anthropic.SDK.Common;
+using AIHappey.Common.Model.Providers.Anthropic;
 using Anthropic.SDK.Messaging;
 using ANT = Anthropic.SDK;
 
@@ -20,13 +21,13 @@ public static partial class AnthropicExtensions
     public static List<ANT.Common.Tool> ToTools(this IEnumerable<AIHappey.Common.Model.Tool>? tools)
         => tools?.Select(a => a.ToTool()).ToList() ?? [];
 
-    public static ANT.Common.Tool ToWebSearchTool(this Common.Model.Providers.WebSearch webSearch)
+    public static ANT.Common.Tool ToWebSearchTool(this WebSearch webSearch)
          => ServerTools.GetWebSearchTool(maxUses: webSearch?.MaxUses ?? 5,
                 allowedDomains: webSearch?.AllowedDomains,
                 blockedDomains: webSearch?.BlockedDomains,
                 userLocation: webSearch?.UserLocation?.ContainsLocation() == true ? webSearch?.UserLocation : null);
 
-    public static ANT.Common.Tool GetCodeExecutionTool(this Common.Model.Providers.CodeExecution codeExecution)
+    public static ANT.Common.Tool GetCodeExecutionTool(this CodeExecution codeExecution)
          => new Function("code_execution", "code_execution_20250825", []);
 
 
@@ -54,7 +55,7 @@ public static partial class AnthropicExtensions
     }
 
     public static List<ANT.Common.Tool> WithDefaultTools(this List<ANT.Common.Tool> tools,
-        Common.Model.Providers.AnthropicProviderMetadata? a)
+        AnthropicProviderMetadata? a)
     {
         if (a?.WebSearch is { } ws) tools.Add(ws.ToWebSearchTool());
         if (a?.CodeExecution is { } ce) tools.Add(ce.GetCodeExecutionTool());

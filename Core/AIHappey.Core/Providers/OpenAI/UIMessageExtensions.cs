@@ -4,7 +4,7 @@ using AIHappey.Common.Model;
 using System.ClientModel.Primitives;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.OpenAI;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

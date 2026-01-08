@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Net.Http.Headers;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Jina;
 
 namespace AIHappey.Core.Providers.Jina;
 

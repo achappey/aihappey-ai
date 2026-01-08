@@ -1,6 +1,6 @@
 using System.Text.Json;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Mistral;

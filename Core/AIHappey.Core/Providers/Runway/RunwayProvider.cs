@@ -12,7 +12,7 @@ using System.Text.Json.Serialization;
 using System.Text;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Runway;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Runway;

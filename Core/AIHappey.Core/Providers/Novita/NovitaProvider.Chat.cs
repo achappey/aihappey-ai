@@ -2,7 +2,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Novita;
 
 namespace AIHappey.Core.Providers.Novita;
 

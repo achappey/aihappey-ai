@@ -158,6 +158,44 @@ Provider key resolution is implemented by [`ConfigKeyResolver.Resolve()`](Sample
 
 All endpoints below are exposed by both sample hosts; AzureAuth additionally requires a valid JWT.
 
+### Vercel Model Gateway v3 compatibility (contract-locked)
+
+The following public endpoints are **Vercel Model Gateway v3 compatible**.
+
+This is a **non-negotiable contract**:
+
+- The JSON **shape** (property names, casing, nesting, and types) of the request/response DTOs is **contract-locked**.
+- Do **not** rename properties, change casing, move fields, or alter types for these DTOs.
+- If you need provider-specific capabilities, use the existing escape hatches:
+  - request-side `providerOptions` / `providerMetadata` (opaque JSON objects)
+  - response-side `providerMetadata` (opaque JSON objects)
+
+Source of truth (DTOs):
+
+- `/api/chat` request DTO: [`ChatRequest`](Core/AIHappey.Common/Model/ChatRequest.cs:7)
+- `POST /v1/images/generations`: [`ImageRequest`](Core/AIHappey.Common/Model/ImageRequest.cs:5) / [`ImageResponse`](Core/AIHappey.Common/Model/ImageRequest.cs:49)
+- `POST /v1/audio/speech`: [`SpeechRequest`](Core/AIHappey.Common/Model/SpeechRequest.cs:6) / [`SpeechResponse`](Core/AIHappey.Common/Model/SpeechRequest.cs:34)
+- `POST /v1/audio/transcriptions`: [`TranscriptionRequest`](Core/AIHappey.Common/Model/TranscriptionRequest.cs:5) / [`TranscriptionResponse`](Core/AIHappey.Common/Model/TranscriptionRequest.cs:18)
+
+#### Cross-cutting contract notes
+
+- `model` MAY be **provider-prefixed** (e.g. `openai/gpt-4o-mini`) when sent by clients.
+  - The hosts resolve the provider from the prefix and then strip it before calling the provider, e.g. [`ImageController.Post()`](Samples/AIHappey.HeaderAuth/Controllers/ImageController.cs:12), [`SpeechController.Post()`](Samples/AIHappey.HeaderAuth/Controllers/SpeechController.cs:12), [`TranscriptionsController.Post()`](Samples/AIHappey.HeaderAuth/Controllers/TranscriptionsController.cs:12).
+- `providerOptions` / `providerMetadata` are **opaque JSON objects** passed through to providers.
+  - Convention in this repo: the top-level keys are provider identifiers (e.g. `openai`, `google`), and each value is provider-specific JSON.
+- Media payloads:
+  - `audio` input (transcriptions) accepts **data-url** (`data:audio/...;base64,....`) or raw **base64**.
+  - `audio` output (speech) is typically returned as a **data-url** string (provider dependent).
+  - `images` output is returned as `data:image/...;base64,...` strings.
+
+#### Compatibility checks (manual)
+
+To verify that DTO contracts stayed intact after changes:
+
+- Build and run [`AIHappey.HeaderAuth`](Samples/AIHappey.HeaderAuth/Program.cs:1)
+- Send a minimal request matching the JSON examples below
+- Ensure the server accepts the payload without model/JSON binding issues, and responses contain the expected top-level fields (`images`, `audio`, `text`, `response`, etc.)
+
 ### Vercel AI SDK (UI message stream)
 
 `POST /api/chat`
@@ -183,11 +221,27 @@ Returns the aggregated model list from all configured providers (see [`ModelsCon
 
 `POST /v1/images/generations`
 
+**Contract:** Vercel Model Gateway v3 compatible (shape is locked; see [`ImageRequest`](Core/AIHappey.Common/Model/ImageRequest.cs:5)).
+
 Routes an image request to the provider backing the selected `model` (see [`ImageController`](Samples/AIHappey.HeaderAuth/Controllers/ImageController.cs:7)).
+
+Minimal example:
+
+```json
+{
+  "model": "openai/gpt-image-1",
+  "prompt": "A cat wearing sunglasses",
+  "size": "1024x1024",
+  "n": 1,
+  "providerOptions": {}
+}
+```
 
 ### Speech (text-to-speech)
 
 `POST /v1/audio/speech`
+
+**Contract:** Vercel Model Gateway v3 compatible (shape is locked; see [`SpeechRequest`](Core/AIHappey.Common/Model/SpeechRequest.cs:6)).
 
 - Request model: [`SpeechRequest`](Core/AIHappey.Common/Model/SpeechRequest.cs:6)
 - Response model: [`SpeechResponse`](Core/AIHappey.Common/Model/SpeechRequest.cs:34)
@@ -196,7 +250,7 @@ Example request:
 
 ```json
 {
-  "model": "openai:gpt-4o-mini-tts",
+  "model": "openai/gpt-4o-mini-tts",
   "text": "Hello from AIHappey.",
   "voice": "alloy",
   "outputFormat": "mp3",
@@ -222,6 +276,8 @@ Implements MCP “sampling” (`createMessage`) by selecting a provider based on
 
 `POST /v1/audio/transcriptions`
 
+**Contract:** Vercel Model Gateway v3 compatible (shape is locked; see [`TranscriptionRequest`](Core/AIHappey.Common/Model/TranscriptionRequest.cs:5)).
+
 - Request model: [`TranscriptionRequest`](Core/AIHappey.Common/Model/TranscriptionRequest.cs:5)
 - Response model: [`TranscriptionResponse`](Core/AIHappey.Common/Model/TranscriptionRequest.cs:18)
 
@@ -229,7 +285,7 @@ Example request:
 
 ```json
 {
-  "model": "openai:whisper-1",
+  "model": "openai/whisper-1",
   "mediaType": "audio/mpeg",
   "audio": "data:audio/mpeg;base64,AAAA...",
   "providerOptions": {}

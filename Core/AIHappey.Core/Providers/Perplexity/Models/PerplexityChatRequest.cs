@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Perplexity;
 
 namespace AIHappey.Core.Providers.Perplexity.Models;
 

@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Fireworks;
 using System.Globalization;
 
 namespace AIHappey.Core.Providers.Fireworks;

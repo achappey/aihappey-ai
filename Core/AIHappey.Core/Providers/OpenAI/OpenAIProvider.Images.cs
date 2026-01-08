@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using OpenAI.Images;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.OpenAI;
 using OpenAI.Audio;
 using System.Net.Http.Headers;
 using System.Text.Json;

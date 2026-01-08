@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Net.Http.Headers;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.AI;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.Groq;

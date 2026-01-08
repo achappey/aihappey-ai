@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Hyperbolic;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 

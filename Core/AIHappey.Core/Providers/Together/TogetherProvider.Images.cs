@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using System.Text;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Together;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.Together;

@@ -6,7 +6,7 @@ using System.Text;
 using AIHappey.Common.Extensions;
 using System.Net.Mime;
 using System.Dynamic;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.XAI;
 
 namespace AIHappey.Core.Providers.xAI;
 

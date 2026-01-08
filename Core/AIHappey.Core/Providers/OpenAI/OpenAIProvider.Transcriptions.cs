@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using OpenAI.Audio;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;

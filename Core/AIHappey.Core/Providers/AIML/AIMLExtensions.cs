@@ -1,6 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.AIML;
 
 namespace AIHappey.Core.Providers.AIML;
 

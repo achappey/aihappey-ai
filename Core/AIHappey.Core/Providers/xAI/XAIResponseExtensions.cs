@@ -1,5 +1,5 @@
 using System.Text.Json;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.XAI;
 
 namespace AIHappey.Core.Providers.xAI;
 

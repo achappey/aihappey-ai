@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Perplexity;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.Perplexity.Models;
 using ModelContextProtocol.Protocol;

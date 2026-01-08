@@ -3,6 +3,13 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model;
 
+/// <summary>
+/// Vercel Model Gateway v3 compatible request DTO for <c>POST /v1/audio/speech</c>.
+/// <para>
+/// This JSON shape is a public, contract-locked surface. Do not rename properties, change casing,
+/// alter types, or restructure this DTO.
+/// </para>
+/// </summary>
 public class SpeechRequest
 {
     [JsonPropertyName("model")]
@@ -31,14 +38,24 @@ public class SpeechRequest
 
 }
 
+/// <summary>
+/// Vercel Model Gateway v3 compatible response DTO for <c>POST /v1/audio/speech</c>.
+/// </summary>
 public class SpeechResponse
 {
+    [JsonPropertyName("providerMetadata")]
     public Dictionary<string, JsonElement>? ProviderMetadata { get; set; }
 
+    /// <summary>
+    /// Generated audio. Typically a data-url string (<c>data:audio/...;base64,...</c>) but may be provider-dependent.
+    /// </summary>
+    [JsonPropertyName("audio")]
     public object Audio { get; set; } = null!;
 
+    [JsonPropertyName("warnings")]
     public IEnumerable<object> Warnings { get; set; } = [];
 
+    [JsonPropertyName("response")]
     public ResponseData Response { get; set; } = default!;
 
 }

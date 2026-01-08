@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Groq;
 using System.Globalization;
 
 namespace AIHappey.Core.Providers.Groq;

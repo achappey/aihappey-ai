@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.NScale;
 
 namespace AIHappey.Core.Providers.Nscale;
 

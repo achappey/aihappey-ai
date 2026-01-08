@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.Mistral;
 
 namespace AIHappey.Core.Providers.Mistral;
 

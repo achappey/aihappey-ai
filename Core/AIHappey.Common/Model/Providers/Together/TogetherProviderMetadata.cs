@@ -1,0 +1,10 @@
+using System.Text.Json.Serialization;
+
+namespace AIHappey.Common.Model.Providers.Together;
+
+public sealed class TogetherProviderMetadata
+{
+    [JsonPropertyName("reasoning_effort")]
+    public string? ReasoningEffort { get; set; }
+}
+

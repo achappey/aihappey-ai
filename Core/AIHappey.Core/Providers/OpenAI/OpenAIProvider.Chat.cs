@@ -2,7 +2,7 @@ using OpenAI.Responses;
 using AIHappey.Common.Model;
 using OpenAI.Files;
 using Microsoft.AspNetCore.StaticFiles;
-using AIHappey.Common.Model.Providers;
+using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 
