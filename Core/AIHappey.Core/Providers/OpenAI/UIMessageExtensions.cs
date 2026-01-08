@@ -13,7 +13,7 @@ public static class UIMessageExtensions
     public static ResponseTextOptions? ToTextOptions(this ChatRequest chatRequest)
     {
         if (chatRequest.ResponseFormat == null) return null;
-        
+
         var schema = chatRequest.ResponseFormat?.GetJSONSchema();
         var format = schema != null
             ?
@@ -252,8 +252,11 @@ public static class UIMessageExtensions
             // USER → exactly one response item
             //----------------------------------------------------------------------
             case Role.user:
-                yield return ResponseItem.CreateUserMessageItem(
-                    message.Parts.ToInputMessageResponseContentParts());
+                var parts = message.Parts.ToInputMessageResponseContentParts();
+                if (parts.Any())
+                    yield return ResponseItem.CreateUserMessageItem(
+                        parts);
+
                 yield break;
             case Role.system:
                 yield return ResponseItem.CreateSystemMessageItem(
