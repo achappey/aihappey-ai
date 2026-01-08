@@ -56,6 +56,7 @@ public class ProviderTools
             JsonSchema? schema = aiProviderId.ToLowerInvariant() switch
             {
                 "openai" => generator.Generate(typeof(OpenAiProviderMetadata)),
+                "deepinfra" => generator.Generate(typeof(OpenAiProviderMetadata)),
                 "anthropic" => generator.Generate(typeof(AnthropicProviderMetadata)),
                 "google" => generator.Generate(typeof(GoogleProviderMetadata)),
                 "cohere" => generator.Generate(typeof(CohereProviderMetadata)),

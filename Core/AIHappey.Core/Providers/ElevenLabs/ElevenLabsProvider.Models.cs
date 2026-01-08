@@ -47,6 +47,9 @@ public partial class ElevenLabsProvider
         models.Add(new Model { Id = "scribe_v1".ToModelId(GetIdentifier()), Name = "scribe_v1", OwnedBy = owner, Type = "transcription" });
         models.Add(new Model { Id = "scribe_v1_experimental".ToModelId(GetIdentifier()), Name = "scribe_v1_experimental", OwnedBy = owner, Type = "transcription" });
 
+        models.Add(new Model { Id = "music_v1".ToModelId(GetIdentifier()), 
+            Name = "music_v1", OwnedBy = owner, Type = "speech" });
+
         return models;
     }
 }

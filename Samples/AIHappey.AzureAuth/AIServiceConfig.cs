@@ -30,6 +30,7 @@ public class AIServiceConfig
     public ProviderConfig? CanopyWave { get; set; }
     public ProviderConfig? NVIDIA { get; set; }
     public ProviderConfig? Runware { get; set; }
+    public ProviderConfig? DeepInfra { get; set; }
     public ProviderConfig? Inferencenet { get; set; }
 }
 

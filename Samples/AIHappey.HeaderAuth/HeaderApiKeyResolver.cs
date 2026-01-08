@@ -34,6 +34,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["nvidia"] = "X-NVIDIA-Key",
             ["runware"] = "X-Runware-Key",
             ["canopywave"] = "X-CanopyWave-Key",
+            ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
         };
 
