@@ -17,9 +17,7 @@ public partial class ElevenLabsProvider
 
         var modelId = !string.IsNullOrWhiteSpace(request.Model)
             ? request.Model
-            : !string.IsNullOrWhiteSpace(metadata?.ModelId)
-                ? metadata!.ModelId!
-                : "scribe_v1";
+            : "scribe_v1";
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
         using var form = new MultipartFormDataContent();

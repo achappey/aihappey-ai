@@ -25,8 +25,6 @@ public partial class ElevenLabsProvider
         var query = new List<string>();
         if (metadata?.EnableLogging is not null)
             query.Add($"enable_logging={metadata.EnableLogging.Value.ToString().ToLowerInvariant()}");
-        if (metadata?.OptimizeStreamingLatency is not null)
-            query.Add($"optimize_streaming_latency={metadata.OptimizeStreamingLatency.Value}");
         if (!string.IsNullOrWhiteSpace(outputFormat))
             query.Add($"output_format={Uri.EscapeDataString(outputFormat)}");
 
@@ -38,9 +36,20 @@ public partial class ElevenLabsProvider
             ["model_id"] = request.Model,
         };
 
-        var languageCode = request.Language ?? metadata?.LanguageCode;
-        if (!string.IsNullOrWhiteSpace(languageCode))
-            body["language_code"] = languageCode;
+        if (!string.IsNullOrWhiteSpace(request.Language))
+            body["language_code"] = request.Language;
+
+        if (!string.IsNullOrWhiteSpace(metadata?.PreviousText))
+            body["previous_text"] = metadata.PreviousText;
+
+        if (!string.IsNullOrWhiteSpace(metadata?.NextText))
+            body["next_text"] = metadata?.NextText;
+
+        if (!string.IsNullOrWhiteSpace(metadata?.ApplyTextNormalization))
+            body["apply_text_normalization"] = metadata?.ApplyTextNormalization;
+
+        if (metadata?.ApplyLanguageTextNormalization is not null)
+            body["apply_language_text_normalization"] = metadata.ApplyLanguageTextNormalization.Value;
 
         if (metadata?.Seed is not null)
             body["seed"] = metadata.Seed.Value;

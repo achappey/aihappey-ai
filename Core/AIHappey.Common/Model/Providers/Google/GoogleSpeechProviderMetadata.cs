@@ -4,9 +4,6 @@ namespace AIHappey.Common.Model.Providers.Google;
 
 public sealed class GoogleSpeechProviderMetadata
 {
-    [JsonPropertyName("ttsModel")]
-    public string? TtsModel { get; set; }
-
     [JsonPropertyName("voice")]
     public string? Voice { get; set; }
 

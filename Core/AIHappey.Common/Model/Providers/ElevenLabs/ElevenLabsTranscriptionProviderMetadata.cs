@@ -4,11 +4,6 @@ namespace AIHappey.Common.Model.Providers.ElevenLabs;
 
 public sealed class ElevenLabsTranscriptionProviderMetadata
 {
-    /// <summary>
-    /// Form field <c>model_id</c> e.g. <c>scribe_v1</c>.
-    /// </summary>
-    [JsonPropertyName("model_id")]
-    public string? ModelId { get; set; }
 
     [JsonPropertyName("enable_logging")]
     public bool? EnableLogging { get; set; }

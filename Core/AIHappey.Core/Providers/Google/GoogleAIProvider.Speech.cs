@@ -34,11 +34,6 @@ public partial class GoogleAIProvider
 
         var metadata = request.GetSpeechProviderMetadata<GoogleSpeechProviderMetadata>(GetIdentifier());
 
-        var ttsModel =
-            metadata?.TtsModel
-            ?? request.Model
-            ?? "gemini-2.5-flash-preview-tts";
-
         var voice =
             request.Voice
             ?? metadata?.Voice
@@ -78,10 +73,10 @@ public partial class GoogleAIProvider
             };
         }
 
-        var modelClient = googleAI.GenerativeModel(ttsModel);
+        var modelClient = googleAI.GenerativeModel(request.Model);
         var item = await modelClient.GenerateContent(new GenerateContentRequest
         {
-            Model = ttsModel,
+            Model = request.Model,
             Contents = [new Content(request.Text)],
             GenerationConfig = new()
             {
@@ -112,7 +107,7 @@ public partial class GoogleAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = ttsModel,
+                ModelId = request.Model,
             }
         };
     }

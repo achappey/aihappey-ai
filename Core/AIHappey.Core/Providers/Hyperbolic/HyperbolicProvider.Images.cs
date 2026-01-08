@@ -53,6 +53,16 @@ public partial class HyperbolicProvider : IModelProvider
             payload["negative_prompt"] = metadata?.NegativePrompt;
         }
 
+        if (metadata?.Steps is not null)
+        {
+            payload["steps"] = metadata?.Steps;
+        }
+
+        if (metadata?.CfgScale is not null)
+        {
+            payload["cfg_scale"] = metadata?.CfgScale;
+        }
+
         // img-to-img
         if (imageRequest.Files?.Any() == true)
         {
@@ -95,7 +105,7 @@ public partial class HyperbolicProvider : IModelProvider
         return new ImageResponse
         {
             Images = images,
-            Response = new ()
+            Response = new()
             {
                 ModelId = imageRequest.Model,
                 Timestamp = now

@@ -16,16 +16,22 @@ public sealed class ElevenLabsSpeechProviderMetadata
     [JsonPropertyName("enable_logging")]
     public bool? EnableLogging { get; set; }
 
-    [JsonPropertyName("optimize_streaming_latency")]
-    public int? OptimizeStreamingLatency { get; set; }
-
-    [JsonPropertyName("language_code")]
-    public string? LanguageCode { get; set; }
-
     [JsonPropertyName("seed")]
     public uint? Seed { get; set; }
 
     [JsonPropertyName("voice_settings")]
     public ElevenLabsVoiceSettings? VoiceSettings { get; set; }
+
+    [JsonPropertyName("previous_text")]
+    public string? PreviousText { get; set; }
+
+    [JsonPropertyName("next_text")]
+    public string? NextText { get; set; }
+
+    [JsonPropertyName("apply_text_normalization")]
+    public string? ApplyTextNormalization { get; set; } // auto | on | off
+
+    [JsonPropertyName("apply_language_text_normalization")]
+    public bool? ApplyLanguageTextNormalization { get; set; } 
 }
 
