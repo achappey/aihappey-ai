@@ -39,7 +39,7 @@ public static class CompletionsExtensions
             ["model"] = chatRequest.Model,
             ["stream"] = true,
             ["stream_options"] = new { include_usage = true },
-            ["max_tokens"] = chatRequest.MaxTokens,
+            ["max_tokens"] = chatRequest.MaxOutputTokens,
             ["temperature"] = chatRequest.Temperature,
             ["response_format"] = chatRequest.ResponseFormat,
             ["messages"] = messages

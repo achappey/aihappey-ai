@@ -28,7 +28,7 @@ public partial class CohereProvider : IModelProvider
             model = chatRequest.Model,
             stream = true,
             messages = chatRequest.Messages.ToMessages(),
-            max_tokens = chatRequest.MaxTokens,
+            max_tokens = chatRequest.MaxOutputTokens,
             temperature = chatRequest.Temperature,
             p = chatRequest.TopP,
             thinking = metadata?.Thinking,

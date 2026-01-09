@@ -28,14 +28,17 @@ public class ChatRequest
     [JsonPropertyName("toolChoice")]
     public string? ToolChoice { get; set; }
 
+    [JsonPropertyName("maxToolCalls")]
+    public int? MaxToolCalls { get; set; }
+
     [JsonPropertyName("temperature")]
     public float Temperature { get; set; } = 1;
 
     [JsonPropertyName("topP")]
     public float? TopP { get; set; }
 
-    [JsonPropertyName("maxTokens")]
-    public int? MaxTokens { get; set; }
+    [JsonPropertyName("maxOutputTokens")]
+    public int? MaxOutputTokens { get; set; }
 
     [JsonPropertyName("tools")]
     public List<Tool>? Tools { get; set; } = [];

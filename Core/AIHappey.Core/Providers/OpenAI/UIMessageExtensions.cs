@@ -46,6 +46,8 @@ public static class UIMessageExtensions
             Temperature = chatRequest.Temperature,
             StoredOutputEnabled = false,
             StreamingEnabled = true,
+            MaxOutputTokenCount = chatRequest.MaxOutputTokens,
+            MaxToolCallCount = chatRequest.MaxToolCalls,
             TextOptions = chatRequest.ToTextOptions(),
             Instructions = metadata?.Instructions,
             ParallelToolCallsEnabled = metadata?.ParallelToolCalls,

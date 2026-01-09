@@ -73,21 +73,25 @@ public static partial class AnthropicExtensions
         var metadata = chatRequest.GetProviderMetadata<AnthropicProviderMetadata>(AnthropicConstants.AnthropicIdentifier);
         var tools = chatRequest.Tools?.ToTools().WithDefaultTools(metadata) ?? [];
 
-        return new()
+        ANT.Messaging.MessageParameters result = new()
         {
             Messages = [.. messages],
             Tools = [.. tools],
             Container = metadata?.CodeExecution != null
-                && metadata?.Container?.Skills?.Any() == true ?
+                && metadata?.Container?.Skills?.Count > 0 ?
                 metadata?.Container : null,
             MCPServers = [.. metadata?.MCPServers ?? []],
-            MaxTokens = chatRequest.MaxTokens ??
-                (metadata?.Thinking != null ?
-                metadata.Thinking.BudgetTokens * 2 : 4096),
             Thinking = metadata?.Thinking,
             Model = model,
             System = systemInstructions != null ? [.. systemInstructions] : []
         };
+
+        if (chatRequest.MaxOutputTokens is not null)
+        {
+            result.MaxTokens = chatRequest.MaxOutputTokens.Value;
+        }
+
+        return result;
     }
 
 }

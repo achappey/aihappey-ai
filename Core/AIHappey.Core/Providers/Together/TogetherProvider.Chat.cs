@@ -24,7 +24,7 @@ public partial class TogetherProvider : IModelProvider
         {
             model = chatRequest.Model,
             stream = true,
-            max_tokens = chatRequest.MaxTokens,
+            max_tokens = chatRequest.MaxOutputTokens,
             context_length_exceeded_behavior = "truncate",
             temperature = chatRequest.Temperature,
             response_format = chatRequest.ResponseFormat,

@@ -89,7 +89,7 @@ public partial class MistralProvider : IModelProvider
             ["completion_args"] = new JsonObject
             {
                 ["temperature"] = chatRequest.Temperature,
-                ["max_tokens"] = chatRequest.MaxTokens
+                ["max_tokens"] = chatRequest.MaxOutputTokens
             }
         };
 

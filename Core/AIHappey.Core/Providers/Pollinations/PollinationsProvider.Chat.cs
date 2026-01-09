@@ -42,7 +42,7 @@ public partial class PollinationsProvider : IModelProvider
         {
             model = chatRequest.Model,
             stream = true,
-            max_tokens = chatRequest.MaxTokens,
+            max_tokens = chatRequest.MaxOutputTokens,
             temperature = chatRequest.Temperature,
             reasoning_effort = metadata?.ReasoningEffort,
             /*      tools = chatRequest.Tools?.Select(a => new
