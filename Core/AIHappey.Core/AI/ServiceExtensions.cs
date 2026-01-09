@@ -19,6 +19,7 @@ using AIHappey.Core.Providers.Nscale;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Providers.Perplexity;
 using AIHappey.Core.Providers.Pollinations;
+using AIHappey.Core.Providers.Nebius;
 using AIHappey.Core.Providers.Runware;
 using AIHappey.Core.Providers.Runway;
 using AIHappey.Core.Providers.SambaNova;
@@ -26,6 +27,7 @@ using AIHappey.Core.Providers.Scaleway;
 using AIHappey.Core.Providers.StabilityAI;
 using AIHappey.Core.Providers.Together;
 using AIHappey.Core.Providers.Telnyx;
+using AIHappey.Core.Providers.Tinfoil;
 using AIHappey.Core.Providers.xAI;
 using AIHappey.Core.Providers.Zai;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +39,7 @@ public static class ServiceExtensions
     public static void AddProviders(this IServiceCollection services)
     {
         services.AddSingleton<IModelProvider, OpenAIProvider>();
+        services.AddSingleton<IModelProvider, TinfoilProvider>();
         services.AddSingleton<IModelProvider, DeepInfraProvider>();
         services.AddSingleton<IModelProvider, NvidiaProvider>();
         services.AddSingleton<IModelProvider, CanopyWaveProvider>();
@@ -66,6 +69,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ZaiProvider>();
         services.AddSingleton<IModelProvider, ElevenLabsProvider>();
         services.AddSingleton<IModelProvider, TelnyxProvider>();
+        services.AddSingleton<IModelProvider, NebiusProvider>();
 
     }
 

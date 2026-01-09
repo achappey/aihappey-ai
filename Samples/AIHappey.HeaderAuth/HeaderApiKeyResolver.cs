@@ -32,8 +32,10 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["telnyx"] = "X-Telnyx-Key",
             ["alibaba"] = "X-Alibaba-Key",
             ["nvidia"] = "X-NVIDIA-Key",
+            ["nebius"] = "X-Nebius-Key",
             ["runware"] = "X-Runware-Key",
             ["canopywave"] = "X-CanopyWave-Key",
+            ["tinfoil"] = "X-Tinfoil-Key",
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
         };

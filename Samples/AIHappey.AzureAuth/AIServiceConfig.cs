@@ -32,6 +32,8 @@ public class AIServiceConfig
     public ProviderConfig? Runware { get; set; }
     public ProviderConfig? DeepInfra { get; set; }
     public ProviderConfig? Inferencenet { get; set; }
+    public ProviderConfig? Tinfoil { get; set; }
+    public ProviderConfig? Nebius { get; set; }
 }
 
 public class ProviderConfig

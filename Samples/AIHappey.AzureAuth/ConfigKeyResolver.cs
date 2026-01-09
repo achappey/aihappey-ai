@@ -36,7 +36,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "alibaba" => _config.Alibaba?.ApiKey,
             "canopywave" => _config.CanopyWave?.ApiKey,
             "nvidia" => _config.NVIDIA?.ApiKey,
+            "tinfoil" => _config.Tinfoil?.ApiKey,            
             "runware" => _config.Runware?.ApiKey,
+            "nebius" => _config.Nebius?.ApiKey,
             "deepinfra" => _config.DeepInfra?.ApiKey,
             "inferencenet" => _config.Inferencenet?.ApiKey,
             _ => null
