@@ -31,9 +31,12 @@ public class AIServiceConfig
     public ProviderConfig? NVIDIA { get; set; }
     public ProviderConfig? Runware { get; set; }
     public ProviderConfig? DeepInfra { get; set; }
+    public ProviderConfig? DeepSeek { get; set; }
     public ProviderConfig? Inferencenet { get; set; }
+    public ProviderConfig? CloudRift { get; set; }
     public ProviderConfig? Tinfoil { get; set; }
     public ProviderConfig? Nebius { get; set; }
+    public ProviderConfig? Baseten { get; set; }
 }
 
 public class ProviderConfig

@@ -16,7 +16,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "google" => _config.Google?.ApiKey,
             "cohere" => _config.Cohere?.ApiKey,
             "together" => _config.Together?.ApiKey,
-            "runway" => _config.Runway?.ApiKey, 
+            "runway" => _config.Runway?.ApiKey,
             "aiml" => _config.AIML?.ApiKey,
             "xai" => _config.XAI?.ApiKey,
             "nscale" => _config.Nscale?.ApiKey,
@@ -36,11 +36,14 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "alibaba" => _config.Alibaba?.ApiKey,
             "canopywave" => _config.CanopyWave?.ApiKey,
             "nvidia" => _config.NVIDIA?.ApiKey,
-            "tinfoil" => _config.Tinfoil?.ApiKey,            
+            "tinfoil" => _config.Tinfoil?.ApiKey,
             "runware" => _config.Runware?.ApiKey,
             "nebius" => _config.Nebius?.ApiKey,
             "deepinfra" => _config.DeepInfra?.ApiKey,
+            "deepseek" => _config.DeepSeek?.ApiKey,
             "inferencenet" => _config.Inferencenet?.ApiKey,
+            "cloudrift" => _config.CloudRift?.ApiKey,
+            "baseten" => _config.Baseten?.ApiKey,
             _ => null
         };
 }

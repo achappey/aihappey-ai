@@ -123,6 +123,7 @@ No appsettings keys are required for providers. Instead send headers like:
 - `X-Groq-Key`
 - `X-xAI-Key`
 - `X-Alibaba-Key`
+- `X-Baseten-Key`
 
 The full mapping is defined in [`HeaderApiKeyResolver`](Samples/AIHappey.HeaderAuth/HeaderApiKeyResolver.cs:5).
 

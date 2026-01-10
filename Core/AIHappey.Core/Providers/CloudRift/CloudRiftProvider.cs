@@ -1,0 +1,54 @@
+using System.Net.Http.Headers;
+using AIHappey.Common.Model;
+using AIHappey.Core.AI;
+using ModelContextProtocol.Protocol;
+using OpenAI.Responses;
+
+namespace AIHappey.Core.Providers.CloudRift;
+
+/// <summary>
+/// CloudRift Inference (OpenAI-compatible).
+/// Base URL: https://inference.cloudrift.ai/v1/
+/// - POST chat/completions
+/// </summary>
+public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    : IModelProvider
+{
+    private readonly HttpClient _client = CreateClient(httpClientFactory);
+
+    private static HttpClient CreateClient(IHttpClientFactory factory)
+    {
+        var client = factory.CreateClient();
+        client.BaseAddress = new Uri("https://inference.cloudrift.ai/v1/");
+        return client;
+    }
+
+    public string GetIdentifier() => "cloudrift";
+
+    private void ApplyAuthHeader()
+    {
+        var key = keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException("No CloudRift API key.");
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+    // Responses API is not implemented for CloudRift in this repo.
+    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+}
+

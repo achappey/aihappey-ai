@@ -34,10 +34,13 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["nvidia"] = "X-NVIDIA-Key",
             ["nebius"] = "X-Nebius-Key",
             ["runware"] = "X-Runware-Key",
+            ["deepseek"] = "X-DeepSeek-Key",
             ["canopywave"] = "X-CanopyWave-Key",
             ["tinfoil"] = "X-Tinfoil-Key",
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
+            ["cloudrift"] = "X-CloudRift-Key",
+            ["baseten"] = "X-Baseten-Key",
         };
 
     public string? Resolve(string provider)
