@@ -37,10 +37,13 @@ public class AIServiceConfig
     public ProviderConfig? Tinfoil { get; set; }
     public ProviderConfig? Nebius { get; set; }
     public ProviderConfig? Baseten { get; set; }
+    public ProviderConfig? Azure { get; set; }
 }
 
 public class ProviderConfig
 {
     public string ApiKey { get; set; } = null!;
+
+    public string? Endpoint { get; set; } = null!;
 }
 

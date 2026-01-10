@@ -34,6 +34,7 @@ using AIHappey.Core.Providers.Telnyx;
 using AIHappey.Core.Providers.Tinfoil;
 using AIHappey.Core.Providers.xAI;
 using AIHappey.Core.Providers.Zai;
+using AIHappey.Core.Providers.Azure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AIHappey.Core.AI;
@@ -78,6 +79,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TelnyxProvider>();
         services.AddSingleton<IModelProvider, NebiusProvider>();
         services.AddSingleton<IModelProvider, BasetenProvider>();
+        services.AddSingleton<IModelProvider, AzureProvider>();
 
     }
 

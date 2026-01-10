@@ -39,16 +39,10 @@ public partial class StabilityAIProvider : IModelProvider
             ?? metadata?.OutputFormat
             ?? "mp3";
 
-        var modelForApi =
-            metadata?.Model
-            ?? (request.Model?.StartsWith("stable-audio", StringComparison.OrdinalIgnoreCase) == true
-                ? request.Model
-                : "stable-audio-2");
-
         using var form = new MultipartFormDataContent();
         form.Add(NamedField("prompt", request.Text));
         form.Add(NamedField("output_format", outputFormat));
-        form.Add(NamedField("model", modelForApi));
+        form.Add(NamedField("model", request.Model));
 
         if (metadata?.DurationSeconds is not null)
             form.Add(NamedField(

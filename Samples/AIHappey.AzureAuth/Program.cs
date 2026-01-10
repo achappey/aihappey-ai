@@ -6,6 +6,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.MCP;
 using AIHappey.Core.MCP;
 using AIHappey.Telemetry.MCP;
+using AIHappey.Core.Providers.Azure;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,9 @@ builder.WebHost.ConfigureKestrel(o =>
 // Add services to the container.
 builder.Services.Configure<AIServiceConfig>(
     builder.Configuration.GetSection("AIServices"));
+
+builder.Services.Configure<AzureProviderOptions>(
+    builder.Configuration.GetSection("AIServices:Azure"));
 
 var telemetryDb = builder.Configuration.GetSection("TelemetryDatabase").Get<string>();
 

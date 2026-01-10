@@ -44,6 +44,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "inferencenet" => _config.Inferencenet?.ApiKey,
             "cloudrift" => _config.CloudRift?.ApiKey,
             "baseten" => _config.Baseten?.ApiKey,
+            "azure" => _config.Azure?.ApiKey,
             _ => null
         };
 }
