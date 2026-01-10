@@ -259,4 +259,8 @@ public partial class NovitaProvider : IModelProvider
         return (status, reason, audioUrl);
     }
 
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -340,6 +340,41 @@ Providers are implemented under [`Core/AIHappey.Core/Providers/`](Core/AIHappey.
 
 The default sample DI registration includes (non-exhaustive): OpenAI, Anthropic, Google, Mistral, Groq, xAI, Together, Cohere, Jina, Runway, and more (see [`ServiceExtensions.AddProviders()`](Core/AIHappey.Core/AI/ServiceExtensions.cs:29)).
 
+### asyncAI (Text-to-Speech)
+
+- Provider id: `asyncai`
+- Base URL: `https://api.async.ai/`
+- Endpoint used: `POST /text_to_speech`
+- Auth headers:
+  - `x-api-key: <key>`
+  - `version: v1`
+
+**Models** (use provider-prefixed model ids):
+
+- `asyncai/asyncflow_v2.0`
+- `asyncai/asyncflow_multilingual_v1.0`
+
+**Minimal request** (HTTP `POST /v1/audio/speech`):
+
+```json
+{
+  "model": "asyncai/asyncflow_multilingual_v1.0",
+  "text": "Hello from asyncAI.",
+  "voice": "e0f39dc4-f691-4e78-bba5-5c636692cc04",
+  "outputFormat": "mp3",
+  "providerOptions": {
+    "asyncai": {
+      "output_format": { "sample_rate": 44100, "bit_rate": 192000 },
+      "language": "en",
+      "speed_control": 1.0,
+      "stability": 50
+    }
+  }
+}
+```
+
+Provider-specific options are deserialized to [`AsyncAISpeechProviderMetadata`](Core/AIHappey.Common/Model/Providers/AsyncAI/AsyncAISpeechProviderMetadata.cs:1).
+
 ### NVIDIA (NIM for LLMs)
 
 - Provider id: `nvidia`

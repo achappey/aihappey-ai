@@ -160,5 +160,10 @@ public partial class AlibabaProvider : IModelProvider
             }
         ]);
     }
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

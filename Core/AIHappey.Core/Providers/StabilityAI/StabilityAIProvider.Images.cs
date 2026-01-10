@@ -222,5 +222,8 @@ public partial class StabilityAIProvider : IModelProvider
         return raw;
     }
 
-
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

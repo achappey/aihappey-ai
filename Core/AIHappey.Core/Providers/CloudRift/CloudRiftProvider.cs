@@ -50,5 +50,10 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

@@ -4,26 +4,29 @@ using AIHappey.Core.AI;
 using OpenAI.Responses;
 using OAIC = OpenAI.Chat;
 
-namespace AIHappey.Core.Providers.ElevenLabs;
+namespace AIHappey.Core.Providers.AsyncAI;
 
-public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     : IModelProvider
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient();
 
-    public string GetIdentifier() => "elevenlabs";
+    public string GetIdentifier() => "asyncai";
 
     private void ApplyAuthHeader()
     {
         var key = keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No ElevenLabs API key.");
+            throw new InvalidOperationException("No asyncAI API key.");
 
-        _client.BaseAddress ??= new Uri("https://api.elevenlabs.io/");
+        _client.BaseAddress ??= new Uri("https://api.async.ai/");
 
-        _client.DefaultRequestHeaders.Remove("xi-api-key");
-        _client.DefaultRequestHeaders.Add("xi-api-key", key);
+        _client.DefaultRequestHeaders.Remove("x-api-key");
+        _client.DefaultRequestHeaders.Add("x-api-key", key);
+
+        _client.DefaultRequestHeaders.Remove("version");
+        _client.DefaultRequestHeaders.Add("version", "v1");
     }
 
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
@@ -41,19 +44,14 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (chatRequest.Model.Contains("scribe") == true)
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
             yield return p;
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)

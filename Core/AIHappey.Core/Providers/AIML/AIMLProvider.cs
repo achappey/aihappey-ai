@@ -104,7 +104,6 @@ public partial class AIMLProvider : IModelProvider
 
         return models.Where(a => a.Type != "document"
             && a.Type != "language-completion");
-        //  && a.Type != "stt");
     }
 
 

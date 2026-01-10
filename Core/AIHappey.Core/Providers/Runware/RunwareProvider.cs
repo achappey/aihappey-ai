@@ -325,5 +325,10 @@ public sealed partial class RunwareProvider(
         await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken: cancellationToken))
             yield return update;
     }
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

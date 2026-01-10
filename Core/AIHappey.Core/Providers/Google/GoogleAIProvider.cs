@@ -52,4 +52,9 @@ public partial class GoogleAIProvider(IApiKeyResolver keyResolver, ILogger<Googl
     {
         throw new NotImplementedException();
     }
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

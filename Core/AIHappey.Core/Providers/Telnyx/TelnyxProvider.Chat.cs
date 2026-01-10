@@ -8,6 +8,11 @@ namespace AIHappey.Core.Providers.Telnyx;
 
 public partial class TelnyxProvider : IModelProvider
 {
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

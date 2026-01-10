@@ -28,6 +28,7 @@ using AIHappey.Core.Providers.Runway;
 using AIHappey.Core.Providers.SambaNova;
 using AIHappey.Core.Providers.Scaleway;
 using AIHappey.Core.Providers.StabilityAI;
+using AIHappey.Core.Providers.Replicate;
 using AIHappey.Core.Providers.Baseten;
 using AIHappey.Core.Providers.Together;
 using AIHappey.Core.Providers.Telnyx;
@@ -35,6 +36,7 @@ using AIHappey.Core.Providers.Tinfoil;
 using AIHappey.Core.Providers.xAI;
 using AIHappey.Core.Providers.Zai;
 using AIHappey.Core.Providers.Azure;
+using AIHappey.Core.Providers.AsyncAI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AIHappey.Core.AI;
@@ -78,8 +80,10 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ElevenLabsProvider>();
         services.AddSingleton<IModelProvider, TelnyxProvider>();
         services.AddSingleton<IModelProvider, NebiusProvider>();
+        services.AddSingleton<IModelProvider, ReplicateProvider>();
         services.AddSingleton<IModelProvider, BasetenProvider>();
         services.AddSingleton<IModelProvider, AzureProvider>();
+        services.AddSingleton<IModelProvider, AsyncAIProvider>();
 
     }
 

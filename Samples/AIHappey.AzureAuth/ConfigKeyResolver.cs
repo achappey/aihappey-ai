@@ -45,6 +45,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "cloudrift" => _config.CloudRift?.ApiKey,
             "baseten" => _config.Baseten?.ApiKey,
             "azure" => _config.Azure?.ApiKey,
+            "asyncai" => _config.AsyncAI?.ApiKey,
+            "replicate" => _config.Replicate?.ApiKey,
             _ => null
         };
 }

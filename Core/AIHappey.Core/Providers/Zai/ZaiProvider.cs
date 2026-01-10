@@ -74,6 +74,11 @@ public partial class ZaiProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> ZaiLanguageModels =>
 [
     new()

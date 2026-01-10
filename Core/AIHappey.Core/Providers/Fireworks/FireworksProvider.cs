@@ -72,6 +72,11 @@ public partial class FireworksProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> FireworksModels =>
         [
             // ===== MiniMax =====

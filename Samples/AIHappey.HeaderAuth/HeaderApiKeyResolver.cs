@@ -40,6 +40,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
             ["cloudrift"] = "X-CloudRift-Key",
+            ["asyncai"] = "X-AsyncAI-Key",
+            ["replicate"] = "X-Replicate-Key",
             ["baseten"] = "X-Baseten-Key",
         };
 

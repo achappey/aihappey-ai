@@ -425,4 +425,9 @@ public partial class AnthropicProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

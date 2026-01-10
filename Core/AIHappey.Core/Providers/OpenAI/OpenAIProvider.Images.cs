@@ -165,4 +165,9 @@ public partial class OpenAIProvider : IModelProvider
             }
         };
     }
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -1,44 +1,47 @@
 using System.Net.Http.Headers;
+using System.Net.Mime;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
 using OAIC = OpenAI.Chat;
 using OpenAI.Responses;
+using System.Runtime.CompilerServices;
 
-namespace AIHappey.Core.Providers.DeepInfra;
+namespace AIHappey.Core.Providers.Replicate;
 
 /// <summary>
-/// DeepInfra is OpenAI Chat Completions compatible.
-/// Endpoint: POST https://api.deepinfra.com/v1/openai/chat/completions
-/// Images endpoint: POST https://api.deepinfra.com/v1/openai/images/generations
+/// Replicate (sync-mode) images provider.
+/// Base URL: https://api.replicate.com/
+/// Uses: POST /v1/models/{owner}/{model}/predictions with Prefer: wait=60.
 /// </summary>
-public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
-    : IModelProvider
+public sealed partial class ReplicateProvider(
+    IApiKeyResolver keyResolver,
+    IHttpClientFactory httpClientFactory) : IModelProvider
 {
+    private readonly IApiKeyResolver _keyResolver = keyResolver;
+
     private readonly HttpClient _client = CreateClient(httpClientFactory);
 
-    private static HttpClient CreateClient(IHttpClientFactory factory)
+    private static HttpClient CreateClient(IHttpClientFactory httpClientFactory)
     {
-        var client = factory.CreateClient();
-        client.BaseAddress = new Uri("https://api.deepinfra.com/");
+        var client = httpClientFactory.CreateClient();
+        client.BaseAddress = new Uri("https://api.replicate.com/");
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
         return client;
     }
 
-    public string GetIdentifier() => "deepinfra";
+    public string GetIdentifier() => "replicate";
 
     private void ApplyAuthHeader()
     {
-        var key = keyResolver.Resolve(GetIdentifier());
-
+        var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No DeepInfra API key.");
+            throw new InvalidOperationException("No Replicate API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    // ChatCompletions endpoint is not used by the Vercel UI stream (`/api/chat`).
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
@@ -48,16 +51,21 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(
-        ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
-  
+
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
+
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken: cancellationToken))
+            yield return update;
+    }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {

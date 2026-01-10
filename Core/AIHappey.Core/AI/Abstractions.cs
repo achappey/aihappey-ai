@@ -22,11 +22,13 @@ public interface IModelProvider
 
     IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default);
 
-    Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default);
+    Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default);
 
-    Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default);
+    Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default);
 
-    Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default);
+    Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default);
+
+    Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default);
 
 }
 
