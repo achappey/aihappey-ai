@@ -72,11 +72,6 @@ public partial class FireworksProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public static IReadOnlyList<Model> FireworksModels =>
         [
             // ===== MiniMax =====
@@ -122,6 +117,12 @@ public partial class FireworksProvider : IModelProvider
 
             new() { Id = "fireworks/whisper-v3", Name = "Whisper v3", Type = "transcription", OwnedBy = "openai" },
             new() { Id = "fireworks/whisper-v3-turbo",  Name = "Whisper v3 Turbo",  Type = "transcription", OwnedBy = "openai" },
+
+            // ===== Qwen3 Rerankers =====
+            new() { Id = "accounts/fireworks/models/qwen3-reranker-0.6b", Name = "Qwen3 Reranker 0.6B", Type = "reranking", OwnedBy = "qwen" },
+            new() { Id = "accounts/fireworks/models/qwen3-reranker-4b",   Name = "Qwen3 Reranker 4B",   Type = "reranking", OwnedBy = "qwen" },
+            new() { Id = "accounts/fireworks/models/qwen3-reranker-8b",   Name = "Qwen3 Reranker 8B",   Type = "reranking", OwnedBy = "qwen" },
+
 
         ];
 

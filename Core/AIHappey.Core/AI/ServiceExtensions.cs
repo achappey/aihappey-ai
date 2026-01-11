@@ -38,6 +38,8 @@ using AIHappey.Core.Providers.Zai;
 using AIHappey.Core.Providers.Azure;
 using AIHappey.Core.Providers.AsyncAI;
 using Microsoft.Extensions.DependencyInjection;
+using AIHappey.Core.Providers.VoyageAI;
+using AIHappey.Core.Providers.ContextualAI;
 
 namespace AIHappey.Core.AI;
 
@@ -84,6 +86,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, BasetenProvider>();
         services.AddSingleton<IModelProvider, AzureProvider>();
         services.AddSingleton<IModelProvider, AsyncAIProvider>();
+        services.AddSingleton<IModelProvider, VoyageAIProvider>();
+        services.AddSingleton<IModelProvider, ContextualAIProvider>();
 
     }
 

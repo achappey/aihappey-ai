@@ -1,0 +1,104 @@
+using AIHappey.Core.AI;
+using OAIC = OpenAI.Chat;
+using ModelContextProtocol.Protocol;
+using System.Net.Http.Headers;
+using AIHappey.Core.Models;
+using AIHappey.Common.Model.ChatCompletions;
+using OpenAI.Responses;
+using AIHappey.Common.Model;
+
+namespace AIHappey.Core.Providers.VoyageAI;
+
+public partial class VoyageAIProvider : IModelProvider
+{
+    private readonly IApiKeyResolver _keyResolver;
+
+    private readonly HttpClient _client;
+
+    public VoyageAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    {
+        _keyResolver = keyResolver;
+        _client = httpClientFactory.CreateClient();
+        _client.BaseAddress = new Uri("https://api.voyageai.com/");
+    }
+
+
+    private void ApplyAuthHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException($"No {nameof(VoyageAI)} API key.");
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+
+
+    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public string GetIdentifier() => "voyageai";
+
+    public async Task<IEnumerable<Model>> ListModels(
+     CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        var owner = nameof(VoyageAI);
+
+        return await Task.FromResult<IEnumerable<Model>>(
+        [
+        new Model
+        {
+            Id = "rerank-2.5".ToModelId(GetIdentifier()),
+            Name = "rerank-2.5",
+            OwnedBy = owner,
+        },
+
+        new Model
+        {
+            Id = "rerank-2.5-lite".ToModelId(GetIdentifier()),
+            Name = "rerank-2.5-lite",
+            OwnedBy = owner,
+        },
+    ]);
+    }
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+}

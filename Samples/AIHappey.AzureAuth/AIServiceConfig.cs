@@ -39,6 +39,8 @@ public class AIServiceConfig
     public ProviderConfig? Baseten { get; set; }
     public ProviderConfig? AsyncAI { get; set; }
     public ProviderConfig? Replicate { get; set; }
+    public ProviderConfig? VoyageAI { get; set; }
+    public ProviderConfig? ContextualAI { get; set; }
     public ProviderConfig? Azure { get; set; }
 }
 

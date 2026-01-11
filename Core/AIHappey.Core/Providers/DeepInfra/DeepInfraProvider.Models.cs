@@ -6,9 +6,11 @@ namespace AIHappey.Core.Providers.DeepInfra;
 public sealed partial class DeepInfraProvider
 {
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => Task.FromResult<IEnumerable<Model>>([.. DeepInfraLanguageModels, .. DeepInfraImageModels]);
+        => Task.FromResult<IEnumerable<Model>>([.. DeepInfraLanguageModels,
+            .. DeepInfraImageModels,
+            .. DeepInfraRerankModels,
+            ]);
 
-    // Curated subset from the DeepInfra UI screenshots (text-generation only).
     public static IReadOnlyList<Model> DeepInfraLanguageModels =>
     [
         new()
@@ -50,7 +52,6 @@ public sealed partial class DeepInfraProvider
         new() { Id = "MiniMaxAI/MiniMax-M2.1".ToModelId("deepinfra"), Name = "MiniMax-M2.1", Type = "language", OwnedBy = "MiniMax" },
     ];
 
-    // Curated subset from the DeepInfra UI screenshots (text-to-image only; excludes edit/erase/expand/background tools).
     public static IReadOnlyList<Model> DeepInfraImageModels =>
     [
         // ---- Bria ----
@@ -80,5 +81,32 @@ public sealed partial class DeepInfraProvider
         // ---- StabilityAI ----
         new() { Id = "stabilityai/sdxl-turbo".ToModelId("deepinfra"), Name = "sdxl-turbo", Type = "image", OwnedBy = "StabilityAI" },
     ];
+
+    public static IReadOnlyList<Model> DeepInfraRerankModels =>
+[
+    // ---- Qwen ----
+    new()
+        {
+            Id = "Qwen/Qwen3-Reranker-0.6B".ToModelId("deepinfra"),
+            Name = "Qwen3-Reranker-0.6B",
+            Type = "reranking",
+            OwnedBy = "Qwen"
+        },
+        new()
+        {
+            Id = "Qwen/Qwen3-Reranker-4B".ToModelId("deepinfra"),
+            Name = "Qwen3-Reranker-4B",
+            Type = "reranking",
+            OwnedBy = "Qwen"
+        },
+        new()
+        {
+            Id = "Qwen/Qwen3-Reranker-8B".ToModelId("deepinfra"),
+            Name = "Qwen3-Reranker-8B",
+            Type = "reranking",
+            OwnedBy = "Qwen"
+        },
+    ];
+
 }
 

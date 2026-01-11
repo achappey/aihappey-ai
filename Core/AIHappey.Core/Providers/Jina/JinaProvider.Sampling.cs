@@ -20,11 +20,6 @@ public partial class JinaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.RerankingResponse> RerankingRequest(Common.Model.RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

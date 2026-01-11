@@ -47,6 +47,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "azure" => _config.Azure?.ApiKey,
             "asyncai" => _config.AsyncAI?.ApiKey,
             "replicate" => _config.Replicate?.ApiKey,
+            "contextualai" => _config.ContextualAI?.ApiKey,
+            "voyageai" => _config.VoyageAI?.ApiKey,
             _ => null
         };
 }

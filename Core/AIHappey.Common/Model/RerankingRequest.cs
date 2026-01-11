@@ -10,7 +10,7 @@ public class RerankingRequest
     public string Model { get; set; } = null!;
 
     [JsonPropertyName("documents")]
-    public IEnumerable<RerankingDocument> Documents { get; set; } = null!;
+    public RerankingDocument Documents { get; set; } = null!;
 
     [JsonPropertyName("query")]
     public string Query { get; set; } = null!;

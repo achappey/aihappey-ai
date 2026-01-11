@@ -8,9 +8,8 @@ public sealed partial class ReplicateProvider
     private static readonly List<(string Id, string Name, string Owner, string Type)> AllModels =
   [
       ..ReplicateProviderImageModels.ImageModels.Select(m => (m.Id, m.Name, m.Owner, "image")),
-     ..ReplicateProviderLanguageModels.LanguageModels.Select(m => (m.Id, m.Name, m.Owner, "language")),
-];
-
+      ..ReplicateProviderLanguageModels.LanguageModels.Select(m => (m.Id, m.Name, m.Owner, "language")),
+  ];
 
     private static readonly HashSet<string> SupportedModels =
         AllModels.Select(m => m.Id)
