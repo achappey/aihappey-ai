@@ -49,6 +49,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "replicate" => _config.Replicate?.ApiKey,
             "contextualai" => _config.ContextualAI?.ApiKey,
             "voyageai" => _config.VoyageAI?.ApiKey,
+            "deepgram" => _config.Deepgram?.ApiKey,
             _ => null
         };
 }

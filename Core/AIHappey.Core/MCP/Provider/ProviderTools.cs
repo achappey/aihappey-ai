@@ -10,6 +10,7 @@ using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Model.Providers.Perplexity;
 using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Common.Model.Providers.ElevenLabs;
+using AIHappey.Common.Model.Providers.Deepgram;
 using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Common.Model.Providers.XAI;
@@ -68,6 +69,7 @@ public class ProviderTools
                 "groq" => generator.Generate(typeof(GroqProviderMetadata)),
                 "together" => generator.Generate(typeof(TogetherProviderMetadata)),
                 "elevenlabs" => generator.Generate(typeof(ElevenLabsProviderMetadata)),
+                "deepgram" => generator.Generate(typeof(DeepgramSpeechProviderMetadata)),
                 "alibaba" => generator.Generate(typeof(AlibabaImageProviderMetadata)),
                 "runware" => generator.Generate(typeof(RunwareImageProviderMetadata)),
                 _ => throw new Exception($"Provider {aiProviderId} not supported. Available providers: {JsonSerializer

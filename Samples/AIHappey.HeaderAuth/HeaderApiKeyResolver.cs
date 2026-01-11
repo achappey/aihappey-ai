@@ -33,6 +33,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["alibaba"] = "X-Alibaba-Key",
             ["nvidia"] = "X-NVIDIA-Key",
             ["nebius"] = "X-Nebius-Key",
+            ["deepgram"] = "X-Deepgram-Key",
             ["runware"] = "X-Runware-Key",
             ["deepseek"] = "X-DeepSeek-Key",
             ["canopywave"] = "X-CanopyWave-Key",

@@ -17,6 +17,16 @@ public partial class NscaleProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (chatRequest.Model.Contains("ByteDance")
+          || chatRequest.Model.Contains("stabilityai")
+          || chatRequest.Model.Contains("black-forest-labs"))
+        {
+            await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         var metadata = chatRequest.GetProviderMetadata<NscaleProviderMetadata>(GetIdentifier());

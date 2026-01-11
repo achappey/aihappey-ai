@@ -42,6 +42,7 @@ public class AIServiceConfig
     public ProviderConfig? VoyageAI { get; set; }
     public ProviderConfig? ContextualAI { get; set; }
     public ProviderConfig? Azure { get; set; }
+    public ProviderConfig? Deepgram { get; set; }
 }
 
 public class ProviderConfig

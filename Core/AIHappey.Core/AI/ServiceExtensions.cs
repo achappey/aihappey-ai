@@ -7,6 +7,7 @@ using AIHappey.Core.Providers.CanopyWave;
 using AIHappey.Core.Providers.CloudRift;
 using AIHappey.Core.Providers.DeepInfra;
 using AIHappey.Core.Providers.DeepSeek;
+using AIHappey.Core.Providers.Deepgram;
 using AIHappey.Core.Providers.Echo;
 using AIHappey.Core.Providers.Fireworks;
 using AIHappey.Core.Providers.Google;
@@ -53,6 +54,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TinfoilProvider>();
         services.AddSingleton<IModelProvider, DeepInfraProvider>();
         services.AddSingleton<IModelProvider, DeepSeekProvider>();
+        services.AddSingleton<IModelProvider, DeepgramProvider>();
         services.AddSingleton<IModelProvider, NvidiaProvider>();
         services.AddSingleton<IModelProvider, CanopyWaveProvider>();
         services.AddSingleton<IModelProvider, InferencenetProvider>();
