@@ -13,9 +13,6 @@ public sealed class DeepgramTranscriptionProviderMetadata
     [JsonPropertyName("language")]
     public string? Language { get; set; }
 
-    [JsonPropertyName("version")]
-    public string? Version { get; set; }
-
     [JsonPropertyName("punctuate")]
     public bool? Punctuate { get; set; }
 

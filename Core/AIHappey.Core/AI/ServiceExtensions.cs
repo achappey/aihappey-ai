@@ -41,6 +41,7 @@ using AIHappey.Core.Providers.AsyncAI;
 using Microsoft.Extensions.DependencyInjection;
 using AIHappey.Core.Providers.VoyageAI;
 using AIHappey.Core.Providers.ContextualAI;
+using AIHappey.Core.Providers.Sarvam;
 
 namespace AIHappey.Core.AI;
 
@@ -90,7 +91,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AsyncAIProvider>();
         services.AddSingleton<IModelProvider, VoyageAIProvider>();
         services.AddSingleton<IModelProvider, ContextualAIProvider>();
-
+        services.AddSingleton<IModelProvider, SarvamProvider>();
+ 
     }
 
 }

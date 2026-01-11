@@ -57,7 +57,6 @@ public sealed partial class DeepgramProvider
         }
 
         AddString("language", metadata?.Language);
-        AddString("version", metadata?.Version);
 
         AddBool("punctuate", metadata?.Punctuate);
         AddBool("smart_format", metadata?.SmartFormat);

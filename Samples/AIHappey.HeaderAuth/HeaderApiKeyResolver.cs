@@ -45,6 +45,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["replicate"] = "X-Replicate-Key",
             ["baseten"] = "X-Baseten-Key",
             ["contextualai"] = "X-ContextualAI-Key",
+            ["sarvam"] = "X-Sarvam-Key",
             ["voyageai"] = "X-VoyageAI-Key",
         };
 

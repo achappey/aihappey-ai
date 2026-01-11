@@ -50,6 +50,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "contextualai" => _config.ContextualAI?.ApiKey,
             "voyageai" => _config.VoyageAI?.ApiKey,
             "deepgram" => _config.Deepgram?.ApiKey,
+            "sarvam" => _config.Sarvam?.ApiKey,
             _ => null
         };
 }
