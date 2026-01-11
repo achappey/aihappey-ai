@@ -62,11 +62,6 @@ public partial class FireworksProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -75,7 +70,7 @@ public partial class FireworksProvider : IModelProvider
     public static IReadOnlyList<Model> FireworksModels =>
         [
             // ===== MiniMax =====
-            new() { Id = "fireworks/accounts/fireworks/models/minimax-m2.1", Name = "MiniMax M2.1", Type = "language", OwnedBy = "minimax" },
+            new() { Id = "fireworks/accounts/fireworks/models/minimax-m2p1", Name = "MiniMax M2.1", Type = "language", OwnedBy = "minimax" },
             new() { Id = "fireworks/accounts/fireworks/models/minimax-m2",   Name = "MiniMax M2",   Type = "language", OwnedBy = "minimax" },
 
             // ===== Z.ai (GLM) =====
@@ -110,6 +105,7 @@ public partial class FireworksProvider : IModelProvider
 
             // ===== Meta =====
             new() { Id = "fireworks/accounts/fireworks/models/llama-3.3-70b-instruct", Name = "Llama 3.3 70B Instruct", Type = "language", OwnedBy = "meta" },
+            new() { Id = "fireworks/accounts/fireworks/models/llama4-maverick-instruct-basic", Name = "Llama 4 Maverick Instruct", Type = "language", OwnedBy = "meta" },
 
             // ===== OpenAI OSS =====
             new() { Id = "fireworks/accounts/fireworks/models/gpt-oss-120b", Name = "GPT-OSS 120B", Type = "language", OwnedBy = "openai" },
@@ -119,9 +115,20 @@ public partial class FireworksProvider : IModelProvider
             new() { Id = "fireworks/whisper-v3-turbo",  Name = "Whisper v3 Turbo",  Type = "transcription", OwnedBy = "openai" },
 
             // ===== Qwen3 Rerankers =====
-            new() { Id = "accounts/fireworks/models/qwen3-reranker-0.6b", Name = "Qwen3 Reranker 0.6B", Type = "reranking", OwnedBy = "qwen" },
-            new() { Id = "accounts/fireworks/models/qwen3-reranker-4b",   Name = "Qwen3 Reranker 4B",   Type = "reranking", OwnedBy = "qwen" },
-            new() { Id = "accounts/fireworks/models/qwen3-reranker-8b",   Name = "Qwen3 Reranker 8B",   Type = "reranking", OwnedBy = "qwen" },
+            new() { Id = "fireworks/fireworks/qwen3-reranker-8b",   Name = "Qwen3 Reranker 8B",   Type = "reranking", OwnedBy = "qwen" },
+
+            // ===== Image (workflows) =====
+            new() { Id = "fireworks/accounts/fireworks/models/flux-kontext-pro", Name = "Flux Kontext Pro", Type = "image", OwnedBy = "fireworks" },
+            new() { Id = "fireworks/accounts/fireworks/models/flux-kontext-max", Name = "Flux Kontext Max", Type = "image", OwnedBy = "fireworks" },
+            new() { Id = "fireworks/accounts/fireworks/models/flux-1-schnell-fp8", Name = "Flux 1 Schnell (FP8)", Type = "image", OwnedBy = "fireworks" },
+            new() { Id = "fireworks/accounts/fireworks/models/flux-1-dev-fp8", Name = "Flux 1 Dev (FP8)", Type = "image", OwnedBy = "fireworks" },
+
+            // ===== Image (image_generation) =====
+            new() { Id = "fireworks/accounts/fireworks/models/stable-diffusion-xl-1024-v1-0", Name = "Stable Diffusion XL 1024", Type = "image", OwnedBy = "stabilityai" },
+            new() { Id = "fireworks/accounts/fireworks/models/playground-v2-1024px-aesthetic", Name = "Playground v2 1024px Aesthetic", Type = "image", OwnedBy = "playground" },
+            new() { Id = "fireworks/accounts/fireworks/models/playground-v2-5-1024px-aesthetic", Name = "Playground v2.5 1024px Aesthetic", Type = "image", OwnedBy = "playground" },
+            new() { Id = "fireworks/accounts/fireworks/models/SSD-1B", Name = "SSD-1B", Type = "image", OwnedBy = "fireworks" },
+            new() { Id = "fireworks/accounts/fireworks/models/japanese-stable-diffusion-xl", Name = "Japanese Stable Diffusion XL", Type = "image", OwnedBy = "stabilityai" },
 
 
         ];
