@@ -40,11 +40,20 @@ public static class CompletionsExtensions
             ["stream"] = true,
             ["stream_options"] = new { include_usage = true },
             ["max_tokens"] = chatRequest.MaxOutputTokens,
-            ["tool_choice"] = chatRequest.ToolChoice,
+            ["tool_choice"] = chatRequest.ToolChoice ?? "auto",
             ["temperature"] = chatRequest.Temperature,
-            ["response_format"] = chatRequest.ResponseFormat,
+         //   ["response_format"] = chatRequest.ResponseFormat,
             ["messages"] = messages
         };
+
+        if (chatRequest.ResponseFormat is null)
+        {
+            payload["response_format"] = new { type = "text" };
+        }
+        else
+        {
+            payload["response_format"] = chatRequest.ResponseFormat;
+        }
 
         if (tools?.Any() == true)
             payload["tools"] = tools;

@@ -1,17 +1,15 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Fireworks;
 
-namespace AIHappey.Core.Providers.Fireworks;
+namespace AIHappey.Core.Providers.MiniMax;
 
-public partial class FireworksProvider : IModelProvider
+public partial class MiniMaxProvider : IModelProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = FireworksModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+        var model = MiniMaxModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
             ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "transcription")
@@ -32,14 +30,12 @@ public partial class FireworksProvider : IModelProvider
 
         ApplyAuthHeader();
 
-        var metadata = chatRequest.GetProviderMetadata<FireworksProviderMetadata>(GetIdentifier());
-
         Dictionary<string, object?> payload = [];
 
-        if (!string.IsNullOrEmpty(metadata?.ReasoningEffort))
+      /*  if (chatRequest.ResponseFormat is null)
         {
-            payload["reasoning_effort"] = metadata?.ReasoningEffort;
-        }
+            payload["response_format"] = new { type = "text" };
+        }*/
 
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
             payload,

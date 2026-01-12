@@ -47,6 +47,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["contextualai"] = "X-ContextualAI-Key",
             ["sarvam"] = "X-Sarvam-Key",
             ["voyageai"] = "X-VoyageAI-Key",
+            ["minimax"] = "X-MiniMax-Key",
         };
 
     public string? Resolve(string provider)
