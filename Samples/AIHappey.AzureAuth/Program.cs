@@ -8,6 +8,9 @@ using AIHappey.Core.MCP;
 using AIHappey.Telemetry.MCP;
 using AIHappey.Core.Providers.Azure;
 using System.Text.Json.Serialization;
+using Microsoft.KernelMemory;
+using AIHappey.Core.Providers.KernelMemory;
+using AIHappey.Core.Providers.OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +28,8 @@ builder.Services.Configure<AzureProviderOptions>(
     builder.Configuration.GetSection("AIServices:Azure"));
 
 var telemetryDb = builder.Configuration.GetSection("TelemetryDatabase").Get<string>();
+var kernelMemoryConfig = builder.Configuration.GetSection("AIServices:KernelMemory").Get<ProviderConfig>();
+var openAiConfig = builder.Configuration.GetSection("AIServices:OpenAI").Get<ProviderConfig>();
 
 builder.Services.AddTelemetryServices(telemetryDb!);
 builder.Services.AddHttpContextAccessor();
@@ -51,6 +56,39 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IApiKeyResolver, ConfigKeyResolver>();
 builder.Services.AddProviders();
+
+if (!string.IsNullOrEmpty(kernelMemoryConfig?.Endpoint)
+    && !string.IsNullOrEmpty(openAiConfig?.ApiKey))
+{
+    builder.Services.AddKernelMemoryWithOptions(memoryBuilder =>
+    {
+        memoryBuilder
+            .WithOpenAI(new OpenAIConfig()
+            {
+                APIKey = openAiConfig.ApiKey,
+                TextModel = kernelMemoryConfig.DefaultModel ?? "gpt-5.2",
+                TextModelMaxTokenTotal = 128_000,
+                EmbeddingDimensions = 3072,
+                EmbeddingModel = "text-embedding-3-large"
+            })
+            .WithSqlServerMemoryDb(new()
+            {
+                ConnectionString = kernelMemoryConfig.Endpoint
+            })
+            .WithSearchClientConfig(new()
+            {
+                MaxMatchesCount = int.MaxValue,
+                AnswerTokens = 64_000
+            });
+    }, new()
+    {
+        AllowMixingVolatileAndPersistentData = true
+    });
+
+    builder.Services.AddSingleton<IModelProvider, KernelMemoryProvider>();
+    builder.Services.AddSingleton<OpenAIProvider>();
+}
+
 //builder.Services.AddMemoryCache();
 
 var allMcpServers = CoreMcpDefinitions.GetDefinitions()

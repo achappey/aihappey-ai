@@ -16,7 +16,9 @@
       <PackageReference Include="Mistral.SDK" Version="2.3.1" />
       <PackageReference Include="ModelContextProtocol" Version="0.5.0-preview.1" />
       <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.5.0-preview.1" />		
-
+      <PackageReference Include="Microsoft.KernelMemory.AI.OpenAI" Version="0.98.250508.3" />
+      <PackageReference Include="Microsoft.KernelMemory.MemoryDb.SQLServer" Version="0.98.250508.3" />
+      <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
   </ItemGroup>
  <ItemGroup>
     <ProjectReference Include="..\AIhappey.Common\AIhappey.Common.csproj" />

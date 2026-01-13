@@ -49,6 +49,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["voyageai"] = "X-VoyageAI-Key",
             ["minimax"] = "X-MiniMax-Key",
             ["assemblyai"] = "X-AssemblyAI-Key",
+            ["resembleai"] = "X-ResembleAI-Key",
         };
 
     public string? Resolve(string provider)

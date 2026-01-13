@@ -53,6 +53,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "deepgram" => _config.Deepgram?.ApiKey,
             "assemblyai" => _config.AssemblyAI?.ApiKey,
             "sarvam" => _config.Sarvam?.ApiKey,
+            "kernelmemory" => _config.KernelMemory?.ApiKey,
+            "resembleai" => _config.ResembleAI?.ApiKey,
             _ => null
         };
 }

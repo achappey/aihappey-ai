@@ -46,6 +46,8 @@ public class AIServiceConfig
     public ProviderConfig? MiniMax { get; set; }
     public ProviderConfig? Sarvam { get; set; }
     public ProviderConfig? AssemblyAI { get; set; }
+    public ProviderConfig? KernelMemory { get; set; }
+    public ProviderConfig? ResembleAI { get; set; }
 }
 
 public class ProviderConfig
@@ -53,5 +55,7 @@ public class ProviderConfig
     public string ApiKey { get; set; } = null!;
 
     public string? Endpoint { get; set; } = null!;
+
+    public string? DefaultModel { get; set; } = null!;
 }
 
