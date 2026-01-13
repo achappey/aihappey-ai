@@ -27,7 +27,7 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
         return client;
     }
 
-    public string GetIdentifier() => "nvidia";
+    public string GetIdentifier() => nameof(Nvidia).ToLowerInvariant();
 
     private void ApplyAuthHeader()
     {

@@ -55,6 +55,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "sarvam" => _config.Sarvam?.ApiKey,
             "kernelmemory" => _config.KernelMemory?.ApiKey,
             "resembleai" => _config.ResembleAI?.ApiKey,
+            "speechify" => _config.Speechify?.ApiKey,
             _ => null
         };
 }

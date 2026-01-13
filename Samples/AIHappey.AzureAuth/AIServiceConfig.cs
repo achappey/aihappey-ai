@@ -48,6 +48,7 @@ public class AIServiceConfig
     public ProviderConfig? AssemblyAI { get; set; }
     public ProviderConfig? KernelMemory { get; set; }
     public ProviderConfig? ResembleAI { get; set; }
+    public ProviderConfig? Speechify { get; set; }
 }
 
 public class ProviderConfig

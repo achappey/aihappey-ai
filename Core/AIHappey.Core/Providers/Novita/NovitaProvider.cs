@@ -34,7 +34,7 @@ public partial class NovitaProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    
+
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -118,73 +118,70 @@ public partial class NovitaProvider : IModelProvider
                 models.Add(model);
         }
 
-        models.Add(new Model()
-        {
-            Id = "glm-asr".ToModelId(GetIdentifier()),
-            Name = "glm-asr-2512",
-            Type = "transcription"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "glm-tts".ToModelId(GetIdentifier()),
-            Name = "glm-tts",
-            Type = "speech"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "async/txt2speech".ToModelId(GetIdentifier()),
-            Name = "txt2speech",
-            Type = "speech"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "minimax-speech-2.5-turbo-preview".ToModelId(GetIdentifier()),
-            Name = "minimax-speech-2.5-turbo-preview",
-            Type = "speech"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "minimax-speech-2.6-turbo".ToModelId(GetIdentifier()),
-            Name = "minimax-speech-2.6-turbo",
-            Type = "speech"
-        });
-
-
-        models.Add(new Model()
-        {
-            Id = "minimax-speech-2.6-hd".ToModelId(GetIdentifier()),
-            Name = "minimax-speech-2.6-hd",
-            Type = "speech"
-        });
-
-
-        models.Add(new Model()
-        {
-            Id = "minimax-speech-2.5-hd-preview".ToModelId(GetIdentifier()),
-            Name = "minimax-speech-2.5-hd-preview",
-            Type = "speech"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "minimax-speech-02-turbo".ToModelId(GetIdentifier()),
-            Name = "minimax-speech-02-turbo",
-            Type = "speech"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "minimax-speech-02-hd".ToModelId(GetIdentifier()),
-            Name = "minimax-speech-02-hd",
-            Type = "speech"
-        });
-
+        models.AddRange(StaticModels(GetIdentifier()));
         return models;
+
     }
+
+    private static IReadOnlyList<Model> StaticModels(string providerId) =>
+[
+    new()
+    {
+        Id = "glm-asr".ToModelId(providerId),
+        Name = "glm-asr-2512",
+        Type = "transcription"
+    },
+    new()
+    {
+        Id = "glm-tts".ToModelId(providerId),
+        Name = "glm-tts",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "async/txt2speech".ToModelId(providerId),
+        Name = "txt2speech",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "minimax-speech-2.5-turbo-preview".ToModelId(providerId),
+        Name = "minimax-speech-2.5-turbo-preview",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "minimax-speech-2.6-turbo".ToModelId(providerId),
+        Name = "minimax-speech-2.6-turbo",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "minimax-speech-2.6-hd".ToModelId(providerId),
+        Name = "minimax-speech-2.6-hd",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "minimax-speech-2.5-hd-preview".ToModelId(providerId),
+        Name = "minimax-speech-2.5-hd-preview",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "minimax-speech-02-turbo".ToModelId(providerId),
+        Name = "minimax-speech-02-turbo",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "minimax-speech-02-hd".ToModelId(providerId),
+        Name = "minimax-speech-02-hd",
+        Type = "speech"
+    },
+];
+
+
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
