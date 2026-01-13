@@ -375,6 +375,39 @@ The default sample DI registration includes (non-exhaustive): OpenAI, Anthropic,
 
 Provider-specific options are deserialized to [`AsyncAISpeechProviderMetadata`](Core/AIHappey.Common/Model/Providers/AsyncAI/AsyncAISpeechProviderMetadata.cs:1).
 
+### MiniMax (Text-to-Audio)
+
+- Provider id: `minimax`
+- Base URL: `https://api.minimax.io/`
+- Endpoint used: `POST /v1/t2a_v2`
+
+Example request (HTTP `POST /v1/audio/speech`):
+
+```json
+{
+  "model": "minimax/speech-2.6-hd",
+  "text": "Hello from MiniMax!",
+  "voice": "English_Insightful_Speaker",
+  "outputFormat": "mp3",
+  "providerOptions": {
+    "minimax": {
+      "language_boost": "English",
+      "audio_setting": {
+        "sample_rate": 32000,
+        "bitrate": 128000,
+        "format": "mp3",
+        "channel": 1
+      },
+      "voice_setting": {
+        "speed": 1.0,
+        "vol": 1.0,
+        "pitch": 0
+      }
+    }
+  }
+}
+```
+
 ### NVIDIA (NIM for LLMs)
 
 - Provider id: `nvidia`

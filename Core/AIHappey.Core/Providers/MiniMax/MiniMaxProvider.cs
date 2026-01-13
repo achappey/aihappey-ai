@@ -7,6 +7,14 @@ using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
 using AIHappey.Common.Model;
 
+// speech
+using System.Net.Mime;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers.MiniMax;
+
 namespace AIHappey.Core.Providers.MiniMax;
 
 public partial class MiniMaxProvider : IModelProvider
@@ -61,16 +69,6 @@ public partial class MiniMaxProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -97,7 +95,26 @@ public partial class MiniMaxProvider : IModelProvider
                 Type = "language",
                 OwnedBy = nameof(MiniMax) },
 
+            // ===== MiniMax Images =====
+            // Expose MiniMax image model as "minimax/image-01" so it routes consistently through the resolver.
+            new()
+            {
+                Id = "image-01".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+                Name = "MiniMax Image",
+                Type = "image",
+                OwnedBy = nameof(MiniMax)
+            },
 
+            // ===== MiniMax Speech (Text-to-Audio) =====
+            new() { Id = "speech-2.6-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.6-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
+            new() { Id = "speech-2.6-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.6-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
+            new() { Id = "speech-02-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-02-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
+            new() { Id = "speech-02-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-02-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
+            new() { Id = "speech-01-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-01-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
+            new() { Id = "speech-01-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-01-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
+
+            // ===== MiniMax Speech (Music) =====
+            new() { Id = "music-2.0".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "music-2.0", Type = "speech", OwnedBy = nameof(MiniMax) },
         ];
 
 }
