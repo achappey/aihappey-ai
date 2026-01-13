@@ -51,6 +51,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "voyageai" => _config.VoyageAI?.ApiKey,
             "minimax" => _config.MiniMax?.ApiKey,
             "deepgram" => _config.Deepgram?.ApiKey,
+            "assemblyai" => _config.AssemblyAI?.ApiKey,
             "sarvam" => _config.Sarvam?.ApiKey,
             _ => null
         };

@@ -45,6 +45,7 @@ public class AIServiceConfig
     public ProviderConfig? Deepgram { get; set; }
     public ProviderConfig? MiniMax { get; set; }
     public ProviderConfig? Sarvam { get; set; }
+    public ProviderConfig? AssemblyAI { get; set; }
 }
 
 public class ProviderConfig

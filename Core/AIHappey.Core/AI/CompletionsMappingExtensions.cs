@@ -1,8 +1,7 @@
 using System.Text.Json;
-using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 
-namespace AIHappey.Core.Providers.NScale;
+namespace AIHappey.Core.AI;
 
 public static class CompletionsMappingExtensions
 {
