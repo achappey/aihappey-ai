@@ -32,11 +32,6 @@ public partial class MiniMaxProvider : IModelProvider
 
         Dictionary<string, object?> payload = [];
 
-      /*  if (chatRequest.ResponseFormat is null)
-        {
-            payload["response_format"] = new { type = "text" };
-        }*/
-
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
             payload,
             cancellationToken: cancellationToken))

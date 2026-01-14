@@ -127,9 +127,4 @@ public partial class MiniMaxProvider : IModelProvider
         };
 
     }
-
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }

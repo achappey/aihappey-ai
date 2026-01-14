@@ -4,23 +4,23 @@ A multi-provider **.NET 9 AI backend** exposing key AI endpoints.
 
 ## Provider Support Matrix
 
-The table below shows which endpoints each provider implements (✅), not yet implemented (❌), partially implements (🟡 for /chat/completions when only streaming or only non-streaming is available), or for which an endpoint is not applicable to the provider or service category (➖).
+The table below shows which endpoints each provider implements (✅), not yet implemented (❌) or for which an endpoint is not applicable to the provider (➖).
 
 | Provider       | [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [Completions](https://platform.openai.com/docs/api-reference/chat) | [Responses](https://platform.openai.com/docs/api-reference/responses) | [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [Sampling](https://modelcontextprotocol.io/specification/draft/client/sampling) |
 | -------------- | --------- | ----------- | ----------------- | ------------- | ---------------------- | ---------------- | ------------------------ | --------- |
-| AIML           | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
-| Alibaba        | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
-| Anthropic      | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ✅        |
+| AIML           | ✅        | ➖          | ❌                | ❌            | ✅                     | ❌               | ✅                       | ❌        |
+| Alibaba        | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
+| Anthropic      | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | AssemblyAI     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
-| AsyncAI        | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
+| AsyncAI        | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
 | Azure          | ✅        | ➖          | ❌                | ❌            | ➖                     | ❌               | ✅                       | ❌        |
 | Baseten        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
-| CanopyWave     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
-| Cerebras       | ✅        | ➖          | ✅                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
-| CloudRift      | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
-| Cohere         | ✅        | ✅          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
-| ContextualAI   | ✅        | ✅          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
-| DeepInfra      | ✅        | ✅          | ✅                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
+| CanopyWave     | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
+| Cerebras       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
+| CloudRift      | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
+| Cohere         | ✅        | ✅          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
+| ContextualAI   | ➖        | ✅          | ➖                | ➖            | ➖                     | ➖               | ➖                       | ➖        |
+| DeepInfra      | ✅        | ✅          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | DeepSeek       | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Deepgram       | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Echo           | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
@@ -32,9 +32,9 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Inferencenet   | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Jina           | ✅        | ✅          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Mistral        | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ✅                       | ✅        |
-| MiniMax        | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ➖                       | ❌        |
-| Nscale         | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
-| Nebius         | ✅        | ➖          | ✅                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
+| MiniMax        | ✅        | ➖          | ✅                | ❌            | ✅                     | ✅               | ➖                       | ❌        |
+| Nscale         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
+| Nebius         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Nvidia         | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Novita         | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | OpenAI         | ✅        | ➖          | ✅                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
