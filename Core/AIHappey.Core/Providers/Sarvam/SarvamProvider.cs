@@ -71,17 +71,6 @@ public sealed partial class SarvamProvider : IModelProvider
             }
         ]);
 
-    // ---------------------------------------------------------------------
-    // Chat Completions (OpenAI-ish surface)
-    // ---------------------------------------------------------------------
-
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException("Sarvam streaming is not implemented (one-shot only).");
-
-
-    // ---------------------------------------------------------------------
-    // Not implemented surfaces
-    // ---------------------------------------------------------------------
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -97,9 +86,21 @@ public sealed partial class SarvamProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.GetChatCompletion(
+             options, ct: cancellationToken);
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.GetChatCompletionUpdates(
+                    options, ct: cancellationToken);
     }
 }
 

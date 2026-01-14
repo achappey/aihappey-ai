@@ -61,5 +61,10 @@ public partial class InferencenetProvider(IApiKeyResolver keyResolver, IHttpClie
     {
         throw new NotImplementedException();
     }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 

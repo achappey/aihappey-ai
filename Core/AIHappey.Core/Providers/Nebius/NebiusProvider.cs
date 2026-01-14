@@ -42,12 +42,21 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    // OpenAI ChatCompletions endpoint (not used by the Vercel UI stream: /api/chat).
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        return await _client.GetChatCompletion(
+             options, ct: cancellationToken);
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.GetChatCompletionUpdates(
+                    options, ct: cancellationToken);
+    }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();

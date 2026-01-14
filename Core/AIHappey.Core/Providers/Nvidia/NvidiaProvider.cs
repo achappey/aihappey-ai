@@ -96,7 +96,6 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
         // Default endpoint: POST https://integrate.api.nvidia.com/v1/chat/completions
         await foreach (var update in _client.CompletionsStreamAsync(
             chatRequest,
-            url: "v1/chat/completions",
             cancellationToken: cancellationToken))
         {
             yield return update;
@@ -104,12 +103,6 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
     }
 
     // ChatCompletions endpoint is not used by the Vercel UI stream (`/api/chat`).
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
@@ -128,6 +121,22 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return await _client.GetChatCompletion(
+             options, ct: cancellationToken);
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.GetChatCompletionUpdates(
+                    options, ct: cancellationToken);
     }
 }
 

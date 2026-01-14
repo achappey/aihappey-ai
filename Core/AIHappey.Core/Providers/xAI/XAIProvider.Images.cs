@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -103,6 +104,11 @@ public partial class XAIProvider : IModelProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

@@ -95,6 +95,11 @@ public partial class ResembleAIProvider : IModelProvider
         }
     }
 
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> ResembleAIModels =>
  [
     new() { Id = "speech-to-text".ToModelId(nameof(ResembleAI).ToLowerInvariant()),

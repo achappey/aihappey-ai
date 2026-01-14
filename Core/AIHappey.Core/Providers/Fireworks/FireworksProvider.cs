@@ -6,6 +6,7 @@ using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
 using AIHappey.Common.Model;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -33,14 +34,13 @@ public partial class FireworksProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        ApplyAuthHeader();
+        options.ToolChoice ??= "auto";
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        return await _client.GetChatCompletion(
+           options, ct: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Fireworks).ToLowerInvariant();
@@ -65,6 +65,15 @@ public partial class FireworksProvider : IModelProvider
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+        options.ToolChoice ??= "auto";
+
+        return _client.GetChatCompletionUpdates(
+            options, ct: cancellationToken);
     }
 
     public static IReadOnlyList<Model> FireworksModels =>

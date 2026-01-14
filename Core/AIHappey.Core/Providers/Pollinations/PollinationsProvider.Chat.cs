@@ -7,6 +7,7 @@ using System.Net.Mime;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Pollinations;
 using OpenAI.Responses;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Pollinations;
 
@@ -333,6 +334,11 @@ public partial class PollinationsProvider : IModelProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

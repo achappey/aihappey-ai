@@ -14,7 +14,7 @@ public interface IModelProvider
 
     Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
 
     Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default);
 

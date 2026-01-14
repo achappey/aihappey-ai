@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using OpenAI.Responses;
@@ -52,6 +53,11 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
         => throw new NotImplementedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

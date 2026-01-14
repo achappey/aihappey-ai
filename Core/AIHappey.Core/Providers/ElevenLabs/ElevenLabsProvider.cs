@@ -60,5 +60,10 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
     {
         throw new NotImplementedException();
     }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 

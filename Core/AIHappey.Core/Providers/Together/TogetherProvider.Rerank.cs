@@ -6,6 +6,7 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -80,6 +81,11 @@ public partial class TogetherProvider : IModelProvider
             }
         };
 
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new()

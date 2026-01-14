@@ -168,6 +168,11 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
         throw new NotImplementedException();
     }
 
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> KernelMemoryModels =>
         [
             new() { Id = "kernelmemory/shared", Name = "Shared Memory", Type = "language" },

@@ -6,6 +6,7 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Jina;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Jina;
 
@@ -87,6 +88,11 @@ public partial class JinaProvider : IModelProvider
             }
         };
 
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new()

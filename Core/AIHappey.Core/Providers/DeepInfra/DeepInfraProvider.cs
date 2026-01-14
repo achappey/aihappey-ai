@@ -2,9 +2,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
-using OAIC = OpenAI.Chat;
 using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.DeepInfra;
@@ -42,21 +40,36 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        return await _client.GetChatCompletion(
+             options,
+             relativeUrl: "v1/openai/chat/completions",
+             ct: cancellationToken);
+    }
 
-    public Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(
-        ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest,
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.GetChatCompletionUpdates(
+                    options,
+                    relativeUrl: "v1/openai/chat/completions",
+                    ct: cancellationToken);
+    }
+
+    public Task<CreateMessageResult> SamplingAsync(
+        CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
-  
+
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
+
 }
 

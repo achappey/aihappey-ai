@@ -41,6 +41,8 @@ public partial class FireworksProvider : IModelProvider
             payload["reasoning_effort"] = metadata?.ReasoningEffort;
         }
 
+        chatRequest.ToolChoice ??= "auto";
+
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
             payload,
             cancellationToken: cancellationToken))

@@ -33,16 +33,26 @@ public partial class ZaiProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.GetChatCompletion(
+             options,
+             relativeUrl: "v4/chat/completions",
+             ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.GetChatCompletionUpdates(
+                    options,
+                    relativeUrl: "v4/chat/completions",
+                    ct: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Zai).ToLowerInvariant();
@@ -79,86 +89,91 @@ public partial class ZaiProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> ZaiLanguageModels =>
-[
-    new()
-    {
-        Id = "zai/glm-4.7",
-        Name = "glm-4.7",
-        Description = "Latest flagship GLM-4.7 model, a foundational model specifically designed for agent applications.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-4.6",
-        Name = "glm-4.6",
-        Description = "Previous-generation GLM flagship model with strong general reasoning and agent capabilities.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-4.5",
-        Name = "glm-4.5",
-        Description = "GLM-4.5 base model offering balanced performance for general-purpose and agent workloads.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-4.5-air",
-        Name = "glm-4.5-air",
-        Description = "Lightweight GLM-4.5 variant optimized for faster inference and lower latency.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-4.5-x",
-        Name = "glm-4.5-x",
-        Description = "Enhanced GLM-4.5 variant with stronger reasoning and extended capability depth.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-4.5-airx",
-        Name = "glm-4.5-airx",
-        Description = "Hybrid GLM-4.5 model combining efficiency of AIR with enhanced reasoning performance.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-4.5-flash",
-        Name = "glm-4.5-flash",
-        Description = "Ultra-fast GLM-4.5 variant optimized for low-latency, high-throughput workloads.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-4-32b-0414-128k",
-        Name = "glm-4-32b-0414-128k",
-        Description = "GLM-4 32B model with a 128k context window, suited for long-context reasoning and document-heavy tasks.",
-        Type = "language",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/cogview-4-250304",
-        Name = "cogview-4-250304",
-        Type = "image",
-        OwnedBy = "z.ai"
-    },
-    new()
-    {
-        Id = "zai/glm-asr-2512",
-        Name = "glm-asr-2512",
-        Type = "transcription",
-        OwnedBy = "z.ai"
-    },
-];
+    [
+        new()
+        {
+            Id = "zai/glm-4.7",
+            Name = "glm-4.7",
+            Description = "Latest flagship GLM-4.7 model, a foundational model specifically designed for agent applications.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-4.6",
+            Name = "glm-4.6",
+            Description = "Previous-generation GLM flagship model with strong general reasoning and agent capabilities.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-4.5",
+            Name = "glm-4.5",
+            Description = "GLM-4.5 base model offering balanced performance for general-purpose and agent workloads.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-4.5-air",
+            Name = "glm-4.5-air",
+            Description = "Lightweight GLM-4.5 variant optimized for faster inference and lower latency.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-4.5-x",
+            Name = "glm-4.5-x",
+            Description = "Enhanced GLM-4.5 variant with stronger reasoning and extended capability depth.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-4.5-airx",
+            Name = "glm-4.5-airx",
+            Description = "Hybrid GLM-4.5 model combining efficiency of AIR with enhanced reasoning performance.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-4.5-flash",
+            Name = "glm-4.5-flash",
+            Description = "Ultra-fast GLM-4.5 variant optimized for low-latency, high-throughput workloads.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-4-32b-0414-128k",
+            Name = "glm-4-32b-0414-128k",
+            Description = "GLM-4 32B model with a 128k context window, suited for long-context reasoning and document-heavy tasks.",
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/cogview-4-250304",
+            Name = "cogview-4-250304",
+            Type = "image",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/glm-asr-2512",
+            Name = "glm-asr-2512",
+            Type = "transcription",
+            OwnedBy = "z.ai"
+        },
+    ];
 
 }

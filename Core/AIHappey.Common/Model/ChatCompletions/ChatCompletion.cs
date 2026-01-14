@@ -22,3 +22,28 @@ public class ChatCompletion
     [JsonPropertyName("usage")]
     public object? Usage { get; set; }
 }
+
+
+public class ChatCompletionUpdate
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = default!;
+
+    [JsonPropertyName("object")]
+    public string Object { get; set; } = "chat.completion.chunk";
+
+    [JsonPropertyName("created")]
+    public long Created { get; set; }
+
+    [JsonPropertyName("model")]
+    public string Model { get; set; } = default!;
+
+    [JsonPropertyName("service_tier")]
+    public string? ServiceTier { get; set; }
+
+    [JsonPropertyName("choices")]
+    public IEnumerable<object> Choices { get; set; } = [];
+
+    [JsonPropertyName("usage")]
+    public object? Usage { get; set; }
+}

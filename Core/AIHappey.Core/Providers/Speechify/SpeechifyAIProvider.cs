@@ -87,6 +87,11 @@ public partial class SpeechifyAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> SpeechifyModels =>
  [
     new() { Id = "simba-english".ToModelId(nameof(Speechify).ToLowerInvariant()),

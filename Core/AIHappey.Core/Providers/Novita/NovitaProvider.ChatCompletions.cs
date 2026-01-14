@@ -1,22 +1,22 @@
-using System.Text.Json;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
+using ModelContextProtocol.Protocol;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using AIHappey.Core.Models;
+using AIHappey.Common.Model.ChatCompletions;
+using OpenAI.Responses;
+using AIHappey.Common.Model;
 
-namespace AIHappey.Core.Providers.Baseten;
+namespace AIHappey.Core.Providers.Novita;
 
-public sealed partial class BasetenProvider
+public partial class NovitaProvider : IModelProvider
 {
-    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerOptions.Web)
-    {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options, relativeUrl: "chat/completions", ct: cancellationToken);
+             options, ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -24,7 +24,6 @@ public sealed partial class BasetenProvider
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options, relativeUrl: "chat/completions", ct: cancellationToken);
+                    options, ct: cancellationToken);
     }
 }
-

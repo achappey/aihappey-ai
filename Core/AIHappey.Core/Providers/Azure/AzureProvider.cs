@@ -73,5 +73,10 @@ public sealed partial class AzureProvider(
     {
         throw new NotImplementedException();
     }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 

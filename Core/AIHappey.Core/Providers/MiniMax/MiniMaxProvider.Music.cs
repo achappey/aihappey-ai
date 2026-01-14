@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -127,4 +128,8 @@ public partial class MiniMaxProvider : IModelProvider
 
     }
 
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

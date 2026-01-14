@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.SambaNova;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
@@ -87,8 +88,4 @@ public partial class SambaNovaProvider : IModelProvider
         };
     }
 
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

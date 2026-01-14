@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Providers.Telnyx;
 using AIHappey.Core.AI;
 
@@ -31,7 +32,7 @@ public partial class TelnyxProvider : IModelProvider
 
         var metadata = chatRequest.GetProviderMetadata<TelnyxProviderMetadata>(GetIdentifier());
 
-        Dictionary<string, object?> payload = new();
+        Dictionary<string, object?> payload = [];
 
         if (metadata?.GuidedJson is not null)
             payload["guided_json"] = metadata.GuidedJson;
@@ -78,5 +79,6 @@ public partial class TelnyxProvider : IModelProvider
             yield return update;
         }
     }
+
 }
 

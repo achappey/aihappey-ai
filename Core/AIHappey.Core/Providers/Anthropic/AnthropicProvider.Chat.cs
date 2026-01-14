@@ -8,6 +8,7 @@ using System.Net.Mime;
 using System.Text;
 using AIHappey.Core.Providers.Anthropic.Extensions;
 using OpenAI.Responses;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -427,6 +428,11 @@ public partial class AnthropicProvider : IModelProvider
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

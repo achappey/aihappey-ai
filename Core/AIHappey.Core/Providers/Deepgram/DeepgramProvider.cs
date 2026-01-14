@@ -195,5 +195,9 @@ public sealed partial class DeepgramProvider
         return Task.FromResult(res);
     }
 
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 

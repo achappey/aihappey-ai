@@ -15,7 +15,6 @@ public sealed partial class NebiusProvider
         // POST https://api.tokenfactory.nebius.com/v1/chat/completions
         await foreach (var update in _client.CompletionsStreamAsync(
             chatRequest,
-            url: "v1/chat/completions",
             cancellationToken: cancellationToken))
         {
             yield return update;

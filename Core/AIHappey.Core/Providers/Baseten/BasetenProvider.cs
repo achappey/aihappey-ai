@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using OpenAI.Responses;
@@ -23,14 +24,14 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
         return client;
     }
 
-    public string GetIdentifier() => "baseten";
+    public string GetIdentifier() => nameof(Baseten).ToLowerInvariant();
 
     private void ApplyAuthHeader()
     {
         var key = keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No Baseten API key.");
+            throw new InvalidOperationException($"No {nameof(Baseten)} API key.");
 
         // Baseten expects: Authorization: Api-Key <key>
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Api-Key", key);

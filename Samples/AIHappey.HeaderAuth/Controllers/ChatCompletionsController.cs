@@ -31,39 +31,12 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
             // Stream tokens or chunks, whatever your provider yields!
             await foreach (var chunk in provider.CompleteChatStreamingAsync(requestDto, cancellationToken))
             {
-                // Each chunk is a string of text (token or partial content)
-                var streamChunk = new
-                {
-                    id = Guid.NewGuid().ToString(),
-                    @object = "chat.completion.chunk",
-                    choices = new[] {
-                        new {
-                            delta = new { content = chunk },
-                            index = 0,
-                            finish_reason = (string?)null
-                        }
-                    }
-                };
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(streamChunk)}\n\n");
-                await writer.FlushAsync();
+                await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
+                await writer.FlushAsync(cancellationToken);
             }
 
-            // Final finish chunk
-            var doneChunk = new
-            {
-                id = Guid.NewGuid().ToString(),
-                @object = "chat.completion.chunk",
-                choices = new[] {
-                    new {
-                        delta = new { content = (string?)null },
-                        index = 0,
-                        finish_reason = "stop"
-                    }
-                }
-            };
-            await writer.WriteAsync($"data: {JsonSerializer.Serialize(doneChunk)}\n\n");
             await writer.WriteAsync("data: [DONE]\n\n");
-            await writer.FlushAsync();
+            await writer.FlushAsync(cancellationToken);
             return new EmptyResult();
         }
         else

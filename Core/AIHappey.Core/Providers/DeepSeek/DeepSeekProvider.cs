@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using OpenAI.Responses;
@@ -24,14 +25,14 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         return client;
     }
 
-    public string GetIdentifier() => "deepseek";
+    public string GetIdentifier() => nameof(DeepSeek).ToLowerInvariant();
 
     private void ApplyAuthHeader()
     {
         var key = keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No DeepSeek API key.");
+            throw new InvalidOperationException($"No {nameof(DeepSeek)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -53,6 +54,11 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         => throw new NotImplementedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

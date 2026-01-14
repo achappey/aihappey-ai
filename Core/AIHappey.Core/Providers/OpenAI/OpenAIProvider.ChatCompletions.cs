@@ -4,15 +4,24 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
-    public async IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        CancellationToken cancellationToken = default)
     {
-        var client = new OpenAIClient(GetKey()).GetChatClient(options.Model);
+        if (!_client.DefaultRequestHeaders.Contains("Authorization"))
+            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetKey());
+
+        options.ParallelToolCalls ??= true;
+
+        return _client.GetChatCompletionUpdates(
+                   options, ct: cancellationToken);
+
+        /*var client = new OpenAIClient(GetKey()).GetChatClient(options.Model);
 
         // OpenAI .NET SDK should offer streaming. If it yields tokens or parts, yield those.
         IEnumerable<OAIC.ChatMessage> oaiMessages = JsonSerializer.Deserialize<IEnumerable<OAIC.ChatMessage>>(
@@ -26,7 +35,7 @@ public partial class OpenAIProvider
             cancellationToken: cancellationToken))
         {
             yield return chunk;
-        }
+        }*/
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions chatRequest, CancellationToken cancellationToken = default)
@@ -36,23 +45,26 @@ public partial class OpenAIProvider
 
         chatRequest.ParallelToolCalls ??= true;
 
-        var json = JsonSerializer.Serialize(chatRequest, JsonSerializerOptions.Web);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        return await _client.GetChatCompletion(
+           chatRequest, ct: cancellationToken);
 
-        // -----------------------------
-        // Send raw HTTP POST
-        // -----------------------------
-        using var resp = await _client.PostAsync(
-            "https://api.openai.com/v1/chat/completions",
-            content,
-            cancellationToken);
+        /* var json = JsonSerializer.Serialize(chatRequest, JsonSerializerOptions.Web);
+         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var result = await resp.Content.ReadAsStringAsync(cancellationToken);
+         // -----------------------------
+         // Send raw HTTP POST
+         // -----------------------------
+         using var resp = await _client.PostAsync(
+             "https://api.openai.com/v1/chat/completions",
+             content,
+             cancellationToken);
 
-        if (!resp.IsSuccessStatusCode)
-            throw new Exception(result);
+         var result = await resp.Content.ReadAsStringAsync(cancellationToken);
 
-        var respJson = JsonSerializer.Deserialize<ChatCompletion>(result);
-        return respJson ?? throw new Exception("Something went wrong");
+         if (!resp.IsSuccessStatusCode)
+             throw new Exception(result);
+
+         var respJson = JsonSerializer.Deserialize<ChatCompletion>(result);
+         return respJson ?? throw new Exception("Something went wrong");*/
     }
 }

@@ -71,5 +71,10 @@ public sealed partial class ReplicateProvider(
     {
         throw new NotImplementedException();
     }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 

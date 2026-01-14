@@ -330,5 +330,10 @@ public sealed partial class RunwareProvider(
     {
         throw new NotImplementedException();
     }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 

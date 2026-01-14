@@ -5,7 +5,6 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
-using OAIC = OpenAI.Chat;
 using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Telnyx;
@@ -28,21 +27,35 @@ public partial class TelnyxProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No Telnyx API key.");
+            throw new InvalidOperationException($"No {nameof(Telnyx)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public string GetIdentifier() => "telnyx";
+    public string GetIdentifier() => nameof(Telnyx).ToLowerInvariant();
 
     public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        return await _client.GetChatCompletion(
+             options,
+             relativeUrl: "ai/chat/completions",
+             ct: cancellationToken);
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.GetChatCompletionUpdates(
+                    options,
+                    relativeUrl: "ai/chat/completions",
+                    ct: cancellationToken);
+    }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();

@@ -82,6 +82,11 @@ public partial class AssemblyAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> AssemblyAIModels =>
  [
     // ── Google Gemini ──────────────────────────────────────────────────────

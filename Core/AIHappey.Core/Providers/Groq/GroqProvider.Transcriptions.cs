@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Groq;
 using System.Globalization;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -122,6 +123,11 @@ public partial class GroqProvider : IModelProvider
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

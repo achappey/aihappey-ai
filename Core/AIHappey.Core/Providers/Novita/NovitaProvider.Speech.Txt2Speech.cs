@@ -4,6 +4,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
 using System.Text.Json;
 using System.Text;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -264,6 +265,11 @@ public partial class NovitaProvider : IModelProvider
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

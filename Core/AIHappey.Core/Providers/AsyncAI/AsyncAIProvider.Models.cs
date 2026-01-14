@@ -1,3 +1,4 @@
+using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
@@ -28,6 +29,11 @@ public partial class AsyncAIProvider : IModelProvider
                 Id = "asyncflow_multilingual_v1.0".ToModelId(GetIdentifier())
             }
         ]);
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }
 
