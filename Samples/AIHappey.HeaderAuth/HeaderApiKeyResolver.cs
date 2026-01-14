@@ -52,6 +52,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["assemblyai"] = "X-AssemblyAI-Key",
             ["resembleai"] = "X-ResembleAI-Key",
             ["ttsreader"] = "X-TTSReader-Key",
+            ["speechmatics"] = "X-Speechmatics-Key",
         };
 
     public string? Resolve(string provider)

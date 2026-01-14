@@ -57,6 +57,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "resembleai" => _config.ResembleAI?.ApiKey,
             "speechify" => _config.Speechify?.ApiKey,
             "ttsreader" => _config.TTSReader?.ApiKey,
+            "speechmatics" => _config.Speechmatics?.ApiKey,
             _ => null
         };
 }

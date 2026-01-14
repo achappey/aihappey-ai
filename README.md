@@ -47,7 +47,8 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | SambaNova      | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Sarvam         | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Scaleway       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
-| SpeechifyAI    | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
+| Speechify      | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
+| Speechmatics   | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ❌                       | ❌        |
 | StabilityAI    | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ➖                       | ❌        |
 | Telnyx         | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Tinfoil        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |

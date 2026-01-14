@@ -50,6 +50,7 @@ public class AIServiceConfig
     public ProviderConfig? ResembleAI { get; set; }
     public ProviderConfig? Speechify { get; set; }
     public ProviderConfig? TTSReader { get; set; }
+    public ProviderConfig? Speechmatics { get; set; }
 }
 
 public class ProviderConfig
