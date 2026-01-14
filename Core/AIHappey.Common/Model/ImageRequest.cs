@@ -80,6 +80,8 @@ public class ImageResponse
     [JsonPropertyName("response")]
     public ResponseData Response { get; set; } = default!;
 
+    [JsonPropertyName("usage")]
+    public ImageUsageData? Usage { get; set; }
 }
 
 public class ResponseData
@@ -92,5 +94,18 @@ public class ResponseData
 
     [JsonPropertyName("body")]
     public object? Body { get; set; }
+}
+
+
+public class ImageUsageData
+{
+    [JsonPropertyName("inputTokens")]
+    public int? InputTokens { get; set; }
+
+    [JsonPropertyName("outputTokens")]
+    public int? OutputTokens { get; set; }
+
+    [JsonPropertyName("totalTokens")]
+    public int? TotalTokens { get; set; }
 
 }

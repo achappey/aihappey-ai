@@ -26,8 +26,7 @@ public partial class GoogleAIProvider
                 {
                     SampleCount = imageRequest.N,
                     AspectRatio = aspectRatio,
-                    // SampleImageSize = typed.SampleImageSize,
-                    PersonGeneration = Mscc.GenerativeAI.PersonGeneration.AllowAdult,
+                    PersonGeneration = PersonGeneration.AllowAdult,
                     OutputOptions = new()
                     {
                         MimeType = MediaTypeNames.Image.Png
@@ -90,6 +89,13 @@ public partial class GoogleAIProvider
                 {
                     Timestamp = now,
                     ModelId = response.ModelVersion!
+                },
+                Usage = new()
+                {
+                    TotalTokens = response.UsageMetadata?.TotalTokenCount,
+                    OutputTokens = response.UsageMetadata?.CandidatesTokenCount,
+                    InputTokens = (response.UsageMetadata?.ToolUsePromptTokenCount ?? 0)
+                                + (response.UsageMetadata?.PromptTokenCount ?? 0)
                 }
             };
 

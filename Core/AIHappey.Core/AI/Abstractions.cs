@@ -1,8 +1,7 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model.Responses;
 using AIHappey.Core.Models;
-using OpenAI.Responses;
-using OAIC = OpenAI.Chat;
 
 namespace AIHappey.Core.AI;
 
@@ -10,11 +9,13 @@ public interface IModelProvider
 {
     string GetIdentifier();
 
-    Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default);
-
     Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
+
+    Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default);
+
+    IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default);
 
     Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default);
 

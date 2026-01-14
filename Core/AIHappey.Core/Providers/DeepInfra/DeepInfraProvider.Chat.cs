@@ -10,7 +10,7 @@ public sealed partial class DeepInfraProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = DeepInfraLanguageModels.FirstOrDefault(a => a.Id == chatRequest.Model)
+        var model = DeepInfraLanguageModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
                   ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "image")

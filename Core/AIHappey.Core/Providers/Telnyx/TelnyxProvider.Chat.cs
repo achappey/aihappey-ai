@@ -3,6 +3,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Providers.Telnyx;
+using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Telnyx;
@@ -10,6 +11,16 @@ namespace AIHappey.Core.Providers.Telnyx;
 public partial class TelnyxProvider : IModelProvider
 {
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -1,4 +1,5 @@
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 
@@ -7,6 +8,16 @@ namespace AIHappey.Core.Providers.CanopyWave;
 public partial class CanopyWaveProvider : IModelProvider
 {
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

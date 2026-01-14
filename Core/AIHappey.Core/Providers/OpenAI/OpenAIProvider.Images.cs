@@ -8,6 +8,7 @@ using OpenAI.Audio;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -168,11 +169,6 @@ public partial class OpenAIProvider : IModelProvider
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

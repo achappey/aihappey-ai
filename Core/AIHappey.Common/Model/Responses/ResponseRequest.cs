@@ -14,6 +14,15 @@ public class ResponseRequest
     [JsonPropertyName("text")]
     public object? Text { get; set; }
 
+    [JsonPropertyName("stream")]
+    public bool? Stream { get; set; }
+
+    [JsonPropertyName("store")]
+    public bool? Store { get; set; }
+
+    [JsonPropertyName("parallel_tool_calls")]
+    public bool? ParallelToolCalls { get; set; }
+
     [JsonPropertyName("input")]
     public IEnumerable<object> Input { get; set; } = [];
 

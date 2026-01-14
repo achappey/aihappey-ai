@@ -167,9 +167,9 @@ public partial class GoogleAIProvider
                         .ToLowerInvariant()
                         .ToFinishUIPart(
                             update.ModelVersion!,
+                            update.UsageMetadata?.CandidatesTokenCount ?? 0,
                             (update.UsageMetadata?.ToolUsePromptTokenCount ?? 0)
-                                + (update.UsageMetadata?.CandidatesTokenCount ?? 0),
-                            update.UsageMetadata?.PromptTokenCount ?? 0,
+                                + (update.UsageMetadata?.PromptTokenCount ?? 0),
                             update.UsageMetadata?.TotalTokenCount ?? 0,
                             reasoningTokens: update.UsageMetadata?.ThoughtsTokenCount ?? 0,
                             temperature: request.Temperature

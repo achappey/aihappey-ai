@@ -6,6 +6,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -126,5 +127,15 @@ public partial class MiniMaxProvider : IModelProvider
             }
         };
 
+    }
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

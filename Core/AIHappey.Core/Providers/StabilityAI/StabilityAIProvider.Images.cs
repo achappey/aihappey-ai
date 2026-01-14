@@ -7,6 +7,7 @@ using System.Globalization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.StabilityAI;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
@@ -229,6 +230,16 @@ public partial class StabilityAIProvider : IModelProvider
     }
 
     IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

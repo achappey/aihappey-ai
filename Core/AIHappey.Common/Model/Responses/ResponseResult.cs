@@ -11,8 +11,8 @@ public class ResponseResult
     [JsonPropertyName("object")]
     public string Object { get; set; } = "response";
 
-    [JsonPropertyName("created")]
-    public long Created { get; set; }
+    [JsonPropertyName("created_at")]
+    public long CreatedAt { get; set; }
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = default!;
@@ -25,4 +25,17 @@ public class ResponseResult
 
     [JsonPropertyName("usage")]
     public object? Usage { get; set; }
+
+    [JsonPropertyName("tools")]
+    public IEnumerable<object> Tools { get; set; } = [];
+
+    [JsonPropertyName("reasoning")]
+    public object? Reasoning { get; set; }
+
+    [JsonPropertyName("store")]
+    public bool? Store { get; set; }
+
+    [JsonPropertyName("max_output_tokens")]
+    public int? MaxOutputTokens { get; set; }
+
 }

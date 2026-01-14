@@ -56,6 +56,6 @@ public class ChatMessageContent
     public string Type { get; set; } = default!;
 
     [JsonPropertyName("text")]
-    public string Text { get; set; } = default!;    
+    public string Text { get; set; } = default!;
 }
 

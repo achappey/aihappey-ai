@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.Cohere;
 
@@ -75,6 +76,16 @@ public partial class CohereProvider : IModelProvider
             }
         };
 
+    }
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new()
