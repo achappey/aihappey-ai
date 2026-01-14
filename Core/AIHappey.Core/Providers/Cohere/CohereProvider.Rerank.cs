@@ -77,11 +77,6 @@ public partial class CohereProvider : IModelProvider
 
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

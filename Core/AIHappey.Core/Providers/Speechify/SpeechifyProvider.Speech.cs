@@ -9,7 +9,7 @@ using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Speechify;
 
-public partial class SpeechifyAIProvider
+public partial class SpeechifyProvider
 {
     private static readonly JsonSerializerOptions SpeechJson = new(JsonSerializerDefaults.Web)
     {

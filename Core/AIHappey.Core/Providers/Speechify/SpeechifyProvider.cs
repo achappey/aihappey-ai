@@ -10,13 +10,13 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Speechify;
 
-public partial class SpeechifyAIProvider : IModelProvider
+public partial class SpeechifyProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    public SpeechifyAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public SpeechifyProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();

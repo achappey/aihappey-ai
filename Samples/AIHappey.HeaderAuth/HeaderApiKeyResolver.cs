@@ -51,6 +51,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["minimax"] = "X-MiniMax-Key",
             ["assemblyai"] = "X-AssemblyAI-Key",
             ["resembleai"] = "X-ResembleAI-Key",
+            ["ttsreader"] = "X-TTSReader-Key",
         };
 
     public string? Resolve(string provider)

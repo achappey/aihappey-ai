@@ -47,6 +47,7 @@ using AIHappey.Core.Providers.AssemblyAI;
 using Microsoft.KernelMemory;
 using AIHappey.Core.Providers.ResembleAI;
 using AIHappey.Core.Providers.Speechify;
+using AIHappey.Core.Providers.TTSReader;
 
 namespace AIHappey.Core.AI;
 
@@ -100,7 +101,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MiniMaxProvider>();
         services.AddSingleton<IModelProvider, AssemblyAIProvider>();
         services.AddSingleton<IModelProvider, ResembleAIProvider>();
-        services.AddSingleton<IModelProvider, SpeechifyAIProvider>();
+        services.AddSingleton<IModelProvider, SpeechifyProvider>();
+        services.AddSingleton<IModelProvider, TTSReaderProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

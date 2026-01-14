@@ -35,7 +35,7 @@ public partial class CohereProvider : IModelProvider
 
     public string GetIdentifier() => CohereExtensions.CohereIdentifier;
 
-    
+
 
     public async Task<IEnumerable<Model>> ListModels(
         CancellationToken cancellationToken = default)
@@ -60,7 +60,7 @@ public partial class CohereProvider : IModelProvider
             var name = item.TryGetProperty("name", out var nameEl)
                 ? nameEl.GetString()
                 : null;
-                
+
             if (string.IsNullOrWhiteSpace(name)) continue;
 
             DateTimeOffset? createdAt = null;
@@ -83,14 +83,24 @@ public partial class CohereProvider : IModelProvider
         return result;
     }
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.GetChatCompletion(
+             options,
+             relativeUrl: "compatibility/v1",
+             ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.GetChatCompletionUpdates(
+                    options,
+                    relativeUrl: "compatibility/v1",
+                    ct: cancellationToken);
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)

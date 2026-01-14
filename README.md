@@ -18,7 +18,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | CanopyWave     | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Cerebras       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | CloudRift      | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
-| Cohere         | ✅        | ✅          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
+| Cohere         | ✅        | ✅          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | ContextualAI   | ➖        | ✅          | ➖                | ➖            | ➖                     | ➖               | ➖                       | ➖        |
 | DeepInfra      | ✅        | ✅          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | DeepSeek       | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
@@ -52,6 +52,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Telnyx         | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Tinfoil        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Together       | ✅        | ✅          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
+| TTSReader      | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
 | VoyageAI       | ➖        | ✅          | ➖                | ➖            | ➖                     | ➖               | ➖                       | ➖        |
 | XAI            | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ✅        |
 | Zai            | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |

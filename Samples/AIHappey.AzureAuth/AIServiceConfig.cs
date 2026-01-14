@@ -49,6 +49,7 @@ public class AIServiceConfig
     public ProviderConfig? KernelMemory { get; set; }
     public ProviderConfig? ResembleAI { get; set; }
     public ProviderConfig? Speechify { get; set; }
+    public ProviderConfig? TTSReader { get; set; }
 }
 
 public class ProviderConfig
