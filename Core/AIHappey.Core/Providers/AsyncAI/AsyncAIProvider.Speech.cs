@@ -94,7 +94,7 @@ public partial class AsyncAIProvider : IModelProvider
             _ => "audio/mpeg"
         };
 
-        var audio = Convert.ToBase64String(bytes).ToDataUrl(mime);
+        var audio = Convert.ToBase64String(bytes);
 
         // Echo back the effective knobs used so callers can introspect what was sent.
         var providerMetadata = new Dictionary<string, JsonElement>
@@ -114,7 +114,12 @@ public partial class AsyncAIProvider : IModelProvider
         return new SpeechResponse
         {
             ProviderMetadata = providerMetadata,
-            Audio = audio,
+            Audio = new()
+            {
+                Base64 = audio,
+                MimeType = mime,
+                Format = container ?? "mp3"
+            },
             Warnings = warnings,
             Response = new()
             {

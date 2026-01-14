@@ -107,11 +107,16 @@ public partial class NovitaProvider : IModelProvider
             _ => "application/octet-stream" // pcm etc
         };
 
-        var base64 = Convert.ToBase64String(audioBytes).ToDataUrl(mime);
+        var base64 = Convert.ToBase64String(audioBytes);
 
         return new SpeechResponse
         {
-            Audio = base64,
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = format ?? "mp3"
+            },
             Warnings = [],
             Response = new()
             {

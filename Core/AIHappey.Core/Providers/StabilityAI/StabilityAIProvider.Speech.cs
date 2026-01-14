@@ -85,11 +85,16 @@ public partial class StabilityAIProvider : IModelProvider
             _ => resp.Content.Headers.ContentType?.MediaType ?? "application/octet-stream"
         };
 
-        var base64 = Convert.ToBase64String(bytesOut).ToDataUrl(mime);
+        var base64 = Convert.ToBase64String(bytesOut);
 
         return new SpeechResponse
         {
-            Audio = base64,
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = outputFormat ?? "mp3"
+            },
             Warnings = warnings,
             Response = new()
             {

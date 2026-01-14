@@ -68,11 +68,16 @@ public partial class ElevenLabsProvider
             throw new InvalidOperationException($"ElevenLabs TTS failed ({(int)resp.StatusCode}): {System.Text.Encoding.UTF8.GetString(bytes)}");
 
         var mime = GuessMimeType(outputFormat);
-        var base64 = Convert.ToBase64String(bytes).ToDataUrl(mime);
+        var base64 = Convert.ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            Audio = base64,
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = outputFormat?.Split("_")?.FirstOrDefault() ?? "mp3",
+            },
             Warnings = [],
             Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
         };
@@ -123,11 +128,16 @@ public partial class ElevenLabsProvider
             throw new InvalidOperationException($"ElevenLabs Music failed ({(int)resp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
 
         var mime = GuessMimeType(outputFormat);
-        var base64 = Convert.ToBase64String(bytes).ToDataUrl(mime);
+        var base64 = Convert.ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            Audio = base64,
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = outputFormat?.Split("_")?.FirstOrDefault() ?? "mp3",
+            },
             Warnings = warnings,
             Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
         };

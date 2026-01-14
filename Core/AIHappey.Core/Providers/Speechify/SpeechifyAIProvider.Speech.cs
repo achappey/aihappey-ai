@@ -123,34 +123,14 @@ public partial class SpeechifyAIProvider
         var mime = MapSpeechifyFormatToMimeType(effectiveFormat);
         var audioDataUrl = audioBase64.ToDataUrl(mime);
 
-        // Provider metadata: echo effective knobs + key billing fields.
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["voice_id"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web),
-            ["audio_format"] = JsonSerializer.SerializeToElement(effectiveFormat, JsonSerializerOptions.Web),
-            ["model"] = JsonSerializer.SerializeToElement(model, JsonSerializerOptions.Web),
-        };
-
-        if (!string.IsNullOrWhiteSpace(language))
-            providerMetadata["language"] = JsonSerializer.SerializeToElement(language, JsonSerializerOptions.Web);
-
-        if (root.TryGetProperty("billable_characters_count", out var bcc) && bcc.ValueKind == JsonValueKind.Number)
-            providerMetadata["billable_characters_count"] = bcc.Clone();
-
-        // Keep speech_marks available to callers (can be large). Best-effort only.
-        if (root.TryGetProperty("speech_marks", out var marks) && marks.ValueKind != JsonValueKind.Null && marks.ValueKind != JsonValueKind.Undefined)
-            providerMetadata["speech_marks"] = marks.Clone();
-
-        // Echo effective options.
-        if (metadata?.Options?.LoudnessNormalization is not null)
-            providerMetadata["loudness_normalization"] = JsonSerializer.SerializeToElement(metadata.Options.LoudnessNormalization.Value, JsonSerializerOptions.Web);
-        if (metadata?.Options?.TextNormalization is not null)
-            providerMetadata["text_normalization"] = JsonSerializer.SerializeToElement(metadata.Options.TextNormalization.Value, JsonSerializerOptions.Web);
-
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
-            Audio = audioDataUrl,
+            Audio = new SpeechAudioResponse()
+            {
+                Base64 = audioDataUrl,
+                MimeType = mime,
+                Format = effectiveFormat
+            },
             Warnings = warnings,
             Response = new ResponseData
             {

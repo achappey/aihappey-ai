@@ -23,9 +23,8 @@ public partial class OpenAIProvider : IModelProvider
             : !string.IsNullOrEmpty(metadata?.Voice)
             ? new GeneratedSpeechVoice(metadata?.Voice) : GeneratedSpeechVoice.Alloy;
 
-        var format = !string.IsNullOrEmpty(request.OutputFormat) ? new GeneratedSpeechFormat(request.OutputFormat)
-                  : !string.IsNullOrEmpty(metadata?.ResponseFormat)
-            ? new GeneratedSpeechFormat(metadata?.ResponseFormat) : GeneratedSpeechFormat.Mp3;
+        var formatString = request.OutputFormat ?? metadata?.ResponseFormat ?? "mp3";
+        var format = new GeneratedSpeechFormat(formatString);
 
         var result = await audioClient.GenerateSpeechAsync(request.Text,
             voice,
@@ -37,11 +36,16 @@ public partial class OpenAIProvider : IModelProvider
             },
             cancellationToken);
 
-        var base64 = Convert.ToBase64String(result.Value.ToArray()).ToDataUrl("audio/mpeg");
+        var base64 = Convert.ToBase64String(result.Value.ToArray());
 
         return new SpeechResponse()
         {
-            Audio = base64,
+            Audio = new SpeechAudioResponse()
+            {
+                Base64 = base64,
+                MimeType = MapToAudioMimeType(formatString),
+                Format = formatString
+            },
             Warnings = warnings,
             Response = new()
             {
@@ -50,4 +54,22 @@ public partial class OpenAIProvider : IModelProvider
             },
         };
     }
+
+    public static string MapToAudioMimeType(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "application/octet-stream";
+
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "mp3" => "audio/mpeg",
+            "opus" => "audio/opus",
+            "aac" => "audio/aac",
+            "flac" => "audio/flac",
+            "wav" => "audio/wav",
+            _ => "application/octet-stream"
+        };
+    }
+
+
 }

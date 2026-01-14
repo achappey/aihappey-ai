@@ -36,24 +36,9 @@ public class SpeechTools
             request.Model = request.Model.SplitModelId().Model;
 
             var result = await provider.SpeechRequest(request, ct);
-            var audio = result.Audio as string;
-            if (string.IsNullOrWhiteSpace(audio))
+
+            if (string.IsNullOrWhiteSpace(result.Audio?.Base64))
                 throw new InvalidOperationException("Provider returned no audio.");
-
-            string mimeType;
-            string base64;
-
-            if (MediaContentHelpers.TryParseDataUrl(audio, out var parsedMime, out var parsedBase64))
-            {
-                mimeType = parsedMime;
-                base64 = parsedBase64;
-            }
-            else
-            {
-                // Fallback: assume raw base64.
-                mimeType = GuessSpeechMimeType(request);
-                base64 = audio;
-            }
 
             var structured = new JsonObject
             {
@@ -65,7 +50,8 @@ public class SpeechTools
 
             return new CallToolResult
             {
-                Content = [new AudioContentBlock { MimeType = mimeType, Data = base64 }],
+                Content = [new AudioContentBlock { MimeType = result.Audio.MimeType,
+                    Data = result.Audio.Base64 }],
                 StructuredContent = structured
             };
         });

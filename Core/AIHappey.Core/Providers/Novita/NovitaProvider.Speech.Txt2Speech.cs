@@ -107,12 +107,16 @@ public partial class NovitaProvider : IModelProvider
         var mime = audioType == "mp3" ? "audio/mpeg" : "audio/wav";
 
         var base64 = Convert
-            .ToBase64String(bytes)
-            .ToDataUrl(mime);
+            .ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            Audio = base64,
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = audioType ?? "wav"
+            },
             Warnings = warnings,
             Response = new()
             {

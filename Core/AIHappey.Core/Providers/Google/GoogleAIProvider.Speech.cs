@@ -102,7 +102,12 @@ public partial class GoogleAIProvider
 
         return new SpeechResponse
         {
-            Audio = base64.ToDataUrl(mime),
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = "pcm"
+            },
             Warnings = warnings,
             Response = new()
             {

@@ -116,34 +116,16 @@ public sealed partial class DeepgramProvider
         var contentType = resp.Content.Headers.ContentType?.MediaType;
         var mime = ResolveSpeechMimeType(contentType, encoding, container, request.OutputFormat);
 
-        var audio = Convert.ToBase64String(bytes).ToDataUrl(mime);
-
-        // Echo the effective knobs so callers can introspect what was sent.
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["model"] = JsonSerializer.SerializeToElement(request.Model, JsonSerializerOptions.Web),
-            ["encoding"] = JsonSerializer.SerializeToElement(encoding, JsonSerializerOptions.Web),
-        };
-
-        if (!string.IsNullOrWhiteSpace(container))
-            providerMetadata["container"] = JsonSerializer.SerializeToElement(container, JsonSerializerOptions.Web);
-        if (sampleRate is not null)
-            providerMetadata["sample_rate"] = JsonSerializer.SerializeToElement(sampleRate.Value, JsonSerializerOptions.Web);
-        if (bitRate is not null)
-            providerMetadata["bit_rate"] = JsonSerializer.SerializeToElement(bitRate.Value, JsonSerializerOptions.Web);
-        if (metadata?.MipOptOut is not null)
-            providerMetadata["mip_opt_out"] = JsonSerializer.SerializeToElement(metadata.MipOptOut.Value, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(metadata?.Callback))
-            providerMetadata["callback"] = JsonSerializer.SerializeToElement(metadata.Callback, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(metadata?.CallbackMethod))
-            providerMetadata["callback_method"] = JsonSerializer.SerializeToElement(metadata.CallbackMethod, JsonSerializerOptions.Web);
-        if (metadata?.Tag is not null)
-            providerMetadata["tag"] = metadata.Tag.Value;
+        var audio = Convert.ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
-            Audio = audio,
+            Audio = new()
+            {
+                Base64 = audio,
+                Format = encoding,
+                MimeType = mime
+            },
             Warnings = warnings,
             Response = new()
             {

@@ -77,12 +77,16 @@ public partial class NovitaProvider : IModelProvider
             warnings.Add("GLM-TTS returned pcm (raw). If you want easy browser playback, request response_format=wav.");
 
         var base64 = Convert
-            .ToBase64String(bytes)
-            .ToDataUrl(mime);
+            .ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            Audio = base64,
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = responseFormat ?? "pcm"
+            },
             Warnings = warnings,
             Response = new()
             {
@@ -94,5 +98,5 @@ public partial class NovitaProvider : IModelProvider
 
     private static bool IsGlmTtsModel(string? model)
            => string.Equals(model, "glm-tts", StringComparison.OrdinalIgnoreCase);
-    
+
 }

@@ -87,11 +87,16 @@ public partial class TogetherProvider : IModelProvider
         }
 
         var mime = ResolveSpeechMimeType(responseFormat, resp.Content.Headers.ContentType?.MediaType);
-        var audio = Convert.ToBase64String(bytes).ToDataUrl(mime);
+        var audio = Convert.ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            Audio = audio,
+            Audio = new()
+            {
+                MimeType = mime,
+                Base64 = audio,
+                Format = responseFormat
+            },
             Warnings = warnings,
             Response = new()
             {

@@ -101,36 +101,21 @@ public partial class ResembleAIProvider
 
         var effectiveFormat = NormalizeResembleOutputFormat(returnedFormat ?? outputFormat) ?? "wav";
         var mime = effectiveFormat.Equals("mp3", StringComparison.OrdinalIgnoreCase) ? "audio/mpeg" : "audio/wav";
-        var audioDataUrl = audioBase64.ToDataUrl(mime);
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["voice_uuid"] = JsonSerializer.SerializeToElement(voiceUuid, JsonSerializerOptions.Web)
-        };
-
-        if (!string.IsNullOrWhiteSpace(metadata?.ProjectUuid))
-            providerMetadata["project_uuid"] = JsonSerializer.SerializeToElement(metadata.ProjectUuid, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(metadata?.Title))
-            providerMetadata["title"] = JsonSerializer.SerializeToElement(metadata.Title, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(metadata?.Precision))
-            providerMetadata["precision"] = JsonSerializer.SerializeToElement(metadata.Precision, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(effectiveFormat))
-            providerMetadata["output_format"] = JsonSerializer.SerializeToElement(effectiveFormat, JsonSerializerOptions.Web);
-        if (metadata?.SampleRate is not null)
-            providerMetadata["sample_rate"] = JsonSerializer.SerializeToElement(metadata.SampleRate.Value, JsonSerializerOptions.Web);
-        if (metadata?.UseHd is not null)
-            providerMetadata["use_hd"] = JsonSerializer.SerializeToElement(metadata.UseHd.Value, JsonSerializerOptions.Web);
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
-            Audio = audioDataUrl,
+            Audio = new()
+            {
+                Base64 = audioBase64,
+                MimeType = mime,
+                Format = effectiveFormat
+            },
             Warnings = warnings,
             Response = new ResponseData
             {
                 Timestamp = now,
                 ModelId = request.Model,
-                Body = body
+                Body = doc.RootElement.Clone()
             }
         };
     }

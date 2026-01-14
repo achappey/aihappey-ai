@@ -66,12 +66,16 @@ public partial class GroqProvider : IModelProvider
         };
 
         var base64 = Convert
-            .ToBase64String(bytes)
-            .ToDataUrl(mime);
+            .ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            Audio = base64,
+            Audio = new()
+            {
+                Base64 = base64,
+                MimeType = mime,
+                Format = format ?? "wav"
+            },
             Warnings = [],
             Response = new()
             {

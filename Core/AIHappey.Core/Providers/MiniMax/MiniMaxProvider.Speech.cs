@@ -59,7 +59,7 @@ public partial class MiniMaxProvider : IModelProvider
         if (pitch > 12) pitch = 12;
 
         // ---- audio_setting ----
-        var format = (request.OutputFormat
+        string format = (request.OutputFormat
             ?? metadata?.AudioSetting?.Format
             ?? "mp3").Trim().ToLowerInvariant();
 
@@ -150,34 +150,16 @@ public partial class MiniMaxProvider : IModelProvider
 
         var bytes = DecodeHexStringToBytes(hex);
         var mime = GuessAudioMimeType(format);
-        var audioDataUrl = Convert.ToBase64String(bytes).ToDataUrl(mime);
-
-        // ---- providerMetadata (small + structured; avoids copying audio twice) ----
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        try
-        {
-            var meta = new Dictionary<string, JsonElement>();
-            if (doc.RootElement.TryGetProperty("trace_id", out var traceId)) meta["trace_id"] = traceId.Clone();
-            if (doc.RootElement.TryGetProperty("extra_info", out var extra)) meta["extra_info"] = extra.Clone();
-            if (doc.RootElement.TryGetProperty("base_resp", out var br)) meta["base_resp"] = br.Clone();
-
-            if (meta.Count > 0)
-            {
-                providerMetadata = new Dictionary<string, JsonElement>
-                {
-                    [GetIdentifier()] = JsonSerializer.SerializeToElement(meta, JsonSerializerOptions.Web)
-                };
-            }
-        }
-        catch
-        {
-            // best-effort only
-        }
+        var audioDataUrl = Convert.ToBase64String(bytes);
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
-            Audio = audioDataUrl,
+            Audio = new()
+            {
+                Base64 = audioDataUrl,
+                MimeType = mime,
+                Format = format
+            },
             Warnings = warnings,
             Response = new()
             {

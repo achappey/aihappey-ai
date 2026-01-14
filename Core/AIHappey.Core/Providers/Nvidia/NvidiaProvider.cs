@@ -34,7 +34,7 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
         var key = keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No NVIDIA API key.");
+            throw new InvalidOperationException($"No {nameof(Nvidia).ToUpperInvariant()} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -49,7 +49,7 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"NVIDIA API error: {err}");
+            throw new Exception($"{nameof(Nvidia).ToUpperInvariant()} API error: {err}");
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -77,7 +77,7 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
                 {
                     Id = (id ?? string.Empty).ToModelId(GetIdentifier()),
                     Name = id ?? string.Empty,
-                    OwnedBy = ownedBy ?? "NVIDIA",
+                    OwnedBy = ownedBy ?? nameof(Nvidia).ToUpperInvariant(),
                     Created = created,
                     Type = "language",
                 };

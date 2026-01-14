@@ -50,12 +50,26 @@ public class SpeechResponse
     /// Generated audio. Typically a data-url string (<c>data:audio/...;base64,...</c>) but may be provider-dependent.
     /// </summary>
     [JsonPropertyName("audio")]
-    public object Audio { get; set; } = null!;
+    public SpeechAudioResponse Audio { get; set; } = null!;
 
     [JsonPropertyName("warnings")]
     public IEnumerable<object> Warnings { get; set; } = [];
 
     [JsonPropertyName("response")]
     public ResponseData Response { get; set; } = default!;
+
+}
+
+public class SpeechAudioResponse
+{
+    [JsonPropertyName("base64")]
+    public string Base64 { get; set; } = null!;
+
+    [JsonPropertyName("mimeType")]
+    public string MimeType { get; set; } = null!;
+
+    [JsonPropertyName("format")]
+    public string Format { get; set; } = null!;
+
 
 }

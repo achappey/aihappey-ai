@@ -101,11 +101,15 @@ public partial class SarvamProvider
         // Sarvam docs: output audio is a wave file encoded as base64 string.
         // If output_audio_codec is set, best-effort mime mapping.
         var mime = GuessMimeType(outputAudioCodec) ?? "audio/wav";
-        var audioDataUrl = audioBase64.ToDataUrl(mime);
 
         return new SpeechResponse
         {
-            Audio = audioDataUrl,
+            Audio = new()
+            {
+                Base64 = audioBase64,
+                MimeType = mime,
+                Format = outputAudioCodec ?? "mp3"
+            },
             Warnings = warnings,
             Response = new ResponseData
             {

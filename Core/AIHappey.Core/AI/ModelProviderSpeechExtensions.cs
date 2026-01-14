@@ -47,26 +47,20 @@ public static class ModelProviderSpeechExtensions
             yield break;
         }
 
-        var audio = result?.Audio as string;
-        if (string.IsNullOrWhiteSpace(audio))
+        //var audio = result?.Audio as string;
+        if (string.IsNullOrWhiteSpace(result?.Audio?.Base64))
         {
             yield return "Provider returned no audio.".ToErrorUIPart();
             yield break;
         }
 
         var mimeType = "audio/mpeg";
-        var base64 = audio;
-
-        if (MediaContentHelpers.TryParseDataUrl(audio, out var parsedMime, out var parsedBase64))
-        {
-            mimeType = parsedMime;
-            base64 = parsedBase64;
-        }
+        var base64 = result.Audio.Base64;
 
         yield return new FileUIPart
         {
             MediaType = mimeType,
-            Url = base64
+            Url = base64.ToDataUrl(mimeType)
         };
 
         // Finish
