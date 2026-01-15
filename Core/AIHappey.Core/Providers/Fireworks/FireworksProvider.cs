@@ -1,12 +1,10 @@
 using AIHappey.Core.AI;
-using OAIC = OpenAI.Chat;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
-using OpenAI.Responses;
 using AIHappey.Common.Model;
-using System.Text.Json;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -71,14 +69,21 @@ public partial class FireworksProvider : IModelProvider
             options, ct: cancellationToken);
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.GetResponses(
+                   options, ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.GetResponsesUpdates(
+           options,
+           ct: cancellationToken);
     }
 
     public static IReadOnlyList<Model> FireworksModels =>

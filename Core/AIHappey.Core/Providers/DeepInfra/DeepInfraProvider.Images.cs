@@ -33,6 +33,9 @@ public sealed partial class DeepInfraProvider
         if (imageRequest.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
+        if (imageRequest.Seed is not null)
+            warnings.Add(new { type = "unsupported", feature = "seed" });
+
         var size = imageRequest.Size;
         if (string.IsNullOrWhiteSpace(size) && !string.IsNullOrWhiteSpace(imageRequest.AspectRatio))
         {

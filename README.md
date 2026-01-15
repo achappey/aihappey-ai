@@ -25,7 +25,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Deepgram       | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Echo           | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | ElevenLabs     | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
-| Fireworks      | ✅        | ✅          | ✅                | ❌            | ✅                     | ➖               | ✅                       | ❌        |
+| Fireworks      | ✅        | ✅          | ✅                | ✅            | ✅                     | ➖               | ✅                       | ❌        |
 | GoogleAI       | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
 | Groq           | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ✅        |
 | Hyperbolic     | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.Providers.Fireworks;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -49,13 +50,13 @@ public partial class FireworksProvider
 
         if (looksLikeFlux)
         {
-            if (hasInitImage)
+            if (imageRequest.Files?.Count() > 1)
             {
                 warnings.Add(new
                 {
                     type = "unsupported",
                     feature = "files",
-                    details = "Files/image-to-image are not supported for Fireworks workflow models. Falling back to text-to-image." 
+                    details = "Multiple files/image-to-image are not supported for Fireworks workflow models. Falling back to single image-to-image."
                 });
             }
 
@@ -209,13 +210,55 @@ public partial class FireworksProvider
         var modelPath = NormalizeModelPath(imageRequest.Model);
         var submitEndpoint = $"v1/workflows/{modelPath}";
         var resultEndpoint = $"v1/workflows/{modelPath}/get_result";
+        var metadata = imageRequest.GetImageProviderMetadata<FireworksImageProviderMetadata>(GetIdentifier());
 
-        // Submit
-        var submitPayload = JsonSerializer.Serialize(new { prompt = imageRequest.Prompt }, ImageJson);
+        var payload = new Dictionary<string, object?>
+        {
+            ["prompt"] = imageRequest.Prompt,
+        };
+
+        if (imageRequest.Seed is not null)
+        {
+            payload["seed"] = imageRequest.Seed;
+        }
+
+        var imageFile = imageRequest.Files?.FirstOrDefault();
+        if (imageFile is not null)
+        {
+            payload["input_image"] = imageFile.Data.ToDataUrl(imageFile.MediaType);
+        }
+
+        if (imageRequest.AspectRatio is not null)
+        {
+            payload["aspect_ratio"] = imageRequest.AspectRatio;
+        }
+
+        if (metadata?.OutputFormat is not null)
+        {
+            payload["output_format"] = metadata.OutputFormat;
+        }
+
+        if (metadata?.SafetyTolerance is not null)
+        {
+            payload["safety_tolerance"] = metadata.SafetyTolerance;
+        }
+
+        if (metadata?.PromptUpsampling is not null)
+        {
+            payload["prompt_upsampling"] = metadata.PromptUpsampling;
+        }
+
+        if (metadata?.WebhookUrl is not null)
+        {
+            payload["webhook_url"] = metadata.WebhookUrl;
+        }
+
+        var submitPayload = JsonSerializer.Serialize(payload, ImageJson);
         using var submitReq = new HttpRequestMessage(HttpMethod.Post, submitEndpoint)
         {
             Content = new StringContent(submitPayload, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
+
         submitReq.Headers.Accept.Clear();
         submitReq.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
 

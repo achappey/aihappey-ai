@@ -25,6 +25,7 @@ public class ResponsesController(IAIModelProviderResolver resolver) : Controller
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
         requestDto.Store = false;
+        requestDto.Truncation = TruncationStrategy.Auto;
 
         if (requestDto.Stream == true)
         {
