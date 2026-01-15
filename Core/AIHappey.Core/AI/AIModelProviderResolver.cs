@@ -137,20 +137,11 @@ public class AIModelProviderResolver(
     public async Task<IModelProvider> Resolve(string model, CancellationToken ct = default)
     {
         var provKey = model.SplitModelId().Provider;
-        var currentProv = providers.FirstOrDefault(a => a.GetIdentifier() == provKey);
+        var currentProv = providers.FirstOrDefault(a => a.GetIdentifier() == provKey
+            && !string.IsNullOrEmpty(apiKeyResolver.Resolve(provKey)));
 
         if (currentProv != null)
             return currentProv;
-
-        var map = await LoadModels(ct);
-
-        if (map.TryGetValue(model, out var entry))
-            return entry.Provider;
-
-        var key = map.Keys.FirstOrDefault(k => k.SplitModelId().Model == model);
-
-        if (key != null && map.TryGetValue(key, out var backEntry))
-            return backEntry.Provider;
 
         throw new NotSupportedException($"No provider found for model '{model}'.");
     }

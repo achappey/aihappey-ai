@@ -27,12 +27,10 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
             }
             catch (Exception)
             {
-                //    provider = _resolver.GetProvider();
             }
         }
 
         provider ??= _resolver.GetProvider();
-
         var result = await provider.SamplingAsync(requestDto, cancellationToken);
 
         return Ok(result);
