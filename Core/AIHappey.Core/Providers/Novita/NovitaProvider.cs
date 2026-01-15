@@ -1,11 +1,9 @@
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using System.Text.Json;
-using AIHappey.Core.Models;
-using AIHappey.Common.Model.ChatCompletions;
-using OpenAI.Responses;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.Responses;
+using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -41,12 +39,41 @@ public partial class NovitaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        var modelId = options.Model ?? throw new ArgumentException(options.Model);
+        var models = StaticModels(GetIdentifier());
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId));
+
+        if (model != null)
+        {
+
+            if (model.Type == "speech")
+            {
+                return await this.SpeechResponseAsync(options, cancellationToken);
+            }
+        }
+
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

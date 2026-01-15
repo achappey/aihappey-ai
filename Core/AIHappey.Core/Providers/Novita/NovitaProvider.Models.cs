@@ -1,9 +1,6 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using OpenAI.Responses;
-using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -67,11 +64,11 @@ public partial class NovitaProvider : IModelProvider
              && el.TryGetProperty("output_token_price_per_m", out var outputPrice)
              && outputPrice.ValueKind == JsonValueKind.Number)
             {
-                model.Pricing = new ModelPricing
+              /*  model.Pricing = new ModelPricing
                 {
                     Input = inputPrice.GetInt32().ToString(),
                     Output = outputPrice.GetInt32().ToString(),
-                };
+                };*/
             }
 
 

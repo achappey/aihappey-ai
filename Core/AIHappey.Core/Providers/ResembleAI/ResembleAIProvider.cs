@@ -38,11 +38,6 @@ public partial class ResembleAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public string GetIdentifier() => nameof(ResembleAI).ToLowerInvariant();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -53,11 +48,6 @@ public partial class ResembleAIProvider : IModelProvider
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -100,8 +90,17 @@ public partial class ResembleAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        var modelId = options.Model ?? throw new ArgumentException(options.Model);
+        var model = ResembleAIModels.FirstOrDefault(a => a.Id.EndsWith(modelId))
+          ?? throw new ArgumentException(modelId);
+
+        if (model.Type == "speech")
+        {
+            return await this.SpeechResponseAsync(options, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 

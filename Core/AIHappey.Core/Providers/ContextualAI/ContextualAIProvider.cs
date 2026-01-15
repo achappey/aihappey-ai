@@ -40,11 +40,6 @@ public partial class ContextualAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public string GetIdentifier() => "contextualai";
 
     public async Task<IEnumerable<Model>> ListModels(
@@ -80,11 +75,6 @@ public partial class ContextualAIProvider : IModelProvider
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

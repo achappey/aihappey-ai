@@ -34,9 +34,6 @@ public partial class AlibabaProvider : IModelProvider
 
     public string GetIdentifier() => "alibaba";
 
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -81,7 +78,7 @@ public partial class AlibabaProvider : IModelProvider
                 Type = "language",
                 OwnedBy = "Alibaba",
                 ContextWindow = 262144,
-                Pricing = new ModelPricing { Input = "1.2", Output = "6" }
+              //  Pricing = new ModelPricing { Input = "1.2", Output = "6" }
             },
             new()
             {
@@ -90,7 +87,7 @@ public partial class AlibabaProvider : IModelProvider
                 Type = "language",
                 OwnedBy = "Alibaba",
                 ContextWindow = 1000000,
-                Pricing = new ModelPricing { Input = "0.4", Output = "1.2" }
+              //  Pricing = new ModelPricing { Input = "0.4", Output = "1.2" }
             },
             new()
             {
@@ -99,7 +96,7 @@ public partial class AlibabaProvider : IModelProvider
                 Type = "language",
                 OwnedBy = "Alibaba",
                 ContextWindow = 1000000,
-                Pricing = new ModelPricing { Input = "0.05", Output = "0.4" }
+             //   Pricing = new ModelPricing { Input = "0.05", Output = "0.4" }
             },
             new()
             {
@@ -108,7 +105,7 @@ public partial class AlibabaProvider : IModelProvider
                 Type = "language",
                 OwnedBy = "Alibaba",
                 ContextWindow = 1000000,
-                Pricing = new ModelPricing { Input = "0.3", Output = "1.5" }
+             //   Pricing = new ModelPricing { Input = "0.3", Output = "1.5" }
             },
 
             // ---- Image generation (Qwen-Image) ----
@@ -118,7 +115,7 @@ public partial class AlibabaProvider : IModelProvider
                 Name = "qwen-image-max",
                 Type = "image",
                 OwnedBy = "Alibaba",
-                Pricing = new ModelPricing { Input = "0.075", Output = "0" }
+              //  Pricing = new ModelPricing { Input = "0.075", Output = "0" }
             },
             new()
             {
@@ -126,7 +123,7 @@ public partial class AlibabaProvider : IModelProvider
                 Name = "qwen-image-max-2025-12-30",
                 Type = "image",
                 OwnedBy = "Alibaba",
-                Pricing = new ModelPricing { Input = "0.075", Output = "0" }
+             //   Pricing = new ModelPricing { Input = "0.075", Output = "0" }
             },
             new()
             {
@@ -134,7 +131,7 @@ public partial class AlibabaProvider : IModelProvider
                 Name = "qwen-image-plus",
                 Type = "image",
                 OwnedBy = "Alibaba",
-                Pricing = new ModelPricing { Input = "0.03", Output = "0" }
+             //   Pricing = new ModelPricing { Input = "0.03", Output = "0" }
             },
             new()
             {
@@ -142,7 +139,7 @@ public partial class AlibabaProvider : IModelProvider
                 Name = "qwen-image",
                 Type = "image",
                 OwnedBy = "Alibaba",
-                Pricing = new ModelPricing { Input = "0.035", Output = "0" }
+            //    Pricing = new ModelPricing { Input = "0.035", Output = "0" }
             },
 
             // ---- Image generation (Tongyi Z-Image) ----
@@ -152,7 +149,7 @@ public partial class AlibabaProvider : IModelProvider
                 Name = "z-image-turbo",
                 Type = "image",
                 OwnedBy = "Alibaba",
-                Pricing = new ModelPricing { Input = "0", Output = "0" }
+             //   Pricing = new ModelPricing { Input = "0", Output = "0" }
             },
 
             // ---- Image generation (Wan 2.6) ----
@@ -162,7 +159,7 @@ public partial class AlibabaProvider : IModelProvider
                 Name = "wan2.6-image",
                 Type = "image",
                 OwnedBy = "Alibaba",
-                Pricing = new ModelPricing { Input = "0", Output = "0" }
+             //   Pricing = new ModelPricing { Input = "0", Output = "0" }
             },
             new()
             {
@@ -170,7 +167,7 @@ public partial class AlibabaProvider : IModelProvider
                 Name = "wan2.6-t2i",
                 Type = "image",
                 OwnedBy = "Alibaba",
-                Pricing = new ModelPricing { Input = "0", Output = "0" }
+            //    Pricing = new ModelPricing { Input = "0", Output = "0" }
             }
         ]);
     }

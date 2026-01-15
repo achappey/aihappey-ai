@@ -38,11 +38,6 @@ public partial class SpeechifyProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public string GetIdentifier() => "speechify";
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -53,11 +48,6 @@ public partial class SpeechifyProvider : IModelProvider
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -81,7 +71,7 @@ public partial class SpeechifyProvider : IModelProvider
         yield break;
     }
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, 
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -92,10 +82,8 @@ public partial class SpeechifyProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+        => await this.SpeechResponseAsync(options, cancellationToken);
 
     public IAsyncEnumerable<Common.Model.Responses.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {

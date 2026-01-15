@@ -47,14 +47,7 @@ public partial class OpenAIProvider : IModelProvider
         return models.Value
             .Where(a => !DeprecatedModels.Contains(a.Id))
             .ToModels();
-    }
-
-    
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    }    
 
     private readonly IEnumerable<string> DeprecatedModels = [
         "davinci-002",

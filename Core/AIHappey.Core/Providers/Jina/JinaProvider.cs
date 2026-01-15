@@ -130,11 +130,5 @@ public partial class JinaProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
-
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     
 }

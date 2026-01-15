@@ -34,9 +34,6 @@ public partial class TelnyxProvider
 
     public string GetIdentifier() => nameof(Telnyx).ToLowerInvariant();
 
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

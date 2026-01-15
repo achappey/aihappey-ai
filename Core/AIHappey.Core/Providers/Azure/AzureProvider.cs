@@ -43,14 +43,7 @@ public sealed partial class AzureProvider(
         return new Uri("https://" + endpoint.TrimStart('/').TrimEnd('/'), UriKind.Absolute);
     }
 
-    // Responses API is not implemented for Azure Speech in this repo.
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)

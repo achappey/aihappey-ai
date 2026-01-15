@@ -6,6 +6,7 @@ using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
+using System.Globalization;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -33,14 +34,9 @@ public partial class TogetherProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    
+
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -123,8 +119,8 @@ public partial class TogetherProvider : IModelProvider
                     && !inputPrice.Equals("0"))
                     model.Pricing = new ModelPricing
                     {
-                        Input = inputPrice,
-                        Output = outputPrice
+                        Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
+                        Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture),
                     };
             }
 
@@ -156,8 +152,4 @@ public partial class TogetherProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }  
 }

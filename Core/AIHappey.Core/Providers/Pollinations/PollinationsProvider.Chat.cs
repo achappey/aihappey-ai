@@ -6,17 +6,12 @@ using System.Text;
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Pollinations;
-using OpenAI.Responses;
 using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Pollinations;
 
 public partial class PollinationsProvider : IModelProvider
 {
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {

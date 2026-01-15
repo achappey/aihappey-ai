@@ -70,11 +70,6 @@ public partial class MiniMaxProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

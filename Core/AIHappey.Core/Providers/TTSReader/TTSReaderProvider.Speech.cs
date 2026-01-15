@@ -37,8 +37,6 @@ public partial class TTSReaderProvider
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("Voice required", nameof(request));
 
-        // Speechify audio_format: recommend always passing it.
-        var audioFormat = "mp3";
         var language = (request.Language ?? metadata?.Language)?.Trim();
         var rate = request.Speed ?? metadata?.Rate;
         if (string.IsNullOrWhiteSpace(language))

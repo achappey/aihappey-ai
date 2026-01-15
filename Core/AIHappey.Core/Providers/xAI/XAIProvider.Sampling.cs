@@ -10,11 +10,6 @@ namespace AIHappey.Core.Providers.xAI;
 
 public partial class XAIProvider : IModelProvider
 {
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

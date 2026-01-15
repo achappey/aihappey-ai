@@ -37,10 +37,6 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Api-Key", key);
     }
 
-    // Responses API is not implemented for Baseten in this repo.
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 

@@ -1,19 +1,10 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
-using OAIC = OpenAI.Chat;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
-/// <summary>
-/// Sarvam Chat Completions API.
-/// Base URL: https://api.sarvam.ai/
-/// Endpoint: POST /v1/chat/completions
-/// Auth header: api-subscription-key: &lt;apiKey&gt;
-/// </summary>
 public sealed partial class SarvamProvider : IModelProvider
 {
 
@@ -45,43 +36,11 @@ public sealed partial class SarvamProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("api-subscription-key", key);
     }
 
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => Task.FromResult<IEnumerable<Model>>(
-        [
-            new Model
-            {
-                Id = "sarvam-m".ToModelId(GetIdentifier()),
-                Name = "sarvam-m",
-                OwnedBy = nameof(Sarvam),
-                Type = "language"
-            },
-             new Model
-            {
-                Id = "saarika:v2.5".ToModelId(GetIdentifier()),
-                Name = "saarika:v2.5",
-                OwnedBy = nameof(Sarvam),
-                Type = "transcription"
-            },
-             new Model
-            {
-                Id = "bulbul:v2".ToModelId(GetIdentifier()),
-                Name = "bulbul:v2",
-                OwnedBy = nameof(Sarvam),
-                Type = "speech"
-            }
-        ]);
-
-
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
-
-    // Implemented in SarvamProvider.Transcriptions.cs
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -103,8 +62,18 @@ public sealed partial class SarvamProvider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        var modelId = options.Model ?? throw new ArgumentException(options.Model);
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
+            ?? throw new ArgumentException(modelId);
+
+        if (model.Type == "speech")
+        {
+            return await this.SpeechResponseAsync(options, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 

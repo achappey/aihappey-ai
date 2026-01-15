@@ -14,7 +14,6 @@ public partial class PollinationsProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
     private readonly IHttpContextAccessor _context;
-
     private readonly HttpClient _client;
 
     public PollinationsProvider(IApiKeyResolver keyResolver,
@@ -35,14 +34,9 @@ public partial class PollinationsProvider : IModelProvider
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    
+
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -60,6 +54,12 @@ public partial class PollinationsProvider : IModelProvider
         return models.Any(a => a.Id.EndsWith(model) && a.Type == "image");
     }
 
+    private readonly ModelPricing Free = new()
+    {
+        Input = 0,
+        Output = 0
+    };
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default) =>
         await Task.FromResult<IEnumerable<Model>>(_context.HttpContext?.User?.Identity?.IsAuthenticated != true
         ? [new Model()
@@ -67,23 +67,27 @@ public partial class PollinationsProvider : IModelProvider
                 OwnedBy = nameof(Pollinations),
                 Name = "Pollinations " + nameof(OpenAI),
                 Type = "language",
+                Pricing = Free,
                 Id = nameof(OpenAI).ToLowerInvariant().ToModelId(GetIdentifier())
             }, new Model()
             {
                 OwnedBy = nameof(Pollinations),
                 Type = "language",
+                Pricing = Free,
                 Name = "Pollinations " + nameof(Mistral),
                 Id = nameof(Mistral).ToLowerInvariant().ToModelId(GetIdentifier())
             }, new Model()
             {
                 OwnedBy = nameof(Pollinations),
                 Type = "image",
+                Pricing = Free,
                 Name = "Pollinations Flux",
                 Id = "flux".ToModelId(GetIdentifier())
             }, new Model()
             {
                 OwnedBy = nameof(Pollinations),
                 Type = "image",
+                Pricing = Free,
                 Name = "Pollinations Turbo",
                 Id = "turbo".ToModelId(GetIdentifier())
             }] : []);

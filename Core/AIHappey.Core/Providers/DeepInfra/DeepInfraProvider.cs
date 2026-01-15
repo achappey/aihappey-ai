@@ -3,7 +3,6 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -35,10 +34,6 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
-
-    // ChatCompletions endpoint is not used by the Vercel UI stream (`/api/chat`).
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

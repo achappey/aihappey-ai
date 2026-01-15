@@ -7,6 +7,7 @@ using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using OpenAI.Responses;
 using AIHappey.Common.Model;
+using System.Globalization;
 
 namespace AIHappey.Core.Providers.Nscale;
 
@@ -119,8 +120,8 @@ public partial class NscaleProvider : IModelProvider
                     && !inputPrice.Equals("0"))
                     model.Pricing = new ModelPricing
                     {
-                        Input = inputPrice,
-                        Output = outputPrice
+                        Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
+                        Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture)
                     };
             }
 
@@ -132,11 +133,6 @@ public partial class NscaleProvider : IModelProvider
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

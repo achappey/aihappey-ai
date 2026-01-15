@@ -18,7 +18,7 @@ public sealed partial class CloudRiftProvider
             Type = "language",
             OwnedBy = nameof(CloudRift),
             ContextWindow = 163840,
-            Pricing = new ModelPricing { Input = "0.15", Output = "0.50" }
+          //  Pricing = new ModelPricing { Input = "0.15", Output = "0.50" }
         },
         new()
         {
@@ -28,7 +28,7 @@ public sealed partial class CloudRiftProvider
             Type = "language",
             OwnedBy = nameof(CloudRift),
             ContextWindow = 131070,
-            Pricing = new ModelPricing { Input = "0.30", Output = "1.75" }
+         //   Pricing = new ModelPricing { Input = "0.30", Output = "1.75" }
         },
         new()
         {
@@ -38,7 +38,7 @@ public sealed partial class CloudRiftProvider
             Type = "language",
             OwnedBy = nameof(CloudRift),
             ContextWindow = 163840,
-            Pricing = new ModelPricing { Input = "0.25", Output = "1.00" }
+          //  Pricing = new ModelPricing { Input = "0.25", Output = "1.00" }
         },
         new()
         {
@@ -48,7 +48,7 @@ public sealed partial class CloudRiftProvider
             Type = "language",
             OwnedBy = "CloudRift",
             ContextWindow = 163840,
-            Pricing = new ModelPricing { Input = "0.15", Output = "0.40" }
+        //    Pricing = new ModelPricing { Input = "0.15", Output = "0.40" }
         }
     ];
 }

@@ -1,4 +1,6 @@
 
+using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Models;
@@ -47,7 +49,7 @@ public class Model
 
 public class ModelPricing
 {
-    [JsonPropertyName("input")]
+    /*[JsonPropertyName("input")]
     public string Input { get; set; } = default!;
 
     [JsonPropertyName("output")]
@@ -57,7 +59,23 @@ public class ModelPricing
     public string? InputCacheRead { get; set; }
 
     [JsonPropertyName("input_cache_write")]
-    public string? InputCacheWrite { get; set; }
+    public string? InputCacheWrite { get; set; }*/
+
+    [JsonPropertyName("input")]
+    [JsonConverter(typeof(TokenPriceConverter))]
+    public decimal Input { get; set; } = default!;
+
+    [JsonPropertyName("output")]
+    [JsonConverter(typeof(TokenPriceConverter))]
+    public decimal Output { get; set; } = default!;
+
+    [JsonPropertyName("input_cache_read")]
+    [JsonConverter(typeof(TokenPriceConverter))]
+    public decimal? InputCacheRead { get; set; }
+
+    [JsonPropertyName("input_cache_write")]
+    [JsonConverter(typeof(TokenPriceConverter))]
+    public decimal? InputCacheWrite { get; set; }
 }
 
 public class ModelReponse
@@ -67,4 +85,34 @@ public class ModelReponse
 
     [JsonPropertyName("data")]
     public IEnumerable<Model> Data { get; set; } = [];
+}
+
+public sealed class TokenPriceConverter : JsonConverter<decimal>
+{
+    private const decimal PerMillion = 1_000_000m;
+
+    public override decimal Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        var perToken = reader.TokenType switch
+        {
+            JsonTokenType.String => decimal.Parse(reader.GetString()!, CultureInfo.InvariantCulture),
+            JsonTokenType.Number => reader.GetDecimal(),
+            _ => throw new JsonException("Invalid token price")
+        };
+
+        // normalize to price per 1M tokens
+        return perToken * PerMillion;
+    }
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        decimal value,
+        JsonSerializerOptions options)
+    {
+        // internal value is already per 1M → write as number
+        writer.WriteNumberValue(value);
+    }
 }

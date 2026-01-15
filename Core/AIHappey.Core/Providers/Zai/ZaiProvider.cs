@@ -69,11 +69,6 @@ public partial class ZaiProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

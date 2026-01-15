@@ -1,12 +1,10 @@
 using AIHappey.Core.AI;
-using OAIC = OpenAI.Chat;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
-using OpenAI.Responses;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
@@ -23,7 +21,6 @@ public partial class StabilityAIProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.stability.ai/v2beta/");
     }
 
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -34,91 +31,14 @@ public partial class StabilityAIProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-
-
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     public string GetIdentifier() => nameof(StabilityAI).ToLowerInvariant();
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return
-        [
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Name = "Stable Image Ultra",
-                Type = "image",
-                Id = "stable-image-ultra".ToModelId(GetIdentifier())
-            },
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Type = "image",
-                Name = "Stable Image Core",
-                Id = "stable-image-core".ToModelId(GetIdentifier())
-            },
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Type = "image",
-                Name = "Stable Diffusion 3.5 Large",
-                Id = "sd3.5-large".ToModelId(GetIdentifier())
-            },
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Type = "image",
-                Name = "Stable Diffusion 3.5 Large Turbo",
-                Id = "sd3.5-large-turbo".ToModelId(GetIdentifier())
-            },
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Type = "image",
-                Name = "Stable Diffusion 3.5 Medium",
-                Id = "sd3.5-medium".ToModelId(GetIdentifier())
-            },
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Type = "image",
-                Name = "Stable Diffusion 3.5 Flash",
-                Id = "sd3.5-flash".ToModelId(GetIdentifier())
-            },
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Type = "speech",
-                Name = "Stable Audio 2.0",
-                Id = "stable-audio-2".ToModelId(GetIdentifier())
-            },
-            new Model()
-            {
-                OwnedBy = nameof(StabilityAI),
-                Type = "speech",
-                Name = "Stable Audio 2.5",
-                Id = "stable-audio-2.5".ToModelId(GetIdentifier())
-            }
-        ];
-    }
-
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -139,6 +59,32 @@ public partial class StabilityAIProvider : IModelProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        if (options.Model?.Contains("audio") == true)
+        {
+            return await this.SpeechResponseAsync(options, cancellationToken);
+        }
+
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

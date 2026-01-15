@@ -3,7 +3,6 @@ using OAIC = OpenAI.Chat;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
-using OpenAI.Responses;
 using AIHappey.Common.Model;
 using Microsoft.KernelMemory;
 using System.Runtime.CompilerServices;
@@ -32,11 +31,6 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public string GetIdentifier() => nameof(KernelMemory).ToLowerInvariant();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -47,11 +41,6 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> CreateResponseAsync(ResponseReasoningOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -1,8 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Fireworks;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -12,8 +10,8 @@ public partial class SarvamProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id == chatRequest.Model)
-         ?? throw new ArgumentException(chatRequest.Model);
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+            ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "transcription")
         {

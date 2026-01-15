@@ -6,8 +6,6 @@ A multi-provider **.NET 9 AI backend** exposing key AI endpoints.
 
 The table below shows which endpoints each provider implements (✅), not yet implemented (❌) or for which an endpoint is not applicable to the provider (➖).
 
-<small>
-
 | Provider       | [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [Completions](https://platform.openai.com/docs/api-reference/chat) | [Responses](https://platform.openai.com/docs/api-reference/responses) | [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [Sampling](https://modelcontextprotocol.io/specification/draft/client/sampling) |
 | -------------- | --------- | ----------- | ----------------- | ------------- | ---------------------- | ---------------- | ------------------------ | --------- |
 | AIML           | ✅        | ➖          | ❌                | ❌            | ✅                     | ❌               | ✅                       | ❌        |
@@ -38,20 +36,20 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Nscale         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Nebius         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Nvidia         | ✅        | ➖          | ✅                | ✅            | ➖                     | ➖               | ➖                       | ❌        |
-| Novita         | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
+| Novita         | ✅        | ➖          | ✅                | 🟡            | ➖                     | ✅               | ✅                       | ❌        |
 | OpenAI         | ✅        | ➖          | ✅                | ✅            | ✅                     | ✅               | ✅                       | ✅        |
 | Perplexity     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | Pollinations   | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ✅        |
 | Replicate      | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
-| ResembleAI     | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
+| ResembleAI     | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ✅                       | ❌        |
 | Runware        | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Runway         | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | SambaNova      | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
-| Sarvam         | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
-| Scaleway       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
-| Speechify      | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
+| Sarvam         | ✅        | ➖          | ✅                | 🟡            | ➖                     | ✅               | ✅                       | ❌        |
+| Scaleway       | ✅        | ➖          | ✅                | ✅            | ➖                     | ➖               | ✅                       | ❌        |
+| Speechify      | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ➖                       | ❌        |
 | Speechmatics   | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ❌                       | ❌        |
-| StabilityAI    | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ➖                       | ❌        |
+| StabilityAI    | ✅        | ➖          | ❌                | 🟡            | ✅                     | ✅               | ➖                       | ❌        |
 | Telnyx         | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Tinfoil        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Together       | ✅        | ✅          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
@@ -59,8 +57,6 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | VoyageAI       | ➖        | ✅          | ➖                | ➖            | ➖                     | ➖               | ➖                       | ➖        |
 | xAI            | ✅        | ➖          | ❌                | ✅            | ✅                     | ➖               | ➖                       | ✅        |
 | Zai            | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
-
-</small>
 
 ## Run locally
 
