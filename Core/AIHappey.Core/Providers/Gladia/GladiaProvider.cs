@@ -75,6 +75,8 @@ public partial class GladiaProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        ApplyAuthHeader();
+
         return await Task.FromResult(new List<Model>()
        {
            new()

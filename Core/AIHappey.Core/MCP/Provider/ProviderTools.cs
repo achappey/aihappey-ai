@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.Anthropic;
+using AIHappey.Common.Model.Providers.Audixa;
 using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Model.Providers.Google;
 using AIHappey.Common.Model.Providers.Jina;
@@ -69,6 +70,7 @@ public class ProviderTools
                 "together" => generator.Generate(typeof(TogetherProviderMetadata)),
                 "elevenlabs" => generator.Generate(typeof(ElevenLabsProviderMetadata)),
                 "deepgram" => generator.Generate(typeof(DeepgramSpeechProviderMetadata)),
+                "audixa" => generator.Generate(typeof(AudixaSpeechProviderMetadata)),
                 "alibaba" => generator.Generate(typeof(AlibabaImageProviderMetadata)),
                 "runware" => generator.Generate(typeof(RunwareImageProviderMetadata)),
                 _ => throw new Exception($"Provider {aiProviderId} not supported. Available providers: {JsonSerializer

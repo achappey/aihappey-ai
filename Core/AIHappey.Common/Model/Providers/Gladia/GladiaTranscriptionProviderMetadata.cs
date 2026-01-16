@@ -15,12 +15,6 @@ public sealed class GladiaTranscriptionProviderMetadata
     [JsonPropertyName("custom_vocabulary_config")]
     public JsonElement? CustomVocabularyConfig { get; set; }
 
-    [JsonPropertyName("callback")]
-    public bool? Callback { get; set; }
-
-    [JsonPropertyName("callback_config")]
-    public JsonElement? CallbackConfig { get; set; }
-
     [JsonPropertyName("subtitles")]
     public bool? Subtitles { get; set; }
 

@@ -60,6 +60,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "speechmatics" => _config.Speechmatics?.ApiKey,
             "hyperstack" => _config.Hyperstack?.ApiKey,
             "gladia" => _config.Gladia?.ApiKey,
+            "verda" => _config.Verda?.ApiKey,
+            "audixa" => _config.Audixa?.ApiKey,
             _ => null
         };
 }

@@ -55,6 +55,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["speechmatics"] = "X-Speechmatics-Key",
             ["hyperstack"] = "X-Hyperstack-Key",
             ["gladia"] = "X-Gladia-Key",
+            ["verda"] = "X-Verda-Key",
+            ["audixa"] = "X-Audixa-Key",
         };
 
     public string? Resolve(string provider)

@@ -6,19 +6,19 @@ using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 
-namespace AIHappey.Core.Providers.Speechify;
+namespace AIHappey.Core.Providers.Audixa;
 
-public partial class SpeechifyProvider : IModelProvider
+public partial class AudixaProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    public SpeechifyProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public AudixaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.sws.speechify.com/");
+        _client.BaseAddress = new Uri("https://api.audixa.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -26,9 +26,10 @@ public partial class SpeechifyProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Speechify)} API key.");
+            throw new InvalidOperationException($"No {nameof(Audixa)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        _client.DefaultRequestHeaders.Remove("x-api-key");
+        _client.DefaultRequestHeaders.Add("x-api-key", key);
     }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -36,13 +37,13 @@ public partial class SpeechifyProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public string GetIdentifier() => nameof(Speechify).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Audixa).ToLowerInvariant();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return SpeechifyModels;
+        return AudixaModels;
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
@@ -88,18 +89,16 @@ public partial class SpeechifyProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public static IReadOnlyList<Model> SpeechifyModels =>
+    public static IReadOnlyList<Model> AudixaModels =>
  [
-    new() { Id = "simba-english".ToModelId(nameof(Speechify).ToLowerInvariant()),
-        Name = "simba-english",
+    new() { Id = "base".ToModelId(nameof(Audixa).ToLowerInvariant()),
+        Name = "Audixa Base",
         Type = "speech",
-        OwnedBy = "Speechify" },
-    new() { Id = "simba-multilingual".ToModelId(nameof(Speechify).ToLowerInvariant()),
-        Name = "simba-multilingual",
+        OwnedBy = nameof(Audixa) },
+    new() { Id = "advance".ToModelId(nameof(Audixa).ToLowerInvariant()),
+        Name = "Audixa Advance",
         Type = "speech",
-        OwnedBy = "Speechify" }
+        OwnedBy = nameof(Audixa) }
 
 ];
-
-
 }

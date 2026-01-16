@@ -67,8 +67,6 @@ public partial class TTSReaderProvider : IModelProvider
     {
         await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
             yield return p;
-
-        yield break;
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request,

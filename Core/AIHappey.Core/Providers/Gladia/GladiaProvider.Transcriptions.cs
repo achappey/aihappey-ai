@@ -112,8 +112,6 @@ public partial class GladiaProvider : IModelProvider
         {
             AddIfHasValue(payload, "custom_vocabulary", metadata.CustomVocabulary);
             AddIfHasValue(payload, "custom_vocabulary_config", metadata.CustomVocabularyConfig);
-            AddIfHasValue(payload, "callback", metadata.Callback);
-            AddIfHasValue(payload, "callback_config", metadata.CallbackConfig);
             AddIfHasValue(payload, "subtitles", metadata.Subtitles);
             AddIfHasValue(payload, "subtitles_config", metadata.SubtitlesConfig);
             AddIfHasValue(payload, "diarization", metadata.Diarization);
@@ -138,8 +136,6 @@ public partial class GladiaProvider : IModelProvider
             AddIfHasValue(payload, "display_mode", metadata.DisplayMode);
             AddIfHasValue(payload, "punctuation_enhanced", metadata.PunctuationEnhanced);
             AddIfHasValue(payload, "language_config", metadata.LanguageConfig);
-
-            ValidatePreRecordedMetadata(metadata);
         }
 
         var body = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
@@ -179,12 +175,6 @@ public partial class GladiaProvider : IModelProvider
             return;
 
         payload[key] = element;
-    }
-
-    private static void ValidatePreRecordedMetadata(GladiaTranscriptionProviderMetadata metadata)
-    {
-        if (metadata.Callback == true && (metadata.CallbackConfig is null || metadata.CallbackConfig.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined))
-            throw new ArgumentException("callback_config is required when callback=true.", nameof(metadata));
     }
 
     private async Task<string> PollUntilDoneAsync(string jobId, CancellationToken cancellationToken)

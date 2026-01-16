@@ -1,8 +1,6 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
-using OpenAI.Responses;
-using OAIC = OpenAI.Chat;
 
 namespace AIHappey.Core.Providers.AsyncAI;
 
