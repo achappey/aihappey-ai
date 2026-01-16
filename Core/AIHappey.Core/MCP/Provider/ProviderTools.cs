@@ -11,11 +11,10 @@ using AIHappey.Common.Model.Providers.Perplexity;
 using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Common.Model.Providers.ElevenLabs;
 using AIHappey.Common.Model.Providers.Deepgram;
+using AIHappey.Common.Model.Providers.DeepInfra;
 using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Common.Model.Providers.XAI;
-using AIHappey.Common.Model.Providers.Together;
-using AIHappey.Common.Model.Providers.Pollinations;
 
 using PollinationsProviderMetadata = AIHappey.Common.Model.Providers.Pollinations.PollinationsProviderMetadata;
 
@@ -57,7 +56,7 @@ public class ProviderTools
             JsonSchema? schema = aiProviderId.ToLowerInvariant() switch
             {
                 "openai" => generator.Generate(typeof(OpenAiProviderMetadata)),
-                "deepinfra" => generator.Generate(typeof(OpenAiProviderMetadata)),
+                "deepinfra" => generator.Generate(typeof(DeepInfraSpeechProviderMetadata)),
                 "anthropic" => generator.Generate(typeof(AnthropicProviderMetadata)),
                 "google" => generator.Generate(typeof(GoogleProviderMetadata)),
                 "cohere" => generator.Generate(typeof(CohereProviderMetadata)),

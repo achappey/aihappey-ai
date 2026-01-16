@@ -39,10 +39,14 @@ public static class CompletionsExtensions
             ["stream"] = true,
             ["stream_options"] = new { include_usage = true },
             ["max_tokens"] = chatRequest.MaxOutputTokens,
-            ["tool_choice"] = chatRequest.ToolChoice ?? "auto",
             ["temperature"] = chatRequest.Temperature,
             ["messages"] = messages
         };
+
+       if (chatRequest.ToolChoice is not null)
+        {
+            payload["tool_choice"] = chatRequest.ToolChoice;
+        }
 
         if (chatRequest.ResponseFormat is null)
         {

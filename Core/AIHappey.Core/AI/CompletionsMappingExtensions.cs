@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 
 namespace AIHappey.Core.AI;
@@ -136,6 +137,14 @@ public static class CompletionsMappingExtensions
         return part switch
         {
             TextUIPart t when !string.IsNullOrWhiteSpace(t.Text) => new { type = "text", text = t.Text },
+            FileUIPart t when t.MediaType.StartsWith("image/") => new
+            {
+                type = "image_url",
+                image_url = new
+                {
+                    url = t.Url
+                }
+            },
             _ => null,
         };
     }
