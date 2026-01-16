@@ -1,32 +1,19 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace AIHappey.Common.Model.Responses;
-
-[JsonConverter(typeof(ResponseStreamConverter))]
-public abstract class ResponseStreamPart
-{
-    public abstract string Type { get; init; }
-}
-
-public class ResponseOutputTextDelta : ResponseStreamPart
-{
-    [JsonPropertyName("delta")]
-    public string Delta { get; init; } = default!;
-
-    [JsonPropertyName("item_id")]
-    public string ItemId { get; init; } = default!;
-
-    [JsonPropertyName("type")]
-    public override string Type { get; init; } = "response.output_text.delta";
-
-}
+namespace AIHappey.Common.Model.Responses.Streaming;
 
 public class ResponseStreamConverter : JsonConverter<ResponseStreamPart>
 {
     private static readonly Dictionary<string, Type> PartTypeMap = new()
     {
         ["response.output_text.delta"] = typeof(ResponseOutputTextDelta),
+        ["response.output_text.done"] = typeof(ResponseOutputTextDone),
+        ["response.created"] = typeof(ResponseCreated),
+        ["response.completed"] = typeof(ResponseCompleted),
+        ["response.failed"] = typeof(ResponseFailed),
+        ["error"] = typeof(ResponseError),
+        ["response.in_progress"] = typeof(ResponseInProgress),
     };
 
     public static ResponseStreamPart DeserializePart(string typeProp, JsonElement root, JsonSerializerOptions options)

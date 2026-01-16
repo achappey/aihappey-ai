@@ -51,6 +51,8 @@ public class AIServiceConfig
     public ProviderConfig? Speechify { get; set; }
     public ProviderConfig? TTSReader { get; set; }
     public ProviderConfig? Speechmatics { get; set; }
+    public ProviderConfig? Hyperstack { get; set; }
+    public ProviderConfig? Gladia { get; set; }
 }
 
 public class ProviderConfig

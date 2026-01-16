@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Common.Model.Responses.Streaming;
 
 namespace AIHappey.Core.AI;
 

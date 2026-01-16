@@ -58,6 +58,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "speechify" => _config.Speechify?.ApiKey,
             "ttsreader" => _config.TTSReader?.ApiKey,
             "speechmatics" => _config.Speechmatics?.ApiKey,
+            "hyperstack" => _config.Hyperstack?.ApiKey,
+            "gladia" => _config.Gladia?.ApiKey,
             _ => null
         };
 }

@@ -15,7 +15,10 @@ public class ResponseResult
     public long CreatedAt { get; set; }
 
     [JsonPropertyName("completed_at")]
-    public long CompletedAt { get; set; }
+    public long? CompletedAt { get; set; }
+
+    [JsonPropertyName("parallel_tool_calls")]
+    public bool? ParallelToolCalls { get; set; }
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = default!;
@@ -49,6 +52,9 @@ public class ResponseResult
 
     [JsonPropertyName("error")]
     public ResponseResultError? Error { get; set; }
+
+    [JsonPropertyName("metadata")]
+    public Dictionary<string, object?>? Metadata { get; set; }
 }
 
 public class ResponseResultError

@@ -49,13 +49,3 @@ public class ChatMessage
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IEnumerable<object>? ToolCalls { get; set; }
 }
-
-public class ChatMessageContent
-{
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = default!;
-
-    [JsonPropertyName("text")]
-    public string Text { get; set; } = default!;
-}
-
