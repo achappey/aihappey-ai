@@ -19,6 +19,9 @@ public partial class NovitaProvider : IModelProvider
         if (IsMiniMaxSpeechModel(request.Model))
             return SpeechRequestMiniMax(request, cancellationToken);
 
+        if (IsFishSpeechModel(request.Model))
+            return SpeechRequestAsyncTxt2SpeechFish(request, cancellationToken);
+
         return SpeechRequestAsyncTxt2Speech(request, cancellationToken); // <- your existing method (task_id + polling)
     }
 }

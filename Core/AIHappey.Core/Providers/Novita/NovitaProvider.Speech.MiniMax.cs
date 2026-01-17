@@ -148,6 +148,14 @@ public partial class NovitaProvider : IModelProvider
             || model.StartsWith("speech-", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool IsFishSpeechModel(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model)) return false;
 
+        // support both forms:
+        // - minimax-speech-02-turbo (novita endpoint suffix)
+        // - speech-02-turbo (friendly alias)
+        return model.StartsWith("s1", StringComparison.OrdinalIgnoreCase);
+    }
 
 }

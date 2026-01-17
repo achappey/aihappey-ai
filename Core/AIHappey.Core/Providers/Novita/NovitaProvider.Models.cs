@@ -64,11 +64,11 @@ public partial class NovitaProvider : IModelProvider
              && el.TryGetProperty("output_token_price_per_m", out var outputPrice)
              && outputPrice.ValueKind == JsonValueKind.Number)
             {
-              /*  model.Pricing = new ModelPricing
-                {
-                    Input = inputPrice.GetInt32().ToString(),
-                    Output = outputPrice.GetInt32().ToString(),
-                };*/
+                /*  model.Pricing = new ModelPricing
+                  {
+                      Input = inputPrice.GetInt32().ToString(),
+                      Output = outputPrice.GetInt32().ToString(),
+                  };*/
             }
 
 
@@ -97,8 +97,14 @@ public partial class NovitaProvider : IModelProvider
     },
     new()
     {
-        Id = "async/txt2speech".ToModelId(providerId),
-        Name = "txt2speech",
+        Id = "txt2speech".ToModelId(providerId),
+        Name = "Text to Speech",
+        Type = "speech"
+    },
+    new()
+    {
+        Id = "s1".ToModelId(providerId),
+        Name = "Fish Audio Text to Speech",
         Type = "speech"
     },
     new()
@@ -136,6 +142,74 @@ public partial class NovitaProvider : IModelProvider
         Id = "minimax-speech-02-hd".ToModelId(providerId),
         Name = "minimax-speech-02-hd",
         Type = "speech"
+    },
+    new()
+    {
+        Id = "baai/bge-reranker-v2-m3".ToModelId(providerId),
+        Name = "bge-reranker-v2-m3",
+        ContextWindow = 8000,
+        MaxTokens = 8000,
+        Pricing = new () {
+            Input = 0.01m,
+            Output = 0.01m
+        }
+    },
+    new()
+    {
+        Id = "seedream-4.5".ToModelId(providerId),
+        Name = "Seedream 4.5",
+        Type = "image",
+         Pricing = new () {
+            Output = 0.03m
+        }
+    },
+    new()
+    {
+        Id = "hunyuan-image-3".ToModelId(providerId),
+        Name = "Hunyuan Image 3",
+        Type = "image",
+         Pricing = new () {
+            Output = 0.10m
+        }
+    },
+    new()
+    {
+        Id = "flux-2-pro".ToModelId(providerId),
+        Name = "Flux 2 Pro",
+        Type = "image",
+        Pricing = new () {
+            Output = 0.03m
+        }
+    },
+    new()
+    {
+        Id = "qwen-image-txt2img".ToModelId(providerId),
+        Name = "Qwen-Image Text to Image",
+        Type = "image",
+        Pricing = new()
+        {
+            Output = 0.02m
+        }
+    },
+    new()
+    {
+        Id = "remove-text".ToModelId(providerId),
+        Name = "Remove Text",
+        Type = "image",
+        Pricing = new()
+        {
+            Output = 0.017m
+        }
+    },
+     new()
+    {
+        Id = "remove-background".ToModelId(providerId),
+        Name = "Remove Background",
+        Type = "image",
+        Pricing = new()
+        {
+            Output = 0.017m
+        }
     },
 ];
 }

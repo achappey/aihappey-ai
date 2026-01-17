@@ -12,12 +12,14 @@ public partial class NovitaProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly IHttpClientFactory _factory;
 
     public NovitaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.novita.ai/openai/");
+        _factory = httpClientFactory;
     }
 
 
@@ -35,17 +37,6 @@ public partial class NovitaProvider : IModelProvider
 
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -74,6 +65,11 @@ public partial class NovitaProvider : IModelProvider
     }
 
     public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

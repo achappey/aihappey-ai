@@ -71,7 +71,7 @@ public partial class NovitaProvider : IModelProvider
         );
 
         using var submitResp = await _client.PostAsync(
-            BaseUrl + request.Model,
+            BaseUrl + "async/" + request.Model,
             submitContent,
             cancellationToken
         );
@@ -263,23 +263,4 @@ public partial class NovitaProvider : IModelProvider
         return (status, reason, audioUrl);
     }
 
-    public Task<string> GetToken(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }
