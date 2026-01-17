@@ -4,7 +4,8 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.Responses.Streaming;
-using AIHappey.Core.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.Gladia;
 
@@ -73,21 +74,6 @@ public partial class GladiaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return await Task.FromResult(new List<Model>()
-       {
-           new()
-           {
-               Id = "gladia".ToModelId(GetIdentifier()),
-               Name = "Gladia",
-               Type = "transcription"
-           }
-       });
-    }
-
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -97,4 +83,10 @@ public partial class GladiaProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerOptions.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
 }

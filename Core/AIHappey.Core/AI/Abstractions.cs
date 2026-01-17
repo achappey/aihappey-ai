@@ -32,6 +32,8 @@ public interface IModelProvider
 
     Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default);
 
+    Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default);
+
 }
 
 public interface IApiKeyResolver

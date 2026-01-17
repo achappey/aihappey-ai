@@ -3,7 +3,6 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Audixa;
@@ -89,16 +88,31 @@ public partial class AudixaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public static IReadOnlyList<Model> AudixaModels =>
- [
-    new() { Id = "base".ToModelId(nameof(Audixa).ToLowerInvariant()),
-        Name = "Audixa Base",
-        Type = "speech",
-        OwnedBy = nameof(Audixa) },
-    new() { Id = "advance".ToModelId(nameof(Audixa).ToLowerInvariant()),
-        Name = "Audixa Advance",
-        Type = "speech",
-        OwnedBy = nameof(Audixa) }
+    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
-];
+    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public static IReadOnlyList<Model> AudixaModels =>
+    [
+        new() { Id = "base".ToModelId(nameof(Audixa).ToLowerInvariant()),
+            Name = "Audixa Base",
+            Type = "speech",
+            OwnedBy = nameof(Audixa) },
+        new() { Id = "advance".ToModelId(nameof(Audixa).ToLowerInvariant()),
+            Name = "Audixa Advance",
+            Type = "speech",
+            OwnedBy = nameof(Audixa) }
+
+    ];
 }

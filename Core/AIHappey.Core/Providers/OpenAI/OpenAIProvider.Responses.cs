@@ -1,5 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.Responses;
+using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -7,8 +8,8 @@ public partial class OpenAIProvider : IModelProvider
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (!_client.DefaultRequestHeaders.Contains("Authorization"))
-            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetKey());
+        _client.DefaultRequestHeaders.Authorization = null;
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         options.ParallelToolCalls ??= true;
 
@@ -18,8 +19,8 @@ public partial class OpenAIProvider : IModelProvider
 
     public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (!_client.DefaultRequestHeaders.Contains("Authorization"))
-            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetKey());
+        _client.DefaultRequestHeaders.Authorization = null;
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         options.ParallelToolCalls ??= true;
 

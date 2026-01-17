@@ -23,7 +23,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ContextualAI   | ➖        | ✅          | ➖                | ➖            | ➖                     | ➖               | ➖                       | ➖        |
 | DeepInfra      | ✅        | ✅          | ✅                | ❌            | ✅                     | ✅               | ❌                       | ❌        |
 | DeepSeek       | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
-| Deepgram       | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
+| Deepgram       | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ✅                       | ❌        |
 | Echo           | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | ElevenLabs     | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Fireworks      | ✅        | ✅          | ✅                | ✅            | ✅                     | ➖               | ✅                       | ❌        |
@@ -35,7 +35,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Inferencenet   | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Jina           | ✅        | ✅          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Mistral        | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ✅                       | ✅        |
-| MiniMax        | ✅        | ➖          | ✅                | ❌            | ✅                     | ✅               | ➖                       | ❌        |
+| MiniMax        | ✅        | ➖          | ✅                | 🟡            | ✅                     | ✅               | ➖                       | ❌        |
 | Nscale         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Nebius         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | NVIDIA         | ✅        | ➖          | ✅                | ✅            | ➖                     | ➖               | ➖                       | ❌        |

@@ -1,8 +1,4 @@
-using OpenAI;
-using OAIC = OpenAI.Chat;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Text;
+using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 
@@ -13,8 +9,8 @@ public partial class OpenAIProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
         CancellationToken cancellationToken = default)
     {
-        if (!_client.DefaultRequestHeaders.Contains("Authorization"))
-            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetKey());
+        _client.DefaultRequestHeaders.Authorization = null;
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         options.ParallelToolCalls ??= true;
 
@@ -24,8 +20,8 @@ public partial class OpenAIProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions chatRequest, CancellationToken cancellationToken = default)
     {
-        if (!_client.DefaultRequestHeaders.Contains("Authorization"))
-            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetKey());
+        _client.DefaultRequestHeaders.Authorization = null;
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         chatRequest.ParallelToolCalls ??= true;
 

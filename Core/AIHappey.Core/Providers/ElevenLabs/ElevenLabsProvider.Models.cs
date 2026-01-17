@@ -19,7 +19,7 @@ public partial class ElevenLabsProvider
         if (doc.RootElement.ValueKind != JsonValueKind.Array)
             return [];
 
-        var owner = "ElevenLabs";
+        var owner = nameof(ElevenLabs);
         var models = new List<Model>();
 
         foreach (var el in doc.RootElement.EnumerateArray())
@@ -46,9 +46,23 @@ public partial class ElevenLabsProvider
         // ElevenLabs STT models are not exposed via GET /v1/models.
         models.Add(new Model { Id = "scribe_v1".ToModelId(GetIdentifier()), Name = "scribe_v1", OwnedBy = owner, Type = "transcription" });
         models.Add(new Model { Id = "scribe_v1_experimental".ToModelId(GetIdentifier()), Name = "scribe_v1_experimental", OwnedBy = owner, Type = "transcription" });
+        models.Add(new Model
+        {
+            Id = "scribe_v2_realtime".ToModelId(GetIdentifier()),
+            Tags = ["real-time"],
+            Name = "scribe_v2_realtime",
+            OwnedBy = owner,
+            Type = "transcription"
+        });
 
-        models.Add(new Model { Id = "music_v1".ToModelId(GetIdentifier()), 
-            Name = "music_v1", OwnedBy = owner, Type = "speech" });
+        models.Add(new Model
+        {
+            Id = "music_v1".ToModelId(GetIdentifier()),
+            Name = "music_v1",
+            OwnedBy = owner,
+            Type = "speech"
+        });
+
 
         return models;
     }

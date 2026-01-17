@@ -1,3 +1,4 @@
+using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
@@ -7,6 +8,21 @@ namespace AIHappey.Core.Providers.AsyncAI;
 
 public partial class AsyncAIProvider : IModelProvider
 {
+    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GetToken(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         // asyncAI does not expose a public list-models endpoint (as of docs provided).
@@ -43,6 +59,11 @@ public partial class AsyncAIProvider : IModelProvider
     }
 
     IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

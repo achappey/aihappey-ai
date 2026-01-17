@@ -35,7 +35,20 @@ public static class MetadataExtensions
         return element.Deserialize<T>(JsonSerializerOptions.Web);
     }
 
+    public static T? GetRealtimeProviderMetadata<T>(this RealtimeRequest chatRequest, string providerId)
+    {
+        if (chatRequest.ProviderOptions is null)
+            return default;
 
+        if (!chatRequest.ProviderOptions.TryGetValue(providerId, out JsonElement element))
+            return default;
+
+        if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
+            return default;
+
+        return element.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+    
     public static T? GetSpeechProviderMetadata<T>(this SpeechRequest chatRequest, string providerId)
     {
         if (chatRequest.ProviderOptions is null)

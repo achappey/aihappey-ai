@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
@@ -69,5 +71,28 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
     {
         throw new NotImplementedException();
     }
+
+    public async Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        var payload = JsonSerializer.SerializeToElement(new { });
+        var resp = await _client.GetRealtimeResponse<ElevenLabsTokenResponse>(payload,
+            relativeUrl: "v1/single-use-token/realtime_scribe",
+            ct: cancellationToken);
+
+        return new RealtimeResponse()
+        {
+            Value = resp.Token,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(),
+        };
+    }
 }
 
+
+public class ElevenLabsTokenResponse
+{
+    [JsonPropertyName("token")]
+    public string Token { get; set; } = null!;
+
+}

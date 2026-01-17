@@ -1,19 +1,9 @@
 using AIHappey.Core.AI;
-using OAIC = OpenAI.Chat;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
-using OpenAI.Responses;
 using AIHappey.Common.Model;
-
-// speech
-using System.Net.Mime;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.MiniMax;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -58,13 +48,6 @@ public partial class MiniMaxProvider : IModelProvider
 
     public string GetIdentifier() => nameof(MiniMax).ToLowerInvariant();
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return MiniMaxModels;
-    }
-
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -80,42 +63,25 @@ public partial class MiniMaxProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public static IReadOnlyList<Model> MiniMaxModels =>
-        [
-            // ===== MiniMax =====
-            new() { Id = "minimax/MiniMax-M2.1",
-                Name = "MiniMax M2.1",
-                Type = "language",
-                OwnedBy = nameof(MiniMax) },
-            new() { Id = "minimax/MiniMax-M2.1-lightning",
-                Name = "MiniMax M2.1 Lightning",
-                Type = "language",
-                OwnedBy = nameof(MiniMax) },
-            new() { Id = "minimax/MiniMax-M2",
-                Name = "MiniMax M2",
-                Type = "language",
-                OwnedBy = nameof(MiniMax) },
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        var modelId = options.Model ?? throw new ArgumentException(options.Model);
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
+            ?? throw new ArgumentException(modelId);
 
-            // ===== MiniMax Images =====
-            // Expose MiniMax image model as "minimax/image-01" so it routes consistently through the resolver.
-            new()
-            {
-                Id = "image-01".ToModelId(nameof(MiniMax).ToLowerInvariant()),
-                Name = "MiniMax Image",
-                Type = "image",
-                OwnedBy = nameof(MiniMax)
-            },
+        if (model.Type == "speech")
+        {
+            return await this.SpeechResponseAsync(options, cancellationToken);
+        }
 
-            // ===== MiniMax Speech (Text-to-Audio) =====
-            new() { Id = "speech-2.6-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.6-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
-            new() { Id = "speech-2.6-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.6-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
-            new() { Id = "speech-02-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-02-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
-            new() { Id = "speech-02-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-02-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
-            new() { Id = "speech-01-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-01-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
-            new() { Id = "speech-01-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-01-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
+        throw new NotImplementedException();
+    }
 
-            // ===== MiniMax Speech (Music) =====
-            new() { Id = "music-2.0".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "music-2.0", Type = "speech", OwnedBy = nameof(MiniMax) },
-        ];
+    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
 
 }

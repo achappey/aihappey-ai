@@ -20,6 +20,8 @@ public static class OpenAIModelExtensions
     {
         Id = source.Id.ToModelId(Constants.OpenAI),
         Name = source.Id,
+        Tags = source.Id.Contains("transcribe") || source.Id.Contains("whisper") 
+            ? ["real-time"] : null,
         Created = source.CreatedAt.ToUnixTimeSeconds(),
         OwnedBy = nameof(OpenAI),
     };

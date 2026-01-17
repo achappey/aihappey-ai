@@ -72,5 +72,10 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     {
         throw new NotImplementedException();
     }
+
+    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
 

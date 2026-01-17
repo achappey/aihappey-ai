@@ -13,6 +13,20 @@ namespace AIHappey.Core.Providers.xAI;
 
 public partial class XAIProvider : IModelProvider
 {
+    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GetToken(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     public async Task<Common.Model.ImageResponse> ImageRequest(Common.Model.ImageRequest imageRequest,
         CancellationToken cancellationToken = default)
@@ -110,6 +124,11 @@ public partial class XAIProvider : IModelProvider
     }
 
     IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

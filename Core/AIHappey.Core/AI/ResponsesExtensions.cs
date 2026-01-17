@@ -22,7 +22,7 @@ public static class ResponsesExtensions
         string relativeUrl = "v1/responses",
         CancellationToken ct = default)
     {
-        if (client is null) throw new ArgumentNullException(nameof(client));
+        ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
@@ -31,11 +31,11 @@ public static class ResponsesExtensions
         var payload = JsonSerializer.SerializeToElement(options);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
-        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct).ConfigureAwait(false);
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-        var result = await JsonSerializer.DeserializeAsync<ResponseResult>(stream, cancellationToken: ct).ConfigureAwait(false);
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        var result = await JsonSerializer.DeserializeAsync<ResponseResult>(stream, cancellationToken: ct);
 
         if (result is null)
             throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
