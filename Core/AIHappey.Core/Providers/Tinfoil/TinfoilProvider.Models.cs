@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Tinfoil;
 

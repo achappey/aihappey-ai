@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
-namespace AIHappey.Core.AI;
+namespace AIHappey.Core.Extensions;
 
 public static class RealtimeExtensions
 {

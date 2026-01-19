@@ -2,6 +2,7 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -36,8 +37,17 @@ public sealed partial class SarvamProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("api-subscription-key", key);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        if (model.Type == "speech")
+        {
+            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        }
+
+        throw new NotImplementedException();
+    }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -64,10 +74,7 @@ public sealed partial class SarvamProvider : IModelProvider
 
     public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
-            ?? throw new ArgumentException(modelId);
+        var model = await this.GetModel(options.Model, cancellationToken);
 
         if (model.Type == "speech")
         {

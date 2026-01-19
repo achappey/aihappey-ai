@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text;
 using System.Dynamic;
 using System.Net.Mime;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.xAI;
 

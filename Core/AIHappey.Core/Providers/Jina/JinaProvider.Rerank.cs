@@ -8,6 +8,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Jina;
 

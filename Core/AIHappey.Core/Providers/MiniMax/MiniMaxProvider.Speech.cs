@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.MiniMax;
 

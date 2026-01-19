@@ -6,6 +6,7 @@ using System.Text;
 using System.Globalization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.StabilityAI;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 

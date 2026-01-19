@@ -4,6 +4,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using System.Text;
 using System.Text.Json.Serialization;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Nscale;
 

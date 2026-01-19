@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Hyperstack;
 

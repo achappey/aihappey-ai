@@ -4,6 +4,7 @@ using AIHappey.Common.Model;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Zai;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Zai;
 

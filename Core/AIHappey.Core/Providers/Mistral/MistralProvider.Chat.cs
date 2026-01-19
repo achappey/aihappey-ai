@@ -8,6 +8,7 @@ using System.Net.Mime;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Mistral;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Mistral;
 

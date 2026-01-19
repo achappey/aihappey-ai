@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AIML;
 

@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.AzureAuth.Controllers;
 

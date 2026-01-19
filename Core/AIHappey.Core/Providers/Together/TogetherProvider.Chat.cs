@@ -6,6 +6,7 @@ using System.Text;
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Together;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Together;
 

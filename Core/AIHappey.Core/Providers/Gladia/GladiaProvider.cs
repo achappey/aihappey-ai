@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.Responses.Streaming;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Gladia;
 

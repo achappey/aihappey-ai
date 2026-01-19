@@ -1,5 +1,6 @@
 using AIHappey.Common.Model;
-using AIHappey.Core.AI;
+using AIHappey.Core.ModelProviders;
+
 
 namespace AIHappey.Core.Providers.Verda;
 

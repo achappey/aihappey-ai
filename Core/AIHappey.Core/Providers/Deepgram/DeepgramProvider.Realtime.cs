@@ -2,6 +2,8 @@ using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Deepgram;
 

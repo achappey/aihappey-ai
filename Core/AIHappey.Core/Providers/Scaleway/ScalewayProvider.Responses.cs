@@ -1,5 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Scaleway;
 

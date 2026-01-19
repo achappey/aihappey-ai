@@ -2,6 +2,7 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Core.AI;
 using System.Net.Mime;
 using System.Text;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Google;
 

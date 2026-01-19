@@ -6,6 +6,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Runware;
 

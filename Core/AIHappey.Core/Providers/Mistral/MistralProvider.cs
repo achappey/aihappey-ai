@@ -4,6 +4,7 @@ using OAIC = OpenAI.Chat;
 using MIS = Mistral.SDK;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Mistral;
 

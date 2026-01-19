@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -35,9 +36,15 @@ public partial class NovitaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Novita).ToLowerInvariant();
 
-
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        if (model.Type == "speech")
+        {
+            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 
@@ -48,17 +55,11 @@ public partial class NovitaProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var models = StaticModels(GetIdentifier());
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId));
+        var model = await this.GetModel(options.Model, cancellationToken);
 
-        if (model != null)
+        if (model.Type == "speech")
         {
-
-            if (model.Type == "speech")
-            {
-                return await this.SpeechResponseAsync(options, cancellationToken);
-            }
+            return await this.SpeechResponseAsync(options, cancellationToken);
         }
 
         throw new NotImplementedException();

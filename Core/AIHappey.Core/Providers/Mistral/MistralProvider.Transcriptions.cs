@@ -6,6 +6,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Mistral;
 

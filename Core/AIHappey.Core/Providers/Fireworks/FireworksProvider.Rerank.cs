@@ -6,6 +6,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Fireworks;
 

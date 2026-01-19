@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.Responses.Streaming;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Verda;
 

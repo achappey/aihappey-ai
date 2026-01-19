@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Nvidia;
 

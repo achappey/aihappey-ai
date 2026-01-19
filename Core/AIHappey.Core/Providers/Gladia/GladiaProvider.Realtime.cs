@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Gladia;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Gladia;
 

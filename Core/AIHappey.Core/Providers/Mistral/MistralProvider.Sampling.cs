@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Mistral;
 

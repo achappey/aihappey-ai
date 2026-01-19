@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text;
 using AIHappey.Common.Model.ChatCompletions;
 using Microsoft.AspNetCore.Http;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Pollinations;
 

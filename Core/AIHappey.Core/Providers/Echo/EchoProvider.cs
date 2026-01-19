@@ -3,6 +3,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Echo;
 

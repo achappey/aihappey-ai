@@ -7,6 +7,7 @@ using AIHappey.Common.Model.Providers.Groq;
 using System.Globalization;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Groq;
 

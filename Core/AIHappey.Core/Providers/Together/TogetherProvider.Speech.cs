@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Together;
 

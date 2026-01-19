@@ -4,6 +4,7 @@ using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Audixa;
 
@@ -45,10 +46,8 @@ public partial class AudixaProvider : IModelProvider
         return AudixaModels;
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {

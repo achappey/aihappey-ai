@@ -7,6 +7,7 @@ using System.Net.Mime;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Pollinations;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Pollinations;
 

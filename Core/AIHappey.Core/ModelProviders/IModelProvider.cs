@@ -4,7 +4,7 @@ using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.Responses.Streaming;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.AI;
+namespace AIHappey.Core.ModelProviders;
 
 public interface IModelProvider
 {
@@ -34,9 +34,4 @@ public interface IModelProvider
 
     Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default);
 
-}
-
-public interface IApiKeyResolver
-{
-    string? Resolve(string provider);
 }

@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
@@ -29,8 +31,15 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        if (chatRequest.GetModel()?.Contains("scribe") == true)
+        {
+            throw new NotImplementedException();
+        }
+
+        return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+    }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)

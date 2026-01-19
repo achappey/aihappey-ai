@@ -5,6 +5,7 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Sarvam;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Sarvam;
 

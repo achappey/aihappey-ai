@@ -2,6 +2,7 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AIML;
 

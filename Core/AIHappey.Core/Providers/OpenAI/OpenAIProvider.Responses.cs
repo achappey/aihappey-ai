@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.Responses;
 using System.Net.Http.Headers;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

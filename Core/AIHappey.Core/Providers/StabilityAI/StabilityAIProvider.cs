@@ -5,6 +5,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
@@ -38,8 +39,13 @@ public partial class StabilityAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(StabilityAI).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
+        if (chatRequest.GetModel()?.Contains("audio") == true)
+        {
+            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 

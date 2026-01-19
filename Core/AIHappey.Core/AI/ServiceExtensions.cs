@@ -53,6 +53,7 @@ using AIHappey.Core.Providers.Hyperstack;
 using AIHappey.Core.Providers.Gladia;
 using AIHappey.Core.Providers.Verda;
 using AIHappey.Core.Providers.Audixa;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.AI;
 

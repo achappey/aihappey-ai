@@ -5,6 +5,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Runway;
 

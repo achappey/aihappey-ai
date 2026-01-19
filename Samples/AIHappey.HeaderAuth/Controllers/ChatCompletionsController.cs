@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

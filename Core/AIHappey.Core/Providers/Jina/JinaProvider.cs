@@ -2,6 +2,7 @@ using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Jina;
 

@@ -3,6 +3,7 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Fireworks;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Fireworks;
 

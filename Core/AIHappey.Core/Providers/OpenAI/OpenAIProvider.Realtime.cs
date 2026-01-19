@@ -5,6 +5,8 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 using System.Text.Json.Serialization;
+using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

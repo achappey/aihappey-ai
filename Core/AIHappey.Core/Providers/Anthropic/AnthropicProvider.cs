@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ANT = Anthropic.SDK;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Anthropic;
 

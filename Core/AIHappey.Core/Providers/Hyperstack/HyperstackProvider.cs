@@ -1,10 +1,10 @@
-using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using System.Text.Json;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Hyperstack;
 

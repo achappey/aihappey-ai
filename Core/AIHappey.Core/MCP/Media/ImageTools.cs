@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
+using AIHappey.Core.ModelProviders;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;

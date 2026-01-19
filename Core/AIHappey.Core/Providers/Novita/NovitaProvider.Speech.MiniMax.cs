@@ -4,6 +4,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
 using System.Text.Json;
 using System.Text;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Novita;
 

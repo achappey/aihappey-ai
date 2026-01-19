@@ -5,6 +5,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Replicate;
 

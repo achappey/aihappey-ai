@@ -8,6 +8,7 @@ using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -116,9 +117,24 @@ public partial class AIMLProvider : IModelProvider
 
     public string GetIdentifier() => AIMLExtensions.GetIdentifier();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id == chatRequest.GetModel());
+
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    return await this.SpeechSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,

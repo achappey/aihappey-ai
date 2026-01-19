@@ -6,6 +6,7 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Common.Model.Providers.Gladia;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Gladia;
 

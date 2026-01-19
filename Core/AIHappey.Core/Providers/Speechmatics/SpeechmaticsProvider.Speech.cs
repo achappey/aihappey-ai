@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Speechmatics;
 

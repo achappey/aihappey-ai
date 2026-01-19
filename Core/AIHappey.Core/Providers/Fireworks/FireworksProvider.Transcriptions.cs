@@ -5,6 +5,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Fireworks;
 using System.Globalization;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Fireworks;
 

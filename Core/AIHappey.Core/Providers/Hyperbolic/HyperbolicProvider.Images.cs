@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Hyperbolic;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 

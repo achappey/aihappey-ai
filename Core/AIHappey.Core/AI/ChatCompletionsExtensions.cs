@@ -8,7 +8,6 @@ namespace AIHappey.Core.AI;
 
 public static class ChatCompletionsExtensions
 {
-
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");
     private static readonly MediaTypeWithQualityHeaderValue AcceptSse = new("text/event-stream");
 

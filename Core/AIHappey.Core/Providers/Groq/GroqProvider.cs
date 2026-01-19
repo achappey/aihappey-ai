@@ -3,6 +3,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Groq;
 

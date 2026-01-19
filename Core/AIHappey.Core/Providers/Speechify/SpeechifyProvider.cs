@@ -5,6 +5,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Speechify;
 
@@ -45,9 +46,9 @@ public partial class SpeechifyProvider : IModelProvider
         return SpeechifyModels;
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)

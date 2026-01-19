@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

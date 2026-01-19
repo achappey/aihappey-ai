@@ -5,6 +5,7 @@ using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Fireworks;
 

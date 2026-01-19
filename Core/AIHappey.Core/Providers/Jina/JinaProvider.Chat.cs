@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Jina;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Jina;
 

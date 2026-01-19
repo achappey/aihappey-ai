@@ -1,6 +1,6 @@
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.AI;
+namespace AIHappey.Core.ModelProviders;
 
 public interface IAIModelProviderResolver
 {
@@ -10,6 +10,6 @@ public interface IAIModelProviderResolver
 
     IModelProvider GetProvider();
 
-    Task<ModelReponse> ResolveModels(
+    Task<ModelResponse> ResolveModels(
         CancellationToken ct);
 }

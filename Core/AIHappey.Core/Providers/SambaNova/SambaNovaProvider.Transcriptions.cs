@@ -5,6 +5,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.SambaNova;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.SambaNova;
 

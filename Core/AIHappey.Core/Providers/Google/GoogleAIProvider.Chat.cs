@@ -4,6 +4,7 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Google;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Google;
 

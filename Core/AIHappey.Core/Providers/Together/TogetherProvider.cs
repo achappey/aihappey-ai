@@ -5,6 +5,7 @@ using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using System.Globalization;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Together;
 

@@ -9,6 +9,7 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Groq;
 

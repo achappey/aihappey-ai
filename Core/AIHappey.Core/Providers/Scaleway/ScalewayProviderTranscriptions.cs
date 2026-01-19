@@ -5,6 +5,7 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Scaleway;
 using System.Globalization;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Scaleway;
 

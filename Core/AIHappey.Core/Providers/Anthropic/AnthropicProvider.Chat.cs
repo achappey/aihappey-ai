@@ -8,6 +8,7 @@ using System.Net.Mime;
 using System.Text;
 using AIHappey.Core.Providers.Anthropic.Extensions;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Anthropic;
 

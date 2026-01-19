@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.StaticFiles;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Novita;
 

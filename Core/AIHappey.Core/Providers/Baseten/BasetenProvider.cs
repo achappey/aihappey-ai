@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Baseten;
 

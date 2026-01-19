@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

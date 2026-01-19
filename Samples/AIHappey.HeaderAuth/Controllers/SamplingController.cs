@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.AI;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

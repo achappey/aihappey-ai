@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
 using Tool = AIHappey.Common.Model.Tool;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.xAI;
 

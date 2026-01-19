@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Responses;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Cohere;
 

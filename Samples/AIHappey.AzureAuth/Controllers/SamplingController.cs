@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Telemetry;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.AzureAuth.Controllers;
 

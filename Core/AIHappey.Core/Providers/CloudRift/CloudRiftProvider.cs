@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.AI;
+using AIHappey.Core.ModelProviders;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.CloudRift;

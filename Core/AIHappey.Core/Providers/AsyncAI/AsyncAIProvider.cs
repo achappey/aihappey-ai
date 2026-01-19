@@ -1,6 +1,7 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AsyncAI;
 
@@ -30,8 +31,9 @@ public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFac
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => await this.SpeechSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)

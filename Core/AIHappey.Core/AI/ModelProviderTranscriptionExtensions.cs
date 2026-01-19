@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.AI;
 

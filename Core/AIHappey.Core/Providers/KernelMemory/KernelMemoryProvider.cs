@@ -7,6 +7,7 @@ using Microsoft.KernelMemory;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Core.Providers.OpenAI;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.KernelMemory;
 

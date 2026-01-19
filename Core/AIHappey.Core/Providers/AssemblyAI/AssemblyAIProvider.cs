@@ -3,6 +3,7 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 

@@ -3,6 +3,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AsyncAI;
 

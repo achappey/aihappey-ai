@@ -3,6 +3,7 @@ using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using Mscc.GenerativeAI;
 using AIHappey.Common.Model.Providers.Google;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Google;
 

@@ -5,6 +5,7 @@ using AIHappey.Common.Extensions;
 using System.Text;
 using AIHappey.Common.Model.Providers.Together;
 using System.Text.Json.Serialization;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Together;
 

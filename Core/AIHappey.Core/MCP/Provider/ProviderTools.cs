@@ -21,12 +21,13 @@ using PollinationsProviderMetadata = AIHappey.Common.Model.Providers.Pollination
 
 using TogetherProviderMetadata = AIHappey.Common.Model.Providers.Together.TogetherProviderMetadata;
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using NJsonSchema;
 using NJsonSchema.Generation;
+using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.MCP.Provider;
 
@@ -113,7 +114,7 @@ public class ProviderTools
         Idempotent = true,
         ReadOnly = true,
         OpenWorld = false)]
-    public static async Task<ModelReponse?> AIProvider_GetModels(
+    public static async Task<ModelResponse?> AIProvider_GetModels(
          IServiceProvider services,
          CancellationToken cancellationToken)
     {

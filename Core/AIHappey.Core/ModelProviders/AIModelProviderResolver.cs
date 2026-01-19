@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
+using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.AI;
+namespace AIHappey.Core.ModelProviders;
 
 public class AIModelProviderResolver(
     IApiKeyResolver apiKeyResolver,
@@ -21,7 +22,7 @@ public class AIModelProviderResolver(
         try
         {
             var http = httpClientFactory.CreateClient();
-            var json = await http.GetFromJsonAsync<ModelReponse>(
+            var json = await http.GetFromJsonAsync<ModelResponse>(
                 "https://ai-gateway.vercel.sh/v1/models", ct);
 
             return json?.Data?.ToList();
@@ -152,7 +153,7 @@ public class AIModelProviderResolver(
         ?? providers.FirstOrDefault(p => p.GetIdentifier() == "pollinations")
         ?? throw new NotSupportedException("No providers found.");
 
-    public async Task<ModelReponse> ResolveModels(CancellationToken ct)
+    public async Task<ModelResponse> ResolveModels(CancellationToken ct)
     {
         var map = await LoadModels(ct);
 

@@ -1,6 +1,6 @@
 using AIHappey.Common.Model;
 using Microsoft.Extensions.Logging;
-using AIHappey.Core.AI;
+using AIHappey.Core.ModelProviders;
 using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Google;

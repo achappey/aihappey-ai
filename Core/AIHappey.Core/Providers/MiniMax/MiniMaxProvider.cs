@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Responses;
-
+using AIHappey.Core.ModelProviders;
 namespace AIHappey.Core.Providers.MiniMax;
 
 public partial class MiniMaxProvider : IModelProvider
@@ -48,8 +48,15 @@ public partial class MiniMaxProvider : IModelProvider
 
     public string GetIdentifier() => nameof(MiniMax).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken: cancellationToken);
+
+        if (model.Type == "speech")
+        {
+            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 
@@ -65,10 +72,7 @@ public partial class MiniMaxProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
-            ?? throw new ArgumentException(modelId);
+        var model = await this.GetModel(options.Model, cancellationToken: cancellationToken);
 
         if (model.Type == "speech")
         {

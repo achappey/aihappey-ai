@@ -4,6 +4,7 @@ using OpenAI.Images;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.OpenAI;
+using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
