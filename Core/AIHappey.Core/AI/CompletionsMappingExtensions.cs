@@ -1,5 +1,4 @@
 using System.Text.Json;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 
 namespace AIHappey.Core.AI;

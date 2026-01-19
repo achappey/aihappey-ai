@@ -24,7 +24,12 @@ public partial class InferencenetProvider
             Name = "schematron-3b",
             Description = "Schematron 3B",
             Type = "language",
-            OwnedBy = "Inference.net"
+            OwnedBy = "Inference.net",
+            ContextWindow = 125_000,
+            Pricing = new () {
+                Input = 0.02m,
+                Output = 0.05m,
+            }
         },
         new()
         {
@@ -32,7 +37,12 @@ public partial class InferencenetProvider
             Name = "schematron-8b",
             Description = "Schematron 8B",
             Type = "language",
-            OwnedBy = "Inference.net"
+            OwnedBy = "Inference.net",
+            ContextWindow = 125_000,
+            Pricing = new () {
+                Input = 0.04m,
+                Output = 0.10m,
+            }
         },
         new()
         {
@@ -40,7 +50,12 @@ public partial class InferencenetProvider
             Name = "gemma-3-27b-instruct/bf-16",
             Description = "Gemma 3 27B Instruct (BF16)",
             Type = "language",
-            OwnedBy = "Google"
+            OwnedBy = nameof(Google),
+            ContextWindow = 125_000,
+            Pricing = new () {
+                Input = 0.15m,
+                Output = 0.30m,
+            }
         }
     ];
 }

@@ -3,8 +3,6 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
-using OAIC = OpenAI.Chat;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Echo;
 

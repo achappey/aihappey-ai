@@ -1,14 +1,13 @@
 using AIHappey.Core.AI;
-using OAIC = OpenAI.Chat;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
-using OpenAI.Responses;
 using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -83,7 +82,8 @@ public partial class AIMLProvider : IModelProvider
                     type == "responses" ? "language" :
                     type == "tts" ? "speech" :
                     type == "stt" ? "transcription"
-                    : type ?? "";
+                    : model.Id.Contains("music")
+                    ? "speech" : type ?? "";
             }
 
             // info block
@@ -107,7 +107,7 @@ public partial class AIMLProvider : IModelProvider
     }
 
 
-    
+
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -121,9 +121,56 @@ public partial class AIMLProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id == chatRequest.Model);
+
+        switch (model?.Type)
+        {
+            case "image":
+                {
+                    await foreach (var update in this.StreamImageAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+            case "speech":
+                {
+                    await foreach (var update in this.StreamSpeechAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+            case "transcription":
+                {
+                    await foreach (var update in this.StreamTranscriptionAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+            default:
+                {
+                    await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+
+        }
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
@@ -131,5 +178,16 @@ public partial class AIMLProvider : IModelProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 
 }

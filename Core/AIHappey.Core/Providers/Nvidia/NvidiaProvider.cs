@@ -4,7 +4,6 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
-using OpenAI.Responses;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 

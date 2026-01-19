@@ -1,6 +1,3 @@
-using AIHappey.Core.AI;
-using AIHappey.Core.Models;
-
 namespace AIHappey.Core.Providers.Replicate;
 
 public static class ReplicateProviderLanguageModels

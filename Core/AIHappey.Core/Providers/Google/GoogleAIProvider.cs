@@ -1,9 +1,7 @@
 using AIHappey.Common.Model;
-using OAIC = OpenAI.Chat;
 using Microsoft.Extensions.Logging;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.ChatCompletions;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Google;
 

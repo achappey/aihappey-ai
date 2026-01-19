@@ -1,5 +1,4 @@
 using System.Text.Json;
-using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Pollinations;

@@ -4,10 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.xAI;
 

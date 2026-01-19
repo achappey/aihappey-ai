@@ -3,8 +3,6 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using OAIC = OpenAI.Chat;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Groq;
 

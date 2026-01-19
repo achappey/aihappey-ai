@@ -6,7 +6,6 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.Cohere;

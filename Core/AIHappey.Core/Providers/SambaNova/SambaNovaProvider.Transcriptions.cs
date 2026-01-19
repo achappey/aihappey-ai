@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.SambaNova;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.SambaNova;

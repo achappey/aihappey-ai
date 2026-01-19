@@ -4,7 +4,6 @@ using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
-using OAIC = OpenAI.Chat;
 using Tool = AIHappey.Common.Model.Tool;
 
 namespace AIHappey.Core.Providers.xAI;

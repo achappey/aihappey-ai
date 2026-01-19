@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.StaticFiles;
 
 namespace AIHappey.Core.MCP.Media;

@@ -8,6 +8,56 @@ public static class AIMLExtensions
 {
     public static string GetIdentifier() => nameof(AIML).ToLowerInvariant();
 
+    /// <summary>
+    /// Best-effort payload builder for AIML audio generation models routed via the unified
+    /// <see cref="AIHappey.Common.Model.SpeechRequest"/>.
+    /// </summary>
+    public static object GetAudioRequestPayload(this SpeechRequest request, AIMLSpeechProviderMetadata? metadata, List<object> warnings)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Text))
+            throw new ArgumentException("Text is required.", nameof(request));
+
+        // Model-aware payload mapping (similar to image payload switching).
+        return request.Model switch
+        {
+            // MiniMax music: supports lyrics + audio_setting.
+            "minimax/music-2.0" => new
+            {
+                model = request.Model,
+                prompt = request.Text,
+                lyrics = metadata?.MiniMax?.Lyrics,
+                audio_setting = metadata?.MiniMax?.AudioSetting?.ValueKind is null or System.Text.Json.JsonValueKind.Null or System.Text.Json.JsonValueKind.Undefined
+                    ? null
+                    : metadata!.MiniMax?.AudioSetting
+            },
+
+            // Stability Audio: supports prompt + timing + steps.
+            "stable-audio" => BuildStableAudioPayload(request, metadata, warnings),
+
+            // Default: send minimal common fields.
+            _ => new
+            {
+                model = request.Model,
+                prompt = request.Text
+            }
+        };
+    }
+
+    private static object BuildStableAudioPayload(SpeechRequest request, AIMLSpeechProviderMetadata? metadata, List<object> warnings)
+    {
+        return new
+        {
+            model = request.Model,
+            prompt = request.Text,
+            seconds_total = metadata?.StabilityAI?.SecondsTotal,
+            seconds_start = metadata?.StabilityAI?.SecondsStart,
+            steps = metadata?.StabilityAI?.Steps
+        };
+    }
+
     public static object GetImageRequestPayload(this ImageRequest imageRequest)
     {
         var width = imageRequest.GetImageWidth();

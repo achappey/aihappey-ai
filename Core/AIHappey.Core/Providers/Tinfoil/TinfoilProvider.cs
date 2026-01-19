@@ -3,8 +3,6 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using OAIC = OpenAI.Chat;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Tinfoil;
 

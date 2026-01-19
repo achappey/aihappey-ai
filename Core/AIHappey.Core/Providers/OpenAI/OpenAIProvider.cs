@@ -4,7 +4,6 @@ using OpenAI.Models;
 using OAI = OpenAI;
 using OpenAI.Containers;
 using OpenAI.Files;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

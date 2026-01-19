@@ -1,8 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.Scaleway;
 

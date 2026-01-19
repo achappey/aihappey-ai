@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Nodes;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.Jina;
 

@@ -5,7 +5,6 @@ using System.Text.Json;
 using OpenAI.Containers;
 using ModelContextProtocol.Protocol;
 using System.Net.Mime;
-using Microsoft.AspNetCore.StaticFiles;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

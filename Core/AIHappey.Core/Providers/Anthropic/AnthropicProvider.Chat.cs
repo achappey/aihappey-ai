@@ -7,7 +7,6 @@ using ModelContextProtocol.Protocol;
 using System.Net.Mime;
 using System.Text;
 using AIHappey.Core.Providers.Anthropic.Extensions;
-using OpenAI.Responses;
 using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Anthropic;

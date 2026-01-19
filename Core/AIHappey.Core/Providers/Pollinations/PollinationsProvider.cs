@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using OAIC = OpenAI.Chat;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Core.Models;

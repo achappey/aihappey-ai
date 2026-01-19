@@ -201,10 +201,20 @@ public partial class NovitaProvider : IModelProvider
             Output = 0.017m
         }
     },
-     new()
+    new()
     {
         Id = "remove-background".ToModelId(providerId),
         Name = "Remove Background",
+        Type = "image",
+        Pricing = new()
+        {
+            Output = 0.017m
+        }
+    },
+    new()
+    {
+        Id = "cleanup".ToModelId(providerId),
+        Name = "Cleanup",
         Type = "image",
         Pricing = new()
         {

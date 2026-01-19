@@ -18,6 +18,7 @@ public partial class JinaProvider : IModelProvider
           [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        
         var metadata = chatRequest.GetProviderMetadata<JinaProviderMetadata>(GetIdentifier());
         var payload = new
         {

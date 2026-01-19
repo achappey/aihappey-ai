@@ -11,12 +11,12 @@ namespace AIHappey.Core.Providers.Novita;
 
 public partial class NovitaProvider : IModelProvider
 {
-    private static readonly JsonSerializerOptions RemoveTextJson = new(JsonSerializerDefaults.Web)
+    private static readonly JsonSerializerOptions CleanupTextJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<ImageResponse> ImageRequestRemove(
+    private async Task<ImageResponse> ImageRequestCleanup(
         ImageRequest request,
         CancellationToken cancellationToken)
     {
@@ -38,7 +38,7 @@ public partial class NovitaProvider : IModelProvider
             {
                 type = "unsupported",
                 feature = "prompt",
-                details = "Remove Text ignores prompt; input image is required."
+                details = "Remove Text ignores prompt. Input image is required."
             });
         }
 
@@ -61,8 +61,8 @@ public partial class NovitaProvider : IModelProvider
             });
         }
 
-        if (request.Mask is not null)
-            warnings.Add(new { type = "unsupported", feature = "mask" });
+        if (request.Mask is null)
+            throw new ArgumentException("An mask image is required.", nameof(request));
 
         if (request.Files is null || !request.Files.Any())
             throw new ArgumentException("An input image is required in files[0].", nameof(request));
@@ -79,13 +79,18 @@ public partial class NovitaProvider : IModelProvider
 
         var inputFile = request.Files.First();
         var imageBase64 = inputFile.Data.RemoveDataUrlPrefix();
+        var maskImageBase64 = request.Mask.Data.RemoveDataUrlPrefix();
 
         if (string.IsNullOrWhiteSpace(imageBase64))
             throw new ArgumentException("files[0].data must contain base64 image data.", nameof(request));
 
+        if (string.IsNullOrWhiteSpace(maskImageBase64))
+            throw new ArgumentException("Mask.data must contain base64 image data.", nameof(request));
+
         var payload = new Dictionary<string, object?>
         {
-            ["image_file"] = imageBase64
+            ["image_file"] = imageBase64,
+            ["mask_file"] = maskImageBase64
         };
 
         if (!string.IsNullOrWhiteSpace(removeText?.Extra?.ResponseImageType))
@@ -115,11 +120,11 @@ public partial class NovitaProvider : IModelProvider
         var root = doc.RootElement;
 
         if (!root.TryGetProperty("image_file", out var imageFileEl) || imageFileEl.ValueKind != JsonValueKind.String)
-            throw new Exception("Novita Remove response did not include image_file.");
+            throw new Exception("Novita Cleanup response did not include image_file.");
 
         var returnedBase64 = imageFileEl.GetString();
         if (string.IsNullOrWhiteSpace(returnedBase64))
-            throw new Exception("Novita Remove response image_file was empty.");
+            throw new Exception("Novita Cleanup response image_file was empty.");
 
         var imageType = "png";
         if (root.TryGetProperty("image_type", out var imageTypeEl) && imageTypeEl.ValueKind == JsonValueKind.String)
@@ -148,6 +153,6 @@ public partial class NovitaProvider : IModelProvider
         };
     }
 
-    public static bool IsRemoveModel(string? model)
-        => model?.Contains("remove", StringComparison.OrdinalIgnoreCase) == true;
+    public static bool IsCleanupModel(string? model)
+        => model?.Contains("cleanup", StringComparison.OrdinalIgnoreCase) == true;
 }

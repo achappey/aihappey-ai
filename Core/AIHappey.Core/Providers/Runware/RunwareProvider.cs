@@ -5,8 +5,6 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
-using OAIC = OpenAI.Chat;
-using OpenAI.Responses;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Runware;

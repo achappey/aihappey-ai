@@ -1,10 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
-using OAIC = OpenAI.Chat;
-using OpenAI.Responses;
 using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.CanopyWave;

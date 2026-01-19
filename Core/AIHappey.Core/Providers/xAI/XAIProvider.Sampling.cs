@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text;
 using System.Dynamic;
 using System.Net.Mime;
-using OpenAI.Responses;
 
 namespace AIHappey.Core.Providers.xAI;
 

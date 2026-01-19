@@ -1,5 +1,4 @@
 using System.Text.Json;
-using AIHappey.Common.Model.Providers;
 using Anthropic.SDK.Common;
 using AIHappey.Common.Model.Providers.Anthropic;
 using Anthropic.SDK.Messaging;
