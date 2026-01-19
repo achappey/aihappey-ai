@@ -27,17 +27,14 @@ public sealed partial class AzureProvider(
         return key;
     }
 
-    private Uri GetHostUri()
+    private string GetEndpointRegion()
     {
         if (string.IsNullOrWhiteSpace(_endpoint))
             throw new InvalidOperationException("No Azure Speech endpoint configured.");
 
         var endpoint = _endpoint.Trim();
-        if (endpoint.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            return new Uri(endpoint, UriKind.Absolute);
 
-        return new Uri("https://" + endpoint.TrimStart('/').TrimEnd('/'), UriKind.Absolute);
+        return endpoint;
     }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -54,9 +51,6 @@ public sealed partial class AzureProvider(
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)

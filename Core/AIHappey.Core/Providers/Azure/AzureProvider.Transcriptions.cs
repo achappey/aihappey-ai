@@ -26,10 +26,15 @@ public sealed partial class AzureProvider
 
         var metadata = request.GetTranscriptionProviderMetadata<AzureTranscriptionProviderMetadata>(GetIdentifier());
 
-        var pushStream = AudioInputStream.CreatePushStream();
+        var format = AudioStreamFormat.GetWaveFormatPCM(
+            samplesPerSecond: metadata?.SamplesPerSecond != null ? (uint)metadata.SamplesPerSecond : (uint)16000,
+            bitsPerSample: metadata?.BitsPerSample != null ? (byte)metadata.BitsPerSample : (byte)16,
+            channels: metadata?.Channels != null ? (byte)metadata.Channels : (byte)1);
+
+        var pushStream = AudioInputStream.CreatePushStream(format);
         using var audioConfig = AudioConfig.FromStreamInput(pushStream);
 
-        var config = SpeechConfig.FromHost(GetHostUri(), GetKey());
+        var config = SpeechConfig.FromSubscription(GetKey(), GetEndpointRegion());
         config.SetProfanity(ProfanityOption.Raw);
 
         if (!string.IsNullOrWhiteSpace(metadata?.Language))

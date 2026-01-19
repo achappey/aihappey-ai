@@ -52,21 +52,48 @@ public partial class AnthropicProvider : IModelProvider
         var models = await client.Models.ListModelsAsync(ctx: cancellationToken);
 
         return models.Models
-            .Where(a => !DeprecatedModels.Contains(a.Id))
             .Select(a => new Model()
             {
                 Id = a.Id.ToModelId(GetIdentifier()),
                 Name = a.Id,
+                ContextWindow = ContextSize.TryGetValue(a.Id, out int s) ? s : null,
+                MaxTokens = MaxOutput.TryGetValue(a.Id, out int m) ? m : null,
+                Pricing = Prices.TryGetValue(a.Id, out ModelPricing? p) ? p : null,
                 Created = new DateTimeOffset(a.CreatedAt.ToUniversalTime())
                         .ToUnixTimeSeconds(),
                 OwnedBy = nameof(Anthropic),
-                //   Publisher = nameof(Anthropic)
             });
     }
-    
 
-      private readonly IEnumerable<string> DeprecatedModels = [
-        "claude-3-7-sonnet-20250219",
-        "claude-3-opus-20240229"
-     ];
+    private readonly Dictionary<string, int> ContextSize = new() {
+        {"claude-sonnet-4-5-20250929", 200_000},
+        {"claude-haiku-4-5-20251001", 200_000},
+        {"claude-opus-4-5-20251101", 200_000}
+      };
+
+    private readonly Dictionary<string, int> MaxOutput = new() {
+        {"claude-sonnet-4-5-20250929", 64_000},
+        {"claude-haiku-4-5-20251001", 64_000},
+        {"claude-opus-4-5-20251101", 64_000}
+      };
+
+    private readonly Dictionary<string, ModelPricing> Prices = new() {
+        {"claude-sonnet-4-5-20250929", new ModelPricing()
+        {
+            Input = 3.00m,
+            Output = 15.00m,
+        }
+        },
+        {"claude-haiku-4-5-20251001", new ModelPricing()
+        {
+            Input = 1.00m,
+            Output = 5.00m,
+        }},
+        {"claude-opus-4-5-20251101", new ModelPricing()
+        {
+            Input = 5.00m,
+            Output = 25.00m,
+        }}
+      };
+
 }

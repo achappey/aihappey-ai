@@ -1,6 +1,6 @@
 # aihappey-ai
 
-A multi-provider **.NET 9 AI backend** exposing key AI endpoints.
+A multi-provider **.NET AI backend** exposing key AI endpoints.
 
 ## Provider Support Matrix
 
@@ -14,7 +14,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AssemblyAI     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | AsyncAI        | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
 | Audixa         | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
-| Azure          | ✅        | ➖          | ❌                | ❌            | ➖                     | ❌               | ✅                       | ❌        |
+| Azure          | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
 | Baseten        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | CanopyWave     | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Cerebras       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
