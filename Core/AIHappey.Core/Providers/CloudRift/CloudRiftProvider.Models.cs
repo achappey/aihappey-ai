@@ -5,8 +5,12 @@ namespace AIHappey.Core.Providers.CloudRift;
 
 public sealed partial class CloudRiftProvider
 {
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => Task.FromResult<IEnumerable<Model>>(CloudRiftLanguageModels);
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+        
+        return await Task.FromResult<IEnumerable<Model>>(CloudRiftLanguageModels);
+    }
 
     private IReadOnlyList<Model> CloudRiftLanguageModels =>
     [

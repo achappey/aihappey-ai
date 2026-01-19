@@ -5,13 +5,17 @@ namespace AIHappey.Core.Providers.DeepInfra;
 
 public sealed partial class DeepInfraProvider
 {
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => Task.FromResult<IEnumerable<Model>>([.. DeepInfraLanguageModels,
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return await Task.FromResult<IEnumerable<Model>>([.. DeepInfraLanguageModels,
             .. DeepInfraImageModels,
             .. DeepInfraRerankModels,
             ..DeepInfraSpeechModels,
             ]);
-
+    }
+    
     public static IReadOnlyList<Model> DeepInfraLanguageModels =>
     [
         new()

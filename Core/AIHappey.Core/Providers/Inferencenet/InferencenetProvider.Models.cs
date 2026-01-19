@@ -5,8 +5,12 @@ namespace AIHappey.Core.Providers.Inferencenet;
 
 public partial class InferencenetProvider
 {
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => Task.FromResult<IEnumerable<Model>>(InferencenetLanguageModels);
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+        
+        return await Task.FromResult<IEnumerable<Model>>(InferencenetLanguageModels);
+    }
 
     public IReadOnlyList<Model> InferencenetLanguageModels =>
     [

@@ -7,8 +7,10 @@ public sealed partial class DeepgramProvider
     : IModelProvider
 {
 
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        ApplyAuthHeader();
+
         // Deepgram docs enumerate available TTS + STT models; we hard-code as requested.
         // NOTE: `SpeechTools` will resolve providers by model id, so these must match user-facing IDs.
         const string owner = "Deepgram";
@@ -133,7 +135,7 @@ public sealed partial class DeepgramProvider
 
         IEnumerable<Model> res = speech.Concat(transcriptions);
 
-        return Task.FromResult(res);
+        return await Task.FromResult(res);
     }
 
 }

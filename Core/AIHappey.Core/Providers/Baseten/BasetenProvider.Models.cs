@@ -5,8 +5,12 @@ namespace AIHappey.Core.Providers.Baseten;
 
 public sealed partial class BasetenProvider
 {
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => Task.FromResult<IEnumerable<Model>>(BasetenLanguageModels);
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return await Task.FromResult<IEnumerable<Model>>(BasetenLanguageModels);
+    }
 
     // Hardcoded to keep onboarding simple.
     private IReadOnlyList<Model> BasetenLanguageModels =>
