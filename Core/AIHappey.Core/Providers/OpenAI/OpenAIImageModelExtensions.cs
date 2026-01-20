@@ -17,4 +17,21 @@ public static class OpenAIImageModelExtensions
            "1792x1024" => GeneratedImageSize.W1792xH1024,
            _ => null
        };
+
+    public static GeneratedImageSize? ToGeneratedImageSizeFromAspectRatio(this string? aspectRatio) =>
+    aspectRatio?.Trim().ToLowerInvariant() switch
+    {
+        // Square
+        "1:1"  => GeneratedImageSize.W1024xH1024,
+
+        // Portrait
+        "2:3" or "3:4" or "9:16" =>
+            GeneratedImageSize.W1024xH1536,
+
+        // Landscape
+        "3:2" or "4:3" or "16:9" =>
+            GeneratedImageSize.W1536xH1024,
+
+        _ => null
+    };
 }

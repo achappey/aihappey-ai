@@ -17,4 +17,14 @@ public static class ModelProviderExtensions
         return model;
     }
 
+    public static Dictionary<string, Dictionary<string, object>?> CreateProviderMetadata(this IModelProvider modelProvider,
+       Dictionary<string, object> metadata)
+         => modelProvider.GetIdentifier().CreateProviderMetadata(metadata);
+
+    public static Dictionary<string, Dictionary<string, object>?> CreateProviderMetadata(this string modelProviderId,
+        Dictionary<string, object> metadata)
+        => new()
+        {
+                { modelProviderId, metadata }
+        };
 }

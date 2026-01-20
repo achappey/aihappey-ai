@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using OpenAI.Images;
 using Microsoft.AspNetCore.StaticFiles;
@@ -10,7 +9,6 @@ namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider : IModelProvider
 {
-
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         var responseClient = new ImageClient(
@@ -22,9 +20,8 @@ public partial class OpenAIProvider : IModelProvider
         List<string> results = [];
         List<object> warnings = [];
 
-        var imageSize = imageRequest.Size.ToGeneratedImageSize();
-
-
+        var imageSize = imageRequest.Size?.ToGeneratedImageSize()
+            ?? imageRequest.AspectRatio?.ToGeneratedImageSizeFromAspectRatio();
 
         if (imageRequest.Files?.Any() == true)
         {
@@ -69,7 +66,6 @@ public partial class OpenAIProvider : IModelProvider
                     details = $"Input File count {imageRequest.Files.Count()} not supported. Used single input image."
                 });
             }
-
         }
         else
         {

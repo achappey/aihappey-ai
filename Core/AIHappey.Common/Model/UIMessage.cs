@@ -367,8 +367,9 @@ public class FileUIPart : UIMessagePart
     [JsonPropertyName("url")]
     public string Url { get; init; } = default!;
 
-    //[JsonPropertyName("filename")]
-    //   public string? Filename { get; init; }
+    //   [JsonPropertyName("providerMetadata")]
+    //  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    // public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
 }
 
 

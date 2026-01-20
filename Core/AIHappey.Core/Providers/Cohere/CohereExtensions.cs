@@ -27,7 +27,8 @@ public static partial class CohereExtensions
             return textUIPart;
         }
 
-        if (uiMessage is FileUIPart fileUIPart && fileUIPart.IsImage())
+        if (uiMessage is FileUIPart fileUIPart
+            && fileUIPart.IsImage())
         {
             return new
             {

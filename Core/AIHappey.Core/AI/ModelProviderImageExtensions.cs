@@ -17,8 +17,7 @@ public static class ModelProviderImageExtensions
 
         var inputFiles = chatRequest.Messages?
             .LastOrDefault(m => m.Role == Role.user)
-            ?.Parts?.OfType<FileUIPart>()
-                .Where(a => a.IsImage())
+            ?.Parts?.GetImages()
                 .Select(a => a.ToImageFile()) ?? [];
 
         if (string.IsNullOrWhiteSpace(prompt))

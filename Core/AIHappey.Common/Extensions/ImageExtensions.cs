@@ -45,6 +45,9 @@ public static class ImageExtensions
     public static string ToDataUrl(
         this string data, string mimeType) => $"data:{mimeType};base64,{data}";
 
+    public static string ToDataUrl(
+        this BinaryData data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data)}";
+
     public static ImageFile ToImageFile(
         this FileUIPart data) => new()
         {

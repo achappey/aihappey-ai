@@ -56,7 +56,6 @@ public static class UIMessagePartExtensions
         return (provider, model);
     }
 
-
     public static FileUIPart ToFileUIPart(this byte[] bytes, string mimeType)
         => new()
         {

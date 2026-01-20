@@ -6,6 +6,8 @@ using OpenAI.Containers;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Net.Mime;
 using AIHappey.Core.AI;
+using ModelContextProtocol.Protocol;
+using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -198,6 +200,13 @@ public static class ResponseExtensions
                 SourceId = url
             };
 
+            yield return ToolCallPart.CreateProviderExecuted(cfc.FileId,
+                "download_container_file", new
+                {
+                    cfc.ContainerId,
+                    cfc.FileId
+                });
+
             var content = await containerClient.DownloadContainerFileAsync(cfc.ContainerId,
                 cfc.FileId);
 
@@ -209,7 +218,24 @@ public static class ResponseExtensions
                 contentType = "application/octet-stream";
             }
 
-            yield return content.Value.ToArray().ToFileUIPart(contentType);
+            yield return new ToolOutputAvailablePart()
+            {
+                ToolCallId = cfc.FileId,
+                ProviderExecuted = true,
+                Output = new CallToolResult()
+                {
+                    Content = [new EmbeddedResourceBlock() {
+                        Resource = new BlobResourceContents() {
+                            Uri = $"file://{cfc.Filename!}",
+                            Blob = Convert.ToBase64String(content.Value),
+                            MimeType = contentType,
+                        }
+                      }]
+                }
+            };
+
+            yield return content.Value.ToArray()
+                .ToFileUIPart(contentType);
 
             yield break;
         }
