@@ -45,6 +45,7 @@ public partial class ElevenLabsProvider
 
         // ElevenLabs STT models are not exposed via GET /v1/models.
         models.Add(new Model { Id = "scribe_v1".ToModelId(GetIdentifier()), Name = "scribe_v1", OwnedBy = owner, Type = "transcription" });
+        models.Add(new Model { Id = "scribe_v2".ToModelId(GetIdentifier()), Name = "scribe_v2", OwnedBy = owner, Type = "transcription" });
         models.Add(new Model { Id = "scribe_v1_experimental".ToModelId(GetIdentifier()), Name = "scribe_v1_experimental", OwnedBy = owner, Type = "transcription" });
         models.Add(new Model
         {

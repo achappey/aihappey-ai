@@ -13,9 +13,10 @@ public sealed partial class DeepInfraProvider
             .. DeepInfraImageModels,
             .. DeepInfraRerankModels,
             ..DeepInfraSpeechModels,
+            ..DeepInfraTranscriptionModels,
             ]);
     }
-    
+
     public static IReadOnlyList<Model> DeepInfraLanguageModels =>
     [
         new()
@@ -203,6 +204,32 @@ public sealed partial class DeepInfraProvider
             Description = "Zonos-v0.1 is a leading open-weight text-to-speech model trained on more than 200k hours of varied multilingual speech, delivering expressiveness and quality on par with—or even surpassing—top TTS providers. Our model enables highly natural speech generation from text prompts when given a speaker embedding or audio prefix, and can accurately perform speech cloning when given a reference clip spanning just a few seconds. The conditioning setup also allows for fine control over speaking rate, pitch variation, audio quality, and emotions such as happiness, fear, sadness, and anger. The model outputs speech natively at 44kHz.",
             Type = "speech",
             OwnedBy = "Zyphra" },
+    ];
+
+    public static IReadOnlyList<Model> DeepInfraTranscriptionModels =>
+    [
+        new() { Id = "mistralai/Voxtral-Small-24B-2507".ToModelId("deepinfra"),
+            Name = "Voxtral-Small-24B-2507",
+            Description = "Voxtral Small is an enhancement of Mistral Small 3, incorporating state-of-the-art audio input capabilities while retaining best-in-class text performance. It excels at speech transcription, translation and audio understanding.",
+            Type = "transcription",
+            ContextWindow = 32_768,
+            OwnedBy = "Mistral" },
+        new() { Id = "mistralai/Voxtral-Mini-3B-2507".ToModelId("deepinfra"),
+            Name = "Voxtral-Mini-3B-2507",
+            Description = "Voxtral Mini is an enhancement of Ministral 3B, incorporating state-of-the-art audio input capabilities while retaining best-in-class text performance. It excels at speech transcription, translation and audio understanding.",
+            Type = "transcription",
+            ContextWindow = 32_768,
+            OwnedBy = "Mistral" },
+        new() { Id = "openai/whisper-large-v3-turbo".ToModelId("deepinfra"),
+            Name = "whisper-large-v3-turbo",
+            Description = "Whisper is a state-of-the-art model for automatic speech recognition (ASR) and speech translation, proposed in the paper 'Robust Speech Recognition via Large-Scale Weak Supervision' by Alec Radford et al. from OpenAI. Trained on >5M hours of labeled data, Whisper demonstrates a strong ability to generalise to many datasets and domains in a zero-shot setting. Whisper large-v3-turbo is a finetuned version of a pruned Whisper large-v3. In other words, it's the exact same model, except that the number of decoding layers have reduced from 32 to 4. As a result, the model is way faster, at the expense of a minor quality degradation.",
+            Type = "transcription",
+            OwnedBy = "OpenAI" },
+        new() { Id = "openai/whisper-large-v3".ToModelId("deepinfra"),
+            Name = "whisper-large-v3",
+            Description = "Whisper is a general-purpose speech recognition model. It is trained on a large dataset of diverse audio and is also a multi-task model that can perform multilingual speech recognition as well as speech translation and language identification.",
+            Type = "transcription",
+            OwnedBy = "OpenAI" },
     ];
 
     public static IReadOnlyList<Model> DeepInfraImageModels =>

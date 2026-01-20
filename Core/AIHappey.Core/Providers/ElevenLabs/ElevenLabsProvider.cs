@@ -69,9 +69,14 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (options.Model?.Contains("scribe") == true)
+        {
+            throw new NotImplementedException();
+        }
+
+        return await this.SpeechResponseAsync(options, cancellationToken);
     }
 
     public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)

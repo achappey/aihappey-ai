@@ -8,11 +8,11 @@ The table below shows which endpoints each provider implements (✅), not yet im
 
 | Provider       | [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [Completions](https://platform.openai.com/docs/api-reference/chat) | [Responses](https://platform.openai.com/docs/api-reference/responses) | [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [Sampling](https://modelcontextprotocol.io/specification/draft/client/sampling) |
 | -------------- | --------- | ----------- | ----------------- | ------------- | ---------------------- | ---------------- | ------------------------ | --------- |
-| AIML           | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
+| AIML           | ✅        | ➖          | ❌                | 🟡            | ✅                     | ✅               | ✅                       | 🟡        |
 | Alibaba        | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Anthropic      | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | AssemblyAI     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
-| AsyncAI        | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | 🟡        |
+| AsyncAI        | ✅        | ➖          | ❌                | ✅            | ➖                     | ✅               | ➖                       | ✅        |
 | Audixa         | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ✅        |
 | Azure          | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | 🟡        |
 | Baseten        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
@@ -21,11 +21,11 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | CloudRift      | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Cohere         | ✅        | ✅          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | ContextualAI   | ➖        | ✅          | ➖                | ➖            | ➖                     | ➖               | ➖                       | ➖        |
-| DeepInfra      | ✅        | ✅          | ✅                | ❌            | ✅                     | ✅               | ❌                       | ❌        |
-| DeepSeek       | ✅        | ➖          | ✅                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
-| Deepgram       | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ✅                       | ❌        |
+| DeepInfra      | ✅        | ✅          | ✅                | 🟡            | ✅                     | ✅               | ✅                       | 🟡        |
+| DeepSeek       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
+| Deepgram       | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ✅                       | 🟡        |
 | Echo           | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
-| ElevenLabs     | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ❌        |
+| ElevenLabs     | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ✅                       | 🟡        |
 | Fireworks      | ✅        | ✅          | ✅                | ✅            | ✅                     | ➖               | ✅                       | ❌        |
 | Gladia         | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Google         | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
@@ -39,7 +39,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Nscale         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Nebius         | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | NVIDIA         | ✅        | ➖          | ✅                | ✅            | ➖                     | ➖               | ➖                       | ❌        |
-| Novita         | ✅        | ✅          | ✅                | 🟡            | ✅                     | ✅               | ✅                       | ❌        |
+| Novita         | ✅        | ✅          | ✅                | 🟡            | ✅                     | ✅               | ✅                       | 🟡        |
 | OpenAI         | ✅        | ➖          | ✅                | ✅            | ✅                     | ✅               | ✅                       | ✅        |
 | Perplexity     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | Pollinations   | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ✅        |
@@ -52,11 +52,11 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Scaleway       | ✅        | ➖          | ✅                | ✅            | ➖                     | ➖               | ✅                       | ❌        |
 | Speechify      | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ➖                       | ✅        |
 | Speechmatics   | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ❌                       | 🟡        |
-| StabilityAI    | ✅        | ➖          | ❌                | 🟡            | ✅                     | ✅               | ➖                       | ❌        |
+| StabilityAI    | ✅        | ➖          | ❌                | 🟡            | ✅                     | ✅               | ➖                       | 🟡        |
 | Telnyx         | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Tinfoil        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Together       | ✅        | ✅          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
-| TTSReader      | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ❌        |
+| TTSReader      | ✅        | ➖          | ❌                | ✅            | ➖                     | ✅               | ➖                       | ✅        |
 | Verda          | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | VoyageAI       | ➖        | ✅          | ➖                | ➖            | ➖                     | ➖               | ➖                       | ➖        |
 | xAI            | ✅        | ➖          | ❌                | ✅            | ✅                     | ➖               | ➖                       | ✅        |

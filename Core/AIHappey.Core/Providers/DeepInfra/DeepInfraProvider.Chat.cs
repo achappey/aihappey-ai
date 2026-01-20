@@ -10,8 +10,7 @@ public sealed partial class DeepInfraProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = DeepInfraLanguageModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
-                  ?? throw new ArgumentException(chatRequest.Model);
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
 
         if (model.Type == "image")
         {
@@ -24,6 +23,14 @@ public sealed partial class DeepInfraProvider
         if (model.Type == "speech")
         {
             await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
+        if (model.Type == "transcription")
+        {
+            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
                 yield return p;
 
             yield break;

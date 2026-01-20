@@ -56,17 +56,41 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
                     ct: cancellationToken);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(
+    public async Task<CreateMessageResult> SamplingAsync(
         CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
-
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    return await this.SpeechSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+
+            default:
+                throw new NotImplementedException();
+        }
+    }
+
+    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        var model = await this.GetModel(options.Model, cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    return await this.SpeechResponseAsync(options,
+                            cancellationToken: cancellationToken);
+                }
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)

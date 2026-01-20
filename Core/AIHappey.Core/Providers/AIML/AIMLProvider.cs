@@ -9,6 +9,7 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Common.Model.Responses;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -109,6 +110,27 @@ public partial class AIMLProvider : IModelProvider
 
 
 
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        var model = await this.GetModel(options.Model, cancellationToken);
+
+        if (model.Type == "speech")
+        {
+            return await this.SpeechResponseAsync(options, cancellationToken);
+        }
+
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -120,8 +142,7 @@ public partial class AIMLProvider : IModelProvider
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken = default)
     {
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id == chatRequest.GetModel());
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
 
         switch (model?.Type)
         {

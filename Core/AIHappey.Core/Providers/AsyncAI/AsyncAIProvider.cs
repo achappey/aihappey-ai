@@ -1,5 +1,6 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 
@@ -52,5 +53,24 @@ public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFac
     {
         throw new NotImplementedException();
     }
+    
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+        => await this.SpeechResponseAsync(options, cancellationToken);
+
+    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
 }
 
