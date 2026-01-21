@@ -13,5 +13,9 @@ public sealed class WebSearchOptions
 
     [JsonPropertyName("image_search_relevance_enhanced")]
     public bool ImageSearchRelevanceEnhanced { get; set; }
+
+    [JsonPropertyName("search_type")]
+    public string? SearchType { get; set; } // pro or fast
+
 }
 

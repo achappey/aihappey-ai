@@ -26,13 +26,6 @@ public static class PerplexityModels
             },
             new Model
             {
-                Id = "sonar-reasoning".ToModelId(Identifier),
-                Name = "sonar-reasoning",
-                Created = DateTimeOffset.Parse("2025-01-29T00:00:00Z").ToUnixTimeSeconds(),
-                OwnedBy = DisplayName
-            },
-            new Model
-            {
                 Id = "sonar-reasoning-pro".ToModelId(Identifier),
                 Name = "sonar-reasoning-pro",
                 Created = DateTimeOffset.Parse("2025-01-29T00:00:00Z").ToUnixTimeSeconds(),

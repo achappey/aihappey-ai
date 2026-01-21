@@ -12,7 +12,7 @@ builder.WebHost.ConfigureKestrel(o =>
 {
     o.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(230);
     o.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(230);
-    o.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100 MB
+    o.Limits.MaxRequestBodySize = null;
 });
 
 builder.Services.AddHttpContextAccessor();

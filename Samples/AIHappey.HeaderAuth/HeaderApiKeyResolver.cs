@@ -58,6 +58,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["gladia"] = "X-Gladia-Key",
             ["verda"] = "X-Verda-Key",
             ["audixa"] = "X-Audixa-Key",
+            ["freepik"] = "X-Freepik-Key",
         };
 
     public string? Resolve(string provider)

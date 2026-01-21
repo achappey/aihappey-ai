@@ -12,5 +12,12 @@ public sealed class PerplexityUserLocation
 
     [JsonPropertyName("country")]
     public string? Country { get; set; }
+
+    [JsonPropertyName("region")]
+    public string? Region { get; set; }
+
+    [JsonPropertyName("city")]
+    public string? City { get; set; }
+
 }
 

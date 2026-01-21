@@ -55,6 +55,7 @@ public class AIServiceConfig
     public ProviderConfig? Gladia { get; set; }
     public ProviderConfig? Verda { get; set; }
     public ProviderConfig? Audixa { get; set; }
+    public ProviderConfig? Freepik { get; set; }
 }
 
 public class ProviderConfig

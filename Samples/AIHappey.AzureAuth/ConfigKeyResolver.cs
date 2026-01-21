@@ -63,6 +63,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "gladia" => _config.Gladia?.ApiKey,
             "verda" => _config.Verda?.ApiKey,
             "audixa" => _config.Audixa?.ApiKey,
+            "freepik" => _config.Freepik?.ApiKey,
             _ => null
         };
 }
