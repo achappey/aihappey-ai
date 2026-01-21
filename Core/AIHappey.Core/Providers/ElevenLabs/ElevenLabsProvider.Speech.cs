@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.ElevenLabs;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
@@ -15,6 +15,22 @@ public partial class ElevenLabsProvider
 
         if (string.Equals(request.Model, "music_v1", StringComparison.OrdinalIgnoreCase))
             return await MusicRequest(request, cancellationToken);
+
+        if (string.Equals(request.Model, "eleven_text_to_sound_v2", StringComparison.OrdinalIgnoreCase))
+            return await TextToSoundRequest(request, cancellationToken);
+
+        if (request.Model.EndsWith("/text-to-dialogue", StringComparison.OrdinalIgnoreCase))
+            return await DialogueRequest(request, cancellationToken);
+
+        // Model-id mapping: accept both "elevenlabs/<model>" and "<model>".
+        // (Some models contain '/', e.g. the dialogue suffix, so we only strip prefix when present.)
+        var normalizedModel = request.Model;
+        var prefix = GetIdentifier() + "/";
+        if (normalizedModel.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            normalizedModel = normalizedModel.SplitModelId().Model;
+
+        if (string.Equals(normalizedModel, "eleven_text_to_sound_v2", StringComparison.OrdinalIgnoreCase))
+            return await TextToSoundRequest(request, cancellationToken);
 
         var metadata = request.GetSpeechProviderMetadata<ElevenLabsSpeechProviderMetadata>(GetIdentifier());
 
@@ -33,14 +49,18 @@ public partial class ElevenLabsProvider
 
         var url = $"v1/text-to-speech/{Uri.EscapeDataString(voice)}" + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
 
+        // Model-id mapping: accept both "elevenlabs/<model>" and "<model>".
+        var model = normalizedModel;
+
         var body = new Dictionary<string, object?>
         {
             ["text"] = request.Text,
-            ["model_id"] = request.Model,
+            ["model_id"] = model,
         };
 
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            body["language_code"] = request.Language;
+        var languageCode = request.Language ?? metadata?.LanguageCode;
+        if (!string.IsNullOrWhiteSpace(languageCode))
+            body["language_code"] = languageCode;
 
         if (!string.IsNullOrWhiteSpace(metadata?.PreviousText))
             body["previous_text"] = metadata.PreviousText;
@@ -81,67 +101,7 @@ public partial class ElevenLabsProvider
             Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
         };
     }
-
-    private async Task<SpeechResponse> MusicRequest(SpeechRequest request, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.Text))
-            throw new ArgumentException("Text is required (used as prompt).", nameof(request));
-
-        var metadata = request.GetSpeechProviderMetadata<ElevenLabsSpeechProviderMetadata>(GetIdentifier());
-
-        var outputFormat = request.OutputFormat ?? metadata?.OutputFormat ?? "mp3_44100_128";
-
-        var query = new List<string>();
-        if (!string.IsNullOrWhiteSpace(outputFormat))
-            query.Add($"output_format={Uri.EscapeDataString(outputFormat)}");
-
-        var url = "v1/music" + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
-
-        // prompt-only implementation (no composition_plan for now)
-        var body = new Dictionary<string, object?>
-        {
-            ["prompt"] = request.Text,
-            ["model_id"] = "music_v1",
-            ["music_length_ms"] = metadata?.MusicLengthMs,
-            ["force_instrumental"] = metadata?.ForceInstrumental,
-            ["respect_sections_durations"] = metadata?.RespectSectionsDurations,
-            ["store_for_inpainting"] = metadata?.StoreForInpainting,
-            ["sign_with_c2pa"] = metadata?.SignWithC2pa,
-        };
-
-        var warnings = new List<object>();
-        if (!string.IsNullOrWhiteSpace(request.Voice))
-            warnings.Add(new { type = "unsupported", feature = "voice" });
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            warnings.Add(new { type = "unsupported", feature = "language" });
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
-            warnings.Add(new { type = "unsupported", feature = "instructions" });
-        if (request.Speed is not null)
-            warnings.Add(new { type = "unsupported", feature = "speed" });
-
-        using var resp = await _client.PostAsJsonAsync(url, body, JsonSerializerOptions.Web, cancellationToken);
-        var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"ElevenLabs Music failed ({(int)resp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
-
-        var mime = GuessMimeType(outputFormat);
-        var base64 = Convert.ToBase64String(bytes);
-
-        return new SpeechResponse
-        {
-            Audio = new()
-            {
-                Base64 = base64,
-                MimeType = mime,
-                Format = outputFormat?.Split("_")?.FirstOrDefault() ?? "mp3",
-            },
-            Warnings = warnings,
-            Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
-        };
-    }
-
+    
     private static string GuessMimeType(string? outputFormat)
     {
         var fmt = (outputFormat ?? string.Empty).Trim().ToLowerInvariant();

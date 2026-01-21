@@ -33,15 +33,35 @@ public partial class ElevenLabsProvider
             if (!canTts)
                 continue;
 
-            models.Add(new Model
+            var baseModel = new Model
             {
                 Id = id!.ToModelId(GetIdentifier()),
                 Name = el.TryGetProperty("name", out var nameEl) ? (nameEl.GetString() ?? id!) : id!,
                 OwnedBy = owner,
                 Description = el.TryGetProperty("description", out var descEl) ? descEl.GetString() : null,
                 Type = "speech",
+            };
+
+            models.Add(baseModel);
+
+            models.Add(new Model
+            {
+                Id = (id! + "/text-to-dialogue").ToModelId(GetIdentifier()),
+                Name = baseModel.Name + " Dialogue",
+                Description = baseModel.Description,
+                OwnedBy = owner,
+                Type = "speech",
             });
+
         }
+
+        models.Add(new Model
+        {
+            Id = "eleven_text_to_sound_v2".ToModelId(GetIdentifier()),
+            Name = "eleven_text_to_sound_v2",
+            OwnedBy = owner,
+            Type = "speech",
+        });
 
         // ElevenLabs STT models are not exposed via GET /v1/models.
         models.Add(new Model { Id = "scribe_v1".ToModelId(GetIdentifier()), Name = "scribe_v1", OwnedBy = owner, Type = "transcription" });

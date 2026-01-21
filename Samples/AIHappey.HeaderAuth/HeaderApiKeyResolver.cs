@@ -60,6 +60,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["audixa"] = "X-Audixa-Key",
             ["freepik"] = "X-Freepik-Key",
             ["ai21"] = "X-AI21-Key",
+            ["murfai"] = "X-MurfAI-Key",
         };
 
     public string? Resolve(string provider)

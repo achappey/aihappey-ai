@@ -65,6 +65,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "audixa" => _config.Audixa?.ApiKey,
             "freepik" => _config.Freepik?.ApiKey,
             "ai21" => _config.AI21?.ApiKey,
+            "murfai" => _config.MurfAI?.ApiKey,
             _ => null
         };
 }

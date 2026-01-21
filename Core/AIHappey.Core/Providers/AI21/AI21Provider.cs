@@ -52,6 +52,7 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
                 ContextWindow = 256_000,
                 Description = "Our most powerful and advanced model, designed to handle complex tasks at enterprise scale with superior performance.",
                 Type = "language",
+                MaxTokens = 4096,
                 Id = "jamba-large".ToModelId(GetIdentifier()),
                 Pricing = new() {
                     Input = 2.00m,
@@ -63,6 +64,7 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
                 OwnedBy = nameof(AI21),
                 Name = "jamba-mini",
                 ContextWindow = 256_000,
+                MaxTokens = 4096,
                 Type = "language",
                 Description = "Jamba2 Mini blends efficiency and steerability into a 12B-active parameters model, delivering reliable output on core enterprise workflows.",
                 Id = "jamba-mini".ToModelId(GetIdentifier()),

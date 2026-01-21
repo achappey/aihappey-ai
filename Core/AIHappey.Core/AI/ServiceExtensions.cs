@@ -55,6 +55,7 @@ using AIHappey.Core.Providers.Gladia;
 using AIHappey.Core.Providers.Verda;
 using AIHappey.Core.Providers.Audixa;
 using AIHappey.Core.Providers.Freepik;
+using AIHappey.Core.Providers.MurfAI;
 using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.AI;
@@ -118,6 +119,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AudixaProvider>();
         services.AddSingleton<IModelProvider, AI21Provider>();
         services.AddSingleton<IModelProvider, FreepikProvider>();
+        services.AddSingleton<IModelProvider, MurfAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
