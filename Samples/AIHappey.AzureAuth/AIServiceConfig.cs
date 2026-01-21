@@ -58,6 +58,7 @@ public class AIServiceConfig
     public ProviderConfig? Freepik { get; set; }
     public ProviderConfig? AI21 { get; set; }
     public ProviderConfig? MurfAI { get; set; }
+    public ProviderConfig? Lingvanex { get; set; }
 }
 
 public class ProviderConfig

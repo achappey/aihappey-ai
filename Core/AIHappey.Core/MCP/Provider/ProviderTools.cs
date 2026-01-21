@@ -16,6 +16,7 @@ using AIHappey.Common.Model.Providers.DeepInfra;
 using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Common.Model.Providers.XAI;
+using AIHappey.Common.Model.Providers.Lingvanex;
 
 using PollinationsProviderMetadata = AIHappey.Common.Model.Providers.Pollinations.PollinationsProviderMetadata;
 
@@ -74,6 +75,7 @@ public class ProviderTools
                 "audixa" => generator.Generate(typeof(AudixaSpeechProviderMetadata)),
                 "alibaba" => generator.Generate(typeof(AlibabaImageProviderMetadata)),
                 "runware" => generator.Generate(typeof(RunwareImageProviderMetadata)),
+                "lingvanex" => generator.Generate(typeof(LingvanexProviderMetadata)),
                 _ => throw new Exception($"Provider {aiProviderId} not supported. Available providers: {JsonSerializer
                     .Serialize(new
                     {

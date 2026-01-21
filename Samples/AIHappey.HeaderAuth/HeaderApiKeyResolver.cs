@@ -61,6 +61,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["freepik"] = "X-Freepik-Key",
             ["ai21"] = "X-AI21-Key",
             ["murfai"] = "X-MurfAI-Key",
+            ["lingvanex"] = "X-Lingvanex-Key",
         };
 
     public string? Resolve(string provider)
