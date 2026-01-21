@@ -50,17 +50,22 @@ public partial class HyperbolicProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Hyperbolic).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var modelId = chatRequest.GetModel();
+
+        ArgumentNullException.ThrowIfNullOrEmpty(modelId);
+        var model = await this.GetModel(modelId, cancellationToken: cancellationToken)
+        ?? throw new ArgumentException(modelId);
+
+        return model.Type switch
+        {
+            "speech" => await this.SpeechSamplingAsync(chatRequest, cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -70,8 +75,14 @@ public partial class HyperbolicProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        var modelId = options.Model ?? throw new ArgumentException(options.Model);
+        var model = await this.GetModel(modelId, cancellationToken);
+
+        if (model.Type == "speech")
+            return await this.SpeechResponseAsync(options, cancellationToken);
+
         throw new NotImplementedException();
     }
 

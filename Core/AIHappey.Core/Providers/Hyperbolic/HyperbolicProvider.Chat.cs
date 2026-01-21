@@ -15,6 +15,9 @@ public partial class HyperbolicProvider : IModelProvider
         if (HyperbolicImageModels.Any(a => a.Id.Equals($"{GetIdentifier()}/{chatRequest.Model}")))
             await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken))
                 yield return update;
+        else if (HyperbolicSpeechModels.Any(a => a.Id.Equals($"{GetIdentifier()}/{chatRequest.Model}")))
+            await foreach (var update in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                yield return update;
         else
             await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
                 cancellationToken: cancellationToken))

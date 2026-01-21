@@ -11,8 +11,20 @@ public partial class HyperbolicProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return [.. HyperbolicModels, .. HyperbolicImageModels];
+        return [.. HyperbolicModels, .. HyperbolicImageModels, .. HyperbolicSpeechModels];
     }
+
+    public IReadOnlyList<Model> HyperbolicSpeechModels =>
+    [
+        new()
+        {
+            Id = "audio-generation".ToModelId(GetIdentifier()),
+            Name = "audio-generation",
+            Description = "Hyperbolic audio generation.",
+            Type = "speech",
+            OwnedBy = nameof(Hyperbolic)
+        }
+    ];
 
     public IReadOnlyList<Model> HyperbolicModels =>
     [

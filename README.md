@@ -15,7 +15,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AssemblyAI     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | AsyncAI        | ✅        | ➖          | ❌                | ✅            | ➖                     | ✅               | ➖                       | ✅        |
 | Audixa         | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ✅        |
-| Azure          | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | 🟡        |
+| Azure          | ✅        | ➖          | 🟡                | 🟡            | ➖                     | ✅               | ✅                       | 🟡        |
 | Baseten        | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | CanopyWave     | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Cerebras       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
@@ -32,7 +32,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Gladia         | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Google         | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
 | Groq           | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ✅        |
-| Hyperbolic     | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
+| Hyperbolic     | ✅        | ➖          | ✅                | 🟡            | ✅                     | ✅               | ➖                       | 🟡        |
 | Hyperstack     | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Inferencenet   | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Jina           | ✅        | ✅          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |

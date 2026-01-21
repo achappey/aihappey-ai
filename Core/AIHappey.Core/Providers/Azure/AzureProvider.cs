@@ -43,16 +43,16 @@ public sealed partial class AzureProvider(
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var models = await ListModels(cancellationToken);
         var modelId = chatRequest.GetModel();
 
         ArgumentNullException.ThrowIfNullOrEmpty(modelId);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
-            ?? throw new ArgumentException(modelId);
+        var model = await this.GetModel(modelId, cancellationToken: cancellationToken)
+        ?? throw new ArgumentException(modelId);
 
         return model.Type switch
         {
             "speech" => await this.SpeechSamplingAsync(chatRequest, cancellationToken),
+            "language" => await this.TranslateSamplingAsync(chatRequest, modelId!, cancellationToken),
             _ => throw new NotImplementedException(),
         };
     }
@@ -60,8 +60,7 @@ public sealed partial class AzureProvider(
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
          [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+        var model = await this.GetModel(chatRequest.Model, cancellationToken: cancellationToken)
             ?? throw new ArgumentException(chatRequest.Model);
 
         switch (model.Type)
@@ -77,6 +76,15 @@ public sealed partial class AzureProvider(
 
                 {
                     await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                        yield return p;
+
+                    yield break;
+                }
+
+            case "language":
+
+                {
+                    await foreach (var p in this.StreamTranslateAsync(chatRequest, cancellationToken))
                         yield return p;
 
                     yield break;
@@ -101,14 +109,13 @@ public sealed partial class AzureProvider(
     public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
-            ?? throw new ArgumentException(modelId);
+        var model = await this.GetModel(modelId, cancellationToken);
 
         if (model.Type == "speech")
-        {
             return await this.SpeechResponseAsync(options, cancellationToken);
-        }
+
+        if (model.Type == "language")
+            return await this.TranslateResponsesAsync(options, cancellationToken);
 
         throw new NotImplementedException();
     }

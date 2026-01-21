@@ -46,12 +46,16 @@ public partial class HyperbolicProvider : IModelProvider
             ["width"] = width,
             ["height"] = height,
             ["backend"] = "auto",
-            ["seed"] = imageRequest.Seed,
         };
 
         if (!string.IsNullOrEmpty(metadata?.NegativePrompt))
         {
             payload["negative_prompt"] = metadata?.NegativePrompt;
+        }
+
+        if (imageRequest.Seed is not null)
+        {
+            payload["seed"] = imageRequest?.Seed;
         }
 
         if (metadata?.Steps is not null)
