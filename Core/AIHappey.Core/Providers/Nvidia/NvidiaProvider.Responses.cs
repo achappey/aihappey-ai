@@ -7,20 +7,6 @@ namespace AIHappey.Core.Providers.Nvidia;
 
 public partial class NvidiaProvider : IModelProvider
 {
-    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {

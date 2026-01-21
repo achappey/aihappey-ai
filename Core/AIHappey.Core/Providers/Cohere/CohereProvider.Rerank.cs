@@ -88,21 +88,6 @@ public partial class CohereProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<string> GetToken(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();

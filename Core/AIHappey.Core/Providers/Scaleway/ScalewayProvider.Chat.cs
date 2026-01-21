@@ -7,21 +7,6 @@ namespace AIHappey.Core.Providers.Scaleway;
 
 public partial class ScalewayProvider : IModelProvider
 {
-    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {

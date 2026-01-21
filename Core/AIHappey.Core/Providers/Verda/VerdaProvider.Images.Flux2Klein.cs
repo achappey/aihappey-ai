@@ -62,7 +62,7 @@ public partial class VerdaProvider
                 feature = "files",
                 details = "Flux.2 [klein] supports up to 4 input images; extra images were ignored."
             });
-            inputImages = inputImages.Take(4).ToList();
+            inputImages = [.. inputImages.Take(4)];
         }
 
         if (inputImages?.Count == 0)

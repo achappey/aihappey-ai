@@ -44,6 +44,7 @@ using AIHappey.Core.Providers.ContextualAI;
 using AIHappey.Core.Providers.Sarvam;
 using AIHappey.Core.Providers.MiniMax;
 using AIHappey.Core.Providers.AssemblyAI;
+using AIHappey.Core.Providers.AI21;
 using Microsoft.KernelMemory;
 using AIHappey.Core.Providers.ResembleAI;
 using AIHappey.Core.Providers.Speechify;
@@ -53,6 +54,7 @@ using AIHappey.Core.Providers.Hyperstack;
 using AIHappey.Core.Providers.Gladia;
 using AIHappey.Core.Providers.Verda;
 using AIHappey.Core.Providers.Audixa;
+using AIHappey.Core.Providers.Freepik;
 using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.AI;
@@ -114,6 +116,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GladiaProvider>();
         services.AddSingleton<IModelProvider, VerdaProvider>();
         services.AddSingleton<IModelProvider, AudixaProvider>();
+        services.AddSingleton<IModelProvider, AI21Provider>();
+        services.AddSingleton<IModelProvider, FreepikProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

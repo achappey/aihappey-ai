@@ -11,20 +11,6 @@ namespace AIHappey.Core.Providers.MiniMax;
 
 public partial class MiniMaxProvider : IModelProvider
 {
-    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public async Task<SpeechResponse> MusicRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {

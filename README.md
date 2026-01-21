@@ -8,6 +8,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 
 | Provider       | [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [Completions](https://platform.openai.com/docs/api-reference/chat) | [Responses](https://platform.openai.com/docs/api-reference/responses) | [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [Sampling](https://modelcontextprotocol.io/specification/draft/client/sampling) |
 | -------------- | --------- | ----------- | ----------------- | ------------- | ---------------------- | ---------------- | ------------------------ | --------- |
+| AI21           | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | AIML           | ✅        | ➖          | ❌                | 🟡            | ✅                     | ✅               | ✅                       | 🟡        |
 | Alibaba        | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Anthropic      | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
@@ -27,6 +28,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Echo           | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | ElevenLabs     | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ✅                       | 🟡        |
 | Fireworks      | ✅        | ✅          | ✅                | ✅            | ✅                     | ➖               | ✅                       | ❌        |
+| Freepik        | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ➖                       | ❌        |
 | Gladia         | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | Google         | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
 | Groq           | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ✅        |

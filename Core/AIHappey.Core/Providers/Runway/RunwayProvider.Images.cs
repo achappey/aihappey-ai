@@ -23,21 +23,6 @@ public partial class RunwayProvider : IModelProvider
     public static string ExtractTaskId(JsonNode? json)
             => json?["id"]?.ToString() ?? throw new Exception("No task ID returned from Runway API.");
 
-    public Task<string> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

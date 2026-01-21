@@ -47,7 +47,7 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
             if (_modelProviderMap != null && DateTimeOffset.UtcNow < _expiresAt)
                 return;
 
-            var providerArray = providers as IModelProvider[] ?? providers.ToArray();
+            var providerArray = providers as IModelProvider[] ?? [.. providers];
 
             var tasks = providerArray.Select(async provider =>
             {
