@@ -16,7 +16,7 @@ public static class ChatCompletionsExtensions
     /// </summary>
     public static async Task<ChatCompletion> GetChatCompletion(
         this HttpClient client,
-        ChatCompletionOptions options,
+        JsonElement payload,
         string relativeUrl = "v1/chat/completions",
         CancellationToken ct = default)
     {
@@ -26,7 +26,7 @@ public static class ChatCompletionsExtensions
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
-        var payload = JsonSerializer.SerializeToElement(options);
+        //   var payload = JsonSerializer.SerializeToElement(options);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
@@ -40,6 +40,16 @@ public static class ChatCompletionsExtensions
 
         return result;
     }
+
+    /// <summary>
+    /// POST JSON and deserialize JSON response into T (non-stream).
+    /// </summary>
+    public static async Task<ChatCompletion> GetChatCompletion(
+        this HttpClient client,
+        ChatCompletionOptions options,
+        string relativeUrl = "v1/chat/completions",
+        CancellationToken ct = default)
+        => await client.GetChatCompletion(JsonSerializer.SerializeToElement(options), relativeUrl, ct);
 
     /// <summary>
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.

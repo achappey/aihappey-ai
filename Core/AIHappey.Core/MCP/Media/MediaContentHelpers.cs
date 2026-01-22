@@ -7,6 +7,8 @@ namespace AIHappey.Core.MCP.Media;
 public static partial class MediaContentHelpers
 {
     private const int MaxImageBytes = 10 * 1024 * 1024;
+    private const int MaxRemoteAudioBytes = 250 * 1024 * 1024;
+    private const int MaxRemoteTextBytes = 25 * 1024 * 1024;
 
     public static bool TryParseDataUrl(string input, out string mimeType, out string base64)
     {
@@ -71,6 +73,75 @@ public static partial class MediaContentHelpers
         return (mime, Convert.ToBase64String(bytes));
     }
 
+    /// <summary>
+    /// Fetch remote audio and return as raw base64 + best-effort media-type.
+    /// Used by MCP tools that accept a URL (publicly accessible) instead of a base64 payload.
+    /// </summary>
+    public static async Task<(string MimeType, string Base64)> FetchExternalAudioAsBase64Async(
+        Uri uri,
+        IHttpClientFactory httpClientFactory,
+        CancellationToken ct)
+    {
+        await EnsurePublicHttpUri(uri, ct);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+        var http = httpClientFactory.CreateClient();
+        using var req = new HttpRequestMessage(HttpMethod.Get, uri);
+        req.Headers.Accept.Clear();
+        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+
+        using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+        resp.EnsureSuccessStatusCode();
+
+        var mime = resp.Content.Headers.ContentType?.MediaType;
+        if (string.IsNullOrWhiteSpace(mime))
+        {
+            var provider = new FileExtensionContentTypeProvider();
+            provider.TryGetContentType(uri.AbsolutePath, out mime);
+        }
+
+        // If the server doesn't provide a clear audio media-type, fall back to a reasonable default.
+        if (string.IsNullOrWhiteSpace(mime) || mime.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
+            mime = "audio/mpeg";
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
+        var bytes = await ReadToMaxBytesAsync(stream, MaxRemoteAudioBytes, cts.Token);
+        return (mime, Convert.ToBase64String(bytes));
+    }
+
+    /// <summary>
+    /// Fetch remote content and decode the raw body as text.
+    /// Used by the reranking URL tool (we do not attempt HTML readability extraction).
+    /// </summary>
+    public static async Task<string> FetchExternalBodyAsTextAsync(
+        Uri uri,
+        IHttpClientFactory httpClientFactory,
+        CancellationToken ct)
+    {
+        await EnsurePublicHttpUri(uri, ct);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(30));
+
+        var http = httpClientFactory.CreateClient();
+        using var req = new HttpRequestMessage(HttpMethod.Get, uri);
+        req.Headers.Accept.Clear();
+        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+
+        using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+        resp.EnsureSuccessStatusCode();
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
+        var bytes = await ReadToMaxBytesAsync(stream, MaxRemoteTextBytes, cts.Token);
+
+        // Best-effort: treat as UTF-8.
+        // If the content is binary, this will produce garbage text, but that's acceptable for fail-fast behavior.
+        return System.Text.Encoding.UTF8.GetString(bytes);
+    }
+
     private static async Task<byte[]> ReadToMaxBytesAsync(Stream stream, int maxBytes, CancellationToken ct)
     {
         using var ms = new MemoryStream();
@@ -92,6 +163,13 @@ public static partial class MediaContentHelpers
 
     private static async Task EnsurePublicHttpUri(Uri uri, CancellationToken ct)
     {
+        if (!uri.IsAbsoluteUri)
+            throw new InvalidOperationException("URL must be absolute.");
+
+        if (!uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase) &&
+            !uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Only http(s) URLs are supported.");
+
         if (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Refusing to fetch localhost URLs.");
 

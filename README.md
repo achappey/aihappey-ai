@@ -12,7 +12,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AIML           | ✅        | ➖          | ❌                | 🟡            | ✅                     | ✅               | ✅                       | 🟡        |
 | Alibaba        | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ➖                       | ❌        |
 | Anthropic      | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
-| AssemblyAI     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
+| AssemblyAI     | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
 | AsyncAI        | ✅        | ➖          | ❌                | ✅            | ➖                     | ✅               | ➖                       | ✅        |
 | Audixa         | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ➖                       | ✅        |
 | Azure          | ✅        | ➖          | 🟡                | 🟡            | ➖                     | ✅               | ✅                       | 🟡        |
@@ -320,3 +320,20 @@ curl "$BASE_URL/v1/models" \
   -H "X-OpenAI-Key: $API_KEY"
 ```
 
+## Core MCP servers (Model Context Protocol)
+
+aihappey-ai exposes a set of **core MCP servers** (streamable HTTP) that give MCP clients serious power: discover models/providers, generate media, rerank content and mint realtime tokens.
+
+Discovery (recommended):
+
+- **MCP registry**: `GET $BASE_URL/v0.1/servers`
+
+Core MCP server URLs (use the same `$BASE_URL` as above):
+
+- **AI Models** — `POST $BASE_URL/ai-models` — Tools: `ai_models_list`
+- **AI Providers** — `POST $BASE_URL/ai-providers` — Tools: `ai_provider_metadata_get_schema`, `ai_providers_list`, `ai_provider_get_models`
+- **AI Images** — `POST $BASE_URL/ai-images` — Tools: `ai_images_generate`
+- **AI Speech** — `POST $BASE_URL/ai-speech` — Tools: `ai_speech_generate`
+- **AI Transcriptions** — `POST $BASE_URL/ai-transcriptions` — Tools: `ai_audio_transcriptions_create`
+- **AI Realtime** — `POST $BASE_URL/ai-realtime` — Tools: `ai_realtime_token_get`
+- **AI Rerank** — `POST $BASE_URL/ai-rerank` — Tools: `ai_rerank_texts`, `ai_rerank_urls`

@@ -13,7 +13,8 @@ namespace AIHappey.Core.MCP.Models;
 public class ModelTools
 {
     [Description("List all available models.")]
-    [McpServerTool(Title = "AI models", Name = "ai_models_list", Idempotent = true, ReadOnly = true, OpenWorld = false)]
+    [McpServerTool(Title = "AI models", Name = "ai_models_list", 
+        Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIModels_List(
            IServiceProvider services,
            RequestContext<CallToolRequestParams> _,

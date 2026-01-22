@@ -21,12 +21,33 @@ public class SpeechTools
         ReadOnly = false,
         OpenWorld = false)]
     public static async Task<CallToolResult?> AI_SpeechGenerate(
-        SpeechRequest request,
+        [Description("AI model identifier")] string model,
+        [Description("Text to turn into speech")] string text,
         RequestContext<CallToolRequestParams> requestContext,
         IServiceProvider services,
+        [Description("Voice identifier (provider/model specific)")] string? voice = null,
+        [Description("Audio output format (e.g. mp3, wav, ogg, opus, flac, aac, m4a)")] string? outputFormat = null,
+        [Description("Optional speaking instructions/style")]
+        string? instructions = null,
+        [Description("Playback speed multiplier (provider/model specific)")] float? speed = null,
+        [Description("Language code (e.g. en-US)")] string? language = null,
+        [Description("Provider options as JSON object string. Example: {\"stability\":{...}}")]
+        string? providerOptionsJson = null,
         CancellationToken ct = default) =>
         await requestContext.WithExceptionCheck(async () =>
         {
+            var request = new SpeechRequest
+            {
+                Model = model,
+                Text = text,
+                Voice = voice,
+                OutputFormat = outputFormat,
+                Instructions = instructions,
+                Speed = speed,
+                Language = language,
+                ProviderOptions = ParseProviderOptions(providerOptionsJson)
+            };
+
             if (string.IsNullOrWhiteSpace(request.Model))
                 throw new ArgumentException("'model' is required.");
             if (string.IsNullOrWhiteSpace(request.Text))
@@ -41,6 +62,10 @@ public class SpeechTools
             if (string.IsNullOrWhiteSpace(result.Audio?.Base64))
                 throw new InvalidOperationException("Provider returned no audio.");
 
+            // Some providers may omit mimetype; use request/outputFormat as a best-effort fallback.
+            if (string.IsNullOrWhiteSpace(result.Audio.MimeType))
+                result.Audio.MimeType = GuessSpeechMimeType(request);
+
             var structured = new JsonObject
             {
                 ["modelId"] = result.Response?.ModelId,
@@ -51,11 +76,35 @@ public class SpeechTools
 
             return new CallToolResult
             {
-                Content = [new AudioContentBlock { MimeType = result.Audio.MimeType,
-                    Data = result.Audio.Base64 }],
+                Content =
+                [
+                    new AudioContentBlock
+                    {
+                        MimeType = result.Audio.MimeType,
+                        Data = result.Audio.Base64
+                    }
+                ],
                 StructuredContent = structured
             };
         });
+
+    private static Dictionary<string, JsonElement>? ParseProviderOptions(string? providerOptionsJson)
+    {
+        if (string.IsNullOrWhiteSpace(providerOptionsJson))
+            return null;
+
+        try
+        {
+            var obj = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(providerOptionsJson, JsonSerializerOptions.Web);
+            if (obj is null)
+                throw new ArgumentException("'providerOptionsJson' must be a JSON object string.");
+            return obj;
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("'providerOptionsJson' must be valid JSON.", ex);
+        }
+    }
 
     private static string GuessSpeechMimeType(SpeechRequest request)
     {

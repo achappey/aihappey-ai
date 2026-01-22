@@ -25,7 +25,7 @@ public static class RealtimeExtensions
         req.Headers.Accept.Add(AcceptJson);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
-        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
 
         if (!resp.IsSuccessStatusCode)
         {
@@ -34,7 +34,7 @@ public static class RealtimeExtensions
             throw new Exception(contents);
         }
 
-        return await resp.Content.ReadFromJsonAsync<T>(cancellationToken: ct) 
+        return await resp.Content.ReadFromJsonAsync<T>(cancellationToken: ct)
             ?? throw new Exception("No content");
     }
 
