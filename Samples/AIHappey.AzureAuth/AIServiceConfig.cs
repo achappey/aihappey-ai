@@ -60,6 +60,8 @@ public class AIServiceConfig
     public ProviderConfig? MurfAI { get; set; }
     public ProviderConfig? Lingvanex { get; set; }
     public ProviderConfig? GoogleTranslate { get; set; }
+    public ProviderConfig? ModernMT { get; set; }
+    public ProviderConfig? LectoAI { get; set; }
 }
 
 public class ProviderConfig

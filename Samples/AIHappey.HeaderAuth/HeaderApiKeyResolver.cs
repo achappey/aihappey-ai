@@ -63,6 +63,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["murfai"] = "X-MurfAI-Key",
             ["lingvanex"] = "X-Lingvanex-Key",
             ["googletranslate"] = "X-GoogleTranslate-Key",
+            ["modernmt"] = "X-ModernMT-Key",
+            ["lectoai"] = "X-LectoAI-Key",
         };
 
     public string? Resolve(string provider)

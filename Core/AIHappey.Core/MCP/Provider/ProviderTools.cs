@@ -17,6 +17,7 @@ using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Common.Model.Providers.Lingvanex;
+using AIHappey.Common.Model.Providers.ModernMT;
 
 using PollinationsProviderMetadata = AIHappey.Common.Model.Providers.Pollinations.PollinationsProviderMetadata;
 
@@ -76,6 +77,9 @@ public class ProviderTools
                 "alibaba" => generator.Generate(typeof(AlibabaImageProviderMetadata)),
                 "runware" => generator.Generate(typeof(RunwareImageProviderMetadata)),
                 "lingvanex" => generator.Generate(typeof(LingvanexProviderMetadata)),
+                "modernmt" => generator.Generate(typeof(ModernMTProviderMetadata)),
+                // LectoAI currently has no provider-specific metadata; return an empty schema.
+                "lectoai" => generator.Generate(typeof(object)),
                 _ => throw new Exception($"Provider {aiProviderId} not supported. Available providers: {JsonSerializer
                     .Serialize(new
                     {
