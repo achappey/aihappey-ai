@@ -82,7 +82,7 @@ public sealed partial class FreepikProvider
                     Type = "image",
                     Id = "image-upscaler-precision-v2".ToModelId(GetIdentifier())
                 },
-                  new Model
+                new Model
                 {
                     OwnedBy = nameof(Freepik),
                     Name = "image-relight",
@@ -92,9 +92,142 @@ public sealed partial class FreepikProvider
                 new Model
                 {
                     OwnedBy = nameof(Freepik),
+                    Name = "classic-fast",
+                    Type = "image",
+                    Id = "classic-fast".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "flux-2-pro",
+                    Type = "image",
+                    Id = "flux-2-pro".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "flux-2-turbo",
+                    Type = "image",
+                    Id = "flux-2-turbo".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "flux-dev",
+                    Type = "image",
+                    Id = "flux-dev".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "flux-pro-v1-1",
+                    Type = "image",
+                    Id = "flux-pro-v1-1".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "hyperflux",
+                    Type = "image",
+                    Id = "hyperflux".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedream",
+                    Type = "image",
+                    Id = "seedream".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedream-v4",
+                    Type = "image",
+                    Id = "seedream-v4".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedream-v4-edit",
+                    Type = "image",
+                    Id = "seedream-v4-edit".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedream-v4-5",
+                    Type = "image",
+                    Id = "seedream-v4-5".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "z-image",
+                    Type = "image",
+                    Id = "z-image".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "z-image-turbo",
+                    Type = "image",
+                    Id = "z-image-turbo".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedream-v4-5-edit",
+                    Type = "image",
+                    Id = "seedream-v4-5-edit".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
                     Name = "sound-effects",
                     Type = "speech",
                     Id = "sound-effects".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "Mystic Zen",
+                    Type = "image",
+                    Id = "mystic/zen".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "Mystic Flexible",
+                    Type = "image",
+                    Id = "mystic/flexible".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "Mystic Fluid",
+                    Type = "image",
+                    Id = "mystic/fluid".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "Mystic Realism",
+                    Type = "image",
+                    Id = "mystic/realism".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "Mystic Super Real",
+                    Type = "image",
+                    Id = "mystic/super_real".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "Mystic Editorial Portraits",
+                    Type = "image",
+                    Id = "mystic/editorial_portraits".ToModelId(GetIdentifier())
                 }
             ]
             : []);

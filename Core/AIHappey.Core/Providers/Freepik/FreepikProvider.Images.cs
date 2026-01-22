@@ -10,6 +10,29 @@ public sealed partial class FreepikProvider
         if (string.IsNullOrWhiteSpace(imageRequest.Model))
             throw new ArgumentException("Model is required.", nameof(imageRequest));
 
+        // Classic Fast (sync base64 response)
+        if (imageRequest.Model.Equals("classic-fast", StringComparison.OrdinalIgnoreCase))
+            return await ClassicFastImageRequest(imageRequest, cancellationToken);
+
+        // Text-to-image generation models (async tasks)
+        if (imageRequest.Model.Equals("flux-2-pro", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("flux-2-turbo", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("flux-dev", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("flux-pro-v1-1", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("hyperflux", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("seedream", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("seedream-v4", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("seedream-v4-edit", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("seedream-v4-5", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("z-image", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("z-image-turbo", StringComparison.OrdinalIgnoreCase)
+            || imageRequest.Model.Equals("seedream-v4-5-edit", StringComparison.OrdinalIgnoreCase)
+            // Mystic models are exposed as mystic/<model>
+            || imageRequest.Model.StartsWith("mystic/", StringComparison.OrdinalIgnoreCase))
+        {
+            return await ImageGenerationImageRequest(imageRequest, cancellationToken);
+        }
+
         if (imageRequest.Model.StartsWith("image-expand/", StringComparison.OrdinalIgnoreCase))
             return await ImageExpandImageRequest(imageRequest, cancellationToken);
 

@@ -22,6 +22,7 @@ public partial class ElevenLabsProvider
         if (request.Model.EndsWith("/text-to-dialogue", StringComparison.OrdinalIgnoreCase))
             return await DialogueRequest(request, cancellationToken);
 
+
         // Model-id mapping: accept both "elevenlabs/<model>" and "<model>".
         // (Some models contain '/', e.g. the dialogue suffix, so we only strip prefix when present.)
         var normalizedModel = request.Model;
@@ -101,7 +102,7 @@ public partial class ElevenLabsProvider
             Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
         };
     }
-    
+
     private static string GuessMimeType(string? outputFormat)
     {
         var fmt = (outputFormat ?? string.Empty).Trim().ToLowerInvariant();
