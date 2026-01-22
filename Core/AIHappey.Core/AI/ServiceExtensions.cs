@@ -57,6 +57,7 @@ using AIHappey.Core.Providers.Audixa;
 using AIHappey.Core.Providers.Freepik;
 using AIHappey.Core.Providers.MurfAI;
 using AIHappey.Core.Providers.Lingvanex;
+using AIHappey.Core.Providers.GoogleTranslate;
 using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.AI;
@@ -122,6 +123,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FreepikProvider>();
         services.AddSingleton<IModelProvider, MurfAIProvider>();
         services.AddSingleton<IModelProvider, LingvanexProvider>();
+        services.AddSingleton<IModelProvider, GoogleTranslateProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

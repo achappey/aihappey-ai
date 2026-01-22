@@ -67,6 +67,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "ai21" => _config.AI21?.ApiKey,
             "murfai" => _config.MurfAI?.ApiKey,
             "lingvanex" => _config.Lingvanex?.ApiKey,
+            "googletranslate" => _config.GoogleTranslate?.ApiKey,
             _ => null
         };
 }
