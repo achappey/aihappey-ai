@@ -44,10 +44,18 @@ public partial class OpenAIProvider : IModelProvider
 
         var models = await client.GetModelsAsync(cancellationToken);
 
-        return models.Value
+        var result = models.Value
             .Where(a => !DeprecatedModels.Contains(a.Id))
             .ToModels();
-    }    
+
+        return [..result, new Model() {
+            Id = "whisper-1/translate".ToModelId(GetIdentifier()),
+            Description = "Translate audio to English",
+            Name = "whisper-1 Translate to English",
+            OwnedBy = nameof(OpenAI),
+            Type = "transcription"
+            }];
+    }
 
     private readonly IEnumerable<string> DeprecatedModels = [
         "davinci-002",

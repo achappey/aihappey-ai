@@ -111,9 +111,8 @@ public sealed class AssemblyAITranscriptionProviderMetadata
 public sealed class AssemblyAICustomSpelling
 {
     [JsonPropertyName("from")]
-    public string? From { get; set; }
+    public IEnumerable<string>? From { get; set; }
 
     [JsonPropertyName("to")]
     public string? To { get; set; }
 }
-

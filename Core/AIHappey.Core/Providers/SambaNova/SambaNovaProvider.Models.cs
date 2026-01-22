@@ -72,6 +72,20 @@ public partial class SambaNovaProvider : IModelProvider
             }
 
             models.Add(model);
+
+            if (model.Type == "transcription")
+            {
+                models.Add(new Model()
+                {
+                    Id = model.Id + "/translate",
+                    Name = model.Name + " Translate to English",
+                    Description = model.Description,
+                    OwnedBy = model.OwnedBy,
+                    Pricing = model.Pricing,
+                    MaxTokens = model.MaxTokens
+
+                });
+            }
         }
 
         return models;

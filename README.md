@@ -218,7 +218,7 @@ Use a reranking-capable model (example uses Cohere):
 ```bash
 curl "$BASE_URL/api/rerank" \
   -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
+  -H "X-Cohere-Key: $API_KEY" \
   -d '{
     "model": "cohere/rerank-english-v3.0",
     "query": "best pizza in Amsterdam",

@@ -14,13 +14,14 @@ namespace AIHappey.Core.Providers.AssemblyAI;
 public partial class AssemblyAIProvider : IModelProvider
 {
 
-   
+
     public async Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest,
         CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
 
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v3/token?expires_in_seconds=600");
+        using var req = new HttpRequestMessage(HttpMethod.Get,
+            "https://streaming.assemblyai.com/v3/token?expires_in_seconds=600");
         using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)

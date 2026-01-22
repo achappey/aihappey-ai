@@ -39,7 +39,17 @@ public partial class MiniMaxProvider : IModelProvider
                 OwnedBy = nameof(MiniMax)
             },
 
+            new()
+            {
+                Id = "image-01-live".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+                Name = "MiniMax Image Live",
+                Type = "image",
+                OwnedBy = nameof(MiniMax)
+            },
+
             // ===== MiniMax Speech (Text-to-Audio) =====
+            new() { Id = "speech-2.8-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.8-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
+            new() { Id = "speech-2.8-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.8-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
             new() { Id = "speech-2.6-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.6-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
             new() { Id = "speech-2.6-turbo".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-2.6-turbo", Type = "speech", OwnedBy = nameof(MiniMax) },
             new() { Id = "speech-02-hd".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "speech-02-hd", Type = "speech", OwnedBy = nameof(MiniMax) },
@@ -49,6 +59,7 @@ public partial class MiniMaxProvider : IModelProvider
 
             // ===== MiniMax Speech (Music) =====
             new() { Id = "music-2.0".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "music-2.0", Type = "speech", OwnedBy = nameof(MiniMax) },
+            new() { Id = "music-2.5".ToModelId(nameof(MiniMax).ToLowerInvariant()), Name = "music-2.5", Type = "speech", OwnedBy = nameof(MiniMax) },
         ];
 
 }

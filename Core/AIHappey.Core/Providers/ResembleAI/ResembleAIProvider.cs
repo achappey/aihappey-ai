@@ -46,8 +46,16 @@ public partial class ResembleAIProvider : IModelProvider
         return ResembleAIModels;
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
+        var model = ResembleAIModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.GetModel()!))
+            ?? throw new ArgumentException(chatRequest.GetModel()!);
+
+        if (model.Type == "speech")
+        {
+            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 

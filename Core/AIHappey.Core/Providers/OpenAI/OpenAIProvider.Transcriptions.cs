@@ -135,6 +135,9 @@ public partial class OpenAIProvider : IModelProvider
         if (request.Model == "gpt-4o-transcribe-diarize")
             return await TranscribeWithDiarization(request, cancellationToken);
 
+        if (request.Model.EndsWith("/translate"))
+            return await TranslateRequest(request, cancellationToken);
+
         var audioClient = new AudioClient(
             request.Model,
             GetKey()
@@ -174,6 +177,55 @@ public partial class OpenAIProvider : IModelProvider
         }
 
         var result = await audioClient.TranscribeAudioAsync(memStream,
+            "audio" + request.MediaType.GetAudioExtension(),
+            options,
+            cancellationToken);
+
+        return new TranscriptionResponse()
+        {
+            Text = result.Value.Text,
+            Segments = result.Value.Segments.Select(a => new TranscriptionSegment()
+            {
+                Text = a.Text,
+                StartSecond = (float)a.StartTime.TotalSeconds,
+                EndSecond = (float)a.EndTime.TotalSeconds
+            }),
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = request.Model,
+                Body = result.GetRawResponse().Content.ToString(),
+            },
+            Language = result.Value.Language,
+            DurationInSeconds = result.Value.Duration.HasValue
+                ? (float)result.Value.Duration.Value.TotalSeconds : null
+        };
+    }
+
+    private async Task<TranscriptionResponse> TranslateRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        var audioClient = new AudioClient(
+            request.Model.Split("/").First(),
+            GetKey()
+        );
+
+        var now = DateTime.UtcNow;
+        List<string> results = [];
+        List<object> warnings = [];
+        var bytes = Convert.FromBase64String(request.Audio.ToString()!);
+        using var memStream = new MemoryStream(bytes, writable: false);
+        var metadata = request.GetTranscriptionProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
+        var options = new AudioTranslationOptions();
+
+        if (!string.IsNullOrEmpty(metadata?.Prompt))
+        {
+            options.Prompt = metadata?.Prompt;
+        }
+
+        options.Temperature = metadata?.Temperature;
+        options.ResponseFormat = AudioTranslationFormat.Verbose;
+
+        var result = await audioClient.TranslateAudioAsync(memStream,
             "audio" + request.MediaType.GetAudioExtension(),
             options,
             cancellationToken);

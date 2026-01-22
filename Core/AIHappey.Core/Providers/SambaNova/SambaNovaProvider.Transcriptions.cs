@@ -47,7 +47,8 @@ public partial class SambaNovaProvider : IModelProvider
         form.Add(new StringContent("json"), "response_format");
 
         using var resp = await _client.PostAsync(
-            "https://api.sambanova.ai/v1/audio/transcriptions",
+            "https://api.sambanova.ai/v1/audio/"
+             + (request.Model.EndsWith("/translate") ? "translations" : "transcriptions"),
             form,
             cancellationToken
         );
