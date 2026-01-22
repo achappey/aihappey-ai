@@ -61,10 +61,10 @@ public partial class RunwayProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+        => string.Equals(request?.Model, "eleven_text_to_sound_v2", StringComparison.OrdinalIgnoreCase)
+            ? RunwaySoundEffectAsync(request!, cancellationToken)
+            : RunwayTextToSpeechAsync(request!, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
