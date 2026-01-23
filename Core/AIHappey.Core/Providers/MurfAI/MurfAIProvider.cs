@@ -36,6 +36,7 @@ public sealed partial class MurfAIProvider : IModelProvider
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        
         ArgumentNullException.ThrowIfNull(options);
 
         var texts = options.Messages

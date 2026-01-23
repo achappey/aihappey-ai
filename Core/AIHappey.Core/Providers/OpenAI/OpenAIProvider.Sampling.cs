@@ -13,6 +13,19 @@ public partial class OpenAIProvider
     {
         var model = chatRequest.GetModel();
 
+        if (model?.Contains("image") == true)
+        {
+            return await this.ImageSamplingAsync(chatRequest,
+                    cancellationToken: cancellationToken);
+        }
+
+        if (model?.Contains("tts") == true)
+        {
+            return await this.SpeechSamplingAsync(chatRequest,
+                    cancellationToken: cancellationToken);
+        }
+
+
         if (model?.Contains("search-preview") == true)
         {
             return await ChatCompletionsSamplingAsync(chatRequest, cancellationToken);

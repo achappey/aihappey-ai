@@ -1,23 +1,25 @@
-using System.Runtime.CompilerServices;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
-using System.Net.Http.Headers;
-using System.Net.Mime;
-using System.Text;
+using AIHappey.Common.Model;
+using System.Runtime.CompilerServices;
+using AIHappey.Core.ModelProviders;
 using System.Text.Json;
+using System.Text;
+using System.Net.Mime;
+using System.Net.Http.Headers;
 
-namespace AIHappey.Core.Providers.AI21;
+namespace AIHappey.Core.Providers.Friendli;
 
-public sealed partial class AI21Provider
+public partial class FriendliProvider : IModelProvider
 {
+
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
-        ChatRequest chatRequest,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+          ChatRequest chatRequest,
+          [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         // AI21 streaming cannot be used with tools; if tools exist, emit error UI part.
         if (chatRequest.Tools?.Count > 0)
         {
-            yield return "AI21 provider does not support tools with streaming in StreamAsync; use non-streaming chat completions for tools."
+            yield return "Friendli provider does not support tools with streaming in StreamAsync; use non-streaming chat completions for tools."
                 .ToErrorUIPart();
 
             yield break;
@@ -27,13 +29,17 @@ public sealed partial class AI21Provider
 
         // Build AI21-compatible payload from the Vercel UI chat request.
         // We send only basic {role, content:string} messages.
-        var messages = chatRequest.Messages.ToAi21Messages();
+        var messages = chatRequest.Messages.ToFriendliMessages();
 
         var payload = new Dictionary<string, object?>
         {
             ["model"] = chatRequest.Model,
             ["stream"] = true,
             ["messages"] = messages,
+            ["stream_options"] = new
+            {
+                include_usage = true
+            },
             ["temperature"] = chatRequest.Temperature
         };
 
@@ -61,7 +67,7 @@ public sealed partial class AI21Provider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            yield return $"AI21 stream error: {(string.IsNullOrWhiteSpace(err) ? resp.ReasonPhrase : err)}".ToErrorUIPart();
+            yield return $"Friendli stream error: {(string.IsNullOrWhiteSpace(err) ? resp.ReasonPhrase : err)}".ToErrorUIPart();
             yield break;
         }
 
@@ -87,6 +93,7 @@ public sealed partial class AI21Provider
 
             using var doc = JsonDocument.Parse(data);
             var root = doc.RootElement;
+            Console.WriteLine(data);
 
             id ??= root.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
             id ??= Guid.NewGuid().ToString("n");
@@ -156,5 +163,5 @@ public sealed partial class AI21Provider
             totalTokens: totalTokens,
             temperature: chatRequest.Temperature);
     }
-}
 
+}

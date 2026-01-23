@@ -2,14 +2,12 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AI21;
 
 public sealed partial class AI21Provider
 {
-    async Task<ChatCompletion> IModelProvider.CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
 
@@ -61,7 +59,7 @@ public sealed partial class AI21Provider
         };
     }
 
-    async IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
         ChatCompletionOptions options,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {

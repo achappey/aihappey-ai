@@ -43,17 +43,6 @@ public partial class PollinationsProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Pollinations).ToLowerInvariant();
 
-
-    private async Task<bool> IsPollinationsImageModel(string? model, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(model)) return false;
-        model = model.Trim().ToLowerInvariant();
-
-        var models = await ListModels(cancellationToken);
-        // keep this strict to avoid "gpt-4-turbo" being treated as image
-        return models.Any(a => a.Id.EndsWith(model) && a.Type == "image");
-    }
-
     private readonly ModelPricing Free = new()
     {
         Input = 0,
@@ -96,6 +85,20 @@ public partial class PollinationsProvider : IModelProvider
      CreateMessageRequestParams chatRequest,
      CancellationToken cancellationToken = default)
     {
+        var modelItem = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        switch (modelItem?.Type)
+        {
+            case "image":
+                {
+                    return await this.ImageSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+            default:
+                break;
+        }
+
         ApplyAuthHeader();
 
         var messages = chatRequest.Messages

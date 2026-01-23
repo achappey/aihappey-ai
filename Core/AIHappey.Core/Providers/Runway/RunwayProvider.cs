@@ -34,7 +34,7 @@ public partial class RunwayProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    
+
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -43,9 +43,27 @@ public partial class RunwayProvider : IModelProvider
 
     public string GetIdentifier() => "runway";
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    return await this.SpeechSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+            case "image":
+                {
+                    return await this.ImageSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(

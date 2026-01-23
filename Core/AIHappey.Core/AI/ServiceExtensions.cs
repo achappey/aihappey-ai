@@ -55,12 +55,14 @@ using AIHappey.Core.Providers.Gladia;
 using AIHappey.Core.Providers.Verda;
 using AIHappey.Core.Providers.Audixa;
 using AIHappey.Core.Providers.Freepik;
- using AIHappey.Core.Providers.MurfAI;
- using AIHappey.Core.Providers.Lingvanex;
- using AIHappey.Core.Providers.GoogleTranslate;
- using AIHappey.Core.Providers.ModernMT;
+using AIHappey.Core.Providers.MurfAI;
+using AIHappey.Core.Providers.Lingvanex;
+using AIHappey.Core.Providers.GoogleTranslate;
+using AIHappey.Core.Providers.ModernMT;
 using AIHappey.Core.Providers.LectoAI;
-  using AIHappey.Core.ModelProviders;
+using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Providers.Bria;
+using AIHappey.Core.Providers.Friendli;
 
 namespace AIHappey.Core.AI;
 
@@ -123,12 +125,14 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AudixaProvider>();
         services.AddSingleton<IModelProvider, AI21Provider>();
         services.AddSingleton<IModelProvider, FreepikProvider>();
-         services.AddSingleton<IModelProvider, MurfAIProvider>();
-          services.AddSingleton<IModelProvider, LingvanexProvider>();
-          services.AddSingleton<IModelProvider, GoogleTranslateProvider>();
-          services.AddSingleton<IModelProvider, ModernMTProvider>();
-          services.AddSingleton<IModelProvider, LectoAIProvider>();
-      }
+        services.AddSingleton<IModelProvider, MurfAIProvider>();
+        services.AddSingleton<IModelProvider, LingvanexProvider>();
+        services.AddSingleton<IModelProvider, GoogleTranslateProvider>();
+        services.AddSingleton<IModelProvider, ModernMTProvider>();
+        services.AddSingleton<IModelProvider, LectoAIProvider>();
+        services.AddSingleton<IModelProvider, BriaProvider>();
+        services.AddSingleton<IModelProvider, FriendliProvider>();
+    }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
         this IServiceCollection services,

@@ -65,6 +65,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["googletranslate"] = "X-GoogleTranslate-Key",
             ["modernmt"] = "X-ModernMT-Key",
             ["lectoai"] = "X-LectoAI-Key",
+            ["bria"] = "X-Bria-Key",
+            ["friendli"] = "X-Friendli-Key",
         };
 
     public string? Resolve(string provider)

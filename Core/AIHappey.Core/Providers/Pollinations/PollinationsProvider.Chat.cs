@@ -36,8 +36,7 @@ public partial class PollinationsProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model));
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
         if (model?.Type == "image")
         {
             await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
@@ -47,14 +46,6 @@ public partial class PollinationsProvider : IModelProvider
         }
 
         ApplyAuthHeader();
-
-        if (await IsPollinationsImageModel(chatRequest.Model, cancellationToken))
-        {
-            await foreach (var p in StreamImageAsync(chatRequest, chatRequest.Model, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
 
         var messages = chatRequest.Messages.ToPollinationMessages();
         var metadata = chatRequest.GetProviderMetadata<PollinationsProviderMetadata>(GetIdentifier());

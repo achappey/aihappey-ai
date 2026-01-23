@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.AI;
 
@@ -12,11 +13,11 @@ public static class ModelProviderImageExtensions
       [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var prompt = string.Join("\n", chatRequest.Messages?
-            .LastOrDefault(m => m.Role == Role.user)
+            .LastOrDefault(m => m.Role == Common.Model.Role.user)
             ?.Parts?.OfType<TextUIPart>().Select(a => a.Text) ?? []);
 
         var inputFiles = chatRequest.Messages?
-            .LastOrDefault(m => m.Role == Role.user)
+            .LastOrDefault(m => m.Role == Common.Model.Role.user)
             ?.Parts?.GetImages()
                 .Select(a => a.ToImageFile()) ?? [];
 
@@ -79,4 +80,95 @@ public static class ModelProviderImageExtensions
         yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, null);
     }
 
+    public static async Task<CreateMessageResult> ImageSamplingAsync(
+          this IModelProvider modelProvider,
+          CreateMessageRequestParams chatRequest,
+          CancellationToken cancellationToken = default)
+    {
+        var input = string.Join("\n\n", chatRequest
+            .Messages
+            .Where(a => a.Role == ModelContextProtocol.Protocol.Role.User)
+            .SelectMany(z => z.Content.OfType<TextContentBlock>())
+            .Select(a => a.Text));
+
+        var inputImages = chatRequest
+                .Messages
+                .Where(a => a.Role == ModelContextProtocol.Protocol.Role.User)
+                .SelectMany(z => z.Content.OfType<ImageContentBlock>());
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            throw new Exception("No prompt provided.");
+        }
+
+        var model = chatRequest.GetModel();
+
+        if (string.IsNullOrWhiteSpace(model))
+        {
+            throw new Exception("No model provided.");
+        }
+
+        var imageRequest = new ImageRequest
+        {
+            Model = model,
+            Prompt = input,
+            Files = inputImages.Select(a => new ImageFile()
+            {
+                MediaType = a.MimeType,
+                Data = a.Data
+            })
+        };
+
+        var result = await modelProvider.ImageRequest(imageRequest, cancellationToken) ?? throw new Exception("No result.");
+
+        return result.ToCreateMessageResult();
+    }
+
+    public static ImageContentBlock ToImageContentBlock(
+        this string image)
+             => new()
+             {
+                 MimeType = image.ExtractMimeTypeAndBase64().MimeType!,
+                 Data = image.ExtractMimeTypeAndBase64().Base64!
+             };
+
+    public static CreateMessageResult ToCreateMessageResult(
+        this ImageResponse result)
+        => new()
+        {
+            Content = [.. result.Images?.Select(a => a.ToImageContentBlock()).ToList() ?? []],
+            Model = result.Response.ModelId
+        };
+
+    /// <summary>
+    /// Extracts MIME type and raw Base64 from a data URL or prefixed string.
+    /// Example input: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+    /// </summary>
+    public static (string? MimeType, string Base64) ExtractMimeTypeAndBase64(this string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            throw new ArgumentException("Input cannot be null or empty.", nameof(input));
+
+        // Not a data URL → assume whole string is already raw base64
+        if (!input.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return (null, input.Trim());
+
+        // data:[mime];base64,<payload>
+        var commaIndex = input.IndexOf(',');
+        if (commaIndex < 0)
+            throw new FormatException("Invalid data URL: missing comma.");
+
+        var header = input.Substring(5, commaIndex - 5); // strip "data:"
+        var payload = input[(commaIndex + 1)..];
+
+        string? mimeType = null;
+
+        var semiIndex = header.IndexOf(';');
+        if (semiIndex >= 0)
+            mimeType = header.Substring(0, semiIndex);
+        else if (!string.IsNullOrWhiteSpace(header))
+            mimeType = header;
+
+        return (string.IsNullOrWhiteSpace(mimeType) ? null : mimeType, payload.Trim());
+    }
 }

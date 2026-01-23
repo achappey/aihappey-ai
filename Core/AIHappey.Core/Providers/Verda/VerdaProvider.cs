@@ -46,8 +46,8 @@ public partial class VerdaProvider
         throw new NotImplementedException();
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => await this.ImageSamplingAsync(chatRequest, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -62,7 +62,7 @@ public partial class VerdaProvider
         throw new NotImplementedException();
     }
 
-    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, 
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
@@ -79,7 +79,7 @@ public partial class VerdaProvider
         throw new NotImplementedException();
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

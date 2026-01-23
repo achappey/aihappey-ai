@@ -46,7 +46,7 @@ public partial class StabilityAIProvider : IModelProvider
             return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
         }
 
-        throw new NotImplementedException();
+        return await this.ImageSamplingAsync(chatRequest, cancellationToken);
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,

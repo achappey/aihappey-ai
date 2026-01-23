@@ -62,6 +62,8 @@ public class AIServiceConfig
     public ProviderConfig? GoogleTranslate { get; set; }
     public ProviderConfig? ModernMT { get; set; }
     public ProviderConfig? LectoAI { get; set; }
+    public ProviderConfig? Bria { get; set; }
+    public ProviderConfig? Friendli { get; set; }
 }
 
 public class ProviderConfig

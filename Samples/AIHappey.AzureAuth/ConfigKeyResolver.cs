@@ -70,6 +70,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "googletranslate" => _config.GoogleTranslate?.ApiKey,
             "modernmt" => _config.ModernMT?.ApiKey,
             "lectoai" => _config.LectoAI?.ApiKey,
+            "bria" => _config.Bria?.ApiKey,
+            "friendli" => _config.Friendli?.ApiKey,
             _ => null
         };
 }

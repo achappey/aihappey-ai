@@ -57,6 +57,11 @@ public partial class MiniMaxProvider : IModelProvider
             return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
         }
 
+        if (model.Type == "image")
+        {
+            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 

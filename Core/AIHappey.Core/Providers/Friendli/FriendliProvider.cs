@@ -1,38 +1,31 @@
-using System.Net.Http.Headers;
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using System.Net.Http.Headers;
+using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 
-namespace AIHappey.Core.Providers.Nebius;
+namespace AIHappey.Core.Providers.Friendli;
 
-/// <summary>
-/// Nebius Token Factory (OpenAI-compatible).
-/// Base URL: https://api.tokenfactory.nebius.com/
-/// - POST /v1/chat/completions
-/// - POST /v1/images/generations
-/// - GET  /v1/models
-/// </summary>
-public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
-    : IModelProvider
+public partial class FriendliProvider : IModelProvider
 {
-    private readonly HttpClient _client = CreateClient(httpClientFactory);
+    private readonly IApiKeyResolver _keyResolver;
 
-    private static HttpClient CreateClient(IHttpClientFactory factory)
+    private readonly HttpClient _client;
+
+    public FriendliProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
-        var client = factory.CreateClient();
-        client.BaseAddress = new Uri("https://api.tokenfactory.nebius.com/");
-        return client;
+        _keyResolver = keyResolver;
+        _client = httpClientFactory.CreateClient();
+        _client.BaseAddress = new Uri("https://api.friendli.ai/serverless/");
     }
-
-    public string GetIdentifier() => "nebius";
 
     private void ApplyAuthHeader()
     {
-        var key = keyResolver.Resolve(GetIdentifier());
+        var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No Nebius API key.");
+            throw new InvalidOperationException($"No {nameof(Friendli)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -42,7 +35,8 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+             options,
+             ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -50,17 +44,21 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+                    options,
+                    ct: cancellationToken);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public string GetIdentifier() => nameof(Friendli).ToLowerInvariant();
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
@@ -81,5 +79,14 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
     {
         throw new NotImplementedException();
     }
-}
 
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+}

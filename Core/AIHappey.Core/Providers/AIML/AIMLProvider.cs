@@ -152,6 +152,12 @@ public partial class AIMLProvider : IModelProvider
                             cancellationToken: cancellationToken);
                 }
 
+            case "image":
+                {
+                    return await this.ImageSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
 
             default:
                 throw new NotImplementedException();
