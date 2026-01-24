@@ -16,19 +16,8 @@ public partial class FriendliProvider
           ChatRequest chatRequest,
           [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        // AI21 streaming cannot be used with tools; if tools exist, emit error UI part.
-        if (chatRequest.Tools?.Count > 0)
-        {
-            yield return "Friendli provider does not support tools with streaming in StreamAsync; use non-streaming chat completions for tools."
-                .ToErrorUIPart();
-
-            yield break;
-        }
-
         ApplyAuthHeader();
 
-        // Build AI21-compatible payload from the Vercel UI chat request.
-        // We send only basic {role, content:string} messages.
         var messages = chatRequest.Messages.ToFriendliMessages();
 
         var payload = new Dictionary<string, object?>

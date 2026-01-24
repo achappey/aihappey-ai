@@ -18,8 +18,6 @@ public partial class GMICloudProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        // Build AI21-compatible payload from the Vercel UI chat request.
-        // We send only basic {role, content:string} messages.
         var messages = chatRequest.Messages.ToGMICloudMessages();
 
         var payload = new Dictionary<string, object?>

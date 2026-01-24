@@ -43,6 +43,9 @@ public partial class OVHcloudProvider
                 model.Name = idEl.GetString() ?? "";
             }
 
+            if (IsImageModel(model.Id))
+                model.Type = "image";
+
             if (el.TryGetProperty("context_length", out var contextLengthEl))
                 model.ContextWindow = contextLengthEl.GetInt32();
 
@@ -73,6 +76,29 @@ public partial class OVHcloudProvider
                 models.Add(model);
         }
 
+        var owner = nameof(OVHcloud);
+        foreach (var ttsModel in TtsModels)
+        {
+            var id = ttsModel.ToModelId(GetIdentifier());
+            if (models.Any(m => string.Equals(m.Id, id, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            models.Add(new Model
+            {
+                Id = id,
+                Name = ttsModel,
+                OwnedBy = owner,
+                Type = "speech"
+            });
+        }
+
         return models;
     }
+
+    public static bool IsImageModel(string model)
+        => model.Contains("stable-diffusion");
+
+    public static bool IsTranscriptionModel(string model)
+        => model.Contains("whisper");
+
 }

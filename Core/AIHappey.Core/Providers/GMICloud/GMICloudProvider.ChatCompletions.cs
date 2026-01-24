@@ -16,12 +16,6 @@ public sealed partial class GMICloudProvider
         if (options.Stream == true)
             throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
 
-        if (options.Tools?.Any() == true)
-        {
-            // AI21: tools require non-stream (OK), but their schema is not identical to OpenAI.
-            // We keep the raw tool definitions and pass them through.
-        }
-
         var payload = BuildGMICloudChatPayload(options, stream: false);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
@@ -32,9 +26,8 @@ public sealed partial class GMICloudProvider
         using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
         if (!resp.IsSuccessStatusCode)
-            throw new HttpRequestException($"AI21 error: {(int)resp.StatusCode} {resp.ReasonPhrase}: {raw}");
+            throw new HttpRequestException($"GMICloud error: {(int)resp.StatusCode} {resp.ReasonPhrase}: {raw}");
 
-        // AI21 response is close to OpenAI, but we keep Choices/Usage as opaque objects.
         using var doc = JsonDocument.Parse(raw);
 
         var id = doc.RootElement.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
@@ -107,7 +100,6 @@ public sealed partial class GMICloudProvider
             }
             catch
             {
-                // If AI21 ever wraps: {"data":{...}} or similar, fall back to extracting a data node.
                 JsonNode? root = JsonNode.Parse(data);
                 var inner = root?["data"];
                 evt = inner is null ? null : inner.Deserialize<ChatCompletionUpdate>(JsonSerializerOptions.Web);
@@ -120,7 +112,6 @@ public sealed partial class GMICloudProvider
 
     private static object BuildGMICloudChatPayload(ChatCompletionOptions options, bool stream)
     {
-        // AI21 requires messages[].content to be a string, and tool_calls.function.arguments to be a JSON string.
         var messages = options.Messages.ToGMICloudMessages().ToList();
 
         var tools = options.Tools is { } t && t.Any()

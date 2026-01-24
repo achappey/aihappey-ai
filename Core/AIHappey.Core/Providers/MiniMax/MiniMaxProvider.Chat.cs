@@ -5,7 +5,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
-public partial class MiniMaxProvider 
+public partial class MiniMaxProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -24,6 +24,14 @@ public partial class MiniMaxProvider
         if (model.Type == "image")
         {
             await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
+        if (model.Type == "speech")
+        {
+            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
                 yield return p;
 
             yield break;

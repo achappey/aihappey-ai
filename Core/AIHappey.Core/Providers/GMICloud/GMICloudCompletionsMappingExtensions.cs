@@ -45,7 +45,6 @@ public static class GMICloudCompletionsMappingExtensions
             var role = msg.Role;
             var contentText = msg.Content.ToGMICloudContentString();
 
-            // NOTE: AI21 supports tool messages with tool_call_id.
             if (string.Equals(role, "tool", StringComparison.OrdinalIgnoreCase))
             {
                 yield return new

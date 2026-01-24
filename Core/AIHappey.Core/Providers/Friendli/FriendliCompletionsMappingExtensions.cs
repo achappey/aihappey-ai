@@ -4,19 +4,10 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Friendli;
 
-/// <summary>
-/// AI21 requires <c>messages[].content</c> to be a string (not OpenAI-style content parts).
-/// This mapper converts gateway ChatCompletions DTOs into AI21 request JSON.
-/// </summary>
 public static class FriendliCompletionsMappingExtensions
 {
     private static readonly JsonSerializerOptions J = JsonSerializerOptions.Web;
 
-    /// <summary>
-    /// Convert Vercel UI chat request messages into AI21 <c>messages</c>.
-    /// AI21 requires a plain string <c>content</c>; we drop any non-text UI parts.
-    /// If a UIMessage contains multiple text parts, we emit multiple messages with the same role.
-    /// </summary>
     public static IEnumerable<object> ToFriendliMessages(this IEnumerable<UIMessage> uiMessages)
     {
         foreach (var msg in uiMessages)
@@ -46,14 +37,6 @@ public static class FriendliCompletionsMappingExtensions
         }
     }
 
-    /// <summary>
-    /// Convert ChatCompletions messages into AI21 <c>messages</c>.
-    /// Rules:
-    /// - Always emit <c>content</c> as string.
-    /// - Preserve <c>tool_call_id</c> for role=tool messages.
-    /// - Preserve <c>tool_calls</c> for assistant messages, but normalize function.arguments to a JSON string
-    ///   (AI21 request schema expects JSON string).
-    /// </summary>
     public static IEnumerable<object> ToFriendliMessages(this IEnumerable<ChatMessage> messages)
     {
         foreach (var msg in messages)
@@ -61,7 +44,6 @@ public static class FriendliCompletionsMappingExtensions
             var role = msg.Role;
             var contentText = msg.Content.ToFriendliContentString();
 
-            // NOTE: AI21 supports tool messages with tool_call_id.
             if (string.Equals(role, "tool", StringComparison.OrdinalIgnoreCase))
             {
                 yield return new
@@ -90,11 +72,6 @@ public static class FriendliCompletionsMappingExtensions
         }
     }
 
-    /// <summary>
-    /// Convert gateway tool definitions to AI21 tool definitions.
-    /// Gateway tools are expected to be in Vercel AI SDK shape: {name, description, inputSchema}.
-    /// AI21 expects OpenAI-like: { type: "function", function: { name, description, parameters } }.
-    /// </summary>
     public static IEnumerable<object> ToFriendliTools(this IEnumerable<object> tools)
     {
         foreach (var tool in tools)
@@ -133,10 +110,6 @@ public static class FriendliCompletionsMappingExtensions
 
     public static string ToFriendliContentString(this JsonElement content)
     {
-        // AI21 requires string content. Gateway content may be:
-        // - JsonValue string
-        // - array/object content parts (OpenAI Responses style)
-        // We stringify non-string content.
         return content.ValueKind switch
         {
             JsonValueKind.String => content.GetString() ?? string.Empty,
@@ -147,10 +120,6 @@ public static class FriendliCompletionsMappingExtensions
 
     private static object NormalizeToolCallsForFriendliRequest(IEnumerable<object> toolCalls)
     {
-        // tool_calls in ChatMessage are opaque; normalize based on OpenAI-ish shape:
-        // { id, type, function: { name, arguments } }
-        // For AI21 request, function.arguments must be a JSON string.
-
         var list = new List<object>();
 
         foreach (var tc in toolCalls)

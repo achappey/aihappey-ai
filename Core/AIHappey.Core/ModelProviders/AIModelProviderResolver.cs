@@ -139,7 +139,8 @@ public class AIModelProviderResolver(
     {
         var provKey = model.SplitModelId().Provider;
         var currentProv = providers.FirstOrDefault(a => a.GetIdentifier() == provKey
-            && (provKey == "pollinations" || provKey == "echo" || !string.IsNullOrEmpty(apiKeyResolver.Resolve(provKey))));
+            && (provKey == "pollinations" || provKey == "echo" || provKey == "gtranslate"
+                || !string.IsNullOrEmpty(apiKeyResolver.Resolve(provKey))));
 
         if (currentProv != null)
             return currentProv;

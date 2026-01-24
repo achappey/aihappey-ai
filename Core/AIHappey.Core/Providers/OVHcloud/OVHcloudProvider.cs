@@ -21,7 +21,6 @@ public partial class OVHcloudProvider : IModelProvider
         _client.BaseAddress = new Uri("https://oai.endpoints.kepler.ai.cloud.ovh.net/");
     }
 
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -52,17 +51,27 @@ public partial class OVHcloudProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
+        var model = chatRequest.GetModel();
+        ArgumentException.ThrowIfNullOrEmpty(model);
+
+        if (IsImageModel(model))
+        {
+            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
+        }
+
+        if (IsSpeechModel(model))
+        {
+            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => SpeechRequestInternal(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -75,8 +84,5 @@ public partial class OVHcloudProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-        => throw new NotSupportedException();
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 }

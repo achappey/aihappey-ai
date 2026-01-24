@@ -7,7 +7,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
@@ -29,6 +29,14 @@ public partial class NovitaProvider
             if (model.Type == "speech")
             {
                 await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                    yield return p;
+
+                yield break;
+            }
+
+            if (model.Type == "image")
+            {
+                await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
                     yield return p;
 
                 yield break;
