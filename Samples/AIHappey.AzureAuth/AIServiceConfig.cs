@@ -65,6 +65,8 @@ public class AIServiceConfig
     public ProviderConfig? Bria { get; set; }
     public ProviderConfig? Friendli { get; set; }
     public ProviderConfig? PublicAI { get; set; }
+    public ProviderConfig? PrimeIntellect { get; set; }
+    public ProviderConfig? OVHcloud { get; set; }
 }
 
 public class ProviderConfig

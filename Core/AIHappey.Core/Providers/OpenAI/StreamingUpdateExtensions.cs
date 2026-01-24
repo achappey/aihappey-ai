@@ -1,5 +1,4 @@
 using OpenAI.Responses;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using System.Text.Json;
 using OpenAI.Containers;

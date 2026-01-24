@@ -1,5 +1,4 @@
 using System.Globalization;
-using AIHappey.Common.Model;
 
 namespace AIHappey.Core.AI;
 

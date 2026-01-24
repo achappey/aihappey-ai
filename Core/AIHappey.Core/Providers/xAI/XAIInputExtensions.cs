@@ -1,5 +1,4 @@
 using System.Text.Json;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.xAI.Models;
 using AIHappey.Vercel.Models;

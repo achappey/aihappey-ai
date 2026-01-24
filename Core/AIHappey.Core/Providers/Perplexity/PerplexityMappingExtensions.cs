@@ -1,4 +1,3 @@
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.Perplexity.Models;
 using AIHappey.Vercel.Models;

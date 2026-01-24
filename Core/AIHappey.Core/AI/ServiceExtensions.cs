@@ -64,6 +64,9 @@ using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Providers.Bria;
 using AIHappey.Core.Providers.Friendli;
 using AIHappey.Core.Providers.PublicAI;
+using AIHappey.Core.Providers.PrimeIntellect;
+using AIHappey.Core.Providers.OVHcloud;
+using AIHappey.Core.Providers.GTranslate;
 
 namespace AIHappey.Core.AI;
 
@@ -134,6 +137,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, BriaProvider>();
         services.AddSingleton<IModelProvider, FriendliProvider>();
         services.AddSingleton<IModelProvider, PublicAIProvider>();
+        services.AddSingleton<IModelProvider, PrimeIntellectProvider>();
+        services.AddSingleton<IModelProvider, OVHcloudProvider>();
+        services.AddSingleton<IModelProvider, GTranslateProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

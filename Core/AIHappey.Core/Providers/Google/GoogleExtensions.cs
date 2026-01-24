@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using Mscc.GenerativeAI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;

@@ -73,6 +73,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "bria" => _config.Bria?.ApiKey,
             "friendli" => _config.Friendli?.ApiKey,
             "publicai" => _config.PublicAI?.ApiKey,
+            "primeintellect" => _config.PrimeIntellect?.ApiKey,
+            "ovhcloud" => _config.OVHcloud?.ApiKey,
             _ => null
         };
 }

@@ -35,6 +35,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Google         | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
 | GoogleTranslate| ✅        | ➖          | ❌                | 🟡            | ➖                     | ➖               | ➖                       | ✅        |
 | Groq           | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ✅        |
+| GTranslate     | ✅        | ➖          | ✅                | ✅            | ➖                     | ➖               | ➖                       | ✅        |
 | Hyperbolic     | ✅        | ➖          | ✅                | 🟡            | ✅                     | ✅               | ➖                       | 🟡        |
 | Hyperstack     | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Inferencenet   | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
@@ -50,8 +51,10 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NVIDIA         | ✅        | ➖          | ✅                | ✅            | ➖                     | ➖               | ➖                       | ❌        |
 | Novita         | ✅        | ✅          | ✅                | 🟡            | ✅                     | ✅               | ✅                       | 🟡        |
 | OpenAI         | ✅        | ➖          | ✅                | ✅            | ✅                     | ✅               | ✅                       | ✅        |
+| OVHcloud       | ✅        | ➖          | ✅                | ❌            | ✅                     | ➖               | ✅                       | ❌        |
 | Perplexity     | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | Pollinations   | ✅        | ➖          | ❌                | ❌            | ✅                     | ➖               | ➖                       | ✅        |
+| PrimeIntellect | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | PublicAI       | ✅        | ❌          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ✅        |
 | Replicate      | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ❌        |
 | ResembleAI     | ✅        | ➖          | ❌                | 🟡            | ➖                     | ✅               | ✅                       | ❌        |

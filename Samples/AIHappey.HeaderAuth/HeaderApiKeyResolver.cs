@@ -67,6 +67,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["bria"] = "X-Bria-Key",
             ["friendli"] = "X-Friendli-Key",
             ["publicai"] = "X-PublicAI-Key",
+            ["primeintellect"] = "X-PrimeIntellect-Key",
+            ["ovhcloud"] = "X-OVHcloud-Key",
         };
 
     public string? Resolve(string provider)

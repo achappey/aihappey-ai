@@ -1,5 +1,4 @@
 using System.Net.Mime;
-using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Jina;
