@@ -70,6 +70,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["primeintellect"] = "X-PrimeIntellect-Key",
             ["ovhcloud"] = "X-OVHcloud-Key",
             ["gmicloud"] = "X-GMICloud-Key",
+            ["byteplus"] = "X-BytePlus-Key",
         };
 
     public string? Resolve(string provider)
