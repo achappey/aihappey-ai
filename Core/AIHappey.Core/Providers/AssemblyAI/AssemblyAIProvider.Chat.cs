@@ -25,7 +25,7 @@ public partial class AssemblyAIProvider : IModelProvider
             .ToList();
 
         var toolDefs = chatRequest.Tools?.Count > 0
-            ? chatRequest.Tools.Select(t => (object)new
+            ? [.. chatRequest.Tools.Select(t => (object)new
             {
                 type = "function",
                 function = new
@@ -34,7 +34,7 @@ public partial class AssemblyAIProvider : IModelProvider
                     description = t.Description,
                     parameters = t.InputSchema
                 }
-            }).ToList()
+            })]
             : new List<object>();
 
         var options = new Dictionary<string, object?>

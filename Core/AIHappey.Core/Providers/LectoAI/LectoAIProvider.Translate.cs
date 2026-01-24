@@ -155,7 +155,7 @@ public sealed partial class LectoAIProvider
             return NormalizeStableList(direct2, expectedCount);
 
         // Fallback: no recognizable payload.
-        return Enumerable.Range(0, expectedCount).Select(_ => string.Empty).ToList();
+        return [.. Enumerable.Range(0, expectedCount).Select(_ => string.Empty)];
     }
 
     private async Task<IReadOnlyList<string>> TranslateAsync(

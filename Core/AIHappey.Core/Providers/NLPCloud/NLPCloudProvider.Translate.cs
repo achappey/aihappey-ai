@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
@@ -8,43 +10,34 @@ using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
-namespace AIHappey.Core.Providers.GoogleTranslate;
+namespace AIHappey.Core.Providers.NLPCloud;
 
-public sealed partial class GoogleTranslateProvider
+public partial class NLPCloudProvider
 {
-    private static string GetTranslateTargetLanguageFromModel(string model)
+    private const string NllbTranslationModelPrefix = "nllb-200-3-3b/translate-to/";
+
+    private sealed record NLPCloudTranslationRequest(
+        [property: JsonPropertyName("text")] string Text,
+        [property: JsonPropertyName("target")] string Target,
+        [property: JsonPropertyName("source")] string Source);
+
+    private sealed record NLPCloudTranslationResponse(
+        [property: JsonPropertyName("translation_text")] string TranslationText);
+
+    private static string GetTranslationTargetLanguageFromModel(string model)
     {
         if (string.IsNullOrWhiteSpace(model))
             throw new ArgumentException("Model is required.", nameof(model));
 
         var m = model.Trim();
+        if (!m.StartsWith(NllbTranslationModelPrefix, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"NLPCloud translation model must start with '{NllbTranslationModelPrefix}'. Got '{model}'.", nameof(model));
 
-        const string prefix = "translate/";
-        if (!m.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException($"GoogleTranslate translation model must start with '{prefix}'. Got '{model}'.", nameof(model));
-
-        var lang = m[prefix.Length..].Trim();
+        var lang = m[NllbTranslationModelPrefix.Length..].Trim();
         if (string.IsNullOrWhiteSpace(lang))
-            throw new ArgumentException("GoogleTranslate translation target language is missing from model id.", nameof(model));
+            throw new ArgumentException("NLPCloud translation target language is missing from model id.", nameof(model));
 
         return lang;
-    }
-
-    private sealed class TranslateResponse
-    {
-        public TranslateData? Data { get; set; }
-    }
-
-    private sealed class TranslateData
-    {
-        public List<TranslateItem>? Translations { get; set; }
-    }
-
-    private sealed class TranslateItem
-    {
-        public string? TranslatedText { get; set; }
-        public string? DetectedSourceLanguage { get; set; }
-        public string? Model { get; set; }
     }
 
     private static List<string> ExtractResponseRequestTexts(ResponseRequest options)
@@ -81,54 +74,71 @@ public sealed partial class GoogleTranslateProvider
         return texts;
     }
 
-    private async Task<IReadOnlyList<string>> TranslateAsync(
-        IReadOnlyList<string> texts,
+    private static string BuildTranslationInput(IReadOnlyList<(string Role, string? Content)> messages)
+    {
+        if (messages.Count == 0)
+            throw new ArgumentException("No messages provided.", nameof(messages));
+
+        var lastUser = messages.LastOrDefault(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(lastUser.Content))
+            return lastUser.Content!;
+
+        var lastContent = messages.LastOrDefault(m => !string.IsNullOrWhiteSpace(m.Content));
+        if (!string.IsNullOrWhiteSpace(lastContent.Content))
+            return lastContent.Content!;
+
+        throw new ArgumentException("No input text provided for translation.", nameof(messages));
+    }
+
+    private async Task<string> SendTranslationAsync(
+        string model,
+        string text,
         string targetLanguage,
         CancellationToken cancellationToken)
     {
-        if (texts is null) throw new ArgumentNullException(nameof(texts));
-        if (texts.Count == 0) throw new ArgumentException("At least one text is required.", nameof(texts));
-        if (string.IsNullOrWhiteSpace(targetLanguage)) throw new ArgumentException("Target language is required.", nameof(targetLanguage));
+        ApplyAuthHeader();
 
-        var key = GetKeyOrThrow();
-        var url = $"{TranslationV2BaseUrl}?key={Uri.EscapeDataString(key)}";
+        var baseModel = model.Trim();
+        if (baseModel.StartsWith(NllbTranslationModelPrefix, StringComparison.OrdinalIgnoreCase))
+            baseModel = "nllb-200-3-3b";
 
-        var payload = new Dictionary<string, object?>
+        var relativeUrl = $"{baseModel}/translation";
+        var payload = new NLPCloudTranslationRequest(text, targetLanguage, string.Empty);
+        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl)
         {
-            // Google accepts string or array; use array always for simplicity.
-            ["q"] = texts,
-            ["target"] = targetLanguage.Trim(),
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        using var req = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = new StringContent(JsonSerializer.Serialize(payload, JsonSerializerOptions.Web), Encoding.UTF8, "application/json")
-        };
-
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-
+        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"GoogleTranslate translate failed ({(int)resp.StatusCode}): {body}");
-
-        var parsed = JsonSerializer.Deserialize<TranslateResponse>(body, JsonSerializerOptions.Web);
-        var translations = parsed?.Data?.Translations ?? [];
-
-        // Expected one output per input.
-        if (translations.Count == 0)
-            return [.. texts.Select(_ => string.Empty)];
-
-        // If API returns fewer items than input, keep stable output shape.
-        var result = new List<string>(texts.Count);
-        for (var i = 0; i < texts.Count; i++)
         {
-            var t = (i < translations.Count)
-                ? translations[i].TranslatedText
-                : null;
-            result.Add(t ?? string.Empty);
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            throw new HttpRequestException($"NLPCloud API error: {err}");
         }
 
-        return result;
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        var result = await JsonSerializer.DeserializeAsync<NLPCloudTranslationResponse>(
+            stream,
+            JsonSerializerOptions.Web,
+            cancellationToken).ConfigureAwait(false);
+
+        if (result is null || string.IsNullOrWhiteSpace(result.TranslationText))
+            throw new InvalidOperationException("Empty NLPCloud translation response.");
+
+        return result.TranslationText;
+    }
+
+    private async IAsyncEnumerable<string> StreamTranslationAsync(
+        string model,
+        string text,
+        string targetLanguage,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var result = await SendTranslationAsync(model, text, targetLanguage, cancellationToken).ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(result))
+            yield return result;
     }
 
     internal async Task<CreateMessageResult> TranslateSamplingAsync(
@@ -138,7 +148,7 @@ public sealed partial class GoogleTranslateProvider
     {
         ArgumentNullException.ThrowIfNull(chatRequest);
 
-        var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
+        var targetLanguage = GetTranslationTargetLanguageFromModel(modelId);
 
         var texts = chatRequest.Messages
             .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
@@ -150,9 +160,13 @@ public sealed partial class GoogleTranslateProvider
         if (texts.Count == 0)
             throw new Exception("No prompt provided.");
 
-        var translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        var joined = string.Join("\n", translated);
+        var translations = new List<string>(texts.Count);
+        foreach (var text in texts)
+        {
+            translations.Add(await SendTranslationAsync(modelId, text, targetLanguage, cancellationToken).ConfigureAwait(false));
+        }
 
+        var joined = string.Join("\n", translations);
         return new CreateMessageResult
         {
             Role = ModelContextProtocol.Protocol.Role.Assistant,
@@ -169,15 +183,19 @@ public sealed partial class GoogleTranslateProvider
         ArgumentNullException.ThrowIfNull(options);
 
         var modelId = options.Model ?? throw new ArgumentException(nameof(options.Model));
-        var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
+        var targetLanguage = GetTranslationTargetLanguageFromModel(modelId);
 
         var texts = ExtractResponseRequestTexts(options);
         if (texts.Count == 0)
             throw new Exception("No prompt provided.");
 
-        var translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        var joined = string.Join("\n", translated);
+        var translations = new List<string>(texts.Count);
+        foreach (var text in texts)
+        {
+            translations.Add(await SendTranslationAsync(modelId, text, targetLanguage, cancellationToken).ConfigureAwait(false));
+        }
 
+        var joined = string.Join("\n", translations);
         var now = DateTimeOffset.UtcNow;
         return new ResponseResult
         {
@@ -213,9 +231,8 @@ public sealed partial class GoogleTranslateProvider
     {
         ArgumentNullException.ThrowIfNull(chatRequest);
 
-        var targetLanguage = GetTranslateTargetLanguageFromModel(chatRequest.Model);
+        var targetLanguage = GetTranslationTargetLanguageFromModel(chatRequest.Model);
 
-        // Translate each incoming text part from the last user message.
         var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == Vercel.Models.Role.user);
         var texts = lastUser?.Parts?.OfType<TextUIPart>()
             .Select(p => p.Text)
@@ -233,7 +250,12 @@ public sealed partial class GoogleTranslateProvider
 
         try
         {
-            translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
+            var translations = new List<string>(texts.Count);
+            foreach (var text in texts)
+            {
+                translations.Add(await SendTranslationAsync(chatRequest.Model, text, targetLanguage, cancellationToken).ConfigureAwait(false));
+            }
+            translated = translations;
         }
         catch (Exception ex)
         {
@@ -260,4 +282,3 @@ public sealed partial class GoogleTranslateProvider
         yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, chatRequest.Temperature);
     }
 }
-

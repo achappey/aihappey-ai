@@ -126,7 +126,7 @@ public sealed partial class LingvanexProvider
             throw new InvalidOperationException($"Lingvanex translate returned err: {err.GetRawText()}");
 
         if (!root.TryGetProperty("result", out var resultEl))
-            return texts.Select(_ => string.Empty).ToList();
+            return [.. texts.Select(_ => string.Empty)];
 
         if (resultEl.ValueKind == JsonValueKind.String)
             return [resultEl.GetString() ?? string.Empty];

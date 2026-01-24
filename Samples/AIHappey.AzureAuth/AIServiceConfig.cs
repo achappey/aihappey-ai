@@ -69,6 +69,7 @@ public class AIServiceConfig
     public ProviderConfig? OVHcloud { get; set; }
     public ProviderConfig? GMICloud { get; set; }
     public ProviderConfig? BytePlus { get; set; }
+    public ProviderConfig? NLPCloud { get; set; }
 }
 
 public class ProviderConfig

@@ -155,7 +155,7 @@ public sealed partial class ModernMTProvider
         }
 
         if (!root.TryGetProperty("data", out var dataEl))
-            return texts.Select(_ => string.Empty).ToList();
+            return [.. texts.Select(_ => string.Empty)];
 
         // If q is array, data is an array of objects (one per input).
         if (dataEl.ValueKind == JsonValueKind.Array)
@@ -190,7 +190,7 @@ public sealed partial class ModernMTProvider
             return [t ?? string.Empty];
         }
 
-        return texts.Select(_ => string.Empty).ToList();
+        return [.. texts.Select(_ => string.Empty)];
     }
 
     internal async Task<CreateMessageResult> TranslateSamplingAsync(

@@ -69,6 +69,7 @@ using AIHappey.Core.Providers.OVHcloud;
 using AIHappey.Core.Providers.GTranslate;
 using AIHappey.Core.Providers.GMICloud;
 using AIHappey.Core.Providers.BytePlus;
+using AIHappey.Core.Providers.NLPCloud;
 
 namespace AIHappey.Core.AI;
 
@@ -144,6 +145,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GTranslateProvider>();
         services.AddSingleton<IModelProvider, GMICloudProvider>();
         services.AddSingleton<IModelProvider, BytePlusProvider>();
+        services.AddSingleton<IModelProvider, NLPCloudProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

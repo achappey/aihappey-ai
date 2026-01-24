@@ -71,6 +71,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["ovhcloud"] = "X-OVHcloud-Key",
             ["gmicloud"] = "X-GMICloud-Key",
             ["byteplus"] = "X-BytePlus-Key",
+            ["nlpcloud"] = "X-NLPCloud-Key",
         };
 
     public string? Resolve(string provider)

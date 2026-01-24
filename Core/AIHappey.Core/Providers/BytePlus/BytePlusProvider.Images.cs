@@ -84,7 +84,7 @@ public partial class BytePlusProvider
         if ((isSeedream45 || isSeedream40) && imageInputs.Count > 14)
         {
             warnings.Add(new { type = "unsupported", feature = "files", details = "seedream-4.x supports up to 14 reference images; extra images were ignored." });
-            imageInputs = imageInputs.Take(14).ToList();
+            imageInputs = [.. imageInputs.Take(14)];
         }
 
         var payload = new Dictionary<string, object?>

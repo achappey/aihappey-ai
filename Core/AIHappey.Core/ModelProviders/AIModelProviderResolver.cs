@@ -160,11 +160,10 @@ public class AIModelProviderResolver(
 
         return new()
         {
-            Data = map.Values
+            Data = [.. map.Values
                 .Select(v => v.Model)
                 .Where(m => m.Type != "embedding" && m.Type != "rerank")
-                .OrderByDescending(m => m.Created)
-                .ToList()
+                .OrderByDescending(m => m.Created)]
         };
     }
 }
