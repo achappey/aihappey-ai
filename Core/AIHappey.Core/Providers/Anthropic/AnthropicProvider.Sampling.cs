@@ -4,11 +4,10 @@ using Anthropic.SDK.Messaging;
 using ModelContextProtocol.Protocol;
 using System.Text.Json.Nodes;
 using AIHappey.Core.Providers.Anthropic.Extensions;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
-public partial class AnthropicProvider : IModelProvider
+public partial class AnthropicProvider
 {
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

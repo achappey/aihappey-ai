@@ -1,17 +1,16 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Together;
-using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider : IModelProvider
+public partial class TogetherProvider
 {
     private static readonly JsonSerializerOptions SpeechSettings = new(JsonSerializerDefaults.Web)
     {
@@ -37,7 +36,7 @@ public partial class TogetherProvider : IModelProvider
         if (request.Speed is not null)
             warnings.Add(new { type = "unsupported", feature = "speed" });
 
-        var metadata = request.GetSpeechProviderMetadata<TogetherSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<TogetherSpeechProviderMetadata>(GetIdentifier());
 
         // Accept both: "together/<model>" and "<model>".
         var modelName = NormalizeTogetherModelName(request.Model);

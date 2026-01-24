@@ -3,10 +3,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Replicate;
 using AIHappey.Core.AI;
 using Microsoft.AspNetCore.StaticFiles;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Replicate;
 
@@ -33,7 +34,7 @@ public sealed partial class ReplicateProvider
         var model = imageRequest.Model;
         EnsureSupportedModel(model);
 
-        var metadata = imageRequest.GetImageProviderMetadata<ReplicateImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<ReplicateImageProviderMetadata>(GetIdentifier());
         var preferWaitSeconds = ClampWaitSeconds(metadata?.PreferWaitSeconds);
 
         if (imageRequest.N is > 1)

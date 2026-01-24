@@ -1,9 +1,9 @@
-using AIHappey.Common.Model;
 using OpenAI.Images;
 using Microsoft.AspNetCore.StaticFiles;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -25,7 +25,7 @@ public partial class OpenAIProvider : IModelProvider
 
         if (imageRequest.Files?.Any() == true)
         {
-            var metadata = imageRequest.GetImageProviderMetadata<OpenAiImageEditProviderMetadata>(GetIdentifier());
+            var metadata = imageRequest.GetProviderMetadata<OpenAiImageEditProviderMetadata>(GetIdentifier());
 
             GeneratedImageQuality? quality = null;
 
@@ -69,7 +69,7 @@ public partial class OpenAIProvider : IModelProvider
         }
         else
         {
-            var metadata = imageRequest.GetImageProviderMetadata<OpenAiImageProviderMetadata>(GetIdentifier());
+            var metadata = imageRequest.GetProviderMetadata<OpenAiImageProviderMetadata>(GetIdentifier());
             GeneratedImageQuality? quality = null;
 
             if (!string.IsNullOrEmpty(metadata?.Quality))

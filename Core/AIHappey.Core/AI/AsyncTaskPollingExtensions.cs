@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace AIHappey.Core.AI;
 
 public static class AsyncTaskPollingExtensions

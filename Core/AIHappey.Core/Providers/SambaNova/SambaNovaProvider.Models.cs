@@ -1,11 +1,10 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
-public partial class SambaNovaProvider : IModelProvider
+public partial class SambaNovaProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

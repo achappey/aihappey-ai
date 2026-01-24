@@ -6,12 +6,14 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Groq;
 using System.Globalization;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Groq;
 
-public partial class GroqProvider : IModelProvider
+public partial class GroqProvider
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
@@ -24,7 +26,7 @@ public partial class GroqProvider : IModelProvider
             : request.Model;
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetTranscriptionProviderMetadata<GroqTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<GroqTranscriptionProviderMetadata>(GetIdentifier());
         using var form = new MultipartFormDataContent();
 
         // file (Groq accepts per-part Content-Type)
@@ -139,7 +141,7 @@ public partial class GroqProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

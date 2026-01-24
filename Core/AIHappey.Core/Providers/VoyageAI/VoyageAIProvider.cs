@@ -5,6 +5,7 @@ using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.VoyageAI;
 
@@ -32,14 +33,12 @@ public partial class VoyageAIProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-
-
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public string GetIdentifier() => "voyageai";
+    public string GetIdentifier() => nameof(VoyageAI).ToLowerInvariant();
 
     public async Task<IEnumerable<Model>> ListModels(
      CancellationToken cancellationToken = default)
@@ -50,20 +49,20 @@ public partial class VoyageAIProvider : IModelProvider
 
         return await Task.FromResult<IEnumerable<Model>>(
         [
-        new Model
-        {
-            Id = "rerank-2.5".ToModelId(GetIdentifier()),
-            Name = "rerank-2.5",
-            OwnedBy = owner,
-        },
+            new Model
+            {
+                Id = "rerank-2.5".ToModelId(GetIdentifier()),
+                Name = "rerank-2.5",
+                OwnedBy = owner,
+            },
 
-        new Model
-        {
-            Id = "rerank-2.5-lite".ToModelId(GetIdentifier()),
-            Name = "rerank-2.5-lite",
-            OwnedBy = owner,
-        },
-    ]);
+            new Model
+            {
+                Id = "rerank-2.5-lite".ToModelId(GetIdentifier()),
+                Name = "rerank-2.5-lite",
+                OwnedBy = owner,
+            },
+        ]);
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
@@ -72,9 +71,7 @@ public partial class VoyageAIProvider : IModelProvider
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
     {
@@ -82,32 +79,26 @@ public partial class VoyageAIProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
 }

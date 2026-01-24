@@ -1,9 +1,8 @@
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Bria;
 
-public partial class BriaProvider : IModelProvider
+public partial class BriaProvider
 {
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

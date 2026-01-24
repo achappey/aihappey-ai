@@ -1,12 +1,11 @@
-using AIHappey.Core.AI;
 using ANT = Anthropic.SDK;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
-public partial class AnthropicProvider : IModelProvider
+public partial class AnthropicProvider
 {
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -25,6 +24,7 @@ public partial class AnthropicProvider : IModelProvider
             GetKey(),
             client: _client
         );
+        
         throw new NotImplementedException();
     }
 }

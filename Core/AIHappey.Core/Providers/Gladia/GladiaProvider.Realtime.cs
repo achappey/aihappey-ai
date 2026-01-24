@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text.Json.Serialization;

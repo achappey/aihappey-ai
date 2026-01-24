@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
@@ -7,12 +6,14 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Jina;
 
-public partial class JinaProvider : IModelProvider
+public partial class JinaProvider
 {
     public async Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
@@ -102,12 +103,12 @@ public partial class JinaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

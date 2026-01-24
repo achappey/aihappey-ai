@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Protocol;
-using AIHappey.Core.AI;
 using AIHappey.Telemetry;
 using System.Text.Json.Nodes;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.ModelProviders;
+using AIHappey.AzureAuth.Extensions;
 
 namespace AIHappey.AzureAuth.Controllers;
 

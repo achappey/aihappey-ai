@@ -3,6 +3,9 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses.Streaming;
+using AIHappey.Responses;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -50,10 +53,10 @@ public sealed partial class SarvamProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -72,7 +75,7 @@ public sealed partial class SarvamProvider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
 
@@ -84,7 +87,7 @@ public sealed partial class SarvamProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

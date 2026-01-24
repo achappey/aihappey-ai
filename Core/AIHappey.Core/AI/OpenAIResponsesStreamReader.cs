@@ -3,11 +3,15 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Common.Extensions;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.AI;
 
 public static class OpenAIResponsesStreamReader
 {
+    // OBSOLETE
+    //TODO Refactor to responses package
     public static async IAsyncEnumerable<UIMessagePart> ReadAsync(
         this Stream stream,
         ChatRequest chatRequest,

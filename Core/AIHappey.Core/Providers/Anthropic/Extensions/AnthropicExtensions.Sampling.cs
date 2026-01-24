@@ -1,3 +1,4 @@
+using AIHappey.Vercel.Models;
 using Anthropic.SDK.Messaging;
 using ModelContextProtocol.Protocol;
 
@@ -5,7 +6,7 @@ namespace AIHappey.Core.Providers.Anthropic.Extensions;
 
 public static partial class AnthropicExtensions
 {
-    public static ImageSource ToImageSource(this AIHappey.Common.Model.FileUIPart fileUIPart) =>
+    public static ImageSource ToImageSource(this FileUIPart fileUIPart) =>
       new()
       {
           Data = fileUIPart.Url[(fileUIPart.Url.IndexOf(',') + 1)..],
@@ -31,7 +32,7 @@ public static partial class AnthropicExtensions
 
         return new Message()
         {
-            Role = samplingMessage.Role == Role.User ? RoleType.User : RoleType.Assistant,
+            Role = samplingMessage.Role == ModelContextProtocol.Protocol.Role.User ? RoleType.User : RoleType.Assistant,
             Content = contents
         };
     }

@@ -1,15 +1,13 @@
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.StabilityAI;
-using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
-public partial class StabilityAIProvider : IModelProvider
+public partial class StabilityAIProvider
 {
     public async Task<SpeechResponse> SpeechRequest(
         SpeechRequest request,
@@ -21,7 +19,7 @@ public partial class StabilityAIProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        var metadata = request.GetSpeechProviderMetadata<StabilityAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<StabilityAISpeechProviderMetadata>(GetIdentifier());
         var now = DateTime.UtcNow;
 
         var warnings = new List<object>();

@@ -6,6 +6,7 @@ using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.TTSReader;
 
@@ -47,17 +48,13 @@ public partial class TTSReaderProvider : IModelProvider
     }
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-      => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -68,24 +65,22 @@ public partial class TTSReaderProvider : IModelProvider
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request,
         CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
         => await this.SpeechResponseAsync(options, cancellationToken);
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -96,8 +91,5 @@ public partial class TTSReaderProvider : IModelProvider
             Name = "ttsSync",
             Type = "speech",
             OwnedBy = nameof(TTSReader) },
-
     ];
-
-
 }

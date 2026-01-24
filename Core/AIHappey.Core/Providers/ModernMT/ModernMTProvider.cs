@@ -3,7 +3,7 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
-using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.ModernMT;
@@ -44,19 +44,19 @@ public sealed partial class ModernMTProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -64,21 +64,9 @@ public sealed partial class ModernMTProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        // Avoid throwing during model discovery when the key is not configured.
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return [];
-
-        ApplyAuthHeader();
-        return await ListTranslationModelsAsync(cancellationToken);
-    }
-
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        // Ensure key is present on request-time.
         ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(chatRequest);
 
         var modelId = chatRequest.GetModel();
         ArgumentNullException.ThrowIfNullOrEmpty(modelId);
@@ -90,24 +78,20 @@ public sealed partial class ModernMTProvider : IModelProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        // Ensure key is present on request-time.
         ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(chatRequest);
 
         await foreach (var p in StreamTranslateAsync(chatRequest, cancellationToken))
             yield return p;
     }
 
-    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        // Ensure key is present on request-time.
         ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(options);
 
         return await TranslateResponsesAsync(options, cancellationToken);
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 }
 

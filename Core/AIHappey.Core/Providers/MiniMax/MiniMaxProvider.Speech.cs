@@ -1,13 +1,11 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
-// speech
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -39,7 +37,7 @@ public partial class MiniMaxProvider : IModelProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetSpeechProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
 
         // ---- voice_setting ----
         var voiceId = request.Voice

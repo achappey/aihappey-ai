@@ -64,6 +64,7 @@ public class AIServiceConfig
     public ProviderConfig? LectoAI { get; set; }
     public ProviderConfig? Bria { get; set; }
     public ProviderConfig? Friendli { get; set; }
+    public ProviderConfig? PublicAI { get; set; }
 }
 
 public class ProviderConfig

@@ -3,8 +3,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Nebius;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Nebius;
 
@@ -24,7 +25,7 @@ public sealed partial class NebiusProvider
             throw new ArgumentException("Prompt is required.", nameof(imageRequest));
         if (string.IsNullOrWhiteSpace(imageRequest.Model))
             throw new ArgumentException("Model is required.", nameof(imageRequest));
-        var metadata = imageRequest.GetImageProviderMetadata<NebiusImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<NebiusImageProviderMetadata>(GetIdentifier());
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();

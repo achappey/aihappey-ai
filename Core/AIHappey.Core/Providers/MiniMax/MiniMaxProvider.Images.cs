@@ -3,8 +3,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.MiniMax;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -55,7 +56,7 @@ public partial class MiniMaxProvider
         if (imageRequest.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        var metadata = imageRequest.GetImageProviderMetadata<MiniMaxImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<MiniMaxImageProviderMetadata>(GetIdentifier());
 
         // ---- model name ----
         // Tooling usually strips "minimax/" before calling provider.ImageRequest, but accept both.
@@ -97,7 +98,7 @@ public partial class MiniMaxProvider
                 new Dictionary<string, object?>
                 {
                     ["type"] = "character",
-                    ["image_file"] = firstFile.Data.ToDataUrl(firstFile.MediaType)
+                    ["image_file"] = Common.Extensions.ImageExtensions.ToDataUrl(firstFile.Data, firstFile.MediaType)
                 }
             };
         }
@@ -164,7 +165,7 @@ public partial class MiniMaxProvider
                     if (string.IsNullOrWhiteSpace(s))
                         continue;
 
-                    images.Add(s.ToDataUrl(MediaTypeNames.Image.Png));
+                    images.Add(Common.Extensions.ImageExtensions.ToDataUrl(s, MediaTypeNames.Image.Png));
                 }
             }
         }

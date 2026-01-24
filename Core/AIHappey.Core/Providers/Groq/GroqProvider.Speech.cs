@@ -1,14 +1,12 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Groq;
-using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Groq;
 
-public partial class GroqProvider : IModelProvider
+public partial class GroqProvider 
 {
     public async Task<SpeechResponse> SpeechRequest(
           SpeechRequest request,
@@ -17,7 +15,7 @@ public partial class GroqProvider : IModelProvider
         ApplyAuthHeader();
 
         var metadata =
-            request.GetSpeechProviderMetadata<GroqSpeechProviderMetadata>(GetIdentifier());
+            request.GetProviderMetadata<GroqSpeechProviderMetadata>(GetIdentifier());
 
         var voice =
             request.Voice

@@ -1,19 +1,18 @@
 using OpenAI.Responses;
-using AIHappey.Common.Model;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using OpenAI.Containers;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Net.Mime;
-using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using AIHappey.Common.Extensions;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
 public static class ResponseExtensions
 {
-    public static ModelContextProtocol.Protocol.ImageContentBlock ToImageContentBlock(this ImageGenerationCallResponseItem imageGenerationCallResponseItem) => new()
+    public static ImageContentBlock ToImageContentBlock(this ImageGenerationCallResponseItem imageGenerationCallResponseItem) => new()
     {
         Data = Convert.ToBase64String(imageGenerationCallResponseItem.ImageResultBytes),
         MimeType = MediaTypeNames.Image.Png

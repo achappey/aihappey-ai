@@ -2,9 +2,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.ResembleAI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ResembleAI;
 
@@ -38,7 +38,7 @@ public partial class ResembleAIProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var metadata = request.GetSpeechProviderMetadata<ResembleAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<ResembleAISpeechProviderMetadata>(GetIdentifier());
 
         // Required: voice_uuid
         var voiceUuid = (request.Voice ?? metadata?.VoiceUuid)?.Trim();

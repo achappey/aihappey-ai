@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.KernelMemory;
 
@@ -55,7 +57,7 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
     {
         var index = GetIndex();
 
-        var userMessage = chatRequest.Messages.LastOrDefault(a => a.Role == Common.Model.Role.user);
+        var userMessage = chatRequest.Messages.LastOrDefault(a => a.Role == Vercel.Models.Role.user);
         var text = string.Join("\n\n", userMessage?.Parts.OfType<TextUIPart>().Select(a => a.Text) ?? []);
         string? messageId = null;
         List<TokenUsage> tokenUsage = [];
@@ -162,12 +164,12 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

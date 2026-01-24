@@ -1,16 +1,14 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.AIML;
 
-public partial class AIMLProvider : IModelProvider
+public partial class AIMLProvider
 {
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {

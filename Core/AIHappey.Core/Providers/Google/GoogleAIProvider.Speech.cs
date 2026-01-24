@@ -1,14 +1,11 @@
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
-using AIHappey.Core.AI;
 using Mscc.GenerativeAI;
 using AIHappey.Common.Model.Providers.Google;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
-    : IModelProvider
 {
     public async Task<SpeechResponse> SpeechRequest(
         SpeechRequest request,
@@ -33,7 +30,7 @@ public partial class GoogleAIProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetSpeechProviderMetadata<GoogleSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<GoogleSpeechProviderMetadata>(GetIdentifier());
 
         var voice =
             request.Voice

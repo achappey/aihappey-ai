@@ -1,6 +1,7 @@
-using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
 
@@ -33,6 +34,7 @@ public static class ModelProviderSpeechSamplingExtensions
         {
             Model = model,
             Text = input,
+            ProviderOptions = chatRequest.Metadata.ToDictionary(),
             Instructions = chatRequest.SystemPrompt
         };
 

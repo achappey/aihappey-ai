@@ -6,11 +6,12 @@ using System.Text;
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Together;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider : IModelProvider
+public partial class TogetherProvider 
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

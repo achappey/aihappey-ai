@@ -1,11 +1,12 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using OpenAI.Audio;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -16,7 +17,7 @@ public partial class OpenAIProvider : IModelProvider
         CancellationToken ct = default)
     {
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetTranscriptionProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
 
         using var http = new HttpClient();
         http.DefaultRequestHeaders.Authorization =
@@ -148,7 +149,7 @@ public partial class OpenAIProvider : IModelProvider
         List<object> warnings = [];
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
         using var memStream = new MemoryStream(bytes, writable: false);
-        var metadata = request.GetTranscriptionProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
         var options = new AudioTranscriptionOptions();
 
         if (!string.IsNullOrEmpty(metadata?.Language))
@@ -214,7 +215,7 @@ public partial class OpenAIProvider : IModelProvider
         List<object> warnings = [];
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
         using var memStream = new MemoryStream(bytes, writable: false);
-        var metadata = request.GetTranscriptionProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<OpenAiTranscriptionProviderMetadata>(GetIdentifier());
         var options = new AudioTranslationOptions();
 
         if (!string.IsNullOrEmpty(metadata?.Prompt))

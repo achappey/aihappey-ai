@@ -1,23 +1,21 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Mistral;
-using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Mistral;
 
-public partial class MistralProvider : IModelProvider
+public partial class MistralProvider
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetTranscriptionProviderMetadata<MistralTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<MistralTranscriptionProviderMetadata>(GetIdentifier());
         using var form = new MultipartFormDataContent();
 
         // audio file
@@ -94,33 +92,5 @@ public partial class MistralProvider : IModelProvider
         };
     }
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }

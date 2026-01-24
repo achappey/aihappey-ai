@@ -170,6 +170,4 @@ public partial class MiniMaxProvider : IModelProvider
         OwnedBy = nameof(MiniMax)
     },
 ];
-
-
 }

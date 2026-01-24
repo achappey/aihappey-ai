@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.GoogleTranslate;
 
@@ -88,7 +89,7 @@ public sealed partial class GoogleTranslateProvider : IModelProvider
             yield return p;
     }
 
-    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         // Ensure key is present on request-time.
         _ = GetKeyOrThrow();
@@ -97,7 +98,7 @@ public sealed partial class GoogleTranslateProvider : IModelProvider
         return await TranslateResponsesAsync(options, cancellationToken);
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 }
 

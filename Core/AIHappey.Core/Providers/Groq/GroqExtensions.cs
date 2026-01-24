@@ -2,6 +2,7 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -145,11 +146,11 @@ public static class GroqExtensions
         _ => "user"
     };
 
-    private static string ToRole(this AIHappey.Common.Model.Role role) => role switch
+    private static string ToRole(this Vercel.Models.Role role) => role switch
     {
-        Common.Model.Role.system => "system",
-        Common.Model.Role.assistant => "assistant",
-        Common.Model.Role.user => "user",
+        Vercel.Models.Role.system => "system",
+        Vercel.Models.Role.assistant => "assistant",
+        Vercel.Models.Role.user => "user",
         _ => "user"
     };
 

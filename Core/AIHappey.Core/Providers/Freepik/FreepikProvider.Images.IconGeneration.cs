@@ -1,10 +1,10 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Freepik;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -55,7 +55,7 @@ public sealed partial class FreepikProvider
         if (!isPreview && !imageRequest.Model.Equals("text-to-icon", StringComparison.OrdinalIgnoreCase))
             throw new NotSupportedException($"Freepik image model '{imageRequest.Model}' is not supported.");
 
-        var metadata = imageRequest.GetImageProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
         var icon = metadata?.IconGeneration;
 
         // Preview endpoint ignores output format per user instruction.

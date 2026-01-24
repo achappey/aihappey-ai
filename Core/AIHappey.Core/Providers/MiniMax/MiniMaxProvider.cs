@@ -3,8 +3,10 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
+using AIHappey.Vercel.Models;
+
 namespace AIHappey.Core.Providers.MiniMax;
 
 public partial class MiniMaxProvider : IModelProvider
@@ -66,14 +68,10 @@ public partial class MiniMaxProvider : IModelProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -87,10 +85,13 @@ public partial class MiniMaxProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }

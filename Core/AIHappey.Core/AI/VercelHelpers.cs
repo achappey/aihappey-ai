@@ -20,30 +20,6 @@ public static class VercelHelpers
                              : null;
 
 
-    public static TextStartUIMessageStreamPart ToTextStartUIMessageStreamPart(this string id)
-        => new()
-        {
-            Id = id
-        };
-
-    public static TextEndUIMessageStreamPart ToTextEndUIMessageStreamPart(this string id)
-        => new()
-        {
-            Id = id
-        };
-
-    public static ErrorUIPart ToErrorUIPart(this string error)
-        => new()
-        {
-            ErrorText = error
-        };
-
-    public static AbortUIPart ToAbortUIPart(this string reason)
-   => new()
-   {
-       Reason = reason
-   };
-
 
 
 }

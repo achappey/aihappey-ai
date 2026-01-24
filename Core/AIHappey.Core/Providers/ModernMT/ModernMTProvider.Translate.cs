@@ -4,9 +4,11 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.Providers.ModernMT;
 using AIHappey.Core.AI;
+using AIHappey.Responses;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.ModernMT;
@@ -223,7 +225,7 @@ public sealed partial class ModernMTProvider
         };
     }
 
-    internal async Task<Common.Model.Responses.ResponseResult> TranslateResponsesAsync(
+    internal async Task<ResponseResult> TranslateResponsesAsync(
         ResponseRequest options,
         CancellationToken cancellationToken)
     {
@@ -241,7 +243,7 @@ public sealed partial class ModernMTProvider
         var joined = string.Join("\n", translated);
 
         var now = DateTimeOffset.UtcNow;
-        return new Common.Model.Responses.ResponseResult
+        return new ResponseResult
         {
             Id = Guid.NewGuid().ToString("n"),
             Model = modelId,
@@ -273,13 +275,11 @@ public sealed partial class ModernMTProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
         var targetLanguage = GetTranslateTargetLanguageFromModel(chatRequest.Model);
         var metadata = chatRequest.GetProviderMetadata<ModernMTProviderMetadata>(GetIdentifier());
 
         // Translate each incoming text part from the last user message.
-        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == AIHappey.Common.Model.Role.user);
+        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == Vercel.Models.Role.user);
         var texts = lastUser?.Parts?.OfType<TextUIPart>()
             .Select(p => p.Text)
             .Where(t => !string.IsNullOrWhiteSpace(t))

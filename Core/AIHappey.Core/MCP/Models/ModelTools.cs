@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Net.Mime;
 using System.Text.Json;
-using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;

@@ -1,15 +1,15 @@
 using AIHappey.Core.AI;
 using System.Net.Http.Headers;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Fireworks;
 using System.Globalization;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
-public partial class FireworksProvider : IModelProvider
+public partial class FireworksProvider
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(
        TranscriptionRequest request,
@@ -17,7 +17,7 @@ public partial class FireworksProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var metadata = request.GetTranscriptionProviderMetadata<FireworksTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<FireworksTranscriptionProviderMetadata>(GetIdentifier());
 
         // Fireworks docs: model = whisper-v3 or whisper-v3-turbo
         var baseUrl = request.Model.Equals("whisper-v3-turbo", StringComparison.OrdinalIgnoreCase)

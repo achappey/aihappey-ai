@@ -2,6 +2,7 @@ using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -17,7 +18,6 @@ public partial class XAIProvider : IModelProvider
 
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.x.ai/");
-
     }
 
     private void ApplyAuthHeader()
@@ -35,31 +35,20 @@ public partial class XAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
-
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
+        => throw new NotSupportedException();
 }

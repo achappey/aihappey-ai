@@ -3,11 +3,11 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Fireworks;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
-public partial class FireworksProvider : IModelProvider
+public partial class FireworksProvider 
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

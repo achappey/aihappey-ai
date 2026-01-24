@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
-using OAIC = OpenAI.Chat;
 
 namespace AIHappey.Core.Providers.CloudRift;
 
@@ -36,7 +35,7 @@ public sealed partial class CloudRiftProvider
         return respJson ?? throw new Exception("Something went wrong");
     }
 
-    public async IAsyncEnumerable<OAIC.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -76,7 +75,7 @@ public sealed partial class CloudRiftProvider
             if (data is "[DONE]" or "[done]")
                 yield break;
 
-            var update = JsonSerializer.Deserialize<OAIC.StreamingChatCompletionUpdate>(data, JsonOpts);
+            var update = JsonSerializer.Deserialize<ChatCompletionUpdate>(data, JsonOpts);
             if (update is not null)
                 yield return update;
         }

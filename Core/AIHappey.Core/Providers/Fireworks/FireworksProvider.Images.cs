@@ -3,8 +3,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Fireworks;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -210,7 +211,7 @@ public partial class FireworksProvider
         var modelPath = NormalizeModelPath(imageRequest.Model);
         var submitEndpoint = $"v1/workflows/{modelPath}";
         var resultEndpoint = $"v1/workflows/{modelPath}/get_result";
-        var metadata = imageRequest.GetImageProviderMetadata<FireworksImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<FireworksImageProviderMetadata>(GetIdentifier());
 
         var payload = new Dictionary<string, object?>
         {

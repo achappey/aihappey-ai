@@ -1,13 +1,11 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Scaleway;
 
-public partial class ScalewayProvider : IModelProvider
+public partial class ScalewayProvider
 {
-
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

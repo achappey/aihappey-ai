@@ -2,10 +2,11 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Telnyx;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Telnyx;
 
@@ -17,7 +18,7 @@ public partial class TelnyxProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var metadata = request.GetTranscriptionProviderMetadata<TelnyxTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<TelnyxTranscriptionProviderMetadata>(GetIdentifier());
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
         var fileName = "audio" + request.MediaType.GetAudioExtension();

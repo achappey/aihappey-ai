@@ -1,11 +1,10 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using AIHappey.Common.Extensions;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 

@@ -1,15 +1,15 @@
-using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Bria;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Bria;
 
-public partial class BriaProvider : IModelProvider
+public partial class BriaProvider
 {
     private static readonly JsonSerializerOptions BriaJson = new(JsonSerializerDefaults.Web)
     {
@@ -161,7 +161,7 @@ public partial class BriaProvider : IModelProvider
         var now = DateTime.UtcNow;
 
         // Provider metadata root: { bria: { generateImage: {...}, imageEdit: {...}, ... } }
-        var briaOptions = imageRequest.GetImageProviderMetadata<BriaImageProviderMetadata>(GetIdentifier());
+        var briaOptions = imageRequest.GetProviderMetadata<BriaImageProviderMetadata>(GetIdentifier());
 
         BriaResultEnvelope env;
 

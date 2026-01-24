@@ -5,11 +5,10 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Mistral;
 
-public partial class MistralProvider : IModelProvider
+public partial class MistralProvider
 {
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)

@@ -3,9 +3,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Speechify;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Speechify;
 
@@ -36,7 +37,7 @@ public partial class SpeechifyProvider
         if (request.Speed is not null)
             warnings.Add(new { type = "unsupported", feature = "speed" });
 
-        var metadata = request.GetSpeechProviderMetadata<SpeechifySpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<SpeechifySpeechProviderMetadata>(GetIdentifier());
 
         // ---- resolve required voice_id ----
         // Contract requested by user:

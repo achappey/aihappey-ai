@@ -4,13 +4,11 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Nodes;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Groq;
 
-public partial class GroqProvider : IModelProvider
+public partial class GroqProvider
 {
-
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

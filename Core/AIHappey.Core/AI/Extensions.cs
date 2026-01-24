@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
 
@@ -56,23 +56,6 @@ public static class UIMessagePartExtensions
         return (provider, model);
     }
 
-    public static FileUIPart ToFileUIPart(this byte[] bytes, string mimeType)
-        => new()
-        {
-            MediaType = mimeType,
-            Url = Convert.ToBase64String(bytes).ToDataUrl(mimeType),
-        };
-
-    public static IEnumerable<FileUIPart> GetImages(this IEnumerable<UIMessagePart>? parts)
-        => parts?.OfType<FileUIPart>()
-            .Where(a => a.IsImage()) ?? [];
-
-    public static bool IsImage(this UIMessagePart? part)
-        => part is FileUIPart fileUIPart && fileUIPart.MediaType.StartsWith("image/");
-
-    public static bool IsAudio(this UIMessagePart? part)
-        => part is FileUIPart fileUIPart && fileUIPart.MediaType.StartsWith("audio/");
-
     public static IEnumerable<FileUIPart> GetPdfFiles(this IEnumerable<UIMessagePart>? parts)
         => parts?.OfType<FileUIPart>()
             .Where(a => a.MediaType.Equals(MediaTypeNames.Application.Pdf, StringComparison.OrdinalIgnoreCase)) ?? [];
@@ -119,55 +102,6 @@ public static class UIMessagePartExtensions
         return base64;
     }
 
-    public static FinishUIPart ToFinishUIPart(
-       this string finishReason,
-       string model,
-       int outputTokens,
-       int inputTokens,
-       int totalTokens,
-       float? temperature,
-       int? reasoningTokens = null,
-       int? cachedInputTokens = null,
-       Dictionary<string, object>? extraMetadata = null
-   )
-    {
-        var metadata = new Dictionary<string, object>
-        {
-         //   { "finishReason", finishReason },
-            { "model", model },
-            { "timestamp", DateTime.UtcNow },
-            { "outputTokens", outputTokens },
-            { "inputTokens", inputTokens },
-            { "totalTokens", totalTokens },
-        };
-
-        if (temperature.HasValue)
-        {
-            metadata["temperature"] = temperature;
-        }
-
-        if (extraMetadata != null)
-        {
-            foreach (var kv in extraMetadata)
-                metadata[kv.Key] = kv.Value;
-        }
-
-        if (reasoningTokens != null)
-        {
-            metadata["reasoningTokens"] = reasoningTokens.Value;
-        }
-
-        if (cachedInputTokens != null)
-        {
-            metadata["cachedInputTokens"] = cachedInputTokens.Value;
-        }
-
-        return new()
-        {
-            MessageMetadata = metadata,
-            FinishReason = finishReason
-        };
-    }
 
     public static string GetAudioExtension(this string mimeType)
     {

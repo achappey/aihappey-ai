@@ -2,10 +2,11 @@ using System.Net.Http.Headers;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Common.Model.Responses.Streaming;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -62,7 +63,7 @@ public sealed partial class FreepikProvider : IModelProvider
         => ModelProviderImageExtensions.StreamImageAsync(this, chatRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
         => SoundEffectsSpeechRequest(request, cancellationToken);

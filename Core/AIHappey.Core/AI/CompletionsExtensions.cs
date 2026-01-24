@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
 

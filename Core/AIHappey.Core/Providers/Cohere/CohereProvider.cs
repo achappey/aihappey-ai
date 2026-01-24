@@ -1,11 +1,12 @@
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using AIHappey.Core.Models;
-using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Cohere;
 
@@ -34,54 +35,6 @@ public partial class CohereProvider : IModelProvider
 
     public string GetIdentifier() => CohereExtensions.CohereIdentifier;
 
-
-
-    public async Task<IEnumerable<Model>> ListModels(
-        CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, "v1/models?page_size=1000");
-        using var response = await _client.SendAsync(request, cancellationToken);
-
-        var payload = await response.Content.ReadAsStringAsync(cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        using var doc = JsonDocument.Parse(payload);
-        if (!doc.RootElement.TryGetProperty("models", out var modelsEl)
-            || modelsEl.ValueKind != JsonValueKind.Array)
-            return [];
-
-        var result = new List<Model>();
-
-        foreach (var item in modelsEl.EnumerateArray())
-        {
-            var name = item.TryGetProperty("name", out var nameEl)
-                ? nameEl.GetString()
-                : null;
-
-            if (string.IsNullOrWhiteSpace(name)) continue;
-
-            DateTimeOffset? createdAt = null;
-            if (item.TryGetProperty("created_at", out var createdEl)
-                && createdEl.ValueKind == JsonValueKind.String
-                && DateTimeOffset.TryParse(createdEl.GetString(), out var dt))
-            {
-                createdAt = dt;
-            }
-
-            result.Add(new Model
-            {
-                Id = name!.ToModelId(GetIdentifier()),
-                Name = name!,
-                OwnedBy = nameof(Cohere),
-                Created = createdAt?.ToUnixTimeSeconds()
-            });
-        }
-
-        return result;
-    }
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -108,19 +61,27 @@ public partial class CohereProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
 
 
 }

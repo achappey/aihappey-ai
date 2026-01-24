@@ -1,8 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Deepgram;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Deepgram;
 
@@ -36,7 +37,7 @@ public sealed partial class DeepgramProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var metadata = request.GetTranscriptionProviderMetadata<DeepgramTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<DeepgramTranscriptionProviderMetadata>(GetIdentifier());
 
         // Build query string.
         var query = new List<string>

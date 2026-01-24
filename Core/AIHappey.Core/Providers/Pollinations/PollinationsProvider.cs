@@ -7,6 +7,8 @@ using System.Text;
 using AIHappey.Common.Model.ChatCompletions;
 using Microsoft.AspNetCore.Http;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Pollinations;
 
@@ -154,6 +156,43 @@ public partial class PollinationsProvider : IModelProvider
                 Text = content
             }]
         };
+    }
+
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
 }

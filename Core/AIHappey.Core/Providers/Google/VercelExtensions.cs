@@ -1,6 +1,7 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Google;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
 using Mscc.GenerativeAI;
 
 namespace AIHappey.Core.Providers.Google;
@@ -24,7 +25,7 @@ public static class VercelExtensions
                };
 
     public static IEnumerable<FunctionDeclaration> ToFunctionDeclarations(
-               this IEnumerable<AIHappey.Common.Model.Tool> data) =>
+               this IEnumerable<Common.Model.Tool> data) =>
                data.Select(a => a.ToFunctionDeclaration());
 
     public static GenerationConfig ToGenerationConfig(this ChatRequest chatRequest, GoogleProviderMetadata? metadata) => new()
@@ -51,8 +52,8 @@ public static class VercelExtensions
                : null,
     };
 
-    public static string ToRole(this Common.Model.Role role)
-        => role == Common.Model.Role.assistant ? "model" : "user";
+    public static string ToRole(this Vercel.Models.Role role)
+        => role == Vercel.Models.Role.assistant ? "model" : "user";
 
     public static ContentResponse ToContentResponse(this UIMessage message)
         => new(message.Parts

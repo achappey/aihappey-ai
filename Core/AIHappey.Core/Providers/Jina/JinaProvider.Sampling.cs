@@ -4,17 +4,11 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Nodes;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Jina;
 
-public partial class JinaProvider : IModelProvider
+public partial class JinaProvider 
 {
-    public Task<Common.Model.ImageResponse> ImageRequest(Common.Model.ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -109,13 +103,5 @@ public partial class JinaProvider : IModelProvider
         };
     }
 
-    public Task<Common.Model.SpeechResponse> SpeechRequest(Common.Model.SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public Task<Common.Model.TranscriptionResponse> TranscriptionRequest(Common.Model.TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

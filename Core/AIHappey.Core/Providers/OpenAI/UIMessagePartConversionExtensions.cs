@@ -2,6 +2,7 @@ using OpenAI.Responses;
 using OAIC = OpenAI.Chat;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

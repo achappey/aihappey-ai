@@ -1,10 +1,10 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Freepik;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -54,7 +54,7 @@ public sealed partial class FreepikProvider
         // If callers provide something else, we still send it and let the upstream API validate.
         var imageField = firstFile.Data;
 
-        var metadata = imageRequest.GetImageProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
         var expand = metadata?.ImageExpand;
 
 

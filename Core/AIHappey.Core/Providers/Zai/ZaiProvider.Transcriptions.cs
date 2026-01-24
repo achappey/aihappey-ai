@@ -1,10 +1,11 @@
 using AIHappey.Core.AI;
 using System.Net.Http.Headers;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Zai;
 
@@ -17,7 +18,7 @@ public partial class ZaiProvider : IModelProvider
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetTranscriptionProviderMetadata<ZaiTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<ZaiTranscriptionProviderMetadata>(GetIdentifier());
 
         using var form = new MultipartFormDataContent();
 

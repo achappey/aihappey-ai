@@ -1,22 +1,22 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
-using AIHappey.Core.Models;
-using ModelContextProtocol.Protocol;
+using AIHappey.Responses.Streaming;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.MurfAI;
 
 public sealed partial class MurfAIProvider : IModelProvider
 {
-    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
         ArgumentNullException.ThrowIfNull(options);
         var model = await this.GetModel(options.Model, cancellationToken: cancellationToken);
         if (model.Type == "language")
         {
+            var now = DateTimeOffset.UtcNow;
+
             var texts = ExtractResponseRequestTexts(options);
             if (texts.Count == 0)
                 throw new Exception("No prompt provided.");
@@ -24,13 +24,12 @@ public sealed partial class MurfAIProvider : IModelProvider
             var result = await TranslateAsync(texts, options.Model?.Split("/").Last()!, cancellationToken);
             var joined = string.Join("\n", result.Translations.Select(t => t.TranslatedText));
 
-            var now = DateTimeOffset.UtcNow;
-            return new Common.Model.Responses.ResponseResult
+            return new ResponseResult
             {
                 Id = Guid.NewGuid().ToString("n"),
                 Model = options.Model ?? "translate",
                 CreatedAt = now.ToUnixTimeSeconds(),
-                CompletedAt = now.ToUnixTimeSeconds(),
+                CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Output =
                 [
                     new
@@ -56,12 +55,11 @@ public sealed partial class MurfAIProvider : IModelProvider
         return await this.SpeechResponseAsync(options, cancellationToken);
     }
 
-    public async IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
-        Common.Model.Responses.ResponseRequest options,
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(options);
 
         var texts = ExtractResponseRequestTexts(options);
         if (texts.Count == 0)
@@ -72,7 +70,7 @@ public sealed partial class MurfAIProvider : IModelProvider
         var createdAt = now.ToUnixTimeSeconds();
         var seq = 0;
 
-        var baseResponse = new Common.Model.Responses.ResponseResult
+        var baseResponse = new ResponseResult
         {
             Id = responseId,
             Model = options.Model ?? "translate",
@@ -80,13 +78,13 @@ public sealed partial class MurfAIProvider : IModelProvider
             Output = []
         };
 
-        yield return new Common.Model.Responses.Streaming.ResponseCreated
+        yield return new ResponseCreated
         {
             SequenceNumber = seq++,
             Response = baseResponse
         };
 
-        Common.Model.Responses.Streaming.ResponseStreamPart? errorPart = null;
+        ResponseStreamPart? errorPart = null;
         TranslationResult? result = null;
         try
         {
@@ -94,7 +92,7 @@ public sealed partial class MurfAIProvider : IModelProvider
         }
         catch (Exception ex)
         {
-            errorPart = new Common.Model.Responses.Streaming.ResponseError
+            errorPart = new ResponseError
             {
                 SequenceNumber = seq++,
                 Code = "translation_error",
@@ -118,7 +116,7 @@ public sealed partial class MurfAIProvider : IModelProvider
             full.Add(t);
             var piece = (i == result.Translations.Count - 1) ? t : (t + "\n");
 
-            yield return new Common.Model.Responses.Streaming.ResponseOutputTextDelta
+            yield return new ResponseOutputTextDelta
             {
                 SequenceNumber = seq++,
                 ItemId = itemId,
@@ -130,7 +128,7 @@ public sealed partial class MurfAIProvider : IModelProvider
 
         var joined = string.Join("\n", full);
 
-        yield return new Common.Model.Responses.Streaming.ResponseOutputTextDone
+        yield return new ResponseOutputTextDone
         {
             SequenceNumber = seq++,
             ItemId = itemId,
@@ -139,10 +137,10 @@ public sealed partial class MurfAIProvider : IModelProvider
             Text = joined
         };
 
-        yield return new Common.Model.Responses.Streaming.ResponseCompleted
+        yield return new ResponseCompleted
         {
             SequenceNumber = seq++,
-            Response = new Common.Model.Responses.ResponseResult
+            Response = new ResponseResult
             {
                 Id = responseId,
                 Model = options.Model ?? "translate",

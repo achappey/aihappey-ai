@@ -4,9 +4,11 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.Providers.Lingvanex;
 using AIHappey.Core.AI;
+using AIHappey.Responses;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Lingvanex;
@@ -174,7 +176,7 @@ public sealed partial class LingvanexProvider
         };
     }
 
-    internal async Task<Common.Model.Responses.ResponseResult> TranslateResponsesAsync(
+    internal async Task<ResponseResult> TranslateResponsesAsync(
         ResponseRequest options,
         CancellationToken cancellationToken)
     {
@@ -192,7 +194,7 @@ public sealed partial class LingvanexProvider
         var joined = string.Join("\n", translated);
 
         var now = DateTimeOffset.UtcNow;
-        return new Common.Model.Responses.ResponseResult
+        return new ResponseResult
         {
             Id = Guid.NewGuid().ToString("n"),
             Model = modelId,
@@ -230,7 +232,7 @@ public sealed partial class LingvanexProvider
         var metadata = chatRequest.GetProviderMetadata<LingvanexProviderMetadata>(GetIdentifier());
 
         // Translate each incoming text part from the last user message.
-        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == AIHappey.Common.Model.Role.user);
+        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == Vercel.Models.Role.user);
         var texts = lastUser?.Parts?.OfType<TextUIPart>()
             .Select(p => p.Text)
             .Where(t => !string.IsNullOrWhiteSpace(t))

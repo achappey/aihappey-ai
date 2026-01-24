@@ -1,10 +1,9 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider 
 {
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

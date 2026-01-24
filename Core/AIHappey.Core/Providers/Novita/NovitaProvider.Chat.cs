@@ -3,11 +3,11 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider 
 {
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,

@@ -1,10 +1,9 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
-public partial class HyperbolicProvider : IModelProvider
+public partial class HyperbolicProvider
 {
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

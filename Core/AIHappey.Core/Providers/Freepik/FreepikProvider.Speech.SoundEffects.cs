@@ -1,10 +1,10 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Freepik;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -38,7 +38,7 @@ public sealed partial class FreepikProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var metadata = request.GetSpeechProviderMetadata<FreepikSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<FreepikSpeechProviderMetadata>(GetIdentifier());
         var se = metadata?.SoundEffects;
 
         // docs: duration_seconds required (0.5 - 22). We accept int seconds in metadata.

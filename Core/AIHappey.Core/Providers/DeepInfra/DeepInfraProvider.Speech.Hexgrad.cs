@@ -1,6 +1,6 @@
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.DeepInfra;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -17,7 +17,7 @@ public sealed partial class DeepInfraProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var rootMetadata = request.GetSpeechProviderMetadata<DeepInfraSpeechProviderMetadata>(GetIdentifier());
+        var rootMetadata = request.GetProviderMetadata<DeepInfraSpeechProviderMetadata>(GetIdentifier());
         var metadata = rootMetadata?.Hexgrad;
         var outputFormat = request.OutputFormat ?? metadata?.OutputFormat ?? "wav";
         var speed = request.Speed ?? metadata?.Speed;

@@ -1,11 +1,9 @@
 using AIHappey.Core.Models;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
-    : IModelProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

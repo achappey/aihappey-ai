@@ -2,9 +2,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Deepgram;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Deepgram;
 
@@ -38,7 +38,7 @@ public sealed partial class DeepgramProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var metadata = request.GetSpeechProviderMetadata<DeepgramSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<DeepgramSpeechProviderMetadata>(GetIdentifier());
 
 
         // Default Deepgram output: mp3 @ 22050 Hz (not configurable)

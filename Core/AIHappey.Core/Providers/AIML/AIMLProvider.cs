@@ -9,7 +9,9 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.ModelProviders;
-using AIHappey.Common.Model.Responses;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -127,7 +129,7 @@ public partial class AIMLProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

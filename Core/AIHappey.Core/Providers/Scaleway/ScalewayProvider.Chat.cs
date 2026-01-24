@@ -1,11 +1,11 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Scaleway;
 
-public partial class ScalewayProvider : IModelProvider
+public partial class ScalewayProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -25,8 +25,4 @@ public partial class ScalewayProvider : IModelProvider
             yield return update;
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }

@@ -1,11 +1,11 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
-public partial class HyperbolicProvider : IModelProvider
+public partial class HyperbolicProvider 
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

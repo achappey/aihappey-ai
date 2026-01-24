@@ -1,8 +1,9 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Common.Model.Responses.Streaming;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
 using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.ModelProviders;
 

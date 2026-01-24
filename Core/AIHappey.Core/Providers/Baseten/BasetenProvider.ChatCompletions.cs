@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 
@@ -6,11 +5,6 @@ namespace AIHappey.Core.Providers.Baseten;
 
 public sealed partial class BasetenProvider
 {
-    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerOptions.Web)
-    {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

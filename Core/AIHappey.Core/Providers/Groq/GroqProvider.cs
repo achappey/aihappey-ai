@@ -4,6 +4,7 @@ using AIHappey.Core.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -73,9 +74,8 @@ public partial class GroqProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.ImageResponse> ImageRequest(Common.Model.ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
 
 }

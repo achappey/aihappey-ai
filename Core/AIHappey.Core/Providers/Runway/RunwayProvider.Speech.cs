@@ -2,9 +2,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Runway;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Runway;
 
@@ -32,7 +32,7 @@ public partial class RunwayProvider
         if (!string.IsNullOrWhiteSpace(request.OutputFormat))
             warnings.Add(new { type = "unsupported", feature = "outputFormat" });
 
-        var metadata = request.GetSpeechProviderMetadata<RunwaySpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<RunwaySpeechProviderMetadata>(GetIdentifier());
 
         // Required: presetId
         var presetId = (request.Voice ?? metadata?.Voice?.PresetId)?.Trim();
@@ -115,7 +115,7 @@ public partial class RunwayProvider
         if (!string.IsNullOrWhiteSpace(request.OutputFormat))
             warnings.Add(new { type = "unsupported", feature = "outputFormat" });
 
-        var metadata = request.GetSpeechProviderMetadata<RunwaySpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<RunwaySpeechProviderMetadata>(GetIdentifier());
         var se = metadata?.SoundEffects;
 
         if (se?.Duration is { } duration)

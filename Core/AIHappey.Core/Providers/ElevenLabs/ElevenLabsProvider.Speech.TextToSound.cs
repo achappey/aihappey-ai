@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.ElevenLabs;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
@@ -15,7 +15,7 @@ public partial class ElevenLabsProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required (used as prompt).", nameof(request));
 
-        var metadata = request.GetSpeechProviderMetadata<ElevenLabsSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<ElevenLabsSpeechProviderMetadata>(GetIdentifier());
 
         var outputFormat = request.OutputFormat ?? metadata?.OutputFormat ?? "mp3_44100_128";
         var query = new List<string>();

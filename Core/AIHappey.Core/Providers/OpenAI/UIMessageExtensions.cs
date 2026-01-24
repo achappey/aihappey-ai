@@ -5,6 +5,7 @@ using System.ClientModel.Primitives;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.OpenAI;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

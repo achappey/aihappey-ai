@@ -1,7 +1,7 @@
 using System.Text.Json;
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using Anthropic.SDK.Messaging;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Anthropic.Extensions;
 

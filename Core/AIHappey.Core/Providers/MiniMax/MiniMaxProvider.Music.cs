@@ -1,15 +1,13 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
-public partial class MiniMaxProvider : IModelProvider
+public partial class MiniMaxProvider
 {
 
     public async Task<SpeechResponse> MusicRequest(SpeechRequest request, CancellationToken cancellationToken = default)
@@ -29,7 +27,7 @@ public partial class MiniMaxProvider : IModelProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetSpeechProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(metadata?.Lyrics))
             throw new ArgumentException("Lyrics are required.", nameof(request));
@@ -129,8 +127,4 @@ public partial class MiniMaxProvider : IModelProvider
 
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }

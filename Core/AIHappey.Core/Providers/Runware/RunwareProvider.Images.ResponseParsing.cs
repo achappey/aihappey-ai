@@ -1,7 +1,6 @@
 using System.Net.Mime;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Runware;
 

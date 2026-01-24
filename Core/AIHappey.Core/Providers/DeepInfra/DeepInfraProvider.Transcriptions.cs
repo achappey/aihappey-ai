@@ -2,9 +2,10 @@ using System.Net.Http.Headers;
 using System.Globalization;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.DeepInfra;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -33,7 +34,7 @@ public sealed partial class DeepInfraProvider
         // Incoming pipeline passes base64 (data-url prefix already stripped upstream).
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
 
-        var metadata = request.GetTranscriptionProviderMetadata<DeepInfraTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<DeepInfraTranscriptionProviderMetadata>(GetIdentifier());
 
         using var form = new MultipartFormDataContent();
 

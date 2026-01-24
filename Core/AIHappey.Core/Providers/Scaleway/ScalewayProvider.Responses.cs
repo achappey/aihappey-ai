@@ -1,10 +1,10 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Responses.Streaming;
+using AIHappey.Responses;
+using AIHappey.Responses.Extensions;
 
 namespace AIHappey.Core.Providers.Scaleway;
 
-public partial class ScalewayProvider : IModelProvider
+public partial class ScalewayProvider 
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -14,7 +14,7 @@ public partial class ScalewayProvider : IModelProvider
                    options, ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

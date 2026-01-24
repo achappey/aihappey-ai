@@ -9,11 +9,12 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Groq;
 
-public partial class GroqProvider : IModelProvider
+public partial class GroqProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,
@@ -50,7 +51,7 @@ public partial class GroqProvider : IModelProvider
         }).Cast<object>().ToList() ?? [];
 
         var systemPrompt = string.Join("\n\n", chatRequest.Messages
-            .Where(a => a.Role == Common.Model.Role.system)
+            .Where(a => a.Role == Vercel.Models.Role.system)
             .SelectMany(a => a.Parts.OfType<TextUIPart>().Select(a => a.Text)));
 
         if (metadata?.BrowserSearch != null)

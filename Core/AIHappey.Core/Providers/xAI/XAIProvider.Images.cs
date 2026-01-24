@@ -4,16 +4,15 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.xAI;
 
 public partial class XAIProvider : IModelProvider
 {
 
-    public async Task<Common.Model.ImageResponse> ImageRequest(Common.Model.ImageRequest imageRequest,
+    public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest,
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

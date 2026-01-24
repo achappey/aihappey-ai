@@ -1,11 +1,11 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Sarvam;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -34,7 +34,7 @@ public partial class SarvamProvider
 
         var now = DateTime.UtcNow;
 
-        var metadata = request.GetTranscriptionProviderMetadata<SarvamTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<SarvamTranscriptionProviderMetadata>(GetIdentifier());
 
         // Sarvam expects raw bytes; unified request can be base64 or data-url.
         var audioString = request.Audio switch

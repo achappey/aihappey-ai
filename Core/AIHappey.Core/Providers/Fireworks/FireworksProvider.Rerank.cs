@@ -1,16 +1,15 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Fireworks;
-using AIHappey.Core.AI;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
-public partial class FireworksProvider : IModelProvider
+public partial class FireworksProvider
 {
     private static readonly JsonSerializerOptions RerankJson = new(JsonSerializerDefaults.Web)
     {

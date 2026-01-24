@@ -1,28 +1,12 @@
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.CanopyWave;
 
-public partial class CanopyWaveProvider : IModelProvider
+public partial class CanopyWaveProvider
 {
-
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -39,9 +23,6 @@ public partial class CanopyWaveProvider : IModelProvider
         }
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
+
 }
 

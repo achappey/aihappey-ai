@@ -1,9 +1,8 @@
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Friendli;
 
-public partial class FriendliProvider : IModelProvider
+public partial class FriendliProvider
 {
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

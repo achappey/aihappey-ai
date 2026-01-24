@@ -1,10 +1,9 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
 using System.Text.Json;
 using System.Text;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -17,7 +16,7 @@ public partial class NovitaProvider : IModelProvider
         ApplyAuthHeader();
 
         var metadata =
-            request.GetSpeechProviderMetadata<NovitaSpeechProviderMetadata>(GetIdentifier());
+            request.GetProviderMetadata<NovitaSpeechProviderMetadata>(GetIdentifier());
 
         var text = request.Text ?? "";
         if (text.Length > 10_000)

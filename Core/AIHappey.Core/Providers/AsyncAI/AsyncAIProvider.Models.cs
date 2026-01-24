@@ -1,13 +1,9 @@
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.AsyncAI;
 
-public partial class AsyncAIProvider : IModelProvider
+public partial class AsyncAIProvider 
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

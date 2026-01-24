@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.Common.Model;
+using AIHappey.Vercel.Models;
 using Anthropic.SDK.Messaging;
 
 namespace AIHappey.Core.Providers.Anthropic.Extensions;

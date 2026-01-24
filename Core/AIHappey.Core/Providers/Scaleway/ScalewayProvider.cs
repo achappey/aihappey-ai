@@ -2,8 +2,9 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Scaleway;
 
@@ -20,7 +21,6 @@ public partial class ScalewayProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.scaleway.ai/");
     }
 
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -30,7 +30,6 @@ public partial class ScalewayProvider : IModelProvider
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
-
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -56,17 +55,15 @@ public partial class ScalewayProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
 }

@@ -1,15 +1,16 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Net.Http.Headers;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Friendli;
 
-public partial class FriendliProvider : IModelProvider
+public partial class FriendliProvider
 {
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
@@ -93,7 +94,6 @@ public partial class FriendliProvider : IModelProvider
 
             using var doc = JsonDocument.Parse(data);
             var root = doc.RootElement;
-            Console.WriteLine(data);
 
             id ??= root.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
             id ??= Guid.NewGuid().ToString("n");

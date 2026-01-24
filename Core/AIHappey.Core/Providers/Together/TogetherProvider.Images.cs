@@ -1,15 +1,15 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using System.Text;
 using AIHappey.Common.Model.Providers.Together;
 using System.Text.Json.Serialization;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider : IModelProvider
+public partial class TogetherProvider 
 {
 
     private static readonly JsonSerializerOptions imageSettings = new(JsonSerializerDefaults.Web)
@@ -22,7 +22,7 @@ public partial class TogetherProvider : IModelProvider
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        var metadata = imageRequest.GetImageProviderMetadata<TogetherImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<TogetherImageProviderMetadata>(GetIdentifier());
         // Step 2: Build JSON payload
         var jsonBody = JsonSerializer.Serialize(new
         {
@@ -73,7 +73,7 @@ public partial class TogetherProvider : IModelProvider
             if (string.IsNullOrWhiteSpace(b64))
                 continue;
 
-            images.Add(b64.ToDataUrl("image/png"));
+            images.Add(Common.Extensions.ImageExtensions.ToDataUrl(b64, "image/png"));
         }
 
         if (images.Count == 0)

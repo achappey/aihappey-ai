@@ -72,6 +72,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "lectoai" => _config.LectoAI?.ApiKey,
             "bria" => _config.Bria?.ApiKey,
             "friendli" => _config.Friendli?.ApiKey,
+            "publicai" => _config.PublicAI?.ApiKey,
             _ => null
         };
 }

@@ -3,10 +3,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Verda;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Verda;
 
@@ -31,7 +32,7 @@ public partial class VerdaProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var providerMetadata = imageRequest.GetImageProviderMetadata<VerdaImageProviderMetadata>(GetIdentifier());
+        var providerMetadata = imageRequest.GetProviderMetadata<VerdaImageProviderMetadata>(GetIdentifier());
         var flux1 = providerMetadata?.Flux1;
 
         var inputImage = imageRequest.Files?.FirstOrDefault();

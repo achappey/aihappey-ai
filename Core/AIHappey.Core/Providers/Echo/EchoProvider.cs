@@ -4,13 +4,14 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Echo;
 
 /// <summary>
 /// Debug provider that echoes the last user message back to the client.
 /// </summary>
-public sealed partial class EchoProvider() : IModelProvider
+public sealed partial class EchoProvider : IModelProvider
 {
     public string GetIdentifier() => "echo";
 
@@ -58,12 +59,12 @@ public sealed partial class EchoProvider() : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -1,9 +1,10 @@
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Azure;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -24,7 +25,7 @@ public sealed partial class AzureProvider
         var now = DateTime.UtcNow;
         var bytes = GetAudioBytes(request);
 
-        var metadata = request.GetTranscriptionProviderMetadata<AzureTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<AzureTranscriptionProviderMetadata>(GetIdentifier());
 
         var format = AudioStreamFormat.GetWaveFormatPCM(
             samplesPerSecond: metadata?.SamplesPerSecond != null ? (uint)metadata.SamplesPerSecond : (uint)16000,

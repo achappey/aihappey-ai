@@ -2,6 +2,7 @@ using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.xAI.Models;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.xAI;
@@ -86,11 +87,11 @@ public static partial class XAIInputExtensions
            };
 
     public static string ToRole(
-               this Common.Model.Role role) => role switch
+               this Vercel.Models.Role role) => role switch
                {
-                   Common.Model.Role.system => "system",
-                   Common.Model.Role.user => "user",
-                   Common.Model.Role.assistant => "assistant",
+                   Vercel.Models.Role.system => "system",
+                   Vercel.Models.Role.user => "user",
+                   Vercel.Models.Role.assistant => "assistant",
                    _ => "user"
                };
 

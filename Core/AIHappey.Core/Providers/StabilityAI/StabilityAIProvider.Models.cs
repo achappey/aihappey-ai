@@ -1,10 +1,9 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
-public partial class StabilityAIProvider : IModelProvider
+public partial class StabilityAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

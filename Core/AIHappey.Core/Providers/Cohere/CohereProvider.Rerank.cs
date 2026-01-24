@@ -1,17 +1,15 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Cohere;
 
-public partial class CohereProvider : IModelProvider
+public partial class CohereProvider
 {
     public async Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
@@ -76,21 +74,6 @@ public partial class CohereProvider : IModelProvider
             }
         };
 
-    }
-
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new()

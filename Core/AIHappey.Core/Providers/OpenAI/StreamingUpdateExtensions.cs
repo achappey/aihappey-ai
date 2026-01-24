@@ -5,6 +5,8 @@ using System.Text.Json;
 using OpenAI.Containers;
 using ModelContextProtocol.Protocol;
 using System.Net.Mime;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

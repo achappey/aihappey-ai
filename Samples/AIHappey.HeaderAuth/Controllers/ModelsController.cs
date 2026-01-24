@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.HeaderAuth.Controllers;

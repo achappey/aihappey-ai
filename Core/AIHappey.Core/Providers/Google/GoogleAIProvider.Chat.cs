@@ -4,12 +4,12 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Google;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
-    : IModelProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -34,13 +34,13 @@ public partial class GoogleAIProvider
 
         List<Mscc.GenerativeAI.ContentResponse> inputItems =
                  [.. request.Messages
-                .Where(a => a.Role != Common.Model.Role.system)
+                .Where(a => a.Role != Vercel.Models.Role.system)
                 .SkipLast(1)
                 .Select(a => a.ToContentResponse())];
 
         var systemPrompt = string.Join("\n\n", request
             .Messages
-            .Where(a => a.Role == Common.Model.Role.system)
+            .Where(a => a.Role == Vercel.Models.Role.system)
             .SelectMany(a => a.Parts
                 .OfType<TextUIPart>()
                 .Select(y => y.Text)));

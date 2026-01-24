@@ -1,12 +1,12 @@
-using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Common.Model.Responses.Streaming;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Gladia;
 
@@ -65,15 +65,6 @@ public partial class GladiaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
     {
@@ -81,6 +72,16 @@ public partial class GladiaProvider : IModelProvider
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

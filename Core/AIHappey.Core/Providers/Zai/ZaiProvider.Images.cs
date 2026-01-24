@@ -1,14 +1,13 @@
-using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Zai;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider : IModelProvider
+public partial class ZaiProvider 
 {
     private static readonly JsonSerializerOptions zaiJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -64,7 +63,7 @@ public partial class ZaiProvider : IModelProvider
         }
 
         // Provider metadata
-        var metadata = imageRequest.GetImageProviderMetadata<ZaiImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<ZaiImageProviderMetadata>(GetIdentifier());
 
         // Size selection: prefer explicit size, else derive from aspect_ratio.
         // Z.AI expects size as e.g. "1280x1280".

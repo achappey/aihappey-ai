@@ -2,11 +2,12 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Common.Model.Providers.Gladia;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Gladia;
 
@@ -54,7 +55,7 @@ public partial class GladiaProvider : IModelProvider
         }
 
         var audioUrl = await UploadAudioAsync(bytes, request.MediaType, cancellationToken);
-        var metadata = request.GetTranscriptionProviderMetadata<GladiaTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<GladiaTranscriptionProviderMetadata>(GetIdentifier());
         var jobId = await CreatePreRecordedJobAsync(audioUrl, metadata, cancellationToken);
         var resultJson = await PollUntilDoneAsync(jobId, cancellationToken);
 

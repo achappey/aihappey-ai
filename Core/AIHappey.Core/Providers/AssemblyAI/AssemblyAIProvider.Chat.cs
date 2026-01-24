@@ -1,9 +1,10 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 

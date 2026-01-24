@@ -5,14 +5,14 @@ using System.Text.Json.Nodes;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using System.Net.Http.Headers;
-using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Jina;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Jina;
 
-public partial class JinaProvider : IModelProvider
+public partial class JinaProvider 
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,

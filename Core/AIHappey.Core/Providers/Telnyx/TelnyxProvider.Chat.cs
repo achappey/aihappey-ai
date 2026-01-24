@@ -2,29 +2,13 @@ using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Telnyx;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Telnyx;
 
-public partial class TelnyxProvider : IModelProvider
+public partial class TelnyxProvider 
 {
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -91,9 +75,5 @@ public partial class TelnyxProvider : IModelProvider
         }
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }
 

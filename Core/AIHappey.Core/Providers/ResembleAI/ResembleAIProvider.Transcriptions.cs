@@ -1,10 +1,11 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.ResembleAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ResembleAI;
 
@@ -30,7 +31,7 @@ public partial class ResembleAIProvider
             ? "speech-to-text"
             : request.Model;
 
-        var metadata = request.GetTranscriptionProviderMetadata<ResembleAITranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<ResembleAITranscriptionProviderMetadata>(GetIdentifier());
 
         // Unified request can be base64 or data-url.
         var audioString = request.Audio switch

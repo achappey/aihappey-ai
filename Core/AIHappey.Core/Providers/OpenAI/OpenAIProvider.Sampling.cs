@@ -25,7 +25,6 @@ public partial class OpenAIProvider
                     cancellationToken: cancellationToken);
         }
 
-
         if (model?.Contains("search-preview") == true)
         {
             return await ChatCompletionsSamplingAsync(chatRequest, cancellationToken);

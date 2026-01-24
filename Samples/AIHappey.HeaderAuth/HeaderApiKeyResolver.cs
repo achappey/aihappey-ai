@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.HeaderAuth;
@@ -67,6 +66,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["lectoai"] = "X-LectoAI-Key",
             ["bria"] = "X-Bria-Key",
             ["friendli"] = "X-Friendli-Key",
+            ["publicai"] = "X-PublicAI-Key",
         };
 
     public string? Resolve(string provider)

@@ -1,6 +1,7 @@
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.Perplexity.Models;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Perplexity;
@@ -55,7 +56,7 @@ public static class PerplexityMappingExtensions
             }
 
             // Image file parts (base64 data URIs)
-            foreach (var filePart in msg.Parts.OfType<AIHappey.Common.Model.FileUIPart>())
+            foreach (var filePart in msg.Parts.OfType<FileUIPart>())
             {
                 if (filePart.MediaType is not null
                     && filePart.MediaType
@@ -94,7 +95,7 @@ public static class PerplexityMappingExtensions
             if (contentParts.Count == 0) continue;
 
             // System role handling: only use the first system message as a param, not a message
-            if (msg.Role == Common.Model.Role.system && systemRole == null)
+            if (msg.Role == Vercel.Models.Role.system && systemRole == null)
             {
                 // If there are text parts, take the first as system prompt
                 var firstText = contentParts

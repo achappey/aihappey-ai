@@ -1,10 +1,6 @@
-using System.Runtime.CompilerServices;
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.MurfAI;
 

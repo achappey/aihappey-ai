@@ -1,14 +1,12 @@
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using Mscc.GenerativeAI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
-    : IModelProvider
 {
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {

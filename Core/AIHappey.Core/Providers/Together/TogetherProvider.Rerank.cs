@@ -1,18 +1,15 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider : IModelProvider
+public partial class TogetherProvider
 {
     public async Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
@@ -84,27 +81,7 @@ public partial class TogetherProvider : IModelProvider
         };
 
     }
-
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
+    
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

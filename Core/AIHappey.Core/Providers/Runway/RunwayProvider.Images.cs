@@ -8,10 +8,12 @@ using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Runway;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Runway;
 
-public partial class RunwayProvider : IModelProvider
+public partial class RunwayProvider
 {
    
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
@@ -28,7 +30,7 @@ public partial class RunwayProvider : IModelProvider
         ApplyAuthHeader();
         
         var now = DateTime.UtcNow;
-        var metadata = imageRequest.GetImageProviderMetadata<RunwayImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<RunwayImageProviderMetadata>(GetIdentifier());
         var payload = new
         {
             promptText = imageRequest.Prompt,

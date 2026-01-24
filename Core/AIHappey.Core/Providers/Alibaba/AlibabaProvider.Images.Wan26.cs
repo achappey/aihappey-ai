@@ -2,8 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Alibaba;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Alibaba;
 

@@ -1,10 +1,10 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Freepik;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -53,7 +53,7 @@ public sealed partial class FreepikProvider
         if (imageRequest.Files?.Any() == true)
             warnings.Add(new { type = "unsupported", feature = "files", details = "Classic Fast is text-to-image; input images were ignored." });
 
-        var metadata = imageRequest.GetImageProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
         var cfg = metadata?.ImageGeneration?.ClassicFast;
 
         // Request body (maps 1:1 to Freepik Classic Fast)
@@ -195,7 +195,7 @@ public sealed partial class FreepikProvider
         if (imageRequest.N is not null && imageRequest.N.Value != 1)
             warnings.Add(new { type = "unsupported", feature = "n", details = "Freepik text-to-image returns one image per request; generated a single image." });
 
-        var metadata = imageRequest.GetImageProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
         var ig = metadata?.ImageGeneration;
 
         var (endpointPath, payload) = BuildTextToImagePayload(imageRequest, ig, warnings);
@@ -282,7 +282,7 @@ public sealed partial class FreepikProvider
 
     private static (string endpointPath, Dictionary<string, object?> payload) BuildTextToImagePayload(
         ImageRequest imageRequest,
-        AIHappey.Common.Model.Providers.Freepik.ImageGeneration.ImageGeneration? imageGeneration,
+        Common.Model.Providers.Freepik.ImageGeneration.ImageGeneration? imageGeneration,
         List<object> warnings)
     {
         var model = imageRequest.Model.Trim();

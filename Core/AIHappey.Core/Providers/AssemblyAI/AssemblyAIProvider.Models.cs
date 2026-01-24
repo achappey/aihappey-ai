@@ -1,13 +1,6 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
-using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
-using System.Text.Json.Serialization;
-using AIHappey.Core.Extensions;
-using System.Text.Json;
-using System.Net.Http.Json;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 

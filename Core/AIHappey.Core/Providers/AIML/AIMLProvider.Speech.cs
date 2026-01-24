@@ -1,15 +1,13 @@
-using AIHappey.Core.AI;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.AIML;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.AIML;
 
-public partial class AIMLProvider : IModelProvider
+public partial class AIMLProvider
 {
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken)
     {
@@ -36,7 +34,7 @@ public partial class AIMLProvider : IModelProvider
         if (!string.IsNullOrWhiteSpace(request.OutputFormat))
             warnings.Add(new { type = "unsupported", feature = "outputFormat" });
 
-        var metadata = request.GetSpeechProviderMetadata<AIMLSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<AIMLSpeechProviderMetadata>(GetIdentifier());
 
         // Build model-aware payload (lyrics only for minimax/music-2.0 etc.).
         var payload = request.GetAudioRequestPayload(metadata, warnings);

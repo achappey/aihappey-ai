@@ -1,14 +1,14 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Hyperbolic;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
-public partial class HyperbolicProvider : IModelProvider
+public partial class HyperbolicProvider 
 {
     public async Task<ImageResponse> ImageRequest(
      ImageRequest imageRequest,
@@ -16,7 +16,7 @@ public partial class HyperbolicProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var metadata = imageRequest.GetImageProviderMetadata<HyperbolicImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<HyperbolicImageProviderMetadata>(GetIdentifier());
         var now = DateTime.UtcNow;
 
         // ---- size handling ----

@@ -1,10 +1,10 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Freepik;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -54,7 +54,7 @@ public sealed partial class FreepikProvider
         if (LooksLikeDataUrl(firstFile.Data))
             throw new ArgumentException("files[0].data must be raw base64 (data URLs are not supported for Freepik relight).", nameof(imageRequest));
 
-        var metadata = imageRequest.GetImageProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
         var relight = metadata?.Relight;
 
         var startPayload = BuildRelightPayload(firstFile.Data, imageRequest.Prompt, relight, warnings);

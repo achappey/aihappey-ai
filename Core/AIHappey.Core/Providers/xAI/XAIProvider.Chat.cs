@@ -7,11 +7,11 @@ using AIHappey.Common.Extensions;
 using System.Net.Mime;
 using System.Dynamic;
 using AIHappey.Common.Model.Providers.XAI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.xAI;
 
-public partial class XAIProvider : IModelProvider
+public partial class XAIProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

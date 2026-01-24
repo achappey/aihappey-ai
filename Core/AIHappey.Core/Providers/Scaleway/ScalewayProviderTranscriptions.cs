@@ -1,15 +1,15 @@
 using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Scaleway;
 using System.Globalization;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Scaleway;
 
-public partial class ScalewayProvider : IModelProvider
+public partial class ScalewayProvider
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(
           TranscriptionRequest request,
@@ -18,7 +18,7 @@ public partial class ScalewayProvider : IModelProvider
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetTranscriptionProviderMetadata<ScalewayTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<ScalewayTranscriptionProviderMetadata>(GetIdentifier());
         using var form = new MultipartFormDataContent();
 
         // file (required)

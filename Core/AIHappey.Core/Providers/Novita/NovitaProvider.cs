@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -70,7 +70,7 @@ public partial class NovitaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

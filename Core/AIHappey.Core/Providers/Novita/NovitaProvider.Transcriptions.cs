@@ -1,10 +1,10 @@
-using AIHappey.Core.AI;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using System.Text;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -16,7 +16,7 @@ public partial class NovitaProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var metadata = request.GetTranscriptionProviderMetadata<NovitaTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<NovitaTranscriptionProviderMetadata>(GetIdentifier());
 
         // Novita expects:
         // - file: base64 string OR URL

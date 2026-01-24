@@ -1,12 +1,11 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using System.Net.Http.Headers;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.AIML;
 
-public partial class AIMLProvider : IModelProvider
+public partial class AIMLProvider
 {
 
     public async Task<TranscriptionResponse> TranscriptionRequest(

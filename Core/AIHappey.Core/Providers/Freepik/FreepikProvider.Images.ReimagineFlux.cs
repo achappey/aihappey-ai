@@ -1,9 +1,9 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Freepik;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -60,7 +60,7 @@ public sealed partial class FreepikProvider
         if (string.IsNullOrWhiteSpace(imageRequest.Prompt))
             warnings.Add(new { type = "compatibility", feature = "prompt", details = "Freepik reimagine-flux works best with a prompt; prompt was empty so only the image will be used." });
 
-        var metadata = imageRequest.GetImageProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<FreepikImageProviderMetadata>(GetIdentifier());
         var cfg = metadata?.ReimagineFlux;
 
         var payload = BuildReimagineFluxPayload(firstFile.Data, imageRequest.Prompt, cfg, warnings);

@@ -1,8 +1,11 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using ModelContextProtocol.Protocol;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
 
@@ -13,11 +16,11 @@ public static class ModelProviderImageExtensions
       [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var prompt = string.Join("\n", chatRequest.Messages?
-            .LastOrDefault(m => m.Role == Common.Model.Role.user)
+            .LastOrDefault(m => m.Role == Vercel.Models.Role.user)
             ?.Parts?.OfType<TextUIPart>().Select(a => a.Text) ?? []);
 
         var inputFiles = chatRequest.Messages?
-            .LastOrDefault(m => m.Role == Common.Model.Role.user)
+            .LastOrDefault(m => m.Role == Vercel.Models.Role.user)
             ?.Parts?.GetImages()
                 .Select(a => a.ToImageFile()) ?? [];
 
@@ -112,6 +115,7 @@ public static class ModelProviderImageExtensions
         {
             Model = model,
             Prompt = input,
+            ProviderOptions = chatRequest.Metadata.ToDictionary(),
             Files = inputImages.Select(a => new ImageFile()
             {
                 MediaType = a.MimeType,
@@ -122,6 +126,21 @@ public static class ModelProviderImageExtensions
         var result = await modelProvider.ImageRequest(imageRequest, cancellationToken) ?? throw new Exception("No result.");
 
         return result.ToCreateMessageResult();
+    }
+
+    public static Dictionary<string, JsonElement>? ToDictionary(this JsonElement? element)
+    {
+        if (element is null || element.Value.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var dict = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var prop in element.Value.EnumerateObject())
+        {
+            dict[prop.Name] = prop.Value;
+        }
+
+        return dict;
     }
 
     public static ImageContentBlock ToImageContentBlock(

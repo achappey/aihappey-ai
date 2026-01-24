@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.ElevenLabs;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
@@ -33,7 +33,7 @@ public partial class ElevenLabsProvider
         if (string.Equals(normalizedModel, "eleven_text_to_sound_v2", StringComparison.OrdinalIgnoreCase))
             return await TextToSoundRequest(request, cancellationToken);
 
-        var metadata = request.GetSpeechProviderMetadata<ElevenLabsSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<ElevenLabsSpeechProviderMetadata>(GetIdentifier());
 
         var voice = request.Voice ?? metadata?.Voice;
 

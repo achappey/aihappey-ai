@@ -1,10 +1,7 @@
-using System.Runtime.CompilerServices;
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.AI;
+using AIHappey.Responses;
 using Azure;
 using Azure.AI.Translation.Text;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -97,135 +94,6 @@ public sealed partial class AzureProvider
         }
 
         return translated;
-    }
-
-    internal async Task<CreateMessageResult> TranslateSamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        string modelId,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
-
-        var texts = chatRequest.Messages
-            .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(m => m.Content.OfType<TextContentBlock>())
-            .Select(b => b.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
-
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        var joined = string.Join("\n", translated);
-
-        return new CreateMessageResult
-        {
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            Model = modelId,
-            StopReason = "stop",
-            Content = [joined.ToTextContentBlock()]
-        };
-    }
-
-    internal async Task<Common.Model.Responses.ResponseResult> TranslateResponsesAsync(
-        ResponseRequest options,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var modelId = options.Model ?? throw new ArgumentException(nameof(options.Model));
-        var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
-
-        var texts = ExtractResponseRequestTexts(options);
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        var joined = string.Join("\n", translated);
-
-        var now = DateTimeOffset.UtcNow;
-        return new Common.Model.Responses.ResponseResult
-        {
-            Id = Guid.NewGuid().ToString("n"),
-            Model = modelId,
-            CreatedAt = now.ToUnixTimeSeconds(),
-            CompletedAt = now.ToUnixTimeSeconds(),
-            Output =
-            [
-                new
-                {
-                    type = "message",
-                    id = Guid.NewGuid().ToString("n"),
-                    status = "completed",
-                    role = "assistant",
-                    content = new[]
-                    {
-                        new
-                        {
-                            type = "output_text",
-                            text = joined,
-                            annotations = Array.Empty<string>()
-                        }
-                    }
-                }
-            ]
-        };
-    }
-
-    internal async IAsyncEnumerable<UIMessagePart> StreamTranslateAsync(
-        ChatRequest chatRequest,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var targetLanguage = GetTranslateTargetLanguageFromModel(chatRequest.Model);
-
-        // Translate each incoming text part from the last user message.
-        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == AIHappey.Common.Model.Role.user);
-        var texts = lastUser?.Parts?.OfType<TextUIPart>()
-            .Select(p => p.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList() ?? [];
-
-        if (texts.Count == 0)
-        {
-            yield return "No prompt provided.".ToErrorUIPart();
-            yield break;
-        }
-
-        IReadOnlyList<string>? translated = null;
-        string? error = null;
-
-        try
-        {
-            translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-
-        if (!string.IsNullOrWhiteSpace(error))
-        {
-            yield return error!.ToErrorUIPart();
-            yield break;
-        }
-
-        var id = Guid.NewGuid().ToString("n");
-        yield return id.ToTextStartUIMessageStreamPart();
-
-        for (var i = 0; i < translated!.Count; i++)
-        {
-            var text = translated[i];
-            var delta = (i == translated.Count - 1) ? text : (text + "\n");
-            yield return new TextDeltaUIMessageStreamPart { Id = id, Delta = delta };
-        }
-
-        yield return id.ToTextEndUIMessageStreamPart();
-        yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, chatRequest.Temperature);
     }
 }
 

@@ -1,9 +1,8 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using OpenAI.Audio;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -16,7 +15,7 @@ public partial class OpenAIProvider : IModelProvider
                GetKey()
            );
 
-        var metadata = request.GetSpeechProviderMetadata<OpenAiSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<OpenAiSpeechProviderMetadata>(GetIdentifier());
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 

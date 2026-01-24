@@ -2,11 +2,12 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Common.Model.Responses.Streaming;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Verda;
 
@@ -50,7 +51,7 @@ public partial class VerdaProvider
         => await this.ImageSamplingAsync(chatRequest, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -70,18 +71,12 @@ public partial class VerdaProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 }
 

@@ -4,11 +4,12 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Hyperstack;
 
-public partial class HyperstackProvider : IModelProvider
+public partial class HyperstackProvider
 {
     private static readonly JsonSerializerOptions completionOptions = new(JsonSerializerOptions.Web)
     {

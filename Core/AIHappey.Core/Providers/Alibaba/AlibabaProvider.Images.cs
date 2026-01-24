@@ -3,10 +3,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Alibaba;
 
@@ -32,7 +32,7 @@ public partial class AlibabaProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var providerMetadata = imageRequest.GetImageProviderMetadata<AlibabaImageProviderMetadata>(GetIdentifier());
+        var providerMetadata = imageRequest.GetProviderMetadata<AlibabaImageProviderMetadata>(GetIdentifier());
 
         var modelName = NormalizeAlibabaModelName(imageRequest.Model);
 

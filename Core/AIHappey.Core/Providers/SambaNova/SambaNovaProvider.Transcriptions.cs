@@ -1,15 +1,14 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.SambaNova;
-using AIHappey.Common.Model.Responses;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
-public partial class SambaNovaProvider : IModelProvider
+public partial class SambaNovaProvider
 {
 
     public async Task<TranscriptionResponse> TranscriptionRequest(
@@ -18,7 +17,7 @@ public partial class SambaNovaProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var metadata = request.GetTranscriptionProviderMetadata<SambaNovaTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<SambaNovaTranscriptionProviderMetadata>(GetIdentifier());
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
 
@@ -90,18 +89,4 @@ public partial class SambaNovaProvider : IModelProvider
         };
     }
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }

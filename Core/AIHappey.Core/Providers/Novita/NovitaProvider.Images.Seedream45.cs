@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
 using System.Net.Mime;
@@ -8,6 +7,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -33,7 +34,7 @@ public partial class NovitaProvider : IModelProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var providerMetadata = request.GetImageProviderMetadata<NovitaImageProviderMetadata>(GetIdentifier());
+        var providerMetadata = request.GetProviderMetadata<NovitaImageProviderMetadata>(GetIdentifier());
         var seedream = providerMetadata?.Seedream45;
 
         if (!string.IsNullOrWhiteSpace(request.AspectRatio))

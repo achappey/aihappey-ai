@@ -1,6 +1,7 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.AIML;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -10,7 +11,7 @@ public static class AIMLExtensions
 
     /// <summary>
     /// Best-effort payload builder for AIML audio generation models routed via the unified
-    /// <see cref="AIHappey.Common.Model.SpeechRequest"/>.
+    /// <see cref="SpeechRequest"/>.
     /// </summary>
     public static object GetAudioRequestPayload(this SpeechRequest request, AIMLSpeechProviderMetadata? metadata, List<object> warnings)
     {
@@ -62,7 +63,7 @@ public static class AIMLExtensions
     {
         var width = imageRequest.GetImageWidth();
         var height = imageRequest.GetImageHeight();
-        var metadata = imageRequest.GetImageProviderMetadata<AIMLImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<AIMLImageProviderMetadata>(GetIdentifier());
 
         return imageRequest.Model switch
         {
@@ -84,7 +85,7 @@ public static class AIMLExtensions
             {
                 prompt = imageRequest.Prompt,
                 model = imageRequest.Model,
-                image_urls = imageRequest.Files?.Select(a => a.Data.ToDataUrl(a.MediaType)),
+                image_urls = imageRequest.Files?.Select(a => Common.Extensions.ImageExtensions.ToDataUrl(a.Data, a.MediaType)),
                 aspect_ratio = imageRequest.AspectRatio,
                 num_images = imageRequest.N
             },

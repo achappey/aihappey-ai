@@ -1,4 +1,4 @@
-using AIHappey.Common.Model;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -8,7 +8,7 @@ public sealed partial class FreepikProvider
         string endpointPath,
         string model,
         ImageRequest imageRequest,
-        AIHappey.Common.Model.Providers.Freepik.ImageGeneration.ImageGeneration? imageGeneration,
+        Common.Model.Providers.Freepik.ImageGeneration.ImageGeneration? imageGeneration,
         Dictionary<string, object?> payload,
         List<object> warnings)
     {

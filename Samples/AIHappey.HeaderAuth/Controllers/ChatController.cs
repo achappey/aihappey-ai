@@ -4,6 +4,7 @@ using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

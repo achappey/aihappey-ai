@@ -4,6 +4,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.LectoAI;
@@ -98,7 +99,7 @@ public sealed partial class LectoAIProvider : IModelProvider
             yield return p;
     }
 
-    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         // Ensure key is present on request-time.
         ApplyAuthHeader();
@@ -107,7 +108,7 @@ public sealed partial class LectoAIProvider : IModelProvider
         return await TranslateResponsesAsync(options, cancellationToken);
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 }
 

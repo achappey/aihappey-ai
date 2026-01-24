@@ -1,14 +1,8 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
-using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using System.Runtime.CompilerServices;
-using System.Text.Json.Nodes;
 using System.Text.Json;
-using System.Text;
-using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 
@@ -95,10 +89,10 @@ public partial class AssemblyAIProvider : IModelProvider
             Id = id,
             Created = created,
             Model = model,
-            Choices = new object[]
-            {
+            Choices =
+            [
                 new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
-            },
+            ],
             Usage = null
         };
 
@@ -116,10 +110,10 @@ public partial class AssemblyAIProvider : IModelProvider
                 Id = id,
                 Created = created,
                 Model = model,
-                Choices = new object[]
-                {
+                Choices =
+                [
                     new { index = 0, delta = deltaObj, finish_reason = (string?)null }
-                },
+                ],
                 Usage = null
             };
         }
@@ -130,10 +124,10 @@ public partial class AssemblyAIProvider : IModelProvider
             Id = id,
             Created = created,
             Model = model,
-            Choices = new object[]
-            {
+            Choices =
+            [
                 new { index = 0, delta = new { }, finish_reason = finishReason ?? "stop" }
-            },
+            ],
             Usage = result.Usage
         };
     }

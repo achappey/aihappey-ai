@@ -7,6 +7,17 @@ namespace AIHappey.Core.Providers.ModernMT;
 
 public sealed partial class ModernMTProvider
 {
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        // Avoid throwing during model discovery when the key is not configured.
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return [];
+
+        ApplyAuthHeader();
+
+        return await ListTranslationModelsAsync(cancellationToken);
+    }
+
     private async Task<IEnumerable<Model>> ListTranslationModelsAsync(CancellationToken cancellationToken)
     {
         // ModernMT docs: GET /translate/languages
@@ -48,7 +59,7 @@ public sealed partial class ModernMTProvider
 
             models.Add(new Model
             {
-                OwnedBy = "ModernMT",
+                OwnedBy = nameof(ModernMT),
                 Type = "language",
                 Id = $"translate/{languageCode}".ToModelId(GetIdentifier()),
                 Name = $"Translate to {languageCode}",

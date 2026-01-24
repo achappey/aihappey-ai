@@ -2,9 +2,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.TTSReader;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.TTSReader;
 
@@ -31,7 +31,7 @@ public partial class TTSReaderProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetSpeechProviderMetadata<TTSReaderSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<TTSReaderSpeechProviderMetadata>(GetIdentifier());
 
         var voiceId = (request.Voice ?? metadata?.Voice)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))

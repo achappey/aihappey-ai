@@ -3,11 +3,11 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.SambaNova;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
-public partial class SambaNovaProvider : IModelProvider
+public partial class SambaNovaProvider
 {
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
     {

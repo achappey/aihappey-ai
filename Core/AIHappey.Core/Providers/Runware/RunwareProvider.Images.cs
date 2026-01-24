@@ -1,9 +1,8 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Runware;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Runware;
 
@@ -26,7 +25,7 @@ public sealed partial class RunwareProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var options = imageRequest.GetImageProviderMetadata<RunwareImageProviderMetadata>(GetIdentifier());
+        var options = imageRequest.GetProviderMetadata<RunwareImageProviderMetadata>(GetIdentifier());
 
         var payloadTask = BuildImageInferencePayload(imageRequest, options);
 

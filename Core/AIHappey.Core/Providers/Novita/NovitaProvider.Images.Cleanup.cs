@@ -3,10 +3,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Novita;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -30,7 +31,7 @@ public partial class NovitaProvider : IModelProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var providerMetadata = request.GetImageProviderMetadata<NovitaImageProviderMetadata>(GetIdentifier());
+        var providerMetadata = request.GetProviderMetadata<NovitaImageProviderMetadata>(GetIdentifier());
         var removeText = providerMetadata?.Editor;
 
         if (!string.IsNullOrWhiteSpace(request.Prompt))

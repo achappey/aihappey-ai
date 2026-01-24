@@ -1,10 +1,9 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.CanopyWave;
 
-public partial class CanopyWaveProvider : IModelProvider
+public partial class CanopyWaveProvider
 {
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

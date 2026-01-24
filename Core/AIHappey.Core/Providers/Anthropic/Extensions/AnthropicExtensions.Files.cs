@@ -1,6 +1,6 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using ANT = Anthropic.SDK;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Anthropic.Extensions;
 

@@ -4,6 +4,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Lingvanex;
@@ -38,19 +39,19 @@ public sealed partial class LingvanexProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -61,6 +62,7 @@ public sealed partial class LingvanexProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
         return await ListTranslationModelsAsync(cancellationToken);
     }
 
@@ -84,32 +86,20 @@ public sealed partial class LingvanexProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var model = await this.GetModel(chatRequest.Model, cancellationToken: cancellationToken);
-        if (!string.Equals(model.Type, "language", StringComparison.OrdinalIgnoreCase))
-            throw new NotImplementedException();
 
         await foreach (var p in StreamTranslateAsync(chatRequest, cancellationToken))
             yield return p;
     }
 
-    public async Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(options);
-
-        var modelId = options.Model ?? throw new ArgumentException(nameof(options.Model));
-        var model = await this.GetModel(modelId, cancellationToken);
-
-        if (!string.Equals(model.Type, "language", StringComparison.OrdinalIgnoreCase))
-            throw new NotImplementedException();
 
         // Lingvanex metadata is NOT supported on Responses endpoint initially (model-only).
         return await TranslateResponsesAsync(options, cancellationToken);
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 }
 

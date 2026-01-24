@@ -6,6 +6,9 @@ using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses.Streaming;
+using AIHappey.Responses;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Runway;
 
@@ -70,14 +73,33 @@ public partial class RunwayProvider : IModelProvider
        ChatRequest chatRequest,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken))
-            yield return update;
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    await foreach (var update in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                        yield return update;
+
+                    yield break;
+                }
+
+            case "image":
+                {
+                    await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken))
+                        yield return update;
+
+                    yield break;
+                }
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
         => string.Equals(request?.Model, "eleven_text_to_sound_v2", StringComparison.OrdinalIgnoreCase)
@@ -85,21 +107,19 @@ public partial class RunwayProvider : IModelProvider
             : RunwayTextToSpeechAsync(request!, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<Common.Model.Responses.ResponseResult> ResponsesAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Common.Model.Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

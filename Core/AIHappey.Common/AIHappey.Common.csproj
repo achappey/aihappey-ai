@@ -11,10 +11,13 @@
       <PackageReference Include="ModelContextProtocol" Version="0.6.0-preview.1" />
       <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.6.0-preview.1" />		
       <PackageReference Include="Mscc.GenerativeAI" Version="2.9.8" />
-      <PackageReference Include="Anthropic.SDK" Version="5.8.0" />
+      <PackageReference Include="Anthropic.SDK" Version="5.9.0" />
       <PackageReference Include="OpenAI" Version="2.8.0" />
       <PackageReference Include="Microsoft.Identity.Web" Version="4.3.0" />
 
   </ItemGroup>
-
+<ItemGroup>
+    <ProjectReference Include="..\AIhappey.Responses\AIhappey.Responses.csproj" />
+    <ProjectReference Include="..\AIhappey.Vercel\AIhappey.Vercel.csproj" />
+  </ItemGroup>
 </Project>

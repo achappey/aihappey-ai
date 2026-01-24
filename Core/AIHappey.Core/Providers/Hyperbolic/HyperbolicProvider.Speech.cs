@@ -2,10 +2,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Hyperbolic;
-using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
@@ -52,7 +51,7 @@ public partial class HyperbolicProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetSpeechProviderMetadata<HyperbolicSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<HyperbolicSpeechProviderMetadata>(GetIdentifier());
 
         // Merge unified fields with providerOptions.
         var language = (request.Language ?? metadata?.Language)?.Trim();

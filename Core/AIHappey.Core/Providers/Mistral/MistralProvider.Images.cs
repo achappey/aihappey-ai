@@ -4,14 +4,13 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Mistral;
 
-public partial class MistralProvider : IModelProvider
+public partial class MistralProvider
 {
 
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)

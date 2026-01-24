@@ -1,5 +1,5 @@
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -7,7 +7,7 @@ public sealed partial class FreepikProvider
 {
     private static void ApplyFlux2ProPayload(
         ImageRequest imageRequest,
-        AIHappey.Common.Model.Providers.Freepik.ImageGeneration.ImageGeneration? imageGeneration,
+        Common.Model.Providers.Freepik.ImageGeneration.ImageGeneration? imageGeneration,
         Dictionary<string, object?> payload,
         List<object> warnings)
     {

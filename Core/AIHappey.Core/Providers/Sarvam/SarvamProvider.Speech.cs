@@ -2,10 +2,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Sarvam;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -35,7 +34,7 @@ public partial class SarvamProvider
         if (request.Speed is not null)
             warnings.Add(new { type = "unsupported", feature = "speed" });
 
-        var metadata = request.GetSpeechProviderMetadata<SarvamSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<SarvamSpeechProviderMetadata>(GetIdentifier());
 
         // Sarvam requires target_language_code.
         var targetLanguageCode =

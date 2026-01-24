@@ -1,8 +1,7 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 

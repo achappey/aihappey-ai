@@ -2,9 +2,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.MurfAI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MurfAI;
 
@@ -32,7 +32,7 @@ public sealed partial class MurfAIProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetSpeechProviderMetadata<MurfAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<MurfAISpeechProviderMetadata>(GetIdentifier());
 
         // ---- required: voiceId ----
         var voiceId = (metadata?.VoiceId ?? request.Voice)?.Trim();

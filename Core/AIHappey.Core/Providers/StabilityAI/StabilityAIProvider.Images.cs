@@ -1,22 +1,20 @@
-using AIHappey.Core.AI;
 using System.Net.Http.Headers;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text;
 using System.Globalization;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.StabilityAI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
-public partial class StabilityAIProvider : IModelProvider
+public partial class StabilityAIProvider
 {
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        var metadata = imageRequest.GetImageProviderMetadata<StabilityAIImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<StabilityAIImageProviderMetadata>(GetIdentifier());
         ArgumentNullException.ThrowIfNull(imageRequest);
         if (string.IsNullOrWhiteSpace(imageRequest.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(imageRequest));
@@ -221,10 +219,5 @@ public partial class StabilityAIProvider : IModelProvider
         }
 
         return raw;
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
     }
 }

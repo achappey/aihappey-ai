@@ -1,9 +1,10 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.ElevenLabs;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
@@ -13,7 +14,7 @@ public partial class ElevenLabsProvider
     {
         ApplyAuthHeader();
 
-        var metadata = request.GetTranscriptionProviderMetadata<ElevenLabsTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<ElevenLabsTranscriptionProviderMetadata>(GetIdentifier());
 
         var modelId = !string.IsNullOrWhiteSpace(request.Model)
             ? request.Model

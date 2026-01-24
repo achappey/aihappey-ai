@@ -1,6 +1,6 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Model.Responses;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Responses;
+using AIHappey.Responses.Extensions;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -14,7 +14,7 @@ public partial class XAIProvider : IModelProvider
                    options, ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<Common.Model.Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
