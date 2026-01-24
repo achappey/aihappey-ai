@@ -21,7 +21,6 @@ public partial class PublicAIProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.publicai.co/");
     }
 
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());

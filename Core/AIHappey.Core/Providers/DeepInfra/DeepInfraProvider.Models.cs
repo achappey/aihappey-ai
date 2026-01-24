@@ -238,6 +238,10 @@ public sealed partial class DeepInfraProvider
         new() { Id = "Bria/Bria-3.2".ToModelId("deepinfra"), Name = "Bria-3.2", Type = "image", OwnedBy = "Bria" },
         new() { Id = "Bria/Bria-3.2-vector".ToModelId("deepinfra"), Name = "Bria-3.2-vector", Type = "image", OwnedBy = "Bria" },
         new() { Id = "Bria/fibo".ToModelId("deepinfra"), Name = "fibo", Type = "image", OwnedBy = "Bria" },
+        new() { Id = "Bria/enhance".ToModelId("deepinfra"), Name = "enhance", Type = "image", OwnedBy = "Bria" },
+        new() { Id = "Bria/expand".ToModelId("deepinfra"), Name = "expand", Type = "image", OwnedBy = "Bria" },
+        new() { Id = "Bria/blur_background".ToModelId("deepinfra"), Name = "blur background", Type = "image", OwnedBy = "Bria" },
+        new() { Id = "Bria/erase_foreground".ToModelId("deepinfra"), Name = "erase foreground", Type = "image", OwnedBy = "Bria" },
 
         // ---- ByteDance ----
         new() { Id = "ByteDance/Seedream-4".ToModelId("deepinfra"), Name = "Seedream-4", Type = "image", OwnedBy = "ByteDance" },

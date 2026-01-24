@@ -49,6 +49,12 @@ public sealed partial class SarvamProvider : IModelProvider
             return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
         }
 
+        if (model.Id.Contains("translate"))
+        {
+            ApplyAuthHeader();
+            return await TranslateSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 
@@ -82,6 +88,12 @@ public sealed partial class SarvamProvider : IModelProvider
         if (model.Type == "speech")
         {
             return await this.SpeechResponseAsync(options, cancellationToken);
+        }
+
+        if (model.Id.Contains("translate"))
+        {
+            ApplyAuthHeader();
+            return await TranslateResponsesAsync(options, cancellationToken);
         }
 
         throw new NotImplementedException();

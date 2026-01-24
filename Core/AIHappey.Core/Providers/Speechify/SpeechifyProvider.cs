@@ -51,14 +51,10 @@ public partial class SpeechifyProvider : IModelProvider
         => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -71,9 +67,8 @@ public partial class SpeechifyProvider : IModelProvider
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request,
         CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
+
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
         => await this.SpeechResponseAsync(options, cancellationToken);
@@ -89,9 +84,7 @@ public partial class SpeechifyProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public static IReadOnlyList<Model> SpeechifyModels =>
  [
@@ -99,6 +92,7 @@ public partial class SpeechifyProvider : IModelProvider
         Name = "simba-english",
         Type = "speech",
         OwnedBy = "Speechify" },
+    
     new() { Id = "simba-multilingual".ToModelId(nameof(Speechify).ToLowerInvariant()),
         Name = "simba-multilingual",
         Type = "speech",

@@ -58,6 +58,9 @@ public partial class FireworksProvider
             new() { Id = "fireworks/whisper-v3", Name = "Whisper v3", Type = "transcription", OwnedBy = "openai" },
             new() { Id = "fireworks/whisper-v3-turbo",  Name = "Whisper v3 Turbo",  Type = "transcription", OwnedBy = "openai" },
 
+            new() { Id = "fireworks/whisper-v3/translate", Name = "Whisper v3 Translate to English", Type = "transcription", OwnedBy = "openai" },
+            new() { Id = "fireworks/whisper-v3-turbo/translate",  Name = "Whisper v3 Turbo Translate to English",  Type = "transcription", OwnedBy = "openai" },
+
             // ===== Qwen3 Rerankers =====
             new() { Id = "fireworks/fireworks/qwen3-reranker-8b",   Name = "Qwen3 Reranker 8B",   Type = "reranking", OwnedBy = "qwen" },
 

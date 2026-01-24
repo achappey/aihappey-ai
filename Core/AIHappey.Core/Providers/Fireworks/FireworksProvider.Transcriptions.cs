@@ -15,6 +15,19 @@ public partial class FireworksProvider
        TranscriptionRequest request,
        CancellationToken cancellationToken = default)
     {
+        if (request.Model.EndsWith("/translate"))
+        {
+            return await TranslationRequest(request, cancellationToken);
+        }
+
+        return await DefaultTranscriptionRequest(request, cancellationToken);
+    }
+
+
+    private async Task<TranscriptionResponse> DefaultTranscriptionRequest(
+        TranscriptionRequest request,
+        CancellationToken cancellationToken = default)
+    {
         ApplyAuthHeader();
 
         var metadata = request.GetProviderMetadata<FireworksTranscriptionProviderMetadata>(GetIdentifier());
@@ -93,6 +106,87 @@ public partial class FireworksProvider
             if (metadata?.MaxSpeakers is int max)
                 form.Add(new StringContent(max.ToString(CultureInfo.InvariantCulture)), "max_speakers");
         }
+
+        using var resp = await _client.PostAsync(url, form, cancellationToken);
+        var json = await resp.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Fireworks STT failed ({(int)resp.StatusCode}): {json}");
+
+        return ConvertTranscriptionResponse(json, request.Model);
+    }
+
+    private async Task<TranscriptionResponse> TranslationRequest(
+         TranscriptionRequest request,
+         CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        var metadata = request.GetProviderMetadata<FireworksTranscriptionProviderMetadata>(GetIdentifier());
+
+        // Fireworks docs: model = whisper-v3 or whisper-v3-turbo
+        var baseUrl = request.Model.Equals("whisper-v3-turbo", StringComparison.OrdinalIgnoreCase)
+            ? "https://audio-turbo.api.fireworks.ai"
+            : "https://audio-prod.api.fireworks.ai";
+
+        var url = $"{baseUrl}/v1/audio/transcriptions";
+
+        var bytes = Convert.FromBase64String(request.Audio.ToString()!);
+
+        using var form = new MultipartFormDataContent();
+
+        // file (required)
+        var fileName = "audio" + request.MediaType.GetAudioExtension(); // make sure this becomes .mp3/.wav/.flac etc
+        var file = new ByteArrayContent(bytes);
+
+        // Fireworks is fine with a per-part content-type
+        if (!string.IsNullOrWhiteSpace(request.MediaType))
+            file.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
+
+        form.Add(file, "file", fileName);
+
+        // model (optional, but we send it)
+        form.Add(new StringContent(request.Model), "model");
+
+        // Always ask for verbose_json so you get segments back (your converter supports it)
+
+        if (metadata?.TimestampGranularities?.Any() == true)
+            form.Add(new StringContent("verbose_json"), "response_format");
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Language))
+            form.Add(new StringContent(metadata.Language), "language");
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            form.Add(new StringContent(metadata.Prompt), "prompt");
+
+        // temperature (optional)
+        if (metadata?.Temperature is not null)
+        {
+            form.Add(
+                new StringContent(
+                    metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)
+                ),
+                "temperature"
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(metadata?.Preprocessing))
+            form.Add(new StringContent("preprocessing"), metadata.Preprocessing);
+
+        if (!string.IsNullOrWhiteSpace(metadata?.VadModel))
+            form.Add(new StringContent("vad_model"), metadata.VadModel);
+
+        if (!string.IsNullOrWhiteSpace(metadata?.AlignmentModel))
+            form.Add(new StringContent("alignment_model"), metadata.AlignmentModel);
+
+        if (metadata?.TimestampGranularities != null && metadata.TimestampGranularities.Any())
+        {
+            foreach (var g in metadata.TimestampGranularities)
+            {
+                form.Add(new StringContent(g), "timestamp_granularities[]");
+            }
+        }
+
 
         using var resp = await _client.PostAsync(url, form, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);

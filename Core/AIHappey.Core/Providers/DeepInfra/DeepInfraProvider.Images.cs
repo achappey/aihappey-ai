@@ -179,6 +179,238 @@ public sealed partial class DeepInfraProvider
         };
     }
 
+    private async Task<ImageResponse> BriaEnhanceAsync(
+        ImageRequest req,
+        CancellationToken ct)
+    {
+        ApplyAuthHeader();
+
+        var now = DateTime.UtcNow;
+        var metadata = req.GetProviderMetadata<DeepInfraImageProviderMetadata>(GetIdentifier());
+
+        var payload = new Dictionary<string, object?>
+        {
+        };
+
+        if (!string.IsNullOrEmpty(metadata?.BriaEnhance?.Resolution))
+        {
+            payload["resolution"] = metadata?.BriaEnhance?.Resolution;
+        }
+
+        if (req.Seed is not null)
+        {
+            payload["seed"] = req.Seed;
+        }
+
+        if (metadata?.BriaEnhance?.PreserveAlpha is not null)
+        {
+            payload["preserve_alpha"] = metadata?.BriaEnhance?.PreserveAlpha;
+        }
+
+        if (metadata?.BriaEnhance?.StepsNum is not null)
+        {
+            payload["steps_num"] = metadata?.BriaEnhance?.StepsNum;
+        }
+
+        if (req.Files?.Any() == true)
+        {
+            var file = req.Files.First();
+            payload["image"] = file.ToDataUrl();
+        }
+        else
+        {
+            throw new Exception("Input image required");
+        }
+
+        var json = JsonSerializer.Serialize(payload, ImageJson);
+
+        using var resp = await _client.PostAsync(
+            $"v1/inference/{req.Model}",
+            new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json),
+            ct);
+
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"{resp.StatusCode}: {raw}");
+
+        var images = await ExtractImagesAsDataUrlsAsync(raw, ct);
+        if (images.Count == 0)
+            throw new Exception("DeepInfra returned no images.");
+
+        return new ImageResponse
+        {
+            Images = images,
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = req.Model,
+                Body = JsonDocument.Parse(raw).RootElement.Clone()
+            }
+        };
+    }
+
+
+    private async Task<ImageResponse> BriaEraseForegroundAsync(
+        ImageRequest req,
+        CancellationToken ct)
+    {
+        ApplyAuthHeader();
+
+        var now = DateTime.UtcNow;
+
+        var payload = new Dictionary<string, object?>
+        {
+        };
+
+
+        if (req.Files?.Any() == true)
+        {
+            var file = req.Files.First();
+            payload["image"] = file.ToDataUrl();
+        }
+        else
+        {
+            throw new Exception("Input image required");
+        }
+
+        var json = JsonSerializer.Serialize(payload, ImageJson);
+
+        using var resp = await _client.PostAsync(
+            $"v1/inference/{req.Model}",
+            new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json),
+            ct);
+
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"{resp.StatusCode}: {raw}");
+
+        var images = await ExtractImagesAsDataUrlsAsync(raw, ct);
+        if (images.Count == 0)
+            throw new Exception("DeepInfra returned no images.");
+
+        return new ImageResponse
+        {
+            Images = images,
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = req.Model,
+                Body = JsonDocument.Parse(raw).RootElement.Clone()
+            }
+        };
+    }
+
+    private async Task<ImageResponse> BriaBlurBackgroundAsync(
+        ImageRequest req,
+        CancellationToken ct)
+    {
+        ApplyAuthHeader();
+
+        var now = DateTime.UtcNow;
+
+        var payload = new Dictionary<string, object?>
+        {
+        };
+
+
+        if (req.Files?.Any() == true)
+        {
+            var file = req.Files.First();
+            payload["image"] = file.ToDataUrl();
+        }
+        else
+        {
+            throw new Exception("Input image required");
+        }
+
+        var json = JsonSerializer.Serialize(payload, ImageJson);
+
+        using var resp = await _client.PostAsync(
+            $"v1/inference/{req.Model}",
+            new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json),
+            ct);
+
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"{resp.StatusCode}: {raw}");
+
+        var images = await ExtractImagesAsDataUrlsAsync(raw, ct);
+        if (images.Count == 0)
+            throw new Exception("DeepInfra returned no images.");
+
+        return new ImageResponse
+        {
+            Images = images,
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = req.Model,
+                Body = JsonDocument.Parse(raw).RootElement.Clone()
+            }
+        };
+    }
+
+
+    private async Task<ImageResponse> BriaExpandAsync(
+        ImageRequest req,
+        CancellationToken ct)
+    {
+        ApplyAuthHeader();
+
+        var now = DateTime.UtcNow;
+        var metadata = req.GetProviderMetadata<DeepInfraImageProviderMetadata>(GetIdentifier());
+
+        var payload = new Dictionary<string, object?>
+        {
+        };
+
+        if (!string.IsNullOrEmpty(req.Prompt))
+        {
+            payload["prompt"] = req.Prompt;
+        }
+
+        if (req.AspectRatio is not null)
+        {
+            payload["aspct_ratio"] = req.AspectRatio;
+        }
+
+        if (req.Files?.Any() == true)
+        {
+            var file = req.Files.First();
+            payload["image"] = file.ToDataUrl();
+        }
+        else
+        {
+            throw new Exception("Input image required");
+        }
+
+        var json = JsonSerializer.Serialize(payload, ImageJson);
+
+        using var resp = await _client.PostAsync(
+            $"v1/inference/{req.Model}",
+            new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json),
+            ct);
+
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"{resp.StatusCode}: {raw}");
+
+        var images = await ExtractImagesAsDataUrlsAsync(raw, ct);
+        if (images.Count == 0)
+            throw new Exception("DeepInfra returned no images.");
+
+        return new ImageResponse
+        {
+            Images = images,
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = req.Model,
+                Body = JsonDocument.Parse(raw).RootElement.Clone()
+            }
+        };
+    }
+
     private async Task<ImageResponse> ImageGenerateAsync(
         ImageRequest req,
         CancellationToken ct)
@@ -230,26 +462,33 @@ public sealed partial class DeepInfraProvider
         };
     }
 
-
     public async Task<ImageResponse> ImageRequest(
-    ImageRequest imageRequest,
-    CancellationToken cancellationToken)
+        ImageRequest imageRequest,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(imageRequest);
 
         if (string.IsNullOrWhiteSpace(imageRequest.Model))
             throw new ArgumentException("Model is required.", nameof(imageRequest));
 
-        if (string.IsNullOrWhiteSpace(imageRequest.Prompt))
-            throw new ArgumentException("Prompt is required.", nameof(imageRequest));
+        //  if (string.IsNullOrWhiteSpace(imageRequest.Prompt))
+        //     throw new ArgumentException("Prompt is required.", nameof(imageRequest));
 
         var isOAIEdit = imageRequest.Model.EndsWith("Qwen/Qwen-Image-Edit")
             || imageRequest.Model.EndsWith("black-forest-labs/FLUX.1-Kontext-dev");
         var isNativeEdit = imageRequest.Model.EndsWith("Bria/fibo");
+        var isBriaEnhance = imageRequest.Model.EndsWith("Bria/enhance");
+        var isBriaExpand = imageRequest.Model.EndsWith("Bria/expand");
+        var isBriaBlurBackground = imageRequest.Model.EndsWith("Bria/blur_background");
+        var isBriaEraseForeground = imageRequest.Model.EndsWith("Bria/erase_foreground");
 
         return isOAIEdit
             ? await OpenAIImageEditAsync(imageRequest, cancellationToken)
             : isNativeEdit ? await ImageEditAsync(imageRequest, cancellationToken)
+            : isBriaEnhance ? await BriaEnhanceAsync(imageRequest, cancellationToken)
+            : isBriaExpand ? await BriaExpandAsync(imageRequest, cancellationToken)
+            : isBriaBlurBackground ? await BriaBlurBackgroundAsync(imageRequest, cancellationToken)
+            : isBriaEraseForeground ? await BriaEraseForegroundAsync(imageRequest, cancellationToken)
             : await ImageGenerateAsync(imageRequest, cancellationToken);
     }
 

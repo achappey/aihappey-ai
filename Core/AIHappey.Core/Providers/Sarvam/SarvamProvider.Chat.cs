@@ -31,6 +31,16 @@ public partial class SarvamProvider : IModelProvider
             yield break;
         }
 
+        if (model.Id.Contains("translate"))
+        {
+            ApplyAuthHeader();
+            
+            await foreach (var p in StreamTranslateAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         Dictionary<string, object?> payload = [];
