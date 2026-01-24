@@ -32,6 +32,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Freepik        | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ➖                       | ✅        |
 | Friendli       | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Gladia         | ✅        | ➖          | ❌                | ❌            | ➖                     | ➖               | ✅                       | ❌        |
+| GMICloud       | ✅        | ➖          | ✅                | ❌            | ➖                     | ➖               | ➖                       | ❌        |
 | Google         | ✅        | ➖          | ❌                | ❌            | ✅                     | ✅               | ✅                       | ✅        |
 | GoogleTranslate| ✅        | ➖          | ❌                | 🟡            | ➖                     | ➖               | ➖                       | ✅        |
 | Groq           | ✅        | ➖          | ❌                | ❌            | ➖                     | ✅               | ✅                       | ✅        |

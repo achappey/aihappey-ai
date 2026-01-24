@@ -25,11 +25,7 @@ public partial class GTranslateProvider
         if (string.IsNullOrWhiteSpace(modelId))
             throw new ArgumentException("Model is required.", nameof(modelId));
 
-        var m = modelId.Contains('/')
-            ? modelId.SplitModelId().Model
-            : modelId;
-
-        m = m.Trim();
+        var m = modelId.Trim();
 
         var patterns = new (string Prefix, GTranslateBackend Backend)[]
         {

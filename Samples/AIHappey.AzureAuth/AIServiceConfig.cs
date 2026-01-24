@@ -67,6 +67,7 @@ public class AIServiceConfig
     public ProviderConfig? PublicAI { get; set; }
     public ProviderConfig? PrimeIntellect { get; set; }
     public ProviderConfig? OVHcloud { get; set; }
+    public ProviderConfig? GMICloud { get; set; }
 }
 
 public class ProviderConfig

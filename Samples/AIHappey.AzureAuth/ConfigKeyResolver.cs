@@ -75,6 +75,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "publicai" => _config.PublicAI?.ApiKey,
             "primeintellect" => _config.PrimeIntellect?.ApiKey,
             "ovhcloud" => _config.OVHcloud?.ApiKey,
+            "gmicloud" => _config.GMICloud?.ApiKey,
             _ => null
         };
 }
