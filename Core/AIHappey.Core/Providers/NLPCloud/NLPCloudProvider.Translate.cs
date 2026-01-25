@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Responses;

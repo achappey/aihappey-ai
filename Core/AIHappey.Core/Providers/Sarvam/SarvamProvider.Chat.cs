@@ -1,12 +1,11 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
-public partial class SarvamProvider : IModelProvider
+public partial class SarvamProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -34,7 +33,7 @@ public partial class SarvamProvider : IModelProvider
         if (model.Id.Contains("translate"))
         {
             ApplyAuthHeader();
-            
+
             await foreach (var p in StreamTranslateAsync(chatRequest, cancellationToken))
                 yield return p;
 

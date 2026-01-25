@@ -78,6 +78,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "gmicloud" => _config.GMICloud?.ApiKey,
             "byteplus" => _config.BytePlus?.ApiKey,
             "nlpcloud" => _config.NLPCloud?.ApiKey,
+            "moonshot" => _config.Moonshot?.ApiKey,
+            "upstage" => _config.Upstage?.ApiKey,
+            "siliconflow" => _config.SiliconFlow?.ApiKey,
             _ => null
         };
 }

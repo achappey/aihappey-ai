@@ -1,6 +1,7 @@
 
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Runtime.Serialization;
 
 namespace AIHappey.Responses;
 
@@ -19,7 +20,7 @@ public sealed class ResponseRequest
     public ResponseInput? Input { get; set; }
 
     [JsonPropertyName("temperature")]
-    public double? Temperature { get; set; }
+    public float? Temperature { get; set; }
 
     [JsonPropertyName("top_p")]
     public double? TopP { get; set; } // ✅ number
@@ -44,6 +45,9 @@ public sealed class ResponseRequest
 
     [JsonPropertyName("service_tier")]
     public string? ServiceTier { get; set; }
+
+    [JsonPropertyName("text")]
+    public object? Text { get; set; }
 
     [JsonPropertyName("include")]
     public List<string>? Include { get; set; }
@@ -99,9 +103,13 @@ public abstract class ResponseInputItem
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResponseRole
 {
+    [EnumMember(Value = "user")]
     User,
+    [EnumMember(Value = "assistant")]
     Assistant,
+    [EnumMember(Value = "system")]
     System,
+    [EnumMember(Value = "developer")]
     Developer
 }
 

@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Responses.Streaming;
+using Microsoft.VisualBasic;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Responses.Extensions;
 
@@ -10,6 +12,11 @@ public static class HttpExtensions
 {
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");
     private static readonly MediaTypeWithQualityHeaderValue AcceptSse = new("text/event-stream");
+
+    private static JsonSerializerOptions jsonOpts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
 
     /// <summary>
     /// POST JSON and deserialize JSON response into T (non-stream).
@@ -26,7 +33,7 @@ public static class HttpExtensions
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
-        var payload = JsonSerializer.SerializeToElement(options);
+        var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -59,7 +66,7 @@ public static class HttpExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = JsonSerializer.SerializeToElement(options);
+        var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);

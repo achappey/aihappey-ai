@@ -72,6 +72,9 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["gmicloud"] = "X-GMICloud-Key",
             ["byteplus"] = "X-BytePlus-Key",
             ["nlpcloud"] = "X-NLPCloud-Key",
+            ["moonshot"] = "X-Moonshot-Key",
+            ["upstage"] = "X-Upstage-Key",
+            ["siliconflow"] = "X-SiliconFlow-Key",
         };
 
     public string? Resolve(string provider)

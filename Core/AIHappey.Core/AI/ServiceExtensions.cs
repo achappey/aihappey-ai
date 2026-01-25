@@ -70,6 +70,9 @@ using AIHappey.Core.Providers.GTranslate;
 using AIHappey.Core.Providers.GMICloud;
 using AIHappey.Core.Providers.BytePlus;
 using AIHappey.Core.Providers.NLPCloud;
+using AIHappey.Core.Providers.Moonshot;
+using AIHappey.Core.Providers.Upstage;
+using AIHappey.Core.Providers.SiliconFlow;
 
 namespace AIHappey.Core.AI;
 
@@ -146,6 +149,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GMICloudProvider>();
         services.AddSingleton<IModelProvider, BytePlusProvider>();
         services.AddSingleton<IModelProvider, NLPCloudProvider>();
+        services.AddSingleton<IModelProvider, MoonshotProvider>();
+        services.AddSingleton<IModelProvider, UpstageProvider>();
+        services.AddSingleton<IModelProvider, SiliconFlowProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

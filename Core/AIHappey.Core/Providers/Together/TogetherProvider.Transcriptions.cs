@@ -66,7 +66,7 @@ public partial class TogetherProvider : IModelProvider
             cancellationToken);
 
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
-        Console.WriteLine(json);
+
         if (!resp.IsSuccessStatusCode)
         {
             throw new Exception(json);

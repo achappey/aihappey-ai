@@ -1,0 +1,135 @@
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using AIHappey.Common.Model.ChatCompletions;
+
+namespace AIHappey.Core.Providers.Upstage;
+
+public sealed partial class UpstageProvider
+{
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        if (options is null) throw new ArgumentNullException(nameof(options));
+
+        if (options.Stream == true)
+            throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
+
+        var payload = BuildGMICloudChatPayload(options, stream: false);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(payload, JsonSerializerOptions.Web), Encoding.UTF8, "application/json")
+        };
+
+        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
+        if (!resp.IsSuccessStatusCode)
+            throw new HttpRequestException($"Upstage error: {(int)resp.StatusCode} {resp.ReasonPhrase}: {raw}");
+
+        using var doc = JsonDocument.Parse(raw);
+
+        var id = doc.RootElement.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
+        var model = doc.RootElement.TryGetProperty("model", out var mEl) ? mEl.GetString() : null;
+        var created = doc.RootElement.TryGetProperty("created", out var cEl) && cEl.TryGetInt64(out var epoch) ? epoch : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        object? usage = null;
+        if (doc.RootElement.TryGetProperty("usage", out var uEl))
+            usage = JsonSerializer.Deserialize<object>(uEl.GetRawText(), JsonSerializerOptions.Web);
+
+        object[] choices = [];
+        if (doc.RootElement.TryGetProperty("choices", out var chEl) && chEl.ValueKind == JsonValueKind.Array)
+            choices = JsonSerializer.Deserialize<object[]>(chEl.GetRawText(), JsonSerializerOptions.Web) ?? [];
+
+        return new ChatCompletion
+        {
+            Id = id ?? Guid.NewGuid().ToString("n"),
+            Created = created,
+            Model = model ?? options.Model,
+            Choices = choices,
+            Usage = usage
+        };
+    }
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        if (options is null) throw new ArgumentNullException(nameof(options));
+
+        var payload = BuildGMICloudChatPayload(options, stream: true);
+        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+
+        req.Headers.Accept.Clear();
+        req.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"UpstageProvider stream error: {(int)resp.StatusCode} {resp.ReasonPhrase}: {err}");
+        }
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var reader = new StreamReader(stream);
+
+        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(cancellationToken);
+            if (line is null) yield break;
+            if (line.Length == 0) continue;
+            if (line.StartsWith(':')) continue;
+            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var data = line["data:".Length..].Trim();
+            if (data.Length == 0) continue;
+            if (data is "[DONE]" or "[done]") yield break;
+
+            ChatCompletionUpdate? evt;
+            try
+            {
+                evt = JsonSerializer.Deserialize<ChatCompletionUpdate>(data, JsonSerializerOptions.Web);
+            }
+            catch
+            {
+                JsonNode? root = JsonNode.Parse(data);
+                var inner = root?["data"];
+                evt = inner is null ? null : inner.Deserialize<ChatCompletionUpdate>(JsonSerializerOptions.Web);
+            }
+
+            if (evt is not null)
+                yield return evt;
+        }
+    }
+
+    private static object BuildGMICloudChatPayload(ChatCompletionOptions options, bool stream)
+    {
+        var messages = options.Messages.ToUpstageMessages().ToList();
+
+        var tools = options.Tools is { } t && t.Any()
+            ? t.ToUpstageTools().ToList()
+            : null;
+
+        return new Dictionary<string, object?>
+        {
+            ["model"] = options.Model,
+            ["messages"] = messages,
+            ["temperature"] = options.Temperature,
+            ["top_p"] = null,
+            ["max_tokens"] = null,
+            ["response_format"] = options.ResponseFormat,
+            ["tools"] = tools,
+            ["tool_choice"] = options.ToolChoice,
+            ["stream"] = stream
+        };
+    }
+}
+

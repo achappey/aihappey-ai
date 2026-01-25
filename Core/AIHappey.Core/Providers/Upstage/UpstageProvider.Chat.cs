@@ -8,9 +8,9 @@ using System.Text;
 using System.Net.Mime;
 using System.Net.Http.Headers;
 
-namespace AIHappey.Core.Providers.GMICloud;
+namespace AIHappey.Core.Providers.Upstage;
 
-public partial class GMICloudProvider : IModelProvider
+public partial class UpstageProvider : IModelProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,
@@ -18,7 +18,7 @@ public partial class GMICloudProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var messages = chatRequest.Messages.ToGMICloudMessages();
+        var messages = chatRequest.Messages.ToUpstageMessages();
 
         var payload = new Dictionary<string, object?>
         {
@@ -52,7 +52,7 @@ public partial class GMICloudProvider : IModelProvider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            yield return $"GMICloud stream error: {(string.IsNullOrWhiteSpace(err) ? resp.ReasonPhrase : err)}".ToErrorUIPart();
+            yield return $"Upstage stream error: {(string.IsNullOrWhiteSpace(err) ? resp.ReasonPhrase : err)}".ToErrorUIPart();
             yield break;
         }
 

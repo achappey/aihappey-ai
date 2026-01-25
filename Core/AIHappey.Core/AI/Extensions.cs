@@ -9,8 +9,10 @@ namespace AIHappey.Core.AI;
 public static class UIMessagePartExtensions
 {
     public static string GuessModelType(
-        this string modelId)
+        this string model)
     {
+        var modelId = model.ToLowerInvariant();
+        
         if (modelId.Contains("whisper")
             || modelId.Contains("transcribe")
             || modelId.Contains("voxtral"))

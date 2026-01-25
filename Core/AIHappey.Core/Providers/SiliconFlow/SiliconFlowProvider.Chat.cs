@@ -8,9 +8,9 @@ using System.Text;
 using System.Net.Mime;
 using System.Net.Http.Headers;
 
-namespace AIHappey.Core.Providers.GMICloud;
+namespace AIHappey.Core.Providers.SiliconFlow;
 
-public partial class GMICloudProvider : IModelProvider
+public partial class SiliconFlowProvider : IModelProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,
@@ -18,7 +18,7 @@ public partial class GMICloudProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var messages = chatRequest.Messages.ToGMICloudMessages();
+        var messages = chatRequest.Messages.ToSiliconFlowMessages();
 
         var payload = new Dictionary<string, object?>
         {
@@ -52,7 +52,7 @@ public partial class GMICloudProvider : IModelProvider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            yield return $"GMICloud stream error: {(string.IsNullOrWhiteSpace(err) ? resp.ReasonPhrase : err)}".ToErrorUIPart();
+            yield return $"SiliconFlow stream error: {(string.IsNullOrWhiteSpace(err) ? resp.ReasonPhrase : err)}".ToErrorUIPart();
             yield break;
         }
 
@@ -78,7 +78,6 @@ public partial class GMICloudProvider : IModelProvider
 
             using var doc = JsonDocument.Parse(data);
             var root = doc.RootElement;
-
             id ??= root.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
             id ??= Guid.NewGuid().ToString("n");
 

@@ -54,7 +54,17 @@ public class ResponsesController(IAIModelProviderResolver resolver) : Controller
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return Ok(new ResponseResult()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Status = "failed",
+                    Temperature = requestDto.Temperature,
+                    Model = requestDto.Model,
+                    Error = new ResponseResultError()
+                    {
+                        Message = e.Message
+                    }
+                });
             }
         }
     }

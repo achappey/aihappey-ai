@@ -4,7 +4,6 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using Microsoft.KernelMemory;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
@@ -68,8 +67,6 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
             },
             cancellationToken: cancellationToken))
         {
-            Console.WriteLine(JsonSerializer.Serialize(p));
-
             switch (p.StreamState)
             {
                 case StreamStates.Reset:

@@ -17,6 +17,9 @@ public class ResponseResult
     [JsonPropertyName("completed_at")]
     public long? CompletedAt { get; set; }
 
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }    
+
     [JsonPropertyName("parallel_tool_calls")]
     public bool? ParallelToolCalls { get; set; }
 
@@ -24,7 +27,7 @@ public class ResponseResult
     public string Model { get; set; } = default!;
 
     [JsonPropertyName("temperature")]
-    public float Temperature { get; set; }
+    public float? Temperature { get; set; }
 
     [JsonPropertyName("output")]
     public IEnumerable<object> Output { get; set; } = [];

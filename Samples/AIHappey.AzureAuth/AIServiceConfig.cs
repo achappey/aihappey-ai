@@ -70,6 +70,9 @@ public class AIServiceConfig
     public ProviderConfig? GMICloud { get; set; }
     public ProviderConfig? BytePlus { get; set; }
     public ProviderConfig? NLPCloud { get; set; }
+    public ProviderConfig? Moonshot { get; set; }
+    public ProviderConfig? Upstage { get; set; }
+    public ProviderConfig? SiliconFlow { get; set; }
 }
 
 public class ProviderConfig

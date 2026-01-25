@@ -47,6 +47,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Mistral        | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ➖               | ➖          |
 | MiniMax        | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ➖                       | ✅               | ➖          |
 | ModernMT       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          |
+| Moonshot       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
 | MurfAI         | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ✅               | ➖          |
 | NLPCloud       | ✅        | 🟡                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          |
 | Nscale         | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          |
@@ -66,6 +67,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | SambaNova      | ✅        | ✅                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          |
 | Sarvam         | ✅        | ✅                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          |
 | Scaleway       | ✅        | ✅                | ✅            | ❌        | ➖                     | ✅                       | ➖               | ➖          |
+| SiliconFlow    | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ✅                       | ✅               | ✅          |
 | Speechify      | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          |
 | Speechmatics   | ✅        | ❌                | ❌            | 🟡        | ➖                     | ❌                       | ✅               | ➖          |
 | StabilityAI    | ✅        | ❌                | 🟡            | ✅        | ✅                     | ➖                       | ✅               | ➖          |
@@ -73,6 +75,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Tinfoil        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
 | Together       | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ✅               | ✅          |
 | TTSReader      | ✅        | ❌                | ✅            | ✅        | ➖                     | ➖                       | ✅               | ➖          |
+| Upstage        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
 | Verda          | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          |
 | VoyageAI       | ❌        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          |
 | xAI            | ✅        | ❌                | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          |

@@ -1,35 +1,13 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
-public sealed partial class SarvamProvider : IModelProvider
+public sealed partial class SarvamProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
-
-        /*
-                new Model
-                {
-                    Id = "mayura:v1/translate-to/xxx".ToModelId(GetIdentifier()),
-                    Name = "mayura Translate to xxx",
-                    OwnedBy = nameof(Sarvam),
-                    Type = "language",
-
-                }
-
-                 new Model
-                {
-                    Id = "sarvam-translate:v1/translate/xxx/to/zzz".ToModelId(GetIdentifier()),
-                    Name = "sarvam Translate xxx to zzz",
-                    OwnedBy = nameof(Sarvam),
-                    Type = "language",
-
-                }*/
-
 
         var models = await Task.FromResult<List<Model>>(
         [
