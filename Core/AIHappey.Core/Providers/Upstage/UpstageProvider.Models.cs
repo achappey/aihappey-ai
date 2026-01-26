@@ -14,6 +14,24 @@ public partial class UpstageProvider
             new Model()
             {
                 OwnedBy = nameof(Upstage),
+                Name = "Solar Pro 3",
+                ContextWindow = 128_000,
+                Type = "language",
+                Created = new DateTimeOffset(2026, 1, 26, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(),
+                Id = "solar-pro3".ToModelId(GetIdentifier())
+            },
+            new Model()
+            {
+                OwnedBy = nameof(Upstage),
+                Name = "Solar Pro 3 260126",
+                Type = "language",
+                Created = new DateTimeOffset(2026, 1, 26, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(),
+                Id = "solar-pro3-260126".ToModelId(GetIdentifier())
+            },
+            
+            new Model()
+            {
+                OwnedBy = nameof(Upstage),
                 Name = "Solar Pro 2 250710",
                 Type = "language",
                 Created = new DateTimeOffset(2025, 7, 10, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(),

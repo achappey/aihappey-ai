@@ -57,17 +57,12 @@ public sealed partial class TinfoilProvider
                 ? typeEl.GetString()
                 : null;
 
-            if (type == "chat")
-                type = "language";
-
-            if (type == "code")
-                type = "language";
-
-            if (type == "title")
-                type = "language";
-
-            if (type == "audio")
-                type = "transcription";
+            type = type switch
+            {
+                "chat" or "code" or "title" or "safety" => "language",
+                "audio" => "transcription",
+                _ => type
+            };
 
             models.Add(new Model
             {
