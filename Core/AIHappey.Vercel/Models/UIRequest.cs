@@ -17,9 +17,6 @@ public class UIRequest
     [JsonPropertyName("context")]
     public object? Context { get; set; }
 
-    [JsonPropertyName("currentTree")]
-    public object? CurrentTree { get; set; }
-
     [JsonPropertyName("providerMetadata")]
     public Dictionary<string, JsonElement>? ProviderMetadata { get; set; }
 }

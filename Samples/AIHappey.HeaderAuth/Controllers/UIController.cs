@@ -1,19 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
-using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using System.Text.Json;
 
-namespace AIHappey.AzureAuth.Controllers;
+namespace AIHappey.HeaderAuth.Controllers;
 
 [ApiController]
 [Route("api/generate")]
 public class UIController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Post([FromBody] UIRequest requestDto, CancellationToken cancellationToken)
     {
         var provider = await resolver.Resolve(requestDto.Model, cancellationToken);
