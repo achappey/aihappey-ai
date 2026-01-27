@@ -56,7 +56,8 @@ public static class CompletionsExtensions
 
         if (chatRequest.ResponseFormat is null)
         {
-            payload["response_format"] = new { type = "text" };
+            if (tools?.Any() != true)
+                payload["response_format"] = new { type = "text" };
         }
         else
         {
