@@ -30,6 +30,7 @@ public partial class FireworksProvider
             new() { Id = "fireworks/accounts/fireworks/models/deepseek-r1-05-28",    Name = "DeepSeek R1 (05-28)",  Type = "language", OwnedBy = "deepseek" },
 
             // ===== Moonshot =====
+            new() { Id = "fireworks/accounts/fireworks/models/kimi-k2p5",      Name = "Kimi K2.5",        Type = "language", OwnedBy = "moonshot" },
             new() { Id = "fireworks/accounts/fireworks/models/kimi-k2-thinking",      Name = "Kimi K2 Thinking",        Type = "language", OwnedBy = "moonshot" },
             new() { Id = "fireworks/accounts/fireworks/models/kimi-k2-instruct-0905", Name = "Kimi K2 Instruct 0905",   Type = "language", OwnedBy = "moonshot" },
 

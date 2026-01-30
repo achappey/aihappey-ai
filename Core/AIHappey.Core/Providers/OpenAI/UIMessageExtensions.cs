@@ -178,7 +178,7 @@ public static class UIMessageExtensions
             var t = parts[i];
 
             // Only attach annotations to the last text part
-            var annos = (i == lastIndex) ? annotations : Enumerable.Empty<ResponseMessageAnnotation>();
+            var annos = (i == lastIndex) ? annotations : [];
 
             yield return ResponseContentPart.CreateOutputTextPart(t.Text, annos);
         }

@@ -21,6 +21,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | BytePlus       | ✅        | ✅                | ✅            | 🟡        | ✅                     | ➖                       | ➖               | ➖          |
 | CanopyWave     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
 | Cerebras       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
+| Cirrascale     | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ➖                       | ➖               | ✅          |
 | CloudRift      | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
 | Cohere         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          |
 | ContextualAI   | ❌        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          |
@@ -42,6 +43,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Hyperstack     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
 | Inferencenet   | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          |
 | Jina           | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ✅          |
+| KlingAI        | ✅        | ❌                | 🟡            | ✅        | ✅                     | ➖                       | ➖               | ➖          |
 | LectoAI        | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          |
 | Lingvanex      | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ✅          |
 | Mistral        | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ➖               | ➖          |

@@ -73,6 +73,8 @@ public class AIServiceConfig
     public ProviderConfig? Moonshot { get; set; }
     public ProviderConfig? Upstage { get; set; }
     public ProviderConfig? SiliconFlow { get; set; }
+    public ProviderConfig? Cirrascale { get; set; }
+    public ProviderConfig? KlingAI { get; set; }
 }
 
 public class ProviderConfig

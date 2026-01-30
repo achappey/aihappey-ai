@@ -12,7 +12,7 @@ public static class UIMessagePartExtensions
         this string model)
     {
         var modelId = model.ToLowerInvariant();
-        
+
         if (modelId.Contains("whisper")
             || modelId.Contains("transcribe")
             || modelId.Contains("voxtral"))
@@ -33,7 +33,7 @@ public static class UIMessagePartExtensions
             || modelId.Contains("dall-e"))
             return "image";
 
-        if (modelId.Contains("openai/sora-") || modelId.Contains("veo-"))
+        if (modelId.Contains("openai/sora-") || modelId.Contains("veo-") || modelId.Contains("video"))
             return "video";
 
         if (modelId.Contains("realtime"))

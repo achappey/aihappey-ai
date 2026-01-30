@@ -97,7 +97,7 @@ public class AIModelProviderResolver(
             catch
             {
                 // provider down → skip
-                models = Enumerable.Empty<Model>();
+                models = [];
             }
 
             foreach (var model in models)

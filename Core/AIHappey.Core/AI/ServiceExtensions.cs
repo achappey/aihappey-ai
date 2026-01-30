@@ -73,6 +73,8 @@ using AIHappey.Core.Providers.NLPCloud;
 using AIHappey.Core.Providers.Moonshot;
 using AIHappey.Core.Providers.Upstage;
 using AIHappey.Core.Providers.SiliconFlow;
+using AIHappey.Core.Providers.Cirrascale;
+using AIHappey.Core.Providers.KlingAI;
 
 namespace AIHappey.Core.AI;
 
@@ -152,6 +154,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MoonshotProvider>();
         services.AddSingleton<IModelProvider, UpstageProvider>();
         services.AddSingleton<IModelProvider, SiliconFlowProvider>();
+        services.AddSingleton<IModelProvider, CirrascaleProvider>();
+        services.AddSingleton<IModelProvider, KlingAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

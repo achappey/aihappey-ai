@@ -81,6 +81,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "moonshot" => _config.Moonshot?.ApiKey,
             "upstage" => _config.Upstage?.ApiKey,
             "siliconflow" => _config.SiliconFlow?.ApiKey,
+            "cirrascale" => _config.Cirrascale?.ApiKey,
+            "klingai" => _config.KlingAI?.ApiKey,
             _ => null
         };
 }
