@@ -87,6 +87,30 @@ public static partial class AnthropicExtensions
         };
     }
 
+    public static IReadOnlyList<string>? ToAnthropicBetaFeatures(this JsonElement? element)
+    {
+        if (element == null) return null;
+
+        if (!element.Value.TryGetProperty(AnthropicConstants.AnthropicIdentifier, out var openai) ||
+            openai.ValueKind != JsonValueKind.Object)
+            return null;
+
+        if (!openai.TryGetProperty("anthropic-beta", out var beta) ||
+            beta.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var features = new List<string>();
+
+        foreach (var item in beta.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.String)
+                features.Add(item.GetString()!);
+        }
+
+        return features.Count > 0 ? features : null;
+    }
+
+
     public static ANT.Common.Tool? ToWebSearchTool(this JsonElement? element)
     {
         if (element == null) return null;

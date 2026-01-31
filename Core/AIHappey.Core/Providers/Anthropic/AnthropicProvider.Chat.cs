@@ -9,6 +9,8 @@ using System.Text;
 using AIHappey.Core.Providers.Anthropic.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Common.Model.Providers.Anthropic;
+using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -33,6 +35,10 @@ public partial class AnthropicProvider
        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var model = chatRequest.Model!;
+
+        var metadata = chatRequest.GetProviderMetadata<AnthropicProviderMetadata>(AnthropicConstants.AnthropicIdentifier);
+        AddBetaHeaders(metadata?.AnthropicBeta);
+
         using var responseClient = new ANT.AnthropicClient(
             GetKey(),
             client: _client

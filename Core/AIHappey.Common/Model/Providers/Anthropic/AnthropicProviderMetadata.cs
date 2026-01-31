@@ -25,5 +25,10 @@ public sealed class AnthropicProviderMetadata
 
     [JsonPropertyName("mcp_servers")]
     public IEnumerable<MCPServer>? MCPServers { get; set; }
+
+    [JsonPropertyName("anthropic-beta")]
+    public IEnumerable<string>? AnthropicBeta { get; set; }
+
+
 }
 

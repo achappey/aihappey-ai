@@ -75,6 +75,7 @@ public class AIServiceConfig
     public ProviderConfig? SiliconFlow { get; set; }
     public ProviderConfig? Cirrascale { get; set; }
     public ProviderConfig? KlingAI { get; set; }
+    public ProviderConfig? Euqai { get; set; }
 }
 
 public class ProviderConfig

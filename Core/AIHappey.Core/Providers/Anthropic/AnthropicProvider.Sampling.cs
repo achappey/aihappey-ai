@@ -4,6 +4,7 @@ using Anthropic.SDK.Messaging;
 using ModelContextProtocol.Protocol;
 using System.Text.Json.Nodes;
 using AIHappey.Core.Providers.Anthropic.Extensions;
+using AIHappey.Common.Model.Providers.Anthropic;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -11,9 +12,10 @@ public partial class AnthropicProvider
 {
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var responseClient = new ANT.AnthropicClient(
-            GetKey()
-        );
+        var betaHeaders = chatRequest.Metadata.ToAnthropicBetaFeatures();
+        AddBetaHeaders(betaHeaders);
+
+        var responseClient = new ANT.AnthropicClient(GetKey());
 
         var clientResult = await responseClient.Messages
            .GetClaudeMessageAsync(chatRequest

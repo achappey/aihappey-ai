@@ -11,11 +11,6 @@ public static partial class AnthropicExtensions
         IEnumerable<ANT.Common.Tool>? tools)
     {
         var model = chatRequest.GetModel() ?? ANT.Constants.AnthropicModels.Claude45Sonnet;
-        var hasLargeContext = model.StartsWith("claude-3-7")
-               || model.StartsWith("claude-opus-4")
-               || model.StartsWith("claude-sonnet-4")
-               || model.StartsWith("claude-haiku-4");
-
         var searchTool = chatRequest.Metadata.ToWebSearchTool();
         var codeExecutionTool = chatRequest.Metadata.ToCodeExecution();
         List<ANT.Common.Tool> allTools = tools?.ToList() ?? [];
@@ -34,7 +29,7 @@ public static partial class AnthropicExtensions
         {
             Messages = [.. chatRequest.Messages.ToMessages()],
             Tools = allTools?.ToList() ?? [],
-            MaxTokens = hasLargeContext ? 20000 : 4096,
+            MaxTokens = chatRequest.MaxTokens,
             Model = model,
             Container = chatRequest.Metadata.ToContainer(),
             Thinking = chatRequest.Metadata.ToThinkingConfig(),
@@ -42,28 +37,6 @@ public static partial class AnthropicExtensions
                         ? [new ANT.Messaging.SystemMessage(chatRequest.SystemPrompt)] : []
         };
     }
-
-
-    public static ANT.Messaging.MessageParameters ToMessageParameters(this IEnumerable<ANT.Messaging.Message> messages,
-        string model,
-        IEnumerable<ANT.Common.Tool>? tools,
-        IEnumerable<ANT.Messaging.SystemMessage>? systemInstructions = null)
-    {
-        var hasLargeContext = model.StartsWith("claude-3-7")
-               || model.StartsWith("claude-opus-4")
-               || model.StartsWith("claude-sonnet-4");
-
-
-        return new()
-        {
-            Messages = [.. messages],
-            Tools = tools?.ToList() ?? [],
-            MaxTokens = hasLargeContext ? 20000 : 4096,
-            Model = model,
-            System = systemInstructions != null ? [.. systemInstructions] : []
-        };
-    }
-
 
     public static ANT.Messaging.MessageParameters ToMessageParameters(this Common.Model.ChatRequest chatRequest,
        IEnumerable<ANT.Messaging.Message> messages,
