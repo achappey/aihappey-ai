@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Upstage;
 
@@ -32,9 +33,7 @@ public partial class UpstageProvider : IModelProvider
     public string GetIdentifier() => nameof(Upstage).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

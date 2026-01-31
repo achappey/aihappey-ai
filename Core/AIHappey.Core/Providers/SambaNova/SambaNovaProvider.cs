@@ -53,9 +53,14 @@ public partial class SambaNovaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(SambaNova).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (chatRequest.GetModel()?.Contains("whisper") == true)
+        {
+            throw new NotImplementedException();
+        }
+
+        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)

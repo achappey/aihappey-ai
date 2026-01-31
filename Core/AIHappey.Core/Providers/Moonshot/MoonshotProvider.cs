@@ -50,9 +50,7 @@ public partial class MoonshotProvider : IModelProvider
     public string GetIdentifier() => nameof(Moonshot).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

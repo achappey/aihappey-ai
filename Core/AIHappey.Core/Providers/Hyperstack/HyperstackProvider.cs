@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Hyperstack;
 
@@ -85,10 +86,8 @@ public partial class HyperstackProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Hyperstack).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

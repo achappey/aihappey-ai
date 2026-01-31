@@ -68,6 +68,12 @@ public partial class ZaiProvider : IModelProvider
                             cancellationToken: cancellationToken);
                 }
 
+            case "language":
+                {
+                    return await this.ChatCompletionsSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
             default:
                 throw new NotImplementedException();
         }

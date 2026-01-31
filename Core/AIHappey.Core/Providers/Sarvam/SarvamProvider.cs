@@ -55,6 +55,11 @@ public sealed partial class SarvamProvider : IModelProvider
             return await TranslateSamplingAsync(chatRequest, cancellationToken);
         }
 
+        if (model.Type == "language")
+        {
+            return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        }
+
         throw new NotImplementedException();
     }
 

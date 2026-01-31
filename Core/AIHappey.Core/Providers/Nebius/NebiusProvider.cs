@@ -27,7 +27,7 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
         return client;
     }
 
-    public string GetIdentifier() => "nebius";
+    public string GetIdentifier() => nameof(Nebius).ToLowerInvariant();
 
     private void ApplyAuthHeader()
     {
@@ -54,8 +54,17 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
                     options, ct: cancellationToken);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+        
+        return model.Type switch
+        {
+            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
+            "language" => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken),
+            _ => throw new NotSupportedException(),
+        };
+    }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

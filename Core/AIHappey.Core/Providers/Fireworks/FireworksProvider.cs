@@ -45,10 +45,22 @@ public partial class FireworksProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Fireworks).ToLowerInvariant();
 
-  
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var modelId = chatRequest.GetModel();
+        var model = FireworksModels.FirstOrDefault(a => a.Id.EndsWith(modelId!))
+             ?? throw new ArgumentException(modelId);
+
+        switch (model.Type)
+        {
+            case "image":
+                return await this.ImageSamplingAsync(chatRequest, cancellationToken);
+            case "language":
+                return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
@@ -65,7 +77,7 @@ public partial class FireworksProvider : IModelProvider
             options, ct: cancellationToken);
     }
 
-     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

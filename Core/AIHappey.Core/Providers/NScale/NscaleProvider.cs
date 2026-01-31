@@ -53,12 +53,13 @@ public partial class NscaleProvider : IModelProvider
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         var model = chatRequest.GetModel();
+
         if (IsImageMode(model))
         {
             return await this.ImageSamplingAsync(chatRequest, cancellationToken);
         }
 
-        throw new NotImplementedException();
+        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

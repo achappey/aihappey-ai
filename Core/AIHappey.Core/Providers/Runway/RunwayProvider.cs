@@ -63,7 +63,6 @@ public partial class RunwayProvider : IModelProvider
                     return await this.ImageSamplingAsync(chatRequest,
                             cancellationToken: cancellationToken);
                 }
-
             default:
                 throw new NotImplementedException();
         }

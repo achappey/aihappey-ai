@@ -51,7 +51,14 @@ public partial class EuqaiProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        return model.Type switch
+        {
+            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
+            "language" => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken),
+            _ => throw new NotSupportedException(),
+        };
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

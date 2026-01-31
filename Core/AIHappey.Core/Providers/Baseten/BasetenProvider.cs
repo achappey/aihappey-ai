@@ -3,6 +3,7 @@ using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Baseten;
 
@@ -36,8 +37,8 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Api-Key", key);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
