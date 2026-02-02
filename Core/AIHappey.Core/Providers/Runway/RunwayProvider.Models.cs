@@ -46,6 +46,41 @@ public partial class RunwayProvider
                         Type = "speech",
                         Name = "eleven_text_to_sound_v2",
                         Id = "eleven_text_to_sound_v2".ToModelId(GetIdentifier())
+                    },
+                    new Model()
+                    {
+                        OwnedBy = nameof(Runway),
+                        Type = "video",
+                        Name = "veo3.1",
+                        Id = "veo3.1".ToModelId(GetIdentifier())
+                    },
+                    new Model()
+                    {
+                        OwnedBy = nameof(Runway),
+                        Type = "video",
+                        Name = "veo3.1_fast",
+                        Id = "veo3.1_fast".ToModelId(GetIdentifier())
+                    },
+                    new Model()
+                    {
+                        OwnedBy = nameof(Runway),
+                        Type = "video",
+                        Name = "veo3",
+                        Id = "veo3".ToModelId(GetIdentifier())
+                    },
+                      new Model()
+                    {
+                        OwnedBy = nameof(Runway),
+                        Type = "video",
+                        Name = "gen4_turbo",
+                        Id = "gen4_turbo".ToModelId(GetIdentifier())
+                    },
+                      new Model()
+                    {
+                        OwnedBy = nameof(Runway),
+                        Type = "video",
+                        Name = "gen3a_turbo",
+                        Id = "gen3a_turbo".ToModelId(GetIdentifier())
                     }
                 ]
                 : []);

@@ -264,8 +264,5 @@ public partial class MiniMaxProvider : IModelProvider
         throw new InvalidOperationException($"Invalid hex character: '{c}'.");
     }
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    // VideoRequest implementation lives in MiniMaxProvider.Videos.cs
 }

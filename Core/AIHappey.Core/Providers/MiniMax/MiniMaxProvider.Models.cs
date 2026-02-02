@@ -70,6 +70,80 @@ public partial class MiniMaxProvider : IModelProvider
         OwnedBy = nameof(MiniMax)
     },
 
+    // ===== MiniMax Video =====
+
+    new()
+    {
+        Id = "MiniMax-Hailuo-2.3".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "MiniMax-Hailuo-2.3",
+        Description = "Text-to-video / image-to-video generation model.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
+    new()
+    {
+        Id = "MiniMax-Hailuo-2.3-Fast".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "MiniMax-Hailuo-2.3-Fast",
+        Description = "Fast variant of MiniMax-Hailuo-2.3 for image-to-video generation.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
+    new()
+    {
+        Id = "MiniMax-Hailuo-02".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "MiniMax-Hailuo-02",
+        Description = "Text-to-video / image-to-video generation model.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
+    new()
+    {
+        Id = "T2V-01-Director".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "T2V-01-Director",
+        Description = "Text-to-video generation model with camera control prompts.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
+    new()
+    {
+        Id = "T2V-01".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "T2V-01",
+        Description = "Text-to-video generation model.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
+    new()
+    {
+        Id = "I2V-01-Director".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "I2V-01-Director",
+        Description = "Image-to-video generation model with camera control prompts.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
+    new()
+    {
+        Id = "I2V-01-live".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "I2V-01-live",
+        Description = "Image-to-video generation model.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
+    new()
+    {
+        Id = "I2V-01".ToModelId(nameof(MiniMax).ToLowerInvariant()),
+        Name = "I2V-01",
+        Description = "Image-to-video generation model.",
+        Type = "video",
+        OwnedBy = nameof(MiniMax)
+    },
+
 
     new()
     {

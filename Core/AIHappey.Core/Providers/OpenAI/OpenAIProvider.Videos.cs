@@ -8,6 +8,30 @@ namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider : IModelProvider
 {
+    private static MultipartFormDataContent BuildVideoMultipart(VideoRequest request)
+    {
+        var form = new MultipartFormDataContent
+        {
+            { new StringContent(request.Model), "model" },
+            { new StringContent(request.Prompt), "prompt" },
+            { new StringContent((request.Duration ?? 4).ToString()), "seconds" },
+            { new StringContent(request.Resolution ?? "720x1280"), "size" }
+        };
+
+        if (request.Image is not null)
+        {
+            var bytes = Convert.FromBase64String(request.Image.Data);
+            var file = new ByteArrayContent(bytes);
+            file.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue(request.Image.MediaType);
+
+            form.Add(file, "input_reference", "reference");
+        }
+
+        return form;
+    }
+
+
     public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         var responseClient = new VideoClient(GetKey());
@@ -32,17 +56,22 @@ public partial class OpenAIProvider : IModelProvider
             });
         }
 
-        var payload = new
-        {
-            model = request.Model,
-            prompt = request.Prompt,
-            seconds = request.Duration is not null ? request.Duration?.ToString() : 4.ToString(),
-            size = request.Resolution ?? "720x1280"
-        };
+        using var multipart = BuildVideoMultipart(request);
 
-        var json = JsonSerializer.Serialize(payload);
-        var content = BinaryContent.CreateJson(json);
-        var result = await responseClient.CreateVideoAsync(content, "application/json");
+        // must include boundary
+        var contentType = multipart.Headers.ContentType?.ToString()
+            ?? throw new InvalidOperationException("Multipart content-type missing boundary.");
+
+        await using var ms = new MemoryStream();
+        await multipart.CopyToAsync(ms, cancellationToken);
+
+        // ✅ wrap bytes in BinaryData
+        var binaryData = BinaryData.FromBytes(ms.ToArray());
+
+        // ✅ THIS is the correct overload
+        var content = BinaryContent.Create(binaryData);
+        var result = await responseClient.CreateVideoAsync(content, contentType);
+
         using var doc = JsonDocument.Parse(result.GetRawResponse().Content.ToString());
         var videoId = doc.RootElement.GetProperty("id").GetString();
 
@@ -71,14 +100,12 @@ public partial class OpenAIProvider : IModelProvider
         }
 
         var downloadResult = await responseClient.DownloadVideoAsync(videoId);
-
         var response = downloadResult.GetRawResponse();
         await using var stream = response.ContentStream;
 
-        using var ms = new MemoryStream();
-        await stream!.CopyToAsync(ms, cancellationToken);
-
-        var videoBytes = ms.ToArray();
+        using var readStream = new MemoryStream();
+        await stream!.CopyToAsync(readStream, cancellationToken);
+        var videoBytes = readStream.ToArray();
 
         return new VideoResponse()
         {

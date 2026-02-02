@@ -158,6 +158,34 @@ public partial class ZaiProvider : IModelProvider
             Type = "transcription",
             OwnedBy = "z.ai"
         },
+        new()
+        {
+            Id = "zai/cogvideox-3",
+            Name = "cogvideox-3",
+            Type = "video",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/viduq1-text",
+            Name = "viduq1-text",
+            Type = "video",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/viduq1-image",
+            Name = "viduq1-image",
+            Type = "video",
+            OwnedBy = "z.ai"
+        },
+        new()
+        {
+            Id = "zai/vidu2-image",
+            Name = "vidu2-image",
+            Type = "video",
+            OwnedBy = "z.ai"
+        },
     ];
 
 }
