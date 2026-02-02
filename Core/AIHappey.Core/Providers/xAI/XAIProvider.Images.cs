@@ -92,4 +92,8 @@ public partial class XAIProvider : IModelProvider
         };
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

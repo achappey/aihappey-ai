@@ -85,6 +85,11 @@ public partial class TTSReaderProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> TTSReaderModels =>
     [
         new() { Id = "ttsSync".ToModelId(nameof(TTSReader).ToLowerInvariant()),

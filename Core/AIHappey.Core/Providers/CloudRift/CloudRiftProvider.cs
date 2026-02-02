@@ -62,5 +62,10 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

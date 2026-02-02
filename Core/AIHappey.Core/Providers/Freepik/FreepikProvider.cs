@@ -83,5 +83,10 @@ public sealed partial class FreepikProvider : IModelProvider
         _client.DefaultRequestHeaders.Accept.Clear();
         _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

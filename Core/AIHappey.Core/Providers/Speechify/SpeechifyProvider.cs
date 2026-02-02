@@ -86,6 +86,11 @@ public partial class SpeechifyProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> SpeechifyModels =>
  [
     new() { Id = "simba-english".ToModelId(nameof(Speechify).ToLowerInvariant()),

@@ -4,6 +4,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -99,6 +100,11 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     }
 
     Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

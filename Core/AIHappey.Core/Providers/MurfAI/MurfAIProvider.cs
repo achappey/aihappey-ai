@@ -71,5 +71,10 @@ public sealed partial class MurfAIProvider : IModelProvider
         await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
             yield return p;
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

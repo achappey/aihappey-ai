@@ -122,4 +122,9 @@ public partial class RunwayProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

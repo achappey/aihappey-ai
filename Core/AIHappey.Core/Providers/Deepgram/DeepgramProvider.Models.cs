@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Deepgram;
 
@@ -139,4 +140,8 @@ public sealed partial class DeepgramProvider
         return await Task.FromResult(res);
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

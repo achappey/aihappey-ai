@@ -61,5 +61,10 @@ public sealed partial class AzureProvider(
     {
         throw new NotImplementedException();
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

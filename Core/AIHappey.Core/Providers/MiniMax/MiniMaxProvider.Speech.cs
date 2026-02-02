@@ -263,4 +263,9 @@ public partial class MiniMaxProvider : IModelProvider
         if (c >= 'A' && c <= 'F') return c - 'A' + 10;
         throw new InvalidOperationException($"Invalid hex character: '{c}'.");
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

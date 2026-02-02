@@ -224,5 +224,10 @@ public class PerplexityProvider : IModelProvider
     {
         throw new NotSupportedException();
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

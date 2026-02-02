@@ -175,6 +175,11 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
         throw new NotImplementedException();
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> KernelMemoryModels =>
         [
             new() { Id = "kernelmemory/shared", Name = "Shared Memory", Type = "language" },

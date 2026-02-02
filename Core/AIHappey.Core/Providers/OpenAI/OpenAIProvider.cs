@@ -5,6 +5,7 @@ using OAI = OpenAI;
 using OpenAI.Containers;
 using OpenAI.Files;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -64,4 +65,10 @@ public partial class OpenAIProvider : IModelProvider
         "dall-e-2",
         "dall-e-3"
      ];
+
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
 }

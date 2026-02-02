@@ -77,5 +77,8 @@ public partial class GroqProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

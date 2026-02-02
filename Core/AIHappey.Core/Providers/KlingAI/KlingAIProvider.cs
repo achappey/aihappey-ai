@@ -105,5 +105,10 @@ public partial class KlingAIProvider : IModelProvider
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     // ImageRequest implementation lives in KlingAIProvider.Images.cs
 }

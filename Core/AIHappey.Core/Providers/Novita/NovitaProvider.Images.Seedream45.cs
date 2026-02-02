@@ -215,6 +215,11 @@ public partial class NovitaProvider : IModelProvider
         return file.Data.ToDataUrl(file.MediaType);
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private sealed class Seedream45Request
     {
         [JsonPropertyName("size")]

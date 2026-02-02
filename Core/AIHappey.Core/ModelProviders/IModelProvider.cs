@@ -35,4 +35,6 @@ public interface IModelProvider
 
     Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default);
 
+    Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default);
+
 }

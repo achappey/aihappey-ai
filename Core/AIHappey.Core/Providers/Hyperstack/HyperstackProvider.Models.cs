@@ -2,6 +2,7 @@ using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using AIHappey.Core.ModelProviders;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Hyperstack;
 
@@ -16,6 +17,11 @@ public partial class HyperstackProvider : IModelProvider
     }
 
     Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

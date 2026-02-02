@@ -119,6 +119,11 @@ public partial class ResembleAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> ResembleAIModels =>
  [
     new() { Id = "speech-to-text".ToModelId(nameof(ResembleAI).ToLowerInvariant()),

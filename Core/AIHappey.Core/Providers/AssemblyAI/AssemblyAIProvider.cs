@@ -78,6 +78,11 @@ public partial class AssemblyAIProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 

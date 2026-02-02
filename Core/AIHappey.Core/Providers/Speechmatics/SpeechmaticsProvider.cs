@@ -95,6 +95,11 @@ public partial class SpeechmaticsProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public static IReadOnlyList<Model> SpeechmaticsModels =>
     [
         new() { Id = "sarah".ToModelId(nameof(Speechmatics).ToLowerInvariant()),

@@ -108,5 +108,10 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
     {
         throw new NotImplementedException();
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

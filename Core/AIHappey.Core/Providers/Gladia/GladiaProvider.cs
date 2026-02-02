@@ -86,6 +86,11 @@ public partial class GladiaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerOptions.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull

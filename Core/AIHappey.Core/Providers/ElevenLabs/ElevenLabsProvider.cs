@@ -100,6 +100,11 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(),
         };
     }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 
