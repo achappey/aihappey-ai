@@ -4,7 +4,7 @@ A multi-provider **.NET AI backend** exposing key AI endpoints.
 
 ## Provider Support Matrix
 
-The table below shows which endpoints each provider implements (✅), not yet implemented (❌) or for which an endpoint is not applicable to the provider (➖).
+The table below shows which endpoints each provider implements (✅), not yet implemented (❌), partially implemented (🟡) or for which an endpoint is not applicable to the provider (➖).
 
 | Provider       | [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [Completions](https://platform.openai.com/docs/api-reference/chat) | [Responses](https://platform.openai.com/docs/api-reference/responses) | [Sampling](https://modelcontextprotocol.io/specification/draft/client/sampling) | [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | Video |
 | -------------- | --------- | ----------------- | ------------- | --------- | ---------------------- | ------------------------ | ---------------- | ----------- | ----------- |
@@ -36,7 +36,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Friendli       | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Gladia         | ✅        | ❌                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
 | GMICloud       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
-| Google         | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ➖          |
+| Google         | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          |
 | GoogleTranslate| ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Groq           | ✅        | ❌                | ❌            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | GTranslate     | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -65,7 +65,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | PublicAI       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ❌          | ➖          |
 | Replicate      | ✅        | ❌                | ❌            | ❌        | ✅                     | ✅                       | ✅               | ➖          | ➖          |
 | ResembleAI     | ✅        | ❌                | 🟡            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
-| Runware        | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| Runware        | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | Runway         | ✅        | ❌                | ❌            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
 | SambaNova      | ✅        | ✅                | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
 | Sarvam         | ✅        | ✅                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
@@ -337,7 +337,7 @@ curl "$BASE_URL/v1/videos" \
   -d '{
     "model": "openai/sora-2",
     "prompt": "Drone shot of a minimal studio apartment in Scandinavian style",
-    "size": "720x1280",
+    "resolution": "720x1280",
     "n": 1
   }'
 ```

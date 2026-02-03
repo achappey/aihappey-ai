@@ -266,6 +266,77 @@ public sealed partial class RunwareProvider
                 Type = "image",
                 Name = "Bria FIBO",
                 Id = "bria:20@1".ToModelId(GetIdentifier()) },
+
+
+            // =======================
+            // VIDEO MODELS (1–34)
+            // =======================
+
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q1", Id = "vidu:1@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu 2.0", Id = "vidu:2@0".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu 1.5", Id = "vidu:1@5".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q1 Classic", Id = "vidu:1@0".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q2 Pro", Id = "vidu:3@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q2 Turbo", Id = "vidu:3@2".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V2.0 Master", Id = "klingai:4@3".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V1.0 Pro", Id = "klingai:1@2".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V1.6 Pro", Id = "klingai:3@2".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V1.5 Pro", Id = "klingai:2@2".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V2.1 Standard (I2V)", Id = "klingai:5@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V2.1 Master", Id = "klingai:5@3".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Runway", Type = "video", Name = "Runway Gen-4 Turbo", Id = "runway:1@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Runway", Type = "video", Name = "Runway Aleph", Id = "runway:2@1".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Google", Type = "video", Name = "Veo 3.0", Id = "google:3@0".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Google", Type = "video", Name = "Veo 3.1", Id = "google:3@2".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Google", Type = "video", Name = "Veo 3 Fast", Id = "google:3@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Google", Type = "video", Name = "Veo 2.0", Id = "google:2@0".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "OpenAI", Type = "video", Name = "Sora 2", Id = "openai:3@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "OpenAI", Type = "video", Name = "Sora 2 Pro", Id = "openai:3@2".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "PixVerse", Type = "video", Name = "PixVerse v4", Id = "pixverse:1@2".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "PixVerse", Type = "video", Name = "PixVerse v5", Id = "pixverse:1@5".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "PixVerse", Type = "video", Name = "PixVerse v5 Fast", Id = "pixverse:1@5-fast".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "PixVerse", Type = "video", Name = "PixVerse v5.6", Id = "pixverse:1@7".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "MiniMax", Type = "video", Name = "Hailuo 2.3", Id = "minimax:4@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "MiniMax", Type = "video", Name = "Hailuo 2.3 Fast", Id = "minimax:4@2".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "ByteDance", Type = "video", Name = "Seedance 1.0 Pro", Id = "bytedance:2@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "ByteDance", Type = "video", Name = "Seedance 1.0 Lite", Id = "bytedance:1@1".ToModelId(GetIdentifier()) },
+
+            // =======================
+            // VIDEO MODELS (35–68)
+            // =======================
+
+            new() { OwnedBy = "Alibaba", Type = "video", Name = "Wan 2.2 A14B", Id = "runware:200@6".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Alibaba", Type = "video", Name = "Wan 2.6 Flash", Id = "alibaba:wan@2.6-flash".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Lightricks", Type = "video", Name = "LTX-2 Fast", Id = "lightricks:2@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Lightricks", Type = "video", Name = "LTX-2 Pro", Id = "lightricks:2@0".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Lightricks", Type = "video", Name = "LTX-2 Retake", Id = "lightricks:3@1".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Creatify", Type = "video", Name = "Aurora v1 Fast", Id = "creatify:aurora@fast".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "Kling VIDEO 2.6 Pro", Id = "klingai:kling-video@2.6-pro".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "Kling O1 Standard", Id = "klingai:kling@o1-standard".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI Avatar 2.0 Pro", Id = "klingai:avatar@2.0-pro".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI 2.5 Turbo PRO", Id = "klingai:6@1".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Bytedance", Type = "video", Name = "OmniHuman-1.5", Id = "bytedance:5@2".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Google", Type = "video", Name = "Veo 3 Audio", Id = "google:3@0-audio".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Runware", Type = "video", Name = "Wan 2.6 Motion-Realism", Id = "runware:201@1".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "PixVerse", Type = "video", Name = "PixVerse Character Fusion", Id = "pixverse:character@1".ToModelId(GetIdentifier()) },
+
+            new() { OwnedBy = "Bria", Type = "video", Name = "Bria Video Background Removal", Id = "bria:51@1".ToModelId(GetIdentifier()) },
+
+
         ]);
     }
 

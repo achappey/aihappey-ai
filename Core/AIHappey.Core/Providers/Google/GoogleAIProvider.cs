@@ -67,8 +67,4 @@ public partial class GoogleAIProvider(IApiKeyResolver keyResolver, ILogger<Googl
         throw new NotImplementedException();
     }
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

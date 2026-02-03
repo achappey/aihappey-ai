@@ -7,7 +7,7 @@ namespace AIHappey.Common.Model.Providers.Runware;
 /// ProviderOptions schema for Runware image inference.
 /// Consumed via <c>providerOptions.runware</c> for <c>/v1/images/generations</c>.
 /// </summary>
-public sealed class RunwareImageProviderMetadata
+public class RunwareImageProviderMetadata
 {
     [JsonPropertyName("outputType")]
     public string? OutputType { get; set; }

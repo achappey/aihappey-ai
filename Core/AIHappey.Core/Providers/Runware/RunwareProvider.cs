@@ -80,9 +80,6 @@ public sealed partial class RunwareProvider(
         throw new NotImplementedException();
     }
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    // VideoRequest implementation lives in RunwareProvider.Videos.cs
 }
 

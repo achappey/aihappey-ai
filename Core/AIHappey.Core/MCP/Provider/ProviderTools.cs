@@ -73,7 +73,7 @@ public class ProviderTools
                 "deepgram" => generator.Generate(typeof(DeepgramSpeechProviderMetadata)),
                 "audixa" => generator.Generate(typeof(AudixaSpeechProviderMetadata)),
                 "alibaba" => generator.Generate(typeof(AlibabaImageProviderMetadata)),
-                "runware" => generator.Generate(typeof(RunwareImageProviderMetadata)),
+                "runware" => generator.Generate(typeof(RunwareProviderMetadata)),
                 "lingvanex" => generator.Generate(typeof(LingvanexProviderMetadata)),
                 "modernmt" => generator.Generate(typeof(ModernMTProviderMetadata)),
                 _ => throw new Exception($"Provider {aiProviderId} not supported. Available providers: {JsonSerializer

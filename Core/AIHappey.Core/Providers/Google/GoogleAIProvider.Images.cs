@@ -14,6 +14,7 @@ public partial class GoogleAIProvider
         var now = DateTime.UtcNow;
         List<string> images = [];
         List<object> warnings = [];
+
         var imageClient = googleAI.ImageGenerationModel(imageRequest.Model);
         var aspectRatio = imageRequest.AspectRatio.ToImageAspectRatio();
 

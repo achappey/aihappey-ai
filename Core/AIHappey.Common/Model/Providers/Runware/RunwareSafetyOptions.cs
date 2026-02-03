@@ -6,5 +6,8 @@ public sealed class RunwareSafetyOptions
 {
     [JsonPropertyName("checkContent")]
     public bool? CheckContent { get; set; }
+
+    [JsonPropertyName("mode")]
+    public string? Mode { get; set; }
 }
 
