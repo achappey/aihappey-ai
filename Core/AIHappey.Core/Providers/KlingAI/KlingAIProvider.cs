@@ -52,8 +52,8 @@ public partial class KlingAIProvider : IModelProvider
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => await this.ImageSamplingAsync(chatRequest, cancellationToken: cancellationToken);
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+        => SpeechRequestInternal(request, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -105,10 +105,6 @@ public partial class KlingAIProvider : IModelProvider
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     // ImageRequest implementation lives in KlingAIProvider.Images.cs
+    // VideoRequest implementation lives in KlingAIProvider.Videos.cs
 }

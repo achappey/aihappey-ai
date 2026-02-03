@@ -66,7 +66,11 @@ public partial class BytePlusProvider : IModelProvider
                     return await this.ImageSamplingAsync(chatRequest,
                             cancellationToken: cancellationToken);
                 }
-
+            case "language":
+                {
+                    return await this.ChatCompletionsSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
 
             default:
                 throw new NotImplementedException();
@@ -110,8 +114,4 @@ public partial class BytePlusProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => ImageRequestBytePlus(request, cancellationToken);
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

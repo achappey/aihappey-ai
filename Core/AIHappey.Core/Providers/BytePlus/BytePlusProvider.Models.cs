@@ -7,6 +7,8 @@ public partial class BytePlusProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        ApplyAuthHeader();
+
         return await Task.FromResult(ByteDanceModels);
     }
 
@@ -51,6 +53,34 @@ public partial class BytePlusProvider
     {
         Id = "byteplus/seedance-1.0-pro-250528",
         Name = "ByteDance-Seedance-1.0-pro",
+        Type = "video",
+        OwnedBy = "ByteDance"
+    },
+    new()
+    {
+        Id = "byteplus/seedance-1-5-pro-251215",
+        Name = "ByteDance-Seedance-1.5-pro",
+        Type = "video",
+        OwnedBy = "ByteDance"
+    },
+    new()
+    {
+        Id = "byteplus/seedance-1-0-pro-fast-251015",
+        Name = "ByteDance-Seedance-1.0-pro-fast",
+        Type = "video",
+        OwnedBy = "ByteDance"
+    },
+    new()
+    {
+        Id = "byteplus/seedance-1-0-lite-t2v-250428",
+        Name = "ByteDance-Seedance-1.0-lite-t2v",
+        Type = "video",
+        OwnedBy = "ByteDance"
+    },
+    new()
+    {
+        Id = "byteplus/seedance-1-0-lite-i2v-250428",
+        Name = "ByteDance-Seedance-1.0-lite-i2v",
         Type = "video",
         OwnedBy = "ByteDance"
     },
