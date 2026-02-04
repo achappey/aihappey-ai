@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Responses.Streaming;
-using Microsoft.VisualBasic;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Responses.Extensions;

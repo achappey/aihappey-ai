@@ -9,15 +9,11 @@ public partial class AssemblyAIProvider : IModelProvider
 
     public static IReadOnlyList<Model> AssemblyAIModels =>
     [
-        // ===== Speech-to-text models (AssemblyAI Speech API) =====
-        new() { Id = "best".ToModelId(nameof(AssemblyAI).ToLowerInvariant()),
-            Name = "best",
+        new() { Id = "universal-3-pro".ToModelId(nameof(AssemblyAI).ToLowerInvariant()),
+            Name = "universal-3-pro",
             Type = "transcription", OwnedBy = nameof(AssemblyAI) },
-        new() { Id = "slam-1".ToModelId(nameof(AssemblyAI).ToLowerInvariant()),
-            Name = "slam-1",
-            Type = "transcription", OwnedBy = nameof(AssemblyAI) },
-        new() { Id = "universal".ToModelId(nameof(AssemblyAI).ToLowerInvariant()),
-            Name = "universal",
+        new() { Id = "universal-2".ToModelId(nameof(AssemblyAI).ToLowerInvariant()),
+            Name = "universal-2",
             Type = "transcription", OwnedBy = nameof(AssemblyAI) },
         new() { Id = "universal-streaming-english".ToModelId(nameof(AssemblyAI).ToLowerInvariant()),
             Name = "universal-streaming-english",

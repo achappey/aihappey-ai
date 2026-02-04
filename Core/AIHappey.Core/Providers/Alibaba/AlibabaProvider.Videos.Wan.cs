@@ -17,18 +17,6 @@ public partial class AlibabaProvider
 
     private const string DashScopeVideoPath = "/api/v1/services/aigc/video-generation/video-synthesis";
 
-    private static readonly HashSet<string> WanVideoModels = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "wan2.6-i2v-flash",
-        "wan2.6-i2v",
-        "wan2.5-i2v-preview",
-        "wan2.6-t2v",
-        "wan2.5-t2v-preview"
-    };
-
-    private static bool IsWanVideoModel(string modelName)
-        => WanVideoModels.Contains(modelName);
-
     private async Task<VideoResponse> WanVideoRequest(
         VideoRequest request,
         AlibabaVideoProviderMetadata? providerMetadata,

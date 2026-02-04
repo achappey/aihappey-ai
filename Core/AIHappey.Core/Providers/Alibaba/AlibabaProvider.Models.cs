@@ -45,6 +45,24 @@ public partial class AlibabaProvider
                 OwnedBy = nameof(Alibaba),
                 ContextWindow = 1000000,
             },
+         new()
+            {
+                Id = "glm-4.7".ToModelId(GetIdentifier()),
+                Name = "glm-4.7",
+                Type = "language",
+                OwnedBy = "Zhipu AI",
+                ContextWindow = 202_752,
+                MaxTokens = 32_768 + 16_384,
+            },
+              new()
+            {
+                Id = "glm-4.6".ToModelId(GetIdentifier()),
+                Name = "glm-4.6",
+                Type = "language",
+                OwnedBy = "Zhipu AI",
+                ContextWindow = 202_752,
+                MaxTokens = 32_768 + 16_384,
+            },
 
             // ---- Image generation (Qwen-Image) ----
             new()
@@ -136,8 +154,65 @@ public partial class AlibabaProvider
                 Name = "wan2.5-t2v-preview",
                 Type = "video",
                 OwnedBy = nameof(Alibaba),
-            }
+            },
+            new()
+            {
+                Id = "qwen3-asr-flash".ToModelId(GetIdentifier()),
+                Name = "qwen3-asr-flash",
+                Type = "transcription",
+                OwnedBy = nameof(Alibaba),
+            },
+            ..BuildLiveTranslateModels()
         ]);
     }
+
+    private IEnumerable<Model> BuildLiveTranslateModels()
+    {
+        foreach (var baseModel in LiveTranslateBaseModels)
+        {
+            foreach (var language in SupportedLanguages)
+            {
+                yield return new Model
+                {
+                    Id = $"{baseModel}/translate-to-{language}".ToModelId(GetIdentifier()),
+                    Name = $"{baseModel} Translate to {language}",
+                    Type = "transcription",
+                    OwnedBy = nameof(Alibaba),
+                };
+            }
+        }
+    }
+
+
+    private static readonly string[] LiveTranslateBaseModels =
+    [
+        "qwen3-livetranslate-flash",
+        "qwen3-livetranslate-flash-2025-12-01"
+    ];
+
+
+    private HashSet<string> SupportedLanguages = new HashSet<string>
+    {
+        "English",
+        "Chinese",
+        "Russian",
+        "French",
+        "German",
+        "Portuguese",
+        "Spanish",
+        "Italian",
+        "Indonesian",
+        "Korean",
+        "Japanese",
+        "Vietnamese",
+        "Thai",
+        "Arabic",
+        "Cantonese",
+        "Hindi",
+        "Greek",
+        "Turkish"
+    };
+
+
 }
 

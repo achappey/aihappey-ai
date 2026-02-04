@@ -85,6 +85,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "klingai" => _config.KlingAI?.ApiKey,
             "euqai" => _config.Euqai?.ApiKey,
             "vidu" => _config.Vidu?.ApiKey,
+            "reve" => _config.Reve?.ApiKey,
             _ => null
         };
 }

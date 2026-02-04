@@ -9,6 +9,7 @@ using AIHappey.Core.ModelProviders;
 using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
+using AIHappey.Responses.Extensions;
 
 namespace AIHappey.Core.Providers.Alibaba;
 
@@ -22,7 +23,7 @@ public partial class AlibabaProvider : IModelProvider
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/");
+        _client.BaseAddress = new Uri("https://dashscope-intl.aliyuncs.com/");
     }
 
     private void ApplyAuthHeader()
@@ -43,7 +44,7 @@ public partial class AlibabaProvider : IModelProvider
 
         return await _client.GetChatCompletion(
              options,
-             relativeUrl: "chat/completions",
+             relativeUrl: "compatible-mode/v1/chat/completions",
              ct: cancellationToken);
     }
 
@@ -53,7 +54,7 @@ public partial class AlibabaProvider : IModelProvider
 
         return _client.GetChatCompletionUpdates(
                     options,
-                    relativeUrl: "chat/completions",
+                    relativeUrl: "compatible-mode/v1/chat/completions",
                     ct: cancellationToken);
     }
 
@@ -69,13 +70,19 @@ public partial class AlibabaProvider : IModelProvider
                             cancellationToken: cancellationToken);
                 }
 
+            case "language":
+                {
+                    return await this.ChatCompletionsSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
             default:
                 throw new NotImplementedException();
         }
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => TranscriptionRequestInternal(imageRequest, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -83,14 +90,24 @@ public partial class AlibabaProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.GetResponses(
+                   options,
+                   relativeUrl: "api/v2/apps/protocols/compatible-mode/v1/responses",
+                   ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.GetResponsesUpdates(
+           options,
+           relativeUrl: "api/v2/apps/protocols/compatible-mode/v1/responses",
+           ct: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -100,28 +117,17 @@ public partial class AlibabaProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.Model))
-            throw new ArgumentException("Model is required.", nameof(request));
-
-        var modelName = NormalizeAlibabaModelName(request.Model);
-
-        if (IsWanVideoModel(modelName))
+        var now = DateTime.UtcNow;
+        List<object> warnings = [];
+        AlibabaVideoProviderMetadata? providerMetadata = null;
+        if (request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerElement)
+            && providerElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
         {
-            var now = DateTime.UtcNow;
-            List<object> warnings = [];
-            AlibabaVideoProviderMetadata? providerMetadata = null;
-            if (request.ProviderOptions is not null
-                && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerElement)
-                && providerElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-            {
-                providerMetadata = providerElement.Deserialize<AlibabaVideoProviderMetadata>(JsonSerializerOptions.Web);
-            }
-
-            return WanVideoRequest(request, providerMetadata, modelName, warnings, now, cancellationToken);
+            providerMetadata = providerElement.Deserialize<AlibabaVideoProviderMetadata>(JsonSerializerOptions.Web);
         }
 
-        throw new NotSupportedException($"Alibaba video model '{request.Model}' is not supported.");
+        return WanVideoRequest(request, providerMetadata, request.Model, warnings, now, cancellationToken);
     }
 }
 

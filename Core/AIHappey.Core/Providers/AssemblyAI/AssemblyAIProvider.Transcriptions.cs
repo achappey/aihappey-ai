@@ -25,12 +25,6 @@ public partial class AssemblyAIProvider
         if (request.Audio is null)
             throw new ArgumentException("Audio is required.", nameof(request));
 
-        // Model: strip provider prefix if present.
-        var model = request.Model;
-
-        if (string.IsNullOrWhiteSpace(model))
-            model = "best";
-
         var metadata = request.GetProviderMetadata<AssemblyAITranscriptionProviderMetadata>(GetIdentifier());
 
         var now = DateTime.UtcNow;
@@ -58,13 +52,13 @@ public partial class AssemblyAIProvider
         try
         {
             // 2) Create transcript: POST /v2/transcript
-            transcriptId = await CreateTranscriptAsync(uploadUrl, model, metadata, cancellationToken);
+            transcriptId = await CreateTranscriptAsync(uploadUrl, request.Model, metadata, cancellationToken);
 
             // 3) Poll status: GET /v2/transcript/{id}
             var completedJson = await PollTranscriptUntilDoneAsync(transcriptId, cancellationToken);
 
             // 4) Convert
-            return ConvertTranscriptResponse(completedJson, model, now, warnings);
+            return ConvertTranscriptResponse(completedJson, request.Model, now, warnings);
         }
         finally
         {

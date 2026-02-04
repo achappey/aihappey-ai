@@ -34,10 +34,8 @@ public partial class AlibabaProvider
 
         var providerMetadata = imageRequest.GetProviderMetadata<AlibabaImageProviderMetadata>(GetIdentifier());
 
-        var modelName = NormalizeAlibabaModelName(imageRequest.Model);
-
-        if (IsWan26Model(modelName))
-            return await Wan26ImageRequest(imageRequest, providerMetadata?.Wan, modelName, warnings, now, cancellationToken);
+        if (IsWan26Model(imageRequest.Model))
+            return await Wan26ImageRequest(imageRequest, providerMetadata?.Wan, imageRequest.Model, warnings, now, cancellationToken);
 
         if (imageRequest.N is > 1)
             warnings.Add(new { type = "unsupported", feature = "n", details = "DashScope Qwen-Image returns exactly 1 image." });
@@ -53,11 +51,11 @@ public partial class AlibabaProvider
         var dashScopeSize = MapGenericSizeToDashScope(imageRequest.Size);
 
         // Route providerOptions based on model family.
-        var (promptExtend, negativePrompt, watermark) = ResolveDashScopeParams(modelName, providerMetadata);
+        var (promptExtend, negativePrompt, watermark) = ResolveDashScopeParams(imageRequest.Model, providerMetadata);
 
         var payload = new
         {
-            model = modelName,
+            model = imageRequest.Model,
             input = new
             {
                 messages = new[]
@@ -114,19 +112,6 @@ public partial class AlibabaProvider
                 Body = JsonDocument.Parse(raw).RootElement.Clone()
             }
         };
-    }
-
-    private static string NormalizeAlibabaModelName(string model)
-    {
-        if (string.IsNullOrWhiteSpace(model))
-            throw new ArgumentException("Model is required.", nameof(model));
-
-        // Accept both: "alibaba/qwen-image-plus" and "qwen-image-plus".
-        if (!model.Contains('/'))
-            return model.Trim();
-
-        var split = model.SplitModelId();
-        return string.IsNullOrWhiteSpace(split.Model) ? model.Trim() : split.Model.Trim();
     }
 
     private static string? MapGenericSizeToDashScope(string? genericSize)
