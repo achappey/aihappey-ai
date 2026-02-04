@@ -76,6 +76,7 @@ using AIHappey.Core.Providers.SiliconFlow;
 using AIHappey.Core.Providers.Cirrascale;
 using AIHappey.Core.Providers.KlingAI;
 using AIHappey.Core.Providers.Euqai;
+using AIHappey.Core.Providers.Vidu;
 
 namespace AIHappey.Core.AI;
 
@@ -158,6 +159,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CirrascaleProvider>();
         services.AddSingleton<IModelProvider, KlingAIProvider>();
         services.AddSingleton<IModelProvider, EuqaiProvider>();
+        services.AddSingleton<IModelProvider, ViduProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

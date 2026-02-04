@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
-using System.Linq;
 
 namespace AIHappey.Core.Providers.Google;
 

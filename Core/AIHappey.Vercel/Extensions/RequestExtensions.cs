@@ -20,6 +20,11 @@ public static class RequestExtensions
         return request.ProviderOptions.GetProviderMetadata<T>(providerId);
     }
 
+    public static T? GetProviderMetadata<T>(this VideoRequest request, string providerId)
+    {
+        return request.ProviderOptions.GetProviderMetadata<T>(providerId);
+    }
+
     public static T? GetProviderMetadata<T>(this RerankingRequest request, string providerId)
     {
         return request.ProviderOptions.GetProviderMetadata<T>(providerId);

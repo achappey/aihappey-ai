@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Core.AI;
+using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Responses.Streaming;
@@ -96,7 +98,30 @@ public partial class AlibabaProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+
+        var modelName = NormalizeAlibabaModelName(request.Model);
+
+        if (IsWanVideoModel(modelName))
+        {
+            var now = DateTime.UtcNow;
+            List<object> warnings = [];
+            AlibabaVideoProviderMetadata? providerMetadata = null;
+            if (request.ProviderOptions is not null
+                && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerElement)
+                && providerElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+            {
+                providerMetadata = providerElement.Deserialize<AlibabaVideoProviderMetadata>(JsonSerializerOptions.Web);
+            }
+
+            return WanVideoRequest(request, providerMetadata, modelName, warnings, now, cancellationToken);
+        }
+
+        throw new NotSupportedException($"Alibaba video model '{request.Model}' is not supported.");
     }
 }
 

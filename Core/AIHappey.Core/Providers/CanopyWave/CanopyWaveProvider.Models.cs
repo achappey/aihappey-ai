@@ -65,6 +65,27 @@ public partial class CanopyWaveProvider
             Type = "language",
             OwnedBy = "CanopyWave"
         },
+          new()
+        {
+            Id = "moonshotai/kimi-k2.5".ToModelId("canopywave"),
+            Name = "kimi-k2.5",
+            Type = "language",
+            OwnedBy = "CanopyWave"
+        },
+          new()
+        {
+            Id = "zai/glm-4.7".ToModelId("canopywave"),
+            Name = "glm-4.7",
+            Type = "language",
+            OwnedBy = "CanopyWave"
+        },
+          new()
+        {
+            Id = "xiaomimimo/mimo-v2-flash".ToModelId("canopywave"),
+            Name = "mimo-v2-flash",
+            Type = "language",
+            OwnedBy = "CanopyWave"
+        },
     ];
 }
 

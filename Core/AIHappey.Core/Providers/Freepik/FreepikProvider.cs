@@ -86,7 +86,7 @@ public sealed partial class FreepikProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return FreepikVideoRequest(request, cancellationToken);
     }
 }
 

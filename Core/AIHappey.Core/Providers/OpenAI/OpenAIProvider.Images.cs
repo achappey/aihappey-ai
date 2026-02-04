@@ -4,7 +4,6 @@ using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using OpenAI.Videos;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

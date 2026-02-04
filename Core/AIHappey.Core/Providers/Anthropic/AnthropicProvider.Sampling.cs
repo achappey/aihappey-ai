@@ -4,7 +4,6 @@ using Anthropic.SDK.Messaging;
 using ModelContextProtocol.Protocol;
 using System.Text.Json.Nodes;
 using AIHappey.Core.Providers.Anthropic.Extensions;
-using AIHappey.Common.Model.Providers.Anthropic;
 
 namespace AIHappey.Core.Providers.Anthropic;
 

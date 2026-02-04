@@ -78,6 +78,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["cirrascale"] = "X-Cirrascale-Key",
             ["klingai"] = "X-KlingAI-Key",
             ["euqai"] = "X-Euqai-Key",
+            ["vidu"] = "X-Vidu-Key",
         };
 
     public string? Resolve(string provider)

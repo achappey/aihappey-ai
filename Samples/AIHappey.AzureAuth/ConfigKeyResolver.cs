@@ -84,6 +84,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "cirrascale" => _config.Cirrascale?.ApiKey,
             "klingai" => _config.KlingAI?.ApiKey,
             "euqai" => _config.Euqai?.ApiKey,
+            "vidu" => _config.Vidu?.ApiKey,
             _ => null
         };
 }

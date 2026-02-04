@@ -99,6 +99,43 @@ public partial class AlibabaProvider
                 Name = "wan2.6-t2i",
                 Type = "image",
                 OwnedBy = nameof(Alibaba),
+            },
+
+            // ---- Video generation (Wan) ----
+            new()
+            {
+                Id = "wan2.6-i2v-flash".ToModelId(GetIdentifier()),
+                Name = "wan2.6-i2v-flash",
+                Type = "video",
+                OwnedBy = nameof(Alibaba),
+            },
+            new()
+            {
+                Id = "wan2.6-i2v".ToModelId(GetIdentifier()),
+                Name = "wan2.6-i2v",
+                Type = "video",
+                OwnedBy = nameof(Alibaba),
+            },
+            new()
+            {
+                Id = "wan2.5-i2v-preview".ToModelId(GetIdentifier()),
+                Name = "wan2.5-i2v-preview",
+                Type = "video",
+                OwnedBy = nameof(Alibaba),
+            },
+            new()
+            {
+                Id = "wan2.6-t2v".ToModelId(GetIdentifier()),
+                Name = "wan2.6-t2v",
+                Type = "video",
+                OwnedBy = nameof(Alibaba),
+            },
+            new()
+            {
+                Id = "wan2.5-t2v-preview".ToModelId(GetIdentifier()),
+                Name = "wan2.5-t2v-preview",
+                Type = "video",
+                OwnedBy = nameof(Alibaba),
             }
         ]);
     }

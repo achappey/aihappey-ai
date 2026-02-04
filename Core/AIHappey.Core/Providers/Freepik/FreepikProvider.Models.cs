@@ -190,6 +190,90 @@ public sealed partial class FreepikProvider
                 new Model
                 {
                     OwnedBy = nameof(Freepik),
+                    Name = "runway-gen4-turbo",
+                    Type = "video",
+                    Id = "runway-gen4-turbo".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "ltx-2-pro",
+                    Type = "video",
+                    Id = "ltx-2-pro".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "kling-v2-6-pro",
+                    Type = "video",
+                    Id = "kling-v2-6-pro".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-1-5-pro-480p",
+                    Type = "video",
+                    Id = "seedance-1-5-pro-480p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-1-5-pro-720p",
+                    Type = "video",
+                    Id = "seedance-1-5-pro-720p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-1-5-pro-1080p",
+                    Type = "video",
+                    Id = "seedance-1-5-pro-1080p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-pro-480p",
+                    Type = "video",
+                    Id = "seedance-pro-480p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-pro-720p",
+                    Type = "video",
+                    Id = "seedance-pro-720p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-pro-1080p",
+                    Type = "video",
+                    Id = "seedance-pro-1080p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-lite-480p",
+                    Type = "video",
+                    Id = "seedance-lite-480p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-lite-720p",
+                    Type = "video",
+                    Id = "seedance-lite-720p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
+                    Name = "seedance-lite-1080p",
+                    Type = "video",
+                    Id = "seedance-lite-1080p".ToModelId(GetIdentifier())
+                },
+                new Model
+                {
+                    OwnedBy = nameof(Freepik),
                     Name = "Mystic Zen",
                     Type = "image",
                     Id = "mystic/zen".ToModelId(GetIdentifier())

@@ -21,12 +21,66 @@ public sealed partial class DeepInfraProvider
     [
         new()
         {
+            Id = "moonshotai/Kimi-K2.5".ToModelId("deepinfra"),
+            Name = "Kimi-K2.5",
+            Type = "language",
+            OwnedBy = "MoonshotAI",
+            Description = "Kimi K2.5 is an open-source, native multimodal agentic model built through continual pretraining on approximately 15 trillion mixed visual and text tokens atop Kimi-K2-Base. It seamlessly integrates vision and language understanding with advanced agentic capabilities, instant and thinking modes, as well as conversational and agentic paradigms."
+        },
+
+         new()
+        {
+            Id = "zai-org/GLM-4.7-Flash".ToModelId("deepinfra"),
+            Name = "GLM-4.7-Flash",
+            Type = "language",
+            OwnedBy = "Z.ai",
+            Description = "GLM-4.7-Flash is a 30B-A3B MoE model. As the strongest model in the 30B class, GLM-4.7-Flash offers a new option for lightweight deployment that balances performance and efficiency."
+        },
+
+         new()
+        {
+            Id = "zai-org/GLM-4.6".ToModelId("deepinfra"),
+            Name = "GLM-4.6",
+            Type = "language",
+            OwnedBy = "Z.ai",
+            Description = "Compared with GLM-4.5, GLM-4.6 brings several key improvements: Longer context window: The context window has been expanded from 128K to 200K tokens, enabling the model to handle more complex agentic tasks. Superior coding performance: The model achieves higher scores on code benchmarks and demonstrates better real-world performance in applications such as Claude Code、Cline、Roo Code and Kilo Code, including improvements in generating visually polished front-end pages. Advanced reasoning: GLM-4.6 shows a clear improvement in reasoning performance and supports tool use during inference, leading to stronger overall capability. More capable agents: GLM-4.6 exhibits stronger performance in tool using and search-based agents, and integrates more effectively within agent frameworks. Refined writing: Better aligns with human preferences in style and readability, and performs more naturally in role-playing scenarios."
+        },
+
+        new()
+        {
+            Id = "zai-org/GLM-4.6V".ToModelId("deepinfra"),
+            Name = "GLM-4.6V",
+            Type = "language",
+            OwnedBy = "Z.ai",
+            Description = "This model is part of the GLM-V family of models, introduced in the paper GLM-4.1V-Thinking and GLM-4.5V: Towards Versatile Multimodal Reasoning with Scalable Reinforcement Learning."
+        },
+
+        new()
+        {
+            Id = "zai-org/GLM-4.7".ToModelId("deepinfra"),
+            Name = "GLM-4.7",
+            Type = "language",
+            OwnedBy = "Z.ai",
+            Description = "GLM-4.7 is a state-of-the-art, multilingual Mixture-of-Experts (MoE) language model designed for complex reasoning, agentic coding, and tool use. Building on its predecessor GLM-4.6, it delivers significant improvements across key benchmarks, including multilingual SWE-bench, Terminal Bench, and reasoning-heavy evaluations like HLE. The model features advanced 'Interleaved Thinking' and new 'Preserved Thinking' modes, allowing it to reason before actions and maintain consistency across long, multi-turn tasks. With 358 billion parameters, GLM-4.7 excels in generating clean code, modern UI elements, and sophisticated reasoning outputs."
+        },
+              
+        new()
+        {
             Id = "nvidia/Nemotron-3-Nano-30B-A3B".ToModelId("deepinfra"),
             Name = "Nemotron-3-Nano-30B-A3B",
             Type = "language",
             OwnedBy = "NVIDIA",
-            Description = "NVIDIA Nemotron 3 Nano (30B A3B)."
+            Description = "NVIDIA Nemotron 3 Nano is an open reasoning model optimized for fast, cost-efficient inference. Built with a hybrid MoE and Mamba architecture and trained on NVIDIA-curated synthetic reasoning data, it delivers strong multi-step reasoning with stable latency and predictable performance for agentic and production workloads."
         },
+
+   new()
+        {
+            Id = "Gryphe/MythoMax-L2-13b".ToModelId("deepinfra"),
+            Name = "MythoMax-L2-13b",
+            Type = "language",
+            OwnedBy = "Gryphe"
+        },
+
 
         new() { Id = "deepseek-ai/DeepSeek-V3.2".ToModelId("deepinfra"), Name = "DeepSeek-V3.2", Type = "language", OwnedBy = "DeepSeek" },
         new() { Id = "deepseek-ai/DeepSeek-V3.1".ToModelId("deepinfra"), Name = "DeepSeek-V3.1", Type = "language", OwnedBy = "DeepSeek" },
@@ -117,7 +171,6 @@ public sealed partial class DeepInfraProvider
             Name = "Llama-3.3-Nemotron-Super-49B-v1.5",
             Description = "Llama-3.3-Nemotron-Super-49B-v1.5 is a large language model (LLM) optimized for advanced reasoning, conversational interactions, retrieval-augmented generation (RAG), and tool-calling tasks. Derived from Meta's Llama-3.3-70B-Instruct, it employs a Neural Architecture Search (NAS) approach, significantly enhancing efficiency and reducing memory requirements.",
             Type = "language", OwnedBy = "NVIDIA" },
-
 
         new() { Id = "NousResearch/Hermes-3-Llama-3.1-405B".ToModelId("deepinfra"),
             Name = "Hermes-3-Llama-3.1-405B",
