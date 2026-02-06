@@ -80,6 +80,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["euqai"] = "X-Euqai-Key",
             ["vidu"] = "X-Vidu-Key",
             ["reve"] = "X-Reve-Key",
+            ["decart"] = "X-Decart-Key",
         };
 
     public string? Resolve(string provider)

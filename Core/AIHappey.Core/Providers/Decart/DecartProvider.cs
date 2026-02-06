@@ -1,24 +1,24 @@
-using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using System.Runtime.CompilerServices;
 
-namespace AIHappey.Core.Providers.PublicAI;
+namespace AIHappey.Core.Providers.Decart;
 
-public partial class PublicAIProvider : IModelProvider
+public partial class DecartProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    public PublicAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public DecartProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.publicai.co/");
+        _client.BaseAddress = new Uri("https://api.decart.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -26,32 +26,41 @@ public partial class PublicAIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(PublicAI)} API key.");
+            throw new InvalidOperationException($"No {nameof(Decart)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        _client.DefaultRequestHeaders.Authorization = null;
+        _client.DefaultRequestHeaders.Remove("X-API-KEY");
+        _client.DefaultRequestHeaders.Add("X-API-KEY", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        throw new NotImplementedException();
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        throw new NotImplementedException();
     }
 
-    public string GetIdentifier() => nameof(PublicAI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Decart).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "image":
+                {
+                    return await this.ImageSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -61,7 +70,7 @@ public partial class PublicAIProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -77,10 +86,30 @@ public partial class PublicAIProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => DecartImageRequest(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+        => DecartVideoRequest(request, cancellationToken);
+
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "image":
+                {
+                    await foreach (var update in this.StreamImageAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 }

@@ -78,6 +78,7 @@ public class AIServiceConfig
     public ProviderConfig? Euqai { get; set; }
     public ProviderConfig? Vidu { get; set; }
     public ProviderConfig? Reve { get; set; }
+    public ProviderConfig? Decart { get; set; }
 }
 
 public class ProviderConfig

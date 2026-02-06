@@ -10,8 +10,7 @@ public partial class AIMLProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id == chatRequest.Model);
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
 
         switch (model?.Type)
         {

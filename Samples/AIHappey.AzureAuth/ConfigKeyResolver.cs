@@ -86,6 +86,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "euqai" => _config.Euqai?.ApiKey,
             "vidu" => _config.Vidu?.ApiKey,
             "reve" => _config.Reve?.ApiKey,
+            "decart" => _config.Decart?.ApiKey,
             _ => null
         };
 }

@@ -33,7 +33,7 @@ public sealed partial class FreepikProvider
 
     private sealed record FreepikVideoTaskResult(string Status, List<string>? Generated, string Raw, string TaskId);
 
-    private async Task<VideoResponse> FreepikVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
