@@ -82,6 +82,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["reve"] = "X-Reve-Key",
             ["decart"] = "X-Decart-Key",
             ["json2video"] = "X-JSON2Video-Key",
+            ["greenpt"] = "X-GreenPT-Key",
         };
 
     public string? Resolve(string provider)

@@ -80,6 +80,7 @@ public class AIServiceConfig
     public ProviderConfig? Reve { get; set; }
     public ProviderConfig? Decart { get; set; }
     public ProviderConfig? JSON2Video { get; set; }
+    public ProviderConfig? GreenPT { get; set; }
 }
 
 public class ProviderConfig
