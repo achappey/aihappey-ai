@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace AIHappey.Common.Model.Providers.Freepik.ImageGeneration;
 
 /// <summary>

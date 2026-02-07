@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.OpenAI;
 
 namespace AIHappey.Common.Model.Providers.Bria;
 

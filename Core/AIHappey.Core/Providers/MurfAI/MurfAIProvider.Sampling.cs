@@ -18,7 +18,7 @@ public sealed partial class MurfAIProvider
         if (model.Type == "language")
         {
             var texts = chatRequest.Messages
-                .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
+                .Where(m => m.Role == Role.User)
                 .SelectMany(m => m.Content.OfType<TextContentBlock>())
                 .Select(b => b.Text)
                 .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -32,7 +32,7 @@ public sealed partial class MurfAIProvider
 
             return new CreateMessageResult
             {
-                Role = ModelContextProtocol.Protocol.Role.Assistant,
+                Role = Role.Assistant,
                 Model = modelId!,
                 StopReason = "stop",
                 Content = [joined.ToTextContentBlock()]

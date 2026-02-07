@@ -41,7 +41,7 @@ public partial class NLPCloudProvider : IModelProvider
         ArgumentNullException.ThrowIfNull(chatRequest);
 
         var modelId = chatRequest.GetModel();
-        ArgumentNullException.ThrowIfNullOrEmpty(modelId);
+        ArgumentException.ThrowIfNullOrEmpty(modelId);
 
         var kind = GetModelKind(modelId, out _);
         if (kind == NLPCloudModelKind.Translation)

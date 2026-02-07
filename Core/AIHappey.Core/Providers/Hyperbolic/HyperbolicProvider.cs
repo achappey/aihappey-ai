@@ -55,7 +55,7 @@ public partial class HyperbolicProvider : IModelProvider
     {
         var modelId = chatRequest.GetModel();
 
-        ArgumentNullException.ThrowIfNullOrEmpty(modelId);
+        ArgumentException.ThrowIfNullOrEmpty(modelId);
         var model = await this.GetModel(modelId, cancellationToken: cancellationToken)
         ?? throw new ArgumentException(modelId);
 

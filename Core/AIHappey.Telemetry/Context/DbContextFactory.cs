@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using AIHappey.Telemetry.Models;
 
 namespace AIHappey.Telemetry.Context;
 

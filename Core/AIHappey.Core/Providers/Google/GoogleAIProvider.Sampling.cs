@@ -86,7 +86,7 @@ public partial class GoogleAIProvider
             Model = response.ModelVersion!,
             Content = [resultBlock],
             StopReason = response.Candidates?.FirstOrDefault()?.FinishReason.ToStopReason(),
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
+            Role = Role.Assistant,
             Meta = new System.Text.Json.Nodes.JsonObject()
             {
                 ["inputTokens"] = response?.UsageMetadata?.PromptTokenCount,

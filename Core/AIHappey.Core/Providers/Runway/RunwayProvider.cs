@@ -92,6 +92,14 @@ public partial class RunwayProvider : IModelProvider
                     yield break;
                 }
 
+            case "video":
+                {
+                    await foreach (var update in this.StreamVideoAsync(chatRequest, cancellationToken))
+                        yield return update;
+
+                    yield break;
+                }
+
             default:
                 throw new NotImplementedException();
         }

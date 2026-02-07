@@ -1,5 +1,4 @@
 using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Common.Extensions;
 
@@ -55,6 +54,15 @@ public static class ImageExtensions
             Data = data.Url.RemoveDataUrlPrefix(),
             MediaType = data.MediaType
         };
+
+
+    public static VideoFile ToVideoFile(
+        this FileUIPart data) => new()
+        {
+            Data = data.Url.RemoveDataUrlPrefix(),
+            MediaType = data.MediaType
+        };
+
 
     public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
 

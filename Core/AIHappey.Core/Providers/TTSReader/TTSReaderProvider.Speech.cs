@@ -74,7 +74,7 @@ public partial class TTSReaderProvider
         var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"TTSReader TTS failed ({(int)resp.StatusCode}): {System.Text.Encoding.UTF8.GetString(bytes)}");
+            throw new InvalidOperationException($"TTSReader TTS failed ({(int)resp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
 
         var mime = "audio/mpeg";
         var base64 = Convert.ToBase64String(bytes);

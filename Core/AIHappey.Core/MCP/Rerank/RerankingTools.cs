@@ -96,7 +96,7 @@ public class RerankingTools
                 if (!Uri.TryCreate(u, UriKind.Absolute, out var uri))
                     throw new ArgumentException($"Invalid url in 'urls': '{u}'.");
 
-                var text = await AIHappey.Core.MCP.Media.MediaContentHelpers.FetchExternalBodyAsTextAsync(uri, httpClientFactory, ct);
+                var text = await Media.MediaContentHelpers.FetchExternalBodyAsTextAsync(uri, httpClientFactory, ct);
                 docs.Add(text);
             }
 

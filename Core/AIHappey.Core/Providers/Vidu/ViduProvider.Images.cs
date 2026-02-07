@@ -101,7 +101,7 @@ public partial class ViduProvider
         if (completed.State == "failed")
             throw new InvalidOperationException($"Vidu image task failed (task_id={taskId}).");
 
-        var creationUrl = ViduProvider.TryGetFirstCreationUrl(completed.RawRoot);
+        var creationUrl = TryGetFirstCreationUrl(completed.RawRoot);
         if (string.IsNullOrWhiteSpace(creationUrl))
             throw new InvalidOperationException($"Vidu image task completed but returned no creation url (task_id={taskId}).");
 

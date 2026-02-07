@@ -72,7 +72,7 @@ public sealed partial class LingvanexProvider : IModelProvider
         ArgumentNullException.ThrowIfNull(chatRequest);
 
         var modelId = chatRequest.GetModel();
-        ArgumentNullException.ThrowIfNullOrEmpty(modelId);
+        ArgumentException.ThrowIfNullOrEmpty(modelId);
 
         var model = await this.GetModel(modelId, cancellationToken: cancellationToken);
         if (!string.Equals(model.Type, "language", StringComparison.OrdinalIgnoreCase))

@@ -11,10 +11,27 @@ public partial class AlibabaProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
 
-        if (chatRequest.Model.Contains("image") == true)
+        if (model.Type == "image")
         {
             await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
+        if (model.Type == "video")
+        {
+            await foreach (var p in this.StreamVideoAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
+        if (model.Type == "transcription")
+        {
+            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
                 yield return p;
 
             yield break;

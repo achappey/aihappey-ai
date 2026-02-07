@@ -14,7 +14,7 @@ public partial class EuqaiProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<ImageResponse> ImageRequestInternal(ImageRequest request, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

@@ -1,6 +1,5 @@
 using AIHappey.Telemetry.Context;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AIHappey.Telemetry;

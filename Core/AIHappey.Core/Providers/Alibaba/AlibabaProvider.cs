@@ -6,7 +6,6 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.ModelProviders;
-using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Responses.Extensions;

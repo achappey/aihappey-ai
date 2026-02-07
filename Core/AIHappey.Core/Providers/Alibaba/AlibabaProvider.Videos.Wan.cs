@@ -160,7 +160,7 @@ public partial class AlibabaProvider
         {
             var imageData = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
                 ? request.Image.Data
-                : AIHappey.Common.Extensions.ImageExtensions.ToDataUrl(request.Image.Data, request.Image.MediaType);
+                : Common.Extensions.ImageExtensions.ToDataUrl(request.Image.Data, request.Image.MediaType);
 
             input["img_url"] = imageData;
         }

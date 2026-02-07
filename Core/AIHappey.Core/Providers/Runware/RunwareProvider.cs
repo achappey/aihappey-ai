@@ -54,13 +54,36 @@ public sealed partial class RunwareProvider(
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken: cancellationToken))
-            yield return update;
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "image":
+                {
+                    await foreach (var update in this.StreamImageAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+                    yield break;
+                }
+
+            case "video":
+                {
+                    await foreach (var update in this.StreamVideoAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+            default:
+                throw new NotSupportedException();
+        }
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
-
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {

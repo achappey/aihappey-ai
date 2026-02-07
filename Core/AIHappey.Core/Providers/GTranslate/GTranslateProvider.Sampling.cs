@@ -10,7 +10,7 @@ public partial class GTranslateProvider
         ArgumentNullException.ThrowIfNull(chatRequest);
 
         var modelId = chatRequest.GetModel();
-        ArgumentNullException.ThrowIfNullOrEmpty(modelId);
+        ArgumentException.ThrowIfNullOrEmpty(modelId);
 
         return await TranslateSamplingAsync(chatRequest, modelId, cancellationToken);
     }

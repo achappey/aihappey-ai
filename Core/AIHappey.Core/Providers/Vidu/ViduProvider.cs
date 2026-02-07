@@ -4,6 +4,8 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Vidu;
 
@@ -44,7 +46,25 @@ public partial class ViduProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    return await this.SpeechSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+            case "image":
+                {
+                    return await this.ImageSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -66,8 +86,46 @@ public partial class ViduProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "image":
+                {
+                    await foreach (var update in this.StreamImageAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+                    yield break;
+                }
+
+            case "speech":
+                {
+                    await foreach (var update in this.StreamSpeechAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+            case "video":
+                {
+                    await foreach (var update in this.StreamVideoAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
+            default:
+                throw new NotSupportedException();
+
+
+        }
     }
 }

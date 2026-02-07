@@ -5,6 +5,7 @@ using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.JSON2Video;
 
@@ -87,8 +88,14 @@ public partial class JSON2VideoProvider : IModelProvider
         return await Task.FromResult(models);
     }
 
-    public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await foreach (var update in this.StreamVideoAsync(chatRequest,
+                        cancellationToken: cancellationToken))
+            yield return update;
+
+
+        yield break;
     }
 }

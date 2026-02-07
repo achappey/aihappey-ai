@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Core.ModelProviders;
 using Microsoft.Extensions.Options;
 

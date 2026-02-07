@@ -108,6 +108,16 @@ public partial class DecartProvider : IModelProvider
                     yield break;
                 }
 
+            case "video":
+                {
+                    await foreach (var update in this.StreamVideoAsync(chatRequest,
+                            cancellationToken: cancellationToken))
+                        yield return update;
+
+
+                    yield break;
+                }
+
             default:
                 throw new NotImplementedException();
         }

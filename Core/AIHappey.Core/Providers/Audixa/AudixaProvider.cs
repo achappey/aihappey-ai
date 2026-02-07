@@ -68,7 +68,7 @@ public partial class AudixaProvider : IModelProvider
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
@@ -86,12 +86,12 @@ public partial class AudixaProvider : IModelProvider
 
     Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public static IReadOnlyList<Model> AudixaModels =>
