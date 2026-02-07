@@ -79,6 +79,7 @@ using AIHappey.Core.Providers.Euqai;
 using AIHappey.Core.Providers.Vidu;
 using AIHappey.Core.Providers.Reve;
 using AIHappey.Core.Providers.Decart;
+using AIHappey.Core.Providers.JSON2Video;
 
 namespace AIHappey.Core.AI;
 
@@ -164,6 +165,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ViduProvider>();
         services.AddSingleton<IModelProvider, ReveProvider>();
         services.AddSingleton<IModelProvider, DecartProvider>();
+        services.AddSingleton<IModelProvider, JSON2VideoProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

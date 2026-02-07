@@ -79,6 +79,7 @@ public class AIServiceConfig
     public ProviderConfig? Vidu { get; set; }
     public ProviderConfig? Reve { get; set; }
     public ProviderConfig? Decart { get; set; }
+    public ProviderConfig? JSON2Video { get; set; }
 }
 
 public class ProviderConfig

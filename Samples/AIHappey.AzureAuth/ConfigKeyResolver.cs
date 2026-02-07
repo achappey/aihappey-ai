@@ -87,6 +87,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "vidu" => _config.Vidu?.ApiKey,
             "reve" => _config.Reve?.ApiKey,
             "decart" => _config.Decart?.ApiKey,
+            "json2video" => _config.JSON2Video?.ApiKey,
             _ => null
         };
 }
