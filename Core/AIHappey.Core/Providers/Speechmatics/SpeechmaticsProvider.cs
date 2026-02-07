@@ -48,7 +48,20 @@ public partial class SpeechmaticsProvider : IModelProvider
     }
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+    {
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    return await this.SpeechSamplingAsync(chatRequest,
+                            cancellationToken: cancellationToken);
+                }
+            default:
+                throw new NotImplementedException();
+        }
+    }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
@@ -63,17 +76,30 @@ public partial class SpeechmaticsProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-            yield return p;
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
 
-        yield break;
+        switch (model?.Type)
+        {
+            case "speech":
+                {
+                    await foreach (var update in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                        yield return update;
+
+                    yield break;
+                }
+            case "transcription":
+                {
+                    await foreach (var update in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
+                        yield return update;
+
+                    yield break;
+                }
+
+            default:
+                throw new NotImplementedException();
+        }
     }
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
@@ -99,27 +125,4 @@ public partial class SpeechmaticsProvider : IModelProvider
     {
         throw new NotSupportedException();
     }
-
-    public static IReadOnlyList<Model> SpeechmaticsModels =>
-    [
-        new() { Id = "sarah".ToModelId(nameof(Speechmatics).ToLowerInvariant()),
-            Name = "Sarah: English Female (UK)",
-            Type = "speech",
-            OwnedBy = nameof(Speechmatics) },
-        new() { Id = "theo".ToModelId(nameof(Speechmatics).ToLowerInvariant()),
-            Name = "Theo: English Male (UK)",
-            Type = "speech",
-            OwnedBy = nameof(Speechmatics) },
-        new() { Id = "megan".ToModelId(nameof(Speechmatics).ToLowerInvariant()),
-            Name = "Megan: English Female (US)",
-            Type = "speech",
-            OwnedBy = nameof(Speechmatics) },
-        new() { Id = "jack".ToModelId(nameof(Speechmatics).ToLowerInvariant()),
-            Name = "Jack: English Male (US)",
-            Type = "speech",
-            OwnedBy = nameof(Speechmatics) },
-
-    ];
-
-
 }
