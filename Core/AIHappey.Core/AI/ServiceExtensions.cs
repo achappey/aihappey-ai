@@ -81,6 +81,10 @@ using AIHappey.Core.Providers.Reve;
 using AIHappey.Core.Providers.Decart;
 using AIHappey.Core.Providers.JSON2Video;
 using AIHappey.Core.Providers.GreenPT;
+using AIHappey.Core.Providers.RelaxAI;
+using AIHappey.Core.Providers.RegoloAI;
+using AIHappey.Core.Providers.ARKLabs;
+using AIHappey.Core.Providers.IONOS;
 
 namespace AIHappey.Core.AI;
 
@@ -168,6 +172,10 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, DecartProvider>();
         services.AddSingleton<IModelProvider, JSON2VideoProvider>();
         services.AddSingleton<IModelProvider, GreenPTProvider>();
+        services.AddSingleton<IModelProvider, RelaxAIProvider>();
+        services.AddSingleton<IModelProvider, RegoloAIProvider>();
+        services.AddSingleton<IModelProvider, ARKLabsProvider>();
+        services.AddSingleton<IModelProvider, IONOSProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

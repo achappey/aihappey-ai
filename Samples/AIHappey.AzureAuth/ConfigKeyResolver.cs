@@ -88,6 +88,10 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "decart" => _config.Decart?.ApiKey,
             "json2video" => _config.JSON2Video?.ApiKey,
             "greenpt" => _config.GreenPT?.ApiKey,
+            "relaxai" => _config.RelaxAI?.ApiKey,
+            "regoloai" => _config.RegoloAI?.ApiKey,
+            "arklabs" => _config.ARKLabs?.ApiKey,
+            "ionos" => _config.IONOS?.ApiKey,
             _ => null
         };
 }

@@ -12,7 +12,7 @@ public partial class AssemblyAIProvider : IModelProvider
     {
         ApplyAuthHeader(_llmGatewayClient);
 
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         if (options.Stream == true)
             throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
@@ -40,11 +40,11 @@ public partial class AssemblyAIProvider : IModelProvider
             ct: cancellationToken);
     }
 
-    async IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(
-        ChatCompletionOptions options,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+         ChatCompletionOptions options,
+         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         // AssemblyAI LLM Gateway does NOT support server-side streaming.
         // We simulate streaming by performing a non-stream request and converting the single

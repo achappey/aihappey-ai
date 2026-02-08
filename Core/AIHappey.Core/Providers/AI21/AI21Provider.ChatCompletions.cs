@@ -11,7 +11,7 @@ public sealed partial class AI21Provider
     {
         ApplyAuthHeader();
 
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         if (options.Stream == true)
             throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
@@ -65,7 +65,7 @@ public sealed partial class AI21Provider
     {
         ApplyAuthHeader();
 
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         if (options.Tools?.Any() == true)
             throw new NotSupportedException("AI21 does not support tools with stream=true.");

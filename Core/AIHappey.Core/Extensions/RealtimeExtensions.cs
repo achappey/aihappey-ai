@@ -17,7 +17,7 @@ public static class RealtimeExtensions
         string relativeUrl = "v1/realtime/client_secrets",
         CancellationToken ct = default)
     {
-        if (client is null) throw new ArgumentNullException(nameof(client));
+        ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);

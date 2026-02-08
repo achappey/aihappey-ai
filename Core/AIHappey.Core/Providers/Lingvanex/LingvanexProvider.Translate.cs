@@ -86,7 +86,7 @@ public sealed partial class LingvanexProvider
         LingvanexProviderMetadata? metadata,
         CancellationToken cancellationToken)
     {
-        if (texts is null) throw new ArgumentNullException(nameof(texts));
+        ArgumentNullException.ThrowIfNull(texts);
         if (texts.Count == 0) throw new ArgumentException("At least one text is required.", nameof(texts));
         if (string.IsNullOrWhiteSpace(targetLanguage)) throw new ArgumentException("Target language is required.", nameof(targetLanguage));
 

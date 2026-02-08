@@ -11,7 +11,7 @@ public sealed partial class SiliconFlowProvider
     {
         ApplyAuthHeader();
 
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         if (options.Stream == true)
             throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
@@ -58,7 +58,7 @@ public sealed partial class SiliconFlowProvider
     {
         ApplyAuthHeader();
 
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         var payload = BuildGMICloudChatPayload(options, stream: true);
         var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);

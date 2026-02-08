@@ -95,7 +95,7 @@ public sealed partial class MurfAIProvider
     private async Task<TranslationResult> TranslateAsync(IReadOnlyList<string> texts,
         string language, CancellationToken cancellationToken)
     {
-        if (texts is null) throw new ArgumentNullException(nameof(texts));
+        ArgumentNullException.ThrowIfNull(texts);
         if (texts.Count == 0) throw new ArgumentException("At least one text is required.", nameof(texts));
         if (string.IsNullOrWhiteSpace(language)) throw new ArgumentException("Language is required.", nameof(language));
 

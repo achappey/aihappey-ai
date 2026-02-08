@@ -18,8 +18,8 @@ public static class ModelProviderChatCompletionsSamplingExtensions
         CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken = default)
     {
-        if (modelProvider is null) throw new ArgumentNullException(nameof(modelProvider));
-        if (chatRequest is null) throw new ArgumentNullException(nameof(chatRequest));
+        ArgumentNullException.ThrowIfNull(modelProvider);
+        ArgumentNullException.ThrowIfNull(chatRequest);
 
         var model = chatRequest.GetModel();
         if (string.IsNullOrWhiteSpace(model))

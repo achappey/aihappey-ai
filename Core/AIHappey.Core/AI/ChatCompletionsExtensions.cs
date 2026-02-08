@@ -20,7 +20,7 @@ public static class ChatCompletionsExtensions
         string relativeUrl = "v1/chat/completions",
         CancellationToken ct = default)
     {
-        if (client is null) throw new ArgumentNullException(nameof(client));
+        ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
@@ -61,7 +61,7 @@ public static class ChatCompletionsExtensions
         string relativeUrl = "v1/chat/completions",
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (client is null) throw new ArgumentNullException(nameof(client));
+        ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);

@@ -101,7 +101,7 @@ public partial class GTranslateProvider
         string modelId,
         CancellationToken cancellationToken)
     {
-        if (texts is null) throw new ArgumentNullException(nameof(texts));
+        ArgumentNullException.ThrowIfNull(texts);
         if (texts.Count == 0) throw new ArgumentException("At least one text is required.", nameof(texts));
 
         var (backend, targetLanguage) = ParseModel(modelId);

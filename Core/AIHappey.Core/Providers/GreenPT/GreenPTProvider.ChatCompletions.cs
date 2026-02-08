@@ -14,7 +14,7 @@ public partial class GreenPTProvider
     {
         ApplyAuthHeader();
 
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         if (options.Stream == true)
             throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
@@ -64,7 +64,7 @@ public partial class GreenPTProvider
     {
         ApplyAuthHeader();
 
-        if (options is null) throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
 
         var payload = BuildGreenPTChatPayload(options, stream: true);
         var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);

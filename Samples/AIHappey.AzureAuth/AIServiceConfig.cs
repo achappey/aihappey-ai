@@ -81,6 +81,10 @@ public class AIServiceConfig
     public ProviderConfig? Decart { get; set; }
     public ProviderConfig? JSON2Video { get; set; }
     public ProviderConfig? GreenPT { get; set; }
+    public ProviderConfig? RelaxAI { get; set; }
+    public ProviderConfig? RegoloAI { get; set; }
+    public ProviderConfig? ARKLabs { get; set; }
+    public ProviderConfig? IONOS { get; set; }
 }
 
 public class ProviderConfig
