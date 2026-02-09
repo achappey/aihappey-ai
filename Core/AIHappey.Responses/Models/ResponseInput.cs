@@ -22,7 +22,7 @@ public sealed class ResponseInput
 
     public ResponseInput(IEnumerable<ResponseInputItem> items)
     {
-        Items = (items ?? throw new ArgumentNullException(nameof(items))).ToList();
+        Items = [.. (items ?? throw new ArgumentNullException(nameof(items)))];
     }
 
     public static implicit operator ResponseInput(string text) => new(text);

@@ -65,7 +65,7 @@ public record ChatTelemetryRecord(
             Temperature = ChatRequest.Temperature,
             User = user,
             Model = model,
-            Tools = tools.Select(t => new RequestTool { Tool = t }).ToList()
+            Tools = [.. tools.Select(t => new RequestTool { Tool = t })]
         };
 
         return req;

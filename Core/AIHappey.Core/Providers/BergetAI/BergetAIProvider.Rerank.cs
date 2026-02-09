@@ -16,7 +16,7 @@ public partial class BergetAIProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<RerankingResponse> RerankingRequestBerget(RerankingRequest request, CancellationToken cancellationToken = default)
+    public async Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         const string url = "v1/rerank";
 

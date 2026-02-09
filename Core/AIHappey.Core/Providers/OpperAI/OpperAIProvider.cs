@@ -6,19 +6,19 @@ using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.BergetAI;
+namespace AIHappey.Core.Providers.OpperAI;
 
-public partial class BergetAIProvider : IModelProvider
+public partial class OpperAIProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    public BergetAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public OpperAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.berget.ai/");
+        _client.BaseAddress = new Uri("https://api.opper.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -26,7 +26,7 @@ public partial class BergetAIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(BergetAI)} API key.");
+            throw new InvalidOperationException($"No {nameof(OpperAI)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -36,7 +36,9 @@ public partial class BergetAIProvider : IModelProvider
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+             options,
+             relativeUrl: "v2/openai/chat/completions",
+             ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -44,28 +46,20 @@ public partial class BergetAIProvider : IModelProvider
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+                    options,
+                    relativeUrl: "v2/openai/chat/completions",
+                    ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(BergetAI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(OpperAI).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var modelId = chatRequest.GetModel() ?? throw new Exception("Model missing");
-
-        if (modelId.Contains("whisper", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new NotImplementedException();
-        }
-        else if (modelId.Contains("rerank", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new NotImplementedException();
-        }
-        else
-        {
-            return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
-        }
+        throw new NotImplementedException();
     }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

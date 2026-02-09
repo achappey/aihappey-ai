@@ -11,7 +11,7 @@ namespace AIHappey.Core.Providers.BergetAI;
 
 public partial class BergetAIProvider
 {
-    public async Task<TranscriptionResponse> TranscriptionRequestBerget(
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {

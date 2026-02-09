@@ -72,13 +72,12 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             .OrderBy(x => x.Offset)
             .ToListAsync(ct);
 
-        return grouped
+        return [.. grouped
             .Select(x =>
             {
                 var day = baseDay.AddDays(x.Offset);
                 return new TimeBucketStat(DateOnly.FromDateTime(day), x.Requests, x.Users, x.Tokens);
-            })
-            .ToList();
+            })];
     }
 
 

@@ -86,6 +86,7 @@ using AIHappey.Core.Providers.RegoloAI;
 using AIHappey.Core.Providers.ARKLabs;
 using AIHappey.Core.Providers.IONOS;
 using AIHappey.Core.Providers.BergetAI;
+using AIHappey.Core.Providers.OpperAI;
 
 namespace AIHappey.Core.AI;
 
@@ -178,6 +179,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ARKLabsProvider>();
         services.AddSingleton<IModelProvider, IONOSProvider>();
         services.AddSingleton<IModelProvider, BergetAIProvider>();
+        services.AddSingleton<IModelProvider, OpperAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

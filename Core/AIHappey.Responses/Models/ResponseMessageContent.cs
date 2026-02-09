@@ -20,7 +20,7 @@ public sealed class ResponseMessageContent
 
     public ResponseMessageContent(IEnumerable<ResponseContentPart> parts)
     {
-        Parts = (parts ?? throw new ArgumentNullException(nameof(parts))).ToList();
+        Parts = [.. (parts ?? throw new ArgumentNullException(nameof(parts)))];
     }
 
     public static implicit operator ResponseMessageContent(string text) => new(text);
