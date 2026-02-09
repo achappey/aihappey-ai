@@ -34,7 +34,12 @@ public partial class IONOSProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (chatRequest.GetModel()?.Contains("black-forest-labs") == true)
+        {
+            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
+        }
+
+        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
@@ -54,9 +59,6 @@ public partial class IONOSProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-        => throw new NotSupportedException();
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
