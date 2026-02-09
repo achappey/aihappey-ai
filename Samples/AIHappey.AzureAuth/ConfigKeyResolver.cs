@@ -92,6 +92,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "regoloai" => _config.RegoloAI?.ApiKey,
             "arklabs" => _config.ARKLabs?.ApiKey,
             "ionos" => _config.IONOS?.ApiKey,
+            "bergetai" => _config.BergetAI?.ApiKey,
             _ => null
         };
 }

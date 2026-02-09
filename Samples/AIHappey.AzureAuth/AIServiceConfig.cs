@@ -85,6 +85,7 @@ public class AIServiceConfig
     public ProviderConfig? RegoloAI { get; set; }
     public ProviderConfig? ARKLabs { get; set; }
     public ProviderConfig? IONOS { get; set; }
+    public ProviderConfig? BergetAI { get; set; }
 }
 
 public class ProviderConfig

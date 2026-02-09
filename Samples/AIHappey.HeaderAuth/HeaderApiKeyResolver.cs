@@ -87,6 +87,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["regoloai"] = "X-RegoloAI-Key",
             ["arklabs"] = "X-ARKLabs-Key",
             ["ionos"] = "X-IONOS-Key",
+            ["bergetai"] = "X-BergetAI-Key",
         };
 
     public string? Resolve(string provider)
