@@ -90,6 +90,8 @@ using AIHappey.Core.Providers.BergetAI;
 using AIHappey.Core.Providers.OpperAI;
 using AIHappey.Core.Providers.Cortecs;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using AIHappey.Core.Providers.EUrouter;
+using AIHappey.Core.Providers.Requesty;
 
 namespace AIHappey.Core.AI;
 
@@ -188,6 +190,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, BergetAIProvider>();
         services.AddSingleton<IModelProvider, OpperAIProvider>();
         services.AddSingleton<IModelProvider, CortecsProvider>();
+        services.AddSingleton<IModelProvider, EUrouterProvider>();
+        services.AddSingleton<IModelProvider, RequestyProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

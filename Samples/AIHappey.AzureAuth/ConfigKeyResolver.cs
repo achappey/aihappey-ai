@@ -97,6 +97,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "gcore" => _config.Gcore?.ApiKey,
             "cortecs" => _config.Cortecs?.ApiKey,
             "inworld" => _config.Inworld?.ApiKey,
+            "eurouter" => _config.EUrouter?.ApiKey,
+            "requesty" => _config.Requesty?.ApiKey,
             _ => null
         };
 }

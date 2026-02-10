@@ -92,6 +92,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["gcore"] = "X-Gcore-Key",
             ["cortecs"] = "X-Cortecs-Key",
             ["inworld"] = "X-Inworld-Key",
+            ["eurouter"] = "X-EUrouter-Key",
+            ["requesty"] = "X-Requesty-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

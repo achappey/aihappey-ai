@@ -1,32 +1,29 @@
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using System.Text.Json;
+using AIHappey.Core.AI;
 
-namespace AIHappey.Core.Providers.Inworld;
+namespace AIHappey.Core.Providers.EUrouter;
 
-public partial class InworldProvider : IModelProvider
+public partial class EUrouterProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
-    private readonly IEndUserIdResolver _endUserIdResolver;
 
     private readonly HttpClient _client;
 
-    private readonly IServiceProvider _serviceProvider;
+    private static readonly JsonSerializerOptions EurouterJsonOptions = new(JsonSerializerOptions.Web)
+    {
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
 
-    public InworldProvider(
-        IApiKeyResolver keyResolver,
-        IHttpClientFactory httpClientFactory,
-        IServiceProvider serviceProvider,
-        IEndUserIdResolver endUserIdResolver)
+    public EUrouterProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.inworld.ai/");
-        _serviceProvider = serviceProvider;
-        _endUserIdResolver = endUserIdResolver;
+        _client.BaseAddress = new Uri("https://api.eurouter.ai/api/");
     }
 
     private void ApplyAuthHeader()
@@ -34,25 +31,21 @@ public partial class InworldProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Inworld)} API key.");
+            throw new InvalidOperationException($"No {nameof(EUrouter)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", key);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => await ChatCompletionsCompleteChatAsync(options, cancellationToken).ConfigureAwait(false);
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => ChatCompletionsCompleteChatStreamingAsync(options, cancellationToken);
-
-    public string GetIdentifier() => nameof(Inworld).ToLowerInvariant();
+    public string GetIdentifier() => nameof(EUrouter).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
@@ -75,11 +68,6 @@ public partial class InworldProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+        => throw new NotSupportedException();
 
-
-    public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
-        => StreamChatAsync(chatRequest, cancellationToken);
 }

@@ -90,6 +90,8 @@ public class AIServiceConfig
     public ProviderConfig? Gcore { get; set; }
     public ProviderConfig? Cortecs { get; set; }
     public ProviderConfig? Inworld { get; set; }
+    public ProviderConfig? EUrouter { get; set; }
+    public ProviderConfig? Requesty { get; set; }
 }
 
 public class ProviderConfig

@@ -1,10 +1,11 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
-namespace AIHappey.Core.Providers.Cortecs;
+namespace AIHappey.Core.Providers.Requesty;
 
-public partial class CortecsProvider
+public partial class RequestyProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -16,7 +17,7 @@ public partial class CortecsProvider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"Cortecs API error: {err}");
+            throw new Exception($"Requesty API error: {err}");
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -42,8 +43,46 @@ public partial class CortecsProvider
                 model.Name = idEl.GetString() ?? "";
             }
 
+            if (el.TryGetProperty("context_window", out var contextLengthEl))
+                model.ContextWindow = contextLengthEl.GetInt32();
+
+            if (el.TryGetProperty("max_output_tokens", out var maxOutputEl))
+                model.MaxTokens = maxOutputEl.GetInt32();
+
             if (el.TryGetProperty("owned_by", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
+
+            if (el.TryGetProperty("description", out var descEl))
+                model.Description = descEl.GetString() ?? "";
+
+            decimal? inputPrice = null;
+            decimal? outputPrice = null;
+
+            if (el.TryGetProperty("input_price", out var inEl) &&
+                inEl.ValueKind == JsonValueKind.Number &&
+                inEl.TryGetDecimal(out var inPrice))
+            {
+                inputPrice = inPrice;
+            }
+
+            if (el.TryGetProperty("output_price", out var outEl) &&
+                outEl.ValueKind == JsonValueKind.Number &&
+                outEl.TryGetDecimal(out var outPrice))
+            {
+                outputPrice = outPrice;
+            }
+
+            if (inputPrice.HasValue &&
+                outputPrice.HasValue &&
+                inputPrice.Value != 0 &&
+                outputPrice.Value != 0)
+            {
+                model.Pricing = new ModelPricing
+                {
+                    Input = inputPrice.Value,
+                    Output = outputPrice.Value
+                };
+            }
 
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);
