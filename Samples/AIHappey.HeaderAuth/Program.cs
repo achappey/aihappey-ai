@@ -16,6 +16,7 @@ builder.WebHost.ConfigureKestrel(o =>
 });
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<EndUserIdHashingOptions>(builder.Configuration.GetSection("EndUserIdHashing"));
 
 // CORS for SPA (adjust origin as needed)
 builder.Services.AddCors(options =>
@@ -33,6 +34,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IAIModelProviderResolver, AIModelProviderResolver>();
 builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
+builder.Services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();
 builder.Services.AddProviders();
 builder.Services.AddHttpClient();
 builder.Services.AddMcpServers(CoreMcpDefinitions.GetDefinitions());

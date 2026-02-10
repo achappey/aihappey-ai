@@ -114,7 +114,8 @@ public partial class OpenAIProvider
             }
         }
 
-        var options = chatRequest.ToResponseCreationOptions(codeInterpreterFiles);
+        var endUserId = _endUserIdResolver.Resolve(chatRequest);
+        var options = chatRequest.ToResponseCreationOptions(codeInterpreterFiles, endUserId);
         var responseClient = new ResponsesClient(
             model,
             GetKey()

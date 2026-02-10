@@ -94,6 +94,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "ionos" => _config.IONOS?.ApiKey,
             "bergetai" => _config.BergetAI?.ApiKey,
             "opperai" => _config.OpperAI?.ApiKey,
+            "gcore" => _config.Gcore?.ApiKey,
+            "cortecs" => _config.Cortecs?.ApiKey,
+            "inworld" => _config.Inworld?.ApiKey,
             _ => null
         };
 }

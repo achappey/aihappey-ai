@@ -5,6 +5,7 @@ using AIHappey.Common.Model.Providers.Anthropic;
 using AIHappey.Common.Model.Providers.Audixa;
 using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Model.Providers.Google;
+using AIHappey.Common.Model.Providers.Inworld;
 using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Common.Model.Providers.OpenAI;
@@ -69,6 +70,7 @@ public class ProviderTools
                 "jina" => generator.Generate(typeof(JinaProviderMetadata)),
                 "groq" => generator.Generate(typeof(GroqProviderMetadata)),
                 "together" => generator.Generate(typeof(TogetherProviderMetadata)),
+                "inworld" => generator.Generate(typeof(InworldSpeechProviderMetadata)),
                 "elevenlabs" => generator.Generate(typeof(ElevenLabsProviderMetadata)),
                 "deepgram" => generator.Generate(typeof(DeepgramSpeechProviderMetadata)),
                 "audixa" => generator.Generate(typeof(AudixaSpeechProviderMetadata)),

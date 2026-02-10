@@ -87,6 +87,9 @@ public class AIServiceConfig
     public ProviderConfig? IONOS { get; set; }
     public ProviderConfig? BergetAI { get; set; }
     public ProviderConfig? OpperAI { get; set; }
+    public ProviderConfig? Gcore { get; set; }
+    public ProviderConfig? Cortecs { get; set; }
+    public ProviderConfig? Inworld { get; set; }
 }
 
 public class ProviderConfig

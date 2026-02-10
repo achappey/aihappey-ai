@@ -13,10 +13,15 @@ public partial class OpenAIProvider : IModelProvider
 {
     private readonly HttpClient _client;
     private readonly IApiKeyResolver _keyResolver;
+    private readonly IEndUserIdResolver _endUserIdResolver;
 
-    public OpenAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public OpenAIProvider(
+        IApiKeyResolver keyResolver,
+        IHttpClientFactory httpClientFactory,
+        IEndUserIdResolver endUserIdResolver)
     {
         _keyResolver = keyResolver;
+        _endUserIdResolver = endUserIdResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.openai.com/");
     }

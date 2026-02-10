@@ -78,7 +78,7 @@ public sealed partial class TinfoilProvider
 
         return models
             .Where(m => !string.IsNullOrWhiteSpace(m.Id))
-            .Where(m => m.Type != "document")
+            .Where(m => m.Type != "document" && m.Type != "tool")
             .DistinctBy(m => m.Id)
             .OrderByDescending(m => m.Created);
     }

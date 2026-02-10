@@ -89,7 +89,12 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["ionos"] = "X-IONOS-Key",
             ["bergetai"] = "X-BergetAI-Key",
             ["opperai"] = "X-OpperAI-Key",
+            ["gcore"] = "X-Gcore-Key",
+            ["cortecs"] = "X-Cortecs-Key",
+            ["inworld"] = "X-Inworld-Key",
         };
+
+    public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
 
     public string? Resolve(string provider)
     {

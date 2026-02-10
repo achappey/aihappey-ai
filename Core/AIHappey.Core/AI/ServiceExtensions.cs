@@ -14,6 +14,7 @@ using AIHappey.Core.Providers.Google;
 using AIHappey.Core.Providers.Groq;
 using AIHappey.Core.Providers.Hyperbolic;
 using AIHappey.Core.Providers.Inferencenet;
+using AIHappey.Core.Providers.Inworld;
 using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
@@ -87,6 +88,8 @@ using AIHappey.Core.Providers.ARKLabs;
 using AIHappey.Core.Providers.IONOS;
 using AIHappey.Core.Providers.BergetAI;
 using AIHappey.Core.Providers.OpperAI;
+using AIHappey.Core.Providers.Cortecs;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AIHappey.Core.AI;
 
@@ -94,6 +97,9 @@ public static class ServiceExtensions
 {
     public static void AddProviders(this IServiceCollection services)
     {
+        services.TryAddSingleton<EndUserIdHasher>();
+        services.TryAddSingleton<IEndUserIdResolver, NullEndUserIdResolver>();
+
         services.AddSingleton<IModelProvider, EchoProvider>();
         services.AddSingleton<IModelProvider, OpenAIProvider>();
         services.AddSingleton<IModelProvider, CloudRiftProvider>();
@@ -101,6 +107,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, DeepInfraProvider>();
         services.AddSingleton<IModelProvider, DeepSeekProvider>();
         services.AddSingleton<IModelProvider, DeepgramProvider>();
+        services.AddSingleton<IModelProvider, InworldProvider>();
         services.AddSingleton<IModelProvider, NvidiaProvider>();
         services.AddSingleton<IModelProvider, CanopyWaveProvider>();
         services.AddSingleton<IModelProvider, InferencenetProvider>();
@@ -180,6 +187,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, IONOSProvider>();
         services.AddSingleton<IModelProvider, BergetAIProvider>();
         services.AddSingleton<IModelProvider, OpperAIProvider>();
+        services.AddSingleton<IModelProvider, CortecsProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

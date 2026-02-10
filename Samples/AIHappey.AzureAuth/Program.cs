@@ -26,6 +26,9 @@ builder.WebHost.ConfigureKestrel(o =>
 builder.Services.Configure<AIServiceConfig>(
     builder.Configuration.GetSection("AIServices"));
 
+builder.Services.Configure<EndUserIdHashingOptions>(
+    builder.Configuration.GetSection("EndUserIdHashing"));
+
 builder.Services.Configure<AzureProviderOptions>(
     builder.Configuration.GetSection("AIServices:Azure"));
 
@@ -57,6 +60,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSingleton<IApiKeyResolver, ConfigKeyResolver>();
+builder.Services.AddSingleton<IEndUserIdResolver, AzureEndUserIdResolver>();
 builder.Services.AddProviders();
 
 if (!string.IsNullOrEmpty(kernelMemoryConfig?.Endpoint)
