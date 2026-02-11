@@ -7,6 +7,10 @@ public partial class KlingAIProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+                if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         ApplyAuthHeader();
 
         return KlingModels;

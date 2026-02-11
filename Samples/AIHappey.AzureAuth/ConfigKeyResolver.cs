@@ -106,6 +106,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "nextbit" => _config.Nextbit?.ApiKey,
             "deepbricks" => _config.Deepbricks?.ApiKey,
             "segmind" => _config.Segmind?.ApiKey,
+            "rekaai" => _config.RekaAI?.ApiKey,
+            "openrouter" => _config.OpenRouter?.ApiKey,
+            "ai302" => _config.AI302?.ApiKey,
             _ => null
         };
 }

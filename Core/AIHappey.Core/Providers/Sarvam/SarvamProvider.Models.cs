@@ -7,6 +7,10 @@ public sealed partial class SarvamProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         ApplyAuthHeader();
 
         var models = await Task.FromResult<List<Model>>(

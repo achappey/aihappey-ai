@@ -7,6 +7,10 @@ public partial class GoogleAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         var googleAI = GetClient();
         var generativeModel = googleAI.GenerativeModel();
         var models = await generativeModel.ListModels(pageSize: 1000);

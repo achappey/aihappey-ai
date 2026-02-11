@@ -42,6 +42,10 @@ public partial class SpeechmaticsProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         ApplyAuthHeader();
 
         return SpeechmaticsModels;

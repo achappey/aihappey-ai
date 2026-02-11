@@ -45,6 +45,10 @@ public partial class AnthropicProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         var client = new ANT.AnthropicClient(GetKey());
 
         var models = await client.Models.ListModelsAsync(ctx: cancellationToken);

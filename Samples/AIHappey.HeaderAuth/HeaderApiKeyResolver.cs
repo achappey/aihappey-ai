@@ -101,6 +101,9 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["nextbit"] = "X-Nextbit-Key",
             ["deepbricks"] = "X-Deepbricks-Key",
             ["segmind"] = "X-Segmind-Key",
+            ["rekaai"] = "X-RekaAI-Key",
+            ["openrouter"] = "X-OpenRouter-Key",
+            ["ai302"] = "X-302AI-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -42,6 +42,10 @@ public partial class SpeechifyProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         ApplyAuthHeader();
 
         return SpeechifyModels;
@@ -97,7 +101,7 @@ public partial class SpeechifyProvider : IModelProvider
         Name = "simba-english",
         Type = "speech",
         OwnedBy = "Speechify" },
-    
+
     new() { Id = "simba-multilingual".ToModelId(nameof(Speechify).ToLowerInvariant()),
         Name = "simba-multilingual",
         Type = "speech",

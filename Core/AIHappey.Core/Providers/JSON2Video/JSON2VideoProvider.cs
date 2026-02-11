@@ -77,6 +77,10 @@ public partial class JSON2VideoProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         List<Model> models = [new Model()
         {
             Id = "json2video".ToModelId(GetIdentifier()),

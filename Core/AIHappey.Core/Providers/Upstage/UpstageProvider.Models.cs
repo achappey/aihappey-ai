@@ -7,6 +7,9 @@ public partial class UpstageProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         ApplyAuthHeader();
 
         return
@@ -28,7 +31,7 @@ public partial class UpstageProvider
                 Created = new DateTimeOffset(2026, 1, 26, 0, 0, 0, TimeSpan.Zero).ToUnixTimeSeconds(),
                 Id = "solar-pro3-260126".ToModelId(GetIdentifier())
             },
-            
+
             new Model()
             {
                 OwnedBy = nameof(Upstage),

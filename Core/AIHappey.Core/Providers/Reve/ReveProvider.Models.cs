@@ -5,11 +5,15 @@ namespace AIHappey.Core.Providers.Reve;
 
 public partial class ReveProvider
 {
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         ApplyAuthHeader();
 
-        return Task.FromResult<IEnumerable<Model>>(
+        return await Task.FromResult<IEnumerable<Model>>(
         [
             new()
             {

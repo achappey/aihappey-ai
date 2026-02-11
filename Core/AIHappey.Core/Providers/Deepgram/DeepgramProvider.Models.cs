@@ -11,6 +11,9 @@ public sealed partial class DeepgramProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         ApplyAuthHeader();
 
         // Deepgram docs enumerate available TTS + STT models; we hard-code as requested.

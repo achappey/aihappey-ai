@@ -99,6 +99,9 @@ using AIHappey.Core.Providers.CometAPI;
 using AIHappey.Core.Providers.Nextbit;
 using AIHappey.Core.Providers.Deepbricks;
 using AIHappey.Core.Providers.Segmind;
+using AIHappey.Core.Providers.RekaAI;
+using AIHappey.Core.Providers.OpenRouter;
+using AIHappey.Core.Providers.AI302;
 
 namespace AIHappey.Core.AI;
 
@@ -206,6 +209,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, NextbitProvider>();
         services.AddSingleton<IModelProvider, DeepbricksProvider>();
         services.AddSingleton<IModelProvider, SegmindProvider>();
+        services.AddSingleton<IModelProvider, RekaAIProvider>();
+        services.AddSingleton<IModelProvider, OpenRouterProvider>();
+        services.AddSingleton<IModelProvider, AI302Provider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

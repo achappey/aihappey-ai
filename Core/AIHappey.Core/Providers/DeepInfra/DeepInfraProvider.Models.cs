@@ -7,6 +7,9 @@ public sealed partial class DeepInfraProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         ApplyAuthHeader();
 
         return await Task.FromResult<IEnumerable<Model>>([.. DeepInfraLanguageModels,
@@ -63,7 +66,7 @@ public sealed partial class DeepInfraProvider
             OwnedBy = "Z.ai",
             Description = "GLM-4.7 is a state-of-the-art, multilingual Mixture-of-Experts (MoE) language model designed for complex reasoning, agentic coding, and tool use. Building on its predecessor GLM-4.6, it delivers significant improvements across key benchmarks, including multilingual SWE-bench, Terminal Bench, and reasoning-heavy evaluations like HLE. The model features advanced 'Interleaved Thinking' and new 'Preserved Thinking' modes, allowing it to reason before actions and maintain consistency across long, multi-turn tasks. With 358 billion parameters, GLM-4.7 excels in generating clean code, modern UI elements, and sophisticated reasoning outputs."
         },
-              
+
         new()
         {
             Id = "nvidia/Nemotron-3-Nano-30B-A3B".ToModelId("deepinfra"),

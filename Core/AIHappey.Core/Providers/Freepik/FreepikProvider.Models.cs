@@ -5,10 +5,14 @@ namespace AIHappey.Core.Providers.Freepik;
 
 public sealed partial class FreepikProvider
 {
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+
         // Hardcoded per user request.
-        return Task.FromResult<IEnumerable<Model>>(_keyResolver.Resolve(GetIdentifier()) != null
+        return await Task.FromResult<IEnumerable<Model>>(_keyResolver.Resolve(GetIdentifier()) != null
             ?
             [
                 //text-to-icon disabled, required webhook

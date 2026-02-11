@@ -46,6 +46,9 @@ public partial class OpenAIProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         var client = new OpenAIModelClient(GetKey());
 
         var models = await client.GetModelsAsync(cancellationToken);

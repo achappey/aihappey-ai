@@ -8,6 +8,9 @@ public partial class ElevenLabsProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         ApplyAuthHeader();
 
         using var response = await _client.GetAsync("v1/models", cancellationToken);

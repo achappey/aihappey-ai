@@ -6,10 +6,14 @@ public partial class ARKLabsProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         ApplyAuthHeader();
 
         return ARKLabsModels;
     }
+
     public static IReadOnlyList<Model> ARKLabsModels =>
         [
             // ===== Meta =====

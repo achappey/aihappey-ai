@@ -8,6 +8,9 @@ public partial class CirrascaleProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         ApplyAuthHeader();
 
         using var req = new HttpRequestMessage(HttpMethod.Get, "v2/models");
@@ -30,7 +33,7 @@ public partial class CirrascaleProvider
 
         foreach (var category in root.EnumerateObject())
         {
-            var type = category.Name; 
+            var type = category.Name;
 
             if (category.Value.ValueKind != JsonValueKind.Array)
                 continue;

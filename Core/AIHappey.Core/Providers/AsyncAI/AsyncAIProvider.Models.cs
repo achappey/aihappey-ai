@@ -3,12 +3,13 @@ using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AsyncAI;
 
-public partial class AsyncAIProvider 
+public partial class AsyncAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        // asyncAI does not expose a public list-models endpoint (as of docs provided).
-        // We expose the documented model ids for discovery.
+        if (string.IsNullOrWhiteSpace(keyResolver.Resolve(GetIdentifier())))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
         ApplyAuthHeader();
 
         return await Task.FromResult<IEnumerable<Model>>(

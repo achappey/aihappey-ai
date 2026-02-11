@@ -99,6 +99,9 @@ public class AIServiceConfig
     public ProviderConfig? Nextbit { get; set; }
     public ProviderConfig? Deepbricks { get; set; }
     public ProviderConfig? Segmind { get; set; }
+    public ProviderConfig? RekaAI { get; set; }
+    public ProviderConfig? OpenRouter { get; set; }
+    public ProviderConfig? AI302 { get; set; }
 }
 
 public class ProviderConfig
