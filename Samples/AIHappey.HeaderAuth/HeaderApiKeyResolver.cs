@@ -94,6 +94,13 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["inworld"] = "X-Inworld-Key",
             ["eurouter"] = "X-EUrouter-Key",
             ["requesty"] = "X-Requesty-Key",
+            ["sudo"] = "X-Sudo-Key",
+            ["portkey"] = "X-Portkey-Key",
+            ["deepl"] = "X-DeepL-Key",
+            ["cometapi"] = "X-CometAPI-Key",
+            ["nextbit"] = "X-Nextbit-Key",
+            ["deepbricks"] = "X-Deepbricks-Key",
+            ["segmind"] = "X-Segmind-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

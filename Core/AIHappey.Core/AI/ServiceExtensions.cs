@@ -92,6 +92,13 @@ using AIHappey.Core.Providers.Cortecs;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AIHappey.Core.Providers.EUrouter;
 using AIHappey.Core.Providers.Requesty;
+using AIHappey.Core.Providers.Sudo;
+using AIHappey.Core.Providers.Portkey;
+using AIHappey.Core.Providers.DeepL;
+using AIHappey.Core.Providers.CometAPI;
+using AIHappey.Core.Providers.Nextbit;
+using AIHappey.Core.Providers.Deepbricks;
+using AIHappey.Core.Providers.Segmind;
 
 namespace AIHappey.Core.AI;
 
@@ -192,6 +199,13 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CortecsProvider>();
         services.AddSingleton<IModelProvider, EUrouterProvider>();
         services.AddSingleton<IModelProvider, RequestyProvider>();
+        services.AddSingleton<IModelProvider, SudoProvider>();
+        services.AddSingleton<IModelProvider, PortkeyProvider>();
+        services.AddSingleton<IModelProvider, DeepLProvider>();
+        services.AddSingleton<IModelProvider, CometAPIProvider>();
+        services.AddSingleton<IModelProvider, NextbitProvider>();
+        services.AddSingleton<IModelProvider, DeepbricksProvider>();
+        services.AddSingleton<IModelProvider, SegmindProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

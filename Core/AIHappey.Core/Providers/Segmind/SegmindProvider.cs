@@ -1,29 +1,24 @@
+using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
+using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
-using System.Text.Json;
-using AIHappey.Core.AI;
 
-namespace AIHappey.Core.Providers.EUrouter;
+namespace AIHappey.Core.Providers.Segmind;
 
-public partial class EUrouterProvider : IModelProvider
+public partial class SegmindProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    private static readonly JsonSerializerOptions EurouterJsonOptions = new(JsonSerializerOptions.Web)
-    {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
-    public EUrouterProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public SegmindProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.eurouter.ai/api/");
+        _client.BaseAddress = new Uri("https://api.segmind.com/");
     }
 
     private void ApplyAuthHeader()
@@ -31,15 +26,27 @@ public partial class EUrouterProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(EUrouter)} API key.");
+            throw new InvalidOperationException($"No {nameof(Segmind)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public string GetIdentifier() => nameof(EUrouter).ToLowerInvariant();
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public string GetIdentifier() => nameof(Segmind).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -48,7 +55,17 @@ public partial class EUrouterProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException(); 
+        => throw new NotSupportedException();
+
+    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
@@ -57,6 +74,7 @@ public partial class EUrouterProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
+    {
+        throw new NotSupportedException();
+    }
 }

@@ -92,6 +92,13 @@ public class AIServiceConfig
     public ProviderConfig? Inworld { get; set; }
     public ProviderConfig? EUrouter { get; set; }
     public ProviderConfig? Requesty { get; set; }
+    public ProviderConfig? Sudo { get; set; }
+    public ProviderConfig? Portkey { get; set; }
+    public ProviderConfig? DeepL { get; set; }
+    public ProviderConfig? CometAPI { get; set; }
+    public ProviderConfig? Nextbit { get; set; }
+    public ProviderConfig? Deepbricks { get; set; }
+    public ProviderConfig? Segmind { get; set; }
 }
 
 public class ProviderConfig

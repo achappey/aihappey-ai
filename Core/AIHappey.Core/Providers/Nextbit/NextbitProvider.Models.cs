@@ -1,10 +1,11 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
-namespace AIHappey.Core.Providers.Requesty;
+namespace AIHappey.Core.Providers.Nextbit;
 
-public partial class RequestyProvider
+public partial class NextbitProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -16,7 +17,7 @@ public partial class RequestyProvider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"Requesty API error: {err}");
+            throw new Exception($"Nextbit API error: {err}");
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -42,46 +43,11 @@ public partial class RequestyProvider
                 model.Name = idEl.GetString() ?? "";
             }
 
-            if (el.TryGetProperty("context_window", out var contextLengthEl))
+            if (el.TryGetProperty("context_length", out var contextLengthEl))
                 model.ContextWindow = contextLengthEl.GetInt32();
 
-            if (el.TryGetProperty("max_output_tokens", out var maxOutputEl))
-                model.MaxTokens = maxOutputEl.GetInt32();
-
-            if (el.TryGetProperty("owned_by", out var orgEl))
-                model.OwnedBy = orgEl.GetString() ?? "";
-
-            if (el.TryGetProperty("description", out var descEl))
-                model.Description = descEl.GetString() ?? "";
-
-            decimal? inputPrice = null;
-            decimal? outputPrice = null;
-
-            if (el.TryGetProperty("input_price", out var inEl) &&
-                inEl.ValueKind == JsonValueKind.Number &&
-                inEl.TryGetDecimal(out var inPrice))
-            {
-                inputPrice = inPrice;
-            }
-
-            if (el.TryGetProperty("output_price", out var outEl) &&
-                outEl.ValueKind == JsonValueKind.Number &&
-                outEl.TryGetDecimal(out var outPrice))
-            {
-                outputPrice = outPrice;
-            }
-
-            if (inputPrice.HasValue &&
-                outputPrice.HasValue &&
-                inputPrice.Value != 0 &&
-                outputPrice.Value != 0)
-            {
-                model.Pricing = new ModelPricing
-                {
-                    Input = inputPrice.Value,
-                    Output = outputPrice.Value
-                };
-            }
+            if (el.TryGetProperty("max_completion_tokens", out var maxTokensEl))
+                model.MaxTokens = maxTokensEl.GetInt32();
 
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);

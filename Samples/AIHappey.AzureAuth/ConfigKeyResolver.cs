@@ -99,6 +99,13 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "inworld" => _config.Inworld?.ApiKey,
             "eurouter" => _config.EUrouter?.ApiKey,
             "requesty" => _config.Requesty?.ApiKey,
+            "sudo" => _config.Sudo?.ApiKey,
+            "portkey" => _config.Portkey?.ApiKey,
+            "deepl" => _config.DeepL?.ApiKey,
+            "cometapi" => _config.CometAPI?.ApiKey,
+            "nextbit" => _config.Nextbit?.ApiKey,
+            "deepbricks" => _config.Deepbricks?.ApiKey,
+            "segmind" => _config.Segmind?.ApiKey,
             _ => null
         };
 }

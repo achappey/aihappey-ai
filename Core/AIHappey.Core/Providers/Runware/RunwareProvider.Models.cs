@@ -61,6 +61,11 @@ public sealed partial class RunwareProvider
               Type = "image",
               Name = "Gemini 3 Pro Image Preview (Nano Banana 2 Pro)",
               Id = "google:4@2".ToModelId(GetIdentifier()) },
+
+
+
+
+
             new() {
                 OwnedBy = "Vidu",
                 Type = "image",
@@ -84,6 +89,28 @@ public sealed partial class RunwareProvider
                 Name = "Wan 2.5 Preview Image",
                 Id = "alibaba:wan@2.5-image".ToModelId(GetIdentifier()) },
             new() {
+                OwnedBy = "Alibaba",
+                Type = "image",
+                Name = "Wan 2.6 Image",
+                Id = "alibaba:wan@2.6-image".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "Alibaba",
+                Type = "image",
+                Name = "Qwen Image 2512",
+                Id = "alibaba:qwen-image@2512".ToModelId(GetIdentifier()) },
+
+
+
+            new() {
+                OwnedBy = "Twinflow",
+                Type = "image",
+                Name = "Twinflow Z Image Turbo",
+                Id = "runware:twinflow-z-image-turbo@0".ToModelId(GetIdentifier()) },
+
+
+
+
+            new() {
                 OwnedBy = "KlingAI",
                 Type = "image",
                 Name = "Kling Image O1",
@@ -103,6 +130,11 @@ public sealed partial class RunwareProvider
                 Type = "image",
                 Name = "ImagineArt 1.5",
                 Id = "imagineart:1@5".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "ImagineArt",
+                Type = "image",
+                Name = "ImagineArt 1.5 Pro",
+                Id = "imagineart:1.5-pro@0".ToModelId(GetIdentifier()) },
             new() {
                 OwnedBy = "Ideogram",
                 Type = "image",
@@ -189,6 +221,18 @@ public sealed partial class RunwareProvider
                 Type = "image",
                 Name = "Riverflow 2 Preview Max",
                 Id = "sourceful:2@3".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "Sourceful",
+                Type = "image",
+                Name = "Riverflow 2 Fast",
+                Id = "sourceful:riverflow-2.0@fast".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "Sourceful",
+                Type = "image",
+                Name = "Riverflow 2 Pro",
+                Id = "sourceful:riverflow-2.0@pro".ToModelId(GetIdentifier()) },
+
+
 
             new() {
                 OwnedBy = "Black Forest Labs",
@@ -240,6 +284,29 @@ public sealed partial class RunwareProvider
                 Type = "image",
                 Name = "FLUX.2 [max]",
                 Id = "bfl:7@1".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "Black Forest Labs",
+                Type = "image",
+                Name = "FLUX.2 [klein] 4B",
+                Id = "runware:400@4".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "Black Forest Labs",
+                Type = "image",
+                Name = "FLUX.2 [klein] 9B",
+                Id = "runware:400@2".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "Black Forest Labs",
+                Type = "image",
+                Name = "FLUX.2 [klein] 4B Base",
+                Id = "runware:400@5".ToModelId(GetIdentifier()) },
+            new() {
+                OwnedBy = "Black Forest Labs",
+                Type = "image",
+                Name = "FLUX.2 [klein] 9B Base",
+                Id = "runware:400@3".ToModelId(GetIdentifier()) },
+
+
+
              new() {
                 OwnedBy = "Midjourney",
                 Type = "image",
@@ -268,6 +335,14 @@ public sealed partial class RunwareProvider
                 Id = "bria:20@1".ToModelId(GetIdentifier()) },
 
 
+
+            new() {
+                OwnedBy = "xAI",
+                Type = "image",
+                Name = "Grok Imagine Image",
+                Id = "xai:grok-imagine@image".ToModelId(GetIdentifier()) },
+
+
             // =======================
             // VIDEO MODELS (1–34)
             // =======================
@@ -278,6 +353,8 @@ public sealed partial class RunwareProvider
             new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q1 Classic", Id = "vidu:1@0".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q2 Pro", Id = "vidu:3@1".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q2 Turbo", Id = "vidu:3@2".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q3 Turbo", Id = "vidu:4@2".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Vidu", Type = "video", Name = "Vidu Q3", Id = "vidu:4@1".ToModelId(GetIdentifier()) },
 
             new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V2.0 Master", Id = "klingai:4@3".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "KlingAI", Type = "video", Name = "KlingAI V1.0 Pro", Id = "klingai:1@2".ToModelId(GetIdentifier()) },
@@ -288,10 +365,12 @@ public sealed partial class RunwareProvider
 
             new() { OwnedBy = "Runway", Type = "video", Name = "Runway Gen-4 Turbo", Id = "runway:1@1".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Runway", Type = "video", Name = "Runway Aleph", Id = "runway:2@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Runway", Type = "video", Name = "Runway Gen-4.5", Id = "runway:1@2".ToModelId(GetIdentifier()) },
 
             new() { OwnedBy = "Google", Type = "video", Name = "Veo 3.0", Id = "google:3@0".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Google", Type = "video", Name = "Veo 3.1", Id = "google:3@2".ToModelId(GetIdentifier()) },
-            new() { OwnedBy = "Google", Type = "video", Name = "Veo 3 Fast", Id = "google:3@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Google", Type = "video", Name = "Veo 3.0 Fast", Id = "google:3@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Google", Type = "video", Name = "Veo 3.1 Fast", Id = "google:3@3".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Google", Type = "video", Name = "Veo 2.0", Id = "google:2@0".ToModelId(GetIdentifier()) },
 
             new() { OwnedBy = "OpenAI", Type = "video", Name = "Sora 2", Id = "openai:3@1".ToModelId(GetIdentifier()) },
@@ -302,10 +381,13 @@ public sealed partial class RunwareProvider
             new() { OwnedBy = "PixVerse", Type = "video", Name = "PixVerse v5 Fast", Id = "pixverse:1@5-fast".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "PixVerse", Type = "video", Name = "PixVerse v5.6", Id = "pixverse:1@7".ToModelId(GetIdentifier()) },
 
+            new() { OwnedBy = "MiniMax", Type = "video", Name = "Hailuo 02", Id = "minimax:3@1".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "MiniMax", Type = "video", Name = "Hailuo 2.3", Id = "minimax:4@1".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "MiniMax", Type = "video", Name = "Hailuo 2.3 Fast", Id = "minimax:4@2".ToModelId(GetIdentifier()) },
 
+            new() { OwnedBy = "ByteDance", Type = "video", Name = "Seedance 1.5 Pro", Id = "bytedance:seedance@1.5-pro".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "ByteDance", Type = "video", Name = "Seedance 1.0 Pro", Id = "bytedance:2@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "ByteDance", Type = "video", Name = "Seedance 1.0 Pro Fast", Id = "bytedance:2@2".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "ByteDance", Type = "video", Name = "Seedance 1.0 Lite", Id = "bytedance:1@1".ToModelId(GetIdentifier()) },
 
             // =======================
@@ -314,10 +396,12 @@ public sealed partial class RunwareProvider
 
             new() { OwnedBy = "Alibaba", Type = "video", Name = "Wan 2.2 A14B", Id = "runware:200@6".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Alibaba", Type = "video", Name = "Wan 2.6 Flash", Id = "alibaba:wan@2.6-flash".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Alibaba", Type = "video", Name = "Wan 2.6", Id = "alibaba:wan@2.6".ToModelId(GetIdentifier()) },
 
             new() { OwnedBy = "Lightricks", Type = "video", Name = "LTX-2 Fast", Id = "lightricks:2@1".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Lightricks", Type = "video", Name = "LTX-2 Pro", Id = "lightricks:2@0".ToModelId(GetIdentifier()) },
             new() { OwnedBy = "Lightricks", Type = "video", Name = "LTX-2 Retake", Id = "lightricks:3@1".ToModelId(GetIdentifier()) },
+            new() { OwnedBy = "Lightricks", Type = "video", Name = "LTX-2", Id = "lightricks:ltx@2".ToModelId(GetIdentifier()) },
 
             new() { OwnedBy = "Creatify", Type = "video", Name = "Aurora v1 Fast", Id = "creatify:aurora@fast".ToModelId(GetIdentifier()) },
 
@@ -336,6 +420,7 @@ public sealed partial class RunwareProvider
 
             new() { OwnedBy = "Bria", Type = "video", Name = "Bria Video Background Removal", Id = "bria:51@1".ToModelId(GetIdentifier()) },
 
+            new() { OwnedBy = "xAI", Type = "video", Name = "Grok Imagine Video", Id = "xai:grok-imagine@video".ToModelId(GetIdentifier()) },
 
         ]);
     }

@@ -15,10 +15,14 @@ public static class UIMessagePartExtensions
 
         if (modelId.Contains("whisper")
             || modelId.Contains("transcribe")
+            || modelId.Contains("cartesia")
             || modelId.Contains("voxtral"))
             return "transcription";
 
-        if (modelId.Contains("tts") || modelId.Contains("canopy"))
+        if (modelId.Contains("tts")
+        || modelId.Contains("canopy")
+        || modelId.Contains("Kokoro", StringComparison.OrdinalIgnoreCase)
+        || modelId.Contains("chatterbox"))
             return "speech";
 
         if (modelId.Contains("rerank"))
@@ -29,11 +33,25 @@ public static class UIMessagePartExtensions
 
         if (modelId.Contains("image")
             || modelId.Contains("flux")
+            || modelId.Contains("stable-diffusion")
+            || modelId.Contains("sdxl")
+            || modelId.Contains("sd3.5")
+            || modelId.Contains("dalle")
+            || modelId.Contains("ideogram")
+            || modelId.Contains("kandinsky")
+            || modelId.Contains("datacte/proteus")
+            || modelId.Contains("dreamshaper")
+            || modelId.Contains("Bria", StringComparison.OrdinalIgnoreCase)
+            || modelId.Contains("Seedream", StringComparison.OrdinalIgnoreCase)
+            || modelId.Contains("recraft", StringComparison.OrdinalIgnoreCase)
             || modelId.Contains("imagen")
             || modelId.Contains("dall-e"))
             return "image";
 
-        if (modelId.Contains("openai/sora-") || modelId.Contains("veo-") || modelId.Contains("video"))
+        if (modelId.Contains("openai/sora-")
+            || modelId.Contains("veo-")
+            || modelId.Contains("t2v", StringComparison.OrdinalIgnoreCase)
+            || modelId.Contains("video"))
             return "video";
 
         if (modelId.Contains("realtime"))
