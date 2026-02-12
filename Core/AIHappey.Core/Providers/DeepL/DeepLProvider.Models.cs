@@ -19,7 +19,7 @@ public partial class DeepLProvider
         var body = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"DeepL languages failed ({(int)resp.StatusCode}): {body}");
+            throw new InvalidOperationException($"{nameof(DeepL)} languages failed ({(int)resp.StatusCode}): {body}");
 
         var languages = JsonSerializer.Deserialize<List<DeepLLanguage>>(body, JsonSerializerOptions.Web) ?? [];
 
@@ -35,11 +35,19 @@ public partial class DeepLProvider
                     OwnedBy = nameof(DeepL),
                     Type = "language",
                     Id = $"translate-to/{code}".ToModelId(GetIdentifier()),
-                    Name = $"DeepL Translate to {display}",
+                    Name = $"{nameof(DeepL)} Translate to {display}",
                     Description = code
                 };
             })
             .ToList();
+
+        models.Add(new Model()
+        {
+            OwnedBy = nameof(DeepL),
+            Type = "language",
+            Id = $"rephrase".ToModelId(GetIdentifier()),
+            Name = $"Improve text"
+        });
 
         return models;
     }

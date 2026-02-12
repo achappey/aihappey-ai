@@ -26,15 +26,14 @@ public partial class DeepLProvider
         if (texts.Count == 0)
             throw new Exception("No prompt provided.");
 
-        var translated = await TranslateAsync(texts, modelId, cancellationToken);
-        var joined = string.Join("\n", translated);
+        var translated = await ProcessTextsAsync(texts, modelId, cancellationToken);
 
         return new CreateMessageResult
         {
             Role = Role.Assistant,
             Model = modelId,
             StopReason = "stop",
-            Content = [joined.ToTextContentBlock()]
+            Content = [.. translated.Select(a => a.ToTextContentBlock())]
         };
     }
 }

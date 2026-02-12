@@ -16,9 +16,6 @@ public partial class DeepLProvider
 
         ArgumentNullException.ThrowIfNull(chatRequest);
 
-        // Validate model format early.
-        _ = ParseTargetLanguageFromModel(chatRequest.Model);
-
         // Translate each incoming text part from the last user message.
         var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == Role.user);
         var texts = lastUser?.Parts?.OfType<TextUIPart>()
@@ -37,7 +34,7 @@ public partial class DeepLProvider
 
         try
         {
-            translated = await TranslateAsync(texts, chatRequest.Model, cancellationToken);
+            translated = await ProcessTextsAsync(texts, chatRequest.Model, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -50,17 +47,16 @@ public partial class DeepLProvider
             yield break;
         }
 
-        var id = Guid.NewGuid().ToString("n");
-        yield return id.ToTextStartUIMessageStreamPart();
-
         for (var i = 0; i < translated!.Count; i++)
         {
+            var id = Guid.NewGuid().ToString("n");
+            yield return id.ToTextStartUIMessageStreamPart();
+
             var text = translated[i];
-            var delta = (i == translated.Count - 1) ? text : (text + "\n");
-            yield return new TextDeltaUIMessageStreamPart { Id = id, Delta = delta };
+            yield return new TextDeltaUIMessageStreamPart { Id = id, Delta = text };
+            yield return id.ToTextEndUIMessageStreamPart();
         }
 
-        yield return id.ToTextEndUIMessageStreamPart();
         yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, chatRequest.Temperature);
     }
 }

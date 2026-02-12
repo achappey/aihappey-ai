@@ -51,7 +51,7 @@ public partial class DeepLProvider
         IReadOnlyList<string>? translated = null;
         try
         {
-            translated = await TranslateAsync(texts, modelId, cancellationToken);
+            translated = await ProcessTextsAsync(texts, modelId, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -70,35 +70,35 @@ public partial class DeepLProvider
             yield break;
         }
 
-        var itemId = Guid.NewGuid().ToString("n");
-        var full = new List<string>();
+        var responseItemId = Guid.NewGuid().ToString("n");
 
         for (var i = 0; i < translated!.Count; i++)
         {
+            var itemId = Guid.NewGuid().ToString("n");
             var text = translated[i];
-            full.Add(text);
-            var piece = (i == translated.Count - 1) ? text : (text + "\n");
 
             yield return new ResponseOutputTextDelta
             {
                 SequenceNumber = seq++,
                 ItemId = itemId,
-                ContentIndex = 0,
+                ContentIndex = i,
                 Outputindex = 0,
-                Delta = piece
+                Delta = text
+            };
+
+            yield return new ResponseOutputTextDone
+            {
+                SequenceNumber = seq++,
+                ItemId = itemId,
+                ContentIndex = i,
+                Outputindex = 0,
+                Text = text
             };
         }
 
-        var joined = string.Join("\n", full);
-
-        yield return new ResponseOutputTextDone
-        {
-            SequenceNumber = seq++,
-            ItemId = itemId,
-            ContentIndex = 0,
-            Outputindex = 0,
-            Text = joined
-        };
+        var parts = translated
+            .Select(t => new { type = "output_text", text = t, annotations = Array.Empty<string>() })
+            .ToArray();
 
         yield return new ResponseCompleted
         {
@@ -114,13 +114,10 @@ public partial class DeepLProvider
                     new
                     {
                         type = "message",
-                        id = itemId,
+                        id = responseItemId,
                         status = "completed",
                         role = "assistant",
-                        content = new[]
-                        {
-                            new { type = "output_text", text = joined, annotations = Array.Empty<string>() }
-                        }
+                        content = parts
                     }
                 ]
             }
@@ -139,8 +136,16 @@ public partial class DeepLProvider
         if (texts.Count == 0)
             throw new Exception("No prompt provided.");
 
-        var translated = await TranslateAsync(texts, modelId, cancellationToken);
-        var joined = string.Join("\n", translated);
+        var translated = await ProcessTextsAsync(texts, modelId, cancellationToken);
+
+        var parts = translated
+            .Select(t => new
+            {
+                type = "output_text",
+                text = t,
+                annotations = Array.Empty<string>()
+            })
+            .ToArray();
 
         var now = DateTimeOffset.UtcNow;
         return new ResponseResult
@@ -157,15 +162,7 @@ public partial class DeepLProvider
                     id = Guid.NewGuid().ToString("n"),
                     status = "completed",
                     role = "assistant",
-                    content = new[]
-                    {
-                        new
-                        {
-                            type = "output_text",
-                            text = joined,
-                            annotations = Array.Empty<string>()
-                        }
-                    }
+                    content = parts
                 }
             ]
         };
