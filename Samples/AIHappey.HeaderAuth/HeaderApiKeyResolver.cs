@@ -105,6 +105,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["openrouter"] = "X-OpenRouter-Key",
             ["ai302"] = "X-302AI-Key",
             ["matterai"] = "X-MatterAI-Key",
+            ["bytez"] = "X-Bytez-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

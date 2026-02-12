@@ -103,6 +103,7 @@ public class AIServiceConfig
     public ProviderConfig? OpenRouter { get; set; }
     public ProviderConfig? AI302 { get; set; }
     public ProviderConfig? MatterAI { get; set; }
+    public ProviderConfig? Bytez { get; set; }
 }
 
 public class ProviderConfig

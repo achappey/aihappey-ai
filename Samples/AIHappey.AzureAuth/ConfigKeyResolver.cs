@@ -110,6 +110,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "openrouter" => _config.OpenRouter?.ApiKey,
             "ai302" => _config.AI302?.ApiKey,
             "matterai" => _config.MatterAI?.ApiKey,
+            "bytez" => _config.Bytez?.ApiKey,
             _ => null
         };
 }

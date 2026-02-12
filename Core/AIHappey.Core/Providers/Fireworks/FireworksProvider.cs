@@ -52,15 +52,12 @@ public partial class FireworksProvider : IModelProvider
         var model = FireworksModels.FirstOrDefault(a => a.Id.EndsWith(modelId!))
              ?? throw new ArgumentException(modelId);
 
-        switch (model.Type)
+        return model.Type switch
         {
-            case "image":
-                return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-            case "language":
-                return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
-            default:
-                throw new NotImplementedException();
-        }
+            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
+            "language" => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)

@@ -141,25 +141,20 @@ public static class TogetherMessageMappingExtensions
 
     private static object? MapPartToTogetherContent(UIMessagePart part)
     {
-        switch (part)
+        return part switch
         {
-            case TextUIPart t when !string.IsNullOrWhiteSpace(t.Text):
-                return new { type = "text", text = t.Text };
-
+            TextUIPart t when !string.IsNullOrWhiteSpace(t.Text) => new { type = "text", text = t.Text },
             /*      case FileUIPart f
-                      when !string.IsNullOrEmpty(f.Url) &&
-                           !string.IsNullOrEmpty(f.MediaType) &&
-                           f.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase):
-                      return new
-                      {
-                          type = "image_url",
-                          image_url = new { url = f.Url }
-                      };*/
-
-            // You can extend: PDFs to text, audio to input_audio, etc., when the target model supports it.
-            default:
-                return null;
-        }
+when !string.IsNullOrEmpty(f.Url) &&
+!string.IsNullOrEmpty(f.MediaType) &&
+f.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase):
+return new
+{
+type = "image_url",
+image_url = new { url = f.Url }
+};*/// You can extend: PDFs to text, audio to input_audio, etc., when the target model supports it.
+            _ => null,
+        };
     }
 
 }
