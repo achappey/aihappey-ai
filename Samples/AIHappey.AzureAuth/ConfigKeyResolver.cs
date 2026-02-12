@@ -109,6 +109,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "rekaai" => _config.RekaAI?.ApiKey,
             "openrouter" => _config.OpenRouter?.ApiKey,
             "ai302" => _config.AI302?.ApiKey,
+            "matterai" => _config.MatterAI?.ApiKey,
             _ => null
         };
 }

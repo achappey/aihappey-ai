@@ -102,6 +102,7 @@ using AIHappey.Core.Providers.Segmind;
 using AIHappey.Core.Providers.RekaAI;
 using AIHappey.Core.Providers.OpenRouter;
 using AIHappey.Core.Providers.AI302;
+using AIHappey.Core.Providers.MatterAI;
 
 namespace AIHappey.Core.AI;
 
@@ -212,6 +213,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RekaAIProvider>();
         services.AddSingleton<IModelProvider, OpenRouterProvider>();
         services.AddSingleton<IModelProvider, AI302Provider>();
+        services.AddSingleton<IModelProvider, MatterAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

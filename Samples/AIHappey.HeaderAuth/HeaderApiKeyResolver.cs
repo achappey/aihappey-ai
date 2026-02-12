@@ -104,6 +104,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["rekaai"] = "X-RekaAI-Key",
             ["openrouter"] = "X-OpenRouter-Key",
             ["ai302"] = "X-302AI-Key",
+            ["matterai"] = "X-MatterAI-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

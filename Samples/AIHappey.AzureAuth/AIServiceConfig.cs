@@ -102,6 +102,7 @@ public class AIServiceConfig
     public ProviderConfig? RekaAI { get; set; }
     public ProviderConfig? OpenRouter { get; set; }
     public ProviderConfig? AI302 { get; set; }
+    public ProviderConfig? MatterAI { get; set; }
 }
 
 public class ProviderConfig
