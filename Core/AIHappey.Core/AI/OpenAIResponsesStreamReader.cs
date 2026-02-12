@@ -10,8 +10,6 @@ namespace AIHappey.Core.AI;
 
 public static class OpenAIResponsesStreamReader
 {
-    // OBSOLETE
-    //TODO Refactor to responses package
     public static async IAsyncEnumerable<UIMessagePart> ReadAsync(
         this Stream stream,
         ChatRequest chatRequest,

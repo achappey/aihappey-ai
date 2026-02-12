@@ -22,7 +22,7 @@ public static class PerplexityHttpClientExtensions
         var requestJson = JsonSerializer.Serialize(request, options);
 
         // Build the HTTP request
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "completions")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
         {
             Content = new StringContent(requestJson, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
@@ -54,7 +54,7 @@ public static class PerplexityHttpClientExtensions
         var requestJson = JsonSerializer.Serialize(request, options);
 
         // Build the HTTP request
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "completions")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
         {
             Content = new StringContent(requestJson, Encoding.UTF8, MediaTypeNames.Application.Json)
         };

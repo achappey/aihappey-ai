@@ -7,12 +7,19 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Responses.Extensions;
+using System.Text.Json;
+using System.Text;
+using System.Net.Mime;
+using System.Dynamic;
+using AIHappey.Core.Providers.xAI;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.Perplexity;
 
 public class PerplexityProvider : IModelProvider
 {
-    private readonly string BASE_URL = "https://api.perplexity.ai/chat/";
+    private readonly string BASE_URL = "https://api.perplexity.ai/";
 
     public string GetIdentifier() => nameof(Perplexity).ToLowerInvariant();
 
@@ -77,8 +84,6 @@ public class PerplexityProvider : IModelProvider
         };
     }
 
-
-
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
@@ -87,13 +92,84 @@ public class PerplexityProvider : IModelProvider
 
         ApplyAuthHeader();
 
-        return await Task.FromResult(PerplexityModels.AllModels);
+        return await Task.FromResult<List<Model>>([.. PerplexityModels.SonarModels, .. PerplexityModels.AgentModels]);
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        if (PerplexityModels.AgentModels.Any(a => a.Id.EndsWith($"/{chatRequest.Model}")))
+        {
+            var tools = new List<dynamic>();
+
+            foreach (var tool in chatRequest.Tools ?? [])
+            {
+                tools.Add(new
+                {
+                    type = "function",
+                    name = tool.Name,
+                    description = tool.Description,
+                    parameters = tool.InputSchema
+                });
+            }
+
+            dynamic payload = new ExpandoObject();
+            payload.model = chatRequest.Model;
+            payload.stream = true;
+            payload.temperature = chatRequest.Temperature;
+            payload.store = false;
+            payload.input = chatRequest.Messages.BuildResponsesInput();
+            payload.tools = tools;
+
+            if (chatRequest.ResponseFormat != null)
+            {
+                payload.text = new
+                {
+                    format = chatRequest.ResponseFormat
+                };
+            }
+
+            if (tools.Count > 0)
+                payload.tool_choice = "auto";
+
+            var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+            var responseReq = new HttpRequestMessage(HttpMethod.Post, "v1/responses")
+            {
+                Content = new StringContent(
+                    json,
+                    Encoding.UTF8,
+                    MediaTypeNames.Application.Json)
+            };
+
+            // ---------- 2) Send and read SSE ----------
+            using var resp = await _client.SendAsync(
+                responseReq,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                throw new Exception(string.IsNullOrWhiteSpace(err) ? resp.ReasonPhrase : err);
+            }
+
+            await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+
+            await foreach (var part in OpenAIResponsesStreamReader.ReadAsync(
+                stream,
+                chatRequest,
+                chatRequest.Model,
+                ct: cancellationToken))
+            {
+                yield return part;
+            }
+
+            yield break;
+        }
+
+
         var (messages, systemRole) = chatRequest.Messages.ToPerplexityMessages();
         var req = chatRequest.ToChatRequest(messages, systemRole);
 
@@ -214,14 +290,31 @@ public class PerplexityProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (!PerplexityModels.AgentModels.Any(a => a.Id.EndsWith($"/{options.Model}")))
+        {
+            throw new NotImplementedException();
+        }
+
+        ApplyAuthHeader();
+
+        return await _client.GetResponses(
+                   options, ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (!PerplexityModels.AgentModels.Any(a => a.Id.EndsWith($"/{options.Model}")))
+        {
+            throw new NotImplementedException();
+        }
+
+        ApplyAuthHeader();
+
+        return _client.GetResponsesUpdates(
+           options,
+           ct: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
