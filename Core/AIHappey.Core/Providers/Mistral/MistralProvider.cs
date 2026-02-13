@@ -1,10 +1,10 @@
 using OAIC = OpenAI.Chat;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Common.Model;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Mistral;
 

@@ -1,11 +1,10 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider : IModelProvider
+public partial class TogetherProvider 
 {
 
     public async Task<TranscriptionResponse> TranscriptionRequest(

@@ -5,8 +5,8 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.TTSReader;
 
@@ -41,14 +41,7 @@ public partial class TTSReaderProvider : IModelProvider
     public string GetIdentifier() => nameof(TTSReader).ToLowerInvariant();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        ApplyAuthHeader();
-
-        return TTSReaderModels;
-    }
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
@@ -92,12 +85,4 @@ public partial class TTSReaderProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
-
-    public static IReadOnlyList<Model> TTSReaderModels =>
-    [
-        new() { Id = "ttsSync".ToModelId(nameof(TTSReader).ToLowerInvariant()),
-            Name = "ttsSync",
-            Type = "speech",
-            OwnedBy = nameof(TTSReader) },
-    ];
 }

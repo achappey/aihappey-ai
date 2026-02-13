@@ -2,8 +2,8 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.RekaAI;
 

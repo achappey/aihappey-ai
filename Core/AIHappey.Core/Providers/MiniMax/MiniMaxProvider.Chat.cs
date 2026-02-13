@@ -10,7 +10,8 @@ public partial class MiniMaxProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = MiniMaxModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
             ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "transcription")

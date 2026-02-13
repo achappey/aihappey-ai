@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.AzureAuth.Controllers;
 

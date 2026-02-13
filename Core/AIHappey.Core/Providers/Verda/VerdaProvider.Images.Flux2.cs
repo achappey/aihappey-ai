@@ -3,14 +3,12 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Verda;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Verda;
 
 public partial class VerdaProvider
-    : IModelProvider
 {
     private const string Flux2DevEndpoint = "https://inference.datacrunch.io/flux2-dev/runsync";
     private const string Flux2FlexEndpoint = "https://relay.datacrunch.io/bfl/flux-2-flex";

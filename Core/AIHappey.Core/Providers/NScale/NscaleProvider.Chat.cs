@@ -4,12 +4,11 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.NScale;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Nscale;
 
-public partial class NscaleProvider : IModelProvider
+public partial class NscaleProvider
 {
     private static readonly JsonSerializerOptions options = new(JsonSerializerOptions.Web)
     {

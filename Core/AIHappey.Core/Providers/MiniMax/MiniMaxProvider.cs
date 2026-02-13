@@ -3,9 +3,9 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.MiniMax;
 

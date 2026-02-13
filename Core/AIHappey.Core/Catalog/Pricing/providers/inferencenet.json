@@ -1,0 +1,20 @@
+{
+  "inferencenet/inference-net/schematron-3b": {
+    "pricing": {
+      "input": "0.00000002",
+      "output": "0.00000005"
+    }
+  },
+  "inferencenet/inference-net/schematron-8b": {
+    "pricing": {
+      "input": "0.00000004",
+      "output": "0.00000010"
+    }
+  },
+  "inferencenet/google/gemma-3-27b-instruct/bf-16": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000030"
+    }
+  }
+}

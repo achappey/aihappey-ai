@@ -1,0 +1,14 @@
+{
+  "ai21/jamba-large": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000008"
+    }
+  },
+  "ai21/jamba-mini": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000004"
+    }
+  }
+}

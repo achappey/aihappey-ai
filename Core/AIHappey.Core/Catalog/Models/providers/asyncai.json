@@ -1,0 +1,21 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "asyncai/asyncflow_v2.0",
+            "object": "model",
+            "owned_by": "asyncAI",
+            "name": "AsyncFlow V2 (English)",
+            "type": "speech",
+            "description": "AsyncFlow V2 (English)"
+        },
+        {
+            "id": "asyncai/asyncflow_multilingual_v1.0",
+            "object": "model",
+            "owned_by": "asyncAI",
+            "name": "AsyncFlow Multilingual V1",
+            "type": "speech",
+            "description": "AsyncFlow Multilingual V1"
+        }
+    ]
+}

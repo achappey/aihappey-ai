@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Protocol;
 using AIHappey.Telemetry;
 using System.Text.Json.Nodes;
-using AIHappey.Core.ModelProviders;
 using AIHappey.AzureAuth.Extensions;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.AzureAuth.Controllers;
 

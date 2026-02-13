@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Baseten;
 

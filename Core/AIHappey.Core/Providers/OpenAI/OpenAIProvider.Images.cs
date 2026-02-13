@@ -1,13 +1,12 @@
 using OpenAI.Images;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Common.Model.Providers.OpenAI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider : IModelProvider
+public partial class OpenAIProvider
 {
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {

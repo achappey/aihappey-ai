@@ -5,14 +5,12 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Verda;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Verda;
 
 public partial class VerdaProvider
-    : IModelProvider
 {
     public Task<ImageResponse> Flux1KontextImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => Flux1KontextImageRequestInternal(imageRequest, cancellationToken);

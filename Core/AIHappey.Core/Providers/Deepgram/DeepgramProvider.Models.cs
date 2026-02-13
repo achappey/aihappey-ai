@@ -1,12 +1,10 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Deepgram;
 
 public sealed partial class DeepgramProvider
-    : IModelProvider
 {
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

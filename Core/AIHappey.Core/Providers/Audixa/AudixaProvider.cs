@@ -4,8 +4,8 @@ using AIHappey.Core.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Audixa;
 
@@ -41,11 +41,7 @@ public partial class AudixaProvider : IModelProvider
     public string GetIdentifier() => nameof(Audixa).ToLowerInvariant();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return AudixaModels;
-    }
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
@@ -93,17 +89,4 @@ public partial class AudixaProvider : IModelProvider
     {
         throw new NotSupportedException();
     }
-
-    public static IReadOnlyList<Model> AudixaModels =>
-    [
-        new() { Id = "base".ToModelId(nameof(Audixa).ToLowerInvariant()),
-            Name = "Audixa Base",
-            Type = "speech",
-            OwnedBy = nameof(Audixa) },
-        new() { Id = "advance".ToModelId(nameof(Audixa).ToLowerInvariant()),
-            Name = "Audixa Advance",
-            Type = "speech",
-            OwnedBy = nameof(Audixa) }
-
-    ];
 }

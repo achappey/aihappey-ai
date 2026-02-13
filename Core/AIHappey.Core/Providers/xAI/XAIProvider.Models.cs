@@ -1,11 +1,10 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using System.Text.Json;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.xAI;
 
-public partial class XAIProvider : IModelProvider
+public partial class XAIProvider 
 {
     public string GetIdentifier() => XAIRequestExtensions.XAIIdentifier;
 

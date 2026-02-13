@@ -1,0 +1,32 @@
+{
+    "euqai/euqai-fusion-v1": {
+        "pricing": {
+            "input": "0.00000080",
+            "output": "0.00000400"
+        }
+    },
+    "euqai/euqai-fusion-code-v1": {
+        "pricing": {
+            "input": "0.00000100",
+            "output": "0.00000380"
+        }
+    },
+    "euqai/qwen3-235b": {
+        "pricing": {
+            "input": "0.00000100",
+            "output": "0.00000300"
+        }
+    },
+    "euqai/mistral-small-24b": {
+        "pricing": {
+            "input": "0.00000020",
+            "output": "0.00000050"
+        }
+    },
+    "euqai/qwen3-30b": {
+        "pricing": {
+            "input": "0.00000080",
+            "output": "0.00000240"
+        }
+    }
+}

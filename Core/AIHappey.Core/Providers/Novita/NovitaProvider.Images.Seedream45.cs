@@ -6,13 +6,12 @@ using System.Text.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.StaticFiles;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider
 {
     private static readonly JsonSerializerOptions Seedream45Json = new(JsonSerializerDefaults.Web)
     {

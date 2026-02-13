@@ -1,0 +1,189 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "murfai/gen2",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "gen2",
+            "type": "speech",
+            "description": "Murf Speech Gen 2 is our most advanced, realistic, and customizable speech model. It challenges the limits of technology, by merging human-like realism with advanced customization capabilities, empowering users to efficiently bridge the gap between their vision and its execution"
+        },
+        {
+            "id": "murfai/translate/en-US",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "English (US & Canada)",
+            "type": "language",
+            "description": "Translate to English (US & Canada)."
+        },
+        {
+            "id": "murfai/translate/en-UK",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "English (UK)",
+            "type": "language",
+            "description": "Translate to English (UK)."
+        },
+        {
+            "id": "murfai/translate/en-IN",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "English (India)",
+            "type": "language",
+            "description": "Translate to English (India)."
+        },
+        {
+            "id": "murfai/translate/en-AU",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "English (Australia)",
+            "type": "language",
+            "description": "Translate to English (Australia)."
+        },
+        {
+            "id": "murfai/translate/en-SCOTT",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "English (Scotland)",
+            "type": "language",
+            "description": "Translate to English (Scotland)."
+        },
+        {
+            "id": "murfai/translate/es-MX",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Spanish (Mexico)",
+            "type": "language",
+            "description": "Translate to Spanish (Mexico)."
+        },
+        {
+            "id": "murfai/translate/es-ES",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Spanish (Spain)",
+            "type": "language",
+            "description": "Translate to Spanish (Spain)."
+        },
+        {
+            "id": "murfai/translate/fr-FR",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "French (France)",
+            "type": "language",
+            "description": "Translate to French (France)."
+        },
+        {
+            "id": "murfai/translate/de-DE",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "German (Germany)",
+            "type": "language",
+            "description": "Translate to German (Germany)."
+        },
+        {
+            "id": "murfai/translate/it-IT",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Italian (Italy)",
+            "type": "language",
+            "description": "Translate to Italian (Italy)."
+        },
+        {
+            "id": "murfai/translate/nl-NL",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Dutch (Netherlands)",
+            "type": "language",
+            "description": "Translate to Dutch (Netherlands)."
+        },
+        {
+            "id": "murfai/translate/pt-BR",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Portuguese (Brazil)",
+            "type": "language",
+            "description": "Translate to Portuguese (Brazil)."
+        },
+        {
+            "id": "murfai/translate/zh-CN",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Chinese (Mandarin, China)",
+            "type": "language",
+            "description": "Translate to Chinese (Mandarin, China)."
+        },
+        {
+            "id": "murfai/translate/ja-JP",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Japanese (Japan)",
+            "type": "language",
+            "description": "Translate to Japanese (Japan)."
+        },
+        {
+            "id": "murfai/translate/ko-KR",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Korean (Korea)",
+            "type": "language",
+            "description": "Translate to Korean (Korea)."
+        },
+        {
+            "id": "murfai/translate/hi-IN",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Hindi (India)",
+            "type": "language",
+            "description": "Translate to Hindi (India)."
+        },
+        {
+            "id": "murfai/translate/ta-IN",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Tamil (India)",
+            "type": "language",
+            "description": "Translate to Tamil (India)."
+        },
+        {
+            "id": "murfai/translate/bn-IN",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Bangla (India)",
+            "type": "language",
+            "description": "Translate to Bangla (India)."
+        },
+        {
+            "id": "murfai/translate/hr-HR",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Croatian (Croatia)",
+            "type": "language",
+            "description": "Translate to Croatian (Croatia)."
+        },
+        {
+            "id": "murfai/translate/sk-SK",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Slovak (Slovakia)",
+            "type": "language",
+            "description": "Translate to Slovak (Slovakia)."
+        },
+        {
+            "id": "murfai/translate/pl-PL",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Polish (Poland)",
+            "type": "language",
+            "description": "Translate to Polish (Poland)."
+        },
+        {
+            "id": "murfai/translate/el-GR",
+            "object": "model",
+            "owned_by": "MurfAI",
+            "name": "Greek (Greece)",
+            "type": "language",
+            "description": "Translate to Greek (Greece)."
+        }
+    ]
+}

@@ -3,8 +3,8 @@ using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

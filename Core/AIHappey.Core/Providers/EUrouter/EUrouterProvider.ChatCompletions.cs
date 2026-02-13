@@ -1,13 +1,12 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace AIHappey.Core.Providers.EUrouter;
 
-public partial class EUrouterProvider : IModelProvider
+public partial class EUrouterProvider 
 {
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

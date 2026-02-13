@@ -35,20 +35,7 @@ public sealed partial class AzureProvider
             });
 
         return await Task.FromResult<IEnumerable<Model>>([
-            new Model
-            {
-                OwnedBy = nameof(Azure),
-                Name = "speech-to-text",
-                Type = "transcription",
-                Id = "speech-to-text".ToModelId(GetIdentifier())
-            },
-            new Model
-            {
-                OwnedBy = nameof(Azure),
-                Name = "text-to-speech",
-                Type = "speech",
-                Id = "text-to-speech".ToModelId(GetIdentifier())
-            },
+            ..await this.ListModels(_keyResolver.Resolve(GetIdentifier())),
             ..langModels
         ]);
     }

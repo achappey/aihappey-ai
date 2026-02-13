@@ -21,8 +21,7 @@ public sealed class TokenPriceConverter : JsonConverter<decimal>
             _ => throw new JsonException("Invalid token price")
         };
 
-        // normalize to price per 1M tokens
-        return perToken * PerMillion;
+        return perToken;
     }
 
     public override void Write(

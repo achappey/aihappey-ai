@@ -1,0 +1,132 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "byteplus/glm-4-7-251222",
+      "object": "model",
+      "owned_by": "Z.AI",
+      "name": "GLM-4.7",
+      "type": "language",
+      "description": "GLM-4.7 is Z.AI’s flagship model, with stronger coding, more reliable multi-step reasoning, and improved agentic performance, conversation quality, and front-end output."
+    },
+    {
+      "id": "byteplus/seed-1.8-251228",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-1.8",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-translation-250915",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-Translation",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-1.6-250915",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-1.6",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-1.6-flash-250715",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-1.6-flash",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seedance-1.0-pro-250528",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedance-1.0-pro",
+      "type": "video"
+    },
+    {
+      "id": "byteplus/seedance-1-5-pro-251215",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedance-1.5-pro",
+      "type": "video"
+    },
+    {
+      "id": "byteplus/seedance-1-0-pro-fast-251015",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedance-1.0-pro-fast",
+      "type": "video"
+    },
+    {
+      "id": "byteplus/seedance-1-0-lite-t2v-250428",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedance-1.0-lite-t2v",
+      "type": "video"
+    },
+    {
+      "id": "byteplus/seedance-1-0-lite-i2v-250428",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedance-1.0-lite-i2v",
+      "type": "video"
+    },
+    {
+      "id": "byteplus/seedream-3-0-t2i-250415",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedream-3.0-t2i",
+      "type": "image"
+    },
+    {
+      "id": "byteplus/kimi-k2-250711",
+      "object": "model",
+      "owned_by": "Moonshot",
+      "name": "Kimi-K2",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/gpt-oss-120b-250805",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-OSS-120B",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seededit-3.0-i2i-250628",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-SeedEdit-3.0-i2i",
+      "type": "image"
+    },
+    {
+      "id": "byteplus/skylark-pro-250415",
+      "object": "model",
+      "owned_by": "Skylark",
+      "name": "Skylark-pro",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/skylark-vision-250515",
+      "object": "model",
+      "owned_by": "Skylark",
+      "name": "Skylark-vision",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seedream-4-5-251128",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedream-4.5",
+      "type": "image"
+    },
+    {
+      "id": "byteplus/seedream-4-0-250828",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seedream-4.0",
+      "type": "image"
+    }
+  ]
+}

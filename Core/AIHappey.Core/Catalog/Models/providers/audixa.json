@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "audixa/base",
+      "object": "model",
+      "owned_by": "Audixa",
+      "name": "Audixa Base",
+      "type": "speech",
+      "description": "Audixa Base"
+    },
+    {
+      "id": "audixa/advance",
+      "object": "model",
+      "owned_by": "Audixa",
+      "name": "Audixa Advance",
+      "type": "speech",
+      "description": "Audixa Advance"
+    }
+  ]
+}

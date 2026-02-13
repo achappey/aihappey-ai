@@ -1,0 +1,285 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "hyperbolic/Qwen/Qwen3-Next-80B-A3B-Thinking",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-Next-80B-A3B-Thinking",
+            "description": "Qwen3-Next thinker model.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/Qwen/Qwen3-Next-80B-A3B-Instruct",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-Next-80B-A3B-Instruct",
+            "description": "Qwen3-Next instruct model.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/Qwen/Qwen3-Coder-480B-A35B-Instruct",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-Coder-480B-A35B-Instruct",
+            "description": "The latest and most powerful coder model from the Qwen Team.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/Qwen/Qwen3-235B-A22B-Instruct-2507",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-235B-A22B-Instruct-2507",
+            "description": "Qwen latest non-thinking model with significant improvements in general capabilities.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/Qwen/Qwen3-235B-A22B",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-235B-A22B",
+            "description": "A mixture-of-experts (MoE) model by Qwen with strong reasoning and agent tool-calling capabilities.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/Qwen/QwQ-32B",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "QwQ-32B",
+            "description": "The latest Qwen reasoning model.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/Qwen/Qwen2.5-Coder-32B",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen2.5-Coder-32B",
+            "description": "The best coder model from the Qwen Team.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/Qwen/Qwen2.5-72B",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen2.5-72B",
+            "description": "The latest Qwen LLM with more knowledge in coding and math.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/openai/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-oss-120b",
+            "description": "OpenAI’s open-weight model (big model smell).",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/openai/gpt-oss-20b",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-oss-20b",
+            "description": "OpenAI’s open-weight model (small model smell).",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/moonshotai/Kimi-K2",
+            "object": "model",
+            "owned_by": "Moonshot",
+            "name": "Kimi-K2",
+            "description": "Kimi's latest 1T LLM, good at coding and tool-calling.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/deepseek-ai/DeepSeek-R1-0528",
+            "object": "model",
+            "owned_by": "DeepSeek",
+            "name": "DeepSeek-R1-0528",
+            "description": "The latest open-source reasoner LLM released by DeepSeek.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/deepseek-ai/DeepSeek-R1",
+            "object": "model",
+            "owned_by": "DeepSeek",
+            "name": "DeepSeek-R1",
+            "description": "The best open-source reasoner LLM released by DeepSeek.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/deepseek-ai/DeepSeek-V3-0324",
+            "object": "model",
+            "owned_by": "DeepSeek",
+            "name": "DeepSeek-V3-0324",
+            "description": "DeepSeek's updated V3 model released on 03/24/2025.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/deepseek-ai/DeepSeek-V3",
+            "object": "model",
+            "owned_by": "DeepSeek",
+            "name": "DeepSeek-V3",
+            "description": "The best open-source LLM released by DeepSeek.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/meta-llama/Llama-3.3-70B",
+            "object": "model",
+            "owned_by": "Meta",
+            "name": "Llama-3.3-70B",
+            "description": "Meta's latest 70B LLM with performance comparable to Llama 3.1 405B.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/meta-llama/Llama-3.2-3B",
+            "object": "model",
+            "owned_by": "Meta",
+            "name": "Llama-3.2-3B",
+            "description": "The latest Llama 3.2 instruction-tuned model by Meta.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/meta-llama/Llama-3-70B",
+            "object": "model",
+            "owned_by": "Meta",
+            "name": "Llama-3-70B",
+            "description": "A highly efficient and powerful model designed for a variety of tasks.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/meta-llama/Llama-3.1-405B",
+            "object": "model",
+            "owned_by": "Meta",
+            "name": "Llama-3.1-405B",
+            "description": "The biggest and best open-source AI model trained by Meta, beating GPT-4o across most benchmarks.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/meta-llama/Llama-3.1-70B",
+            "object": "model",
+            "owned_by": "Meta",
+            "name": "Llama-3.1-70B",
+            "description": "The best LLM at its size with faster response times compared to the 405B model.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/meta-llama/Llama-3.1-8B",
+            "object": "model",
+            "owned_by": "Meta",
+            "name": "Llama-3.1-8B",
+            "description": "The smallest and fastest member of the Llama 3.1 family.",
+            "type": "language"
+        },
+        {
+            "id": "hyperbolic/FLUX.1-dev",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX.1-dev",
+            "description": "State-of-the-art image generation model with excellent prompt following and visual fidelity.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/SDXL1.0-base",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "SDXL-1.0",
+            "description": "High-resolution image generation with strong detail and composition.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/SD1.5",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Diffusion 1.5",
+            "description": "Reliable and versatile general-purpose image generation model.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/SD2",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Diffusion 2",
+            "description": "Improved generation quality over SD 1.5.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/SSD",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Speed Diffusion",
+            "description": "Optimized Stable Diffusion variant focused on faster inference.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/SDXL-turbo",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "SDXL Turbo",
+            "description": "Fast SDXL variant with reduced latency.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/SD1.5-ControlNet",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "SD 1.5 ControlNet",
+            "description": "Stable Diffusion 1.5 with ControlNet conditioning support.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/SDXL-ControlNet",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "SDXL ControlNet",
+            "description": "SDXL with ControlNet for structure-guided generation.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/playground-v2.5",
+            "object": "model",
+            "owned_by": "PlaygroundAI",
+            "name": "Playground v2.5",
+            "description": "Creative image generation model tuned for aesthetics.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/Fluently-XL-v4",
+            "object": "model",
+            "owned_by": "FluentlyAI",
+            "name": "Fluently XL v4",
+            "description": "High-quality XL model optimized for fluent visual output.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/Fluently-XL-Final",
+            "object": "model",
+            "owned_by": "FluentlyAI",
+            "name": "Fluently XL Final",
+            "description": "Final Fluently XL release with refined visual consistency.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/PixArt-Sigma-XL-2-1024-MS",
+            "object": "model",
+            "owned_by": "PixArt",
+            "name": "PixArt Sigma XL 2",
+            "description": "Diffusion transformer model focused on photorealism and scale.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/dreamshaper-xl-lightning",
+            "object": "model",
+            "owned_by": "DreamShaper",
+            "name": "DreamShaper XL Lightning",
+            "description": "Stylized SDXL model with lightning-fast generation.",
+            "type": "image"
+        },
+        {
+            "id": "hyperbolic/audio-generation",
+            "object": "model",
+            "owned_by": "Hyperbolic",
+            "name": "audio-generation",
+            "description": "Hyperbolic audio generation.",
+            "type": "speech"
+        }
+    ]
+}

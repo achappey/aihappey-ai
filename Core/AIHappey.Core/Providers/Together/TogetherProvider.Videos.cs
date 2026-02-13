@@ -1,6 +1,5 @@
 using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -9,7 +8,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider : IModelProvider
+public partial class TogetherProvider 
 {
     private static readonly JsonSerializerOptions VideoJsonSettings = new(JsonSerializerDefaults.Web)
     {

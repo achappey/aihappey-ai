@@ -20,7 +20,7 @@ public partial class BergetAIProvider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"PublicAI API error: {err}");
+            throw new Exception($"BergetAI API error: {err}");
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -29,10 +29,7 @@ public partial class BergetAIProvider
         var models = new List<Model>();
         var root = doc.RootElement;
 
-        // ✅ root is already an array
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                 ? dataEl.EnumerateArray()
                 : Enumerable.Empty<JsonElement>();
 
@@ -57,42 +54,94 @@ public partial class BergetAIProvider
             if (el.TryGetProperty("owned_by", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
 
-            if (el.TryGetProperty("release_date", out var releaseDateEl))
+            if (el.TryGetProperty("created", out var createdEl) &&
+                 createdEl.ValueKind == JsonValueKind.Number)
             {
-                var releaseDateString = releaseDateEl.GetString();
+                var ms = createdEl.GetInt64();
+                model.Created = DateTimeOffset
+                    .FromUnixTimeMilliseconds(ms)
+                    .ToUnixTimeSeconds();
+            }
 
-                if (!string.IsNullOrWhiteSpace(releaseDateString) &&
-                    DateTimeOffset.TryParseExact(
-                        releaseDateString,
-                        "yyyy-MM-dd",
-                        CultureInfo.InvariantCulture,
-                        DateTimeStyles.AssumeUniversal,
-                        out var releaseDate))
+            if (el.TryGetProperty("capabilities", out var capsEl) &&
+                capsEl.ValueKind == JsonValueKind.Object)
+            {
+                var tags = new List<string>();
+
+                foreach (var prop in capsEl.EnumerateObject())
                 {
-                    model.Created = releaseDate.ToUnixTimeSeconds();
+                    if (prop.Value.ValueKind == JsonValueKind.True)
+                    {
+                        tags.Add(prop.Name);
+                    }
                 }
+
+                if (tags.Count > 0)
+                    model.Tags = tags.ToArray();
             }
 
 
             if (el.TryGetProperty("pricing", out var pricingEl) &&
-                pricingEl.ValueKind == JsonValueKind.Object)
+        pricingEl.ValueKind == JsonValueKind.Object)
             {
-                var inputPrice = pricingEl.TryGetProperty("input", out var inEl)
-                        ? inEl.GetRawText() : null;
+                decimal inputNormalized = 0m;
+                decimal outputNormalized = 0m;
 
-                var outputPrice = pricingEl.TryGetProperty("output", out var outEl)
-                        ? outEl.GetRawText() : null;
+                var unit = pricingEl.TryGetProperty("unit", out var unitEl)
+                    ? unitEl.GetString()
+                    : null;
 
-                if (!string.IsNullOrEmpty(outputPrice)
-                    && !string.IsNullOrEmpty(inputPrice)
-                    && !outputPrice.Equals("0")
-                    && !inputPrice.Equals("0"))
+                // ---- INPUT ----
+                if (pricingEl.TryGetProperty("input", out var inEl))
+                {
+                    var input = inEl.GetDecimal();
+
+                    if (!string.IsNullOrEmpty(unit) &&
+                        unit.Contains("M Token", StringComparison.OrdinalIgnoreCase))
+                    {
+                        inputNormalized =
+                            input.PerMillionToPerToken();
+                    }
+                    else
+                    {
+                        inputNormalized = input;
+                    }
+                }
+
+                // ---- OUTPUT ----
+                if (pricingEl.TryGetProperty("output", out var outEl))
+                {
+                    var output = outEl.GetDecimal();
+
+                    if (!string.IsNullOrEmpty(unit) &&
+                        unit.Contains("M Token", StringComparison.OrdinalIgnoreCase))
+                    {
+                        outputNormalized =
+                            output.PerMillionToPerToken();
+                    }
+                    else if (!string.IsNullOrEmpty(unit) &&
+                             unit.Contains("/ hour", StringComparison.OrdinalIgnoreCase))
+                    {
+                        outputNormalized =
+                            output.PerHourToPerSecond();
+                    }
+                    else
+                    {
+                        outputNormalized = output;
+                    }
+                }
+
+                if (inputNormalized > 0m || outputNormalized > 0m)
+                {
                     model.Pricing = new ModelPricing
                     {
-                        Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
-                        Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture)
+                        Input = inputNormalized,
+                        Output = outputNormalized
                     };
+                }
             }
+
+
 
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);

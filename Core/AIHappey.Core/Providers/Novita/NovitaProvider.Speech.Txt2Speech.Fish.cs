@@ -1,11 +1,10 @@
 using System.Text.Json;
 using System.Text;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider 
 {
     private const string V4BaseUrl = "https://api.novita.ai/v4beta/txt2speech";
 

@@ -1,0 +1,16 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "gladia/solaria-1",
+            "object": "model",
+            "owned_by": "Gladia",
+            "name": "Solaria",
+            "type": "transcription",
+            "description": "Solaria",
+            "tags": [
+                "real-time"
+            ]
+        }
+    ]
+}

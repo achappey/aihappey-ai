@@ -8,7 +8,7 @@ using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
-public partial class HyperbolicProvider 
+public partial class HyperbolicProvider
 {
     public async Task<ImageResponse> ImageRequest(
      ImageRequest imageRequest,
@@ -55,7 +55,7 @@ public partial class HyperbolicProvider
 
         if (imageRequest.Seed is not null)
         {
-            payload["seed"] = imageRequest?.Seed;
+            payload["seed"] = imageRequest.Seed;
         }
 
         if (metadata?.Steps is not null)

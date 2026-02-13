@@ -1,0 +1,89 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "vidu/viduq3-pro",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq3-pro",
+            "type": "video"
+        },
+        {
+            "id": "vidu/viduq2-pro-fast",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq2-pro-fast",
+            "type": "video"
+        },
+        {
+            "id": "vidu/viduq2-pro",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq2-pro",
+            "type": "video"
+        },
+        {
+            "id": "vidu/viduq2-turbo",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq2-turbo",
+            "type": "video"
+        },
+        {
+            "id": "vidu/viduq1",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq1",
+            "type": "video"
+        },
+        {
+            "id": "vidu/viduq1-classic",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq1-classic",
+            "type": "video"
+        },
+        {
+            "id": "vidu/vidu2.0",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "vidu2.0",
+            "type": "video"
+        },
+        {
+            "id": "vidu/viduq2",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq2",
+            "type": "video"
+        },
+        {
+            "id": "vidu/viduq2",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq2",
+            "type": "image"
+        },
+        {
+            "id": "vidu/viduq1",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "viduq1",
+            "type": "image"
+        },
+        {
+            "id": "vidu/audio1.0",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "audio1.0",
+            "type": "speech"
+        },
+        {
+            "id": "vidu/audio-tts",
+            "object": "model",
+            "owned_by": "Vidu",
+            "name": "audio-tts",
+            "type": "speech"
+        }
+    ]
+}

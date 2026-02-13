@@ -5,13 +5,12 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Common.Model.Providers.Gladia;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Gladia;
 
-public partial class GladiaProvider : IModelProvider
+public partial class GladiaProvider 
 {
     private const string UploadEndpoint = "v2/upload";
     private const string PreRecordedEndpoint = "v2/pre-recorded";

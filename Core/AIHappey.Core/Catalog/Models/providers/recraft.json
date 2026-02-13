@@ -1,0 +1,77 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "recraft/recraftv2",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft V2",
+      "type": "image",
+      "description": "Recraft V2 is an image generation model released in March 2024 and the first model trained from scratch by Recraft. With 20 billion parameters, it was a breakthrough in human anatomical accuracy and the first to support brand consistency and brand color inputs. It also introduced vector image generation (SVG output), as well as minimalistic icon and illustration styles."
+    },
+    {
+      "id": "recraft/recraftv3",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft V3",
+      "type": "image",
+      "description": "Recraft V3 is an image generation model released in October 2024. It ranked first for five consecutive months on the Artificial Analysis public benchmark on Hugging Face, maintaining a clear lead over models from Midjourney, OpenAI, and others. V3 introduced major advances in photorealism and text rendering. It was the first Recraft model to generate mid-size text accurately and, as of 2025, is the only model capable of placing text at specific positions in an image."
+    },
+    {
+      "id": "recraft/vectorize",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Vectorize",
+      "type": "image",
+      "description": "Converts a given raster image to SVG format."
+    },
+    {
+      "id": "recraft/generateBackground",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Generate background",
+      "type": "image",
+      "description": "Generate Background operation generates a background for a given image, based on a prompt and a mask that specifies the regions to fill."
+    },
+    {
+      "id": "recraft/removeBackground",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Remove background",
+      "type": "image",
+      "description": "Removes background of a given raster image."
+    },
+    {
+      "id": "recraft/crispUpscale",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Crisp upscale",
+      "type": "image",
+      "description": "Enhances a given raster image using ‘crisp upscale’ tool, increasing image resolution, making the image sharper and cleaner."
+    },
+    {
+      "id": "recraft/creativeUpscale",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Creative upscale",
+      "type": "image",
+      "description": "Enhances a given raster image using ‘creative upscale’ tool, boosting resolution with a focus on refining small details and faces."
+    },
+    {
+      "id": "recraft/eraseRegion",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Erase region",
+      "type": "image",
+      "description": "Erases a region of a given raster image following a given mask, where white pixels represent the regions to erase, and black pixels indicate the areas to keep intact."
+    },
+    {
+      "id": "recraft/variateImage",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Variate image",
+      "type": "image",
+      "description": "Variate generates new versions of an image while keeping the overall concept intact. Each variation introduces slight differences in elements like character appearance, object position, or scene composition. The Variate function does not use a prompt. Instead, it uses the visual content of the original image to generate alternatives in different aspect ratios."
+    }
+  ]
+}

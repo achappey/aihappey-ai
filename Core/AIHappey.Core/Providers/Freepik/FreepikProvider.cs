@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
@@ -7,6 +6,7 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Freepik;
 

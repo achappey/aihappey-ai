@@ -3,13 +3,12 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.MiniMax;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
-public partial class MiniMaxProvider : IModelProvider
+public partial class MiniMaxProvider 
 {
     private static readonly JsonSerializerOptions SpeechJson = new(JsonSerializerDefaults.Web)
     {

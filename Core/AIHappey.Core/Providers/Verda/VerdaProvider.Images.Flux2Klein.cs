@@ -4,14 +4,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Verda;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Verda;
 
 public partial class VerdaProvider
-    : IModelProvider
 {
     private const string Flux2Klein4bEndpoint = "https://inference.datacrunch.io/flux2-klein-4b/generate";
     private const string Flux2KleinBase4bEndpoint = "https://inference.datacrunch.io/flux2-klein-base-4b/generate";

@@ -5,8 +5,8 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.ResembleAI;
 
@@ -47,12 +47,12 @@ public partial class ResembleAIProvider : IModelProvider
 
         ApplyAuthHeader();
 
-        return ResembleAIModels;
+        return GetIdentifier().GetModels();
     }
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = ResembleAIModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.GetModel()!))
+        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(chatRequest.GetModel()!))
             ?? throw new ArgumentException(chatRequest.GetModel()!);
 
         if (model.Type == "speech")
@@ -73,7 +73,7 @@ public partial class ResembleAIProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = ResembleAIModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
             ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "transcription")
@@ -101,7 +101,7 @@ public partial class ResembleAIProvider : IModelProvider
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var model = ResembleAIModels.FirstOrDefault(a => a.Id.EndsWith(modelId))
+        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(modelId))
           ?? throw new ArgumentException(modelId);
 
         if (model.Type == "speech")
@@ -126,26 +126,5 @@ public partial class ResembleAIProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
-
-    public static IReadOnlyList<Model> ResembleAIModels =>
- [
-    new() { Id = "speech-to-text".ToModelId(nameof(ResembleAI).ToLowerInvariant()),
-        Name = "speech-to-text",
-        Type = "transcription",
-        OwnedBy = nameof(ResembleAI) },
-    new() { Id = "chatterbox-turbo".ToModelId(nameof(ResembleAI).ToLowerInvariant()),
-        Name = "Chatterbox-Turbo",
-        Type = "speech",
-        OwnedBy = nameof(ResembleAI) },
-    new() { Id = "chatterbox".ToModelId(nameof(ResembleAI).ToLowerInvariant()),
-        Name = "Chatterbox",
-        Type = "speech",
-        OwnedBy = nameof(ResembleAI) },
-    new() { Id = "chatterbox-multilingual".ToModelId(nameof(ResembleAI).ToLowerInvariant()),
-        Name = "Chatterbox-Multilingual",
-        Type = "speech",
-        OwnedBy = nameof(ResembleAI) },
-];
-
 
 }

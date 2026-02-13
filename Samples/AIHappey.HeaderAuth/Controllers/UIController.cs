@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

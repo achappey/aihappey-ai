@@ -1,6 +1,5 @@
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using System.Text.Json;
@@ -10,7 +9,7 @@ using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.Upstage;
 
-public partial class UpstageProvider : IModelProvider
+public partial class UpstageProvider 
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,

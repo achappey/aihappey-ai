@@ -1,0 +1,133 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "klingai/kling-v1",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v1",
+            "type": "image",
+            "description": "kling-v1"
+        },
+        {
+            "id": "klingai/kling-v1-5",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v1-5",
+            "type": "image",
+            "description": "kling-v1-5"
+        },
+        {
+            "id": "klingai/kling-v2",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2",
+            "type": "image",
+            "description": "kling-v2"
+        },
+        {
+            "id": "klingai/kling-v2-new",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2-new",
+            "type": "image",
+            "description": "kling-v2-new"
+        },
+        {
+            "id": "klingai/kling-v2-1",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2-1",
+            "type": "image",
+            "description": "kling-v2-1"
+        },
+        {
+            "id": "klingai/kling-v1",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v1",
+            "type": "video",
+            "description": "kling-v1"
+        },
+        {
+            "id": "klingai/kling-v1-5",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v1-5",
+            "type": "video",
+            "description": "kling-v1-5"
+        },
+        {
+            "id": "klingai/kling-v1-6",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v1-6",
+            "type": "video",
+            "description": "kling-v1-6"
+        },
+        {
+            "id": "klingai/kling-v2-master",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2-master",
+            "type": "video",
+            "description": "kling-v2-master"
+        },
+        {
+            "id": "klingai/kling-v2-1",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2-1",
+            "type": "video",
+            "description": "kling-v2-1"
+        },
+        {
+            "id": "klingai/kling-v2-1-master",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2-1-master",
+            "type": "video",
+            "description": "kling-v2-1-master"
+        },
+        {
+            "id": "klingai/kling-v2-5-turbo",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2-5-turbo",
+            "type": "video",
+            "description": "kling-v2-5-turbo"
+        },
+        {
+            "id": "klingai/kling-v2-6",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-v2-6",
+            "type": "video",
+            "description": "kling-v2-6"
+        },
+        {
+            "id": "klingai/kling-video-o1",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "kling-video-o1",
+            "type": "video",
+            "description": "kling-video-o1"
+        },
+        {
+            "id": "klingai/avatar",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "avatar",
+            "type": "video",
+            "description": "avatar"
+        },
+        {
+            "id": "klingai/text-to-audio",
+            "object": "model",
+            "owned_by": "Kling AI",
+            "name": "text-to-audio",
+            "type": "speech",
+            "description": "text-to-audio"
+        }
+    ]
+}

@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
@@ -45,14 +45,7 @@ public sealed partial class MurfAIProvider : IModelProvider
         => throw new NotImplementedException();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-            
-        ApplyAuthHeader();
-
-        return MurfAIModels;
-    }
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

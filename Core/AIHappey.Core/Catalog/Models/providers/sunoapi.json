@@ -1,0 +1,40 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "sunoapi/V4",
+            "object": "model",
+            "owned_by": "SunoAPI",
+            "name": "Suno Generate V4",
+            "type": "speech"
+        },
+        {
+            "id": "sunoapi/V4_5",
+            "object": "model",
+            "owned_by": "SunoAPI",
+            "name": "Suno Generate V4_5",
+            "type": "speech"
+        },
+        {
+            "id": "sunoapi/V4_5ALL",
+            "object": "model",
+            "owned_by": "SunoAPI",
+            "name": "Suno Generate V4_5ALL",
+            "type": "speech"
+        },
+        {
+            "id": "sunoapi/V4_5PLUS",
+            "object": "model",
+            "owned_by": "SunoAPI",
+            "name": "Suno Generate V4_5PLUS",
+            "type": "speech"
+        },
+        {
+            "id": "sunoapi/V5",
+            "object": "model",
+            "owned_by": "SunoAPI",
+            "name": "Suno Generate V5",
+            "type": "speech"
+        }
+    ]
+}

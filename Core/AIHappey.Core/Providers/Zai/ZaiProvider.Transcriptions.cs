@@ -3,13 +3,12 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Zai;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider : IModelProvider
+public partial class ZaiProvider 
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,

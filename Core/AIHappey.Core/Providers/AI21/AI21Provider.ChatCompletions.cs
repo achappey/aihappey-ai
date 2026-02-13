@@ -13,9 +13,6 @@ public sealed partial class AI21Provider
 
         ArgumentNullException.ThrowIfNull(options);
 
-        if (options.Stream == true)
-            throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
-
         if (options.Tools?.Any() == true)
         {
             // AI21: tools require non-stream (OK), but their schema is not identical to OpenAI.

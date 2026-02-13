@@ -29,7 +29,7 @@ using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using NJsonSchema;
 using NJsonSchema.Generation;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.MCP.Provider;
 

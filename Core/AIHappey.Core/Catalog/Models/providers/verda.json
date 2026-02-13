@@ -1,0 +1,82 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "verda/flux-dev",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.1 [dev]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux-krea-dev",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.1 Krea [dev]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux-kontext-max",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.1 Kontext [max]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux-kontext-pro",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.1 Kontext [pro]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux-kontext-dev",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.1 Kontext [dev]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux2-dev",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.2 [dev]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux-2-flex",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.2 [flex]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux-2-pro",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.2 [pro]",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux2-klein-4b",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.2 [klein] 4B",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux2-klein-base-4b",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.2 [klein] Base 4B",
+            "type": "image"
+        },
+        {
+            "id": "verda/flux2-klein-base-9b",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "FLUX.2 [klein] Base 9B",
+            "type": "image"
+        }
+    ]
+}

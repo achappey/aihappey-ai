@@ -1,0 +1,25 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "ai21/jamba-large",
+      "object": "model",
+      "owned_by": "AI21",
+      "name": "jamba-large",
+      "type": "language",
+      "description": "Our most powerful and advanced model, designed to handle complex tasks at enterprise scale with superior performance.",
+      "context_window": 256000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "ai21/jamba-mini",
+      "object": "model",
+      "owned_by": "AI21",
+      "name": "jamba-mini",
+      "type": "language",
+      "description": "Jamba2 Mini blends efficiency and steerability into a 12B-active parameters model, delivering reliable output on core enterprise workflows.",
+      "context_window": 256000,
+      "max_tokens": 4096
+    }
+  ]
+}

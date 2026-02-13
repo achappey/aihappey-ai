@@ -4,12 +4,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Runware;
 
-public sealed partial class RunwareProvider : IModelProvider
+public sealed partial class RunwareProvider
 {
     private static readonly JsonSerializerOptions RunwareVideoJson = new(JsonSerializerDefaults.Web)
     {

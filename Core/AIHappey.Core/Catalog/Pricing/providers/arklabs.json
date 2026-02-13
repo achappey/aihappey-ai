@@ -1,0 +1,50 @@
+{
+  "arklabs/meta/Llama-3.1-8B-Instruct": {
+    "pricing": {
+      "input": "0.00000029",
+      "output": "0.00000029"
+    }
+  },
+  "arklabs/Qwen/Qwen2.5-32B-Instruct": {
+    "pricing": {
+      "input": "0.00000179",
+      "output": "0.00000179"
+    }
+  },
+  "arklabs/Qwen/Qwen2.5-Coder-32B-Instruct": {
+    "pricing": {
+      "input": "0.00000179",
+      "output": "0.00000179"
+    }
+  },
+  "arklabs/Qwen/Qwen2.5-VL-7B-Instruct": {
+    "pricing": {
+      "input": "0.00000029",
+      "output": "0.00000029"
+    }
+  },
+  "arklabs/speakleash/Bielik-11B-v2.6-Instruct": {
+    "pricing": {
+      "input": "0.00000049",
+      "output": "0.00000049"
+    }
+  },
+  "arklabs/openai/gpt-oss-20b": {
+    "pricing": {
+      "input": "0.00000049",
+      "output": "0.00000049"
+    }
+  },
+  "arklabs/openai/whisper-large-v3-turbo": {
+    "pricing": {
+      "input": "0.000004",
+      "output": "0"
+    }
+  },
+  "arklabs/stabilityai/stable-diffusion-3.5-large": {
+    "pricing": {
+      "input": "0",
+      "output": "0.019"
+    }
+  }
+}

@@ -1,0 +1,113 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "synexa/google/nano-banana-pro",
+            "object": "model",
+            "owned_by": "Google",
+            "type": "image"
+        },
+        {
+            "id": "synexa/tencent/hunyuan3d-2",
+            "object": "model",
+            "owned_by": "Tencent",
+            "type": "image"
+        },
+        {
+            "id": "synexa/black-forest-labs/flux-kontext-pro",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "type": "image"
+        },
+        {
+            "id": "synexa/google/veo3.1",
+            "object": "model",
+            "owned_by": "Google",
+            "type": "video"
+        },
+        {
+            "id": "synexa/minimax/hailuo-01",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "type": "video"
+        },
+        {
+            "id": "synexa/black-forest-labs/flux-1.1-pro",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "type": "image"
+        },
+        {
+            "id": "synexa/black-forest-labs/flux-schnell",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "type": "image"
+        },
+        {
+            "id": "synexa/black-forest-labs/flux-kontext-dev",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "type": "image"
+        },
+        {
+            "id": "synexa/stability-ai/stable-diffusion",
+            "object": "model",
+            "owned_by": "Stability AI",
+            "type": "image"
+        },
+        {
+            "id": "synexa/bytedance/sdxl-lightning-4step",
+            "object": "model",
+            "owned_by": "ByteDance",
+            "type": "image"
+        },
+        {
+            "id": "synexa/fofr/face-to-many",
+            "object": "model",
+            "owned_by": "fofr",
+            "type": "image"
+        },
+        {
+            "id": "synexa/vetkastar/fooocus",
+            "object": "model",
+            "owned_by": "vetkastar",
+            "type": "image"
+        },
+        {
+            "id": "synexa/nightmareai/real-esrgan",
+            "object": "model",
+            "owned_by": "NightmareAI",
+            "type": "image"
+        },
+        {
+            "id": "synexa/tencentarc/gfpgan",
+            "object": "model",
+            "owned_by": "Tencent ARC",
+            "type": "image"
+        },
+        {
+            "id": "synexa/yorickvp/llava-13b",
+            "object": "model",
+            "owned_by": "yorickvp",
+            "type": "language"
+        },
+        {
+            "id": "synexa/sczhou/codeformer",
+            "object": "model",
+            "owned_by": "sczhou",
+            "type": "image"
+        },
+        {
+            "id": "synexa/stability-ai/sdxl",
+            "object": "model",
+            "owned_by": "Stability AI",
+            "type": "image"
+        },
+        {
+            "id": "synexa/meshy/meshy-latest",
+            "object": "model",
+            "owned_by": "Meshy",
+            "type": "image"
+        }
+    ]
+}

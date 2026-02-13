@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
@@ -40,44 +40,8 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
         _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        var hasKey = !string.IsNullOrWhiteSpace(keyResolver.Resolve(GetIdentifier()));
-        if (!hasKey)
-            return Task.FromResult<IEnumerable<Model>>([]);
-
-        return Task.FromResult<IEnumerable<Model>>(
-        [
-            new Model
-            {
-                OwnedBy = nameof(AI21),
-                Name = "jamba-large",
-                ContextWindow = 256_000,
-                Description = "Our most powerful and advanced model, designed to handle complex tasks at enterprise scale with superior performance.",
-                Type = "language",
-                MaxTokens = 4096,
-                Id = "jamba-large".ToModelId(GetIdentifier()),
-                Pricing = new() {
-                    Input = 2.00m,
-                    Output = 8.00m
-                }
-            },
-            new Model
-            {
-                OwnedBy = nameof(AI21),
-                Name = "jamba-mini",
-                ContextWindow = 256_000,
-                MaxTokens = 4096,
-                Type = "language",
-                Description = "Jamba2 Mini blends efficiency and steerability into a 12B-active parameters model, delivering reliable output on core enterprise workflows.",
-                Id = "jamba-mini".ToModelId(GetIdentifier()),
-                Pricing = new() {
-                    Input = 0.20m,
-                    Output = 0.40m
-                }
-            }
-        ]);
-    }
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
 
     // Implemented in AI21Provider.Chat.cs
 
@@ -93,8 +57,8 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
@@ -111,7 +75,7 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
 

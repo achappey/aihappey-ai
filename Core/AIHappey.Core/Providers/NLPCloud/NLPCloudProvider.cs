@@ -1,9 +1,9 @@
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Common.Model;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.NLPCloud;
 

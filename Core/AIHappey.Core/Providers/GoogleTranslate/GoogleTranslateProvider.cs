@@ -2,10 +2,10 @@ using System.Runtime.CompilerServices;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.GoogleTranslate;
 

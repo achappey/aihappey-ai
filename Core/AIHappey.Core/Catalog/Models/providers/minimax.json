@@ -1,0 +1,201 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "minimax/minimax/MiniMax-M2.1",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax M2.1",
+            "type": "language",
+            "description": "Open-source coding model optimized for agentic scenarios with strong multi-language programming, tool usage, instruction following, and long-range planning.",
+            "created": 1766361600
+        },
+        {
+            "id": "minimax/minimax/MiniMax-M2.1-lightning",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax M2.1 Lightning",
+            "type": "language",
+            "description": "Faster version of MiniMax M2.1, offering the same performance with significantly higher throughput (~100 TPS).",
+            "created": 1766361600
+        },
+        {
+            "id": "minimax/minimax/MiniMax-M2",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax M2",
+            "type": "language",
+            "description": "Open-source model built for agents and code, designed for end-to-end development workflows.",
+            "created": 1761523200
+        },
+        {
+            "id": "minimax/image-01",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax Image-01",
+            "type": "image",
+            "description": "Text-to-image generation model supporting multiple image sizes.",
+            "created": 1739577600
+        },
+        {
+            "id": "minimax/image-01-live",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax Image-01 Live",
+            "type": "image",
+            "description": "Text-to-image generation model supporting multiple image sizes.",
+            "created": 1739577600
+        },
+        {
+            "id": "minimax/MiniMax-Hailuo-2.3",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax-Hailuo-2.3",
+            "type": "video",
+            "description": "Text-to-video / image-to-video generation model."
+        },
+        {
+            "id": "minimax/MiniMax-Hailuo-2.3-Fast",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax-Hailuo-2.3-Fast",
+            "type": "video",
+            "description": "Fast variant of MiniMax-Hailuo-2.3 for image-to-video generation."
+        },
+        {
+            "id": "minimax/MiniMax-Hailuo-02",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax-Hailuo-02",
+            "type": "video",
+            "description": "Text-to-video / image-to-video generation model."
+        },
+        {
+            "id": "minimax/T2V-01-Director",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "T2V-01-Director",
+            "type": "video",
+            "description": "Text-to-video generation model with camera control prompts."
+        },
+        {
+            "id": "minimax/T2V-01",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "T2V-01",
+            "type": "video",
+            "description": "Text-to-video generation model."
+        },
+        {
+            "id": "minimax/I2V-01-Director",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "I2V-01-Director",
+            "type": "video",
+            "description": "Image-to-video generation model with camera control prompts."
+        },
+        {
+            "id": "minimax/I2V-01-live",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "I2V-01-live",
+            "type": "video",
+            "description": "Image-to-video generation model."
+        },
+        {
+            "id": "minimax/I2V-01",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "I2V-01",
+            "type": "video",
+            "description": "Image-to-video generation model."
+        },
+        {
+            "id": "minimax/speech-2.8-hd",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-2.8-hd",
+            "type": "speech",
+            "description": "Latest HD speech model: perfecting tonal nuances and maximizing timbre similarity."
+        },
+        {
+            "id": "minimax/speech-2.8-turbo",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-2.8-turbo",
+            "type": "speech",
+            "description": "Latest Turbo speech model: faster and more affordable, perfecting tonal nuances and maximizing timbre similarity."
+        },
+        {
+            "id": "minimax/speech-2.6-hd",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-2.6-hd",
+            "type": "speech",
+            "description": "HD speech model with real-time response, intelligent parsing, and enhanced naturalness.",
+            "created": 1761696000
+        },
+        {
+            "id": "minimax/speech-2.6-turbo",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-2.6-turbo",
+            "type": "speech",
+            "description": "Turbo speech model: faster, more affordable, low-latency model designed for real-time applications and agents.",
+            "created": 1761696000
+        },
+        {
+            "id": "minimax/speech-02-hd",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-02-hd",
+            "type": "speech",
+            "description": "Speech-02 HD: high-fidelity text-to-audio with exceptional prosody, stability, voice similarity, and audio quality.",
+            "created": 1743552000
+        },
+        {
+            "id": "minimax/speech-02-turbo",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-02-turbo",
+            "type": "speech",
+            "description": "Speech-02 Turbo: optimized for real-time performance with low latency while maintaining strong voice quality.",
+            "created": 1743552000
+        },
+        {
+            "id": "minimax/speech-01-hd",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-01-hd",
+            "type": "speech",
+            "description": "Premium-quality voice synthesis with high-fidelity voice cloning from ~10 seconds of audio input, capturing voice characteristics and emotional nuances.",
+            "created": 1736899200
+        },
+        {
+            "id": "minimax/speech-01-turbo",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-01-turbo",
+            "type": "speech",
+            "description": "Speech synthesis model in the Speech-01 family (Turbo variant)."
+        },
+        {
+            "id": "minimax/music-2.5",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "music-2.5",
+            "type": "speech",
+            "description": "Text-to-music model with human-like emotional vocals and enhanced multi-instrument performance; designed for professional studio quality and cohesive musical structure.",
+            "created": 1768521600
+        },
+        {
+            "id": "minimax/music-2.0",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "music-2.0",
+            "type": "speech",
+            "description": "Text-to-music model focused on enhanced musicality with natural vocals and smooth melodies, delivering richer emotional expression and stronger tone control.",
+            "created": 1761696000
+        }
+    ]
+}

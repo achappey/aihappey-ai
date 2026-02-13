@@ -1,6 +1,5 @@
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using System.Text.Json;
@@ -10,7 +9,7 @@ using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
-public partial class SiliconFlowProvider : IModelProvider
+public partial class SiliconFlowProvider 
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
           ChatRequest chatRequest,

@@ -4,8 +4,9 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using System.Text.Json;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
@@ -50,6 +51,9 @@ public partial class HyperbolicProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(Hyperbolic).ToLowerInvariant();
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+          => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

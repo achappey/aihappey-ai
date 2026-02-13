@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "azure/speech-to-text",
+      "object": "model",
+      "owned_by": "Azure",
+      "name": "speech-to-text",
+      "type": "transcription"
+    },
+    {
+      "id": "azure/text-to-speech",
+      "object": "model",
+      "owned_by": "Azure",
+      "name": "text-to-speech",
+      "type": "speech"
+    }
+  ]
+}

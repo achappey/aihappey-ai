@@ -1,0 +1,47 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "euqai/euqai-fusion-v1",
+            "object": "model",
+            "owned_by": "Euqai",
+            "name": "Euqai Fusion v1",
+            "type": "language"
+        },
+        {
+            "id": "euqai/euqai-fusion-code-v1",
+            "object": "model",
+            "owned_by": "Euqai",
+            "name": "Euqai Fusion Code v1",
+            "type": "language"
+        },
+        {
+            "id": "euqai/qwen3-235b",
+            "object": "model",
+            "owned_by": "Euqai",
+            "name": "Qwen 3 235B",
+            "type": "language"
+        },
+        {
+            "id": "euqai/mistral-small-24b",
+            "object": "model",
+            "owned_by": "Euqai",
+            "name": "Mistral Small 24b",
+            "type": "language"
+        },
+        {
+            "id": "euqai/qwen3-30b",
+            "object": "model",
+            "owned_by": "Euqai",
+            "name": "Qwen 3 30B",
+            "type": "language"
+        },
+        {
+            "id": "euqai/flux-schnell",
+            "object": "model",
+            "owned_by": "Euqai",
+            "name": "FLUX.1 Schnell",
+            "type": "image"
+        }
+    ]
+}

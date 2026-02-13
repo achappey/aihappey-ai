@@ -12,7 +12,7 @@ public partial class FireworksProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = FireworksModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
             ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "transcription")

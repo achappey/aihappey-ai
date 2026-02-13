@@ -1,8 +1,8 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using Microsoft.Extensions.Options;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Azure;
 

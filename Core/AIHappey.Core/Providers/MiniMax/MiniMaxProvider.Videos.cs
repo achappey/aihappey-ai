@@ -5,12 +5,11 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
-public partial class MiniMaxProvider : IModelProvider
+public partial class MiniMaxProvider 
 {
     private static readonly JsonSerializerOptions VideoJson = new(JsonSerializerDefaults.Web)
     {

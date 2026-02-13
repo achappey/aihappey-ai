@@ -1,12 +1,11 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.MurfAI;
 
-public sealed partial class MurfAIProvider : IModelProvider
+public sealed partial class MurfAIProvider 
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {

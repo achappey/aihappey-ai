@@ -3,9 +3,11 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
+using AIHappey.Common.Model;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Hyperstack;
 
@@ -53,6 +55,10 @@ public partial class HyperstackProvider : IModelProvider
 
         return result;
     }
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -109,6 +115,16 @@ public partial class HyperstackProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "json2video/json2video",
+      "object": "model",
+      "owned_by": "JSON2Video",
+      "name": "JSON2Video",
+      "type": "video",
+      "description": "Convert any text or data into video in a matter of seconds."
+    }
+  ]
+}

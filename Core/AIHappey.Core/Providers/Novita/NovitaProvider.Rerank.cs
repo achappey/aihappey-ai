@@ -2,12 +2,11 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider 
 {
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)

@@ -104,6 +104,10 @@ public class AIServiceConfig
     public ProviderConfig? AI302 { get; set; }
     public ProviderConfig? MatterAI { get; set; }
     public ProviderConfig? Bytez { get; set; }
+    public ProviderConfig? SunoAPI { get; set; }
+    public ProviderConfig? HorayAI { get; set; }
+    public ProviderConfig? Synexa { get; set; }
+    public ProviderConfig? Recraft { get; set; }
 }
 
 public class ProviderConfig

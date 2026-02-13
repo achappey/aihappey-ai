@@ -3,8 +3,8 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Nebius;
 
@@ -57,7 +57,7 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-        
+
         return model.Type switch
         {
             "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),

@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
+using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
+using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Jina;
@@ -48,4 +50,26 @@ public partial class JinaProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+
 }

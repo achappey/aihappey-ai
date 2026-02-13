@@ -1,0 +1,40 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "inferencenet/meta-llama/llama-3.1-8b-instruct/fp-8",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama-3.1-8b-instruct/fp-8",
+      "type": "language",
+      "description": "Llama 3.1 8B Instruct (FP8)"
+    },
+    {
+      "id": "inferencenet/inference-net/schematron-3b",
+      "object": "model",
+      "owned_by": "Inference.net",
+      "name": "schematron-3b",
+      "type": "language",
+      "description": "Schematron 3B",
+      "context_window": 125000
+    },
+    {
+      "id": "inferencenet/inference-net/schematron-8b",
+      "object": "model",
+      "owned_by": "Inference.net",
+      "name": "schematron-8b",
+      "type": "language",
+      "description": "Schematron 8B",
+      "context_window": 125000
+    },
+    {
+      "id": "inferencenet/google/gemma-3-27b-instruct/bf-16",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma-3-27b-instruct/bf-16",
+      "type": "language",
+      "description": "Gemma 3 27B Instruct (BF16)",
+      "context_window": 125000
+    }
+  ]
+}

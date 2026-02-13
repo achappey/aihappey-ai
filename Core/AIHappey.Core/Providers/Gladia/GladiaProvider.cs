@@ -3,10 +3,10 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Gladia;
 

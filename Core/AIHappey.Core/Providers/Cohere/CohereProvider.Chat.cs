@@ -7,13 +7,12 @@ using System.Text;
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Cohere;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Cohere;
 
-public partial class CohereProvider : IModelProvider
+public partial class CohereProvider 
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

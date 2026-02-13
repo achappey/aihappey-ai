@@ -1,13 +1,11 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 using System.Text;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Runway;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
@@ -127,8 +125,4 @@ public partial class RunwayProvider
         throw new TimeoutException($"Runway task {taskId} did not complete.");
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 }

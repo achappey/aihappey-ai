@@ -1,10 +1,9 @@
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 
 namespace AIHappey.Core.Providers.xAI;
 
-public partial class XAIProvider : IModelProvider
+public partial class XAIProvider
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {

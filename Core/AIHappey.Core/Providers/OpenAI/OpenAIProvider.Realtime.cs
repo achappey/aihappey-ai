@@ -4,7 +4,6 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 using System.Text.Json.Serialization;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
@@ -22,7 +21,7 @@ public class OpenAiRealtimeResponse
     public JsonElement Session { get; set; }
 }
 
-public partial class OpenAIProvider : IModelProvider
+public partial class OpenAIProvider 
 {
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");
 

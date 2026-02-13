@@ -5,10 +5,10 @@ using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Core.AI;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Responses.Extensions;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Alibaba;
 

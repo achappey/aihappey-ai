@@ -4,12 +4,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.KlingAI;
 
-public partial class KlingAIProvider : IModelProvider
+public partial class KlingAIProvider 
 {
     private static readonly JsonSerializerOptions VideoJson = new(JsonSerializerDefaults.Web)
     {

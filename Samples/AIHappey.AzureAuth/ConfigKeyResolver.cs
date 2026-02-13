@@ -1,4 +1,4 @@
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 using Microsoft.Extensions.Options;
 
 namespace AIHappey.AzureAuth;
@@ -111,6 +111,10 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "ai302" => _config.AI302?.ApiKey,
             "matterai" => _config.MatterAI?.ApiKey,
             "bytez" => _config.Bytez?.ApiKey,
+            "sunoapi" => _config.SunoAPI?.ApiKey,
+            "horayai" => _config.HorayAI?.ApiKey,
+            "synexa" => _config.Synexa?.ApiKey,
+            "recraft" => _config.Recraft?.ApiKey,
             _ => null
         };
 }

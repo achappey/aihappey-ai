@@ -1,9 +1,9 @@
 using ModelContextProtocol.Protocol;
-using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 
@@ -46,20 +46,18 @@ public partial class AssemblyAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(AssemblyAI).ToLowerInvariant();
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+   
+
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
 
-
-        ApplyAuthHeader();
-
-        return AssemblyAIAllModels;
-    }
-
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        return (model?.Type) switch
+        {
+            "language" => await this.ChatCompletionsSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)

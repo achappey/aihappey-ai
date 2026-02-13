@@ -4,8 +4,8 @@ using OpenAI.Models;
 using OAI = OpenAI;
 using OpenAI.Containers;
 using OpenAI.Files;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

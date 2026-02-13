@@ -1,9 +1,9 @@
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses;
 using AIHappey.Common.Model;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -19,7 +19,6 @@ public partial class TogetherProvider : IModelProvider
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.together.xyz/");
     }
-
 
     private void ApplyAuthHeader()
     {

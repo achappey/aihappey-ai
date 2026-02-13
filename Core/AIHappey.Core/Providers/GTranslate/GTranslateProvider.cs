@@ -1,5 +1,5 @@
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.GTranslate;

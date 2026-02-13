@@ -1,0 +1,61 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "arklabs/meta/Llama-3.1-8B-Instruct",
+      "object": "model",
+      "owned_by": "meta",
+      "name": "Llama 3.1 8B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "arklabs/Qwen/Qwen2.5-32B-Instruct",
+      "object": "model",
+      "owned_by": "qwen",
+      "name": "Qwen 2.5 32B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "arklabs/Qwen/Qwen2.5-Coder-32B-Instruct",
+      "object": "model",
+      "owned_by": "qwen",
+      "name": "Qwen 2.5 Coder 32B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "arklabs/Qwen/Qwen2.5-VL-7B-Instruct",
+      "object": "model",
+      "owned_by": "qwen",
+      "name": "Qwen 2.5 VL 7B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "arklabs/speakleash/Bielik-11B-v2.6-Instruct",
+      "object": "model",
+      "owned_by": "speakleash",
+      "name": "Bielik 11B v2.6 Instruct",
+      "type": "language"
+    },
+    {
+      "id": "arklabs/openai/gpt-oss-20b",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "GPT OSS 20B",
+      "type": "language"
+    },
+    {
+      "id": "arklabs/openai/whisper-large-v3-turbo",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "whisper-large-v3-turbo",
+      "type": "transcription"
+    },
+    {
+      "id": "arklabs/stabilityai/stable-diffusion-3.5-large",
+      "object": "model",
+      "owned_by": "stabilityai",
+      "name": "Stable Diffusion 3.5 Large",
+      "type": "image"
+    }
+  ]
+}

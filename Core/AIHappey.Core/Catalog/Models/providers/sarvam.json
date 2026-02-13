@@ -1,0 +1,32 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "sarvam/sarvam-m",
+            "object": "model",
+            "owned_by": "Sarvam",
+            "name": "sarvam-m",
+            "type": "language",
+            "description": "sarvam-m is a multilingual, hybrid-reasoning, text-only language model built on Mistral-Small. This post-trained version delivers exceptional improvements over the base model. Performance gains are even more impressive at the intersection of Indian languages and mathematics, with an outstanding +86% improvement in romanized Indian language GSM-8K benchmarks.",
+            "created": 1747958400
+        },
+        {
+            "id": "sarvam/saarika:v2.5",
+            "object": "model",
+            "owned_by": "Sarvam",
+            "name": "saarika:v2.5",
+            "type": "transcription",
+            "description": "The Saarika model can be used for converting speech to text across different scenarios. It supports basic transcription, code-mixed speech, and automatic language detection for Indian languages.",
+            "created": 1747958400
+        },
+        {
+            "id": "sarvam/bulbul:v2",
+            "object": "model",
+            "owned_by": "Sarvam",
+            "name": "bulbul:v2",
+            "type": "speech",
+            "description": "Bulbul-v2 is our flagship text-to-speech model, specifically designed for Indian languages and accents. It excels in natural-sounding speech synthesis with human-like prosody, multiple voice personalities, and comprehensive support for multiple Indian languages",
+            "created": 1743465600
+        }
+    ]
+}

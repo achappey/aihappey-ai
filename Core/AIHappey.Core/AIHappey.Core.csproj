@@ -25,4 +25,11 @@
  <ItemGroup>
     <ProjectReference Include="..\AIhappey.Common\AIhappey.Common.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="Catalog/**/*.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

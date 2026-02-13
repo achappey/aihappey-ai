@@ -1,0 +1,41 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "cloudrift/deepseek-ai/DeepSeek-V3.1",
+            "object": "model",
+            "owned_by": "CloudRift",
+            "name": "deepseek-v3.1",
+            "type": "language",
+            "description": "DeepSeek V3.1",
+            "context_window": 163840
+        },
+        {
+            "id": "cloudrift/moonshotai/Kimi-K2-Instruct",
+            "object": "model",
+            "owned_by": "CloudRift",
+            "name": "kimi-k2-instruct",
+            "type": "language",
+            "description": "Kimi K2 Instruct",
+            "context_window": 131070
+        },
+        {
+            "id": "cloudrift/deepseek-ai/DeepSeek-R1-0528",
+            "object": "model",
+            "owned_by": "CloudRift",
+            "name": "deepseek-r1-0528",
+            "type": "language",
+            "description": "DeepSeek R1 0528",
+            "context_window": 163840
+        },
+        {
+            "id": "cloudrift/deepseek-ai/DeepSeek-V3",
+            "object": "model",
+            "owned_by": "CloudRift",
+            "name": "deepseek-v3",
+            "type": "language",
+            "description": "DeepSeek V3",
+            "context_window": 163840
+        }
+    ]
+}

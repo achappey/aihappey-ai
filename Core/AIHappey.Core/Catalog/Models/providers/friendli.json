@@ -1,0 +1,159 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "friendli/zai-org/GLM-5",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "GLM-5",
+      "type": "language"
+    },
+    {
+      "id": "friendli/zai-org/GLM-4.7",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "GLM-4.7",
+      "type": "language"
+    },
+    {
+      "id": "friendli/zai-org/GLM-4.6",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "GLM-4.6",
+      "type": "language"
+    },
+    {
+      "id": "friendli/LGAI-EXAONE/K-EXAONE-236B-A23B",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "K-EXAONE-236B-A23B",
+      "type": "language"
+    },
+    {
+      "id": "friendli/meta-llama/Llama-3.1-8B-Instruct",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Llama-3.1-8B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "friendli/mistralai/Magistral-Small-2506",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Magistral-Small-2506",
+      "type": "language"
+    },
+    {
+      "id": "friendli/skt/A.X-3.1",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "A.X-3.1",
+      "type": "language"
+    },
+    {
+      "id": "friendli/Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Qwen3-235B-A22B-Thinking-2507",
+      "type": "language"
+    },
+    {
+      "id": "friendli/Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Qwen3-235B-A22B-Instruct-2507",
+      "type": "language"
+    },
+    {
+      "id": "friendli/meta-llama/Llama-3.3-70B-Instruct",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Llama-3.3-70B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "friendli/mistralai/Devstral-Small-2505",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Devstral-Small-2505",
+      "type": "language"
+    },
+    {
+      "id": "friendli/google/gemma-3-27b-it",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "gemma-3-27b-it",
+      "type": "language"
+    },
+    {
+      "id": "friendli/Qwen/Qwen3-32B",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Qwen3-32B",
+      "type": "language"
+    },
+    {
+      "id": "friendli/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Llama-4-Scout-17B-16E-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "friendli/Qwen/Qwen3-30B-A3B",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Qwen3-30B-A3B",
+      "type": "language"
+    },
+    {
+      "id": "friendli/meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Llama-4-Maverick-17B-128E-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "friendli/mistralai/Mistral-Small-3.1-24B-Instruct-2503",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "Mistral-Small-3.1-24B-Instruct-2503",
+      "type": "language"
+    },
+    {
+      "id": "friendli/deepseek-ai/DeepSeek-V3.1",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "DeepSeek-V3.1",
+      "type": "language"
+    },
+    {
+      "id": "friendli/MiniMaxAI/MiniMax-M2.1",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "MiniMax-M2.1",
+      "type": "language"
+    },
+    {
+      "id": "friendli/skt/A.X-4.0",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "A.X-4.0",
+      "type": "language"
+    },
+    {
+      "id": "friendli/naver-hyperclovax/HyperCLOVAX-SEED-Think-14B",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "HyperCLOVAX-SEED-Think-14B",
+      "type": "language"
+    },
+    {
+      "id": "friendli/LGAI-EXAONE/EXAONE-4.0.1-32B",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "EXAONE-4.0.1-32B",
+      "type": "language"
+    }
+  ]
+}

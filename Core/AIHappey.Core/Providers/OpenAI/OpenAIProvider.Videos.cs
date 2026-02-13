@@ -1,4 +1,3 @@
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using OpenAI.Videos;
 using System.ClientModel;
@@ -6,7 +5,7 @@ using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider : IModelProvider
+public partial class OpenAIProvider 
 {
     private static MultipartFormDataContent BuildVideoMultipart(VideoRequest request)
     {

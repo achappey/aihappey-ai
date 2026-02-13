@@ -1,0 +1,138 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "deepbricks/Claude-Sonnet-4.5",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "Claude Sonnet 4.5",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/Claude-HaiKu-4.5",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "Claude HaiKu 4.5",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-5.1",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-5.1",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-5-Chat",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-5 Chat",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "gemini-2.5-pro",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "gemini-2.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-4o-2024-08-06",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-4o-2024-08-06",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-4o",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-4o",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/o1-mini",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "o1-mini",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/o3-mini",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "o3-mini",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/o4-mini",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "o4-mini",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-4-turbo",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-4-turbo",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-4.1",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-4.1",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/o1",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "o1",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/Claude-3.5-Sonnet",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "Claude 3.5 Sonnet",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-4.1-mini",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-4.1-mini",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-3.5-turbo",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-3.5-turbo",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/GPT-3.5-turbo-instruct",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "GPT-3.5-turbo-instruct",
+      "type": "language"
+    },
+    {
+      "id": "deepbricks/dall-e-3",
+      "object": "model",
+      "owned_by": "Deepbricks",
+      "name": "dall-e-3",
+      "type": "image"
+    }
+  ]
+}

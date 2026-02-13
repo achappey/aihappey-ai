@@ -1,0 +1,70 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "jina/jina-deepsearch-v1",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-deepsearch-v1",
+            "created": 1740787200
+        },
+        {
+            "id": "jina/jina-reranker-v3",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-reranker-v3",
+            "created": 1759276800
+        },
+        {
+            "id": "jina/jina-reranker-m0",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-reranker-m0",
+            "created": 1744070400
+        },
+        {
+            "id": "jina/jina-colbert-v2",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-colbert-v2",
+            "type": "reranking",
+            "created": 1725062400
+        },
+        {
+            "id": "jina/jina-reranker-v2-base-multilingual",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-reranker-v2-base-multilingual",
+            "created": 1719273600
+        },
+        {
+            "id": "jina/jina-reranker-v1-tiny-en",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-reranker-v1-tiny-en",
+            "created": 1713398400
+        },
+        {
+            "id": "jina/jina-reranker-v1-turbo-en",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-reranker-v1-turbo-en",
+            "created": 1713398400
+        },
+        {
+            "id": "jina/jina-reranker-v1-base-en",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-reranker-v1-base-en",
+            "created": 1709164800
+        },
+        {
+            "id": "jina/jina-colbert-v1-en",
+            "object": "model",
+            "owned_by": "Jina",
+            "name": "jina-colbert-v1-en",
+            "type": "reranking",
+            "created": 1708128000
+        }
+    ]
+}

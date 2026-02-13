@@ -2,13 +2,12 @@ using System.Text.Json;
 using System.Text;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider 
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(
            TranscriptionRequest request,

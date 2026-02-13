@@ -1,5 +1,4 @@
 using AIHappey.Common.Model.Providers.RekaAI;
-using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using System.Globalization;
 using System.Net.Mime;

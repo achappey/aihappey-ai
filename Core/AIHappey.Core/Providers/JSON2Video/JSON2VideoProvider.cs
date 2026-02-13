@@ -2,10 +2,10 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.JSON2Video;
 
@@ -76,21 +76,7 @@ public partial class JSON2VideoProvider : IModelProvider
         => throw new NotSupportedException();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-
-        List<Model> models = [new Model()
-        {
-            Id = "json2video".ToModelId(GetIdentifier()),
-            Name = "JSON2Video",
-            Description = "Convert any text or data into video in a matter of seconds.",
-            Type = "video"
-        }];
-
-        return await Task.FromResult(models);
-    }
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -98,8 +84,5 @@ public partial class JSON2VideoProvider : IModelProvider
         await foreach (var update in this.StreamVideoAsync(chatRequest,
                         cancellationToken: cancellationToken))
             yield return update;
-
-
-        yield break;
     }
 }

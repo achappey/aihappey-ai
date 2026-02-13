@@ -4,13 +4,12 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Telnyx;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Telnyx;
 
-public partial class TelnyxProvider : IModelProvider
+public partial class TelnyxProvider 
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,

@@ -5,9 +5,9 @@ using AIHappey.Common.Model;
 using Microsoft.KernelMemory;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Providers.OpenAI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.KernelMemory;
 

@@ -1,4 +1,4 @@
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.HeaderAuth;
 
@@ -106,6 +106,10 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["ai302"] = "X-302AI-Key",
             ["matterai"] = "X-MatterAI-Key",
             ["bytez"] = "X-Bytez-Key",
+            ["sunoapi"] = "X-SunoAPI-Key",
+            ["horayai"] = "X-HorayAI-Key",
+            ["horayai"] = "X-Synexa-Key",
+            ["recraft"] = "X-Recraft-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

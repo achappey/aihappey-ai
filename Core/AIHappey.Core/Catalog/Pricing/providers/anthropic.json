@@ -1,0 +1,68 @@
+{
+  "anthropic/claude-opus-4-6": {
+    "pricing": {
+      "input": "0.000005",
+      "output": "0.000025"
+    }
+  },
+  "anthropic/claude-opus-4-5-20251101": {
+    "pricing": {
+      "input": "0.000005",
+      "output": "0.000025"
+    }
+  },
+  "anthropic/claude-opus-4-1-20250805": {
+    "pricing": {
+      "input": "0.000015",
+      "output": "0.000075"
+    }
+  },
+  "anthropic/claude-opus-4-20250514": {
+    "pricing": {
+      "input": "0.000015",
+      "output": "0.000075"
+    }
+  },
+  "anthropic/claude-sonnet-4-5-20250929": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000015"
+    }
+  },
+  "anthropic/claude-sonnet-4-0-20250514": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000015"
+    }
+  },
+  "anthropic/claude-3-7-sonnet-20250219": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000015"
+    }
+  },
+  "anthropic/claude-haiku-4-5-20251001": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000005"
+    }
+  },
+  "anthropic/claude-haiku-3-5": {
+    "pricing": {
+      "input": "0.0000008",
+      "output": "0.000004"
+    }
+  },
+  "anthropic/claude-haiku-3": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.00000125"
+    }
+  },
+  "anthropic/claude-opus-3": {
+    "pricing": {
+      "input": "0.000015",
+      "output": "0.000075"
+    }
+  }
+}

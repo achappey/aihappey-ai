@@ -4,11 +4,10 @@ using System.Text.Json;
 using System.Text;
 using System.Dynamic;
 using System.Net.Mime;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.xAI;
 
-public partial class XAIProvider : IModelProvider
+public partial class XAIProvider
 {
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

@@ -1,9 +1,8 @@
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider : IModelProvider
+public partial class ZaiProvider 
 {
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

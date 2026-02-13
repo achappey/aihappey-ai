@@ -5,12 +5,11 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider : IModelProvider
+public partial class ZaiProvider 
 {
     private static readonly JsonSerializerOptions ZaiVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {

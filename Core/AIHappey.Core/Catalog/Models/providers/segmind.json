@@ -1,0 +1,957 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "segmind/grok-2-vision",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "grok-2-vision",
+            "type": "image"
+        },
+        {
+            "id": "segmind/grok-2",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "grok-2",
+            "type": "image"
+        },
+        {
+            "id": "segmind/image-upscale",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "image-upscale",
+            "type": "image"
+        },
+        {
+            "id": "segmind/z-image-turbo",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "z-image-turbo",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ace-step-music",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ace-step-music",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-xl-1.0",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-xl-1.0",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-xl-0.9",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-xl-0.9",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-inpainting",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-inpainting",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-img2img",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-img2img",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-3.5-turbo-text-to-image",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-3.5-turbo-text-to-image",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-3.5-large-text-to-image",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-3.5-large-text-to-image",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-3-medium-text-to-image",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-3-medium-text-to-image",
+            "type": "image"
+        },
+        {
+            "id": "segmind/stable-diffusion-2.1",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "stable-diffusion-2.1",
+            "type": "image"
+        },
+        {
+            "id": "segmind/sdxl-inpaint",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "sdxl-inpaint",
+            "type": "image"
+        },
+        {
+            "id": "segmind/sd3-medium-tile-controlnet",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "sd3-medium-tile-controlnet",
+            "type": "image"
+        },
+        {
+            "id": "segmind/sd3-medium-pose-controlnet",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "sd3-medium-pose-controlnet",
+            "type": "image"
+        },
+        {
+            "id": "segmind/sd3-medium-canny-controlnet",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "sd3-medium-canny-controlnet",
+            "type": "image"
+        },
+        {
+            "id": "segmind/zavychroma-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "zavychroma-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/word2img",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "word2img",
+            "type": "image"
+        },
+        {
+            "id": "segmind/wildcard-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "wildcard-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/try-on-diffusion",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "try-on-diffusion",
+            "type": "image"
+        },
+        {
+            "id": "segmind/transparent-background-maker",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "transparent-background-maker",
+            "type": "image"
+        },
+        {
+            "id": "segmind/tiny-sd-portrait",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "tiny-sd-portrait",
+            "type": "image"
+        },
+        {
+            "id": "segmind/tiny-sd",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "tiny-sd",
+            "type": "image"
+        },
+        {
+            "id": "segmind/text-overlay",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "text-overlay",
+            "type": "image"
+        },
+        {
+            "id": "segmind/supir-photo-realistic-restoration",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "supir-photo-realistic-restoration",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ssd-img2img",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ssd-img2img",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ssd-depth",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ssd-depth",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ssd-canny",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ssd-canny",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ssd-1b",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ssd-1b",
+            "type": "image"
+        },
+        {
+            "id": "segmind/small-sd",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "small-sd",
+            "type": "image"
+        },
+        {
+            "id": "segmind/skin-contrast-upscaler",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "skin-contrast-upscaler",
+            "type": "image"
+        },
+        {
+            "id": "segmind/segswap-v0.1",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "segswap-v0.1",
+            "type": "image"
+        },
+        {
+            "id": "segmind/segmind-vegart",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "segmind-vegart",
+            "type": "image"
+        },
+        {
+            "id": "segmind/segmind-vega",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "segmind-vega",
+            "type": "image"
+        },
+        {
+            "id": "segmind/segfit-v1.3",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "segfit-v1.3",
+            "type": "image"
+        },
+        {
+            "id": "segmind/segfit-v1.2",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "segfit-v1.2",
+            "type": "image"
+        },
+        {
+            "id": "segmind/segfit-v1.1",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "segfit-v1.1",
+            "type": "image"
+        },
+        {
+            "id": "segmind/sdxl-openpose",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "sdxl-openpose",
+            "type": "image"
+        },
+        {
+            "id": "segmind/sd-outpainting",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "sd-outpainting",
+            "type": "image"
+        },
+        {
+            "id": "segmind/scifi",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "scifi",
+            "type": "image"
+        },
+        {
+            "id": "segmind/scenecraft-v0.1",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "scenecraft-v0.1",
+            "type": "image"
+        },
+        {
+            "id": "segmind/samaritan-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "samaritan-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/samaritan-3d-xl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "samaritan-3d-xl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/samaritan",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "samaritan",
+            "type": "image"
+        },
+        {
+            "id": "segmind/rpg",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "rpg",
+            "type": "image"
+        },
+        {
+            "id": "segmind/revanimated",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "revanimated",
+            "type": "image"
+        },
+        {
+            "id": "segmind/relighting-v2",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "relighting-v2",
+            "type": "image"
+        },
+        {
+            "id": "segmind/relighting",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "relighting",
+            "type": "image"
+        },
+        {
+            "id": "segmind/reliberate",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "reliberate",
+            "type": "image"
+        },
+        {
+            "id": "segmind/realvis-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "realvis-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/realvis-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "realvis-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/realistic-vision",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "realistic-vision",
+            "type": "image"
+        },
+        {
+            "id": "segmind/realism-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "realism-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/realdream-pony-v9",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "realdream-pony-v9",
+            "type": "image"
+        },
+        {
+            "id": "segmind/realdream-lightning",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "realdream-lightning",
+            "type": "image"
+        },
+        {
+            "id": "segmind/rcnz-cartoon",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "rcnz-cartoon",
+            "type": "image"
+        },
+        {
+            "id": "segmind/qr-generator",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "qr-generator",
+            "type": "image"
+        },
+        {
+            "id": "segmind/protovision-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "protovision-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/profile-photo-style-transfer",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "profile-photo-style-transfer",
+            "type": "image"
+        },
+        {
+            "id": "segmind/paragon",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "paragon",
+            "type": "image"
+        },
+        {
+            "id": "segmind/omini-control",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "omini-control",
+            "type": "image"
+        },
+        {
+            "id": "segmind/nomos-image-upscaler-4k",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "nomos-image-upscaler-4k",
+            "type": "image"
+        },
+        {
+            "id": "segmind/nightvis-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "nightvis-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/material-transfer",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "material-transfer",
+            "type": "image"
+        },
+        {
+            "id": "segmind/manmarumix",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "manmarumix",
+            "type": "image"
+        },
+        {
+            "id": "segmind/majicmix",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "majicmix",
+            "type": "image"
+        },
+        {
+            "id": "segmind/magic-eraser",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "magic-eraser",
+            "type": "image"
+        },
+        {
+            "id": "segmind/kandinsky-2.1",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "kandinsky-2.1",
+            "type": "image"
+        },
+        {
+            "id": "segmind/juggernaut-pro-flux",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "juggernaut-pro-flux",
+            "type": "image"
+        },
+        {
+            "id": "segmind/juggernaut-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "juggernaut-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/juggernaut-lightning-flux",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "juggernaut-lightning-flux",
+            "type": "image"
+        },
+        {
+            "id": "segmind/juggernaut-final",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "juggernaut-final",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ipadapter-style-transfer",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ipadapter-style-transfer",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ip-adapter-openpose-xl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ip-adapter-openpose-xl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ip-adapter-depth-xl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ip-adapter-depth-xl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ip-adapter-canny-xl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ip-adapter-canny-xl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/instantid",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "instantid",
+            "type": "image"
+        },
+        {
+            "id": "segmind/insta-depth",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "insta-depth",
+            "type": "image"
+        },
+        {
+            "id": "segmind/infinite-you",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "infinite-you",
+            "type": "image"
+        },
+        {
+            "id": "segmind/image-superimpose-v2",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "image-superimpose-v2",
+            "type": "image"
+        },
+        {
+            "id": "segmind/illusion-diffusion-hq",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "illusion-diffusion-hq",
+            "type": "image"
+        },
+        {
+            "id": "segmind/idm-vton",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "idm-vton",
+            "type": "image"
+        },
+        {
+            "id": "segmind/fruit-fusion",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "fruit-fusion",
+            "type": "image"
+        },
+        {
+            "id": "segmind/fooocus-outpainting",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "fooocus-outpainting",
+            "type": "image"
+        },
+        {
+            "id": "segmind/fooocus-inpainting",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "fooocus-inpainting",
+            "type": "image"
+        },
+        {
+            "id": "segmind/fooocus",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "fooocus",
+            "type": "image"
+        },
+        {
+            "id": "segmind/font-sheet-generator",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "font-sheet-generator",
+            "type": "image"
+        },
+        {
+            "id": "segmind/flat-2d",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "flat-2d",
+            "type": "image"
+        },
+        {
+            "id": "segmind/fast-flux-1-schnell",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "fast-flux-1-schnell",
+            "type": "image"
+        },
+        {
+            "id": "segmind/fantassified-icons",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "fantassified-icons",
+            "type": "image"
+        },
+        {
+            "id": "segmind/faceswap-v5",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "faceswap-v5",
+            "type": "image"
+        },
+        {
+            "id": "segmind/faceswap-v4",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "faceswap-v4",
+            "type": "image"
+        },
+        {
+            "id": "segmind/faceswap-v3-multifaceswap",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "faceswap-v3-multifaceswap",
+            "type": "image"
+        },
+        {
+            "id": "segmind/faceswap-v3",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "faceswap-v3",
+            "type": "image"
+        },
+        {
+            "id": "segmind/faceswap-v2",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "faceswap-v2",
+            "type": "image"
+        },
+        {
+            "id": "segmind/faceswap-comic-v1",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "faceswap-comic-v1",
+            "type": "image"
+        },
+        {
+            "id": "segmind/faceswap",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "faceswap",
+            "type": "image"
+        },
+        {
+            "id": "segmind/face-to-sticker",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "face-to-sticker",
+            "type": "image"
+        },
+        {
+            "id": "segmind/face-to-many",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "face-to-many",
+            "type": "image"
+        },
+        {
+            "id": "segmind/face-detailer",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "face-detailer",
+            "type": "image"
+        },
+        {
+            "id": "segmind/expression-editor",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "expression-editor",
+            "type": "image"
+        },
+        {
+            "id": "segmind/esrgan",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "esrgan",
+            "type": "image"
+        },
+        {
+            "id": "segmind/epic-realism",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "epic-realism",
+            "type": "image"
+        },
+        {
+            "id": "segmind/edge-of-realism",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "edge-of-realism",
+            "type": "image"
+        },
+        {
+            "id": "segmind/dynavis-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "dynavis-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/dvarch",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "dvarch",
+            "type": "image"
+        },
+        {
+            "id": "segmind/dreamshaper-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "dreamshaper-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/dreamshaper-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "dreamshaper-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/dream-shaper",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "dream-shaper",
+            "type": "image"
+        },
+        {
+            "id": "segmind/deep-spaced-diffusion",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "deep-spaced-diffusion",
+            "type": "image"
+        },
+        {
+            "id": "segmind/cyber-realistic",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "cyber-realistic",
+            "type": "image"
+        },
+        {
+            "id": "segmind/cute-rich-style",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "cute-rich-style",
+            "type": "image"
+        },
+        {
+            "id": "segmind/copax-timeless-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "copax-timeless-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/controlnet-soft-edge",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "controlnet-soft-edge",
+            "type": "image"
+        },
+        {
+            "id": "segmind/controlnet-scribble",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "controlnet-scribble",
+            "type": "image"
+        },
+        {
+            "id": "segmind/controlnet-openpose",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "controlnet-openpose",
+            "type": "image"
+        },
+        {
+            "id": "segmind/controlnet-depth",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "controlnet-depth",
+            "type": "image"
+        },
+        {
+            "id": "segmind/controlnet-canny",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "controlnet-canny",
+            "type": "image"
+        },
+        {
+            "id": "segmind/consistent-character-with-pose",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "consistent-character-with-pose",
+            "type": "image"
+        },
+        {
+            "id": "segmind/consistent-character-v1",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "consistent-character-v1",
+            "type": "image"
+        },
+        {
+            "id": "segmind/consistent-character-ai-neolemon-v3",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "consistent-character-ai-neolemon-v3",
+            "type": "image"
+        },
+        {
+            "id": "segmind/consistent-character-ai-neolemon-v2",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "consistent-character-ai-neolemon-v2",
+            "type": "image"
+        },
+        {
+            "id": "segmind/consistent-character",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "consistent-character",
+            "type": "image"
+        },
+        {
+            "id": "segmind/colossus-lightning-sdxl",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "colossus-lightning-sdxl",
+            "type": "image"
+        },
+        {
+            "id": "segmind/colorful",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "colorful",
+            "type": "image"
+        },
+        {
+            "id": "segmind/codeformer",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "codeformer",
+            "type": "image"
+        },
+        {
+            "id": "segmind/clarity-upscaler",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "clarity-upscaler",
+            "type": "image"
+        },
+        {
+            "id": "segmind/caricature-style",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "caricature-style",
+            "type": "image"
+        },
+        {
+            "id": "segmind/beyond-outpaint",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "beyond-outpaint",
+            "type": "image"
+        },
+        {
+            "id": "segmind/background-replace",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "background-replace",
+            "type": "image"
+        },
+        {
+            "id": "segmind/background-removal",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "background-removal",
+            "type": "image"
+        },
+        {
+            "id": "segmind/all-in-one-pixe",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "all-in-one-pixe",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ai-product-photography",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ai-product-photography",
+            "type": "image"
+        },
+        {
+            "id": "segmind/ai-product-photo-editor",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "ai-product-photo-editor",
+            "type": "image"
+        },
+        {
+            "id": "segmind/526mix",
+            "object": "model",
+            "owned_by": "Segmind",
+            "name": "526mix",
+            "type": "image"
+        }
+    ]
+}

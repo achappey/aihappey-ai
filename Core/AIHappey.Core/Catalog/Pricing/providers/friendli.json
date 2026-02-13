@@ -1,0 +1,128 @@
+{
+    "friendli/zai-org/GLM-5": {
+        "pricing": {
+            "input": "0.000001",
+            "output": "0.0000032"
+        }
+    },
+    "friendli/zai-org/GLM-4.7": {
+        "pricing": {
+            "input": "0.0000006",
+            "output": "0.0000022"
+        }
+    },
+    "friendli/zai-org/GLM-4.6": {
+        "pricing": {
+            "input": "0.000000004",
+            "output": "0.000000004"
+        }
+    },
+    "friendli/LGAI-EXAONE/K-EXAONE-236B-A23B": {
+        "pricing": {
+            "input": "0",
+            "output": "0"
+        }
+    },
+    "friendli/meta-llama/Llama-3.1-8B-Instruct": {
+        "pricing": {
+            "input": "0.0000001",
+            "output": "0.0000001"
+        }
+    },
+    "friendli/mistralai/Magistral-Small-2506": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/skt/A.X-3.1": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/Qwen/Qwen3-235B-A22B-Thinking-2507": {
+        "pricing": {
+            "input": "0.000000004",
+            "output": "0.000000004"
+        }
+    },
+    "friendli/Qwen/Qwen3-235B-A22B-Instruct-2507": {
+        "pricing": {
+            "input": "0.0000002",
+            "output": "0.0000008"
+        }
+    },
+    "friendli/meta-llama/Llama-3.3-70B-Instruct": {
+        "pricing": {
+            "input": "0.0000006",
+            "output": "0.0000006"
+        }
+    },
+    "friendli/mistralai/Devstral-Small-2505": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/google/gemma-3-27b-it": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/Qwen/Qwen3-32B": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/Qwen/Qwen3-30B-A3B": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/meta-llama/Llama-4-Maverick-17B-128E-Instruct": {
+        "pricing": {
+            "input": "0.000000004",
+            "output": "0.000000004"
+        }
+    },
+    "friendli/mistralai/Mistral-Small-3.1-24B-Instruct-2503": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/deepseek-ai/DeepSeek-V3.1": {
+        "pricing": {
+            "input": "0.000000004",
+            "output": "0.000000004"
+        }
+    },
+    "friendli/MiniMaxAI/MiniMax-M2.1": {
+        "pricing": {
+            "input": "0.0000003",
+            "output": "0.0000012"
+        }
+    },
+    "friendli/skt/A.X-4.0": {
+        "pricing": {
+            "input": "0.000000002",
+            "output": "0.000000002"
+        }
+    },
+    "friendli/LGAI-EXAONE/EXAONE-4.0.1-32B": {
+        "pricing": {
+            "input": "0.0000006",
+            "output": "0.000001"
+        }
+    }
+}

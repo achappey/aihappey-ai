@@ -2,8 +2,8 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Cortecs;
 
@@ -31,14 +31,10 @@ public partial class CortecsProvider : IModelProvider
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        return await ChatCompletionsCompleteChatAsync(options, cancellationToken);
-    }
+        => await ChatCompletionsCompleteChatAsync(options, cancellationToken);
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        return ChatCompletionsCompleteChatStreamingAsync(options, cancellationToken);
-    }
+        => ChatCompletionsCompleteChatStreamingAsync(options, cancellationToken);
 
     public string GetIdentifier() => nameof(Cortecs).ToLowerInvariant();
 

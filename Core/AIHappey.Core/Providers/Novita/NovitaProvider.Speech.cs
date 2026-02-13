@@ -1,9 +1,8 @@
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider
 {
     private const string BaseUrl = "https://api.novita.ai/v3/";
     private const string TaskResultUrl = "https://api.novita.ai/v3/async/task-result?task_id=";

@@ -1,0 +1,122 @@
+{
+    "synexa/google/nano-banana-pro": {
+        "pricing": {
+            "input": "0",
+            "output": "0.1000"
+        }
+    },
+    "synexa/tencent/hunyuan3d-2": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0250"
+        }
+    },
+    "synexa/black-forest-labs/flux-kontext-pro": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0200"
+        }
+    },
+    "synexa/google/veo3.1": {
+        "pricing": {
+            "input": "0",
+            "output": "0.8000"
+        }
+    },
+    "synexa/minimax/hailuo-01": {
+        "pricing": {
+            "input": "0",
+            "output": "0.3000"
+        }
+    },
+    "synexa/zsxkib/mmaudio": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0100"
+        }
+    },
+    "synexa/black-forest-labs/flux-1.1-pro": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0200"
+        }
+    },
+    "synexa/black-forest-labs/flux-schnell": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0015"
+        }
+    },
+    "synexa/black-forest-labs/flux-kontext-dev": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0100"
+        }
+    },
+    "synexa/stability-ai/stable-diffusion": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0007"
+        }
+    },
+    "synexa/bytedance/sdxl-lightning-4step": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0010"
+        }
+    },
+    "synexa/fofr/face-to-many": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0040"
+        }
+    },
+    "synexa/vetkastar/fooocus": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0150"
+        }
+    },
+    "synexa/falcons-ai/nsfw_image_detection": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0001"
+        }
+    },
+    "synexa/nightmareai/real-esrgan": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0015"
+        }
+    },
+    "synexa/tencentarc/gfpgan": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0008"
+        }
+    },
+    "synexa/yorickvp/llava-13b": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0005"
+        }
+    },
+    "synexa/sczhou/codeformer": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0025"
+        }
+    },
+    "synexa/stability-ai/sdxl": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0020"
+        }
+    },
+    "synexa/meshy/meshy-latest": {
+        "pricing": {
+            "input": "0",
+            "output": "0.4000"
+        }
+    }
+}

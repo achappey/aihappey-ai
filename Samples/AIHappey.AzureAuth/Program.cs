@@ -11,7 +11,9 @@ using System.Text.Json.Serialization;
 using Microsoft.KernelMemory;
 using AIHappey.Core.Providers.KernelMemory;
 using AIHappey.Core.Providers.OpenAI;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
+using AIHappey.Core.Orchestration;
 
 var builder = WebApplication.CreateBuilder(args);
 

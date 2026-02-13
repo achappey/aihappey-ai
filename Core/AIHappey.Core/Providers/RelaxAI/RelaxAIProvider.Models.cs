@@ -29,9 +29,7 @@ public partial class RelaxAIProvider
         var root = doc.RootElement;
 
         // ✅ root is already an array
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                 ? dataEl.EnumerateArray()
                 : Enumerable.Empty<JsonElement>();
 
@@ -60,12 +58,7 @@ public partial class RelaxAIProvider
             });
         }
 
-        models.Add(new Model()
-        {
-            Id = "Voxtral-Small-24B-2507".ToModelId(GetIdentifier()),
-            Name = "Voxtral-Small-24B-2507",
-            Type = "transcription"
-        });
+        models.AddRange(await this.ListModels(_keyResolver.Resolve(GetIdentifier())));
 
         return models;
     }

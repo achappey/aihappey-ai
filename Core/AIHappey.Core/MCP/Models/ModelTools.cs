@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Net.Mime;
 using System.Text.Json;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;

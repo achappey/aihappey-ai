@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Net.Http.Json;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
+
 public partial class AssemblyAIProvider 
 {
     public async Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest,

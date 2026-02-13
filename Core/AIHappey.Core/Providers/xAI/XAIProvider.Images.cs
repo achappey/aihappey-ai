@@ -4,12 +4,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.xAI;
 
-public partial class XAIProvider : IModelProvider
+public partial class XAIProvider
 {
 
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest,

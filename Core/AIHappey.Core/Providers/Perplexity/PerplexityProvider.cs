@@ -4,7 +4,6 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Responses.Extensions;
@@ -14,6 +13,7 @@ using System.Net.Mime;
 using System.Dynamic;
 using AIHappey.Core.Providers.xAI;
 using AIHappey.Responses;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Perplexity;
 

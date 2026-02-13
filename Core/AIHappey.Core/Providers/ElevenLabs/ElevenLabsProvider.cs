@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
 using AIHappey.Core.Extensions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.ElevenLabs;

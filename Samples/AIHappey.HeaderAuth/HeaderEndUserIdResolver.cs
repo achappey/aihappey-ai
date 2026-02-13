@@ -1,5 +1,6 @@
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Orchestration;
 
 namespace AIHappey.HeaderAuth;
 

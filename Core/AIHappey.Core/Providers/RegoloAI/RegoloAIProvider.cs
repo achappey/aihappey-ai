@@ -1,11 +1,11 @@
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Common.Model.ChatCompletions;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.RegoloAI;
 

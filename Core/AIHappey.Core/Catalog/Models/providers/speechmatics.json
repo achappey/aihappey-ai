@@ -1,0 +1,53 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "speechmatics/sarah",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Sarah: English Female (UK)",
+            "type": "speech",
+            "description": "Text-to-speech voice"
+        },
+        {
+            "id": "speechmatics/theo",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Theo: English Male (UK)",
+            "type": "speech",
+            "description": "Text-to-speech voice"
+        },
+        {
+            "id": "speechmatics/megan",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Megan: English Female (US)",
+            "type": "speech",
+            "description": "Text-to-speech voice"
+        },
+        {
+            "id": "speechmatics/jack",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Jack: English Male (US)",
+            "type": "speech",
+            "description": "Text-to-speech voice"
+        },
+        {
+            "id": "speechmatics/standard",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Speechmatics Standard",
+            "type": "transcription",
+            "description": "Speech-to-text transcription model"
+        },
+        {
+            "id": "speechmatics/enhanced",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Speechmatics Enhanced",
+            "type": "transcription",
+            "description": "Enhanced speech-to-text transcription model"
+        }
+    ]
+}

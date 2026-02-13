@@ -1,5 +1,4 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
@@ -7,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.xAI;
 
-public partial class XAIProvider : IModelProvider
+public partial class XAIProvider
 {
     private static readonly JsonSerializerOptions VideoJson = new()
     {

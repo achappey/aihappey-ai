@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.DeepL;
 

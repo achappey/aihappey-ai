@@ -6,10 +6,10 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -69,24 +69,14 @@ public partial class AIMLProvider : IModelProvider
     {
         var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
 
-        switch (model?.Type)
+        return (model?.Type) switch
         {
-            case "speech":
-                {
-                    return await this.SpeechSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-            case "image":
-                {
-                    return await this.ImageSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-
-            default:
-                throw new NotImplementedException();
-        }
+            "speech" => await this.SpeechSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            "image" => await this.ImageSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)

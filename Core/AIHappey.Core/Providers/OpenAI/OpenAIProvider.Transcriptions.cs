@@ -4,13 +4,12 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider : IModelProvider
+public partial class OpenAIProvider 
 {
     public async Task<TranscriptionResponse> TranscribeWithDiarization(
         TranscriptionRequest request,

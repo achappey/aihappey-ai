@@ -1,0 +1,173 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "bria/generate",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria FIDO",
+            "type": "image"
+        },
+        {
+            "id": "bria/generate/lite",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria FIDO lite",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Image Edit",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/add_object_by_text",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Add Object",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/replace_object_by_text",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Replace Object",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/erase_by_text",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Erase Object",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/blend",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Image Blending",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/reseason",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Reseason Image",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/replace_text",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Rewrite",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/sketch_to_image",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Sketch to Image",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/restore",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Restore Old Image",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/colorize",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Colorize",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/restyle",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Restyle Image",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/relight",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Relight Image",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/erase",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Eraser",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/gen_fill",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Generative Fill",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/remove_background",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Remove Background",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/replace_background",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Replace Background",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/erase_foreground",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Erase Foreground",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/blur_background",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Blur Background",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/expand",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Expand Image",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/enhance",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Enhance Image",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/increase_resolution",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Increase Resolution",
+            "type": "image"
+        },
+        {
+            "id": "bria/edit/crop_foreground",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Crop out Foreground",
+            "type": "image"
+        }
+    ]
+}

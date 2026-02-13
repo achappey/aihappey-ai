@@ -1,13 +1,12 @@
 using AIHappey.Common.Model.Providers.Novita;
 using System.Text.Json;
 using System.Text;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider : IModelProvider
+public partial class NovitaProvider 
 {
     private async Task<SpeechResponse> SpeechRequestMiniMax(
         SpeechRequest request,

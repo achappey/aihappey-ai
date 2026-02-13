@@ -1,6 +1,7 @@
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.AzureAuth.Extensions;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Orchestration;
 
 namespace AIHappey.AzureAuth;
 

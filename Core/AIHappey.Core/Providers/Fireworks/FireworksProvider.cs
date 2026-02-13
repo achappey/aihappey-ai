@@ -3,10 +3,10 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -49,7 +49,7 @@ public partial class FireworksProvider : IModelProvider
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         var modelId = chatRequest.GetModel();
-        var model = FireworksModels.FirstOrDefault(a => a.Id.EndsWith(modelId!))
+        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(modelId!))
              ?? throw new ArgumentException(modelId);
 
         return model.Type switch

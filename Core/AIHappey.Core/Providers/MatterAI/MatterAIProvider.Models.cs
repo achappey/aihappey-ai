@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
 namespace AIHappey.Core.Providers.MatterAI;
 
@@ -11,7 +12,6 @@ public partial class MatterAIProvider
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-
         ApplyAuthHeader();
 
         using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
@@ -20,7 +20,7 @@ public partial class MatterAIProvider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"PublicAI API error: {err}");
+            throw new Exception($"MatterAI API error: {err}");
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -29,10 +29,7 @@ public partial class MatterAIProvider
         var models = new List<Model>();
         var root = doc.RootElement;
 
-        // ✅ root is already an array
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                 ? dataEl.EnumerateArray()
                 : Enumerable.Empty<JsonElement>();
 
@@ -61,25 +58,43 @@ public partial class MatterAIProvider
             if (el.TryGetProperty("name", out var nameEl))
                 model.Name = nameEl.GetString() ?? model.Name;
 
-            /*  if (el.TryGetProperty("pricing", out var pricingEl) &&
-                  pricingEl.ValueKind == JsonValueKind.Object)
-              {
-                  var inputPrice = pricingEl.TryGetProperty("prompt", out var inEl)
-                          ? inEl.GetRawText() : null;
+            if (el.TryGetProperty("pricing", out var pricingEl) &&
+                pricingEl.ValueKind == JsonValueKind.Object)
+            {
+                static decimal? ParsePrice(JsonElement element)
+                {
+                    if (element.ValueKind == JsonValueKind.Number &&
+                        element.TryGetDecimal(out var number))
+                        return number;
 
-                  var outputPrice = pricingEl.TryGetProperty("completion", out var outEl)
-                          ? outEl.GetRawText() : null;
+                    if (element.ValueKind == JsonValueKind.String &&
+                        decimal.TryParse(
+                            element.GetString(),
+                            NumberStyles.Float,
+                            CultureInfo.InvariantCulture,
+                            out var parsed))
+                        return parsed;
 
-                  if (!string.IsNullOrEmpty(outputPrice)
-                      && !string.IsNullOrEmpty(inputPrice)
-                      && !outputPrice.Equals("0")
-                      && !inputPrice.Equals("0"))
-                      model.Pricing = new ModelPricing
-                      {
-                          Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
-                          Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture)
-                      };
-              }*/
+                    return null;
+                }
+
+                var input = pricingEl.TryGetProperty("prompt", out var inEl)
+                    ? ParsePrice(inEl)
+                    : null;
+
+                var output = pricingEl.TryGetProperty("completion", out var outEl)
+                    ? ParsePrice(outEl)
+                    : null;
+
+                if ((input ?? 0) > 0 || (output ?? 0) > 0)
+                {
+                    model.Pricing = new ModelPricing
+                    {
+                        Input = input ?? 0,
+                        Output = output ?? 0
+                    };
+                }
+            }
 
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);

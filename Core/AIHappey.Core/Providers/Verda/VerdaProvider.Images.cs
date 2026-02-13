@@ -1,10 +1,9 @@
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Verda;
 
 public partial class VerdaProvider
-    : IModelProvider
+   
 {
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {

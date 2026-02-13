@@ -1,0 +1,77 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "decart/lucy-pro-t2i",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Pro T2I",
+            "type": "image",
+            "description": "Generate images from text."
+        },
+        {
+            "id": "decart/lucy-pro-i2i",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Pro I2I",
+            "type": "image",
+            "description": "Edit and transform images."
+        },
+        {
+            "id": "decart/lucy-pro-t2v",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Pro T2V",
+            "type": "video",
+            "description": "Generate videos from text."
+        },
+        {
+            "id": "decart/lucy-pro-i2v",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Pro I2V",
+            "type": "video",
+            "description": "Animate images."
+        },
+        {
+            "id": "decart/lucy-pro-v2v",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Pro V2V",
+            "type": "video",
+            "description": "Transform and edit videos."
+        },
+        {
+            "id": "decart/lucy-fast-v2v",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Fast V2V",
+            "type": "video",
+            "description": "Transform and edit videos (fast)."
+        },
+        {
+            "id": "decart/lucy-dev-i2v",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Dev I2V",
+            "type": "video",
+            "description": "Animate images (faster)."
+        },
+        {
+            "id": "decart/lucy-motion",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Motion",
+            "type": "video",
+            "description": "Trajectory-based image animation."
+        },
+        {
+            "id": "decart/lucy-restyle-v2v",
+            "object": "model",
+            "owned_by": "Decart",
+            "name": "Lucy Restyle V2V",
+            "type": "video",
+            "description": "Long-form video restyling."
+        }
+    ]
+}

@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.CloudRift;
 

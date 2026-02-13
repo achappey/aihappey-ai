@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "speechify/simba-english",
+      "object": "model",
+      "owned_by": "Speechify",
+      "name": "simba-english",
+      "type": "speech"
+    },
+    {
+      "id": "speechify/simba-multilingual",
+      "object": "model",
+      "owned_by": "Speechify",
+      "name": "simba-multilingual",
+      "type": "speech"
+    }
+  ]
+}

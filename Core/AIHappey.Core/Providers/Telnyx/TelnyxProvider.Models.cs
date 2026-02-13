@@ -11,7 +11,6 @@ public partial class TelnyxProvider
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-
         ApplyAuthHeader();
 
         using var req = new HttpRequestMessage(HttpMethod.Get, "ai/models");
@@ -23,7 +22,6 @@ public partial class TelnyxProvider
 
         using var doc = JsonDocument.Parse(body);
 
-        // { object: "list", data: [ { id, created, owned_by } ] }
         var root = doc.RootElement;
         if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
             return [];

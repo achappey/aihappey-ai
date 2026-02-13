@@ -1,8 +1,9 @@
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.ARKLabs;
 
@@ -33,7 +34,16 @@ public partial class ARKLabsProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
+
+        return (model?.Type) switch
+        {
+            "image" => await this.ImageSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            "language" => await this.ChatCompletionsSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

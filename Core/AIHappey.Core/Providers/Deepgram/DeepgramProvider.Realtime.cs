@@ -1,13 +1,11 @@
 using AIHappey.Common.Model;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Deepgram;
 
 public sealed partial class DeepgramProvider
-    : IModelProvider
 {
     public async Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {

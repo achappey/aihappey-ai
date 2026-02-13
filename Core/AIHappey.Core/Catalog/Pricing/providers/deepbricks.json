@@ -1,0 +1,110 @@
+{
+  "deepbricks/Claude-Sonnet-4.5": {
+    "pricing": {
+      "input": "0.0000015",
+      "output": "0.0000075"
+    }
+  },
+  "deepbricks/Claude-HaiKu-4.5": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000025"
+    }
+  },
+  "deepbricks/GPT-5.1": {
+    "pricing": {
+      "input": "0.00000065",
+      "output": "0.000005"
+    }
+  },
+  "deepbricks/GPT-5-Chat": {
+    "pricing": {
+      "input": "0.00000065",
+      "output": "0.000005"
+    }
+  },
+  "deepbricks/gemini-2.5-pro": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.000004"
+    }
+  },
+  "deepbricks/gemini-2.5-flash": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.000001"
+    }
+  },
+  "deepbricks/GPT-4o-2024-08-06": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000004"
+    }
+  },
+  "deepbricks/GPT-4o": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000004"
+    }
+  },
+  "deepbricks/o1-mini": {
+    "pricing": {
+      "input": "0.00000055",
+      "output": "0.0000022"
+    }
+  },
+  "deepbricks/o3-mini": {
+    "pricing": {
+      "input": "0.00000055",
+      "output": "0.0000022"
+    }
+  },
+  "deepbricks/o4-mini": {
+    "pricing": {
+      "input": "0.00000055",
+      "output": "0.0000022"
+    }
+  },
+  "deepbricks/GPT-4-turbo": {
+    "pricing": {
+      "input": "0.000004",
+      "output": "0.00001"
+    }
+  },
+  "deepbricks/GPT-4.1": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000004"
+    }
+  },
+  "deepbricks/o1": {
+    "pricing": {
+      "input": "0.0000075",
+      "output": "0.00003"
+    }
+  },
+  "deepbricks/Claude-3.5-Sonnet": {
+    "pricing": {
+      "input": "0.0000015",
+      "output": "0.0000075"
+    }
+  },
+  "deepbricks/GPT-4.1-mini": {
+    "pricing": {
+      "input": "0.000000125",
+      "output": "0.0000005"
+    }
+  },
+  "deepbricks/GPT-3.5-turbo": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000006"
+    }
+  },
+  "deepbricks/GPT-3.5-turbo-instruct": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.0000008"
+    }
+  }
+}

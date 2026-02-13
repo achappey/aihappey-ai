@@ -1,0 +1,33 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "resembleai/speech-to-text",
+      "object": "model",
+      "owned_by": "ResembleAI",
+      "name": "speech-to-text",
+      "type": "transcription"
+    },
+    {
+      "id": "resembleai/chatterbox-turbo",
+      "object": "model",
+      "owned_by": "ResembleAI",
+      "name": "Chatterbox-Turbo",
+      "type": "speech"
+    },
+    {
+      "id": "resembleai/chatterbox",
+      "object": "model",
+      "owned_by": "ResembleAI",
+      "name": "Chatterbox",
+      "type": "speech"
+    },
+    {
+      "id": "resembleai/chatterbox-multilingual",
+      "object": "model",
+      "owned_by": "ResembleAI",
+      "name": "Chatterbox-Multilingual",
+      "type": "speech"
+    }
+  ]
+}

@@ -5,8 +5,8 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Speechify;
 
@@ -41,15 +41,7 @@ public partial class SpeechifyProvider : IModelProvider
     public string GetIdentifier() => nameof(Speechify).ToLowerInvariant();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-
-        ApplyAuthHeader();
-
-        return SpeechifyModels;
-    }
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
@@ -94,20 +86,5 @@ public partial class SpeechifyProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
-
-    public static IReadOnlyList<Model> SpeechifyModels =>
- [
-    new() { Id = "simba-english".ToModelId(nameof(Speechify).ToLowerInvariant()),
-        Name = "simba-english",
-        Type = "speech",
-        OwnedBy = "Speechify" },
-
-    new() { Id = "simba-multilingual".ToModelId(nameof(Speechify).ToLowerInvariant()),
-        Name = "simba-multilingual",
-        Type = "speech",
-        OwnedBy = "Speechify" }
-
-];
-
 
 }

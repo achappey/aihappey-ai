@@ -4,7 +4,9 @@ using AIHappey.Core.AI;
 using AIHappey.HeaderAuth;
 using AIHappey.Common.MCP;
 using AIHappey.Core.MCP;
-using AIHappey.Core.ModelProviders;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Orchestration;
+using AIHappey.Core.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

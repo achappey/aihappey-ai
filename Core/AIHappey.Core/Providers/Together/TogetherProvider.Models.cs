@@ -39,10 +39,6 @@ public partial class TogetherProvider
 
         foreach (var el in arr)
         {
-            //  if (!el.TryGetProperty("type", out var typeEl) ||
-            //        typeEl.GetString() != "chat")
-            //    continue;
-
             Model model = new();
 
             if (el.TryGetProperty("id", out var idEl))
@@ -75,21 +71,43 @@ public partial class TogetherProvider
             if (el.TryGetProperty("pricing", out var pricingEl) &&
                 pricingEl.ValueKind == JsonValueKind.Object)
             {
-                var inputPrice = pricingEl.TryGetProperty("input", out var inEl)
-                        ? inEl.GetRawText() : null;
+                decimal inputNormalized = 0m;
+                decimal outputNormalized = 0m;
 
-                var outputPrice = pricingEl.TryGetProperty("output", out var outEl)
-                        ? outEl.GetRawText() : null;
+                if (pricingEl.TryGetProperty("input", out var inEl))
+                {
+                    var input = decimal.Parse(inEl.GetRawText(), CultureInfo.InvariantCulture);
 
-                if (!string.IsNullOrEmpty(outputPrice)
-                    && !string.IsNullOrEmpty(inputPrice)
-                    && !outputPrice.Equals("0")
-                    && !inputPrice.Equals("0"))
+                    if (input > 0m)
+                        inputNormalized = input.PerMillionToPerToken();
+                }
+
+                if (pricingEl.TryGetProperty("output", out var outEl))
+                {
+                    var output = decimal.Parse(outEl.GetRawText(), CultureInfo.InvariantCulture);
+
+                    if (output > 0m)
+                        outputNormalized = output.PerMillionToPerToken();
+                }
+
+                // Together sometimes provides hourly pricing instead of output
+                if (outputNormalized == 0m &&
+                    pricingEl.TryGetProperty("hourly", out var hourlyEl))
+                {
+                    var hourly = decimal.Parse(hourlyEl.GetRawText(), CultureInfo.InvariantCulture);
+
+                    if (hourly > 0m)
+                        outputNormalized = hourly.PerHourToPerSecond();
+                }
+
+                if (inputNormalized > 0m || outputNormalized > 0m)
+                {
                     model.Pricing = new ModelPricing
                     {
-                        Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
-                        Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture),
+                        Input = inputNormalized,
+                        Output = outputNormalized
                     };
+                }
             }
 
             if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)

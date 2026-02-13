@@ -4,11 +4,10 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Gladia;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.Core.Providers.Gladia;
 
-public partial class GladiaProvider : IModelProvider
+public partial class GladiaProvider
 {
     public async Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
     {

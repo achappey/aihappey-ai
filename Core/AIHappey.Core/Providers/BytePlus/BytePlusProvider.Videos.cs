@@ -5,12 +5,11 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.BytePlus;
 using AIHappey.Core.AI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.BytePlus;
 
-public partial class BytePlusProvider : IModelProvider
+public partial class BytePlusProvider
 {
     private static readonly JsonSerializerOptions BytePlusVideoJson = new(JsonSerializerDefaults.Web)
     {

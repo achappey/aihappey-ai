@@ -5,10 +5,10 @@ using AIHappey.Common.Model;
 using AIHappey.Telemetry;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.ModelProviders;
 using AIHappey.AzureAuth.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.AzureAuth.Controllers;
 

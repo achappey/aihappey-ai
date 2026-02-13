@@ -1,9 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Core.ModelProviders;
-using AIHappey.Core.Providers.Fireworks;
-using AIHappey.Core.Providers.DeepInfra;
 using Microsoft.Extensions.DependencyInjection;
+using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Inworld;
 
@@ -105,7 +103,7 @@ public partial class InworldProvider
                 ]
             },
             {
-                "deepinfra", [  ..DeepInfraProvider.DeepInfraLanguageModels
+                "deepinfra", [  .."deepinfra".GetModels()
             .Where(a => a.Type == "language")
             .Select(m => new Model
             {
@@ -118,7 +116,7 @@ public partial class InworldProvider
             })]
             },
             {
-                "fireworks", [ ..FireworksProvider.FireworksModels
+                "fireworks", [ .."fireworks".GetModels()
                     .Where(a => a.Type == "language")
                     .Select(m => new Model
                     {

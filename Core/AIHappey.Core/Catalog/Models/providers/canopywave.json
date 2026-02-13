@@ -1,0 +1,75 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "canopywave/qwen/qwen3-coder",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "qwen3-coder",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/moonshotai/kimi-k2-thinking",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "kimi-k2-thinking",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/deepseek/deepseek-chat-v3.2",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "deepseek-chat-v3.2",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "DeepSeek-R1-Distill-Qwen-32B",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/deepseek-ai/DeepSeek-Math-V2",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "DeepSeek-Math-V2",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/minimax/minimax-m2.1",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "minimax-m2.1",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/openai/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "gpt-oss-120b",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/moonshotai/kimi-k2.5",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "kimi-k2.5",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/zai/glm-4.7",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "glm-4.7",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/xiaomimimo/mimo-v2-flash",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "mimo-v2-flash",
+            "type": "language"
+        }
+    ]
+}

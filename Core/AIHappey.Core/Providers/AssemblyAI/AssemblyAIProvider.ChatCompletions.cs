@@ -1,12 +1,11 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Core.ModelProviders;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 
-public partial class AssemblyAIProvider : IModelProvider
+public partial class AssemblyAIProvider 
 {
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {

@@ -1,0 +1,61 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "stabilityai/stable-image-ultra",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Image Ultra",
+            "type": "image"
+        },
+        {
+            "id": "stabilityai/stable-image-core",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Image Core",
+            "type": "image"
+        },
+        {
+            "id": "stabilityai/sd3.5-large",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Diffusion 3.5 Large",
+            "type": "image"
+        },
+        {
+            "id": "stabilityai/sd3.5-large-turbo",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Diffusion 3.5 Large Turbo",
+            "type": "image"
+        },
+        {
+            "id": "stabilityai/sd3.5-medium",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Diffusion 3.5 Medium",
+            "type": "image"
+        },
+        {
+            "id": "stabilityai/sd3.5-flash",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Diffusion 3.5 Flash",
+            "type": "image"
+        },
+        {
+            "id": "stabilityai/stable-audio-2",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Audio 2.0",
+            "type": "speech"
+        },
+        {
+            "id": "stabilityai/stable-audio-2.5",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Audio 2.5",
+            "type": "speech"
+        }
+    ]
+}

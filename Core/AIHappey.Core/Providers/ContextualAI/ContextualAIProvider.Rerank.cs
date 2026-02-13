@@ -4,13 +4,12 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.ContextualAI;
-using AIHappey.Core.ModelProviders;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ContextualAI;
 
-public partial class ContextualAIProvider : IModelProvider
+public partial class ContextualAIProvider
 {
     public async Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
