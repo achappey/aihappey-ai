@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "telnyx/distil-whisper/distil-large-v2",
+      "object": "model",
+      "owned_by": "distil-whisper",
+      "name": "distil-large-v2",
+      "type": "transcription"
+    },
+    {
+      "id": "telnyx/openai/whisper-large-v3-turbo",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "whisper-large-v3-turbo",
+      "type": "transcription"
+    }
+  ]
+}

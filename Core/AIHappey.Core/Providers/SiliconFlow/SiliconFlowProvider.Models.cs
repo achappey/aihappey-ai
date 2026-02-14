@@ -57,6 +57,10 @@ public partial class SiliconFlowProvider
                 || model.Id.Contains("/IndexTTS-2"))
                 model.Type = "speech";
 
+            if (model.Id.Contains("I2V")
+                || model.Id.Contains("T2V"))
+                model.Type = "video";
+
             if (el.TryGetProperty("context_length", out var contextLengthEl))
                 model.ContextWindow = contextLengthEl.GetInt32();
 
@@ -68,26 +72,6 @@ public partial class SiliconFlowProvider
 
             if (el.TryGetProperty("organization", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
-
-            if (el.TryGetProperty("pricing", out var pricingEl) &&
-                pricingEl.ValueKind == JsonValueKind.Object)
-            {
-                var inputPrice = pricingEl.TryGetProperty("input", out var inEl)
-                        ? inEl.GetRawText() : null;
-
-                var outputPrice = pricingEl.TryGetProperty("output", out var outEl)
-                        ? outEl.GetRawText() : null;
-
-                if (!string.IsNullOrEmpty(outputPrice)
-                    && !string.IsNullOrEmpty(inputPrice)
-                    && !outputPrice.Equals("0")
-                    && !inputPrice.Equals("0"))
-                    model.Pricing = new ModelPricing
-                    {
-                        Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
-                        Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture),
-                    };
-            }
 
             if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
             {

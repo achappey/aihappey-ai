@@ -54,25 +54,7 @@ public partial class RegoloAIProvider
         }
 
 
-        models.Add(new Model()
-        {
-            Id = "Qwen-Image".ToModelId(GetIdentifier()),
-            Name = "Qwen-Image",
-            Type = "image"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "Qwen3-Reranker-4B".ToModelId(GetIdentifier()),
-            Name = "Qwen3-Reranker-4B"
-        });
-
-        models.Add(new Model()
-        {
-            Id = "faster-whisper-large-v3".ToModelId(GetIdentifier()),
-            Name = "faster-whisper-large-v3",
-            Type = "transcription"
-        });
+        models.AddRange(await this.ListModels(_keyResolver.Resolve(GetIdentifier())));
 
         return models;
     }

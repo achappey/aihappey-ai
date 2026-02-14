@@ -5,14 +5,10 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
-/// <summary>
-/// DeepInfra is OpenAI Chat Completions compatible.
-/// Endpoint: POST https://api.deepinfra.com/v1/openai/chat/completions
-/// Images endpoint: POST https://api.deepinfra.com/v1/openai/images/generations
-/// </summary>
 public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     : IModelProvider
 {
@@ -25,7 +21,7 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         return client;
     }
 
-    public string GetIdentifier() => "deepinfra";
+    public string GetIdentifier() => nameof(DeepInfra).ToLowerInvariant();
 
     private void ApplyAuthHeader()
     {
@@ -36,6 +32,9 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+          => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -63,35 +62,24 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     {
         var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
 
-        switch (model?.Type)
+        return (model?.Type) switch
         {
-            case "speech":
-                {
-                    return await this.SpeechSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-
-            default:
-                throw new NotImplementedException();
-        }
+            "speech" => await this.SpeechSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
 
-        switch (model?.Type)
+        return (model?.Type) switch
         {
-            case "speech":
-                {
-                    return await this.SpeechResponseAsync(options,
-                            cancellationToken: cancellationToken);
-                }
-
-            default:
-                throw new NotImplementedException();
-        }
+            "speech" => await this.SpeechResponseAsync(options,
+                                        cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)

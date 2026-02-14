@@ -30,9 +30,7 @@ public partial class ScalewayProvider
         var root = doc.RootElement;
 
         // ✅ root is already an array
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                 ? dataEl.EnumerateArray()
                 : Enumerable.Empty<JsonElement>();
 
@@ -48,7 +46,9 @@ public partial class ScalewayProvider
 
             model.Type = model.Id.Contains("voxtral")
                 | model.Id.Contains("whisper")
-                ? "transcription" : "language";
+                ? "transcription"
+                : model.Id.Contains("qwen3-embedding")
+                ? "reranking" : "language";
 
             if (el.TryGetProperty("owned_by", out var ownedByEl))
                 model.OwnedBy = ownedByEl.GetString() ?? "";

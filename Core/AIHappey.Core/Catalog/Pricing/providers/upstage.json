@@ -1,0 +1,54 @@
+{
+  "upstage/solar-mini": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000015"
+    }
+  },
+  "upstage/solar-mini-240612": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000015"
+    }
+  },
+  "upstage/solar-mini-250123": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000015"
+    }
+  },
+  "upstage/solar-mini-250422": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000015"
+    }
+  },
+  "upstage/solar-pro2": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006",
+      "input_cache_read": "0.000000015"
+    }
+  },
+  "upstage/solar-pro2-250710": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006",
+      "input_cache_read": "0.000000015"
+    }
+  },
+  "upstage/solar-pro2-250909": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006",
+      "input_cache_read": "0.000000015"
+    }
+  },
+  "upstage/solar-pro2-251215": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006",
+      "input_cache_read": "0.000000015"
+    }
+  }
+}

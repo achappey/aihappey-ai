@@ -48,21 +48,7 @@ public partial class TelnyxProvider
             });
         }
 
-        if (!models.Any(a => a.Id.EndsWith("distil-whisper/distil-large-v2")))
-            models.Add(new()
-            {
-                Id = "distil-whisper/distil-large-v2".ToModelId(GetIdentifier()),
-                Name = "distil-large-v2",
-                Type = "transcription"
-            });
-
-        if (!models.Any(a => a.Id.EndsWith("openai/whisper-large-v3-turbo")))
-            models.Add(new()
-            {
-                Id = "openai/whisper-large-v3-turbo".ToModelId(GetIdentifier()),
-                Name = "whisper-large-v3-turbo",
-                Type = "transcription"
-            });
+        models.AddRange(await this.ListModels(_keyResolver.Resolve(GetIdentifier())));
 
         return models;
     }

@@ -39,40 +39,28 @@ public partial class SiliconFlowProvider : IModelProvider
     {
         var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
 
-        switch (model?.Type)
+        return (model?.Type) switch
         {
-            case "image":
-                {
-                    return await this.ImageSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-            case "speech":
-                {
-                    return await this.SpeechSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-            default:
-                throw new NotImplementedException();
-        }
+            "image" => await this.ImageSamplingAsync(chatRequest,
+                                        cancellationToken: cancellationToken),
+            "speech" => await this.SpeechSamplingAsync(chatRequest,
+                                        cancellationToken: cancellationToken),
+            "language" => await this.ChatCompletionsSamplingAsync(chatRequest,
+                                        cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
 
-        switch (model?.Type)
+        return (model?.Type) switch
         {
-            case "speech":
-                {
-                    return await this.SpeechResponseAsync(options,
-                            cancellationToken: cancellationToken);
-                }
-
-            default:
-                throw new NotImplementedException();
-        }
+            "speech" => await this.SpeechResponseAsync(options,
+                                        cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
@@ -82,9 +70,4 @@ public partial class SiliconFlowProvider : IModelProvider
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
-
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

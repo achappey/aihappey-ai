@@ -51,6 +51,7 @@ public static class UIMessagePartExtensions
         if (modelId.Contains("openai/sora-")
             || modelId.Contains("veo-")
             || modelId.Contains("t2v", StringComparison.OrdinalIgnoreCase)
+            || modelId.Contains("i2v", StringComparison.OrdinalIgnoreCase)
             || modelId.Contains("video"))
             return "video";
 

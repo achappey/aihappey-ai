@@ -4,6 +4,7 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Upstage;
 
@@ -31,6 +32,9 @@ public partial class UpstageProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(Upstage).ToLowerInvariant();
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);

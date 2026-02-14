@@ -13,10 +13,7 @@ public sealed partial class SiliconFlowProvider
 
         ArgumentNullException.ThrowIfNull(options);
 
-        if (options.Stream == true)
-            throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
-
-        var payload = BuildGMICloudChatPayload(options, stream: false);
+        var payload = BuildSiliconFlowChatPayload(options, stream: false);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
         {
@@ -60,7 +57,7 @@ public sealed partial class SiliconFlowProvider
 
         ArgumentNullException.ThrowIfNull(options);
 
-        var payload = BuildGMICloudChatPayload(options, stream: true);
+        var payload = BuildSiliconFlowChatPayload(options, stream: true);
         var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
@@ -110,7 +107,7 @@ public sealed partial class SiliconFlowProvider
         }
     }
 
-    private static object BuildGMICloudChatPayload(ChatCompletionOptions options, bool stream)
+    private static object BuildSiliconFlowChatPayload(ChatCompletionOptions options, bool stream)
     {
         var messages = options.Messages.ToSiliconFlowMessages().ToList();
 

@@ -1,0 +1,22 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "regoloai/Qwen-Image",
+      "object": "model",
+      "name": "Qwen-Image",
+      "type": "image"
+    },
+    {
+      "id": "regoloai/Qwen3-Reranker-4B",
+      "object": "model",
+      "name": "Qwen3-Reranker-4B"
+    },
+    {
+      "id": "regoloai/faster-whisper-large-v3",
+      "object": "model",
+      "name": "faster-whisper-large-v3",
+      "type": "transcription"
+    }
+  ]
+}

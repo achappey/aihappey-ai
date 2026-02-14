@@ -1,0 +1,131 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "upstage/solar-pro3",
+            "object": "model",
+            "owned_by": "Upstage",
+            "name": "Solar Pro 3",
+            "type": "language",
+            "description": "Solar Pro 3 is Upstage's powerful Mixture-of-Experts (MoE) language model. With 102B total parameters and 12B active parameters per forward pass, it delivers exceptional performance while maintaining computational efficiency. Optimized for Korean with English and Japanese support.",
+            "context_window": 128000,
+            "tags": [
+                "tool-use",
+                "reasoning"
+            ]
+        },
+        {
+            "id": "upstage/solar-pro3-260126",
+            "object": "model",
+            "owned_by": "Upstage",
+            "name": "Solar Pro 3 260126",
+            "description": "Solar Pro 3 is Upstage's powerful Mixture-of-Experts (MoE) language model. With 102B total parameters and 12B active parameters per forward pass, it delivers exceptional performance while maintaining computational efficiency. Optimized for Korean with English and Japanese support.",
+            "type": "language",
+            "context_window": 128000,
+            "tags": [
+                "tool-use",
+                "reasoning"
+            ]
+        },
+        {
+            "id": "upstage/solar-pro2-250710",
+            "object": "model",
+            "owned_by": "Upstage",
+            "context_window": 65536,
+            "name": "Solar Pro 2 250710",
+            "description": "A high-performance model from Upstage that supports both Chat and Reasoning modes, allowing users to tailor performance based on task complexity. Reasoning mode provides structured, multi-step thinking for complex tasks, while Chat mode delivers fast, direct responses for simpler queries. By supporting both modes in a single model, this design achieves an optimal balance of speed, accuracy, and resource efficiency for diverse use cases.",
+            "type": "language",
+            "tags": [
+                "tool-use",
+                "reasoning"
+            ]
+        },
+        {
+            "id": "upstage/solar-pro2-250909",
+            "object": "model",
+            "owned_by": "Upstage",
+            "context_window": 65536,
+            "name": "Solar Pro 2 250909",
+            "description": "A high-performance model from Upstage that supports both Chat and Reasoning modes, allowing users to tailor performance based on task complexity. Reasoning mode provides structured, multi-step thinking for complex tasks, while Chat mode delivers fast, direct responses for simpler queries. By supporting both modes in a single model, this design achieves an optimal balance of speed, accuracy, and resource efficiency for diverse use cases.",
+            "type": "language",
+            "tags": [
+                "tool-use",
+                "reasoning"
+            ]
+        },
+        {
+            "id": "upstage/solar-pro2-251215",
+            "object": "model",
+            "owned_by": "Upstage",
+            "context_window": 65536,
+            "name": "Solar Pro 2 251215",
+            "description": "A high-performance model from Upstage that supports both Chat and Reasoning modes, allowing users to tailor performance based on task complexity. Reasoning mode provides structured, multi-step thinking for complex tasks, while Chat mode delivers fast, direct responses for simpler queries. By supporting both modes in a single model, this design achieves an optimal balance of speed, accuracy, and resource efficiency for diverse use cases.",
+            "type": "language",
+            "tags": [
+                "tool-use",
+                "reasoning"
+            ]
+        },
+        {
+            "id": "upstage/solar-pro2",
+            "object": "model",
+            "owned_by": "Upstage",
+            "context_window": 65536,
+            "name": "Solar Pro 2",
+            "description": "A high-performance model from Upstage that supports both Chat and Reasoning modes, allowing users to tailor performance based on task complexity. Reasoning mode provides structured, multi-step thinking for complex tasks, while Chat mode delivers fast, direct responses for simpler queries. By supporting both modes in a single model, this design achieves an optimal balance of speed, accuracy, and resource efficiency for diverse use cases.",
+            "type": "language",
+            "tags": [
+                "tool-use",
+                "reasoning"
+            ]
+        },
+        {
+            "id": "upstage/solar-mini-240612",
+            "object": "model",
+            "owned_by": "Upstage",
+            "context_window": 32768,
+            "description": "A compact yet powerful 10.7-billion-parameter large language model (LLM) for businesses seeking AI solutions.",
+            "name": "Solar Mini 240612",
+            "type": "language",
+            "tags": [
+                "tool-use"
+            ]
+        },
+        {
+            "id": "upstage/solar-mini-250123",
+            "object": "model",
+            "owned_by": "Upstage",
+            "name": "Solar Mini 250123",
+            "context_window": 32768,
+            "description": "A compact yet powerful 10.7-billion-parameter large language model (LLM) for businesses seeking AI solutions.",
+            "type": "language",
+            "tags": [
+                "tool-use"
+            ]
+        },
+        {
+            "id": "upstage/solar-mini-250422",
+            "object": "model",
+            "owned_by": "Upstage",
+            "name": "Solar Mini 250422",
+            "context_window": 32768,
+            "description": "A compact yet powerful 10.7-billion-parameter large language model (LLM) for businesses seeking AI solutions.",
+            "type": "language",
+            "tags": [
+                "tool-use"
+            ]
+        },
+        {
+            "id": "upstage/solar-mini",
+            "object": "model",
+            "owned_by": "Upstage",
+            "context_window": 32768,
+            "description": "A compact yet powerful 10.7-billion-parameter large language model (LLM) for businesses seeking AI solutions.",
+            "name": "Solar Mini",
+            "type": "language",
+            "tags": [
+                "tool-use"
+            ]
+        }
+    ]
+}
