@@ -19,7 +19,9 @@ public static class ModelProviderExtensions
         var models = await modelProvider.ListModels(cancellationToken);
         var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
             ?? throw new ArgumentException(modelId);
-
+        
+        model.Type ??= model.Id.GuessModelType();
+        
         return model;
     }
 
