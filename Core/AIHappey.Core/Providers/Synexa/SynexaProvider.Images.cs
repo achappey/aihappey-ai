@@ -1,4 +1,3 @@
-using System.Net.Mime;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Synexa;
 using AIHappey.Vercel.Extensions;

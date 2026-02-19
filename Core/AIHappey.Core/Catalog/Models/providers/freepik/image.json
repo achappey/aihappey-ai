@@ -1,0 +1,201 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "freepik/skin-enhancer/creative",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "skin-enhancer/creative",
+      "type": "image"
+    },
+    {
+      "id": "freepik/skin-enhancer/faithful",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "skin-enhancer/faithful",
+      "type": "image"
+    },
+    {
+      "id": "freepik/skin-enhancer/flexible",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "skin-enhancer/flexible",
+      "type": "image"
+    },
+    {
+      "id": "freepik/image-expand/flux-pro",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "image-expand/flux-pro",
+      "type": "image"
+    },
+    {
+      "id": "freepik/reimagine-flux",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "reimagine-flux",
+      "type": "image"
+    },
+    {
+      "id": "freepik/image-upscaler",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "image-upscaler",
+      "type": "image"
+    },
+    {
+      "id": "freepik/image-upscaler-precision",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "image-upscaler-precision",
+      "type": "image"
+    },
+    {
+      "id": "freepik/image-upscaler-precision-v2",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "image-upscaler-precision-v2",
+      "type": "image"
+    },
+    {
+      "id": "freepik/image-relight",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "image-relight",
+      "type": "image"
+    },
+    {
+      "id": "freepik/classic-fast",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "classic-fast",
+      "type": "image"
+    },
+    {
+      "id": "freepik/flux-2-pro",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "flux-2-pro",
+      "type": "image"
+    },
+    {
+      "id": "freepik/flux-2-turbo",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "flux-2-turbo",
+      "type": "image"
+    },
+    {
+      "id": "freepik/flux-dev",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "flux-dev",
+      "type": "image"
+    },
+    {
+      "id": "freepik/flux-pro-v1-1",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "flux-pro-v1-1",
+      "type": "image"
+    },
+    {
+      "id": "freepik/hyperflux",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "hyperflux",
+      "type": "image"
+    },
+    {
+      "id": "freepik/seedream",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "seedream",
+      "type": "image"
+    },
+    {
+      "id": "freepik/seedream-v4",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "seedream-v4",
+      "type": "image"
+    },
+    {
+      "id": "freepik/seedream-v4-edit",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "seedream-v4-edit",
+      "type": "image"
+    },
+    {
+      "id": "freepik/seedream-v4-5",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "seedream-v4-5",
+      "type": "image"
+    },
+    {
+      "id": "freepik/z-image",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "z-image",
+      "type": "image"
+    },
+    {
+      "id": "freepik/z-image-turbo",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "z-image-turbo",
+      "type": "image"
+    },
+    {
+      "id": "freepik/seedream-v4-5-edit",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "seedream-v4-5-edit",
+      "type": "image"
+    },
+    {
+      "id": "freepik/mystic/zen",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "Mystic Zen",
+      "type": "image"
+    },
+    {
+      "id": "freepik/mystic/flexible",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "Mystic Flexible",
+      "type": "image"
+    },
+    {
+      "id": "freepik/mystic/fluid",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "Mystic Fluid",
+      "type": "image"
+    },
+    {
+      "id": "freepik/mystic/realism",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "Mystic Realism",
+      "type": "image"
+    },
+    {
+      "id": "freepik/mystic/super_real",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "Mystic Super Real",
+      "type": "image"
+    },
+    {
+      "id": "freepik/mystic/editorial_portraits",
+      "object": "model",
+      "owned_by": "Freepik",
+      "name": "Mystic Editorial Portraits",
+      "type": "image"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "meganova/bytedance/seedream-3.0",
+            "object": "model",
+            "owned_by": "ByteDance",
+            "name": "Seedream 3.0",
+            "type": "image",
+            "description": "Image generation model designed for high-quality visual creation and prompt-driven image synthesis."
+        },
+        {
+            "id": "meganova/black-forest-labs/flux.1-kontext-dev",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "name": "FLUX.1 Kontext Dev",
+            "type": "image",
+            "description": "Image editing and generation model capable of modifying images based on text instructions."
+        }
+    ]
+}

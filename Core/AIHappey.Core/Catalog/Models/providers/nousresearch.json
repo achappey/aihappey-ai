@@ -1,0 +1,75 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "nousresearch/Hermes-4.3-36B",
+      "object": "model",
+      "owned_by": "NousResearch",
+      "name": "Hermes-4.3-36B",
+      "type": "language",
+      "description": "Hermes 4.3 36B is a high-performance open language model optimized for instruction-following and advanced reasoning tasks.",
+      "context_window": 128000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "nousresearch/Hermes-4-70B",
+      "object": "model",
+      "owned_by": "NousResearch",
+      "name": "Hermes-4-70B",
+      "type": "language",
+      "description": "Hermes 4 70B delivers strong reasoning and instruction performance at large scale with extended context support.",
+      "context_window": 128000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "nousresearch/Hermes-4-405B",
+      "object": "model",
+      "owned_by": "NousResearch",
+      "name": "Hermes-4-405B",
+      "type": "language",
+      "description": "Hermes 4 405B is an ultra-large open model designed for advanced reasoning, coding, and complex enterprise workloads.",
+      "context_window": 128000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "nousresearch/Hermes-3-Llama-3.1-70B",
+      "object": "model",
+      "owned_by": "NousResearch",
+      "name": "Hermes-3-Llama-3.1-70B",
+      "type": "language",
+      "description": "Hermes 3 Llama 3.1 70B combines strong alignment with reliable reasoning and instruction tuning.",
+      "context_window": 32000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "nousresearch/DeepHermes-3-Llama-3-8B-Preview",
+      "object": "model",
+      "owned_by": "NousResearch",
+      "name": "DeepHermes-3-Llama-3-8B-Preview",
+      "type": "language",
+      "description": "DeepHermes 3 Llama 3 8B Preview is a lightweight preview model focused on reasoning efficiency and experimentation.",
+      "context_window": 64000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "nousresearch/DeepHermes-3-Mistral-24B-Preview",
+      "object": "model",
+      "owned_by": "NousResearch",
+      "name": "DeepHermes-3-Mistral-24B-Preview",
+      "type": "language",
+      "description": "DeepHermes 3 Mistral 24B Preview offers balanced reasoning and instruction-following with moderate parameter size.",
+      "context_window": 32000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "nousresearch/Hermes-3-Llama-3.1-405B",
+      "object": "model",
+      "owned_by": "NousResearch",
+      "name": "Hermes-3-Llama-3.1-405B",
+      "type": "language",
+      "description": "Hermes 3 Llama 3.1 405B is a large-scale aligned model built for deep reasoning, coding, and high-complexity tasks.",
+      "context_window": 32000,
+      "max_tokens": 4096
+    }
+  ]
+}

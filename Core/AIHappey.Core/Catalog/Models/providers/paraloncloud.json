@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "paraloncloud/hermes-3-8b",
+      "object": "model",
+      "owned_by": "ParalonCloud",
+      "name": "hermes-3-8b",
+      "type": "language",
+      "description": "Hermes 3 Llama 3.1 8B optimized for instruction-following and efficient reasoning workloads."
+    },
+    {
+      "id": "paraloncloud/qwen3-14b",
+      "object": "model",
+      "owned_by": "ParalonCloud",
+      "name": "qwen3-14b",
+      "type": "language",
+      "description": "Qwen 2.5 14B Instruct (Q8) offering strong reasoning performance with balanced efficiency."
+    },
+    {
+      "id": "paraloncloud/qwen3-3b",
+      "object": "model",
+      "owned_by": "ParalonCloud",
+      "name": "qwen3-3b",
+      "type": "language",
+      "description": "Qwen 2.5 3B Instruct lightweight model suited for fast and cost-efficient instruction tasks."
+    },
+    {
+      "id": "paraloncloud/qwen3-8b",
+      "object": "model",
+      "owned_by": "ParalonCloud",
+      "name": "qwen3-8b",
+      "type": "language",
+      "description": "Qwen 2.5 7B Instruct designed for reliable instruction-following with moderate resource requirements."
+    }
+  ]
+}

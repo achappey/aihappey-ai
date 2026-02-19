@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.CanopyWave;
 
@@ -21,7 +22,7 @@ public partial class CanopyWaveProvider : IModelProvider
         _client.BaseAddress = new Uri("https://inference.canopywave.io/");
     }
 
-    public string GetIdentifier() => "canopywave";
+    public string GetIdentifier() => nameof(CanopyWave).ToLowerInvariant();
 
     private void ApplyAuthHeader()
     {
@@ -32,6 +33,9 @@ public partial class CanopyWaveProvider : IModelProvider
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     // ChatCompletions endpoint is not used by the Vercel UI stream (`/api/chat`).
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)

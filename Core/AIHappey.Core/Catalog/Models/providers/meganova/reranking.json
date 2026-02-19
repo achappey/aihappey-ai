@@ -1,0 +1,13 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "meganova/baai/bge-reranker-v2-m3",
+            "object": "model",
+            "owned_by": "BAAI",
+            "name": "BGE Reranker v2 M3",
+            "type": "reranking",
+            "description": "Reranking model designed to improve retrieval quality by reordering candidate results based on relevance."
+        }
+    ]
+}

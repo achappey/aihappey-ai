@@ -1,0 +1,125 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "runpod/infinitetalk",
+            "object": "model",
+            "owned_by": "InfiniteTalk",
+            "name": "InfiniteTalk",
+            "type": "video",
+            "description": "Audio-driven talking and singing video generation model."
+        },
+        {
+            "id": "runpod/kling-v2.1-i2v-pro",
+            "object": "model",
+            "owned_by": "Kling",
+            "name": "Kling v2.1 I2V Pro",
+            "type": "video",
+            "description": "Professional image-to-video model with enhanced visual fidelity."
+        },
+        {
+            "id": "runpod/kling-v2.6-motion-control",
+            "object": "model",
+            "owned_by": "Kling",
+            "name": "Kling v2.6 Motion Control",
+            "type": "video",
+            "description": "Video generation model supporting motion transfer from reference videos."
+        },
+        {
+            "id": "runpod/kling-video-o1-r2v",
+            "object": "model",
+            "owned_by": "Kling",
+            "name": "Kling Video O1 R2V",
+            "type": "video",
+            "description": "Creative video generation using multiple reference images."
+        },
+        {
+            "id": "runpod/seedance-1.0-pro",
+            "object": "model",
+            "owned_by": "Seedance",
+            "name": "Seedance 1.0 Pro",
+            "type": "video",
+            "description": "High-performance video generation model supporting multi-shot storytelling."
+        },
+        {
+            "id": "runpod/seedance-1.5-pro-i2v",
+            "object": "model",
+            "owned_by": "Seedance",
+            "name": "Seedance 1.5 Pro I2V",
+            "type": "video",
+            "description": "Cinematic image-to-video model with expressive motion generation."
+        },
+        {
+            "id": "runpod/sora-2-i2v",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "SORA 2 I2V",
+            "type": "video",
+            "description": "Video and audio generation model for image-to-video workflows."
+        },
+        {
+            "id": "runpod/sora-2-pro-i2v",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "SORA 2 Pro I2V",
+            "type": "video",
+            "description": "Professional-grade SORA video generation with higher quality output."
+        },
+        {
+            "id": "runpod/wan-2.6-t2v",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.6 T2V",
+            "type": "video",
+            "description": "Text-to-video generation model supporting multiple resolution options."
+        },
+        {
+            "id": "runpod/wan-2.5",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.5",
+            "type": "video",
+            "description": "Image-to-video generation model with prompt expansion capabilities."
+        },
+        {
+            "id": "runpod/wan-2.2-i2v-lora",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.2 I2V LoRA",
+            "type": "video",
+            "description": "Image-to-video model supporting LoRA-based camera control."
+        },
+        {
+            "id": "runpod/wan-2.2-i2v",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.2 I2V",
+            "type": "video",
+            "description": "Open-source image-to-video generation model at 720p resolution."
+        },
+        {
+            "id": "runpod/wan-2.2-t2v",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.2 T2V",
+            "type": "video",
+            "description": "Open-source text-to-video generation model at 720p resolution."
+        },
+        {
+            "id": "runpod/wan-2.1-i2v",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.1 I2V",
+            "type": "video",
+            "description": "Image-to-video generation model at 720p resolution."
+        },
+        {
+            "id": "runpod/wan-2.1-t2v",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.1 T2V",
+            "type": "video",
+            "description": "Text-to-video generation model at 720p resolution."
+        }
+    ]
+}

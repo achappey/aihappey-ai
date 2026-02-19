@@ -108,6 +108,28 @@ public class AIServiceConfig
     public ProviderConfig? HorayAI { get; set; }
     public ProviderConfig? Synexa { get; set; }
     public ProviderConfig? Recraft { get; set; }
+    public ProviderConfig? AtlasCloud { get; set; }
+    public ProviderConfig? Bineric { get; set; }
+    public ProviderConfig? DigitalOcean { get; set; }
+    public ProviderConfig? GooseAI { get; set; }
+    public ProviderConfig? SUPA { get; set; }
+    public ProviderConfig? Runpod { get; set; }
+    public ProviderConfig? MegaNova { get; set; }
+    public ProviderConfig? LLMGateway { get; set; }
+    public ProviderConfig? Abliteration { get; set; }
+    public ProviderConfig? AmazonBedrock { get; set; }
+    public ProviderConfig? Parasail { get; set; }
+    public ProviderConfig? MancerAI { get; set; }
+    public ProviderConfig? Kilo { get; set; }
+    public ProviderConfig? Tinker { get; set; }
+    public ProviderConfig? Helicone { get; set; }
+    public ProviderConfig? NousResearch { get; set; }
+    public ProviderConfig? ParalonCloud { get; set; }
+    public ProviderConfig? ASIOne { get; set; }
+    public ProviderConfig? APIpie { get; set; }
+    public ProviderConfig? StepFun { get; set; }
+    public ProviderConfig? SEALION { get; set; }
+    public ProviderConfig? TencentHunyuan { get; set; }
 }
 
 public class ProviderConfig

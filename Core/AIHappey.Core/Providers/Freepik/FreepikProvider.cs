@@ -7,6 +7,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -22,6 +23,9 @@ public sealed partial class FreepikProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(Freepik).ToLowerInvariant();
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -39,24 +43,14 @@ public sealed partial class FreepikProvider : IModelProvider
     {
         var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
 
-        switch (model?.Type)
+        return (model?.Type) switch
         {
-            case "speech":
-                {
-                    return await this.SpeechSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-            case "image":
-                {
-                    return await this.ImageSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-
-            default:
-                throw new NotImplementedException();
-        }
+            "speech" => await this.SpeechSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            "image" => await this.ImageSamplingAsync(chatRequest,
+                                    cancellationToken: cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)

@@ -6,80 +6,77 @@
       "object": "model",
       "owned_by": "Baseten",
       "name": "zai-org/GLM-4.6",
-      "type": "language",
-      "description": "zai-org/GLM-4.6"
+      "type": "language"
     },
     {
       "id": "baseten/zai-org/GLM-4.7",
       "object": "model",
       "owned_by": "Baseten",
       "name": "zai-org/GLM-4.7",
-      "type": "language",
-      "description": "zai-org/GLM-4.7"
+      "type": "language"
     },
     {
       "id": "baseten/moonshotai/Kimi-K2-Thinking",
       "object": "model",
       "owned_by": "Baseten",
       "name": "moonshotai/Kimi-K2-Thinking",
-      "type": "language",
-      "description": "moonshotai/Kimi-K2-Thinking"
+      "type": "language"
     },
     {
       "id": "baseten/deepseek-ai/DeepSeek-V3-0324",
       "object": "model",
       "owned_by": "Baseten",
       "name": "deepseek-ai/DeepSeek-V3-0324",
-      "type": "language",
-      "description": "deepseek-ai/DeepSeek-V3-0324"
+      "type": "language"
     },
     {
       "id": "baseten/moonshotai/Kimi-K2-Instruct-0905",
       "object": "model",
       "owned_by": "Baseten",
       "name": "moonshotai/Kimi-K2-Instruct-0905",
-      "type": "language",
-      "description": "moonshotai/Kimi-K2-Instruct-0905"
+      "type": "language"
     },
     {
       "id": "baseten/moonshotai/Kimi-K2.5",
       "object": "model",
       "owned_by": "Baseten",
       "name": "moonshotai/Kimi-K2.5",
-      "type": "language",
-      "description": "moonshotai/Kimi-K2.5"
+      "type": "language"
     },
     {
       "id": "baseten/openai/gpt-oss-120b",
       "object": "model",
       "owned_by": "Baseten",
       "name": "openai/gpt-oss-120b",
-      "type": "language",
-      "description": "openai/gpt-oss-120b"
+      "type": "language"
     },
     {
       "id": "baseten/deepseek-ai/DeepSeek-V3.1",
       "object": "model",
       "owned_by": "Baseten",
       "name": "deepseek-ai/DeepSeek-V3.1",
-      "type": "language",
-      "description": "deepseek-ai/DeepSeek-V3.1"
+      "type": "language"
     },
     {
       "id": "baseten/deepseek-ai/DeepSeek-V3.2",
       "object": "model",
       "owned_by": "Baseten",
       "name": "deepseek-ai/DeepSeek-V3.2",
-      "type": "language",
-      "description": "deepseek-ai/DeepSeek-V3.2"
+      "type": "language"
     },
     {
       "id": "baseten/Qwen/Qwen3-Coder-480B-A35B-Instruct",
       "object": "model",
       "owned_by": "Baseten",
       "name": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-      "type": "language",
-      "description": "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+      "type": "language"
+    },
+    {
+      "id": "baseten/MiniMaxAI/MiniMax-M2.5",
+      "object": "model",
+      "owned_by": "Baseten",
+      "name": "MiniMax-M2.5",
+      "type": "language"
     }
   ]
 }

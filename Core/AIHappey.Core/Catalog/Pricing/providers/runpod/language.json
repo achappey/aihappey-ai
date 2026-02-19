@@ -1,0 +1,14 @@
+{
+    "runpod/qwen3-32b-awq": {
+        "pricing": {
+            "input": "0.000002",
+            "output": "0.000008"
+        }
+    },
+    "runpod/granite-4.0-h-small": {
+        "pricing": {
+            "input": "0.0000002",
+            "output": "0.0000004"
+        }
+    }
+}

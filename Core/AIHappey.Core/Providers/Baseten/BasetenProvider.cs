@@ -4,6 +4,7 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Baseten;
 
@@ -26,6 +27,9 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
 
     public string GetIdentifier() => nameof(Baseten).ToLowerInvariant();
 
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
+        
     private void ApplyAuthHeader()
     {
         var key = keyResolver.Resolve(GetIdentifier());

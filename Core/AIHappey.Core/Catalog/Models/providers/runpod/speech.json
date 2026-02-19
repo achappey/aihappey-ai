@@ -1,0 +1,29 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "runpod/chatterbox-turbo",
+            "object": "model",
+            "owned_by": "Chatterbox",
+            "name": "Chatterbox Turbo",
+            "type": "speech",
+            "description": "Fast text-to-speech model with preset voices and voice cloning support."
+        },
+        {
+            "id": "runpod/whisper-v3-large",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Whisper V3 Large",
+            "type": "speech",
+            "description": "State-of-the-art speech recognition model for transcription and speech understanding."
+        },
+        {
+            "id": "runpod/minimax-speech-02-hd",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "Minimax Speech 02 HD",
+            "type": "speech",
+            "description": "Text-to-speech model with emotional expression and voice control."
+        }
+    ]
+}

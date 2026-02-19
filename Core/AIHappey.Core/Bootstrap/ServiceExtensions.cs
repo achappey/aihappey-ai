@@ -109,6 +109,27 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Orchestration;
 using AIHappey.Core.Providers.Synexa;
 using AIHappey.Core.Providers.Recraft;
+using AIHappey.Core.Providers.AtlasCloud;
+using AIHappey.Core.Providers.Bineric;
+using AIHappey.Core.Providers.DigitalOcean;
+using AIHappey.Core.Providers.GooseAI;
+using AIHappey.Core.Providers.SUPA;
+using AIHappey.Core.Providers.Runpod;
+using AIHappey.Core.Providers.MegaNova;
+using AIHappey.Core.Providers.LLMGateway;
+using AIHappey.Core.Providers.Abliteration;
+using AIHappey.Core.Providers.AmazonBedrock;
+using AIHappey.Core.Providers.Parasail;
+using AIHappey.Core.Providers.MancerAI;
+using AIHappey.Core.Providers.Kilo;
+using AIHappey.Core.Providers.Helicone;
+using AIHappey.Core.Providers.NousResearch;
+using AIHappey.Core.Providers.ParalonCloud;
+using AIHappey.Core.Providers.ASIOne;
+using AIHappey.Core.Providers.APIpie;
+using AIHappey.Core.Providers.StepFun;
+using AIHappey.Core.Providers.SEALION;
+using AIHappey.Core.Providers.TencentHunyuan;
 
 namespace AIHappey.Core.AI;
 
@@ -225,6 +246,27 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HorayAIProvider>();
         services.AddSingleton<IModelProvider, SynexaProvider>();
         services.AddSingleton<IModelProvider, RecraftProvider>();
+        services.AddSingleton<IModelProvider, AtlasCloudProvider>();
+        services.AddSingleton<IModelProvider, BinericProvider>();
+        services.AddSingleton<IModelProvider, DigitalOceanProvider>();
+        services.AddSingleton<IModelProvider, GooseAIProvider>();
+        services.AddSingleton<IModelProvider, SUPAProvider>();
+        services.AddSingleton<IModelProvider, RunpodProvider>();
+        services.AddSingleton<IModelProvider, MegaNovaProvider>();
+        services.AddSingleton<IModelProvider, LLMGatewayProvider>();
+        services.AddSingleton<IModelProvider, AbliterationProvider>();
+        services.AddSingleton<IModelProvider, AmazonBedrockProvider>();
+        services.AddSingleton<IModelProvider, ParasailProvider>();
+        services.AddSingleton<IModelProvider, MancerAIProvider>();
+        services.AddSingleton<IModelProvider, KiloProvider>();
+        services.AddSingleton<IModelProvider, HeliconeProvider>();
+        services.AddSingleton<IModelProvider, NousResearchProvider>();
+        services.AddSingleton<IModelProvider, ParalonCloudProvider>();
+        services.AddSingleton<IModelProvider, ASIOneProvider>();
+        services.AddSingleton<IModelProvider, APIpieProvider>();
+        services.AddSingleton<IModelProvider, StepFunProvider>();
+        services.AddSingleton<IModelProvider, SEALIONProvider>();
+        services.AddSingleton<IModelProvider, TencentHunyuanProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

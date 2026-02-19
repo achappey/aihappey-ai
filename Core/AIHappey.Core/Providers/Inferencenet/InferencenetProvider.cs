@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Inferencenet;
 
@@ -34,6 +35,9 @@ public partial class InferencenetProvider(IApiKeyResolver keyResolver, IHttpClie
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
 
     // ChatCompletions endpoint is not used by the Vercel UI stream (`/api/chat`).
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)

@@ -7,7 +7,7 @@ public static class ReplicateProviderLanguageModels
         // ─────────────────────────────
         // OpenAI
         // ─────────────────────────────
-        ("openai/gpt-5", "GPT-5", "OpenAI"),
+    ("openai/gpt-5", "GPT-5", "OpenAI"),
     ("openai/gpt-5-mini", "GPT-5 Mini", "OpenAI"),
     ("openai/gpt-5-nano", "GPT-5 Nano", "OpenAI"),
     ("openai/gpt-5-structured", "GPT-5 Structured", "OpenAI"),

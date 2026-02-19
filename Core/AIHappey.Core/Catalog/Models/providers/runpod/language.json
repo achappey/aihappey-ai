@@ -1,0 +1,21 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "runpod/qwen3-32b-awq",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3 32B AWQ",
+            "type": "language",
+            "description": "Quantized 32B parameter language model optimized for efficient inference and balanced reasoning performance."
+        },
+        {
+            "id": "runpod/granite-4.0-h-small",
+            "object": "model",
+            "owned_by": "IBM",
+            "name": "IBM Granite 4.0 H Small",
+            "type": "language",
+            "description": "Compact enterprise-focused language model from IBM Granite family optimized for efficient reasoning and business workflows."
+        }
+    ]
+}

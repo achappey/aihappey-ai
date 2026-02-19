@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "meganova/bytedance/seedance-1.0-pro-image-to-video",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Seedance 1.0 Pro Image-to-Video",
+      "type": "video",
+      "description": "High-performance image-to-video generation model supporting cinematic motion and multi-shot storytelling."
+    },
+    {
+      "id": "meganova/bytedance/seedance-1.0-lite-image-to-video",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Seedance 1.0 Lite Image-to-Video",
+      "type": "video",
+      "description": "Lightweight image-to-video generation model optimized for faster generation and lower compute usage."
+    },
+    {
+      "id": "meganova/bytedance/seedance-1.0-pro-text-to-video",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Seedance 1.0 Pro Text-to-Video",
+      "type": "video",
+      "description": "Text-to-video generation model designed for high-quality cinematic video creation."
+    },
+    {
+      "id": "meganova/bytedance/seedance-1.0-lite-text-to-video",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Seedance 1.0 Lite Text-to-Video",
+      "type": "video",
+      "description": "Lightweight text-to-video generation model optimized for speed and efficiency."
+    }
+  ]
+}

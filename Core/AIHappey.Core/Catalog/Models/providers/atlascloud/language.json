@@ -1,0 +1,405 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "atlascloud/moonshotai/kimi-k2.5",
+      "object": "model",
+      "owned_by": "MoonshotAI",
+      "name": "kimi-k2.5",
+      "type": "language",
+      "description": "Advanced large language model with strong reasoning and native multimodality for production AI assistants and enterprise workflows.",
+      "context_window": 262144,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/qwen/qwen3.5-397ba17b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3.5-397ba17b",
+      "type": "language",
+      "description": "Large multimodal language model with improved architectural efficiency, reasoning capability, and enterprise-scale performance.",
+      "context_window": 262144,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/minimax/minimax-m2.5",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.5",
+      "type": "language",
+      "description": "Lightweight state-of-the-art model optimized for coding, agentic workflows, and modern application development.",
+      "context_window": 196608,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/zai/glm-5",
+      "object": "model",
+      "owned_by": "ZAI",
+      "name": "glm-5",
+      "type": "language",
+      "description": "Flagship model with improved programming capability and stable multi-step reasoning for complex agent tasks.",
+      "context_window": 202752,
+      "max_tokens": 131072
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-max-20260123",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-max-20260123",
+      "type": "language",
+      "description": "Flagship model designed for ultra-long context understanding, reasoning, and high-performance generation.",
+      "context_window": 252000,
+      "max_tokens": 32000
+    },
+    {
+      "id": "atlascloud/minimax/minimax-m2.1",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.1",
+      "type": "language",
+      "description": "Lightweight model optimized for coding and agentic workflows with strong latency and efficiency characteristics.",
+      "context_window": 196608,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/zai/glm-4.7",
+      "object": "model",
+      "owned_by": "ZAI",
+      "name": "glm-4.7",
+      "type": "language",
+      "description": "Enhanced reasoning and programming model with stable execution and improved conversational quality.",
+      "context_window": 202752,
+      "max_tokens": 131072
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-v3.2",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.2",
+      "type": "language",
+      "description": "State-of-the-art language model combining efficient sparse attention and strong reasoning for long-context tasks.",
+      "context_window": 163840,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-v3.2-speciale",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.2-speciale",
+      "type": "language",
+      "description": "Fast and cost-effective variant of DeepSeek V3.2 optimized for throughput and efficiency.",
+      "context_window": 163840,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/kat/kat-coder-pro-v1",
+      "object": "model",
+      "owned_by": "KAT",
+      "name": "kat-coder-pro-v1",
+      "type": "language",
+      "description": "Agentic coding model optimized for real-world software engineering tasks and complex coding workflows.",
+      "context_window": 256000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "atlascloud/kat/kat-coder-exp-72b-101",
+      "object": "model",
+      "owned_by": "KAT",
+      "name": "kat-coder-exp-72b-101",
+      "type": "language",
+      "description": "Experimental agentic coding model in the KAT-Coder series.",
+      "context_window": 128000,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-r1-0528",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-r1-0528",
+      "type": "language",
+      "description": "Advanced reasoning-focused language model optimized for structured reasoning and complex problem solving.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-vl-235b-a22b-instruct",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-vl-235b-a22b-instruct",
+      "type": "language",
+      "description": "Large multimodal instruction-tuned model capable of understanding text and visual inputs.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-30b-a3b-instruct-2507",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-30b-a3b-instruct-2507",
+      "type": "language",
+      "description": "Instruction-tuned Qwen3 model designed for reasoning and general language tasks.",
+      "context_window": 131072,
+      "max_tokens": 131072
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-next-80b-a3b-thinking",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-next-80b-a3b-thinking",
+      "type": "language",
+      "description": "Reasoning-optimized Qwen model designed for advanced thinking and long-context workflows.",
+      "context_window": 262144,
+      "max_tokens": 262144
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-next-80b-a3b-instruct",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-next-80b-a3b-instruct",
+      "type": "language",
+      "description": "Instruction-tuned version of Qwen3 Next optimized for production usage.",
+      "context_window": 262144,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-8b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-8b",
+      "type": "language",
+      "description": "Compact reasoning model suitable for lightweight applications and fast inference.",
+      "context_window": 32000,
+      "max_tokens": 8192
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-ocr",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-ocr",
+      "type": "language",
+      "description": "OCR-capable model optimized for extracting structured text from images and documents.",
+      "context_window": 8192,
+      "max_tokens": 8192
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-coder",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-coder",
+      "type": "language",
+      "description": "Code-specialized version of Qwen3 optimized for software development tasks.",
+      "context_window": 262144,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/anthropic/claude-opus-4.6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4.6",
+      "type": "language",
+      "description": "Large-scale reasoning model designed for complex enterprise and analytical workloads.",
+      "context_window": 1000000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "atlascloud/openai/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-oss-120b",
+      "type": "language",
+      "description": "117B parameter mixture-of-experts language model optimized for general-purpose inference.",
+      "context_window": 131072,
+      "max_tokens": 128000
+    },
+    {
+      "id": "atlascloud/minimax/minimax-m2",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2",
+      "type": "language",
+      "description": "Lightweight, state-of-the-art model optimized for coding, agentic workflows, and modern application development.",
+      "context_window": 196608,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-v3.2-exp",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.2-exp",
+      "type": "language",
+      "description": "Fast and cost-effective variant of DeepSeek V3.2 optimized for throughput and efficiency.",
+      "context_window": 163840,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/zai/glm-4.6",
+      "object": "model",
+      "owned_by": "ZAI",
+      "name": "glm-4.6",
+      "type": "language",
+      "description": "Large MoE model from Zhipu AI optimized for efficient long-context reasoning and generation.",
+      "context_window": 202752,
+      "max_tokens": 131072
+    },
+    {
+      "id": "atlascloud/moonshotai/kimi-k2-thinking",
+      "object": "model",
+      "owned_by": "MoonshotAI",
+      "name": "kimi-k2-thinking",
+      "type": "language",
+      "description": "Kimi's open-source thinking model tuned for stronger reasoning and long-context problem solving.",
+      "context_window": 262144,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/mimo/mimo-v2-flash",
+      "object": "model",
+      "owned_by": "MiMo",
+      "name": "mimo-v2-flash",
+      "type": "language",
+      "description": "Low-latency long-context model optimized for fast responses.",
+      "context_window": 262144,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-v3-0324",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3-0324",
+      "type": "language",
+      "description": "DeepSeek V3 update released on 03/24/2025.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/tongyi-deepresearch-30b-a3b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "tongyi-deepresearch-30b-a3b",
+      "type": "language",
+      "description": "Open and advanced research-oriented model designed for deep analysis and long-context workflows.",
+      "context_window": 131072,
+      "max_tokens": 131072
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-235b-a22b-thinking-2507",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-235b-a22b-thinking-2507",
+      "type": "language",
+      "description": "Large Qwen3 reasoning model optimized for advanced thinking and complex long-context tasks.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-vl-235b-a22b-thinking",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-vl-235b-a22b-thinking",
+      "type": "language",
+      "description": "Multimodal reasoning model capable of understanding and reasoning over text and visual inputs.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-30b-a3b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-30b-a3b",
+      "type": "language",
+      "description": "Qwen3 reasoning model designed for strong general performance with efficient compute characteristics.",
+      "context_window": 40960,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-30b-a3b-thinking-2507",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-30b-a3b-thinking-2507",
+      "type": "language",
+      "description": "Thinking-optimized Qwen3 model designed for improved reasoning and multi-step problem solving.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/qwen/qwen2.5-7b-instruct",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen2.5-7b-instruct",
+      "type": "language",
+      "description": "Instruction-tuned Qwen2.5 model optimized for reliable general-purpose chat and task execution.",
+      "context_window": 131072,
+      "max_tokens": 8192
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-32b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-32b",
+      "type": "language",
+      "description": "Qwen3 reasoning model with strong capability balance for long-context generation and analysis.",
+      "context_window": 40960,
+      "max_tokens": 40960
+    },
+    {
+      "id": "atlascloud/qwen/qwen3-235b-a22b-instruct-2507",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-235b-a22b-instruct-2507",
+      "type": "language",
+      "description": "Instruction-tuned Qwen3 MoE model built for high-quality general generation and tool-use workflows.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-v3.1",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.1",
+      "type": "language",
+      "description": "DeepSeek open-source model optimized for strong general capability and long-context tasks.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/deepseek/deepseek-v3.1-terminus",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.1-terminus",
+      "type": "language",
+      "description": "Variant of DeepSeek V3.1 designed for robust production inference and stable behavior.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    },
+    {
+      "id": "atlascloud/moonshotai/kimi-k2-instruct-0905",
+      "object": "model",
+      "owned_by": "MoonshotAI",
+      "name": "kimi-k2-instruct-0905",
+      "type": "language",
+      "description": "Instruction-tuned Kimi K2 model variant for stable production usage.",
+      "context_window": 65536,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/moonshotai/kimi-k2-instruct",
+      "object": "model",
+      "owned_by": "MoonshotAI",
+      "name": "kimi-k2-instruct",
+      "type": "language",
+      "description": "Instruction-tuned Kimi K2 open-source model for assistants and general task execution.",
+      "context_window": 131072,
+      "max_tokens": 65536
+    },
+    {
+      "id": "atlascloud/meituan/longcat-flash-chat",
+      "object": "model",
+      "owned_by": "Meituan",
+      "name": "longcat-flash-chat",
+      "type": "language",
+      "description": "Meituan open-source chat model optimized for fast responses and long-context workflows.",
+      "context_window": 131072,
+      "max_tokens": 32768
+    }
+  ]
+}

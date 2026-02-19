@@ -21,7 +21,6 @@ public partial class CerebrasProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.cerebras.ai/");
     }
 
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());

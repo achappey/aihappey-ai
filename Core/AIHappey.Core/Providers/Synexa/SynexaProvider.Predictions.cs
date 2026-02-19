@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Synexa;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 

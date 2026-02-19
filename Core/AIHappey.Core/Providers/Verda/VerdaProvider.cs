@@ -8,6 +8,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Verda;
 
@@ -36,6 +37,9 @@ public partial class VerdaProvider
     }
 
     public string GetIdentifier() => nameof(Verda).ToLowerInvariant();
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

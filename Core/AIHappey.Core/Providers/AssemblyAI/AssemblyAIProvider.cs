@@ -4,6 +4,7 @@ using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 
@@ -46,7 +47,8 @@ public partial class AssemblyAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(AssemblyAI).ToLowerInvariant();
 
-   
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

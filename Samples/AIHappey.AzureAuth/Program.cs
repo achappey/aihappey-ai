@@ -14,6 +14,7 @@ using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;
+using AIHappey.Core.Providers.AmazonBedrock;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,9 @@ builder.Services.Configure<EndUserIdHashingOptions>(
 
 builder.Services.Configure<AzureProviderOptions>(
     builder.Configuration.GetSection("AIServices:Azure"));
+
+builder.Services.Configure<AmazonProviderOptions>(
+    builder.Configuration.GetSection("AIServices:AmazonBedrock"));
 
 var telemetryDb = builder.Configuration.GetSection("TelemetryDatabase").Get<string>();
 var kernelMemoryConfig = builder.Configuration.GetSection("AIServices:KernelMemory").Get<ProviderConfig>();

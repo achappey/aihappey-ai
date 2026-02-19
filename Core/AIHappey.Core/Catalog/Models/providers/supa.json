@@ -1,0 +1,105 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "supa/google/gemma-3-27b-it",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma-3-27b-it",
+      "type": "language",
+      "description": "Instruction-tuned Gemma 3 model optimized for reasoning and multimodal tasks including vision.",
+      "context_window": 8192,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/qwen/qwen3-30b-a3b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-30b-a3b",
+      "type": "language",
+      "description": "Reasoning-focused Qwen3 model designed for large-context processing and cost-efficient inference.",
+      "context_window": 131072,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/openai/gpt-oss-safeguard-20b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-oss-safeguard-20b",
+      "type": "language",
+      "description": "Open-weight safeguard model optimized for reasoning and safety-aligned generation at lower cost.",
+      "context_window": 131072,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/openai/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-oss-120b",
+      "type": "language",
+      "description": "Large-scale open-weight reasoning model designed for advanced language understanding and complex tasks.",
+      "context_window": 131072,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/qwen/qwen-turbo",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen-turbo",
+      "type": "language",
+      "description": "High-speed Qwen model optimized for large context workloads and fast generation.",
+      "context_window": 1000000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/google/gemma-3-12b",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma-3-12b",
+      "type": "language",
+      "description": "Compact Gemma 3 model supporting vision input and efficient multimodal inference.",
+      "context_window": 32768,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/qwen/qwen3-coder-30b-a3b-instruct",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-coder-30b-a3b-instruct",
+      "type": "language",
+      "description": "Instruction-tuned Qwen3 coding model optimized for software development and structured generation.",
+      "context_window": 160000,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/mistral/mistral-small-3.2-24b",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mistral-small-3.2-24b",
+      "type": "language",
+      "description": "Efficient multimodal Mistral model supporting vision and general reasoning workloads.",
+      "context_window": 131072,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/meta/llama-3.3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama-3.3-70b-instruct",
+      "type": "language",
+      "description": "Instruction-tuned Llama 3.3 model designed for general-purpose language and reasoning tasks.",
+      "context_window": 131072,
+      "max_tokens": 4096
+    },
+    {
+      "id": "supa/qwen/qwen3-4b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-4b",
+      "type": "language",
+      "description": "Lightweight Qwen3 model optimized for fast inference and low-cost workloads.",
+      "context_window": 40960,
+      "max_tokens": 4096
+    }
+  ]
+}

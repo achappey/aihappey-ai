@@ -110,6 +110,28 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["horayai"] = "X-HorayAI-Key",
             ["horayai"] = "X-Synexa-Key",
             ["recraft"] = "X-Recraft-Key",
+            ["atlascloud"] = "X-AtlasCloud-Key",
+            ["bineric"] = "X-Bineric-Key",
+            ["digitalocean"] = "X-DigitalOcean-Key",
+            ["gooseai"] = "X-GooseAI-Key",
+            ["supa"] = "X-SUPA-Key",
+            ["runpod"] = "X-Runpod-Key",
+            ["meganova"] = "X-MegaNova-Key",
+            ["llmgateway"] = "X-LLMGateway-Key",
+            ["abliteration"] = "X-Abliteration-Key",
+            ["amazonbedrock"] = "X-AmazonBedrock-Key",
+            ["parasail"] = "X-Parasail-Key",
+            ["mancerai"] = "X-MancerAI-Key",
+            ["kilo"] = "X-Kilo-Key",
+            ["tinker"] = "X-Tinker-Key",
+            ["helicone"] = "X-Helicone-Key",
+            ["nousresearch"] = "X-NousResearch-Key",
+            ["paraloncloud"] = "X-ParalonCloud-Key",
+            ["asione"] = "X-ASIOne-Key",
+            ["apipie"] = "X-APIpie-Key",
+            ["stepfun"] = "X-StepFun-Key",
+            ["sealion"] = "X-SEALION-Key",
+            ["tencenthunyuan"] = "X-TencentHunyuan-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

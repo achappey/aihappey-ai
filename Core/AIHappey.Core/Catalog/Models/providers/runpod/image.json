@@ -1,0 +1,141 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "runpod/flux-dev",
+            "object": "model",
+            "owned_by": "Flux",
+            "name": "Flux Dev",
+            "type": "image",
+            "description": "High-quality image generation model with strong prompt adherence."
+        },
+        {
+            "id": "runpod/flux-schnell",
+            "object": "model",
+            "owned_by": "Flux",
+            "name": "Flux Schnell",
+            "type": "image",
+            "description": "Fast and lightweight image generation model optimized for rapid prototyping."
+        },
+        {
+            "id": "runpod/flux-kontext-dev",
+            "object": "model",
+            "owned_by": "Flux",
+            "name": "Flux Kontext Dev",
+            "type": "image",
+            "description": "Image editing model that modifies images based on text instructions."
+        },
+        {
+            "id": "runpod/p-image-t2i",
+            "object": "model",
+            "owned_by": "P-Image",
+            "name": "P-Image T2I",
+            "type": "image",
+            "description": "Ultra-fast text-to-image generation with automatic prompt enhancement."
+        },
+        {
+            "id": "runpod/p-image-edit",
+            "object": "model",
+            "owned_by": "P-Image",
+            "name": "P-Image Edit",
+            "type": "image",
+            "description": "Premium image editing model supporting complex compositions."
+        },
+        {
+            "id": "runpod/qwen-image",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen Image",
+            "type": "image",
+            "description": "Image generation model with advanced text rendering capabilities."
+        },
+        {
+            "id": "runpod/qwen-image-lora",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen Image LoRA",
+            "type": "image",
+            "description": "Image generation model with LoRA-based customization support."
+        },
+        {
+            "id": "runpod/qwen-image-edit",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen Image Edit",
+            "type": "image",
+            "description": "Image editing model with advanced text rendering capabilities."
+        },
+        {
+            "id": "runpod/qwen-image-edit-2511",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen Image Edit 2511",
+            "type": "image",
+            "description": "Enhanced image editing model with improved consistency."
+        },
+        {
+            "id": "runpod/qwen-image-edit-2511-lora",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen Image Edit 2511 LoRA",
+            "type": "image",
+            "description": "Advanced image editing model with LoRA support."
+        },
+        {
+            "id": "runpod/seedream-4.0-t2i",
+            "object": "model",
+            "owned_by": "Seedream",
+            "name": "Seedream 4.0 T2I",
+            "type": "image",
+            "description": "New-generation text-to-image creation model."
+        },
+        {
+            "id": "runpod/seedream-4.0-edit",
+            "object": "model",
+            "owned_by": "Seedream",
+            "name": "Seedream 4.0 Edit",
+            "type": "image",
+            "description": "New-generation image editing model."
+        },
+        {
+            "id": "runpod/seedream-3.0",
+            "object": "model",
+            "owned_by": "Seedream",
+            "name": "Seedream 3.0",
+            "type": "image",
+            "description": "Bilingual image generation model supporting Chinese and English prompts."
+        },
+        {
+            "id": "runpod/wan-2.6-t2i",
+            "object": "model",
+            "owned_by": "WAN",
+            "name": "WAN 2.6 T2I",
+            "type": "image",
+            "description": "Open-source text-to-image generation model at 1024x1024 resolution."
+        },
+        {
+            "id": "runpod/z-image-turbo",
+            "object": "model",
+            "owned_by": "Z-Image",
+            "name": "Z-Image Turbo",
+            "type": "image",
+            "description": "Fast 6B parameter image generation model optimized for speed."
+        },
+        {
+            "id": "runpod/nano-banana-edit",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "Nano Banana Edit",
+            "type": "image",
+            "description": "Image editing model designed for combining multiple images."
+        },
+        {
+            "id": "runpod/nano-banana-pro-edit",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "Nano Banana Pro Edit",
+            "type": "image",
+            "description": "Advanced multi-image editing model with higher resolution options."
+        }
+    ]
+}

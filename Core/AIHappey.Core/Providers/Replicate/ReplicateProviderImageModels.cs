@@ -6,7 +6,7 @@ public static class ReplicateProviderImageModels
     public static readonly IReadOnlyList<(string Id, string Name, string Owner)> ImageModels =
    [
        // Black Forest Labs (FLUX)
-       ("black-forest-labs/flux-pro", "FLUX Pro", "Black Forest Labs"),
+    ("black-forest-labs/flux-pro", "FLUX Pro", "Black Forest Labs"),
     ("black-forest-labs/flux-1.1-pro-ultra", "FLUX Pro Ultra", "Black Forest Labs"),
     ("black-forest-labs/flux-1.1-pro-ultra-finetuned", "FLUX Pro Ultra (Finetuned)", "Black Forest Labs"),
     ("black-forest-labs/flux-dev", "FLUX Dev", "Black Forest Labs"),

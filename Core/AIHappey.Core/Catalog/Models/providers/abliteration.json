@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "abliteration/abliterated-model",
+      "object": "model",
+      "owned_by": "Abliteration",
+      "name": "abliterated-model",
+      "type": "language"
+    }
+  ]
+}

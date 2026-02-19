@@ -1,0 +1,14 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "asione/asi1",
+      "object": "model",
+      "owned_by": "ASI:One",
+      "name": "ASI1",
+      "type": "language",
+      "description": "ASI1 is a unified intelligent model that automatically adapts its capabilities based on your request. No need to select between different models — ASI1 handles reasoning depth, speed optimization, and capability activation for you.",
+      "context_window": 128000
+    }
+  ]
+}

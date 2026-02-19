@@ -36,12 +36,24 @@ public static class ModelProviderExtensions
 
     public static List<Model> GetModels(this string provider)
     {
-        var modelResponseJson = TryReadCatalogFile(provider);
-        if (string.IsNullOrWhiteSpace(modelResponseJson))
+        var catalogFiles = TryReadCatalogFiles(provider);
+        if (catalogFiles.Count == 0)
             return [];
 
-        var modelResponse = JsonSerializer.Deserialize<ModelResponse>(modelResponseJson, JsonSerializerOptions.Web);
-        var models = modelResponse?.Data?.ToList() ?? [];
+        List<Model> models = [];
+        foreach (var catalogFile in catalogFiles)
+        {
+            var modelResponseJson = File.ReadAllText(catalogFile);
+            if (string.IsNullOrWhiteSpace(modelResponseJson))
+                continue;
+
+            var modelResponse = JsonSerializer.Deserialize<ModelResponse>(modelResponseJson, JsonSerializerOptions.Web);
+            if (modelResponse?.Data is null)
+                continue;
+
+            models.AddRange(modelResponse.Data);
+        }
+
         if (models.Count == 0)
             return [];
 
@@ -70,16 +82,26 @@ public static class ModelProviderExtensions
         return modelResponse;
     }
 
-    private static string? TryReadCatalogFile(string provider)
+    private static List<string> TryReadCatalogFiles(string provider)
     {
-        List<string> folders = ["Catalog", "Models", "providers", provider + ".json"];
+        var providersPath = Path.Combine(AppContext.BaseDirectory, "Catalog", "Models", "providers");
+        List<string> catalogFiles = [];
 
-        var path = Path.Combine(AppContext.BaseDirectory, string.Join(Path.DirectorySeparatorChar, folders));
+        var legacyProviderFilePath = Path.Combine(providersPath, provider + ".json");
+        if (File.Exists(legacyProviderFilePath))
+            catalogFiles.Add(legacyProviderFilePath);
 
-        if (File.Exists(path))
-            return File.ReadAllText(path);
+        var providerDirectoryPath = Path.Combine(providersPath, provider);
+        if (Directory.Exists(providerDirectoryPath))
+        {
+            var providerDirectoryFiles = Directory
+                .EnumerateFiles(providerDirectoryPath, "*.json", SearchOption.TopDirectoryOnly)
+                .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase);
 
-        return null;
+            catalogFiles.AddRange(providerDirectoryFiles);
+        }
+
+        return catalogFiles;
     }
 
     private static string? TryReadPricingFile(string provider)

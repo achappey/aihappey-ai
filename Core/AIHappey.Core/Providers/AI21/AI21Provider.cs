@@ -43,8 +43,6 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
 
-    // Implemented in AI21Provider.Chat.cs
-
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
