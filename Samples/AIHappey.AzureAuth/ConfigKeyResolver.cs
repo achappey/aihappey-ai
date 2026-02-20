@@ -137,6 +137,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "stepfun" => _config.StepFun?.ApiKey,
             "sealion" => _config.SEALION?.ApiKey,
             "tencenthunyuan" => _config.TencentHunyuan?.ApiKey,
+            "deapi" => _config.DeAPI?.ApiKey,
             _ => null
         };
 }

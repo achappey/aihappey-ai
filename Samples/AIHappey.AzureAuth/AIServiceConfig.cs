@@ -130,6 +130,7 @@ public class AIServiceConfig
     public ProviderConfig? StepFun { get; set; }
     public ProviderConfig? SEALION { get; set; }
     public ProviderConfig? TencentHunyuan { get; set; }
+    public ProviderConfig? DeAPI { get; set; }
 }
 
 public class ProviderConfig
