@@ -16,6 +16,14 @@
             "type": "language"
         },
         {
+            "id": "fireworks/accounts/fireworks/models/minimax-m2p5",
+            "object": "model",
+            "owned_by": "minimax",
+            "name": "MiniMax M2.5",
+            "context_window": 196600,
+            "type": "language"
+        },
+        {
             "id": "fireworks/accounts/fireworks/models/glm-5",
             "object": "model",
             "owned_by": "z.ai",

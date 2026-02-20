@@ -5,6 +5,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Deepbricks;
 
@@ -31,27 +32,28 @@ public partial class DeepbricksProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return await CompleteChatCoreAsync(options, cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return CompleteChatStreamingCoreAsync(options, cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Deepbricks).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

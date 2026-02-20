@@ -3,6 +3,8 @@ using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.CloudRift;
 
@@ -34,6 +36,9 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
