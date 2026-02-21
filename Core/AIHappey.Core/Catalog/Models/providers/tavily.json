@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tavily/mini",
+      "object": "model",
+      "owned_by": "Tavily",
+      "name": "Tavily Research Mini",
+      "type": "language",
+      "description": "mini is optimized for targeted, efficient research and works best for narrow or well-scoped questions."
+    },
+    {
+      "id": "tavily/pro",
+      "object": "model",
+      "owned_by": "Tavily",
+      "name": "Tavily Research Pro",
+      "type": "language",
+      "description": "pro provides comprehensive, multi-angle research and is suited for complex topics that span multiple subtopics or domains."
+    }
+  ]
+}

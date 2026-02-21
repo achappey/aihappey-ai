@@ -139,6 +139,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "tencenthunyuan" => _config.TencentHunyuan?.ApiKey,
             "deapi" => _config.DeAPI?.ApiKey,
             "infomaniak" => _config.Infomaniak?.ApiKey,
+            "tavily" => _config.Tavily?.ApiKey,
             _ => null
         };
 }
