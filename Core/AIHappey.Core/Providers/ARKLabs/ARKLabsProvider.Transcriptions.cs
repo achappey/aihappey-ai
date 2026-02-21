@@ -13,7 +13,7 @@ namespace AIHappey.Core.Providers.ARKLabs;
 
 public partial class ARKLabsProvider
 {
-    private async Task<TranscriptionResponse> TranscriptionRequestInternal(
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {

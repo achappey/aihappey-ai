@@ -134,7 +134,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["tencenthunyuan"] = "X-TencentHunyuan-Key",
             ["deapi"] = "X-DeAPI-Key",
             ["infomaniak"] = "X-Infomaniak-Key",
-            ["tavily"] = "X-Tavily-Key"
+            ["tavily"] = "X-Tavily-Key",
+            ["opencode"] = "X-OpenCode-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

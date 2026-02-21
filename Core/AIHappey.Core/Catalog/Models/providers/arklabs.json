@@ -56,6 +56,27 @@
       "owned_by": "stabilityai",
       "name": "Stable Diffusion 3.5 Large",
       "type": "image"
+    },
+    {
+      "id": "arklabs/tts-1",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "tts-1",
+      "type": "speech"
+    },
+    {
+      "id": "arklabs/tts-1-hd",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "tts-1-hd",
+      "type": "speech"
+    },
+    {
+      "id": "arklabs/gpt-4o-mini-tts",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "gpt-4o-mini-tts",
+      "type": "speech"
     }
   ]
 }

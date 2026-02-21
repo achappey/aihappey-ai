@@ -5,20 +5,21 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Responses.Extensions;
 
-namespace AIHappey.Core.Providers.Cirrascale;
+namespace AIHappey.Core.Providers.OpenCode;
 
-public partial class CirrascaleProvider : IModelProvider
+public partial class OpenCodeProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    public CirrascaleProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public OpenCodeProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://aisuite.cirrascale.com/apis/");
+        _client.BaseAddress = new Uri("https://opencode.ai/zen/");
     }
 
     private void ApplyAuthHeader()
@@ -26,7 +27,7 @@ public partial class CirrascaleProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Cirrascale)} API key.");
+            throw new InvalidOperationException($"No {nameof(OpenCode)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -36,9 +37,7 @@ public partial class CirrascaleProvider : IModelProvider
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options,
-             relativeUrl: "v2/chat/completions",
-             ct: cancellationToken);
+             options, ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -46,39 +45,49 @@ public partial class CirrascaleProvider : IModelProvider
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options,
-                    relativeUrl: "v2/chat/completions",
-                    ct: cancellationToken);
+                    options, ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(Cirrascale).ToLowerInvariant();
+    public string GetIdentifier() => nameof(OpenCode).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.GetResponses(
+             options, ct: cancellationToken);
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.GetResponsesUpdates(
+                    options, ct: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

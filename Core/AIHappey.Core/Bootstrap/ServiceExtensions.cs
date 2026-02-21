@@ -133,6 +133,7 @@ using AIHappey.Core.Providers.TencentHunyuan;
 using AIHappey.Core.Providers.DeAPI;
 using AIHappey.Core.Providers.Infomaniak;
 using AIHappey.Core.Providers.Tavily;
+using AIHappey.Core.Providers.OpenCode;
 
 namespace AIHappey.Core.AI;
 
@@ -273,6 +274,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, DeAPIProvider>();
         services.AddSingleton<IModelProvider, InfomaniakProvider>();
         services.AddSingleton<IModelProvider, TavilyProvider>();
+        services.AddSingleton<IModelProvider, OpenCodeProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

@@ -140,6 +140,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "deapi" => _config.DeAPI?.ApiKey,
             "infomaniak" => _config.Infomaniak?.ApiKey,
             "tavily" => _config.Tavily?.ApiKey,
+            "opencode" => _config.OpenCode?.ApiKey,
             _ => null
         };
 }
