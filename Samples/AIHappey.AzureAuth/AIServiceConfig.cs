@@ -131,6 +131,7 @@ public class AIServiceConfig
     public ProviderConfig? SEALION { get; set; }
     public ProviderConfig? TencentHunyuan { get; set; }
     public ProviderConfig? DeAPI { get; set; }
+    public ProviderConfig? Infomaniak { get; set; }
 }
 
 public class ProviderConfig

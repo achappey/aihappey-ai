@@ -132,7 +132,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["stepfun"] = "X-StepFun-Key",
             ["sealion"] = "X-SEALION-Key",
             ["tencenthunyuan"] = "X-TencentHunyuan-Key",
-            ["deapi"] = "X-DeAPI-Key"
+            ["deapi"] = "X-DeAPI-Key",
+            ["infomaniak"] = "X-Infomaniak-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

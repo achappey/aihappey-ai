@@ -138,6 +138,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "sealion" => _config.SEALION?.ApiKey,
             "tencenthunyuan" => _config.TencentHunyuan?.ApiKey,
             "deapi" => _config.DeAPI?.ApiKey,
+            "infomaniak" => _config.Infomaniak?.ApiKey,
             _ => null
         };
 }
