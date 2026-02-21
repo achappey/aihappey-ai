@@ -85,10 +85,10 @@ public class ProviderTools
                     }, JsonSerializerOptions.Web)}"),
             };
 
-            return new CallToolResult()
+            return await Task.FromResult(new CallToolResult()
             {
                 StructuredContent = JsonNode.Parse(schema.ToJson())
-            };
+            });
         });
 
     [Description("List all available AI provider identifiers.")]
@@ -103,13 +103,13 @@ public class ProviderTools
     {
         var providers = services.GetServices<IModelProvider>();
 
-        return new CallToolResult()
+        return await Task.FromResult(new CallToolResult()
         {
             StructuredContent = JsonNode.Parse(JsonSerializer.Serialize(new
             {
                 providers = providers.Select(a => a.GetIdentifier())
             }, JsonSerializerOptions.Web))
-        };
+        });
     }
 
     [Description("Get AI models from all providers.")]

@@ -49,7 +49,7 @@ public partial class HorayAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(HorayAI).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

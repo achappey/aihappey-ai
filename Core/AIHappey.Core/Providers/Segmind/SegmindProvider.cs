@@ -35,7 +35,7 @@ public partial class SegmindProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
          => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
-    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -47,7 +47,7 @@ public partial class SegmindProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Segmind).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <NoWarn>OPENAI001</NoWarn>
+    <NoWarn>OPENAI001;CS1998;NU1608</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -36,7 +36,7 @@ public partial class GladiaProvider : IModelProvider
     }
 
 
-    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

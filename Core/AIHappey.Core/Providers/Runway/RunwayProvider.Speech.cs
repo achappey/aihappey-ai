@@ -249,7 +249,7 @@ public partial class RunwayProvider
                 return uri;
 
             // Fallback to stringification
-            var s = first.ToString();
+            var s = first?.ToString();
             return string.IsNullOrWhiteSpace(s) ? null : s;
         }
 

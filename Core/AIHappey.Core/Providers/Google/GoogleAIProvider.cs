@@ -25,7 +25,7 @@ public partial class GoogleAIProvider(IApiKeyResolver keyResolver, ILogger<Googl
 
     
 
-    public async Task<UIMessagePart> CompleteAsync(ChatCompletionOptions request, CancellationToken cancellationToken = default)
+    public Task<UIMessagePart> CompleteAsync(ChatCompletionOptions request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

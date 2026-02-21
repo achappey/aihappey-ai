@@ -16,7 +16,7 @@ public partial class AnthropicProvider
         throw new NotImplementedException();
     }
 
-    public async Task<UIMessagePart> CompleteAsync(ChatCompletionOptions chatRequest,
+    public Task<UIMessagePart> CompleteAsync(ChatCompletionOptions chatRequest,
      CancellationToken cancellationToken = default)
     {
         var client = new ANT.AnthropicClient(

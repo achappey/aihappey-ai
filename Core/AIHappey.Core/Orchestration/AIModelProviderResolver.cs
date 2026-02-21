@@ -169,7 +169,7 @@ public class AIModelProviderResolver(
                 || !string.IsNullOrEmpty(apiKeyResolver.Resolve(provKey))));
 
         if (currentProv != null)
-            return currentProv;
+            return await Task.FromResult(currentProv);
 
         throw new NotSupportedException($"No provider found for model '{model}'.");
     }

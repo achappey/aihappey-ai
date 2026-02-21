@@ -45,7 +45,7 @@ public partial class JSON2VideoProvider : IModelProvider
 
     public string GetIdentifier() => nameof(JSON2Video).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

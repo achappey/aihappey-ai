@@ -8,7 +8,7 @@ public partial class GTranslateProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        
+
         return await ListTranslationModelsAsync(cancellationToken);
     }
 
@@ -59,7 +59,7 @@ public partial class GTranslateProvider
             Description = a.Value.NativeName,
         }).ToList();
 
-        return [.. yandexModels, .. googleModels, .. google2Models, .. bingModels, .. microsoftModels];
+        return await Task.FromResult<IEnumerable<Model>>([.. yandexModels, .. googleModels, .. google2Models, .. bingModels, .. microsoftModels]);
     }
 }
 

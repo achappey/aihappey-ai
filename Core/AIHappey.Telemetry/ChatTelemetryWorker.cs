@@ -46,7 +46,9 @@ public record ChatTelemetryRecord(
         {
             var existing = await db.Tools.Where(t => toolNames.Contains(t.ToolName)).ToListAsync(ct);
             var existingSet = existing.Select(t => t.ToolName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var newOnes = toolNames.Where(n => !existingSet.Contains(n)).Select(n => new AIHappey.Telemetry.Models.Tool { ToolName = n });
+            var newOnes = toolNames.OfType<string>()
+                .Where(n => !existingSet.Contains(n))
+                .Select(n => new AIHappey.Telemetry.Models.Tool { ToolName = n });
             db.Tools.AddRange(newOnes);
             tools.AddRange(existing);
             tools.AddRange(newOnes);

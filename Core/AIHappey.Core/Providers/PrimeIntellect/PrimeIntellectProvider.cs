@@ -50,7 +50,7 @@ public partial class PrimeIntellectProvider : IModelProvider
 
     public string GetIdentifier() => nameof(PrimeIntellect).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
