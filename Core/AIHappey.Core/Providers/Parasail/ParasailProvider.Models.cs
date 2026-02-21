@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using System.Globalization;
 
 namespace AIHappey.Core.Providers.Parasail;
 
@@ -9,7 +8,7 @@ public partial class ParasailProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-                if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
 
@@ -48,6 +47,8 @@ public partial class ParasailProvider
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);
         }
+
+        models.AddRange(await this.ListModels(_keyResolver.Resolve(GetIdentifier())));
 
         return models;
     }

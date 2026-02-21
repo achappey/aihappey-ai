@@ -51,7 +51,12 @@ public partial class ParasailProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var imageModels = await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+
+        if (imageModels.Any(a => a.Id.EndsWith(chatRequest.GetModel()!, StringComparison.OrdinalIgnoreCase)))
+            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
+
+        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -74,9 +79,6 @@ public partial class ParasailProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-        => throw new NotSupportedException();
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)

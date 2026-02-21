@@ -1,0 +1,17 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "parasail/Shitao/OmniGen-v1",
+      "object": "model",
+      "name": "Shitao/OmniGen-v1",
+      "type": "image"
+    },
+    {
+      "id": "parasail/Qwen/Qwen-Image-Edit",
+      "object": "model",
+      "name": "Qwen/Qwen-Image-Edit",
+      "type": "image"
+    }
+  ]
+}
