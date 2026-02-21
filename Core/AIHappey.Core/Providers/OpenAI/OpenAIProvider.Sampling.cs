@@ -150,7 +150,7 @@ public partial class OpenAIProvider
                     {
                         Uri = $"https://api.openai.com/v1/containers/{containerId}/files/{fileId}",
                         MimeType = contentType,
-                        Blob = Convert.ToBase64String(fileContant.Value.ToArray())
+                        Blob = fileContant.Value.ToArray()
                     }
                 });
             }

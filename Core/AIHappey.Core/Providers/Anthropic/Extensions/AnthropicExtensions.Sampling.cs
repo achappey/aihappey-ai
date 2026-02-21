@@ -40,7 +40,7 @@ public static partial class AnthropicExtensions
     public static ImageSource ToImageSource(this ImageContentBlock imageContentBlock) =>
     new()
     {
-        Data = imageContentBlock.Data,
+        Data = Convert.ToBase64String(imageContentBlock.Data.ToArray()),
         MediaType = imageContentBlock.MimeType
     };
 

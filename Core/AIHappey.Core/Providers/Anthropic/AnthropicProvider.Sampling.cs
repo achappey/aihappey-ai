@@ -59,7 +59,7 @@ public partial class AnthropicProvider
                             {
                                 Uri = "https://api.anthropic.com/v1/files/" + outputContent.FileId,
                                 MimeType = fileItem.MimeType,
-                                Blob = Convert.ToBase64String(fileDownload)
+                                Blob = fileDownload
                             }
                         });
                     }

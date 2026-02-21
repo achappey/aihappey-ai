@@ -137,7 +137,7 @@ public static class GoogleSamplingExtensions
             InlineData = new()
             {
                 MimeType = imageContentBlock.MimeType,
-                Data = imageContentBlock.Data
+                Data = Convert.ToBase64String(imageContentBlock.Data.ToArray())
             }
         };
 }

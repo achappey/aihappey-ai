@@ -52,7 +52,7 @@ public partial class GoogleAIProvider
             .Select(a => a?.MimeType.StartsWith("image/") == true ? new ImageContentBlock()
             {
                 MimeType = a?.MimeType!,
-                Data = a?.Data!
+                Data = Convert.FromBase64String(a?.Data!)
             } : (ContentBlock)new EmbeddedResourceBlock()
             {
                 Resource = a?.MimeType.StartsWith("text/") == true
@@ -64,7 +64,7 @@ public partial class GoogleAIProvider
                         Uri = FILES_API
                     } : new BlobResourceContents()
                     {
-                        Blob = a?.Data!,
+                        Blob = Convert.FromBase64String(a?.Data!),
                         MimeType = a?.MimeType,
                         Uri = FILES_API
                     }

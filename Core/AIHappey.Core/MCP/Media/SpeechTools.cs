@@ -81,7 +81,7 @@ public class SpeechTools
                     new AudioContentBlock
                     {
                         MimeType = result.Audio.MimeType,
-                        Data = result.Audio.Base64
+                        Data = Convert.FromBase64String(result.Audio.Base64)
                     }
                 ],
                 StructuredContent = structured

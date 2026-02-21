@@ -164,7 +164,7 @@ public partial class BytezProvider
                     {
                         Uri = "bytez://video/output",
                         MimeType = firstVideo.MediaType,
-                        Blob = firstVideo.Data
+                        Blob = Convert.FromBase64String(firstVideo.Data)
                     }
                 }
             ]

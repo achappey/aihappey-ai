@@ -119,7 +119,7 @@ public static class ModelProviderImageExtensions
             Files = inputImages.Select(a => new ImageFile()
             {
                 MediaType = a.MimeType,
-                Data = a.Data
+                Data = Convert.ToBase64String(a.Data.ToArray())
             })
         };
 
@@ -148,7 +148,7 @@ public static class ModelProviderImageExtensions
              => new()
              {
                  MimeType = image.ExtractMimeTypeAndBase64().MimeType!,
-                 Data = image.ExtractMimeTypeAndBase64().Base64!
+                 Data = Convert.FromBase64String(image.ExtractMimeTypeAndBase64().Base64!)
              };
 
     public static CreateMessageResult ToCreateMessageResult(

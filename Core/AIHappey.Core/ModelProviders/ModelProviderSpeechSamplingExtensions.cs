@@ -47,7 +47,7 @@ public static class ModelProviderSpeechSamplingExtensions
             => new()
             {
                 MimeType = audio.MimeType,
-                Data = audio.Base64
+                Data = Convert.FromBase64String(audio.Base64)
             };
 
     public static CreateMessageResult ToCreateMessageResult(

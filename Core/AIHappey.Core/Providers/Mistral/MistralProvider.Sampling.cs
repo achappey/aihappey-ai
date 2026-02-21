@@ -171,7 +171,6 @@ public partial class MistralProvider
                                 if (!fileResp.IsSuccessStatusCode) continue;
 
                                 var bytes = await fileResp.Content.ReadAsByteArrayAsync(cancellationToken);
-                                var base64 = Convert.ToBase64String(bytes);
 
                                 contentBlocks.Add(new EmbeddedResourceBlock
                                 {
@@ -179,7 +178,7 @@ public partial class MistralProvider
                                     {
                                         Uri = $"https://api.mistral.ai/v1/files/{fileId}",
                                         MimeType = mime,
-                                        Blob = base64
+                                        Blob = bytes
                                     }
                                 });
                                 // If we got a file, prefer returning it (you can still keep text in meta if you want)

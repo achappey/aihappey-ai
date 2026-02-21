@@ -46,6 +46,9 @@ public static class ImageExtensions
         this string data, string mimeType) => $"data:{mimeType};base64,{data}";
 
     public static string ToDataUrl(
+        this ReadOnlyMemory<byte> data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data.ToArray())}";
+
+    public static string ToDataUrl(
         this BinaryData data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data)}";
 
     public static ImageFile ToImageFile(

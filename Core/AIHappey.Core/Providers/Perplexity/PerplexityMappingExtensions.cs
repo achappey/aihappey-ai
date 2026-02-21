@@ -1,3 +1,4 @@
+using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.Perplexity.Models;
 using AIHappey.Vercel.Models;
@@ -131,26 +132,16 @@ public static class PerplexityMappingExtensions
             }
             else if (content is ImageContentBlock imageContentBlock)
             {
-                if (imageContentBlock.MimeType is not null
-                                   && imageContentBlock.MimeType
-                                       .StartsWith("image/", StringComparison.OrdinalIgnoreCase)
-                                   && imageContentBlock.Data is not null
-                                   && imageContentBlock.Data
-                                       .StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                contentParts.Add(new PerplexityImageUrlContent
                 {
-                    contentParts.Add(new PerplexityImageUrlContent
+                    Url = new PerplexityUrlItem
                     {
-                        Url = new PerplexityUrlItem
-                        {
-                            Url = imageContentBlock.Data
-                        }
-                    });
-                }
+                        Url = Convert.ToBase64String(imageContentBlock.Data.ToArray()).ToDataUrl(imageContentBlock.MimeType)
+                    }
+                });
             }
             else if (content is EmbeddedResourceBlock embeddedResourceBlock)
             {
-
-
                 if (embeddedResourceBlock.Resource.MimeType is not null
                                && SupportedFileTypes.Contains(embeddedResourceBlock.Resource.MimeType)
                                && embeddedResourceBlock.Resource.Uri is not null

@@ -37,7 +37,7 @@ public static class ModelContextExtensions
       {
          var json = tip.Output.ToString();
          var typed = JsonSerializer.Deserialize<CallToolResult>(json!,
-             JsonSerializerOptions.Web);  
+             JsonSerializerOptions.Web);
 
          if (typed!.Content.Any() == true
             || typed.StructuredContent != null

@@ -14,7 +14,7 @@ public static class ResponseExtensions
 {
     public static ImageContentBlock ToImageContentBlock(this ImageGenerationCallResponseItem imageGenerationCallResponseItem) => new()
     {
-        Data = Convert.ToBase64String(imageGenerationCallResponseItem.ImageResultBytes),
+        Data = imageGenerationCallResponseItem.ImageResultBytes,
         MimeType = MediaTypeNames.Image.Png
     };
 
@@ -226,7 +226,7 @@ public static class ResponseExtensions
                     Content = [new EmbeddedResourceBlock() {
                         Resource = new BlobResourceContents() {
                             Uri = $"file://{cfc.Filename!}",
-                            Blob = Convert.ToBase64String(content.Value),
+                            Blob = content.Value,
                             MimeType = contentType,
                         }
                       }]

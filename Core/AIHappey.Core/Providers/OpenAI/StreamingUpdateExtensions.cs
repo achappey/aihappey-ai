@@ -116,9 +116,10 @@ public static class StreamingUpdateExtensions
                         CodeInterpreterCallLogsOutput l =>
                             [l.Logs.ToTextContentBlock()],
                         CodeInterpreterCallImageOutput i =>
-                            [new ImageContentBlock {
+                            [new ResourceLinkBlock {
                                 MimeType = MediaTypeNames.Image.Png,
-                                Data = i.ImageUri.ToString() }],
+                                Name = Path.GetFileName(i.ImageUri.ToString()),
+                                Uri = i.ImageUri.ToString() }],
                         _ => Array.Empty<ContentBlock>()
                     })
                 ];

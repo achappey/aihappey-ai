@@ -18,7 +18,7 @@ public static class SamplingMessageExtensions
         if (contentBlock is ImageContentBlock imageContentBlock)
         {
             return ResponseContentPart.CreateInputImagePart(
-                            BinaryData.FromBytes(Convert.FromBase64String(imageContentBlock.Data)),
+                            BinaryData.FromBytes(imageContentBlock.Data),
                             imageContentBlock.MimeType,
                             ResponseImageDetailLevel.High
                         );
