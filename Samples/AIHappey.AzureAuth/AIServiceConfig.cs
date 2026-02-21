@@ -134,6 +134,8 @@ public class AIServiceConfig
     public ProviderConfig? Infomaniak { get; set; }
     public ProviderConfig? Tavily { get; set; }
     public ProviderConfig? OpenCode { get; set; }
+    public ProviderConfig? Haimaker { get; set; }
+    public ProviderConfig? Straico { get; set; }
 }
 
 public class ProviderConfig

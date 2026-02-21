@@ -1,0 +1,200 @@
+{
+  "opencode/big-pickle": {
+    "pricing": {
+      "input": "0",
+      "output": "0"
+    }
+  },
+  "opencode/minimax-m2.5-free": {
+    "pricing": {
+      "input": "0",
+      "output": "0"
+    }
+  },
+  "opencode/minimax-m2.5": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000012"
+    }
+  },
+  "opencode/minimax-m2.1": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000012"
+    }
+  },
+  "opencode/glm-5-free": {
+    "pricing": {
+      "input": "0",
+      "output": "0"
+    }
+  },
+  "opencode/glm-5": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.0000032"
+    }
+  },
+  "opencode/glm-4.7": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.0000022"
+    }
+  },
+  "opencode/glm-4.6": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.0000022"
+    }
+  },
+  "opencode/kimi-k2.5-free": {
+    "pricing": {
+      "input": "0",
+      "output": "0"
+    }
+  },
+  "opencode/kimi-k2.5": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.000003"
+    }
+  },
+  "opencode/kimi-k2-thinking": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.0000025"
+    }
+  },
+  "opencode/kimi-k2": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.0000025"
+    }
+  },
+  "opencode/qwen3-coder": {
+    "pricing": {
+      "input": "0.00000045",
+      "output": "0.0000015"
+    }
+  },
+  "opencode/claude-opus-4-6": {
+    "pricing": {
+      "input": "0.000005",
+      "output": "0.000025"
+    }
+  },
+  "opencode/claude-opus-4-5": {
+    "pricing": {
+      "input": "0.000005",
+      "output": "0.000025"
+    }
+  },
+  "opencode/claude-opus-4-1": {
+    "pricing": {
+      "input": "0.000015",
+      "output": "0.000075"
+    }
+  },
+  "opencode/claude-sonnet-4-6": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000015"
+    }
+  },
+  "opencode/claude-sonnet-4-5": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000015"
+    }
+  },
+  "opencode/claude-sonnet-4": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000015"
+    }
+  },
+  "opencode/claude-haiku-4-5": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000005"
+    }
+  },
+  "opencode/claude-3-5-haiku": {
+    "pricing": {
+      "input": "0.0000008",
+      "output": "0.000004"
+    }
+  },
+  "opencode/gemini-3.1-pro": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000012"
+    }
+  },
+  "opencode/gemini-3-pro": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000012"
+    }
+  },
+  "opencode/gemini-3-flash": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.000003"
+    }
+  },
+  "opencode/gpt-5.2": {
+    "pricing": {
+      "input": "0.00000175",
+      "output": "0.000014"
+    }
+  },
+  "opencode/gpt-5.2-codex": {
+    "pricing": {
+      "input": "0.00000175",
+      "output": "0.000014"
+    }
+  },
+  "opencode/gpt-5.1": {
+    "pricing": {
+      "input": "0.00000107",
+      "output": "0.0000085"
+    }
+  },
+  "opencode/gpt-5.1-codex": {
+    "pricing": {
+      "input": "0.00000107",
+      "output": "0.0000085"
+    }
+  },
+  "opencode/gpt-5.1-codex-max": {
+    "pricing": {
+      "input": "0.00000125",
+      "output": "0.00001"
+    }
+  },
+  "opencode/gpt-5.1-codex-mini": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.000002"
+    }
+  },
+  "opencode/gpt-5": {
+    "pricing": {
+      "input": "0.00000107",
+      "output": "0.0000085"
+    }
+  },
+  "opencode/gpt-5-codex": {
+    "pricing": {
+      "input": "0.00000107",
+      "output": "0.0000085"
+    }
+  },
+  "opencode/gpt-5-nano": {
+    "pricing": {
+      "input": "0",
+      "output": "0"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "haimaker/openai/gpt-4o-mini-transcribe",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4o-mini-transcribe",
+            "type": "transcription",
+            "description": "GPT-4o Mini audio transcription model."
+        },
+        {
+            "id": "haimaker/openai/gpt-4o-transcribe",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4o-transcribe",
+            "type": "transcription",
+            "description": "GPT-4o audio transcription model."
+        },
+        {
+            "id": "haimaker/openai/gpt-4o-transcribe-diarize",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4o-transcribe-diarize",
+            "type": "transcription",
+            "description": "GPT-4o audio transcription model with speaker diarization."
+        },
+        {
+            "id": "haimaker/openai/whisper-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/whisper-1",
+            "type": "transcription",
+            "description": "Whisper v1 audio transcription model."
+        }
+    ]
+}

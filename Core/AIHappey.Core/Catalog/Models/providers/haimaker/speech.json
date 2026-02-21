@@ -1,0 +1,29 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "haimaker/openai/gpt-4o-mini-tts",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4o-mini-tts",
+            "type": "speech",
+            "description": "GPT-4o Mini Text-to-Speech model."
+        },
+        {
+            "id": "haimaker/openai/tts-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/tts-1",
+            "type": "speech",
+            "description": "OpenAI TTS-1 text-to-speech model."
+        },
+        {
+            "id": "haimaker/openai/tts-1-hd",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/tts-1-hd",
+            "type": "speech",
+            "description": "OpenAI TTS-1 HD text-to-speech model."
+        }
+    ]
+}

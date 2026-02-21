@@ -135,7 +135,9 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["deapi"] = "X-DeAPI-Key",
             ["infomaniak"] = "X-Infomaniak-Key",
             ["tavily"] = "X-Tavily-Key",
-            ["opencode"] = "X-OpenCode-Key"
+            ["opencode"] = "X-OpenCode-Key",
+            ["haimaker"] = "X-Haimaker-Key",
+            ["straico"] = "X-Straico-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

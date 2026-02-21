@@ -1,0 +1,152 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "deepinfra/Bria/Bria-3.2",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria-3.2",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Bria/Bria-3.2-vector",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria-3.2-vector",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Bria/fibo_edit",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "fibo_edit",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Bria/fibo",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "fibo",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Bria/enhance",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "enhance",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Bria/expand",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "expand",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Bria/blur_background",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "blur background",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Bria/erase_foreground",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "erase foreground",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/ByteDance/Seedream-4",
+            "object": "model",
+            "owned_by": "ByteDance",
+            "name": "Seedream-4",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-2-klein-4b",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-2-klein-4b",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-2-klein-9b",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-2-klein-9b",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-1-dev",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-1-dev",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-1-schnell",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-1-schnell",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-1.1-pro",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-1.1-pro",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-2-dev",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-2-dev",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-2-pro",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-2-pro",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-2-max",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-2-max",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX-pro",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX-pro",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/black-forest-labs/FLUX.1-Kontext-dev",
+            "object": "model",
+            "owned_by": "BlackForestLabs",
+            "name": "FLUX.1-Kontext-dev",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/stabilityai/sdxl-turbo",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "sdxl-turbo",
+            "type": "image"
+        },
+        {
+            "id": "deepinfra/Qwen/Qwen-Image-Edit",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen-Image-Edit",
+            "type": "image"
+        }
+    ]
+}

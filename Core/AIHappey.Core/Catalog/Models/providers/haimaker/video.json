@@ -1,0 +1,21 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "haimaker/openai/sora-2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/sora-2",
+            "type": "video",
+            "description": "Sora 2 video generation model."
+        },
+        {
+            "id": "haimaker/openai/sora-2-pro",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/sora-2-pro",
+            "type": "video",
+            "description": "Sora 2 Pro video generation model."
+        }
+    ]
+}

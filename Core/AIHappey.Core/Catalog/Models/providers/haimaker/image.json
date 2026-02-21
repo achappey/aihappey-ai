@@ -1,0 +1,485 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "haimaker/openai/256-x-256/dall-e-2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/256-x-256/dall-e-2",
+            "type": "image",
+            "description": "OpenAI DALL·E 2 image generation (256×256)."
+        },
+        {
+            "id": "haimaker/openai/512-x-512/dall-e-2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/512-x-512/dall-e-2",
+            "type": "image",
+            "description": "OpenAI DALL·E 2 image generation (512×512)."
+        },
+        {
+            "id": "haimaker/openai/1024-x-1024/dall-e-2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/1024-x-1024/dall-e-2",
+            "type": "image",
+            "description": "OpenAI DALL·E 2 image generation (1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/1024-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/1024-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (1024×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/1024-x-1536/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/1024-x-1536/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (1024×1536) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/1536-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/1536-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (1536×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/dall-e-2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/dall-e-2",
+            "type": "image",
+            "description": "DALL·E 2 image generation."
+        },
+        {
+            "id": "haimaker/openai/dall-e-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/dall-e-3",
+            "type": "image",
+            "description": "DALL·E 3 image generation."
+        },
+        {
+            "id": "haimaker/openai/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1."
+        },
+        {
+            "id": "haimaker/openai/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-image-1-mini",
+            "type": "image",
+            "description": "GPT Image 1 Mini."
+        },
+        {
+            "id": "haimaker/openai/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5."
+        },
+        {
+            "id": "haimaker/openai/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/hd/1024-x-1024/dall-e-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/hd/1024-x-1024/dall-e-3",
+            "type": "image",
+            "description": "DALL·E 3 HD (1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/hd/1024-x-1792/dall-e-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/hd/1024-x-1792/dall-e-3",
+            "type": "image",
+            "description": "DALL·E 3 HD (1024×1792)."
+        },
+        {
+            "id": "haimaker/openai/hd/1792-x-1024/dall-e-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/hd/1792-x-1024/dall-e-3",
+            "type": "image",
+            "description": "DALL·E 3 HD (1792×1024)."
+        },
+        {
+            "id": "haimaker/openai/high/1024-x-1024/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1024-x-1024/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (High, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/high/1024-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1024-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (High, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/high/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (High, 1024×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/high/1024-x-1536/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1024-x-1536/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (High, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/high/1024-x-1536/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1024-x-1536/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (High, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/high/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (High, 1024×1536) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/high/1536-x-1024/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1536-x-1024/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (High, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/high/1536-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1536-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (High, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/high/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/high/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (High, 1536×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1024/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1024/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (Low, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1024/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1024/gpt-image-1-mini",
+            "type": "image",
+            "description": "GPT Image 1 Mini (Low, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Low, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Low, 1024×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1536/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1536/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (Low, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1536/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1536/gpt-image-1-mini",
+            "type": "image",
+            "description": "GPT Image 1 Mini (Low, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1536/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1536/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Low, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/low/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Low, 1024×1536) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/low/1536-x-1024/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1536-x-1024/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (Low, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/low/1536-x-1024/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1536-x-1024/gpt-image-1-mini",
+            "type": "image",
+            "description": "GPT Image 1 Mini (Low, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/low/1536-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1536-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Low, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/low/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/low/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Low, 1536×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1024/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1024/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (Medium, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1024/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1024/gpt-image-1-mini",
+            "type": "image",
+            "description": "GPT Image 1 Mini (Medium, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Medium, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Medium, 1024×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1536/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1536/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (Medium, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1536/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1536/gpt-image-1-mini",
+            "type": "image",
+            "description": "GPT Image 1 Mini (Medium, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1536/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1536/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Medium, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/medium/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Medium, 1024×1536) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/medium/1536-x-1024/gpt-image-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1536-x-1024/gpt-image-1",
+            "type": "image",
+            "description": "GPT Image 1 (Medium, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/medium/1536-x-1024/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1536-x-1024/gpt-image-1-mini",
+            "type": "image",
+            "description": "GPT Image 1 Mini (Medium, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/medium/1536-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1536-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Medium, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/medium/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/medium/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Medium, 1536×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/standard/1024-x-1024/dall-e-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1024-x-1024/dall-e-3",
+            "type": "image",
+            "description": "DALL·E 3 (Standard, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/standard/1024-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1024-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Standard, 1024×1024)."
+        },
+        {
+            "id": "haimaker/openai/standard/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1024-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Standard, 1024×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/standard/1024-x-1536/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1024-x-1536/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Standard, 1024×1536)."
+        },
+        {
+            "id": "haimaker/openai/standard/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1024-x-1536/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Standard, 1024×1536) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/standard/1024-x-1792/dall-e-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1024-x-1792/dall-e-3",
+            "type": "image",
+            "description": "DALL·E 3 (Standard, 1024×1792)."
+        },
+        {
+            "id": "haimaker/openai/standard/1536-x-1024/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1536-x-1024/gpt-image-1.5",
+            "type": "image",
+            "description": "GPT Image 1.5 (Standard, 1536×1024)."
+        },
+        {
+            "id": "haimaker/openai/standard/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1536-x-1024/gpt-image-1.5-2025-12-16",
+            "type": "image",
+            "description": "GPT Image 1.5 (Standard, 1536×1024) – 2025-12-16."
+        },
+        {
+            "id": "haimaker/openai/standard/1792-x-1024/dall-e-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/standard/1792-x-1024/dall-e-3",
+            "type": "image",
+            "description": "DALL·E 3 (Standard, 1792×1024)."
+        }
+    ]
+}

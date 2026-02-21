@@ -9,6 +9,13 @@
             "type": "language"
         },
         {
+            "id": "deepinfra/zai-org/GLM-5",
+            "object": "model",
+            "owned_by": "Z.ai",
+            "name": "GLM-5",
+            "type": "language"
+        },
+        {
             "id": "deepinfra/zai-org/GLM-4.7-Flash",
             "object": "model",
             "owned_by": "Z.ai",
@@ -198,6 +205,13 @@
             "type": "language"
         },
         {
+            "id": "deepinfra/MiniMaxAI/MiniMax-M2.5",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax-M2.5",
+            "type": "language"
+        },
+        {
             "id": "deepinfra/MiniMaxAI/MiniMax-M2",
             "object": "model",
             "owned_by": "MiniMax",
@@ -294,230 +308,6 @@
             "owned_by": "Mistral",
             "name": "Mistral-Small-24B-Instruct-2501",
             "type": "language"
-        },
-        {
-            "id": "deepinfra/Bria/Bria-3.2",
-            "object": "model",
-            "owned_by": "Bria",
-            "name": "Bria-3.2",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/Bria/Bria-3.2-vector",
-            "object": "model",
-            "owned_by": "Bria",
-            "name": "Bria-3.2-vector",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/Bria/fibo",
-            "object": "model",
-            "owned_by": "Bria",
-            "name": "fibo",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/Bria/enhance",
-            "object": "model",
-            "owned_by": "Bria",
-            "name": "enhance",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/Bria/expand",
-            "object": "model",
-            "owned_by": "Bria",
-            "name": "expand",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/Bria/blur_background",
-            "object": "model",
-            "owned_by": "Bria",
-            "name": "blur background",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/Bria/erase_foreground",
-            "object": "model",
-            "owned_by": "Bria",
-            "name": "erase foreground",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/ByteDance/Seedream-4",
-            "object": "model",
-            "owned_by": "ByteDance",
-            "name": "Seedream-4",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX-1-dev",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX-1-dev",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX-1-schnell",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX-1-schnell",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX-1.1-pro",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX-1.1-pro",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX-2-dev",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX-2-dev",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX-2-pro",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX-2-pro",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX-2-max",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX-2-max",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX-pro",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX-pro",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/black-forest-labs/FLUX.1-Kontext-dev",
-            "object": "model",
-            "owned_by": "BlackForestLabs",
-            "name": "FLUX.1-Kontext-dev",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/stabilityai/sdxl-turbo",
-            "object": "model",
-            "owned_by": "StabilityAI",
-            "name": "sdxl-turbo",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/Qwen/Qwen-Image-Edit",
-            "object": "model",
-            "owned_by": "Qwen",
-            "name": "Qwen-Image-Edit",
-            "type": "image"
-        },
-        {
-            "id": "deepinfra/ResembleAI/chatterbox-multilingual",
-            "object": "model",
-            "owned_by": "Resemble AI",
-            "name": "chatterbox-multilingual",
-            "type": "speech"
-        },
-        {
-            "id": "deepinfra/ResembleAI/chatterbox-turbo",
-            "object": "model",
-            "owned_by": "Resemble AI",
-            "name": "chatterbox-turbo",
-            "type": "speech"
-        },
-        {
-            "id": "deepinfra/hexgrad/Kokoro-82M",
-            "object": "model",
-            "owned_by": "Hexgrad",
-            "name": "Kokoro-82M",
-            "type": "speech"
-        },
-        {
-            "id": "deepinfra/sesame/csm-1b",
-            "object": "model",
-            "owned_by": "Sesame",
-            "name": "csm-1b",
-            "type": "speech"
-        },
-        {
-            "id": "deepinfra/canopylabs/orpheus-3b-0.1-ft",
-            "object": "model",
-            "owned_by": "Canopy Labs",
-            "name": "orpheus-3b-0.1-ft",
-            "type": "speech"
-        },
-        {
-            "id": "deepinfra/Zyphra/Zonos-v0.1-transformer",
-            "object": "model",
-            "owned_by": "Zyphra",
-            "name": "Zonos-v0.1-transformer",
-            "type": "speech"
-        },
-        {
-            "id": "deepinfra/Zyphra/Zonos-v0.1-hybrid",
-            "object": "model",
-            "owned_by": "Zyphra",
-            "name": "Zonos-v0.1-hybrid",
-            "type": "speech"
-        },
-        {
-            "id": "deepinfra/mistralai/Voxtral-Small-24B-2507",
-            "object": "model",
-            "owned_by": "Mistral",
-            "name": "Voxtral-Small-24B-2507",
-            "type": "transcription"
-        },
-        {
-            "id": "deepinfra/mistralai/Voxtral-Mini-3B-2507",
-            "object": "model",
-            "owned_by": "Mistral",
-            "name": "Voxtral-Mini-3B-2507",
-            "type": "transcription"
-        },
-        {
-            "id": "deepinfra/openai/whisper-large-v3-turbo",
-            "object": "model",
-            "owned_by": "OpenAI",
-            "name": "whisper-large-v3-turbo",
-            "type": "transcription"
-        },
-        {
-            "id": "deepinfra/openai/whisper-large-v3",
-            "object": "model",
-            "owned_by": "OpenAI",
-            "name": "whisper-large-v3",
-            "type": "transcription"
-        },
-        {
-            "id": "deepinfra/Qwen/Qwen3-Reranker-0.6B",
-            "object": "model",
-            "owned_by": "Qwen",
-            "name": "Qwen3-Reranker-0.6B",
-            "type": "reranking"
-        },
-        {
-            "id": "deepinfra/Qwen/Qwen3-Reranker-4B",
-            "object": "model",
-            "owned_by": "Qwen",
-            "name": "Qwen3-Reranker-4B",
-            "type": "reranking"
-        },
-        {
-            "id": "deepinfra/Qwen/Qwen3-Reranker-8B",
-            "object": "model",
-            "owned_by": "Qwen",
-            "name": "Qwen3-Reranker-8B",
-            "type": "reranking"
         },
         {
             "id": "deepinfra/nvidia/Llama-3.1-Nemotron-70B-Instruct",

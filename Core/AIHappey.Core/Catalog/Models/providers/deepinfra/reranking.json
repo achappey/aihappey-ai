@@ -1,0 +1,26 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "deepinfra/Qwen/Qwen3-Reranker-0.6B",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-Reranker-0.6B",
+            "type": "reranking"
+        },
+        {
+            "id": "deepinfra/Qwen/Qwen3-Reranker-4B",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-Reranker-4B",
+            "type": "reranking"
+        },
+        {
+            "id": "deepinfra/Qwen/Qwen3-Reranker-8B",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "Qwen3-Reranker-8B",
+            "type": "reranking"
+        }
+    ]
+}

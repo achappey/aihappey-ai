@@ -141,6 +141,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "infomaniak" => _config.Infomaniak?.ApiKey,
             "tavily" => _config.Tavily?.ApiKey,
             "opencode" => _config.OpenCode?.ApiKey,
+            "haimaker" => _config.Haimaker?.ApiKey,
+            "straico" => _config.Straico?.ApiKey,
             _ => null
         };
 }

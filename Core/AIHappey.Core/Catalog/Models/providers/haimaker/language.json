@@ -1,0 +1,2173 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "haimaker/anthropic/claude-2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-2",
+            "type": "language",
+            "description": "Claude 2 language model."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-5-haiku",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-5-haiku",
+            "type": "language",
+            "description": "Claude 3.5 Haiku language model."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-5-haiku-20241022",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-5-haiku-20241022",
+            "type": "language",
+            "description": "Claude 3.5 Haiku (2024-10-22)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-5-haiku-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-5-haiku-latest",
+            "type": "language",
+            "description": "Claude 3.5 Haiku latest."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-5-sonnet-20240620",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-5-sonnet-20240620",
+            "type": "language",
+            "description": "Claude 3.5 Sonnet (2024-06-20)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-5-sonnet-20241022",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-5-sonnet-20241022",
+            "type": "language",
+            "description": "Claude 3.5 Sonnet (2024-10-22)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-5-sonnet-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-5-sonnet-latest",
+            "type": "language",
+            "description": "Claude 3.5 Sonnet latest."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-7-sonnet-20250219",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-7-sonnet-20250219",
+            "type": "language",
+            "description": "Claude 3.7 Sonnet (2025-02-19)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-7-sonnet-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-7-sonnet-latest",
+            "type": "language",
+            "description": "Claude 3.7 Sonnet latest."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-haiku",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-haiku",
+            "type": "language",
+            "description": "Claude 3 Haiku."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-haiku-20240307",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-haiku-20240307",
+            "type": "language",
+            "description": "Claude 3 Haiku (2024-03-07)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-opus",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-opus",
+            "type": "language",
+            "description": "Claude 3 Opus."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-opus-20240229",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-opus-20240229",
+            "type": "language",
+            "description": "Claude 3 Opus (2024-02-29)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-3-opus-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-3-opus-latest",
+            "type": "language",
+            "description": "Claude 3 Opus latest."
+        },
+        {
+            "id": "haimaker/anthropic/claude-4-opus-20250514",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-4-opus-20250514",
+            "type": "language",
+            "description": "Claude 4 Opus (2025-05-14)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-4-sonnet-20250514",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-4-sonnet-20250514",
+            "type": "language",
+            "description": "Claude 4 Sonnet (2025-05-14)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-haiku-4-5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-haiku-4-5",
+            "type": "language",
+            "description": "Claude Haiku 4.5."
+        },
+        {
+            "id": "haimaker/anthropic/claude-haiku-4-5-20251001",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-haiku-4-5-20251001",
+            "type": "language",
+            "description": "Claude Haiku 4.5 (2025-10-01)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-haiku-4.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-haiku-4.5",
+            "type": "language",
+            "description": "Claude Haiku 4.5 extended context."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4",
+            "type": "language",
+            "description": "Claude Opus 4."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4-1",
+            "type": "language",
+            "description": "Claude Opus 4.1."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4-1-20250805",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4-1-20250805",
+            "type": "language",
+            "description": "Claude Opus 4.1 (2025-08-05)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4-5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4-5",
+            "type": "language",
+            "description": "Claude Opus 4.5."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4-5-20251101",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4-5-20251101",
+            "type": "language",
+            "description": "Claude Opus 4.5 (2025-11-01)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4-20250514",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4-20250514",
+            "type": "language",
+            "description": "Claude Opus 4 (2025-05-14)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4.1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4.1",
+            "type": "language",
+            "description": "Claude Opus 4.1 variant."
+        },
+        {
+            "id": "haimaker/anthropic/claude-opus-4.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-opus-4.5",
+            "type": "language",
+            "description": "Claude Opus 4.5 variant."
+        },
+        {
+            "id": "haimaker/anthropic/claude-sonnet-4",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-sonnet-4",
+            "type": "language",
+            "description": "Claude Sonnet 4."
+        },
+        {
+            "id": "haimaker/anthropic/claude-sonnet-4-5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-sonnet-4-5",
+            "type": "language",
+            "description": "Claude Sonnet 4.5."
+        },
+        {
+            "id": "haimaker/anthropic/claude-sonnet-4-5-20250929",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-sonnet-4-5-20250929",
+            "type": "language",
+            "description": "Claude Sonnet 4.5 (2025-09-29)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-sonnet-4-20250514",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-sonnet-4-20250514",
+            "type": "language",
+            "description": "Claude Sonnet 4 (2025-05-14)."
+        },
+        {
+            "id": "haimaker/anthropic/claude-sonnet-4.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "anthropic/claude-sonnet-4.5",
+            "type": "language",
+            "description": "Claude Sonnet 4.5 extended."
+        },
+        {
+            "id": "haimaker/fast/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "fast/claude-opus-4-6",
+            "type": "language",
+            "description": "Fast Claude Opus 4.6."
+        },
+        {
+            "id": "haimaker/fast/claude-opus-4-6-20260205",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "fast/claude-opus-4-6-20260205",
+            "type": "language",
+            "description": "Fast Claude Opus 4.6 (2026-02-05)."
+        },
+        {
+            "id": "haimaker/us/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "us/claude-opus-4-6",
+            "type": "language",
+            "description": "US Claude Opus 4.6."
+        },
+        {
+            "id": "haimaker/us/claude-opus-4-6-20260205",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "us/claude-opus-4-6-20260205",
+            "type": "language",
+            "description": "US Claude Opus 4.6 (2026-02-05)."
+        },
+        {
+            "id": "haimaker/bytedance/ui-tars-1.5-7b",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "bytedance/ui-tars-1.5-7b",
+            "type": "language",
+            "description": "ByteDance UI-TARS 1.5 7B."
+        },
+        {
+            "id": "haimaker/cognitivecomputations/dolphin-mixtral-8x7b",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "cognitivecomputations/dolphin-mixtral-8x7b",
+            "type": "language",
+            "description": "Dolphin Mixtral 8x7B."
+        },
+        {
+            "id": "haimaker/cohere/command-r-plus",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "cohere/command-r-plus",
+            "type": "language",
+            "description": "Cohere Command R+."
+        },
+        {
+            "id": "haimaker/databricks/dbrx-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "databricks/dbrx-instruct",
+            "type": "language",
+            "description": "Databricks DBRX Instruct."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-chat",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-chat",
+            "type": "language",
+            "description": "DeepSeek Chat."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-chat-v3-0324",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-chat-v3-0324",
+            "type": "language",
+            "description": "DeepSeek Chat v3 (0324)."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-chat-v3.1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-chat-v3.1",
+            "type": "language",
+            "description": "DeepSeek Chat v3.1."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-coder",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-coder",
+            "type": "language",
+            "description": "DeepSeek Coder."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-r1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-r1",
+            "type": "language",
+            "description": "DeepSeek R1."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-r1-0528",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-r1-0528",
+            "type": "language",
+            "description": "DeepSeek R1 (0528)."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-v3.2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-v3.2",
+            "type": "language",
+            "description": "DeepSeek v3.2."
+        },
+        {
+            "id": "haimaker/deepseek/deepseek-v3.2-exp",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "deepseek/deepseek-v3.2-exp",
+            "type": "language",
+            "description": "DeepSeek v3.2 experimental."
+        },
+        {
+            "id": "haimaker/fireworks/firellava-13b",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "fireworks/firellava-13b",
+            "type": "language",
+            "description": "FireLLaVA 13B."
+        },
+        {
+            "id": "haimaker/google/gemini-2.0-flash-001",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/gemini-2.0-flash-001",
+            "type": "language",
+            "description": "Gemini 2.0 Flash 001."
+        },
+        {
+            "id": "haimaker/google/gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/gemini-2.5-flash",
+            "type": "language",
+            "description": "Gemini 2.5 Flash."
+        },
+        {
+            "id": "haimaker/google/gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/gemini-2.5-pro",
+            "type": "language",
+            "description": "Gemini 2.5 Pro."
+        },
+        {
+            "id": "haimaker/google/gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/gemini-3-flash-preview",
+            "type": "language",
+            "description": "Gemini 3 Flash preview."
+        },
+        {
+            "id": "haimaker/google/gemini-3-pro-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/gemini-3-pro-preview",
+            "type": "language",
+            "description": "Gemini 3 Pro preview."
+        },
+        {
+            "id": "haimaker/google/gemini-pro-1.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/gemini-pro-1.5",
+            "type": "language",
+            "description": "Gemini Pro 1.5."
+        },
+        {
+            "id": "haimaker/google/gemini-pro-vision",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/gemini-pro-vision",
+            "type": "language",
+            "description": "Gemini Pro Vision."
+        },
+        {
+            "id": "haimaker/google/palm-2-chat-bison",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/palm-2-chat-bison",
+            "type": "language",
+            "description": "PaLM 2 Chat Bison."
+        },
+        {
+            "id": "haimaker/google/palm-2-codechat-bison",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "google/palm-2-codechat-bison",
+            "type": "language",
+            "description": "PaLM 2 CodeChat Bison."
+        },
+        {
+            "id": "haimaker/mistralai/devstral-2512",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/devstral-2512",
+            "type": "language",
+            "description": "Devstral 2512."
+        },
+        {
+            "id": "haimaker/mistralai/devstral-2512:free",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/devstral-2512:free",
+            "type": "language",
+            "description": "Devstral 2512 (Free)."
+        },
+        {
+            "id": "haimaker/mistralai/ministral-3b-2512",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/ministral-3b-2512",
+            "type": "language",
+            "description": "Ministral 3B 2512."
+        },
+        {
+            "id": "haimaker/mistralai/ministral-8b-2512",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/ministral-8b-2512",
+            "type": "language",
+            "description": "Ministral 8B 2512."
+        },
+        {
+            "id": "haimaker/mistralai/ministral-14b-2512",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/ministral-14b-2512",
+            "type": "language",
+            "description": "Ministral 14B 2512."
+        },
+        {
+            "id": "haimaker/mistralai/mistral-7b-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/mistral-7b-instruct",
+            "type": "language",
+            "description": "Mistral 7B Instruct."
+        },
+        {
+            "id": "haimaker/mistralai/mistral-7b-instruct:free",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/mistral-7b-instruct:free",
+            "type": "language",
+            "description": "Mistral 7B Instruct (Free)."
+        },
+        {
+            "id": "haimaker/mistralai/mistral-large",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/mistral-large",
+            "type": "language",
+            "description": "Mistral Large."
+        },
+        {
+            "id": "haimaker/mistralai/mistral-large-2512",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/mistral-large-2512",
+            "type": "language",
+            "description": "Mistral Large 2512."
+        },
+        {
+            "id": "haimaker/mistralai/mistral-small-3.1-24b-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/mistral-small-3.1-24b-instruct",
+            "type": "language",
+            "description": "Mistral Small 3.1 24B Instruct."
+        },
+        {
+            "id": "haimaker/mistralai/mistral-small-3.2-24b-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/mistral-small-3.2-24b-instruct",
+            "type": "language",
+            "description": "Mistral Small 3.2 24B Instruct."
+        },
+        {
+            "id": "haimaker/mistralai/mixtral-8x22b-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "mistralai/mixtral-8x22b-instruct",
+            "type": "language",
+            "description": "Mixtral 8x22B Instruct."
+        },
+        {
+            "id": "haimaker/moonshotai/kimi-k2.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "moonshotai/kimi-k2.5",
+            "type": "language",
+            "description": "Kimi K2.5."
+        },
+        {
+            "id": "haimaker/nousresearch/nous-hermes-llama2-13b",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "nousresearch/nous-hermes-llama2-13b",
+            "type": "language",
+            "description": "Nous Hermes LLaMA2 13B."
+        },
+        {
+            "id": "haimaker/meta-llama/codellama-34b-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "meta-llama/codellama-34b-instruct",
+            "type": "language",
+            "description": "CodeLLaMA 34B Instruct."
+        },
+        {
+            "id": "haimaker/meta-llama/llama-2-13b-chat",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "meta-llama/llama-2-13b-chat",
+            "type": "language",
+            "description": "LLaMA 2 13B Chat."
+        },
+        {
+            "id": "haimaker/meta-llama/llama-2-70b-chat",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "meta-llama/llama-2-70b-chat",
+            "type": "language",
+            "description": "LLaMA 2 70B Chat."
+        },
+        {
+            "id": "haimaker/meta-llama/llama-3-8b-instruct:extended",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "meta-llama/llama-3-8b-instruct:extended",
+            "type": "language",
+            "description": "LLaMA 3 8B Instruct Extended."
+        },
+        {
+            "id": "haimaker/meta-llama/llama-3-8b-instruct:free",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "meta-llama/llama-3-8b-instruct:free",
+            "type": "language",
+            "description": "LLaMA 3 8B Instruct Free."
+        },
+        {
+            "id": "haimaker/meta-llama/llama-3-70b-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "meta-llama/llama-3-70b-instruct",
+            "type": "language",
+            "description": "LLaMA 3 70B Instruct."
+        },
+        {
+            "id": "haimaker/meta-llama/llama-3-70b-instruct:nitro",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "meta-llama/llama-3-70b-instruct:nitro",
+            "type": "language",
+            "description": "LLaMA 3 70B Instruct Nitro."
+        },
+        {
+            "id": "haimaker/minimax/minimax-m2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/minimax-m2",
+            "type": "language",
+            "description": "MiniMax M2."
+        },
+        {
+            "id": "haimaker/minimax/MiniMax-M2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/MiniMax-M2",
+            "type": "language",
+            "description": "MiniMax M2 (capitalized variant)."
+        },
+        {
+            "id": "haimaker/minimax/minimax-m2.1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/minimax-m2.1",
+            "type": "language",
+            "description": "MiniMax M2.1."
+        },
+        {
+            "id": "haimaker/minimax/MiniMax-M2.1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/MiniMax-M2.1",
+            "type": "language",
+            "description": "MiniMax M2.1 (capitalized variant)."
+        },
+        {
+            "id": "haimaker/minimax/MiniMax-M2.1-lightning",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/MiniMax-M2.1-lightning",
+            "type": "language",
+            "description": "MiniMax M2.1 Lightning."
+        },
+        {
+            "id": "haimaker/minimax/MiniMax-M2.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/MiniMax-M2.5",
+            "type": "language",
+            "description": "MiniMax M2.5."
+        },
+        {
+            "id": "haimaker/minimax/minimax-m2.5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/minimax-m2.5",
+            "type": "language",
+            "description": "MiniMax M2.5 (lowercase variant)."
+        },
+        {
+            "id": "haimaker/minimax/MiniMax-M2.5-lightning",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "minimax/MiniMax-M2.5-lightning",
+            "type": "language",
+            "description": "MiniMax M2.5 Lightning."
+        },
+        {
+            "id": "haimaker/qwen/qwen3-235b-a22b-2507",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "qwen/qwen3-235b-a22b-2507",
+            "type": "language",
+            "description": "Qwen3 235B A22B 2507."
+        },
+        {
+            "id": "haimaker/qwen/qwen3-235b-a22b-thinking-2507",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "qwen/qwen3-235b-a22b-thinking-2507",
+            "type": "language",
+            "description": "Qwen3 235B A22B Thinking 2507."
+        },
+        {
+            "id": "haimaker/qwen/qwen3-coder",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "qwen/qwen3-coder",
+            "type": "language",
+            "description": "Qwen3 Coder."
+        },
+        {
+            "id": "haimaker/qwen/qwen-2.5-coder-32b-instruct",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "qwen/qwen-2.5-coder-32b-instruct",
+            "type": "language",
+            "description": "Qwen 2.5 Coder 32B Instruct."
+        },
+        {
+            "id": "haimaker/qwen/qwen-vl-plus",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "qwen/qwen-vl-plus",
+            "type": "language",
+            "description": "Qwen VL Plus."
+        },
+        {
+            "id": "haimaker/xiaomi/mimo-v2-flash",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xiaomi/mimo-v2-flash",
+            "type": "language",
+            "description": "Xiaomi MIMO v2 Flash."
+        },
+        {
+            "id": "haimaker/z-ai/glm-4.6",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "z-ai/glm-4.6",
+            "type": "language",
+            "description": "GLM 4.6."
+        },
+        {
+            "id": "haimaker/z-ai/glm-4.6:exacto",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "z-ai/glm-4.6:exacto",
+            "type": "language",
+            "description": "GLM 4.6 Exacto."
+        },
+        {
+            "id": "haimaker/z-ai/glm-4.7",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "z-ai/glm-4.7",
+            "type": "language",
+            "description": "GLM 4.7."
+        },
+        {
+            "id": "haimaker/z-ai/glm-4.7-flash",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "z-ai/glm-4.7-flash",
+            "type": "language",
+            "description": "GLM 4.7 Flash."
+        },
+        {
+            "id": "haimaker/switchpoint/router",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "switchpoint/router",
+            "type": "language",
+            "description": "Switchpoint Router model."
+        },
+        {
+            "id": "haimaker/x-ai/grok-4",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "x-ai/grok-4",
+            "type": "language",
+            "description": "Grok 4."
+        },
+        {
+            "id": "haimaker/x-ai/grok-4-fast:free",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "x-ai/grok-4-fast:free",
+            "type": "language",
+            "description": "Grok 4 Fast Free."
+        },
+        {
+            "id": "haimaker/xai/grok-2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-2",
+            "type": "language",
+            "description": "Grok 2."
+        },
+        {
+            "id": "haimaker/xai/grok-2-1212",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-2-1212",
+            "type": "language",
+            "description": "Grok 2 (1212)."
+        },
+        {
+            "id": "haimaker/xai/grok-2-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-2-latest",
+            "type": "language",
+            "description": "Grok 2 Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-2-vision",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-2-vision",
+            "type": "language",
+            "description": "Grok 2 Vision."
+        },
+        {
+            "id": "haimaker/xai/grok-2-vision-1212",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-2-vision-1212",
+            "type": "language",
+            "description": "Grok 2 Vision (1212)."
+        },
+        {
+            "id": "haimaker/xai/grok-2-vision-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-2-vision-latest",
+            "type": "language",
+            "description": "Grok 2 Vision Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3",
+            "type": "language",
+            "description": "Grok 3."
+        },
+        {
+            "id": "haimaker/xai/grok-3-beta",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-beta",
+            "type": "language",
+            "description": "Grok 3 Beta."
+        },
+        {
+            "id": "haimaker/xai/grok-3-fast-beta",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-fast-beta",
+            "type": "language",
+            "description": "Grok 3 Fast Beta."
+        },
+        {
+            "id": "haimaker/xai/grok-3-fast-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-fast-latest",
+            "type": "language",
+            "description": "Grok 3 Fast Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-3-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-latest",
+            "type": "language",
+            "description": "Grok 3 Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-3-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-mini",
+            "type": "language",
+            "description": "Grok 3 Mini."
+        },
+        {
+            "id": "haimaker/xai/grok-3-mini-beta",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-mini-beta",
+            "type": "language",
+            "description": "Grok 3 Mini Beta."
+        },
+        {
+            "id": "haimaker/xai/grok-3-mini-fast",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-mini-fast",
+            "type": "language",
+            "description": "Grok 3 Mini Fast."
+        },
+        {
+            "id": "haimaker/xai/grok-3-mini-fast-beta",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-mini-fast-beta",
+            "type": "language",
+            "description": "Grok 3 Mini Fast Beta."
+        },
+        {
+            "id": "haimaker/xai/grok-3-mini-fast-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-mini-fast-latest",
+            "type": "language",
+            "description": "Grok 3 Mini Fast Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-3-mini-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-3-mini-latest",
+            "type": "language",
+            "description": "Grok 3 Mini Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-4",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4",
+            "type": "language",
+            "description": "Grok 4."
+        },
+        {
+            "id": "haimaker/xai/grok-4-0709",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-0709",
+            "type": "language",
+            "description": "Grok 4 (0709)."
+        },
+        {
+            "id": "haimaker/xai/grok-4-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-latest",
+            "type": "language",
+            "description": "Grok 4 Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-4-fast-reasoning",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-fast-reasoning",
+            "type": "language",
+            "description": "Grok 4 Fast Reasoning."
+        },
+        {
+            "id": "haimaker/xai/grok-4-fast-non-reasoning",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-fast-non-reasoning",
+            "type": "language",
+            "description": "Grok 4 Fast Non-Reasoning."
+        },
+        {
+            "id": "haimaker/xai/grok-4-1-fast",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-1-fast",
+            "type": "language",
+            "description": "Grok 4.1 Fast."
+        },
+        {
+            "id": "haimaker/xai/grok-4-1-fast-reasoning",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-1-fast-reasoning",
+            "type": "language",
+            "description": "Grok 4.1 Fast Reasoning."
+        },
+        {
+            "id": "haimaker/xai/grok-4-1-fast-non-reasoning",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-1-fast-non-reasoning",
+            "type": "language",
+            "description": "Grok 4.1 Fast Non-Reasoning."
+        },
+        {
+            "id": "haimaker/xai/grok-4-1-fast-reasoning-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-1-fast-reasoning-latest",
+            "type": "language",
+            "description": "Grok 4.1 Fast Reasoning Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-4-1-fast-non-reasoning-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-4-1-fast-non-reasoning-latest",
+            "type": "language",
+            "description": "Grok 4.1 Fast Non-Reasoning Latest."
+        },
+        {
+            "id": "haimaker/xai/grok-beta",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-beta",
+            "type": "language",
+            "description": "Grok Beta."
+        },
+        {
+            "id": "haimaker/xai/grok-code-fast",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-code-fast",
+            "type": "language",
+            "description": "Grok Code Fast."
+        },
+        {
+            "id": "haimaker/xai/grok-code-fast-1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-code-fast-1",
+            "type": "language",
+            "description": "Grok Code Fast 1."
+        },
+        {
+            "id": "haimaker/xai/grok-code-fast-1-0825",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-code-fast-1-0825",
+            "type": "language",
+            "description": "Grok Code Fast 1 (0825)."
+        },
+        {
+            "id": "haimaker/xai/grok-vision-beta",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "xai/grok-vision-beta",
+            "type": "language",
+            "description": "Grok Vision Beta."
+        },
+        {
+            "id": "haimaker/gpt-3.5-turbo",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-3.5-turbo",
+            "type": "language",
+            "description": "GPT-3.5 Turbo."
+        },
+        {
+            "id": "haimaker/gpt-3.5-turbo-0125",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-3.5-turbo-0125",
+            "type": "language",
+            "description": "GPT-3.5 Turbo (0125)."
+        },
+        {
+            "id": "haimaker/gpt-3.5-turbo-0613",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-3.5-turbo-0613",
+            "type": "language",
+            "description": "GPT-3.5 Turbo (0613)."
+        },
+        {
+            "id": "haimaker/gpt-3.5-turbo-1106",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-3.5-turbo-1106",
+            "type": "language",
+            "description": "GPT-3.5 Turbo (1106)."
+        },
+        {
+            "id": "haimaker/gpt-3.5-turbo-16k",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-3.5-turbo-16k",
+            "type": "language",
+            "description": "GPT-3.5 Turbo 16K."
+        },
+        {
+            "id": "haimaker/gpt-4",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4",
+            "type": "language",
+            "description": "GPT-4."
+        },
+        {
+            "id": "haimaker/gpt-4-0613",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-0613",
+            "type": "language",
+            "description": "GPT-4 (0613)."
+        },
+        {
+            "id": "haimaker/gpt-4-1106-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-1106-preview",
+            "type": "language",
+            "description": "GPT-4 Preview (1106)."
+        },
+        {
+            "id": "haimaker/gpt-4-turbo",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-turbo",
+            "type": "language",
+            "description": "GPT-4 Turbo."
+        },
+        {
+            "id": "haimaker/gpt-4-turbo-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-turbo-preview",
+            "type": "language",
+            "description": "GPT-4 Turbo Preview."
+        },
+        {
+            "id": "haimaker/gpt-4.1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.1",
+            "type": "language",
+            "description": "GPT-4.1."
+        },
+        {
+            "id": "haimaker/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.1-mini",
+            "type": "language",
+            "description": "GPT-4.1 Mini."
+        },
+        {
+            "id": "haimaker/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.1-nano",
+            "type": "language",
+            "description": "GPT-4.1 Nano."
+        },
+        {
+            "id": "haimaker/gpt-4.5-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.5-preview",
+            "type": "language",
+            "description": "GPT-4.5 Preview."
+        },
+        {
+            "id": "haimaker/gpt-4o",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o",
+            "type": "language",
+            "description": "GPT-4o."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini",
+            "type": "language",
+            "description": "GPT-4o Mini."
+        },
+        {
+            "id": "haimaker/gpt-4o-realtime-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-realtime-preview",
+            "type": "language",
+            "description": "GPT-4o Realtime Preview."
+        },
+        {
+            "id": "haimaker/gpt-4o-search-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-search-preview",
+            "type": "language",
+            "description": "GPT-4o Search Preview."
+        },
+        {
+            "id": "haimaker/gpt-5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5",
+            "type": "language",
+            "description": "GPT-5."
+        },
+        {
+            "id": "haimaker/gpt-5-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-mini",
+            "type": "language",
+            "description": "GPT-5 Mini."
+        },
+        {
+            "id": "haimaker/gpt-5-nano",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-nano",
+            "type": "language",
+            "description": "GPT-5 Nano."
+        },
+        {
+            "id": "haimaker/gpt-5-chat",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-chat",
+            "type": "language",
+            "description": "GPT-5 Chat."
+        },
+        {
+            "id": "haimaker/gpt-5.1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5.1",
+            "type": "language",
+            "description": "GPT-5.1."
+        },
+        {
+            "id": "haimaker/gpt-5.2",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5.2",
+            "type": "language",
+            "description": "GPT-5.2."
+        },
+        {
+            "id": "haimaker/o1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o1",
+            "type": "language",
+            "description": "OpenAI o1."
+        },
+        {
+            "id": "haimaker/o1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o1-mini",
+            "type": "language",
+            "description": "OpenAI o1 Mini."
+        },
+        {
+            "id": "haimaker/o3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o3",
+            "type": "language",
+            "description": "OpenAI o3."
+        },
+        {
+            "id": "haimaker/o3-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o3-mini",
+            "type": "language",
+            "description": "OpenAI o3 Mini."
+        },
+        {
+            "id": "haimaker/o4-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o4-mini",
+            "type": "language",
+            "description": "OpenAI o4 Mini."
+        },
+        {
+            "id": "haimaker/gpt-audio",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-audio",
+            "type": "language",
+            "description": "GPT Audio."
+        },
+        {
+            "id": "haimaker/gpt-audio-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-audio-mini",
+            "type": "language",
+            "description": "GPT Audio Mini."
+        },
+        {
+            "id": "haimaker/gpt-realtime",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-realtime",
+            "type": "language",
+            "description": "GPT Realtime."
+        },
+        {
+            "id": "haimaker/gpt-realtime-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-realtime-mini",
+            "type": "language",
+            "description": "GPT Realtime Mini."
+        },
+        {
+            "id": "haimaker/openai/gpt-4o",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4o",
+            "type": "language",
+            "description": "OpenAI GPT-4o."
+        },
+        {
+            "id": "haimaker/openai/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4o-mini",
+            "type": "language",
+            "description": "OpenAI GPT-4o Mini."
+        },
+        {
+            "id": "haimaker/openai/gpt-4.1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4.1",
+            "type": "language",
+            "description": "OpenAI GPT-4.1."
+        },
+        {
+            "id": "haimaker/openai/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4.1-mini",
+            "type": "language",
+            "description": "OpenAI GPT-4.1 Mini."
+        },
+        {
+            "id": "haimaker/openai/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-4.1-nano",
+            "type": "language",
+            "description": "OpenAI GPT-4.1 Nano."
+        },
+        {
+            "id": "haimaker/openai/gpt-5",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5",
+            "type": "language",
+            "description": "OpenAI GPT-5."
+        },
+        {
+            "id": "haimaker/openai/gpt-5-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5-mini",
+            "type": "language",
+            "description": "OpenAI GPT-5 Mini."
+        },
+        {
+            "id": "haimaker/openai/gpt-5-nano",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5-nano",
+            "type": "language",
+            "description": "OpenAI GPT-5 Nano."
+        },
+        {
+            "id": "haimaker/openai/gpt-5-pro",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5-pro",
+            "type": "language",
+            "description": "OpenAI GPT-5 Pro."
+        },
+        {
+            "id": "haimaker/openai/gpt-5.2-pro",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5.2-pro",
+            "type": "language",
+            "description": "OpenAI GPT-5.2 Pro."
+        },
+        {
+            "id": "haimaker/openai/gpt-5-codex",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5-codex",
+            "type": "language",
+            "description": "OpenAI GPT-5 Codex."
+        },
+        {
+            "id": "haimaker/openai/gpt-5.1-codex",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5.1-codex",
+            "type": "language",
+            "description": "OpenAI GPT-5.1 Codex."
+        },
+        {
+            "id": "haimaker/openai/gpt-5.1-codex-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5.1-codex-mini",
+            "type": "language",
+            "description": "OpenAI GPT-5.1 Codex Mini."
+        },
+        {
+            "id": "haimaker/openai/gpt-5.1-codex-max",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5.1-codex-max",
+            "type": "language",
+            "description": "OpenAI GPT-5.1 Codex Max."
+        },
+        {
+            "id": "haimaker/openai/o1",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o1",
+            "type": "language",
+            "description": "OpenAI o1."
+        },
+        {
+            "id": "haimaker/openai/o1-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o1-mini",
+            "type": "language",
+            "description": "OpenAI o1 Mini."
+        },
+        {
+            "id": "haimaker/openai/o1-pro",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o1-pro",
+            "type": "language",
+            "description": "OpenAI o1 Pro."
+        },
+        {
+            "id": "haimaker/openai/o3",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o3",
+            "type": "language",
+            "description": "OpenAI o3."
+        },
+        {
+            "id": "haimaker/openai/o3-pro",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o3-pro",
+            "type": "language",
+            "description": "OpenAI o3 Pro."
+        },
+        {
+            "id": "haimaker/openai/o3-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o3-mini",
+            "type": "language",
+            "description": "OpenAI o3 Mini."
+        },
+        {
+            "id": "haimaker/openai/o3-mini-high",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o3-mini-high",
+            "type": "language",
+            "description": "OpenAI o3 Mini High."
+        },
+        {
+            "id": "haimaker/openai/o3-deep-research",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o3-deep-research",
+            "type": "language",
+            "description": "OpenAI o3 Deep Research."
+        },
+        {
+            "id": "haimaker/openai/o4-mini-deep-research",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o4-mini-deep-research",
+            "type": "language",
+            "description": "OpenAI o4 Mini Deep Research."
+        },
+        {
+            "id": "haimaker/openai/gpt-oss-20b",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-oss-20b",
+            "type": "language",
+            "description": "OpenAI GPT OSS 20B."
+        },
+        {
+            "id": "haimaker/openai/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-oss-120b",
+            "type": "language",
+            "description": "OpenAI GPT OSS 120B."
+        },
+        {
+            "id": "haimaker/openai/gpt-audio",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-audio",
+            "type": "language",
+            "description": "OpenAI GPT Audio."
+        },
+        {
+            "id": "haimaker/openai/gpt-audio-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-audio-mini",
+            "type": "language",
+            "description": "OpenAI GPT Audio Mini."
+        },
+        {
+            "id": "haimaker/openai/gpt-realtime",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-realtime",
+            "type": "language",
+            "description": "OpenAI GPT Realtime."
+        },
+        {
+            "id": "haimaker/openai/gpt-realtime-mini",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-realtime-mini",
+            "type": "language",
+            "description": "OpenAI GPT Realtime Mini."
+        },
+        {
+            "id": "haimaker/chatgpt-4o-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "chatgpt-4o-latest",
+            "type": "language",
+            "description": "ChatGPT-4o latest."
+        },
+        {
+            "id": "haimaker/openai/chatgpt-4o-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/chatgpt-4o-latest",
+            "type": "language",
+            "description": "OpenAI ChatGPT-4o latest."
+        },
+        {
+            "id": "haimaker/openai/codex-mini-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/codex-mini-latest",
+            "type": "language",
+            "description": "OpenAI Codex Mini latest."
+        },
+        {
+            "id": "haimaker/gpt-4-32k",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-32k",
+            "type": "language",
+            "description": "GPT-4 32K."
+        },
+        {
+            "id": "haimaker/gpt-4-32k-0314",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-32k-0314",
+            "type": "language",
+            "description": "GPT-4 32K (0314)."
+        },
+        {
+            "id": "haimaker/gpt-4-32k-0613",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-32k-0613",
+            "type": "language",
+            "description": "GPT-4 32K (0613)."
+        },
+        {
+            "id": "haimaker/gpt-4-0314",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-0314",
+            "type": "language",
+            "description": "GPT-4 (0314)."
+        },
+        {
+            "id": "haimaker/gpt-4-0125-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-0125-preview",
+            "type": "language",
+            "description": "GPT-4 (0125 preview)."
+        },
+        {
+            "id": "haimaker/gpt-4-1106-vision-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-1106-vision-preview",
+            "type": "language",
+            "description": "GPT-4 (1106 vision preview)."
+        },
+        {
+            "id": "haimaker/gpt-4-vision-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-vision-preview",
+            "type": "language",
+            "description": "GPT-4 vision preview."
+        },
+        {
+            "id": "haimaker/gpt-4-turbo-2024-04-09",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4-turbo-2024-04-09",
+            "type": "language",
+            "description": "GPT-4 Turbo (2024-04-09)."
+        },
+        {
+            "id": "haimaker/gpt-4.1-2025-04-14",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.1-2025-04-14",
+            "type": "language",
+            "description": "GPT-4.1 (2025-04-14)."
+        },
+        {
+            "id": "haimaker/gpt-4.1-mini-2025-04-14",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.1-mini-2025-04-14",
+            "type": "language",
+            "description": "GPT-4.1 Mini (2025-04-14)."
+        },
+        {
+            "id": "haimaker/gpt-4.1-nano-2025-04-14",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.1-nano-2025-04-14",
+            "type": "language",
+            "description": "GPT-4.1 Nano (2025-04-14)."
+        },
+        {
+            "id": "haimaker/gpt-4.5-preview-2025-02-27",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4.5-preview-2025-02-27",
+            "type": "language",
+            "description": "GPT-4.5 Preview (2025-02-27)."
+        },
+        {
+            "id": "haimaker/gpt-4o-2024-05-13",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-2024-05-13",
+            "type": "language",
+            "description": "GPT-4o (2024-05-13)."
+        },
+        {
+            "id": "haimaker/gpt-4o-2024-08-06",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-2024-08-06",
+            "type": "language",
+            "description": "GPT-4o (2024-08-06)."
+        },
+        {
+            "id": "haimaker/gpt-4o-2024-11-20",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-2024-11-20",
+            "type": "language",
+            "description": "GPT-4o (2024-11-20)."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini-2024-07-18",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini-2024-07-18",
+            "type": "language",
+            "description": "GPT-4o Mini (2024-07-18)."
+        },
+        {
+            "id": "haimaker/gpt-4o-audio-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-audio-preview",
+            "type": "language",
+            "description": "GPT-4o Audio Preview."
+        },
+        {
+            "id": "haimaker/gpt-4o-audio-preview-2024-10-01",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-audio-preview-2024-10-01",
+            "type": "language",
+            "description": "GPT-4o Audio Preview (2024-10-01)."
+        },
+        {
+            "id": "haimaker/gpt-4o-audio-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-audio-preview-2024-12-17",
+            "type": "language",
+            "description": "GPT-4o Audio Preview (2024-12-17)."
+        },
+        {
+            "id": "haimaker/gpt-4o-audio-preview-2025-06-03",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-audio-preview-2025-06-03",
+            "type": "language",
+            "description": "GPT-4o Audio Preview (2025-06-03)."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini-audio-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini-audio-preview",
+            "type": "language",
+            "description": "GPT-4o Mini Audio Preview."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini-audio-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini-audio-preview-2024-12-17",
+            "type": "language",
+            "description": "GPT-4o Mini Audio Preview (2024-12-17)."
+        },
+        {
+            "id": "haimaker/gpt-4o-realtime-preview-2024-10-01",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-realtime-preview-2024-10-01",
+            "type": "language",
+            "description": "GPT-4o Realtime Preview (2024-10-01)."
+        },
+        {
+            "id": "haimaker/gpt-4o-realtime-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-realtime-preview-2024-12-17",
+            "type": "language",
+            "description": "GPT-4o Realtime Preview (2024-12-17)."
+        },
+        {
+            "id": "haimaker/gpt-4o-realtime-preview-2025-06-03",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-realtime-preview-2025-06-03",
+            "type": "language",
+            "description": "GPT-4o Realtime Preview (2025-06-03)."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini-realtime-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini-realtime-preview",
+            "type": "language",
+            "description": "GPT-4o Mini Realtime Preview."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini-realtime-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini-realtime-preview-2024-12-17",
+            "type": "language",
+            "description": "GPT-4o Mini Realtime Preview (2024-12-17)."
+        },
+        {
+            "id": "haimaker/gpt-4o-search-preview-2025-03-11",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-search-preview-2025-03-11",
+            "type": "language",
+            "description": "GPT-4o Search Preview (2025-03-11)."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini-search-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini-search-preview",
+            "type": "language",
+            "description": "GPT-4o Mini Search Preview."
+        },
+        {
+            "id": "haimaker/gpt-4o-mini-search-preview-2025-03-11",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-4o-mini-search-preview-2025-03-11",
+            "type": "language",
+            "description": "GPT-4o Mini Search Preview (2025-03-11)."
+        },
+        {
+            "id": "haimaker/gpt-5-2025-08-07",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-2025-08-07",
+            "type": "language",
+            "description": "GPT-5 (2025-08-07)."
+        },
+        {
+            "id": "haimaker/gpt-5-chat-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-chat-latest",
+            "type": "language",
+            "description": "GPT-5 Chat latest."
+        },
+        {
+            "id": "haimaker/gpt-5-mini-2025-08-07",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-mini-2025-08-07",
+            "type": "language",
+            "description": "GPT-5 Mini (2025-08-07)."
+        },
+        {
+            "id": "haimaker/gpt-5-nano-2025-08-07",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-nano-2025-08-07",
+            "type": "language",
+            "description": "GPT-5 Nano (2025-08-07)."
+        },
+        {
+            "id": "haimaker/gpt-5-search-api",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-search-api",
+            "type": "language",
+            "description": "GPT-5 Search API."
+        },
+        {
+            "id": "haimaker/gpt-5-search-api-2025-10-14",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5-search-api-2025-10-14",
+            "type": "language",
+            "description": "GPT-5 Search API (2025-10-14)."
+        },
+        {
+            "id": "haimaker/gpt-5.1-2025-11-13",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5.1-2025-11-13",
+            "type": "language",
+            "description": "GPT-5.1 (2025-11-13)."
+        },
+        {
+            "id": "haimaker/gpt-5.1-chat-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5.1-chat-latest",
+            "type": "language",
+            "description": "GPT-5.1 Chat latest."
+        },
+        {
+            "id": "haimaker/gpt-5.2-2025-12-11",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5.2-2025-12-11",
+            "type": "language",
+            "description": "GPT-5.2 (2025-12-11)."
+        },
+        {
+            "id": "haimaker/gpt-5.2-chat-latest",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-5.2-chat-latest",
+            "type": "language",
+            "description": "GPT-5.2 Chat latest."
+        },
+        {
+            "id": "haimaker/gpt-audio-2025-08-28",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-audio-2025-08-28",
+            "type": "language",
+            "description": "GPT Audio (2025-08-28)."
+        },
+        {
+            "id": "haimaker/gpt-audio-mini-2025-10-06",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-audio-mini-2025-10-06",
+            "type": "language",
+            "description": "GPT Audio Mini (2025-10-06)."
+        },
+        {
+            "id": "haimaker/gpt-audio-mini-2025-12-15",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-audio-mini-2025-12-15",
+            "type": "language",
+            "description": "GPT Audio Mini (2025-12-15)."
+        },
+        {
+            "id": "haimaker/gpt-realtime-2025-08-28",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-realtime-2025-08-28",
+            "type": "language",
+            "description": "GPT Realtime (2025-08-28)."
+        },
+        {
+            "id": "haimaker/gpt-realtime-mini-2025-10-06",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-realtime-mini-2025-10-06",
+            "type": "language",
+            "description": "GPT Realtime Mini (2025-10-06)."
+        },
+        {
+            "id": "haimaker/gpt-realtime-mini-2025-12-15",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "gpt-realtime-mini-2025-12-15",
+            "type": "language",
+            "description": "GPT Realtime Mini (2025-12-15)."
+        },
+        {
+            "id": "haimaker/o1-2024-12-17",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o1-2024-12-17",
+            "type": "language",
+            "description": "o1 (2024-12-17)."
+        },
+        {
+            "id": "haimaker/o1-preview",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o1-preview",
+            "type": "language",
+            "description": "o1 preview."
+        },
+        {
+            "id": "haimaker/o1-preview-2024-09-12",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o1-preview-2024-09-12",
+            "type": "language",
+            "description": "o1 preview (2024-09-12)."
+        },
+        {
+            "id": "haimaker/o1-mini-2024-09-12",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o1-mini-2024-09-12",
+            "type": "language",
+            "description": "o1 mini (2024-09-12)."
+        },
+        {
+            "id": "haimaker/o3-2025-04-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o3-2025-04-16",
+            "type": "language",
+            "description": "o3 (2025-04-16)."
+        },
+        {
+            "id": "haimaker/o3-mini-2025-01-31",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o3-mini-2025-01-31",
+            "type": "language",
+            "description": "o3 mini (2025-01-31)."
+        },
+        {
+            "id": "haimaker/o3-mini-high",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o3-mini-high",
+            "type": "language",
+            "description": "o3 mini high."
+        },
+        {
+            "id": "haimaker/o4-mini-2025-04-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "o4-mini-2025-04-16",
+            "type": "language",
+            "description": "o4 mini (2025-04-16)."
+        },
+        {
+            "id": "haimaker/openai/gpt-5-pro-2025-10-06",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5-pro-2025-10-06",
+            "type": "language",
+            "description": "OpenAI GPT-5 Pro (2025-10-06)."
+        },
+        {
+            "id": "haimaker/openai/gpt-5.2-pro-2025-12-11",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-5.2-pro-2025-12-11",
+            "type": "language",
+            "description": "OpenAI GPT-5.2 Pro (2025-12-11)."
+        },
+        {
+            "id": "haimaker/openai/o1-pro-2025-03-19",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o1-pro-2025-03-19",
+            "type": "language",
+            "description": "OpenAI o1 Pro (2025-03-19)."
+        },
+        {
+            "id": "haimaker/openai/o3-pro-2025-06-10",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o3-pro-2025-06-10",
+            "type": "language",
+            "description": "OpenAI o3 Pro (2025-06-10)."
+        },
+        {
+            "id": "haimaker/openai/o3-deep-research-2025-06-26",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o3-deep-research-2025-06-26",
+            "type": "language",
+            "description": "OpenAI o3 Deep Research (2025-06-26)."
+        },
+        {
+            "id": "haimaker/openai/o4-mini-deep-research-2025-06-26",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/o4-mini-deep-research-2025-06-26",
+            "type": "language",
+            "description": "OpenAI o4 Mini Deep Research (2025-06-26)."
+        },
+        {
+            "id": "haimaker/openai/gpt-realtime-mini-2025-10-06",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-realtime-mini-2025-10-06",
+            "type": "language",
+            "description": "OpenAI GPT Realtime Mini (2025-10-06)."
+        },
+        {
+            "id": "haimaker/openai/gpt-realtime-mini-2025-12-15",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "openai/gpt-realtime-mini-2025-12-15",
+            "type": "language",
+            "description": "OpenAI GPT Realtime Mini (2025-12-15)."
+        },
+        {
+            "id": "haimaker/ft:gpt-3.5-turbo",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-3.5-turbo",
+            "type": "language",
+            "description": "Fine-tuned GPT-3.5 Turbo."
+        },
+        {
+            "id": "haimaker/ft:gpt-3.5-turbo-0125",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-3.5-turbo-0125",
+            "type": "language",
+            "description": "Fine-tuned GPT-3.5 Turbo (0125)."
+        },
+        {
+            "id": "haimaker/ft:gpt-3.5-turbo-0613",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-3.5-turbo-0613",
+            "type": "language",
+            "description": "Fine-tuned GPT-3.5 Turbo (0613)."
+        },
+        {
+            "id": "haimaker/ft:gpt-3.5-turbo-1106",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-3.5-turbo-1106",
+            "type": "language",
+            "description": "Fine-tuned GPT-3.5 Turbo (1106)."
+        },
+        {
+            "id": "haimaker/ft:gpt-4-0613",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-4-0613",
+            "type": "language",
+            "description": "Fine-tuned GPT-4 (0613)."
+        },
+        {
+            "id": "haimaker/ft:gpt-4.1-2025-04-14",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-4.1-2025-04-14",
+            "type": "language",
+            "description": "Fine-tuned GPT-4.1 (2025-04-14)."
+        },
+        {
+            "id": "haimaker/ft:gpt-4.1-mini-2025-04-14",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-4.1-mini-2025-04-14",
+            "type": "language",
+            "description": "Fine-tuned GPT-4.1 Mini (2025-04-14)."
+        },
+        {
+            "id": "haimaker/ft:gpt-4.1-nano-2025-04-14",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-4.1-nano-2025-04-14",
+            "type": "language",
+            "description": "Fine-tuned GPT-4.1 Nano (2025-04-14)."
+        },
+        {
+            "id": "haimaker/ft:gpt-4o-2024-08-06",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-4o-2024-08-06",
+            "type": "language",
+            "description": "Fine-tuned GPT-4o (2024-08-06)."
+        },
+        {
+            "id": "haimaker/ft:gpt-4o-2024-11-20",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-4o-2024-11-20",
+            "type": "language",
+            "description": "Fine-tuned GPT-4o (2024-11-20)."
+        },
+        {
+            "id": "haimaker/ft:gpt-4o-mini-2024-07-18",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:gpt-4o-mini-2024-07-18",
+            "type": "language",
+            "description": "Fine-tuned GPT-4o Mini (2024-07-18)."
+        },
+        {
+            "id": "haimaker/ft:o4-mini-2025-04-16",
+            "object": "model",
+            "owned_by": "Haimaker",
+            "name": "ft:o4-mini-2025-04-16",
+            "type": "language",
+            "description": "Fine-tuned o4-mini (2025-04-16)."
+        }
+    ]
+}

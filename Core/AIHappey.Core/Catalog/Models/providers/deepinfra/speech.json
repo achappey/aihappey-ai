@@ -1,0 +1,61 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "deepinfra/ResembleAI/chatterbox-multilingual",
+            "object": "model",
+            "owned_by": "Resemble AI",
+            "name": "chatterbox-multilingual",
+            "type": "speech"
+        },
+        {
+            "id": "deepinfra/bosonai/HiggsAudioV2.5",
+            "object": "model",
+            "owned_by": "Boson AI",
+            "name": "HiggsAudioV2.5",
+            "type": "speech"
+        },
+        {
+            "id": "deepinfra/ResembleAI/chatterbox-turbo",
+            "object": "model",
+            "owned_by": "Resemble AI",
+            "name": "chatterbox-turbo",
+            "type": "speech"
+        },
+        {
+            "id": "deepinfra/hexgrad/Kokoro-82M",
+            "object": "model",
+            "owned_by": "Hexgrad",
+            "name": "Kokoro-82M",
+            "type": "speech"
+        },
+        {
+            "id": "deepinfra/sesame/csm-1b",
+            "object": "model",
+            "owned_by": "Sesame",
+            "name": "csm-1b",
+            "type": "speech"
+        },
+        {
+            "id": "deepinfra/canopylabs/orpheus-3b-0.1-ft",
+            "object": "model",
+            "owned_by": "Canopy Labs",
+            "name": "orpheus-3b-0.1-ft",
+            "type": "speech"
+        },
+        {
+            "id": "deepinfra/Zyphra/Zonos-v0.1-transformer",
+            "object": "model",
+            "owned_by": "Zyphra",
+            "name": "Zonos-v0.1-transformer",
+            "type": "speech"
+        },
+        {
+            "id": "deepinfra/Zyphra/Zonos-v0.1-hybrid",
+            "object": "model",
+            "owned_by": "Zyphra",
+            "name": "Zonos-v0.1-hybrid",
+            "type": "speech"
+        }
+    ]
+}
