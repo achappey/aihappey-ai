@@ -21,7 +21,9 @@ public partial class AmazonBedrockProvider : IModelProvider
         _keyResolver = keyResolver;
         _endpoint = options.Value.Endpoint;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri($"https://bedrock.{_endpoint}.amazonaws.com/");
+
+        if (!string.IsNullOrEmpty(_endpoint))
+            _client.BaseAddress = new Uri($"https://bedrock.{_endpoint}.amazonaws.com/");
     }
 
     private void ApplyAuthHeader()
