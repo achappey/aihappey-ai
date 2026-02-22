@@ -153,6 +153,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "ohmygpt" => _config.OhMyGPT?.ApiKey,
             "ideogram" => _config.Ideogram?.ApiKey,
             "pinecone" => _config.Pinecone?.ApiKey,
+            "zyphra" => _config.Zyphra?.ApiKey,
             _ => null
         };
 }

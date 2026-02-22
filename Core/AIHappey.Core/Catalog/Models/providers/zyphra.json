@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "zyphra/zonos-v0.1-transformer",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer",
+      "type": "speech"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid",
+      "type": "speech"
+    }
+  ]
+}

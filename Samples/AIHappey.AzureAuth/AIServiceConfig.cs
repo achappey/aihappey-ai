@@ -146,6 +146,7 @@ public class AIServiceConfig
     public ProviderConfig? OhMyGPT { get; set; }
     public ProviderConfig? Ideogram { get; set; }
     public ProviderConfig? Pinecone { get; set; }
+    public ProviderConfig? Zyphra { get; set; }
 }
 
 public class ProviderConfig

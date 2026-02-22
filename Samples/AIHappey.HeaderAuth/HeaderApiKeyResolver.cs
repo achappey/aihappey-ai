@@ -147,7 +147,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["blackbox"] = "X-Blackbox-Key",
             ["ohmygpt"] = "X-OhMyGPT-Key",
             ["ideogram"] = "X-Ideogram-Key",
-            ["pinecone"] = "X-Pinecone-Key"
+            ["pinecone"] = "X-Pinecone-Key",
+            ["zyphra"] = "X-Zyphra-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
