@@ -1,0 +1,82 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "monica/stable-diffusion-xl-1.0",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "stable-diffusion-xl-1.0",
+            "type": "image"
+        },
+        {
+            "id": "monica/stable-diffusion-3-large",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "stable-diffusion-3-large",
+            "type": "image"
+        },
+        {
+            "id": "monica/stable-diffusion-3.5-large",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "stable-diffusion-3.5-large",
+            "type": "image"
+        },
+        {
+            "id": "monica/flux-schnell-1.0",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "flux-schnell-1.0",
+            "type": "image"
+        },
+        {
+            "id": "monica/flux-dev-1.0",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "flux-dev-1.0",
+            "type": "image"
+        },
+        {
+            "id": "monica/flux-pro-1.0",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "flux-pro-1.0",
+            "type": "image"
+        },
+        {
+            "id": "monica/dall-e-3",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "dall-e-3",
+            "type": "image"
+        },
+        {
+            "id": "monica/playground-v2.5",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "playground-v2.5",
+            "type": "image"
+        },
+        {
+            "id": "monica/ideogram-v2",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "ideogram-v2",
+            "type": "image"
+        },
+        {
+            "id": "monica/upscale",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "upscale",
+            "type": "image"
+        },
+        {
+            "id": "monica/remove-object",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "remove-object",
+            "type": "image"
+        }
+    ]
+}

@@ -136,6 +136,8 @@ public class AIServiceConfig
     public ProviderConfig? OpenCode { get; set; }
     public ProviderConfig? Haimaker { get; set; }
     public ProviderConfig? Straico { get; set; }
+    public ProviderConfig? Monica { get; set; }
+    public ProviderConfig? CAMBAI { get; set; }
 }
 
 public class ProviderConfig

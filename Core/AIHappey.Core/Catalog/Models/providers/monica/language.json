@@ -1,0 +1,173 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "monica/gpt-5",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-5",
+            "type": "language"
+        },
+        {
+            "id": "monica/gpt-4.1",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-4.1",
+            "type": "language"
+        },
+        {
+            "id": "monica/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-4.1-mini",
+            "type": "language"
+        },
+        {
+            "id": "monica/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-4.1-nano",
+            "type": "language"
+        },
+        {
+            "id": "monica/gpt-4o",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-4o",
+            "type": "language"
+        },
+        {
+            "id": "monica/gpt-4o-2024-11-20",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-4o-2024-11-20",
+            "type": "language"
+        },
+        {
+            "id": "monica/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-4o-mini",
+            "type": "language"
+        },
+        {
+            "id": "monica/gpt-4o-mini-2024-07-18",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "gpt-4o-mini-2024-07-18",
+            "type": "language"
+        },
+        {
+            "id": "monica/o4-mini",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "o4-mini",
+            "type": "language"
+        },
+        {
+            "id": "monica/o3",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "o3",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-opus-4-20250514",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-opus-4-20250514",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-opus-4-20250514-thinking",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-opus-4-20250514-thinking",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-4-sonnet",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-4-sonnet",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-sonnet-4-20250514",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-sonnet-4-20250514",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-sonnet-4-20250514-thinking",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-sonnet-4-20250514-thinking",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-7-sonnet-latest",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-7-sonnet-latest",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-5-sonnet-20241022",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-5-sonnet-20241022",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-5-sonnet-latest",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-5-sonnet-latest",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-5-sonnet-20240620",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-5-sonnet-20240620",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-5-haiku-latest",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-5-haiku-latest",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-5-haiku-20241022",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-5-haiku-20241022",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-opus-20240229",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-opus-20240229",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-haiku-20240307",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-haiku-20240307",
+            "type": "language"
+        },
+        {
+            "id": "monica/claude-3-haiku",
+            "object": "model",
+            "owned_by": "Monica",
+            "name": "claude-3-haiku",
+            "type": "language"
+        }
+    ]
+}

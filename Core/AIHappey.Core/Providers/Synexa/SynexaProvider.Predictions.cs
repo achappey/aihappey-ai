@@ -243,7 +243,7 @@ public partial class SynexaProvider
         {
             return value.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
                 ? value
-                : AIHappey.Common.Extensions.ImageExtensions.ToDataUrl(value, MediaTypeNames.Image.Png);
+                : Common.Extensions.ImageExtensions.ToDataUrl(value, MediaTypeNames.Image.Png);
         }
 
         using var resp = await _client.GetAsync(value, cancellationToken);
@@ -256,7 +256,7 @@ public partial class SynexaProvider
         if (string.IsNullOrWhiteSpace(mimeType) || !mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
             mimeType = MediaTypeNames.Image.Png;
 
-        return AIHappey.Common.Extensions.ImageExtensions.ToDataUrl(Convert.ToBase64String(bytes), mimeType);
+        return Common.Extensions.ImageExtensions.ToDataUrl(Convert.ToBase64String(bytes), mimeType);
     }
 
     private static string ExtractOutputText(JsonElement output)

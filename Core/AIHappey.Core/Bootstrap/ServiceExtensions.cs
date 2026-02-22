@@ -136,6 +136,8 @@ using AIHappey.Core.Providers.Tavily;
 using AIHappey.Core.Providers.OpenCode;
 using AIHappey.Core.Providers.Haimaker;
 using AIHappey.Core.Providers.Straico;
+using AIHappey.Core.Providers.Monica;
+using AIHappey.Core.Providers.CAMBAI;
 
 namespace AIHappey.Core.AI;
 
@@ -279,6 +281,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OpenCodeProvider>();
         services.AddSingleton<IModelProvider, HaimakerProvider>();
         services.AddSingleton<IModelProvider, StraicoProvider>();
+        services.AddSingleton<IModelProvider, MonicaProvider>();
+        services.AddSingleton<IModelProvider, CAMBAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

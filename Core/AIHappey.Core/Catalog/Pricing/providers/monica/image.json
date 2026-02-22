@@ -1,0 +1,68 @@
+{
+    "monica/stable-diffusion-xl-1.0": {
+        "pricing": {
+            "input": "0",
+            "output": "0.005"
+        }
+    },
+    "monica/stable-diffusion-3-large": {
+        "pricing": {
+            "input": "0",
+            "output": "0.035"
+        }
+    },
+    "monica/stable-diffusion-3.5-large": {
+        "pricing": {
+            "input": "0",
+            "output": "0.065"
+        }
+    },
+    "monica/flux-schnell-1.0": {
+        "pricing": {
+            "input": "0",
+            "output": "0.003"
+        }
+    },
+    "monica/flux-dev-1.0": {
+        "pricing": {
+            "input": "0",
+            "output": "0.025"
+        }
+    },
+    "monica/flux-pro-1.0": {
+        "pricing": {
+            "input": "0",
+            "output": "0.055"
+        }
+    },
+    "monica/dall-e-3": {
+        "pricing": {
+            "input": "0",
+            "output": "0.040"
+        }
+    },
+    "monica/playground-v2.5": {
+        "pricing": {
+            "input": "0",
+            "output": "0.0039"
+        }
+    },
+    "monica/ideogram-v2": {
+        "pricing": {
+            "input": "0",
+            "output": "0.08"
+        }
+    },
+    "monica/upscale": {
+        "pricing": {
+            "input": "0",
+            "output": "0.004"
+        }
+    },
+    "monica/remove-object": {
+        "pricing": {
+            "input": "0",
+            "output": "0.004"
+        }
+    }
+}

@@ -137,7 +137,9 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["tavily"] = "X-Tavily-Key",
             ["opencode"] = "X-OpenCode-Key",
             ["haimaker"] = "X-Haimaker-Key",
-            ["straico"] = "X-Straico-Key"
+            ["straico"] = "X-Straico-Key",
+            ["monica"] = "X-Monica-Key",
+            ["cambai"] = "X-CAMBAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

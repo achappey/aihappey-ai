@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cambai/text-to-sound/sound",
+      "object": "model",
+      "owned_by": "CAMB.AI",
+      "name": "text-to-sound sound",
+      "type": "speech",
+      "description": "Generate an audio file with sound effects from a given text prompt."
+    },
+    {
+      "id": "cambai/text-to-sound/music",
+      "object": "model",
+      "owned_by": "CAMB.AI",
+      "name": "text-to-sound music",
+      "type": "speech",
+      "description": "Generate an audio file with music from a given text prompt."
+    },
+    {
+      "id": "cambai/text-to-voice",
+      "object": "model",
+      "owned_by": "CAMB.AI",
+      "name": "text-to-voice",
+      "type": "speech",
+      "description": "Creating a human-like voice from a given text prompt."
+    }
+  ]
+}

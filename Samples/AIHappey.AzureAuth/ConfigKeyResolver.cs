@@ -143,6 +143,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "opencode" => _config.OpenCode?.ApiKey,
             "haimaker" => _config.Haimaker?.ApiKey,
             "straico" => _config.Straico?.ApiKey,
+            "monica" => _config.Monica?.ApiKey,
+            "cambai" => _config.CAMBAI?.ApiKey,
             _ => null
         };
 }
