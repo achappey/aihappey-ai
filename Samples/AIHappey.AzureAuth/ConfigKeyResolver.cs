@@ -154,6 +154,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "ideogram" => _config.Ideogram?.ApiKey,
             "pinecone" => _config.Pinecone?.ApiKey,
             "zyphra" => _config.Zyphra?.ApiKey,
+            "picsart" => _config.Picsart?.ApiKey,
             _ => null
         };
 }

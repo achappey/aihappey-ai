@@ -147,6 +147,7 @@ public class AIServiceConfig
     public ProviderConfig? Ideogram { get; set; }
     public ProviderConfig? Pinecone { get; set; }
     public ProviderConfig? Zyphra { get; set; }
+    public ProviderConfig? Picsart { get; set; }
 }
 
 public class ProviderConfig

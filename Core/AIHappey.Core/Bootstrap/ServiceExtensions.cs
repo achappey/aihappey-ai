@@ -146,6 +146,7 @@ using AIHappey.Core.Providers.Blackbox;
 using AIHappey.Core.Providers.OhMyGPT;
 using AIHappey.Core.Providers.Ideogram;
 using AIHappey.Core.Providers.Pinecone;
+using AIHappey.Core.Providers.Picsart;
 using AIHappey.Core.Providers.Zyphra;
 
 namespace AIHappey.Core.AI;
@@ -300,6 +301,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OhMyGPTProvider>();
         services.AddSingleton<IModelProvider, IdeogramProvider>();
         services.AddSingleton<IModelProvider, PineconeProvider>();
+        services.AddSingleton<IModelProvider, PicsartProvider>();
         services.AddSingleton<IModelProvider, ZyphraProvider>();
     }
 
