@@ -139,6 +139,7 @@ public class AIServiceConfig
     public ProviderConfig? Monica { get; set; }
     public ProviderConfig? CAMBAI { get; set; }
     public ProviderConfig? Morpheus { get; set; }
+    public ProviderConfig? ArceeAI { get; set; }
 }
 
 public class ProviderConfig

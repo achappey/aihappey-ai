@@ -140,7 +140,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["straico"] = "X-Straico-Key",
             ["monica"] = "X-Monica-Key",
             ["cambai"] = "X-CAMBAI-Key",
-            ["morpheus"] = "X-Morpheus-Key"
+            ["morpheus"] = "X-Morpheus-Key",
+            ["arceeai"] = "X-ArceeAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
