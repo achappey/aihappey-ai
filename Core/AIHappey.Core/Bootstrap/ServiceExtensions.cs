@@ -144,6 +144,8 @@ using AIHappey.Core.Providers.Exa;
 using AIHappey.Core.Providers.Featherless;
 using AIHappey.Core.Providers.Blackbox;
 using AIHappey.Core.Providers.OhMyGPT;
+using AIHappey.Core.Providers.Ideogram;
+using AIHappey.Core.Providers.Pinecone;
 
 namespace AIHappey.Core.AI;
 
@@ -295,6 +297,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FeatherlessProvider>();
         services.AddSingleton<IModelProvider, BlackboxProvider>();
         services.AddSingleton<IModelProvider, OhMyGPTProvider>();
+        services.AddSingleton<IModelProvider, IdeogramProvider>();
+        services.AddSingleton<IModelProvider, PineconeProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

@@ -2,25 +2,24 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.Featherless;
+namespace AIHappey.Core.Providers.Pinecone;
 
-public partial class FeatherlessProvider
+public partial class PineconeProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-
         ApplyAuthHeader();
 
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+        using var req = new HttpRequestMessage(HttpMethod.Get, "models");
         using var resp = await _client.SendAsync(req, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"Featherless API error: {err}");
+            throw new Exception($"Pinecone API error: {err}");
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -29,7 +28,7 @@ public partial class FeatherlessProvider
         var models = new List<Model>();
         var root = doc.RootElement;
 
-        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+        var arr = root.TryGetProperty("models", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                 ? dataEl.EnumerateArray()
                 : Enumerable.Empty<JsonElement>();
 
@@ -37,28 +36,22 @@ public partial class FeatherlessProvider
         {
             Model model = new();
 
-            if (el.TryGetProperty("id", out var idEl))
+            if (el.TryGetProperty("model", out var idEl))
             {
                 model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                 model.Name = idEl.GetString() ?? "";
             }
 
-            if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
-                model.Created = createdEl.GetInt64();
-
-            if (el.TryGetProperty("context_length", out var contextLengthEl))
+            if (el.TryGetProperty("max_sequence_length", out var contextLengthEl))
                 model.ContextWindow = contextLengthEl.GetInt32();
 
-            if (el.TryGetProperty("max_completion_tokens", out var maxTokenEl))
-                model.MaxTokens = maxTokenEl.GetInt32();
+            if (el.TryGetProperty("short_description", out var descEl))
+                model.Description = descEl.GetString();
 
-            if (el.TryGetProperty("owned_by", out var orgEl))
-                model.OwnedBy = orgEl.GetString() ?? "";
+            if (el.TryGetProperty("type", out var typeEl) && typeEl.GetString() == "rerank")
+                model.Type = "reranking";
 
-            if (el.TryGetProperty("model_class", out var modelClassEl))
-                model.Description = modelClassEl.GetString();
-
-            if (!string.IsNullOrEmpty(model.Id))
+            if (!string.IsNullOrEmpty(model.Id) && !string.IsNullOrEmpty(model.Type))
                 models.Add(model);
         }
 

@@ -151,6 +151,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "featherless" => _config.Featherless?.ApiKey,
             "blackbox" => _config.Blackbox?.ApiKey,
             "ohmygpt" => _config.OhMyGPT?.ApiKey,
+            "ideogram" => _config.Ideogram?.ApiKey,
+            "pinecone" => _config.Pinecone?.ApiKey,
             _ => null
         };
 }

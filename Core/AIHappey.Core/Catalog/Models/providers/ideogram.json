@@ -1,0 +1,47 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "ideogram/ideogram-v3/generate",
+            "object": "model",
+            "owned_by": "Ideogram 3.0 Generate",
+            "type": "image"
+        },
+        {
+            "id": "ideogram/ideogram-v3/generate-transparent",
+            "object": "model",
+            "owned_by": "Ideogram 3.0 Generate (Transparent Background)",
+            "type": "image"
+        },
+        {
+            "id": "ideogram/ideogram-v3/edit",
+            "object": "model",
+            "owned_by": "Ideogram 3.0 Edit",
+            "type": "image"
+        },
+        {
+            "id": "ideogram/ideogram-v3/remix",
+            "object": "model",
+            "owned_by": "Ideogram 3.0 Remix",
+            "type": "image"
+        },
+        {
+            "id": "ideogram/ideogram-v3/reframe",
+            "object": "model",
+            "owned_by": "Ideogram 3.0 Reframe",
+            "type": "image"
+        },
+        {
+            "id": "ideogram/ideogram-v3/replace-background",
+            "object": "model",
+            "owned_by": "Ideogram 3.0 Replace Background",
+            "type": "image"
+        },
+        {
+            "id": "ideogram/upscale",
+            "object": "model",
+            "owned_by": "Upscale",
+            "type": "image"
+        }
+    ]
+}

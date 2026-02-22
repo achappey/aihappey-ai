@@ -144,6 +144,8 @@ public class AIServiceConfig
     public ProviderConfig? Featherless { get; set; }
     public ProviderConfig? Blackbox { get; set; }
     public ProviderConfig? OhMyGPT { get; set; }
+    public ProviderConfig? Ideogram { get; set; }
+    public ProviderConfig? Pinecone { get; set; }
 }
 
 public class ProviderConfig
