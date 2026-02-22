@@ -140,6 +140,8 @@ using AIHappey.Core.Providers.Monica;
 using AIHappey.Core.Providers.CAMBAI;
 using AIHappey.Core.Providers.Morpheus;
 using AIHappey.Core.Providers.ArceeAI;
+using AIHappey.Core.Providers.Exa;
+using AIHappey.Core.Providers.Featherless;
 
 namespace AIHappey.Core.AI;
 
@@ -287,6 +289,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CAMBAIProvider>();
         services.AddSingleton<IModelProvider, MorpheusProvider>();
         services.AddSingleton<IModelProvider, ArceeAIProvider>();
+        services.AddSingleton<IModelProvider, ExaProvider>();
+        services.AddSingleton<IModelProvider, FeatherlessProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

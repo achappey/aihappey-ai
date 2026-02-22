@@ -147,6 +147,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "cambai" => _config.CAMBAI?.ApiKey,
             "morpheus" => _config.Morpheus?.ApiKey,
             "arceeai" => _config.ArceeAI?.ApiKey,
+            "exa" => _config.Exa?.ApiKey,
+            "featherless" => _config.Featherless?.ApiKey,
             _ => null
         };
 }

@@ -1,0 +1,33 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "exa/exa-research-fast",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "exa-research-fast",
+      "type": "language"
+    },
+    {
+      "id": "exa/exa-research",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "exa-research",
+      "type": "language"
+    },
+    {
+      "id": "exa/exa-research-pro",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "exa-research-pro",
+      "type": "language"
+    },
+    {
+      "id": "exa/exa",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "exa",
+      "type": "language"
+    }
+  ]
+}

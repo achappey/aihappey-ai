@@ -140,6 +140,8 @@ public class AIServiceConfig
     public ProviderConfig? CAMBAI { get; set; }
     public ProviderConfig? Morpheus { get; set; }
     public ProviderConfig? ArceeAI { get; set; }
+    public ProviderConfig? Exa { get; set; }
+    public ProviderConfig? Featherless { get; set; }
 }
 
 public class ProviderConfig
