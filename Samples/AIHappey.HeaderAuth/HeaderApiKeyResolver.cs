@@ -143,7 +143,9 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["morpheus"] = "X-Morpheus-Key",
             ["arceeai"] = "X-ArceeAI-Key",
             ["exa"] = "X-Exa-Key",
-            ["featherless"] = "X-Featherless-Key"
+            ["featherless"] = "X-Featherless-Key",
+            ["blackbox"] = "X-Blackbox-Key",
+            ["ohmygpt"] = "X-OhMyGPT-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

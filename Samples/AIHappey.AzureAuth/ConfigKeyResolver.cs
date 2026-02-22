@@ -149,6 +149,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "arceeai" => _config.ArceeAI?.ApiKey,
             "exa" => _config.Exa?.ApiKey,
             "featherless" => _config.Featherless?.ApiKey,
+            "blackbox" => _config.Blackbox?.ApiKey,
+            "ohmygpt" => _config.OhMyGPT?.ApiKey,
             _ => null
         };
 }

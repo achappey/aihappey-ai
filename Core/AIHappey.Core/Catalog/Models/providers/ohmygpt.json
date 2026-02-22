@@ -1,0 +1,1493 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "ohmygpt/gemini-3.1-pro-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-1-fast",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-1-fast-reasoning",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-1-fast-reasoning-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-1-fast-non-reasoning",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-1-fast-non-reasoning-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.7",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5.2",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5.2-codex",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-3-pro-preview-thinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5.1-codex-max",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-3-pro-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-3-pro-image-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/gpt-5.1-codex",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5.1-codex-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5.1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5.1-2025-11-13",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-opus-4-5-20251101",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-opus-4-5",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-haiku-4-5",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-haiku-4-5-20251001",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/fireworks/models/kimi-k2-instruct-0905",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/fireworks/models/deepseek-v3p1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/fireworks/models/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/fireworks/models/gpt-oss-20b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/fireworks/models/deepseek-r1-0528",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/fireworks/models/deepseek-v3-0324",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/fireworks/models/llama-v3p3-70b-instruct",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-code-fast-1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-code-fast",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-code-fast-1-0825",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-fast-reasoning",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-fast",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-fast-reasoning-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-fast-non-reasoning",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-fast-non-reasoning-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.6",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-pro",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-pro-2025-10-06",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-audio-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-audio-mini-2025-10-06",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-audio",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-audio-2025-08-28",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-realtime-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-realtime-mini-2025-10-06",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-realtime",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-realtime-2025-08-28",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-image-1-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/claude-sonnet-4-5",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-sonnet-4-5-20250929",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-lite-preview-09-2025-nothinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-lite-preview-09-2025-thinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-preview-09-2025-nothinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-preview-09-2025-thinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o3-pro-2025-06-10",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o3-pro",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-codex",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-image-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-lite-nothinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-lite-thinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/openai/gpt-oss-20b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-doubao-seed-1.6-vision-250815",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-deepseek-v3.1-250821",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/openai/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/deepseek-ai/DeepSeek-V3.1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-thinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-flash-nothinking",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.0-flash-001",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/vertex-gemini-2.0-flash-lite-001",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.5v",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.5-flash",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.5-airx",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.5-air",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.5-x",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4.5",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-chat-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-nano",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-nano-2025-08-07",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-mini-2025-08-07",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-5-2025-08-07",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-2.5-flash-lite",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-opus-4-1-20250805",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-opus-4-1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-doubao-seed-1.6-flash-250715",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-doubao-seed-1.6-thinking-250715",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4-0709",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-4",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-doubao-seed-1.6-flash-250615",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-doubao-seed-1.6-thinking-250615",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-doubao-seed-1.6-250615",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/ark-deepseek-r1-250528",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-1.5-pro-32k-250115",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-1.5-vision-lite-250315",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-1.5-vision-pro-250328",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-1.5-thinking-vision-pro-250428",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-1.5-thinking-pro-m-250428",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-sonnet-4-0",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-sonnet-4-20250514",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-opus-4-0",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-opus-4-20250514",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-image-1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/o4-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-1.5-thinking-pro-250415",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o3",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o3-2025-04-16",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o4-mini-2025-04-16",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4.1-2025-04-14",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4.1-mini-2025-04-14",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4.1-nano-2025-04-14",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/tts-1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/tts-1-hd",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/tts-1-1106",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/tts-1-hd-1106",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini-search-preview-2025-03-11",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini-search-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-search-preview-2025-03-11",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-search-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/c4ai-aya-vision-8b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/c4ai-aya-vision-32b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-3-7-sonnet-20250219",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-3-7-sonnet-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-2.0-flash-lite-001",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-2.0-flash-lite",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/whisper-1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "transcription"
+        },
+        {
+            "id": "ohmygpt/ark-deepseek-v3-250324",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-a-03-2025",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r-03-2024",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r-08-2024",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r-plus",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r-plus-04-2024",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r-plus-08-2024",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r7b-12-2024",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r-online",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/command-r-plus-online",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-3-turbo",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4-plus",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4-airx",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4-air",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4-long",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4-flashx",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4-flash",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4v-plus",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/glm-4v",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/azure-tts-1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/mistral-large-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/open-mistral-nemo",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/omni-moderation-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/omni-moderation-2024-09-26",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/text-moderation-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/text-moderation-007",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/text-moderation-stable",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-embedding-large-text-240915",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/doubao-embedding-text-240715",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/google-search-v1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/bing-search-v7",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/serper-search-v1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/file-v1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/deepseek-reasoner",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/yi-lightning",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/yi-vision-v2",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/nd-imagine-v3",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/claude-3-haiku-20240307",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-3-5-haiku-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/claude-3-5-haiku-20241022",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/deepseek-ai/DeepSeek-R1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/deepseek-ai/DeepSeek-V3",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/Qwen/Qwen2.5-7B-Instruct-Turbo",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/mistralai/Mistral-7B-Instruct-v0.2",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/TA/mistralai/Mixtral-8x7B-Instruct-v0.1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/flux-schnell",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/flux-pro",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/flux-dev",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/flux-1.1-pro",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/flux-1.1-pro-ultra",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/grok-3",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-3-beta",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-3-fast",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-3-fast-beta",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-3-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-3-mini-beta",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-3-mini-fast",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/grok-3-mini-fast-beta",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/deepseek-r1-1.5b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-2.0-flash",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gemini-2.0-flash-001",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o3-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o3-mini-2025-01-31",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o1-2024-12-17",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini-audio-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini-audio-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-audio-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-realtime-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini-realtime-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini-realtime-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-2024-11-20",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/c4ai-aya-expanse-8b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/c4ai-aya-expanse-32b",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-audio-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-realtime-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "speech"
+        },
+        {
+            "id": "ohmygpt/o1-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/o1-preview-2024-09-12",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/davinci-002",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/babbage-002",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/chatgpt-4o-latest",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-2024-08-06",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-mini-2024-07-18",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4o-2024-05-13",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4-turbo",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4-turbo-2024-04-09",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4-0125-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4-turbo-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/text-embedding-ada-002",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/text-embedding-3-small",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/text-embedding-3-large",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4-vision-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-3.5-turbo-16k",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-3.5-turbo-1106",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4-1106-preview",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/dall-e-3",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/gpt-3.5-turbo-instruct",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-3.5-turbo-instruct-0914",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-4-0613",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-3.5-turbo",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/gpt-3.5-turbo-0125",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/dall-e-2",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/dall-e",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "image"
+        },
+        {
+            "id": "ohmygpt/gpt-4.1",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        },
+        {
+            "id": "ohmygpt/deepseek-chat",
+            "object": "model",
+            "owned_by": "OhMyGPT",
+            "type": "language"
+        }
+    ]
+}

@@ -1,0 +1,2471 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "blackbox/claude-sonnet-4.6",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-sonnet-4.5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-opus-4.6",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-opus-4.5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.2-codex",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-3-pro-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-3.1-pro-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/jamba-large-1.7",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/jamba-mini-1.7",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/aion-1.0",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/aion-1.0-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/aion-rp-llama-3.1-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/codellama-7b-instruct-solidity",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/tongyi-deepresearch-30b-a3b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/molmo-2-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/olmo-2-0325-32b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/olmo-3-32b-think",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/olmo-3-7b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/olmo-3-7b-think",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/olmo-3.1-32b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/goliath-120b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nova-2-lite-v1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nova-lite-v1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nova-micro-v1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nova-premier-v1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nova-pro-v1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/magnum-v4-72b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-3-haiku",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-3.5-haiku",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-3.7-sonnet",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-haiku-4.5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-opus-4",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-opus-4.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-sonnet-4",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/coder-large",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/maestro-reasoning",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/spotlight",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/trinity-large-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/trinity-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/virtuoso-large",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ernie-4.5-21b-a3b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ernie-4.5-21b-a3b-thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ernie-4.5-300b-a47b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/command-a",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/command-r-08-2024",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/command-r-plus-08-2024",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/command-r7b-12-2024",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-chat",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-chat-v3-0324",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-chat-v3.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1-0528",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1-distill-qwen-32b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-pro-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/phi-4",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/wizardlm-2-8x22b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3-70b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3-8b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-405b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-405b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-70b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-8b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-large",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-medium-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-small-3.2-24b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mixtral-8x22b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5-chat",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o3-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.1-chat",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.1-codex",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.1-codex-max",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.1-codex-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.2-chat",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5.2-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-oss-20b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o1-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o3-deep-research",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o3-mini-high",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o3-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o4-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o4-mini-deep-research",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o4-mini-high",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sonar",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sonar-deep-research",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sonar-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sonar-pro-search",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sonar-reasoning-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/intellect-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-2.5-72b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-2.5-7b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-2.5-coder-32b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-2.5-vl-7b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-max",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-plus",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-plus-2025-07-28",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-turbo",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-14b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-235b-a22b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-30b-a3b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-32b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-coder",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-coder-plus",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-next-80b-a3b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-3-beta",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-3-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-3-mini-beta",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-4",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-4-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-4.1-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/grok-code-fast-1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4-32b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.5-air",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.5v",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.6",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.6v",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.7",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.7-flash",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/palmyra-x5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/solar-pro-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/inflection-3-pi",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/inflection-3-productivity",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mercury",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mercury-coder",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kat-coder-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/lfm2-8b-a1b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/longcat-flash-chat",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nemotron-3-nano-30b-a3b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nemotron-nano-12b-v2-vl",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nemotron-nano-9b-v2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kimi-k2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kimi-k2-thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kimi-k2.5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hermes-3-llama-3.1-405b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hermes-3-llama-3.1-70b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hermes-4-405b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-v3.2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-v3.2-exp",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-v3.2-speciale",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-large-2512",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-medium-3.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-large-2411",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-large-2407",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-small-3.1-24b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-small-creative",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-nemo",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-saba",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-tiny",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ministral-14b-2512",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ministral-3b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ministral-3b-2512",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ministral-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ministral-8b-2512",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/codestral-2508",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/devstral-2512",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/devstral-medium",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/devstral-small",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-7b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-7b-instruct-v0.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-7b-instruct-v0.2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-7b-instruct-v0.3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/pixtral-12b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/pixtral-large-2411",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/voxtral-small-24b-2507",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kimi-dev-72b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kimi-k2-0905",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/morph-v3-large",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-4-maverick",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-4-scout",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.3-70b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.2-11b-vision-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.2-1b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.2-3b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-guard-2-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-guard-3-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-guard-4-12b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-235b-a22b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-235b-a22b-thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-30b-a3b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-30b-a3b-thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-32b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-8b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-8b-thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwq-32b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/l3-euryale-70b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/l3-lunaris-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/l3.1-70b-hanami-x1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/l3.1-euryale-70b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/l3.3-euryale-70b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/step3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hunyuan-a13b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/cydonia-24b-v4.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/rocinante-12b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/skyfall-36b-v2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/unslopnemo-12b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1t-chimera",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1t2-chimera",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/tng-r1t-chimera",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/remm-slerp-l2-13b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mimo-v2-flash",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/rnj-1-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llemma_7b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/dolphin-mistral-24b-venice-edition",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/cogito-v2-preview-llama-109b-moe",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/cogito-v2-preview-llama-405b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/cogito-v2-preview-llama-70b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/cogito-v2.1-671b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/seed-1.6",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/seed-1.6-flash",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/seedream-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/seedream-4",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ui-tars-1.5-7b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hermes-2-pro-llama-3-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/lfm-2.2-6b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/lfm-2.5-1.2b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/lfm-2.5-1.2b-thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/weaver",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-lumimaid-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/noromaid-20b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-v3.1-nex-n1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-nemotron-70b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-nemotron-ultra-253b-v1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.3-nemotron-super-49b-v1.5",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sana",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sana-sprint-1.6b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-3.5-turbo",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-3.5-turbo-0613",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-3.5-turbo-16k",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-3.5-turbo-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4-1106-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4-turbo",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4-turbo-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/chatgpt-4o-latest",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-2024-05-13",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-2024-08-06",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-2024-11-20",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-audio",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-audio-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/o3-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen2.5-coder-7b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen2.5-vl-32b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen2.5-vl-72b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-image",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sorcererlm-8x22b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/l3-euryale-70b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/l3-lunaris-8b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/stable-diffusion",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/stable-diffusion-3.5-large",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/stable-diffusion-3.5-medium",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.7-flash",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/intellect-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/molmo-2-8b:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/olmo-3.1-32b-think",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/claude-3.7-sonnet:thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/trinity-large-preview:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/trinity-mini:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ernie-4.5-vl-28b-a3b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ernie-4.5-vl-424b-a47b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/flux-1.1-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/flux-1.1-pro-ultra",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/flux-dev",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/flux-kontext-max",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/flux-kontext-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/flux-schnell",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/blackbox-search",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/cogvideox-5b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/fast-animatediff",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/fast-svd",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/fast-svd-lcm",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-flash-edit",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hunyuan-video-lora",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mochi-v1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-max",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-235b-a22b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-vl-32b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ray-2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sora-2-image-to-video",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sora-2-image-to-video-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sora-2-text-to-video",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sora-2-text-to-video-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/sora-2-video-remix",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/veo-3.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/veo-3.1-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/fibo",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/image-3.2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/dolphin-mistral-24b-venice-edition:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1-0528:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-v3.1-terminus:exacto",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-v3.1-terminus",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/edit",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/multi",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.0-flash-001",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.0-flash-lite-001",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-flash-image",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-flash-lite",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-flash-lite-preview-09-2025",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-flash-preview-09-2025",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-2.5-pro-preview-05-06",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemini-3-pro-image-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-2-27b-it",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-2-9b-it",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-3-12b-it",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-3-12b-it:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-3-4b-it",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-3-4b-it:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-3n-e2b-it:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-3n-e4b-it",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gemma-3n-e4b-it:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/imagen-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/imagen-3-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/imagen-4",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/imagen-4-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/imagen-4-ultra",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nano-banana",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nano-banana-pro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/veo-2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/veo-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/veo-3-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/edit-image",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mythomax-l2-13b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/granite-4.0-h-micro",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ideogram-v2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ideogram-v2-turbo",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ideogram-v2a",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ideogram-v2a-turbo",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/ideogram-v3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/lfm-2.5-1.2b-instruct:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/lfm-2.5-1.2b-thinking:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/dreamshaper",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/photon",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/photon-flash",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.1-405b-instruct:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/llama-3.2-3b-instruct:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/image-01",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/minimax-01",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/minimax-free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/minimax-m1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/minimax-m2",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/minimax-m2-her",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/minimax-m2.1",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-small-24b-instruct-2501",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mistral-small-3.1-24b-instruct:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/mixtral-8x7b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kimi-k2:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/kimi-k2-0905:exacto",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/morph-v3-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hermes-3-llama-3.1-405b:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nemotron-3-nano-30b-a3b:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nemotron-nano-12b-v2-vl:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/nemotron-nano-9b-v2:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o:extended",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-audio-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-mini-2024-07-18",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-mini-search-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-4o-search-preview",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5-codex",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5-image",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5-image-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5-mini",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-5-nano",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-oss-120b:exacto",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/gpt-oss-safeguard-20b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/internvl3-78b",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/playground-v25",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hidream-l1-dev",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hidream-l1-fast",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hidream-l1-full",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/wan-2.2-image",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-2.5-vl-7b-instruct:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-plus-2025-07-28:thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-vl-max",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen-vl-plus",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-235b-a22b-2507",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-235b-a22b-thinking-2507",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-30b-a3b-instruct-2507",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-30b-a3b-thinking-2507",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-4b:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-coder:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-coder:exacto",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-coder-30b-a3b-instruct",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-coder-flash",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-next-80b-a3b-instruct:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/qwen3-next-80b-a3b-thinking",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/recraft-v3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/recraft-v3-svg",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/relace-apply-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/relace-search",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/hunyuan-image-3",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1t-chimera:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/deepseek-r1t2-chimera:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/solar-pro-3:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.5-air:free",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        },
+        {
+            "id": "blackbox/glm-4.6:exacto",
+            "object": "model",
+            "owned_by": "Blackbox",
+            "type": "language"
+        }
+    ]
+}

@@ -27,6 +27,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Baseten        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | BergetAI       | ✅        | ✅                | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ✅          | ➖          |
 | Bineric        | ✅        | ✅                | ❌            | 🟡        | ➖                     | ❌                       | ✅               | ➖          | ➖          |
+| Blackbox       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Bria           | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | BytePlus       | ✅        | ✅                | ✅            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | Bytez          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
@@ -96,6 +97,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NVIDIA         | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | NousResearch   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Novita         | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ✅                       | ✅               | ✅          | ➖          |
+| OhMyGPT        | ✅        | ✅                | ❌            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ➖          |
 | OpenAI         | ✅        | ✅                | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          |
 | OpenCode       | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | OpenRouter     | ✅        | ❌                | ❌            | ❌        | ❌                     | ❌                       | ➖               | ➖          | ➖          |
