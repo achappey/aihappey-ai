@@ -145,6 +145,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "straico" => _config.Straico?.ApiKey,
             "monica" => _config.Monica?.ApiKey,
             "cambai" => _config.CAMBAI?.ApiKey,
+            "morpheus" => _config.Morpheus?.ApiKey,
             _ => null
         };
 }

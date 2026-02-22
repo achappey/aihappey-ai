@@ -138,6 +138,7 @@ using AIHappey.Core.Providers.Haimaker;
 using AIHappey.Core.Providers.Straico;
 using AIHappey.Core.Providers.Monica;
 using AIHappey.Core.Providers.CAMBAI;
+using AIHappey.Core.Providers.Morpheus;
 
 namespace AIHappey.Core.AI;
 
@@ -283,6 +284,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, StraicoProvider>();
         services.AddSingleton<IModelProvider, MonicaProvider>();
         services.AddSingleton<IModelProvider, CAMBAIProvider>();
+        services.AddSingleton<IModelProvider, MorpheusProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
