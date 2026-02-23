@@ -29,7 +29,6 @@ public partial class ScalewayProvider
         var models = new List<Model>();
         var root = doc.RootElement;
 
-        // ✅ root is already an array
         var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                 ? dataEl.EnumerateArray()
                 : Enumerable.Empty<JsonElement>();

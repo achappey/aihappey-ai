@@ -70,6 +70,34 @@
             "owned_by": "CanopyWave",
             "name": "mimo-v2-flash",
             "type": "language"
+        },
+        {
+            "id": "canopywave/zai/glm-5",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "glm-5",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/qwen/qwen3.5-397b-a17b",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "qwen3.5-397b-a17b",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/minimax/minimax-m2.5",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "minimax-m2.5",
+            "type": "language"
+        },
+        {
+            "id": "canopywave/deepseek/deepseek-v3.2",
+            "object": "model",
+            "owned_by": "CanopyWave",
+            "name": "deepseek-v3.2",
+            "type": "language"
         }
     ]
 }
