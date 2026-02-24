@@ -1,0 +1,145 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "browseruse/browser-use-llm",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "browser-use-llm",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/browser-use-2.0",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "browser-use-2.0",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-4.1",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-4.1",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-4.1-mini",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/o4-mini",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "o4-mini",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/o3",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "o3",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-2.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-2.5-pro",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-3-pro-preview",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-3-pro-preview",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-3-flash-preview",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-flash-latest",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-flash-latest",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-flash-lite-latest",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-flash-lite-latest",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-sonnet-4-20250514",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-sonnet-4-20250514",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-sonnet-4-5-20250929",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-sonnet-4-5-20250929",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-sonnet-4-6",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-opus-4-5-20251101",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-opus-4-5-20251101",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-4o",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-4o",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-4o-mini",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/llama-4-maverick-17b-128e-instruct",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "llama-4-maverick-17b-128e-instruct",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-3-7-sonnet-20250219",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-3-7-sonnet-20250219",
+      "type": "language"
+    }
+  ]
+}

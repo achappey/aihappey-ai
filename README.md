@@ -3,7 +3,7 @@
 A multi-provider **.NET AI backend** exposing key AI endpoints.
 
 No smart routing fairy. No shiny admin portal. No hidden logic maze.
-Just providers flattened to capabilities, normalized hard, exposed through an open contract.
+Just providers flattened to capabilities, normalized hard, exposed through open contracts.
 Boring on purpose.
 
 Access 70k+ models from your favorite client.
@@ -38,6 +38,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Blackbox       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | BlackForestLabs| ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Bria           | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| BrowserUse     | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | BytePlus       | ✅        | ✅                | ✅            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | Bytez          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
 | CAMBAI         | ✅        | ✅                | ✅            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          |

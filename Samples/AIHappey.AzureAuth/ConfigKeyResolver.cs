@@ -161,6 +161,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "lumaai" => _config.LumaAI?.ApiKey,
             "truefoundry" => _config.TrueFoundry?.ApiKey,
             "databricks" => _config.Databricks?.ApiKey,
+            "browseruse" => _config.BrowserUse?.ApiKey,
             _ => null
         };
 }

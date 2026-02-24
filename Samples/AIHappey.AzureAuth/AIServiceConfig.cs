@@ -154,6 +154,7 @@ public class AIServiceConfig
     public ProviderConfig? LumaAI { get; set; }
     public ProviderConfig? TrueFoundry { get; set; }
     public ProviderConfig? Databricks { get; set; }
+    public ProviderConfig? BrowserUse { get; set; }
 }
 
 public class ProviderConfig

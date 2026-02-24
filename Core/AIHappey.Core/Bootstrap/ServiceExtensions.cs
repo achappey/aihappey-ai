@@ -154,6 +154,7 @@ using AIHappey.Core.Providers.AionLabs;
 using AIHappey.Core.Providers.LumaAI;
 using AIHappey.Core.Providers.TrueFoundry;
 using AIHappey.Core.Providers.Databricks;
+using AIHappey.Core.Providers.BrowserUse;
 
 namespace AIHappey.Core.AI;
 
@@ -315,6 +316,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LumaAIProvider>();
         services.AddSingleton<IModelProvider, TrueFoundryProvider>();
         services.AddSingleton<IModelProvider, DatabricksProvider>();
+        services.AddSingleton<IModelProvider, BrowserUseProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
