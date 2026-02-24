@@ -1,0 +1,29 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "inferencesh/falai/kokoro-tts",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "kokoro-tts",
+            "type": "speech",
+            "description": "Kokoro TTS - Lightweight text-to-speech with multiple languages and voices"
+        },
+        {
+            "id": "inferencesh/falai/dia-tts",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "dia-tts",
+            "type": "speech",
+            "description": "Dia TTS - Generate realistic dialogue with emotion control, natural nonverbals, and voice cloning"
+        },
+        {
+            "id": "inferencesh/infsh/youtube-downloader",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "youtube-downloader",
+            "type": "speech",
+            "description": "Download YouTube videos and audio with customizable quality, format, and codec options. Supports audio-only extraction, video+audio, or video-only downloads."
+        }
+    ]
+}

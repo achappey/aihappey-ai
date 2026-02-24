@@ -156,7 +156,12 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["lumaai"] = "X-LumaAI-Key",
             ["truefoundry"] = "X-TrueFoundry-Key",
             ["databricks"] = "X-Databricks-Key",
-            ["browseruse"] = "X-BrowserUse-Key"
+            ["browseruse"] = "X-BrowserUse-Key",
+            ["inferencesh"] = "X-Inferencesh-Key",
+            ["crazyrouter"] = "X-Crazyrouter-Key",
+            ["infraxa"] = "X-Infraxa-Key",
+            ["inceptionlabs"] = "X-InceptionLabs-Key",
+            ["daglo"] = "X-Daglo-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

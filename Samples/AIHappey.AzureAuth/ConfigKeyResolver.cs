@@ -162,6 +162,11 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "truefoundry" => _config.TrueFoundry?.ApiKey,
             "databricks" => _config.Databricks?.ApiKey,
             "browseruse" => _config.BrowserUse?.ApiKey,
+            "inferencesh" => _config.Inferencesh?.ApiKey,
+            "crazyrouter" => _config.Crazyrouter?.ApiKey,
+            "infraxa" => _config.Infraxa?.ApiKey,
+            "inceptionlabs" => _config.InceptionLabs?.ApiKey,
+            "daglo" => _config.Daglo?.ApiKey,
             _ => null
         };
 }

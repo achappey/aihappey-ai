@@ -1,0 +1,156 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "infraxa/cerebras/zai-glm-4.6",
+      "object": "model",
+      "owned_by": "cerebras",
+      "name": "zai-glm-4.6",
+      "type": "language",
+      "context_window": 41000
+    },
+    {
+      "id": "infraxa/google/gemini-flash-latest",
+      "object": "model",
+      "owned_by": "google",
+      "name": "gemini-flash-latest",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
+      "id": "infraxa/google/gemini-flash-lite-latest",
+      "object": "model",
+      "owned_by": "google",
+      "name": "gemini-flash-lite-latest",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
+      "id": "infraxa/google/gemini-3-pro-preview",
+      "object": "model",
+      "owned_by": "google",
+      "name": "gemini-3-pro-preview",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "infraxa/google/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "google",
+      "name": "gemini-3-flash-preview",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
+      "id": "infraxa/zai/glm-4.5-x",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-x",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/zai/glm-4.5-airx",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-airx",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/zai/glm-4.5-air",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-air",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/zai/glm-4.6",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.6",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/zai/glm-4.5-flash",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-flash",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/zai/glm-4.5v",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5v",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/zai/glm-4-32b-0414-128k",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4-32b-0414-128k",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/zai/glm-4.5",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "infraxa/xai/grok-4-fast",
+      "object": "model",
+      "owned_by": "x.ai",
+      "name": "grok-4-fast",
+      "type": "language",
+      "context_window": 2000000
+    },
+    {
+      "id": "infraxa/xai/grok-code-fast-1",
+      "object": "model",
+      "owned_by": "x.ai",
+      "name": "grok-code-fast-1",
+      "type": "language",
+      "context_window": 256000
+    },
+    {
+      "id": "infraxa/openai/gpt-5-codex",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "gpt-5-codex",
+      "type": "language",
+      "context_window": 400000
+    },
+    {
+      "id": "infraxa/anthropic/claude-haiku-4.5",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "claude-haiku-4.5",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "infraxa/anthropic/claude-sonnet-4.5",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "claude-sonnet-4.5",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
+      "id": "infraxa/infraxa/flux-kontext-lora",
+      "object": "model",
+      "owned_by": "infraxa",
+      "name": "flux-kontext-lora",
+      "type": "image"
+    }
+  ]
+}

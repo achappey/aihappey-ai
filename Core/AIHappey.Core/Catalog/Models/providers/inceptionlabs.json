@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "inceptionlabs/mercury-2",
+      "object": "model",
+      "owned_by": "InceptionLabs",
+      "name": "Mercury 2",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "inceptionlabs/mercury-edit",
+      "object": "model",
+      "owned_by": "InceptionLabs",
+      "name": "Mercury Edit",
+      "type": "language",
+      "context_window": 32000
+    },
+    {
+      "id": "inceptionlabs/mercury-edit/apply",
+      "object": "model",
+      "owned_by": "InceptionLabs",
+      "name": "Mercury Apply Edit",
+      "type": "language",
+      "context_window": 32000
+    }
+  ]
+}

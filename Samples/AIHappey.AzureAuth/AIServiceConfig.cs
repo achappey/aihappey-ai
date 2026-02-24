@@ -155,6 +155,11 @@ public class AIServiceConfig
     public ProviderConfig? TrueFoundry { get; set; }
     public ProviderConfig? Databricks { get; set; }
     public ProviderConfig? BrowserUse { get; set; }
+    public ProviderConfig? Inferencesh { get; set; }
+    public ProviderConfig? Crazyrouter { get; set; }
+    public ProviderConfig? Infraxa { get; set; }
+    public ProviderConfig? InceptionLabs { get; set; }
+    public ProviderConfig? Daglo { get; set; }
 }
 
 public class ProviderConfig

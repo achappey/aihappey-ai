@@ -22,7 +22,6 @@ public partial class ContextualAIProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.contextual.ai/");
     }
 
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -33,50 +32,15 @@ public partial class ContextualAIProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-
-
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public string GetIdentifier() => "contextualai";
+    public string GetIdentifier() => nameof(ContextualAI).ToLowerInvariant();
 
-    public async Task<IEnumerable<Model>> ListModels(
-     CancellationToken cancellationToken = default)
-    {
-
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        ApplyAuthHeader();
-
-        var owner = nameof(ContextualAI);
-
-        return await Task.FromResult<IEnumerable<Model>>(
-        [
-        new Model
-        {
-            Id = "ctxl-rerank-v2-instruct-multilingual".ToModelId(GetIdentifier()),
-            Name = "ctxl-rerank-v2-instruct-multilingual",
-            OwnedBy = owner,
-        },
-
-        new Model
-        {
-            Id = "ctxl-rerank-v2-instruct-multilingual-mini".ToModelId(GetIdentifier()),
-            Name = "ctxl-rerank-v2-instruct-multilingual-mini",
-            OwnedBy = owner,
-        },
-
-        new Model
-        {
-            Id = "ctxl-rerank-v1-instruct".ToModelId(GetIdentifier()),
-            Name = "ctxl-rerank-v1-instruct",
-            OwnedBy = owner,
-        },
-    ]);
-    }
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

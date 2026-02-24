@@ -1,0 +1,125 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "inferencesh/xai/grok-imagine-image-pro",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "grok-imagine-image-pro",
+            "type": "image",
+            "description": "Generate and edit images using xAI's Grok Imagine Pro model. Supports text-to-image and image editing with multiple aspect ratios."
+        },
+        {
+            "id": "inferencesh/xai/grok-imagine-image",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "grok-imagine-image",
+            "type": "image",
+            "description": "Generate and edit images using xAI's Grok Imagine model. Supports text-to-image and image editing with multiple aspect ratios."
+        },
+        {
+            "id": "inferencesh/falai/flux-dev-lora",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "flux-dev-lora",
+            "type": "image",
+            "description": "Text-to-image and image-to-image generation with FLUX.1 [dev] LoRA support. Custom style adaptation and fine-tuned model variations from Black Forest Labs."
+        },
+        {
+            "id": "inferencesh/falai/flux-2-klein-lora",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "flux-2-klein-lora",
+            "type": "image",
+            "description": "Text-to-image and image-to-image generation with FLUX.2 [klein] LoRA support. Available in 4B and 9B parameter sizes. Custom style adaptation and fine-tuned model variations from Black Forest Labs."
+        },
+        {
+            "id": "inferencesh/bytedance/seedream-3-0-t2i",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "seedream-3-0-t2i",
+            "type": "image",
+            "description": "Generate cinematic quality images from text prompts with accurate text rendering using ByteDance's Seedream 3.0 T2I model via BytePlus ARK API."
+        },
+        {
+            "id": "inferencesh/bytedance/seedream-4-0",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "seedream-4-0",
+            "type": "image",
+            "description": "Generate high-quality 2K-4K images from text prompts with optional image-to-image generation using ByteDance's Seedream 4.0 model via BytePlus ARK API."
+        },
+        {
+            "id": "inferencesh/bytedance/seedream-4-5",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "seedream-4-5",
+            "type": "image",
+            "description": "Generate high-quality 2K-4K images from text prompts with optional image-to-image generation using ByteDance's Seedream 4.5 model via BytePlus ARK API."
+        },
+        {
+            "id": "inferencesh/falai/imagine-art-1-5-pro-preview",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "imagine-art-1-5-pro-preview",
+            "type": "image",
+            "description": "Advanced text-to-image model creating ultra-high-fidelity 4K visuals with lifelike realism and refined aesthetics."
+        },
+        {
+            "id": "inferencesh/google/gemini-2-5-flash-image",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "gemini-2-5-flash-image",
+            "type": "image",
+            "description": "Gemini 2.5 Flash Image via Vertex AI - Advanced image generation model powered by Google Cloud"
+        },
+        {
+            "id": "inferencesh/google/gemini-3-pro-image-preview",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "gemini-3-pro-image-preview",
+            "type": "image",
+            "description": "Gemini 3 Pro Image Preview via Vertex AI - Advanced image generation model powered by Google Cloud"
+        },
+        {
+            "id": "inferencesh/infsh/falconsai-nsfw-detection",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "falconsai-nsfw-detection",
+            "type": "image",
+            "description": "Detects NSFW content in images and videos using Falconsai/nsfw_image_detection model. For videos, samples frames at configurable intervals."
+        },
+        {
+            "id": "inferencesh/falai/reve",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "reve",
+            "type": "image",
+            "description": "Reve - Image generation, editing, and style remix via text prompts"
+        },
+        {
+            "id": "inferencesh/falai/topaz-image-upscaler",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "topaz-image-upscaler",
+            "type": "image",
+            "description": "Enhance and increase the size of images without losing quality, making your photos look sharper and more detailed."
+        },
+        {
+            "id": "inferencesh/infsh/stitch-images",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "stitch-images",
+            "type": "image",
+            "description": "Combine multiple photos horizontally or vertically into a single image or collage."
+        },
+        {
+            "id": "inferencesh/infsh/rodin-3d-generator",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "rodin-3d-generator",
+            "type": "image",
+            "description": "Generates high-quality 3D models simply by using text descriptions or uploading an image."
+        }
+    ]
+}

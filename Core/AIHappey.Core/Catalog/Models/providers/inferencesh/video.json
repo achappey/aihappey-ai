@@ -1,0 +1,181 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "inferencesh/google/veo-3-1-fast",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "veo-3-1-fast",
+            "type": "video",
+            "description": "Veo 3.1 Fast via Vertex AI - Generate videos from text prompts or images with optional audio"
+        },
+        {
+            "id": "inferencesh/infsh/remotion-render",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "remotion-render",
+            "type": "video",
+            "description": "Render videos from React/Remotion component code — pass TSX, get MP4"
+        },
+        {
+            "id": "inferencesh/xai/grok-imagine-video",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "grok-imagine-video",
+            "type": "video",
+            "description": "Generate and edit videos using xAI's Grok Imagine Video model. Supports text-to-video, image-to-video, and video editing with configurable duration and resolution."
+        },
+        {
+            "id": "inferencesh/google/veo-3-1",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "veo-3-1",
+            "type": "video",
+            "description": "Veo 3.1 via Vertex AI - Advanced video generation with frame interpolation, reference images, and audio generation"
+        },
+        {
+            "id": "inferencesh/google/veo-3-fast",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "veo-3-fast",
+            "type": "video",
+            "description": "Veo 3 Fast via Vertex AI - Fast video generation with audio from text prompts and images"
+        },
+        {
+            "id": "inferencesh/google/veo-3",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "veo-3",
+            "type": "video",
+            "description": "Veo 3 via Vertex AI - Generate videos with audio from text prompts and images"
+        },
+        {
+            "id": "inferencesh/google/veo-2",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "veo-2",
+            "type": "video",
+            "description": "Veo 2 via Vertex AI - Generate high-quality realistic videos from text prompts"
+        },
+        {
+            "id": "inferencesh/bytedance/omnihuman-1-5",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "omnihuman-1-5",
+            "type": "video",
+            "description": "Multi-character audio-driven avatar video generation. Takes a portrait image + audio and generates a video where the person speaks/sings in sync. Supports specifying which character to drive."
+        },
+        {
+            "id": "inferencesh/bytedance/omnihuman-1-0",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "omnihuman-1-0",
+            "type": "video",
+            "description": "Audio-driven avatar video generation. Takes a portrait image + audio and generates a video where the person speaks/sings in sync with the audio."
+        },
+        {
+            "id": "inferencesh/bytedance/seedance-1-0-lite",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "seedance-1-0-lite",
+            "type": "video",
+            "description": "Lightweight 720p video generation. Automatically uses image-to-video mode when an image is provided, or text-to-video mode otherwise."
+        },
+        {
+            "id": "inferencesh/bytedance/seedance-1-0-pro",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "seedance-1-0-pro",
+            "type": "video",
+            "description": "Generate high-quality videos up to 1080p from text prompts with optional first-frame image control using ByteDance's Seedance 1.0 Pro model."
+        },
+        {
+            "id": "inferencesh/bytedance/seedance-1-0-pro-fast",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "seedance-1-0-pro-fast",
+            "type": "video",
+            "description": "Fast high-quality video generation up to 1080p from text prompts with optional first-frame image control using ByteDance's Seedance 1.0 Pro Fast model."
+        },
+        {
+            "id": "inferencesh/bytedance/seedance-1-5-pro",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "seedance-1-5-pro",
+            "type": "video",
+            "description": "Generate high-quality videos from text prompts with optional first-frame image control using ByteDance's Seedance 1.5 Pro model via BytePlus ARK API."
+        },
+        {
+            "id": "inferencesh/falai/topaz-video-upscaler",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "topaz-video-upscaler",
+            "type": "video",
+            "description": "Enhances and increases the resolution of your videos, turning lower quality footage into sharp, high-definition results."
+        },
+        {
+            "id": "inferencesh/falai/fabric-1-0",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "fabric-1-0",
+            "type": "video",
+            "description": "Creates videos where an image appears to talk using advanced lip-sync technology."
+        },
+        {
+            "id": "inferencesh/falai/pixverse-lipsync",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "pixverse-lipsync",
+            "type": "video",
+            "description": "Generates highly realistic lipsync animations from any audio input."
+        },
+        {
+            "id": "inferencesh/falai/wan-2-5-i2v",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "wan-2-5-i2v",
+            "type": "video",
+            "description": "Generates high-quality video content from static images."
+        },
+        {
+            "id": "inferencesh/falai/wan-2-5",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "wan-2-5",
+            "type": "video",
+            "description": "Creates high-quality, animated videos instantly from any static image."
+        },
+        {
+            "id": "inferencesh/infsh/hunyuanvideo-foley",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "hunyuanvideo-foley",
+            "type": "video",
+            "description": "Synthesizes realistic sound effects and audio tracks based on your video content and written descriptions."
+        },
+        {
+            "id": "inferencesh/infsh/extract-last-frame",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "extract-last-frame",
+            "type": "video",
+            "description": "Save a specific frame from the end of a video as a static image file."
+        },
+        {
+            "id": "inferencesh/infsh/media-merger",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "media-merger",
+            "type": "video",
+            "description": "Merges multiple videos and images together using customized transitions."
+        },
+        {
+            "id": "inferencesh/infsh/wan2-2-i2i-a14b",
+            "object": "model",
+            "owned_by": "InferenceSH",
+            "name": "wan2-2-i2i-a14b",
+            "type": "video",
+            "description": "Creates videos from images and enhances video quality using a built-in upscaler."
+        }
+    ]
+}

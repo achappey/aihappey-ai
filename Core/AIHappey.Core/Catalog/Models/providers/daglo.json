@@ -1,0 +1,26 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "daglo/elli",
+      "object": "model",
+      "owned_by": "daglo",
+      "name": "elli",
+      "type": "language"
+    },
+    {
+      "id": "daglo/tts",
+      "object": "model",
+      "owned_by": "daglo",
+      "name": "tts",
+      "type": "speech"
+    },
+    {
+      "id": "daglo/stt",
+      "object": "model",
+      "owned_by": "daglo",
+      "name": "stt",
+      "type": "transcription"
+    }
+  ]
+}
