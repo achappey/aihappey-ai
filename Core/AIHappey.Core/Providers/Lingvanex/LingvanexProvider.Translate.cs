@@ -33,17 +33,18 @@ public sealed partial class LingvanexProvider
         return lang;
     }
 
-    private static LingvanexProviderMetadata? GetLingvanexMetadataFromSampling(CreateMessageRequestParams chatRequest)
+    private static LingvanexProviderMetadata? GetLingvanexMetadataFromSampling(
+     CreateMessageRequestParams chatRequest)
     {
-        // MCP sampling metadata is a JsonElement map; we support `metadata.lingvanex`.
-        // (No other providers currently expose a generic typed helper for this.)
-        if (chatRequest.Metadata is not JsonElement el || el.ValueKind != JsonValueKind.Object)
+        if (chatRequest.Metadata is not JsonObject metadata)
             return null;
 
-        if (!el.TryGetProperty("lingvanex", out var ln) || ln.ValueKind != JsonValueKind.Object)
+        if (metadata["lingvanex"] is not JsonObject ln)
             return null;
 
-        return ln.Deserialize<LingvanexProviderMetadata>(JsonSerializerOptions.Web);
+        return JsonSerializer.Deserialize<LingvanexProviderMetadata>(
+            ln.ToJsonString(),
+            JsonSerializerOptions.Web);
     }
 
     private static List<string> ExtractResponseRequestTexts(ResponseRequest options)

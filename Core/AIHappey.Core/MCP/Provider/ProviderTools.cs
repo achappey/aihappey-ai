@@ -87,7 +87,7 @@ public class ProviderTools
 
             return await Task.FromResult(new CallToolResult()
             {
-                StructuredContent = JsonNode.Parse(schema.ToJson())
+                StructuredContent = JsonSerializer.SerializeToElement(schema, JsonSerializerOptions.Web)
             });
         });
 
@@ -105,10 +105,10 @@ public class ProviderTools
 
         return await Task.FromResult(new CallToolResult()
         {
-            StructuredContent = JsonNode.Parse(JsonSerializer.Serialize(new
+            StructuredContent = JsonSerializer.SerializeToElement(new
             {
                 providers = providers.Select(a => a.GetIdentifier())
-            }, JsonSerializerOptions.Web))
+            }, JsonSerializerOptions.Web)
         });
     }
 
@@ -129,10 +129,10 @@ public class ProviderTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonNode.Parse(JsonSerializer.Serialize(new
+            StructuredContent = JsonSerializer.SerializeToElement(new
             {
                 models
-            }))
+            }, JsonSerializerOptions.Web)
         };
     }
 }

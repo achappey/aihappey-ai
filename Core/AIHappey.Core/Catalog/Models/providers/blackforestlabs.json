@@ -1,0 +1,94 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "blackforestlabs/flux-pro-1.1",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 1.1 Pro",
+      "type": "image",
+      "description": "Fast, high-quality image generation from text."
+    },
+    {
+      "id": "blackforestlabs/flux-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Dev",
+      "type": "image"
+    },
+    {
+      "id": "blackforestlabs/flux-pro-1.1-ultra",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 1.1 Pro Ultra",
+      "type": "image",
+      "description": "Flux1.1 [Pro] Ultra delivers ultra-fast, ultra high-resolution image creation - with more pixels in every picture. Generate varying aspect ratios from text, at 4MP resolution in unprecedented speed."
+    },
+    {
+      "id": "blackforestlabs/flux-pro-1.0-fill",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 1.0 Pro Fill",
+      "type": "image"
+    },
+    {
+      "id": "blackforestlabs/flux-pro-1.0-expand",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 1.0 Pro Expand",
+      "type": "image"
+    },
+    {
+      "id": "blackforestlabs/flux-kontext-pro",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Kontext Pro",
+      "type": "image"
+    },
+    {
+      "id": "blackforestlabs/flux-kontext-max",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Kontext Max",
+      "type": "image"
+    },
+    {
+      "id": "blackforestlabs/flux-2-max",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX.2 Max",
+      "type": "image",
+      "description": "Top-tier quality image generation and editing. The most capable variant of FLUX.2 for professional-grade output."
+    },
+    {
+      "id": "blackforestlabs/flux-2-klein-9b",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX.2 Klein 9B",
+      "type": "image",
+      "description": "Generate and edit in less than a second with state-of-the-art quality."
+    },
+    {
+      "id": "blackforestlabs/flux-2-klein-4b",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX.2 Klein 4B",
+      "type": "image",
+      "description": "Generate and edit in less than a second with state-of-the-art quality."
+    },
+    {
+      "id": "blackforestlabs/flux-2-pro",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 2 Pro",
+      "type": "image"
+    },
+    {
+      "id": "blackforestlabs/flux-2-flex",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 2 Flex",
+      "type": "image"
+    }
+  ]
+}

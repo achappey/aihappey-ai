@@ -33,16 +33,18 @@ public sealed partial class ModernMTProvider
         return lang;
     }
 
-    private static ModernMTProviderMetadata? GetModernMTMetadataFromSampling(CreateMessageRequestParams chatRequest)
+    private static ModernMTProviderMetadata? GetModernMTMetadataFromSampling(
+       CreateMessageRequestParams chatRequest)
     {
-        // MCP sampling metadata is a JsonElement map; we support `metadata.modernmt`.
-        if (chatRequest.Metadata is not JsonElement el || el.ValueKind != JsonValueKind.Object)
+        if (chatRequest.Metadata is not JsonObject metadata)
             return null;
 
-        if (!el.TryGetProperty("modernmt", out var mm) || mm.ValueKind != JsonValueKind.Object)
+        if (metadata["modernmt"] is not JsonObject ln)
             return null;
 
-        return mm.Deserialize<ModernMTProviderMetadata>(JsonSerializerOptions.Web);
+        return JsonSerializer.Deserialize<ModernMTProviderMetadata>(
+            ln.ToJsonString(),
+            JsonSerializerOptions.Web);
     }
 
     private static List<string> ExtractResponseRequestTexts(ResponseRequest options)

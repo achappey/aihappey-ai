@@ -71,18 +71,16 @@ public class ImageTools
                 throw new InvalidOperationException("Unsupported image output format. Expected data-url or http(s) URL.");
             }
 
-            var structured = new JsonObject
-            {
-                ["modelId"] = result.Response?.ModelId,
-                ["timestamp"] = result.Response?.Timestamp,
-                ["warnings"] = JsonSerializer.SerializeToNode(result.Warnings, JsonSerializerOptions.Web),
-                ["providerMetadata"] = JsonSerializer.SerializeToNode(result.ProviderMetadata, JsonSerializerOptions.Web)
-            };
-
             return new CallToolResult
             {
                 Content = [.. blocks],
-                StructuredContent = structured
+                StructuredContent = JsonSerializer.SerializeToElement(new
+                {
+                    modelId = result.Response?.ModelId,
+                    timestamp = result.Response?.Timestamp,
+                    warnings = result.Warnings,
+                    providerMetadata = result.ProviderMetadata
+                }, JsonSerializerOptions.Web)
             };
         });
 }

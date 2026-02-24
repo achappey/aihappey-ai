@@ -1,61 +1,65 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.XAI;
 
 namespace AIHappey.Core.Providers.xAI;
 
 public static partial class XAIResponseExtensions
-{   
-    public static XAIReasoning? ToReasoning(this JsonElement? element)
+{
+    public static XAIReasoning? ToReasoning(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIRequestExtensions.XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj is null)
             return null;
 
-        if (!openai.TryGetProperty("reasoning", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
+        if (obj[XAIRequestExtensions.XAIIdentifier] is not JsonObject provider)
             return null;
 
-        return JsonSerializer.Deserialize<XAIReasoning>(webSearch.GetRawText());
+        if (provider["reasoning"] is not JsonObject reasoning)
+            return null;
+
+        return JsonSerializer.Deserialize<XAIReasoning>(reasoning.ToJsonString());
     }
 
-    public static XAIXCodeExecution? ToCodeExecution(this JsonElement? element)
+    public static XAIXCodeExecution? ToCodeExecution(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIRequestExtensions.XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj is null)
             return null;
 
-        if (!openai.TryGetProperty("code_execution", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
+        if (obj[XAIRequestExtensions.XAIIdentifier] is not JsonObject provider)
             return null;
 
-        return JsonSerializer.Deserialize<XAIXCodeExecution>(webSearch.GetRawText());
+        if (provider["code_execution"] is not JsonObject codeExecution)
+            return null;
+
+        return JsonSerializer.Deserialize<XAIXCodeExecution>(codeExecution.ToJsonString());
     }
 
-    public static XAIXSearch? ToXSearchTool(this JsonElement? element)
+    public static XAIXSearch? ToXSearchTool(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIRequestExtensions.XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj is null)
             return null;
 
-        if (!openai.TryGetProperty("x_search", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
+        if (obj[XAIRequestExtensions.XAIIdentifier] is not JsonObject provider)
             return null;
 
-        return JsonSerializer.Deserialize<XAIXSearch>(webSearch.GetRawText());
+        if (provider["x_search"] is not JsonObject xSearch)
+            return null;
+
+        return JsonSerializer.Deserialize<XAIXSearch>(xSearch.ToJsonString());
     }
 
-
-    public static XAIWebSearch? ToWebSearchTool(this JsonElement? element)
+    public static XAIWebSearch? ToWebSearchTool(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(XAIRequestExtensions.XAIIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj is null)
             return null;
 
-        if (!openai.TryGetProperty("web_search", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
+        if (obj[XAIRequestExtensions.XAIIdentifier] is not JsonObject provider)
             return null;
 
-        return JsonSerializer.Deserialize<XAIWebSearch>(webSearch.GetRawText());
+        if (provider["web_search"] is not JsonObject webSearch)
+            return null;
+
+        return JsonSerializer.Deserialize<XAIWebSearch>(webSearch.ToJsonString());
     }
 
 }

@@ -600,7 +600,7 @@ public partial class ExaProvider
             if (outputEl.TryGetProperty("content", out var contentEl))
             {
                 content = contentEl.ValueKind == JsonValueKind.String
-                    ? (object)(contentEl.GetString() ?? string.Empty)
+                    ? contentEl.GetString() ?? string.Empty
                     : JsonSerializer.Deserialize<object>(contentEl.GetRawText(), JsonWeb) ?? string.Empty;
             }
 

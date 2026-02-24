@@ -115,7 +115,11 @@ public static class ModelProviderImageExtensions
         {
             Model = model,
             Prompt = input,
-            ProviderOptions = chatRequest.Metadata.ToDictionary(),
+            ProviderOptions = chatRequest.Metadata?
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => JsonSerializer.SerializeToElement(kvp.Value)
+                ),
             Files = inputImages.Select(a => new ImageFile()
             {
                 MediaType = a.MimeType,
@@ -126,21 +130,6 @@ public static class ModelProviderImageExtensions
         var result = await modelProvider.ImageRequest(imageRequest, cancellationToken) ?? throw new Exception("No result.");
 
         return result.ToCreateMessageResult();
-    }
-
-    public static Dictionary<string, JsonElement>? ToDictionary(this JsonElement? element)
-    {
-        if (element is null || element.Value.ValueKind != JsonValueKind.Object)
-            return null;
-
-        var dict = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var prop in element.Value.EnumerateObject())
-        {
-            dict[prop.Name] = prop.Value;
-        }
-
-        return dict;
     }
 
     public static ImageContentBlock ToImageContentBlock(

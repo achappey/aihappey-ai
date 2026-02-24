@@ -16,5 +16,11 @@
       "input": "0.00000015",
       "output": "0.00000030"
     }
+  },
+  "inferencenet/inference-net/cliptagger-12b": {
+    "pricing": {
+      "input": "0.00000030",
+      "output": "0.00000050"
+    }
   }
 }

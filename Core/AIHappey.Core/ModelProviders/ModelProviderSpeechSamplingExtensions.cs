@@ -1,6 +1,7 @@
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.AI;
 
@@ -33,7 +34,11 @@ public static class ModelProviderSpeechSamplingExtensions
         {
             Model = model,
             Text = input,
-            ProviderOptions = chatRequest.Metadata.ToDictionary(),
+            ProviderOptions = chatRequest.Metadata?
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => JsonSerializer.SerializeToElement(kvp.Value)
+            ),
             Instructions = chatRequest.SystemPrompt
         };
 

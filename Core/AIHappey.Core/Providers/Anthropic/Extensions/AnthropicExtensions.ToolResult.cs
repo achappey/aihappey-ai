@@ -14,7 +14,7 @@ public static partial class AnthropicExtensions
         var toolResultContent = new List<ContentBase>();
 
         if (tip.StructuredContent != null)
-            toolResultContent.Add(tip.StructuredContent.ToJsonString().ToTextContent());
+            toolResultContent.Add(tip.StructuredContent?.GetRawText().ToTextContent()!);
 
         foreach (var c in tip.Content)
         {

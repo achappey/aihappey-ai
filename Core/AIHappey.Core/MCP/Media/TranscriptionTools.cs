@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -56,26 +55,14 @@ public class TranscriptionTools
             var result = await provider.TranscriptionRequest(request, ct);
             if (string.IsNullOrWhiteSpace(result.Text))
                 throw new InvalidOperationException("Provider returned no transcription text.");
-
-            var structured = new JsonObject
-            {
-                // full contract response as structured content
-                ["providerMetadata"] = JsonSerializer.SerializeToNode(result.ProviderMetadata, JsonSerializerOptions.Web),
-                ["text"] = result.Text,
-                ["language"] = result.Language,
-                ["durationInSeconds"] = result.DurationInSeconds,
-                ["warnings"] = JsonSerializer.SerializeToNode(result.Warnings, JsonSerializerOptions.Web),
-                ["segments"] = JsonSerializer.SerializeToNode(result.Segments, JsonSerializerOptions.Web),
-                ["response"] = JsonSerializer.SerializeToNode(result.Response, JsonSerializerOptions.Web)
-            };
-
+        
             return new CallToolResult
             {
                 Content =
                 [
                     new TextContentBlock { Text = result.Text }
                 ],
-                StructuredContent = structured
+                StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web)
             };
         });
 }

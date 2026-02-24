@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -51,14 +50,10 @@ public class RerankingTools
 
             var result = await provider.RerankingRequest(request, ct);
 
-            var structured = new JsonObject
+            return new CallToolResult
             {
-                ["ranking"] = JsonSerializer.SerializeToNode(result.Ranking, JsonSerializerOptions.Web),
-                ["warnings"] = JsonSerializer.SerializeToNode(result.Warnings, JsonSerializerOptions.Web),
-                ["response"] = JsonSerializer.SerializeToNode(result.Response, JsonSerializerOptions.Web)
+                StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web)
             };
-
-            return new CallToolResult { StructuredContent = structured };
         });
 
 
@@ -114,14 +109,7 @@ public class RerankingTools
 
             var result = await provider.RerankingRequest(request, ct);
 
-            var structured = new JsonObject
-            {
-                ["ranking"] = JsonSerializer.SerializeToNode(result.Ranking, JsonSerializerOptions.Web),
-                ["warnings"] = JsonSerializer.SerializeToNode(result.Warnings, JsonSerializerOptions.Web),
-                ["response"] = JsonSerializer.SerializeToNode(result.Response, JsonSerializerOptions.Web)
-            };
-
-            return new CallToolResult { StructuredContent = structured };
+            return new CallToolResult { StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web) };
         });
 }
 

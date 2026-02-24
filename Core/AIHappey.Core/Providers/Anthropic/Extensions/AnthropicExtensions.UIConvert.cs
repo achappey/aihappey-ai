@@ -76,7 +76,7 @@ public static partial class AnthropicExtensions
                             {
                                 if (callToolResponse.StructuredContent != null)
                                 {
-                                    buffer.Add(callToolResponse.StructuredContent.ToJsonString().ToTextContent());
+                                    buffer.Add(callToolResponse.StructuredContent?.GetRawText().ToTextContent()!);
                                 }
 
                                 foreach (var c in callToolResponse.Content ?? [])

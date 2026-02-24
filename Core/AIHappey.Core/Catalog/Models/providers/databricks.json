@@ -1,0 +1,222 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "databricks/databricks-gpt-5-2",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-5.2",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-5-1",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-5.1",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-5-1-codex-max",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-5.1 Codex Max",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-5-1-codex-mini",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-5.1 Codex Mini",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-5",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-5",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-5-mini",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-5 mini",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-5-nano",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-5 nano",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gemini-3-flash",
+      "object": "model",
+      "owned_by": "google",
+      "name": "Google Gemini 3 Flash",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gemini-3-1-pro",
+      "object": "model",
+      "owned_by": "google",
+      "name": "Google Gemini 3.1 Pro Preview",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gemini-3-pro",
+      "object": "model",
+      "owned_by": "google",
+      "name": "Google Gemini 3 Pro Preview",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gemini-2-5-pro",
+      "object": "model",
+      "owned_by": "google",
+      "name": "Google Gemini 2.5 Pro",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gemini-2-5-flash",
+      "object": "model",
+      "owned_by": "google",
+      "name": "Google Gemini 2.5 Flash",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-qwen3-embedding-0-6b",
+      "object": "model",
+      "owned_by": "alibaba",
+      "name": "Alibaba Cloud Qwen3-Embedding-0.6B",
+      "type": "embedding"
+    },
+    {
+      "id": "databricks/databricks-qwen3-next-80b-a3b-instruct",
+      "object": "model",
+      "owned_by": "alibaba",
+      "name": "Alibaba Cloud Qwen3-Next 80B A3B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-oss-120b",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT OSS 120B",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gpt-oss-20b",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT OSS 20B",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gemma-3-12b",
+      "object": "model",
+      "owned_by": "google",
+      "name": "Google Gemma 3 12B",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-llama-4-maverick",
+      "object": "model",
+      "owned_by": "meta",
+      "name": "Meta Llama 4 Maverick",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-meta-llama-3-3-70b-instruct",
+      "object": "model",
+      "owned_by": "meta",
+      "name": "Meta Llama 3.3 70B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-meta-llama-3-1-405b-instruct",
+      "object": "model",
+      "owned_by": "meta",
+      "name": "Meta Llama 3.1 405B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-meta-llama-3-1-8b-instruct",
+      "object": "model",
+      "owned_by": "meta",
+      "name": "Meta Llama 3.1 8B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-haiku-4-5",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude Haiku 4.5",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude Sonnet 4.6",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-sonnet-4-5",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude Sonnet 4.5",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-opus-4-6",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude Opus 4.6",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-opus-4-5",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude Opus 4.5",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-sonnet-4",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude Sonnet 4",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-opus-4-1",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude Opus 4.1",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-claude-3-7-sonnet",
+      "object": "model",
+      "owned_by": "anthropic",
+      "name": "Anthropic Claude 3.7 Sonnet",
+      "type": "language"
+    },
+    {
+      "id": "databricks/databricks-gte-large-en",
+      "object": "model",
+      "owned_by": "databricks",
+      "name": "GTE Large (En)",
+      "type": "embedding"
+    },
+    {
+      "id": "databricks/databricks-bge-large-en",
+      "object": "model",
+      "owned_by": "databricks",
+      "name": "BGE Large (En)",
+      "type": "embedding"
+    }
+  ]
+}

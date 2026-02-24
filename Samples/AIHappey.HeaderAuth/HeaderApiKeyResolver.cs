@@ -149,7 +149,13 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["ideogram"] = "X-Ideogram-Key",
             ["pinecone"] = "X-Pinecone-Key",
             ["zyphra"] = "X-Zyphra-Key",
-            ["picsart"] = "X-Picsart-Key"
+            ["picsart"] = "X-Picsart-Key",
+            ["azerion"] = "X-Azerion-Key",
+            ["blackforestlabs"] = "X-BlackForestLabs-Key",
+            ["aionlabs"] = "X-AionLabs-Key",
+            ["lumaai"] = "X-LumaAI-Key",
+            ["truefoundry"] = "X-TrueFoundry-Key",
+            ["databricks"] = "X-Databricks-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

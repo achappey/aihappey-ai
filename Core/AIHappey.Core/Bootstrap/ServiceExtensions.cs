@@ -148,6 +148,12 @@ using AIHappey.Core.Providers.Ideogram;
 using AIHappey.Core.Providers.Pinecone;
 using AIHappey.Core.Providers.Picsart;
 using AIHappey.Core.Providers.Zyphra;
+using AIHappey.Core.Providers.Azerion;
+using AIHappey.Core.Providers.BlackForestLabs;
+using AIHappey.Core.Providers.AionLabs;
+using AIHappey.Core.Providers.LumaAI;
+using AIHappey.Core.Providers.TrueFoundry;
+using AIHappey.Core.Providers.Databricks;
 
 namespace AIHappey.Core.AI;
 
@@ -303,6 +309,12 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PineconeProvider>();
         services.AddSingleton<IModelProvider, PicsartProvider>();
         services.AddSingleton<IModelProvider, ZyphraProvider>();
+        services.AddSingleton<IModelProvider, AzerionProvider>();
+        services.AddSingleton<IModelProvider, BlackForestLabsProvider>();
+        services.AddSingleton<IModelProvider, AionLabsProvider>();
+        services.AddSingleton<IModelProvider, LumaAIProvider>();
+        services.AddSingleton<IModelProvider, TrueFoundryProvider>();
+        services.AddSingleton<IModelProvider, DatabricksProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

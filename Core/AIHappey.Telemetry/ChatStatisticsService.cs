@@ -125,7 +125,7 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
                 users.TryGetValue(a.Key, out var name) ? name : $"user:{a.Key}",
                  order switch
                  {
-                     TopOrder.Tokens => (int)Math.Min(a.Tokens, int.MaxValue),
+                     TopOrder.Tokens => Math.Min(a.Tokens, int.MaxValue),
                      TopOrder.Requests => a.Requests,
                      _ => (int)a.Duration / 1000 // convert ms → seconds here
                  }
@@ -191,7 +191,7 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
 
         IEnumerable<(int id, int val)> ordered =
             order == TopOrder.Tokens
-            ? aggReq.Join(tokensPerTool, a => a.Key, t => (int)t.ToolId, (a, t) => (id: a.Key, val: (int)t.Tokens))
+            ? aggReq.Join(tokensPerTool, a => a.Key, t => t.ToolId, (a, t) => (id: a.Key, val: t.Tokens))
                     .OrderByDescending(x => x.val)
             : aggReq.Select(a => (id: a.Key, val: a.Requests))
                     .OrderByDescending(x => x.val);

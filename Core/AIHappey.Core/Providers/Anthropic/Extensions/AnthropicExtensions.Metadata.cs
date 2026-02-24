@@ -1,4 +1,4 @@
-using System.Text.Json;
+using System.Text.Json.Nodes;
 using Anthropic.SDK.Common;
 using Anthropic.SDK.Messaging;
 using ANT = Anthropic.SDK;
@@ -12,62 +12,54 @@ public static partial class AnthropicExtensions
           => new()
           { { AnthropicConstants.AnthropicIdentifier, metadata } };
 
-    public static ThinkingParameters? ToThinkingConfig(this JsonElement? element)
+    public static ThinkingParameters? ToThinkingConfig(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(AnthropicConstants.AnthropicIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        var thinking = GetAnthropicTool(obj, "thinking");
+        if (thinking is null)
             return null;
 
-        if (!openai.TryGetProperty("thinking", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
+        var budget = thinking["budget_tokens"] is JsonValue v &&
+                     v.TryGetValue<int>(out var parsed)
+            ? parsed
+            : 4096;
 
-        var size = reasoning.TryGetProperty("budget_tokens", out var effortProp) && effortProp.ValueKind == JsonValueKind.Number
-            ? (int?)effortProp.GetInt32()
-            : null;
-
-        return new ThinkingParameters()
+        return new ThinkingParameters
         {
-            BudgetTokens = size ?? 4096
+            BudgetTokens = budget
         };
     }
 
-
-    public static Container? ToContainer(this JsonElement? element)
+    public static Container? ToContainer(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(AnthropicConstants.AnthropicIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        var containerObj = GetAnthropicTool(obj, "container");
+        if (containerObj is null)
             return null;
 
-        if (!openai.TryGetProperty("container", out var containerEl) || containerEl.ValueKind != JsonValueKind.Object)
-            return null;
+        var id = containerObj["id"] is JsonValue idVal &&
+                 idVal.TryGetValue<string>(out var parsedId)
+            ? parsedId
+            : null;
 
-        var id = containerEl.TryGetProperty("id", out var effortProp) && effortProp.ValueKind == JsonValueKind.String
-            ? effortProp.ToString() : null;
+        List<Skill> skills = [];
 
-        // Extract skills (if present)
-        List<Skill>? skills = null;
-        if (containerEl.TryGetProperty("skills", out var skillsEl) && skillsEl.ValueKind == JsonValueKind.Array)
+        if (containerObj["skills"] is JsonArray skillsArray)
         {
-            skills = new List<Skill>();
-            foreach (var skillEl in skillsEl.EnumerateArray())
+            foreach (var node in skillsArray.OfType<JsonObject>())
             {
-                if (skillEl.ValueKind != JsonValueKind.Object) continue;
-
-                var type = skillEl.TryGetProperty("type", out var typeProp) && typeProp.ValueKind == JsonValueKind.String
-                    ? typeProp.GetString()
+                var type = node["type"] is JsonValue t && t.TryGetValue<string>(out var tVal)
+                    ? tVal
                     : null;
 
-                var skillId = skillEl.TryGetProperty("skill_id", out var idProp2) && idProp2.ValueKind == JsonValueKind.String
-                    ? idProp2.GetString()
+                var skillId = node["skill_id"] is JsonValue s && s.TryGetValue<string>(out var sVal)
+                    ? sVal
                     : null;
 
-                var version = skillEl.TryGetProperty("version", out var verProp) && verProp.ValueKind == JsonValueKind.String
-                    ? verProp.GetString()
+                var version = node["version"] is JsonValue v && v.TryGetValue<string>(out var vVal)
+                    ? vVal
                     : null;
 
-                if (!string.IsNullOrEmpty(type) && !string.IsNullOrEmpty(skillId))
+                if (!string.IsNullOrWhiteSpace(type) &&
+                    !string.IsNullOrWhiteSpace(skillId))
                 {
                     skills.Add(new Skill
                     {
@@ -79,65 +71,65 @@ public static partial class AnthropicExtensions
             }
         }
 
-        // Construct and return container
         return new Container
         {
             Id = id,
-            Skills = skills?.Count > 0 ? skills : []
+            Skills = skills
         };
     }
 
-    public static IReadOnlyList<string>? ToAnthropicBetaFeatures(this JsonElement? element)
+    private static JsonObject? GetAnthropicTool(JsonObject? root, string tool)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(AnthropicConstants.AnthropicIdentifier, out var openai) ||
-            openai.ValueKind != JsonValueKind.Object)
+        if (root?[AnthropicConstants.AnthropicIdentifier] is not JsonObject a)
             return null;
 
-        if (!openai.TryGetProperty("anthropic-beta", out var beta) ||
-            beta.ValueKind != JsonValueKind.Array)
+        return a[tool] as JsonObject;
+    }
+
+
+    public static IReadOnlyList<string>? ToAnthropicBetaFeatures(this JsonObject? obj)
+    {
+        if (obj is null)
+            return null;
+
+        if (obj[AnthropicConstants.AnthropicIdentifier] is not JsonObject anthropic)
+            return null;
+
+        if (anthropic["anthropic-beta"] is not JsonArray betaArray)
             return null;
 
         var features = new List<string>();
 
-        foreach (var item in beta.EnumerateArray())
+        foreach (var node in betaArray)
         {
-            if (item.ValueKind == JsonValueKind.String)
-                features.Add(item.GetString()!);
+            if (node is JsonValue value &&
+                value.TryGetValue<string>(out var str) &&
+                !string.IsNullOrWhiteSpace(str))
+            {
+                features.Add(str);
+            }
         }
 
         return features.Count > 0 ? features : null;
     }
 
-
-    public static ANT.Common.Tool? ToWebSearchTool(this JsonElement? element)
+    public static ANT.Common.Tool? ToWebSearchTool(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(AnthropicConstants.AnthropicIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        var webSearch = GetAnthropicTool(obj, "web_search");
+        if (webSearch is null)
             return null;
 
-        if (!openai.TryGetProperty("web_search", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
+        var maxUses = webSearch["max_uses"] is JsonValue v &&
+                      v.TryGetValue<int>(out var parsed)
+            ? parsed
+            : 5;
 
-        var size = reasoning.TryGetProperty("max_uses", out var effortProp) && effortProp.ValueKind == JsonValueKind.Number
-            ? (int?)effortProp.GetInt32()
-            : null;
-
-        return ServerTools.GetWebSearchTool(maxUses: size ?? 5);
+        return ServerTools.GetWebSearchTool(maxUses: maxUses);
     }
-
-    public static ANT.Common.Tool? ToCodeExecution(this JsonElement? element)
+    public static ANT.Common.Tool? ToCodeExecution(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(AnthropicConstants.AnthropicIdentifier, out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("code_execution", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return new Function("code_execution", "code_execution_20250825", []);
+        return GetAnthropicTool(obj, "code_execution") is not null
+            ? new Function("code_execution", "code_execution_20250825", [])
+            : null;
     }
 }

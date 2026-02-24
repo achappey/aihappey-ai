@@ -28,7 +28,7 @@ public sealed partial class AzureProvider
         var metadata = request.GetProviderMetadata<AzureTranscriptionProviderMetadata>(GetIdentifier());
 
         var format = AudioStreamFormat.GetWaveFormatPCM(
-            samplesPerSecond: metadata?.SamplesPerSecond != null ? (uint)metadata.SamplesPerSecond : (uint)16000,
+            samplesPerSecond: metadata?.SamplesPerSecond != null ? (uint)metadata.SamplesPerSecond : 16000,
             bitsPerSample: metadata?.BitsPerSample != null ? (byte)metadata.BitsPerSample : (byte)16,
             channels: metadata?.Channels != null ? (byte)metadata.Channels : (byte)1);
 

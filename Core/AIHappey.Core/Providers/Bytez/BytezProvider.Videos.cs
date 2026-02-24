@@ -145,9 +145,13 @@ public partial class BytezProvider
         {
             Model = model,
             Prompt = input,
-            ProviderOptions = chatRequest.Metadata.ToDictionary()
+            ProviderOptions = chatRequest.Metadata?
+           .ToDictionary(
+               kvp => kvp.Key,
+               kvp => JsonSerializer.SerializeToElement(kvp.Value, JsonSerializerOptions.Web)
+           )
         };
-
+        
         var result = await this.VideoRequest(videoRequest, cancellationToken) ?? throw new Exception("No result.");
         var firstVideo = result.Videos?.FirstOrDefault() ?? throw new Exception("No video generated.");
 

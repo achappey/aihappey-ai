@@ -155,6 +155,12 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "pinecone" => _config.Pinecone?.ApiKey,
             "zyphra" => _config.Zyphra?.ApiKey,
             "picsart" => _config.Picsart?.ApiKey,
+            "azerion" => _config.Azerion?.ApiKey,
+            "blackforestlabs" => _config.BlackForestLabs?.ApiKey,
+            "aionlabs" => _config.AionLabs?.ApiKey,
+            "lumaai" => _config.LumaAI?.ApiKey,
+            "truefoundry" => _config.TrueFoundry?.ApiKey,
+            "databricks" => _config.Databricks?.ApiKey,
             _ => null
         };
 }

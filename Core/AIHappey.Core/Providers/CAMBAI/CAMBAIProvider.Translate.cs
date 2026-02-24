@@ -33,7 +33,7 @@ public partial class CAMBAIProvider
         {
             SourceLanguage = sourceLanguageId,
             TargetLanguage = targetLanguageId,
-            Texts = texts.ToArray()
+            Texts = [.. texts]
         };
 
         var createJson = await PostJsonAndReadAsync("translate", payload, cancellationToken);

@@ -395,7 +395,7 @@ public partial class RekaAIProvider
 
             var finishReason = response.TryGetProperty("finish_reason", out var frEl) && frEl.ValueKind == JsonValueKind.String
                 ? frEl.GetString()
-                : (string?)null;
+                : null;
 
             choices.Add(new
             {

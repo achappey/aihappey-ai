@@ -556,6 +556,6 @@ public class UIMessagePartConverter : JsonConverter<UIMessagePart>
 
     public override void Write(Utf8JsonWriter writer, UIMessagePart value, JsonSerializerOptions options)
     {
-        JsonSerializer.Serialize(writer, (object)value, value.GetType(), options);
+        JsonSerializer.Serialize(writer, value, value.GetType(), options);
     }
 }

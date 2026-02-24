@@ -280,7 +280,7 @@ public partial class TavilyProvider
         if (root.TryGetProperty("content", out var contentEl))
         {
             content = contentEl.ValueKind == JsonValueKind.String
-                ? (object)(contentEl.GetString() ?? string.Empty)
+                ? contentEl.GetString() ?? string.Empty
                 : JsonSerializer.Deserialize<object>(contentEl.GetRawText(), JsonSerializerOptions.Web) ?? string.Empty;
         }
 

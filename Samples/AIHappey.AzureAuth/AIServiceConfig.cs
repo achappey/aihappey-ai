@@ -148,6 +148,12 @@ public class AIServiceConfig
     public ProviderConfig? Pinecone { get; set; }
     public ProviderConfig? Zyphra { get; set; }
     public ProviderConfig? Picsart { get; set; }
+    public ProviderConfig? Azerion { get; set; }
+    public ProviderConfig? BlackForestLabs { get; set; }
+    public ProviderConfig? AionLabs { get; set; }
+    public ProviderConfig? LumaAI { get; set; }
+    public ProviderConfig? TrueFoundry { get; set; }
+    public ProviderConfig? Databricks { get; set; }
 }
 
 public class ProviderConfig

@@ -2,6 +2,7 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
+using System.Text.Json.Nodes;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -59,30 +60,31 @@ public static class GroqExtensions
         }
     }
 
-    public static object? ToCodeInterpreter(this JsonElement? element)
+    public static object? ToCodeInterpreter(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(Identifier(), out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj is null)
             return null;
 
-        if (!openai.TryGetProperty("code_interpreter", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
+        if (obj[Identifier()] is not JsonObject provider)
             return null;
 
-        return JsonSerializer.Deserialize<object>(webSearch.GetRawText());
+        if (provider["code_interpreter"] is not JsonObject codeInterpreter)
+            return null;
+
+        return codeInterpreter;
     }
-
-    public static object? ToBrowserSearchTool(this JsonElement? element)
+    public static object? ToBrowserSearchTool(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(Identifier(), out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj is null)
             return null;
 
-        if (!openai.TryGetProperty("browser_search", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
+        if (obj[Identifier()] is not JsonObject provider)
             return null;
 
-        return JsonSerializer.Deserialize<object>(webSearch.GetRawText());
+        if (provider["browser_search"] is not JsonObject browserSearch)
+            return null;
+
+        return browserSearch;
     }
 
     public static List<dynamic> GetTools(this CreateMessageRequestParams chatRequest)
@@ -104,18 +106,18 @@ public static class GroqExtensions
         return allTools;
     }
 
-
-    public static object? ToReasoning(this JsonElement? element)
+    public static object? ToReasoning(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(Identifier(), out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj is null)
             return null;
 
-        if (!openai.TryGetProperty("reasoning", out var webSearch) || webSearch.ValueKind != JsonValueKind.Object)
+        if (obj[Identifier()] is not JsonObject provider)
             return null;
 
-        return JsonSerializer.Deserialize<object>(webSearch.GetRawText());
+        if (provider["reasoning"] is not JsonObject reasoning)
+            return null;
+
+        return reasoning;
     }
 
     public static object[] BuildSamplingInput(this IEnumerable<SamplingMessage> messages)

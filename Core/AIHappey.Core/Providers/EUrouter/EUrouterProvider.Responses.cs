@@ -521,7 +521,7 @@ public partial class EUrouterProvider
                         }
                     }
 
-                    return list.Count == 0 ? null : list.ToArray();
+                    return list.Count == 0 ? null : [.. list];
                 }
 
                 if (el.ValueKind == JsonValueKind.String)

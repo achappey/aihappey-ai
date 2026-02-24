@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using Mscc.GenerativeAI;
@@ -14,106 +15,74 @@ public static class GoogleSamplingExtensions
         ResponseModalities = [ResponseModality.Text]
     };
 
-    public static GoogleSearch? ToGoogleSearch(this JsonElement? element)
+    private static JsonObject? GetGoogleTool(JsonObject? root, string key)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(GoogleExtensions.Identifier(), out var google) || google.ValueKind != JsonValueKind.Object)
+        if (root?[GoogleExtensions.Identifier()] is not JsonObject google)
             return null;
 
-        if (!google.TryGetProperty("google_search", out var googleSearch) || googleSearch.ValueKind != JsonValueKind.Object)
+        return google[key] as JsonObject;
+    }
+
+    public static GoogleSearch? ToGoogleSearch(this JsonObject? obj)
+    {
+        var googleSearch = GetGoogleTool(obj, "google_search");
+        if (googleSearch is null)
             return null;
 
         Interval? timeRange = null;
 
-        if (googleSearch.TryGetProperty("timeRangeFilter", out var timeRangeProp) && timeRangeProp.ValueKind == JsonValueKind.Object)
+        if (googleSearch["timeRangeFilter"] is JsonObject range)
         {
-            DateTime? start = null;
-            DateTime? end = null;
+            DateTime? start = range["startTime"] is JsonValue s &&
+                              s.TryGetValue<string>(out var sVal) &&
+                              DateTime.TryParse(sVal, out var parsedStart)
+                ? parsedStart
+                : null;
 
-            if (timeRangeProp.TryGetProperty("startTime", out var startProp) && startProp.ValueKind == JsonValueKind.String &&
-                DateTime.TryParse(startProp.GetString(), out var parsedStart))
-                start = parsedStart;
+            DateTime? end = range["endTime"] is JsonValue e &&
+                            e.TryGetValue<string>(out var eVal) &&
+                            DateTime.TryParse(eVal, out var parsedEnd)
+                ? parsedEnd
+                : null;
 
-            if (timeRangeProp.TryGetProperty("endTime", out var endProp) && endProp.ValueKind == JsonValueKind.String &&
-                DateTime.TryParse(endProp.GetString(), out var parsedEnd))
-                end = parsedEnd;
-
-            // Only set if both values are valid and start < end
-            if (start.HasValue && end.HasValue && start.Value < end.Value)
+            if (start.HasValue && end.HasValue && start < end)
                 timeRange = new Interval { StartTime = start, EndTime = end };
         }
 
         return new GoogleSearch
         {
-            TimeRangeFilter = timeRange,
+            TimeRangeFilter = timeRange
         };
     }
+    public static bool UseUrlContext(this JsonObject? obj)
+        => GetGoogleTool(obj, "url_context") is not null;
 
+    public static bool UseGoogleMaps(this JsonObject? obj)
+        => GetGoogleTool(obj, "googleMaps") is not null;
 
+    public static bool UseCodeExecution(this JsonObject? obj)
+        => GetGoogleTool(obj, "code_execution") is not null;
 
-    public static bool UseUrlContext(this JsonElement? element)
+    public static ThinkingConfig? ToThinkingConfig(this JsonObject? obj)
     {
-        if (element == null) return false;
-
-        if (!element.Value.TryGetProperty(GoogleExtensions.Identifier(), out var google) || google.ValueKind != JsonValueKind.Object)
-            return false;
-
-        if (!google.TryGetProperty("url_context", out var googleSearch) || googleSearch.ValueKind != JsonValueKind.Object)
-            return false;
-
-        return true;
-    }
-
-    public static bool UseGoogleMaps(this JsonElement? element)
-    {
-        if (element == null) return false;
-
-        if (!element.Value.TryGetProperty(GoogleExtensions.Identifier(), out var google) || google.ValueKind != JsonValueKind.Object)
-            return false;
-
-        if (!google.TryGetProperty("googleMaps", out var googleSearch) || googleSearch.ValueKind != JsonValueKind.Object)
-            return false;
-
-        return true;
-    }
-
-    public static bool UseCodeExecution(this JsonElement? element)
-    {
-        if (element == null) return false;
-
-        if (!element.Value.TryGetProperty(GoogleExtensions.Identifier(), out var google) || google.ValueKind != JsonValueKind.Object)
-            return false;
-
-        if (!google.TryGetProperty("code_execution", out var googleSearch) || googleSearch.ValueKind != JsonValueKind.Object)
-            return false;
-
-        return true;
-    }
-
-    public static ThinkingConfig? ToThinkingConfig(this JsonElement element)
-    {
-        if (!element.TryGetProperty(GoogleExtensions.Identifier(), out var google) || google.ValueKind != JsonValueKind.Object)
+        var thinking = GetGoogleTool(obj, "thinkingConfig");
+        if (thinking is null)
             return null;
 
-        if (!google.TryGetProperty("thinkingConfig", out var thinkingConfig) || thinkingConfig.ValueKind != JsonValueKind.Object)
-            return null;
+        int? budget = thinking["thinkingBudget"] is JsonValue b &&
+                      b.TryGetValue<int>(out var parsedBudget)
+            ? parsedBudget
+            : null;
 
-        int? thinkingBudget = null;
-        bool? includeThoughts = null;
-
-        if (thinkingConfig.TryGetProperty("thinkingBudget", out var budgetProp)
-            && budgetProp.ValueKind == JsonValueKind.Number)
-            thinkingBudget = budgetProp.GetInt32();
-
-        if (thinkingConfig.TryGetProperty("includeThoughts", out var includeProp)
-            && includeProp.ValueKind == JsonValueKind.True || includeProp.ValueKind == JsonValueKind.False)
-            includeThoughts = includeProp.GetBoolean();
+        bool? include = thinking["includeThoughts"] is JsonValue i &&
+                        i.TryGetValue<bool>(out var parsedInclude)
+            ? parsedInclude
+            : null;
 
         return new ThinkingConfig
         {
-            ThinkingBudget = thinkingBudget,
-            IncludeThoughts = includeThoughts
+            ThinkingBudget = budget,
+            IncludeThoughts = include
         };
     }
 

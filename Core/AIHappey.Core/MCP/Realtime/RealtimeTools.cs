@@ -36,14 +36,7 @@ public class RealtimeTools
             var req = new RealtimeRequest { Model = model.SplitModelId().Model, ProviderOptions = null };
             var result = await provider.GetRealtimeToken(req, ct);
 
-            var structured = new JsonObject
-            {
-                ["value"] = result.Value,
-                ["expires_at"] = result.ExpiresAt,
-                ["providerMetadata"] = JsonSerializer.SerializeToNode(result.ProviderMetadata, JsonSerializerOptions.Web)
-            };
-
-            return new CallToolResult { StructuredContent = structured };
+            return new CallToolResult { StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web) };
         });
 }
 

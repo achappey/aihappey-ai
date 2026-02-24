@@ -13,28 +13,37 @@
       "id": "inferencenet/inference-net/schematron-3b",
       "object": "model",
       "owned_by": "Inference.net",
-      "name": "schematron-3b",
+      "name": "Schematron 3B",
       "type": "language",
-      "description": "Schematron 3B",
+      "description": "Schematron-3B is a state-of-the-art large language model designed for reasoning and complex problem-solving tasks, with a focus on accuracy and efficiency in various domains, offering advanced capabilities for structured output generation and complex reasoning.",
       "context_window": 125000
     },
     {
       "id": "inferencenet/inference-net/schematron-8b",
       "object": "model",
       "owned_by": "Inference.net",
-      "name": "schematron-8b",
+      "name": "Schematron 8B",
       "type": "language",
-      "description": "Schematron 8B",
+      "description": "Schematron-8B is a state-of-the-art large language model designed for reasoning and complex problem-solving tasks, with a focus on accuracy and efficiency in various domains, offering advanced capabilities for structured output generation and complex reasoning.",
       "context_window": 125000
     },
     {
       "id": "inferencenet/google/gemma-3-27b-instruct/bf-16",
       "object": "model",
       "owned_by": "Google",
-      "name": "gemma-3-27b-instruct/bf-16",
+      "name": "Google Gemma 3",
       "type": "language",
-      "description": "Gemma 3 27B Instruct (BF16)",
+      "description": "Gemma 3 is a versatile, lightweight, multimodal open-source model family by Google DeepMind, primed for text and image processing and text generation, supporting over 140 languages with a 128K context window, designed for easy deployment in resource-constrained environments.",
       "context_window": 125000
+    },
+    {
+      "id": "inferencenet/inference-net/cliptagger-12b",
+      "object": "model",
+      "owned_by": "Inference.net",
+      "name": "ClipTagger 12B",
+      "type": "language",
+      "description": "ClipTagger-12b is a highly efficient, open-source 12-billion parameter vision-language model designed for scalable video understanding, providing frontier-quality performance through schema-consistent JSON outputs for video frames at a fraction of the cost of leading closed-source models.",
+      "context_window": 8000
     }
   ]
 }

@@ -66,14 +66,6 @@ public class SpeechTools
             if (string.IsNullOrWhiteSpace(result.Audio.MimeType))
                 result.Audio.MimeType = GuessSpeechMimeType(request);
 
-            var structured = new JsonObject
-            {
-                ["modelId"] = result.Response?.ModelId,
-                ["timestamp"] = result.Response?.Timestamp,
-                ["warnings"] = JsonSerializer.SerializeToNode(result.Warnings, JsonSerializerOptions.Web),
-                ["providerMetadata"] = JsonSerializer.SerializeToNode(result.ProviderMetadata, JsonSerializerOptions.Web)
-            };
-
             return new CallToolResult
             {
                 Content =
@@ -84,7 +76,13 @@ public class SpeechTools
                         Data = Convert.FromBase64String(result.Audio.Base64)
                     }
                 ],
-                StructuredContent = structured
+                StructuredContent = JsonSerializer.SerializeToElement(new
+                {
+                    modelId = result.Response?.ModelId,
+                    timestamp = result.Response?.Timestamp,
+                    warnings = result.Warnings,
+                    providerMetadata = result.ProviderMetadata
+                }, JsonSerializerOptions.Web)
             };
         });
 

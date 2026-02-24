@@ -1,0 +1,41 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "aionlabs/aion-rp-llama-3.1-8b",
+      "object": "model",
+      "owned_by": "Aion Labs",
+      "name": "aion-rp-llama-3.1-8b",
+      "type": "language",
+      "description": "A variant of LLama 3.1 8B optimized for immersive roleplaying and storytelling.",
+      "context_window": 32768
+    },
+    {
+      "id": "aionlabs/aion-1.0-mini",
+      "object": "model",
+      "owned_by": "Aion Labs",
+      "name": "aion-1.0-mini",
+      "type": "language",
+      "description": "A distilled version of the DeepSeek-R1 model that excels in reasoning domains like mathematics, coding, and logic.",
+      "context_window": 131072
+    },
+    {
+      "id": "aionlabs/aion-1.0",
+      "object": "model",
+      "owned_by": "Aion Labs",
+      "name": "aion-1.0",
+      "type": "language",
+      "description": "A variant of DeepSeek R1 optimized for immersive roleplaying and storytelling.",
+      "context_window": 131072
+    },
+    {
+      "id": "aionlabs/aion-2.0",
+      "object": "model",
+      "owned_by": "Aion Labs",
+      "name": "aion-2.0",
+      "type": "language",
+      "description": "A variant of DeepSeek V3.2 optimized for immersive roleplaying and storytelling. It is particularly strong at introducing tension, crises, and conflict into stories, making narratives feel more engaging. It also handles mature and darker themes with more nuance and depth.",
+      "context_window": 131072
+    }
+  ]
+}

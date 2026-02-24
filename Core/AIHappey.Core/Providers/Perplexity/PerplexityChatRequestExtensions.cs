@@ -1,6 +1,7 @@
 
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Perplexity;
@@ -60,28 +61,22 @@ public static class PerplexityChatRequestExtensions
            string? systemRole = null)
     {
         string? searchMode = null;
-        if (chatRequest.Metadata is JsonElement el &&
-            el.ValueKind == JsonValueKind.Object &&
-            el.TryGetProperty("perplexity", out var perplexityObj) &&
-            perplexityObj.ValueKind == JsonValueKind.Object &&
-            perplexityObj.TryGetProperty("search_mode", out var prop) &&
-            prop.ValueKind == JsonValueKind.String)
+
+        if (chatRequest.Metadata?["perplexity"] is JsonObject perplexity &&
+            perplexity["search_mode"] is JsonValue modeVal &&
+            modeVal.TryGetValue<string>(out var parsedMode))
         {
-            searchMode = prop.GetString();
+            searchMode = parsedMode;
         }
 
         string? searchContextSize = null;
 
-        if (chatRequest.Metadata is JsonElement el1 &&
-            el1.ValueKind == JsonValueKind.Object &&
-            el1.TryGetProperty("perplexity", out var perplexityObj1) &&
-            perplexityObj1.ValueKind == JsonValueKind.Object &&
-            perplexityObj1.TryGetProperty("web_search_options", out var webSearchOptionsObj) &&
-            webSearchOptionsObj.ValueKind == JsonValueKind.Object &&
-            webSearchOptionsObj.TryGetProperty("search_context_size", out var sizeProp) &&
-            sizeProp.ValueKind == JsonValueKind.String)
+        if (chatRequest.Metadata?["perplexity"] is JsonObject perplexity2 &&
+            perplexity2["web_search_options"] is JsonObject webOptions &&
+            webOptions["search_context_size"] is JsonValue sizeVal &&
+            sizeVal.TryGetValue<string>(out var parsedSize))
         {
-            searchContextSize = sizeProp.GetString();
+            searchContextSize = parsedSize;
         }
 
 

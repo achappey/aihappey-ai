@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
@@ -8,57 +9,21 @@ namespace AIHappey.Core.Providers.Mistral;
 
 public static partial class MistralExtensions
 {
-    public static MistralCodeInterpreter? ToCodeInterpreter(this JsonElement? element)
-    {
-        if (element == null) return null;
 
-        if (!element.Value.TryGetProperty("mistral", out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
+    private static bool HasMistralTool(JsonObject? root, string tool)
+        => root?["mistral"] is JsonObject m && m[tool] is JsonObject;
 
-        if (!openai.TryGetProperty("code_interpreter", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
+    public static MistralWebSearch? ToWebSearchTool(this JsonObject? obj)
+        => HasMistralTool(obj, "web_search") ? new MistralWebSearch() : null;
 
-        return new MistralCodeInterpreter();
-    }
+    public static MistralImageGeneration? ToImageGeneration(this JsonObject? obj)
+        => HasMistralTool(obj, "image_generation") ? new MistralImageGeneration() : null;
 
-    public static MistralWebSearchPremium? ToWebSearchPremiumTool(this JsonElement? element)
-    {
-        if (element == null) return null;
+    public static MistralWebSearchPremium? ToWebSearchPremiumTool(this JsonObject? obj)
+        => HasMistralTool(obj, "web_search_premium") ? new MistralWebSearchPremium() : null;
 
-        if (!element.Value.TryGetProperty("mistral", out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("web_search_premium", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return new MistralWebSearchPremium();
-    }
-
-    public static MistralImageGeneration? ToImageGeneration(this JsonElement? element)
-    {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty("mistral", out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("image_generation", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return new MistralImageGeneration();
-    }
-
-    public static MistralWebSearch? ToWebSearchTool(this JsonElement? element)
-    {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty("mistral", out var openai) || openai.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!openai.TryGetProperty("web_search", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return new MistralWebSearch();
-    }
+    public static MistralCodeInterpreter? ToCodeInterpreter(this JsonObject? obj)
+        => HasMistralTool(obj, "code_interpreter") ? new MistralCodeInterpreter() : null;
 
     public static Dictionary<string, object> ToProviderMetadata(this Dictionary<string, object> metadata)
         => new()

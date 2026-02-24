@@ -3,6 +3,7 @@ using OAIC = OpenAI.Chat;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -56,128 +57,108 @@ public static class SamplingMessageExtensions
         ReasoningOptions = chatRequest.Metadata?.ToResponseCreationOptions()
     };
 
-    public static ResponseReasoningOptions? ToResponseCreationOptions(this JsonElement element)
+    public static ResponseReasoningOptions? ToResponseCreationOptions(this JsonObject? obj)
     {
-        if (!element.TryGetProperty(Constants.OpenAI, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        var reasoning = GetOpenAITool(obj, "reasoning");
+        if (reasoning is null)
             return null;
 
-        if (!openai.TryGetProperty("reasoning", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
+        var effort =
+            reasoning["effort"] is JsonValue e &&
+            e.TryGetValue<string>(out var effortStr)
+                ? effortStr
+                : null;
 
-        var effort = reasoning.TryGetProperty("effort", out var effortProp) && effortProp.ValueKind == JsonValueKind.String
-            ? effortProp.GetString()
-            : null;
+        var summary =
+            reasoning["summary"] is JsonValue s &&
+            s.TryGetValue<string>(out var summaryStr)
+                ? summaryStr
+                : null;
 
-        var summary = reasoning.TryGetProperty("summary", out var summaryProp) && summaryProp.ValueKind == JsonValueKind.String
-            ? summaryProp.GetString()
-            : null;
+        var options = new ResponseReasoningOptions();
 
-        var options = new ResponseReasoningOptions
-        {
-        };
-
-        if (summary != null)
-        {
+        if (summary is not null)
             options.ReasoningSummaryVerbosity = new ResponseReasoningSummaryVerbosity(summary);
-        }
 
-        if (effort != null)
-        {
+        if (effort is not null)
             options.ReasoningEffortLevel = new ResponseReasoningEffortLevel(effort);
-        }
 
         return options;
     }
 
-    public static ResponseTool? ToWebSearchTool(this JsonElement? element)
+    public static ResponseTool? ToWebSearchTool(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(Constants.OpenAI, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        var webSearch = GetOpenAITool(obj, "web_search");
+        if (webSearch is null)
             return null;
 
-        if (!openai.TryGetProperty("web_search", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
-
-        var size = reasoning.TryGetProperty("search_context_size", out var effortProp) && effortProp.ValueKind == JsonValueKind.String
-            ? effortProp.GetString()
-            : null;
+        var size =
+            webSearch["search_context_size"] is JsonValue v &&
+            v.TryGetValue<string>(out var sizeStr)
+                ? sizeStr
+                : null;
 
         return ResponseTool.CreateWebSearchTool(searchContextSize: size);
     }
-
-    public static ResponseTool? ToFileSearchTool(this JsonElement? element)
+    public static ResponseTool? ToFileSearchTool(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(Constants.OpenAI, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        var fileSearch = GetOpenAITool(obj, "file_search");
+        if (fileSearch is null)
             return null;
 
-        if (!openai.TryGetProperty("file_search", out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
+        string[]? storeIds = null;
 
-        string[]? storeIds = [];
+        var idsNode = fileSearch["vector_store_ids"];
 
-        if (reasoning.TryGetProperty("vector_store_ids", out var idsProp))
+        if (idsNode is JsonArray arr)
         {
-            switch (idsProp.ValueKind)
-            {
-                case JsonValueKind.Array:
-                    storeIds = [.. idsProp.EnumerateArray()
-                        .Where(e => e.ValueKind == JsonValueKind.String)
-                        .Select(e => e.GetString()!)
-                        .Where(s => !string.IsNullOrWhiteSpace(s))];
-                    break;
-
-                // allow a single string as shorthand
-                case JsonValueKind.String:
-                    var one = idsProp.GetString();
-                    if (!string.IsNullOrWhiteSpace(one))
-                        storeIds = [one!];
-                    break;
-
-                case JsonValueKind.Null:
-                case JsonValueKind.Undefined:
-                    storeIds = null;
-                    break;
-            }
+            storeIds = [.. arr
+                .OfType<JsonValue>()
+                .Select(v => v.TryGetValue<string>(out var s) ? s : null)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .OfType<string>()];
+        }
+        else if (idsNode is JsonValue single &&
+                 single.TryGetValue<string>(out var one) &&
+                 !string.IsNullOrWhiteSpace(one))
+        {
+            storeIds = [one];
         }
 
-        if (storeIds == null || storeIds?.Length == 0)
-        {
+        if (storeIds is null || storeIds.Length == 0)
             return null;
-        }
 
-        var size = reasoning.TryGetProperty("max_num_results", out var effortProp) && effortProp.ValueKind == JsonValueKind.Number
-            ? (int?)effortProp.GetInt32()
-            : null;
+        int? maxResults =
+            fileSearch["max_num_results"] is JsonValue n &&
+            n.TryGetValue<int>(out var parsed)
+                ? parsed
+                : null;
 
-        return ResponseTool.CreateFileSearchTool(storeIds, maxResultCount: size);
+        return ResponseTool.CreateFileSearchTool(storeIds, maxResultCount: maxResults);
     }
-
-    public static IEnumerable<ResponseTool>? ToMcpTools(this JsonElement? element)
+    public static IEnumerable<ResponseTool>? ToMcpTools(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(Constants.OpenAI, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj?[Constants.OpenAI] is not JsonObject openai)
             return null;
 
-        if (!openai.TryGetProperty("mcp_list_tools", out var toolsProp) || toolsProp.ValueKind != JsonValueKind.Array)
+        if (openai["mcp_list_tools"] is not JsonArray toolsArray)
             return null;
 
         var tools = new List<ResponseTool>();
 
-        foreach (var toolEl in toolsProp.EnumerateArray())
+        foreach (var node in toolsArray)
         {
-            if (toolEl.ValueKind == JsonValueKind.Object)
+            if (node is JsonObject toolObj)
             {
-                var dict = (Dictionary<string, object?>)JsonToObject(toolEl)!;
+                var element = JsonSerializer.SerializeToElement(toolObj);
+                var dict = (Dictionary<string, object?>)JsonToObject(element)!;
 
-                // required: we need the 'type' string to create the tool
-                if (dict.TryGetValue("type", out var type) && type is string typeStr && !string.IsNullOrWhiteSpace(typeStr))
+                if (dict.TryGetValue("type", out var type) &&
+                    type is string typeStr &&
+                    !string.IsNullOrWhiteSpace(typeStr))
                 {
-                    // normalize: allowed_tools can be array-of-strings or object; if it’s a string, wrap it
-                    if (dict.TryGetValue("allowed_tools", out var allowedRaw) && allowedRaw is string oneStr)
+                    if (dict.TryGetValue("allowed_tools", out var allowed) &&
+                        allowed is string oneStr)
                     {
                         dict["allowed_tools"] = new[] { oneStr };
                     }
@@ -185,28 +166,32 @@ public static class SamplingMessageExtensions
                     tools.Add(typeStr.CreateCustomTool(dict));
                 }
             }
-            else if (toolEl.ValueKind == JsonValueKind.String)
+            else if (node is JsonValue v &&
+                     v.TryGetValue<string>(out var typeStr) &&
+                     !string.IsNullOrWhiteSpace(typeStr))
             {
-                // shorthand: just the type string
-                var typeStr = toolEl.GetString();
-                if (!string.IsNullOrWhiteSpace(typeStr))
-                {
-                    tools.Add(typeStr.CreateCustomTool(new Dictionary<string, object?>()));
-                }
+                tools.Add(typeStr.CreateCustomTool(new Dictionary<string, object?>()));
             }
         }
 
         return tools.Count > 0 ? tools : null;
     }
-    
-   public static string ToStopReason(this OAIC.ChatFinishReason finishReason)
-      => finishReason switch
-      {
-          OAIC.ChatFinishReason.Stop => "endTurn",
-          OAIC.ChatFinishReason.Length => "maxTokens",
-          OAIC.ChatFinishReason.ToolCalls => "toolUse",
-          _ => finishReason.ToString()
-      };
+    private static JsonObject? GetOpenAITool(JsonObject? root, string key)
+    {
+        if (root?[Constants.OpenAI] is not JsonObject openai)
+            return null;
+
+        return openai[key] as JsonObject;
+    }
+
+    public static string ToStopReason(this OAIC.ChatFinishReason finishReason)
+       => finishReason switch
+       {
+           OAIC.ChatFinishReason.Stop => "endTurn",
+           OAIC.ChatFinishReason.Length => "maxTokens",
+           OAIC.ChatFinishReason.ToolCalls => "toolUse",
+           _ => finishReason.ToString()
+       };
 
 
     /// <summary>
@@ -258,39 +243,21 @@ public static class SamplingMessageExtensions
         }
     }
 
-
-    public static ResponseTool? ToCodeInterpreterTool(this JsonElement? element)
+    public static ResponseTool? ToCodeInterpreterTool(this JsonObject? obj)
     {
-        if (element == null) return null;
-
-        if (!element.Value.TryGetProperty(Constants.OpenAI, out var openai) || openai.ValueKind != JsonValueKind.Object)
+        if (obj?[Constants.OpenAI] is not JsonObject openai ||
+            openai[Constants.CodeInterpreter] is not JsonObject reasoning)
             return null;
 
-        if (!openai.TryGetProperty(Constants.CodeInterpreter, out var reasoning) || reasoning.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (reasoning.TryGetProperty("container", out var idsProp))
+        object container = reasoning["container"] switch
         {
-            switch (idsProp.ValueKind)
-            {
-                case JsonValueKind.Object:
-                    return Constants.CodeInterpreter.CreateCustomTool(new Dictionary<string, object?>() { { "container", new { type = "auto" } } });
+            JsonObject => new { type = "auto" },
+            JsonValue v when v.TryGetValue<string>(out var s) &&
+                             !string.IsNullOrWhiteSpace(s) => s,
+            _ => new { type = "auto" }
+        };
 
-                // allow a single string as shorthand
-                case JsonValueKind.String:
-                    var one = idsProp.GetString();
-                    if (!string.IsNullOrWhiteSpace(one))
-                        return Constants.CodeInterpreter.CreateCustomTool(new Dictionary<string, object?>() { { "container", one } });
-
-                    break;
-
-                default:
-                    break;
-
-            }
-        }
-
-        return Constants.CodeInterpreter.CreateCustomTool(new Dictionary<string, object?>() { { "container", new { type = "auto" } } });
+        return Constants.CodeInterpreter.CreateCustomTool(
+            new Dictionary<string, object?> { { "container", container } });
     }
-
 }
