@@ -1,0 +1,325 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "forefront/omer3485907/OmerModel",
+            "object": "model"
+        },
+        {
+            "id": "forefront/jlabs/cyber_bot",
+            "object": "model"
+        },
+        {
+            "id": "forefront/sen-e-carte/sen-assistant",
+            "object": "model"
+        },
+        {
+            "id": "forefront/minwin/video50",
+            "object": "model"
+        },
+        {
+            "id": "forefront/minwin/wynm72627",
+            "object": "model"
+        },
+        {
+            "id": "forefront/notbdq/mistral-turkish-v2",
+            "object": "model"
+        },
+        {
+            "id": "forefront/Artples/L-MChat-7b",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Mistral-7B-Instruct-v0.1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/mistralai/Mistral-7B-Instruct-v0.1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Mistral-7B-v0.2-hf",
+            "object": "model"
+        },
+        {
+            "id": "forefront/alpindale/Mistral-7B-v0.2-hf",
+            "object": "model"
+        },
+        {
+            "id": "forefront/WizardLM/WizardMath-7B-V1.1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/zydus/Zydus",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Mistral-7B-claude-chat",
+            "object": "model"
+        },
+        {
+            "id": "forefront/Norquinal/Mistral-7B-claude-chat",
+            "object": "model"
+        },
+        {
+            "id": "forefront/leucine/high-gpt-1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/high-testing-y-check",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/high-testing-y-final",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/high-testing-y-new",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/high-testing-y_new",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/high-testing-y",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/high-testing-x-1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-1234",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-123",
+            "object": "model"
+        },
+        {
+            "id": "forefront/cybet/eVA11",
+            "object": "model"
+        },
+        {
+            "id": "forefront/sparklingllcae/sparklingllcae",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/NeuralBeagle14-7B",
+            "object": "model"
+        },
+        {
+            "id": "forefront/mlabonne/NeuralBeagle14-7B",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/zephyr-7b-sft-full-SPIN-iter3",
+            "object": "model"
+        },
+        {
+            "id": "forefront/UCLA-AGI/zephyr-7b-sft-full-SPIN-iter3",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/OpenHermes-2.5-Mistral-7B",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/teknium/OpenHermes-2.5-Mistral-7B",
+            "object": "model"
+        },
+        {
+            "id": "forefront/teknium/OpenHermes-2.5-Mistral-7B",
+            "object": "model"
+        },
+        {
+            "id": "forefront/minitaur/test",
+            "object": "model"
+        },
+        {
+            "id": "forefront/personal/test-2",
+            "object": "model"
+        },
+        {
+            "id": "forefront/personal/my-first-model",
+            "object": "model"
+        },
+        {
+            "id": "forefront/acme-2/test-2",
+            "object": "model"
+        },
+        {
+            "id": "forefront/acme-2/test",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/jlkjklj",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-price-match",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-evals-2",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-usage",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-mmlu-mini",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/inference-boost",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/translate",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/xDAN-L1-Chat-RL-v1-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Starling-LM-7B-alpha-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Nous-Hermes-2-Vision-Alpha-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Loyal-Macaroni-Maid-7B-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/CodeNinja-1.0-OpenChat-7B-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/mistral-ft-optimized-1227-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Nous-Capybara-7B-V1.9-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/dolphin-2.6-mistral-7b-dpo-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Mistral-7B-OpenOrca-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/zephyr-7b-beta-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/openchat-3.5-1210-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Mistral-7B-Instruct-v0.2-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/neural-chat-7b-v3-1-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/MonadGPT-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/Marcoro14-7B-slerp-chatml",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-6-percent-4-epochs",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-6-percent",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test-evals-validation",
+            "object": "model"
+        },
+        {
+            "id": "forefront/forefront/test",
+            "object": "model"
+        },
+        {
+            "id": "forefront/mistralai/Mistral-7B-v0.1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/Intel/neural-chat-7b-v3-1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/berkeley-nest/Starling-LM-7B-alpha",
+            "object": "model"
+        },
+        {
+            "id": "forefront/cognitivecomputations/dolphin-2.6-mistral-7b-dpo",
+            "object": "model"
+        },
+        {
+            "id": "forefront/Open-Orca/Mistral-7B-OpenOrca",
+            "object": "model"
+        },
+        {
+            "id": "forefront/NousResearch/Nous-Capybara-7B-V1.9",
+            "object": "model"
+        },
+        {
+            "id": "forefront/xDAN-AI/xDAN-L1-Chat-RL-v1",
+            "object": "model"
+        },
+        {
+            "id": "forefront/openchat/openchat-3.5-1210",
+            "object": "model"
+        },
+        {
+            "id": "forefront/NousResearch/Nous-Hermes-2-Vision-Alpha",
+            "object": "model"
+        },
+        {
+            "id": "forefront/mistralai/Mistral-7B-Instruct-v0.2",
+            "object": "model"
+        },
+        {
+            "id": "forefront/beowolx/CodeNinja-1.0-OpenChat-7B",
+            "object": "model"
+        },
+        {
+            "id": "forefront/Pclanglais/MonadGPT",
+            "object": "model"
+        },
+        {
+            "id": "forefront/HuggingFaceH4/zephyr-7b-beta",
+            "object": "model"
+        },
+        {
+            "id": "forefront/SanjiWatsuki/Loyal-Macaroni-Maid-7B",
+            "object": "model"
+        },
+        {
+            "id": "forefront/mlabonne/Marcoro14-7B-slerp",
+            "object": "model"
+        },
+        {
+            "id": "forefront/OpenPipe/mistral-ft-optimized-1227",
+            "object": "model"
+        }
+    ]
+}

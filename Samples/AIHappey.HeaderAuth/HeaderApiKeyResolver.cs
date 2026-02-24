@@ -161,7 +161,10 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["crazyrouter"] = "X-Crazyrouter-Key",
             ["infraxa"] = "X-Infraxa-Key",
             ["inceptionlabs"] = "X-InceptionLabs-Key",
-            ["daglo"] = "X-Daglo-Key"
+            ["daglo"] = "X-Daglo-Key",
+            ["opeai"] = "X-OPEAI-Key",
+            ["forefront"] = "X-Forefront-Key",
+            ["aicc"] = "X-AICC-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

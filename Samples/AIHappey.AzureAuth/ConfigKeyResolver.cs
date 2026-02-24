@@ -167,6 +167,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "infraxa" => _config.Infraxa?.ApiKey,
             "inceptionlabs" => _config.InceptionLabs?.ApiKey,
             "daglo" => _config.Daglo?.ApiKey,
+            "opeai" => _config.OPEAI?.ApiKey,
+            "forefront" => _config.Forefront?.ApiKey,
+            "aicc" => _config.AICC?.ApiKey,
             _ => null
         };
 }

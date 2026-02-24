@@ -160,6 +160,9 @@ using AIHappey.Core.Providers.Crazyrouter;
 using AIHappey.Core.Providers.Infraxa;
 using AIHappey.Core.Providers.InceptionLabs;
 using AIHappey.Core.Providers.Daglo;
+using AIHappey.Core.Providers.OPEAI;
+using AIHappey.Core.Providers.Forefront;
+using AIHappey.Core.Providers.AICC;
 
 namespace AIHappey.Core.AI;
 
@@ -327,6 +330,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, InfraxaProvider>();
         services.AddSingleton<IModelProvider, InceptionLabsProvider>();
         services.AddSingleton<IModelProvider, DagloProvider>();
+        services.AddSingleton<IModelProvider, OPEAIProvider>();
+        services.AddSingleton<IModelProvider, ForefrontProvider>();
+        services.AddSingleton<IModelProvider, AICCProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
