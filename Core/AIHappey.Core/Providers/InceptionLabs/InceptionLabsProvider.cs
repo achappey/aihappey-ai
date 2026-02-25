@@ -60,7 +60,7 @@ public partial class InceptionLabsProvider : IModelProvider
 
     private static string ResolveChatCompletionsRelativeUrl(string? model)
     {
-        var normalizedModel = NormalizeModelName(model);
+        var normalizedModel = model ?? string.Empty;
 
         if (normalizedModel.Equals("mercury-edit/apply", StringComparison.OrdinalIgnoreCase))
             return "v1/apply/completions";
@@ -71,21 +71,8 @@ public partial class InceptionLabsProvider : IModelProvider
         // Keep Mercury 2 and other models on standard chat completions.
         return "v1/chat/completions";
     }
-
-    private static string NormalizeModelName(string? model)
-    {
-        if (string.IsNullOrWhiteSpace(model))
-            return string.Empty;
-
-        var trimmed = model.Trim();
-        if (trimmed.StartsWith("inceptionlabs/", StringComparison.OrdinalIgnoreCase))
-            return trimmed["inceptionlabs/".Length..];
-
-        return trimmed;
-    }
-
     private static bool IsMercuryEditModel(string? model)
-        => NormalizeModelName(model).StartsWith("mercury-edit", StringComparison.OrdinalIgnoreCase);
+        => model?.StartsWith("mercury-edit", StringComparison.OrdinalIgnoreCase) == true;
 
     public string GetIdentifier() => nameof(InceptionLabs).ToLowerInvariant();
 

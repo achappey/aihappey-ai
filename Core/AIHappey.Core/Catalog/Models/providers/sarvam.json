@@ -20,13 +20,27 @@
             "created": 1747958400
         },
         {
+            "id": "sarvam/saaras:v3",
+            "object": "model",
+            "owned_by": "Sarvam",
+            "name": "saaras:v3",
+            "type": "transcription"
+        },
+        {
             "id": "sarvam/bulbul:v2",
             "object": "model",
             "owned_by": "Sarvam",
             "name": "bulbul:v2",
             "type": "speech",
-            "description": "Bulbul-v2 is our flagship text-to-speech model, specifically designed for Indian languages and accents. It excels in natural-sounding speech synthesis with human-like prosody, multiple voice personalities, and comprehensive support for multiple Indian languages",
             "created": 1743465600
+        },
+        {
+            "id": "sarvam/bulbul:v3",
+            "object": "model",
+            "owned_by": "Sarvam",
+            "name": "bulbul:v3",
+            "type": "speech",
+            "description": "Natural, expressive, and production-ready text-to-speech for Indian languages across 11 languages."
         }
     ]
 }

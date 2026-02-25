@@ -35,20 +35,28 @@ public partial class CohereProvider
 
             if (string.IsNullOrWhiteSpace(name)) continue;
 
-            DateTimeOffset? createdAt = null;
-            if (item.TryGetProperty("created_at", out var createdEl)
-                && createdEl.ValueKind == JsonValueKind.String
-                && DateTimeOffset.TryParse(createdEl.GetString(), out var dt))
+            int? contextLength = null;
+            if (item.TryGetProperty("context_length", out var contextLengthEl))
+                contextLength = contextLengthEl.GetInt32();
+
+            IEnumerable<string>? tags = null;
+            if (item.TryGetProperty("features", out var featuresEl)
+                && featuresEl.ValueKind == JsonValueKind.Array)
             {
-                createdAt = dt;
+                tags = [.. featuresEl
+                    .EnumerateArray()
+                    .Where(f => f.ValueKind == JsonValueKind.String)
+                    .Select(f => f.GetString()!)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))];
             }
 
             result.Add(new Model
             {
                 Id = name!.ToModelId(GetIdentifier()),
                 Name = name!,
-                OwnedBy = nameof(Cohere),
-                Created = createdAt?.ToUnixTimeSeconds()
+                Tags = tags,
+                ContextWindow = contextLength,
+                OwnedBy = nameof(Cohere)
             });
         }
 

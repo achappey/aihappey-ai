@@ -1,0 +1,50 @@
+{
+  "cohere/command-r7b-12-2024": {
+    "pricing": {
+      "input": "0.0000000375",
+      "output": "0.00000015"
+    }
+  },
+  "cohere/command-r-08-2024": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006"
+    }
+  },
+  "cohere/command-r-plus-08-2024": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.00001"
+    }
+  },
+  "cohere/command-a-03-2025": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.00001"
+    }
+  },
+  "cohere/command-a-reasoning-08-2025": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.00001"
+    }
+  },
+  "cohere/command-a-translate-08-2025": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.00001"
+    }
+  },
+  "cohere/c4ai-aya-expanse-8b": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006"
+    }
+  },
+  "cohere/tiny-aya-global": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006"
+    }
+  }
+}

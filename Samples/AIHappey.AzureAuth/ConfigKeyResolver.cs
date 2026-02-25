@@ -170,6 +170,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "opeai" => _config.OPEAI?.ApiKey,
             "forefront" => _config.Forefront?.ApiKey,
             "aicc" => _config.AICC?.ApiKey,
+            "yourvoic" => _config.YourVoic?.ApiKey,
+            "fishaudio" => _config.FishAudio?.ApiKey,
+            "lovo" => _config.LOVO?.ApiKey,
             _ => null
         };
 }

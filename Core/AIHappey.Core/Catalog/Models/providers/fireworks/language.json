@@ -1,0 +1,118 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "fireworks/accounts/fireworks/models/minimax-m2p1",
+            "object": "model",
+            "owned_by": "minimax",
+            "name": "MiniMax M2.1",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/minimax-m2p1",
+            "object": "model",
+            "owned_by": "minimax",
+            "name": "MiniMax M2.1",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/minimax-m2p5",
+            "object": "model",
+            "owned_by": "minimax",
+            "name": "MiniMax M2.5",
+            "context_window": 196600,
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/glm-5",
+            "object": "model",
+            "owned_by": "z.ai",
+            "name": "GLM-5",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/glm-4.7",
+            "object": "model",
+            "owned_by": "z.ai",
+            "name": "GLM-4.7",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/deepseek-v3.2",
+            "object": "model",
+            "owned_by": "deepseek",
+            "name": "DeepSeek V3.2",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/deepseek-v3.1",
+            "object": "model",
+            "owned_by": "deepseek",
+            "name": "DeepSeek V3.1",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/kimi-k2p5",
+            "object": "model",
+            "owned_by": "moonshot",
+            "name": "Kimi K2.5",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/kimi-k2-thinking",
+            "object": "model",
+            "owned_by": "moonshot",
+            "name": "Kimi K2 Thinking",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/kimi-k2-instruct-0905",
+            "object": "model",
+            "owned_by": "moonshot",
+            "name": "Kimi K2 Instruct 0905",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/qwen3-8b",
+            "object": "model",
+            "owned_by": "qwen",
+            "name": "Qwen3 8B",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/qwen3-vl-30b-a3b-thinking",
+            "object": "model",
+            "owned_by": "qwen",
+            "name": "Qwen3 VL 30B Thinking",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/qwen3-vl-30b-a3b-instruct",
+            "object": "model",
+            "owned_by": "qwen",
+            "name": "Qwen3 VL 30B Instruct",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/llama-3.3-70b-instruct",
+            "object": "model",
+            "owned_by": "meta",
+            "name": "Llama 3.3 70B Instruct",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "openai",
+            "name": "GPT-OSS 120B",
+            "type": "language"
+        },
+        {
+            "id": "fireworks/accounts/fireworks/models/gpt-oss-20b",
+            "object": "model",
+            "owned_by": "openai",
+            "name": "GPT-OSS 20B",
+            "type": "language"
+        }
+    ]
+}

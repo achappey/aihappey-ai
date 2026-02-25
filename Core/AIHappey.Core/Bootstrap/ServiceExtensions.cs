@@ -163,6 +163,9 @@ using AIHappey.Core.Providers.Daglo;
 using AIHappey.Core.Providers.OPEAI;
 using AIHappey.Core.Providers.Forefront;
 using AIHappey.Core.Providers.AICC;
+using AIHappey.Core.Providers.YourVoic;
+using AIHappey.Core.Providers.FishAudio;
+using AIHappey.Core.Providers.LOVO;
 
 namespace AIHappey.Core.AI;
 
@@ -333,6 +336,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OPEAIProvider>();
         services.AddSingleton<IModelProvider, ForefrontProvider>();
         services.AddSingleton<IModelProvider, AICCProvider>();
+        services.AddSingleton<IModelProvider, YourVoicProvider>();
+        services.AddSingleton<IModelProvider, FishAudioProvider>();
+        services.AddSingleton<IModelProvider, LOVOProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

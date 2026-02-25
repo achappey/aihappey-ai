@@ -96,7 +96,7 @@ public partial class FireworksProvider
         // POST /inference/v1/image_generation/<model>
         // Accept: image/jpeg
 
-        var modelPath = NormalizeModelPath(imageRequest.Model);
+        var modelPath = imageRequest.Model;
         var endpoint = $"v1/image_generation/{modelPath}";
 
         var width = imageRequest.GetImageWidth();
@@ -157,7 +157,7 @@ public partial class FireworksProvider
         // Fireworks Image Generation image-to-image (multipart)
         // POST /inference/v1/image_generation/<model>/image_to_image
 
-        var modelPath = NormalizeModelPath(imageRequest.Model);
+        var modelPath = imageRequest.Model;
         var endpoint = $"v1/image_generation/{modelPath}/image_to_image";
 
         var init = imageRequest.Files!.First();
@@ -208,7 +208,7 @@ public partial class FireworksProvider
         // POST /inference/v1/workflows/<model>
         // POST /inference/v1/workflows/<model>/get_result
 
-        var modelPath = NormalizeModelPath(imageRequest.Model);
+        var modelPath = imageRequest.Model;
         var submitEndpoint = $"v1/workflows/{modelPath}";
         var resultEndpoint = $"v1/workflows/{modelPath}/get_result";
         var metadata = imageRequest.GetProviderMetadata<FireworksImageProviderMetadata>(GetIdentifier());
@@ -342,16 +342,6 @@ public partial class FireworksProvider
         }
 
         throw new TimeoutException("Timed out waiting for Fireworks workflow result.");
-    }
-
-    private static string NormalizeModelPath(string model)
-    {
-        // Expected incoming model string style in this repo:
-        //   fireworks/accounts/fireworks/models/<name>
-        // We remove a leading "fireworks/" if present (tolerant), and then use it as path.
-        return model.StartsWith("fireworks/", StringComparison.OrdinalIgnoreCase)
-            ? model["fireworks/".Length..]
-            : model;
     }
 
     private static string? TryDecodeUtf8(byte[] bytes)

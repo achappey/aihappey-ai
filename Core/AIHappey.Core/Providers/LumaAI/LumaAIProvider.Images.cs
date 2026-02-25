@@ -41,7 +41,7 @@ public partial class LumaAIProvider
         if (request.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        var model = NormalizeModel(request.Model);
+        var model = request.Model;
         if (model is not ("photon-1" or "photon-flash-1"))
             throw new NotSupportedException($"Luma image model '{request.Model}' is not supported.");
 
@@ -141,15 +141,6 @@ public partial class LumaAIProvider
         var root = pollDoc.RootElement.Clone();
         var state = (TryGetString(root, "state") ?? "unknown").Trim().ToLowerInvariant();
         return new LumaGenerationStatus(state, root);
-    }
-
-    private static string NormalizeModel(string model)
-    {
-        var value = model.Trim();
-        if (value.StartsWith("lumaai/", StringComparison.OrdinalIgnoreCase))
-            value = value["lumaai/".Length..];
-
-        return value;
     }
 
     private static string? TryGetString(JsonElement element, params string[] path)

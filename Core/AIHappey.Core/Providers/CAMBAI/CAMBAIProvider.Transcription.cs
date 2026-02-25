@@ -17,7 +17,7 @@ public partial class CAMBAIProvider
 
         ArgumentNullException.ThrowIfNull(request);
 
-        var model = NormalizeModelId(request.Model);
+        var model = request.Model;
         var languageId = ParseLanguageIdFromModel(model);
         var (audioBytes, audioMimeFromPayload) = ParseAudioBytes(request);
 
@@ -127,21 +127,7 @@ public partial class CAMBAIProvider
             || string.Equals(status, "ERROR", StringComparison.OrdinalIgnoreCase)
             || string.Equals(status, "TIMEOUT", StringComparison.OrdinalIgnoreCase)
             || string.Equals(status, "PAYMENT_REQUIRED", StringComparison.OrdinalIgnoreCase);
-
-    private string NormalizeModelId(string model)
-    {
-        if (string.IsNullOrWhiteSpace(model))
-            throw new ArgumentException("Model is required.", nameof(model));
-
-        if (!model.Contains('/'))
-            return model;
-
-        var split = model.SplitModelId();
-        return string.Equals(split.Provider, GetIdentifier(), StringComparison.OrdinalIgnoreCase)
-            ? split.Model
-            : model;
-    }
-
+   
     private static int ParseLanguageIdFromModel(string model)
     {
         if (!model.StartsWith(TranscriptionModelPrefix, StringComparison.OrdinalIgnoreCase))

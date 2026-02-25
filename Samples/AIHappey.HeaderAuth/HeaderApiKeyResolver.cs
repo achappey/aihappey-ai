@@ -164,7 +164,10 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["daglo"] = "X-Daglo-Key",
             ["opeai"] = "X-OPEAI-Key",
             ["forefront"] = "X-Forefront-Key",
-            ["aicc"] = "X-AICC-Key"
+            ["aicc"] = "X-AICC-Key",
+            ["yourvoic"] = "X-YourVoic-Key",
+            ["fishaudio"] = "X-FishAudio-Key",
+            ["lovo"] = "X-LOVO-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

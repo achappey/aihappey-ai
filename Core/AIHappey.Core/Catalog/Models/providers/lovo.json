@@ -1,0 +1,14 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "lovo/tts/sample",
+      "object": "model",
+      "owned_by": "LOVO",
+      "name": "LOVO TTS (dynamic speakers)",
+      "type": "speech",
+      "description": "Seed model for LOVO. Actual speaker models are generated dynamically from /api/v1/speakers as lovo/tts/[speakerId]."
+    }
+  ]
+}
+

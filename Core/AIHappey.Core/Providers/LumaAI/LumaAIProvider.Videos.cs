@@ -31,7 +31,7 @@ public partial class LumaAIProvider
         if (request.Seed is not null)
             warnings.Add(new { type = "unsupported", feature = "seed" });
 
-        var model = NormalizeModel(request.Model);
+        var model = request.Model;
         if (model is not ("ray-2" or "ray-flash-2"))
             throw new NotSupportedException($"Luma video model '{request.Model}' is not supported.");
 

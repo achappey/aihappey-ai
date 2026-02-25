@@ -1,0 +1,93 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "yourvoic/cipher-fast",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "cipher-fast",
+      "type": "transcription",
+      "description": "Ultra-fast transcription for quick turnaround."
+    },
+    {
+      "id": "yourvoic/cipher-max",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "cipher-max",
+      "type": "transcription",
+      "description": "Maximum accuracy for complex audio."
+    },
+    {
+      "id": "yourvoic/lucid-mono",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "lucid-mono",
+      "type": "transcription",
+      "description": "Enterprise-grade high-accuracy transcription for single language content (English optimized). Supports batch and real-time streaming."
+    },
+    {
+      "id": "yourvoic/lucid-multi",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "lucid-multi",
+      "type": "transcription",
+      "description": "Enterprise-grade multilingual transcription with code-switching support. Supports batch and real-time streaming."
+    },
+    {
+      "id": "yourvoic/lucid-agent",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "lucid-agent",
+      "type": "transcription",
+      "description": "Enterprise-grade transcription optimized for conversational content. Supports batch and real-time streaming."
+    },
+    {
+      "id": "yourvoic/lucid-lite",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "lucid-lite",
+      "type": "transcription",
+      "description": "Enterprise-grade cost-effective transcription model for high-volume use. Supports batch and real-time streaming."
+    },
+    {
+      "id": "yourvoic/aura-lite",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "aura-lite",
+      "type": "speech",
+      "description": "Fast TTS model optimized for real-time applications. Supports 74 languages, expression tags, ~200ms first byte latency. Cost: 1 credit per character."
+    },
+    {
+      "id": "yourvoic/aura-prime",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "aura-prime",
+      "type": "speech",
+      "description": "Balanced TTS model with excellent quality and enhanced prosody. Supports 74 languages, expression tags, ~400ms first byte latency. Cost: 1 credit per character."
+    },
+    {
+      "id": "yourvoic/aura-max",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "aura-max",
+      "type": "speech",
+      "description": "Premium TTS model for audiobooks and professional media. Highest quality, natural prosody, expression tags, ~800ms first byte latency. Supports 74 languages. Cost: 1 credit per character."
+    },
+    {
+      "id": "yourvoic/rapid-flash",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "rapid-flash",
+      "type": "speech",
+      "description": "Ultra-fast low-latency TTS (~100ms first byte). Optimized for IVR and notifications. Supports 18 languages. No expression tags. Cost: 1 credit per character."
+    },
+    {
+      "id": "yourvoic/rapid-max",
+      "object": "model",
+      "owned_by": "YourVoic",
+      "name": "rapid-max",
+      "type": "speech",
+      "description": "Fast TTS model with better quality than Rapid Flash (~150ms first byte). Supports 50+ languages. No expression tags. Cost: 2 credits per character."
+    }
+  ]
+}

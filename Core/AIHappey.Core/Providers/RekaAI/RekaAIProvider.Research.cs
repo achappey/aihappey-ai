@@ -17,19 +17,7 @@ public partial class RekaAIProvider
     private const string ResearchModelId = "reka-flash-research";
 
     private static bool IsResearchModel(string? model)
-        => string.Equals(NormalizeModelId(model), ResearchModelId, StringComparison.OrdinalIgnoreCase);
-
-    private static string NormalizeModelId(string? model)
-    {
-        if (string.IsNullOrWhiteSpace(model))
-            return string.Empty;
-
-        var value = model.Trim();
-        if (value.Contains('/', StringComparison.Ordinal))
-            value = value.SplitModelId().Model;
-
-        return value;
-    }
+        => string.Equals(model, ResearchModelId, StringComparison.OrdinalIgnoreCase);
 
     private void ApplyResearchAuthHeader()
     {

@@ -1,0 +1,33 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "fishaudio/asr",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "Speech to Text",
+      "type": "transcription"
+    },
+    {
+      "id": "fishaudio/s1",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "s1",
+      "type": "speech"
+    },
+    {
+      "id": "fishaudio/speech-1.6",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "speech-1.6",
+      "type": "speech"
+    },
+    {
+      "id": "fishaudio/speech-1.5",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "speech-1.5",
+      "type": "speech"
+    }
+  ]
+}

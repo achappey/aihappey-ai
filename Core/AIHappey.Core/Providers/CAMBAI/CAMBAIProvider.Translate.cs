@@ -14,7 +14,7 @@ public partial class CAMBAIProvider
 
     private async Task<IReadOnlyList<string>> TranslateTextsFromModelAsync(string model, IReadOnlyList<string> texts, CancellationToken cancellationToken)
     {
-        var normalizedModel = NormalizeModelId(model);
+        var normalizedModel = model;
         var (sourceLanguageId, targetLanguageId) = ParseSourceAndTargetLanguageIdsFromTranslationModel(normalizedModel);
         return await TranslateTextsAsync(sourceLanguageId, targetLanguageId, texts, cancellationToken);
     }

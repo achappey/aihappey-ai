@@ -1,0 +1,33 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "fireworks/whisper-v3",
+            "object": "model",
+            "owned_by": "openai",
+            "name": "Whisper v3",
+            "type": "transcription"
+        },
+        {
+            "id": "fireworks/whisper-v3-turbo",
+            "object": "model",
+            "owned_by": "openai",
+            "name": "Whisper v3 Turbo",
+            "type": "transcription"
+        },
+        {
+            "id": "fireworks/whisper-v3/translate",
+            "object": "model",
+            "owned_by": "openai",
+            "name": "Whisper v3 Translate to English",
+            "type": "transcription"
+        },
+        {
+            "id": "fireworks/whisper-v3-turbo/translate",
+            "object": "model",
+            "owned_by": "openai",
+            "name": "Whisper v3 Turbo Translate to English",
+            "type": "transcription"
+        }
+    ]
+}

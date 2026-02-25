@@ -26,7 +26,7 @@ public partial class CAMBAIProvider
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
 
-        var model = NormalizeModelId(request.Model);
+        var model = request.Model;
 
         if (model.StartsWith(TtsModelPrefix, StringComparison.OrdinalIgnoreCase))
             return await TtsRequestAsync(request, model, cancellationToken);

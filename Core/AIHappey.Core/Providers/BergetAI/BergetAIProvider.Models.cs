@@ -76,7 +76,7 @@ public partial class BergetAIProvider
                 }
 
                 if (tags.Count > 0)
-                    model.Tags = tags.ToArray();
+                    model.Tags = [.. tags];
             }
 
 

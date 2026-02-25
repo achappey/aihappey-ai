@@ -48,7 +48,7 @@ public partial class BytezProvider
             ["text"] = request.Prompt
         };
 
-        var modelRoute = NormalizeModelRoute(request.Model);
+        var modelRoute = request.Model;
         using var createReq = new HttpRequestMessage(HttpMethod.Post, modelRoute)
         {
             Content = new StringContent(
@@ -100,16 +100,6 @@ public partial class BytezProvider
                 Body = root.Clone()
             }
         };
-    }
-
-    private static string NormalizeModelRoute(string model)
-    {
-        var route = (model ?? string.Empty).Trim().TrimStart('/');
-
-        if (route.StartsWith("bytez/", StringComparison.OrdinalIgnoreCase))
-            route = route["bytez/".Length..];
-
-        return route;
     }
 
     private static string? GuessImageMediaType(string? url)

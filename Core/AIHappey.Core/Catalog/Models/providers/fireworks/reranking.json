@@ -1,0 +1,12 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "fireworks/fireworks/qwen3-reranker-8b",
+            "object": "model",
+            "owned_by": "qwen",
+            "name": "Qwen3 Reranker 8B",
+            "type": "reranking"
+        }
+    ]
+}
