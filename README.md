@@ -6,7 +6,7 @@ No smart routing fairy. No shiny admin portal. No hidden logic maze.
 Just providers flattened to capabilities, normalized hard, exposed through open contracts.
 Boring on purpose.
 
-Access 80k+ models from your favorite client.
+Access 100k+ models from your favorite client.
 
 ## Provider Support Matrix
 
@@ -28,6 +28,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ARKLabs        | ✅        | ✅                | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ➖          |
 | ASIOne         | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AssemblyAI     | ✅        | ✅                | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
+| Astica         | ✅        | ❌                | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ➖          |
 | AsyncAI        | ✅        | ❌                | ✅            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | AtlasCloud     | ✅        | ✅                | ❌            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | Audixa         | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
@@ -67,6 +68,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ElevenLabs     | ✅        | ❌                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Euqai          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | EUrouter       | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| EverypixelLabs | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Exa            | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Featherless    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | FishAudio      | ✅        | ❌                | ❌            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
@@ -83,6 +85,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | GTranslate     | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Haimaker       | ✅        | ✅                | ❌            | ❌        | ✅                     | ✅                       | ➖               | ➖          | ✅          |
 | Helicone       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| HeyGen         | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | HorayAI        | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Hyperbolic     | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ➖          |
 | Hyperstack     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -164,6 +167,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Sudo           | ✅        | ✅                | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | SunoAPI        | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | SUPA           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Supertone      | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Synexa         | ✅        | ✅                | ✅            | ✅        | ✅                     | ✅                       | ➖               | ➖          | ✅          |
 | Tavily         | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Telnyx         | ✅        | ✅                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
@@ -175,6 +179,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Typecast       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | UnrealSpeech   | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Upstage        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| UVoiceAI       | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Vapi           | ✅        | 🟡                | 🟡            | 🟡        | ➖                     | ❌                       | ❌               | ➖          | ➖          |
 | Verbatik       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Verda          | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |

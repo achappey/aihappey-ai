@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "astica/1.0_full",
+      "object": "model",
+      "owned_by": "Astica",
+      "name": "1.0_full",
+      "type": "image",
+      "description": "Astica Design image generation model version 1.0_full."
+    },
+    {
+      "id": "astica/2.0_full",
+      "object": "model",
+      "owned_by": "Astica",
+      "name": "2.0_full",
+      "type": "image",
+      "description": "Astica Design image generation model version 2.0_full."
+    }
+  ]
+}

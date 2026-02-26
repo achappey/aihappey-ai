@@ -181,6 +181,11 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "typecast" => _config.Typecast?.ApiKey,
             "unrealspeech" => _config.UnrealSpeech?.ApiKey,
             "kugu" => _config.Kugu?.ApiKey,
+            "everypixellabs" => _config.EverypixelLabs?.ApiKey,
+            "supertone" => _config.Supertone?.ApiKey,
+            "uvoiceai" => _config.UVoiceAI?.ApiKey,
+            "astica" => _config.Astica?.ApiKey,
+            "heygen" => _config.HeyGen?.ApiKey,
             _ => null
         };
 }

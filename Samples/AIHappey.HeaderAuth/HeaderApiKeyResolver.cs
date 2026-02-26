@@ -175,7 +175,12 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["orq"] = "X-Orq-Key",
             ["typecast"] = "X-Typecast-Key",
             ["unrealspeech"] = "X-UnrealSpeech-Key",
-            ["kugu"] = "X-Kugu-Key"
+            ["kugu"] = "X-Kugu-Key",
+            ["everypixellabs"] = "X-EverypixelLabs-Key",
+            ["supertone"] = "X-Supertone-Key",
+            ["uvoiceai"] = "X-UVoiceAI-Key",
+            ["astica"] = "X-Astica-Key",
+            ["heygen"] = "X-HeyGen-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

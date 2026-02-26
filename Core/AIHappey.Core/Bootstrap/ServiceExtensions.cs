@@ -166,14 +166,19 @@ using AIHappey.Core.Providers.Forefront;
 using AIHappey.Core.Providers.AICC;
 using AIHappey.Core.Providers.YourVoic;
 using AIHappey.Core.Providers.FishAudio;
+using AIHappey.Core.Providers.HeyGen;
 using AIHappey.Core.Providers.Cartesia;
 using AIHappey.Core.Providers.LOVO;
+using AIHappey.Core.Providers.EverypixelLabs;
 using AIHappey.Core.Providers.Verbatik;
 using AIHappey.Core.Providers.Vapi;
 using AIHappey.Core.Providers.SmallestAI;
 using AIHappey.Core.Providers.Orq;
 using AIHappey.Core.Providers.Typecast;
 using AIHappey.Core.Providers.UnrealSpeech;
+using AIHappey.Core.Providers.Supertone;
+using AIHappey.Core.Providers.UVoiceAI;
+using AIHappey.Core.Providers.Astica;
 
 namespace AIHappey.Core.AI;
 
@@ -347,14 +352,19 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AICCProvider>();
         services.AddSingleton<IModelProvider, YourVoicProvider>();
         services.AddSingleton<IModelProvider, FishAudioProvider>();
+        services.AddSingleton<IModelProvider, HeyGenProvider>();
         services.AddSingleton<IModelProvider, CartesiaProvider>();
         services.AddSingleton<IModelProvider, LOVOProvider>();
+        services.AddSingleton<IModelProvider, EverypixelLabsProvider>();
         services.AddSingleton<IModelProvider, VerbatikProvider>();
         services.AddSingleton<IModelProvider, SmallestAIProvider>();
         services.AddSingleton<IModelProvider, OrqProvider>();
         services.AddSingleton<IModelProvider, TypecastProvider>();
         services.AddSingleton<IModelProvider, UnrealSpeechProvider>();
         services.AddSingleton<IModelProvider, VapiProvider>();
+        services.AddSingleton<IModelProvider, SupertoneProvider>();
+        services.AddSingleton<IModelProvider, UVoiceAIProvider>();
+        services.AddSingleton<IModelProvider, AsticaProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
