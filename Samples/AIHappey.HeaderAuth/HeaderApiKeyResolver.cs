@@ -167,7 +167,15 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["aicc"] = "X-AICC-Key",
             ["yourvoic"] = "X-YourVoic-Key",
             ["fishaudio"] = "X-FishAudio-Key",
-            ["lovo"] = "X-LOVO-Key"
+            ["lovo"] = "X-LOVO-Key",
+            ["verbatik"] = "X-Verbatik-Key",
+            ["cartesia"] = "X-Cartesia-Key",
+            ["vapi"] = "X-Vapi-Key",
+            ["smallestai"] = "X-SmallestAI-Key",
+            ["orq"] = "X-Orq-Key",
+            ["typecast"] = "X-Typecast-Key",
+            ["unrealspeech"] = "X-UnrealSpeech-Key",
+            ["kugu"] = "X-Kugu-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

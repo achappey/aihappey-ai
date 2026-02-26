@@ -1,0 +1,93 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "orq/elevenlabs/eleven_flash_v2",
+            "object": "model",
+            "owned_by": "Eleven Labs",
+            "name": "eleven_flash_v2",
+            "type": "speech",
+            "description": "Orq Router speech model: elevenlabs/eleven_flash_v2"
+        },
+        {
+            "id": "orq/elevenlabs/eleven_flash_v2_5",
+            "object": "model",
+            "owned_by": "Eleven Labs",
+            "name": "eleven_flash_v2_5",
+            "type": "speech",
+            "description": "Orq Router speech model: elevenlabs/eleven_flash_v2_5"
+        },
+        {
+            "id": "orq/elevenlabs/eleven_multilingual_v2",
+            "object": "model",
+            "owned_by": "Eleven Labs",
+            "name": "eleven_multilingual_v2",
+            "type": "speech",
+            "description": "Orq Router speech model: elevenlabs/eleven_multilingual_v2"
+        },
+        {
+            "id": "orq/elevenlabs/eleven_turbo_v2_5",
+            "object": "model",
+            "owned_by": "Eleven Labs",
+            "name": "eleven_turbo_v2_5",
+            "type": "speech",
+            "description": "Orq Router speech model: elevenlabs/eleven_turbo_v2_5"
+        },
+        {
+            "id": "orq/google/gemini-2.5-flash-preview-tts",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.5-flash-preview-tts",
+            "type": "speech",
+            "description": "Orq Router speech model: google/gemini-2.5-flash-preview-tts"
+        },
+        {
+            "id": "orq/google/gemini-2.5-pro-preview-tts",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.5-pro-preview-tts",
+            "type": "speech",
+            "description": "Orq Router speech model: google/gemini-2.5-pro-preview-tts"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.5-flash-preview-tts",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.5-flash-preview-tts",
+            "type": "speech",
+            "description": "Orq Router speech model: google-ai/gemini-2.5-flash-preview-tts"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.5-pro-preview-tts",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.5-pro-preview-tts",
+            "type": "speech",
+            "description": "Orq Router speech model: google-ai/gemini-2.5-pro-preview-tts"
+        },
+        {
+            "id": "orq/openai/gpt-4o-mini-tts",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-tts",
+            "type": "speech",
+            "description": "Orq Router speech model: openai/gpt-4o-mini-tts"
+        },
+        {
+            "id": "orq/openai/tts-1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "tts-1",
+            "type": "speech",
+            "description": "Orq Router speech model: openai/tts-1"
+        },
+        {
+            "id": "orq/openai/tts-1-hd",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "tts-1-hd",
+            "type": "speech",
+            "description": "Orq Router speech model: openai/tts-1-hd"
+        }
+    ]
+}

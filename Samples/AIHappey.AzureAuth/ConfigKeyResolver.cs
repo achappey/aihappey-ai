@@ -173,6 +173,14 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "yourvoic" => _config.YourVoic?.ApiKey,
             "fishaudio" => _config.FishAudio?.ApiKey,
             "lovo" => _config.LOVO?.ApiKey,
+            "verbatik" => _config.Verbatik?.ApiKey,
+            "cartesia" => _config.Cartesia?.ApiKey,
+            "vapi" => _config.Vapi?.ApiKey,
+            "smallestai" => _config.SmallestAI?.ApiKey,
+            "orq" => _config.Orq?.ApiKey,
+            "typecast" => _config.Typecast?.ApiKey,
+            "unrealspeech" => _config.UnrealSpeech?.ApiKey,
+            "kugu" => _config.Kugu?.ApiKey,
             _ => null
         };
 }

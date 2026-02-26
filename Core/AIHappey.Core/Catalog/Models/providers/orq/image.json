@@ -1,0 +1,197 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "orq/bytedance/seededit-3-0-i2i-250628",
+            "object": "model",
+            "owned_by": "bytedance",
+            "name": "seededit-3-0-i2i-250628",
+            "type": "image",
+            "description": "Orq Router image model: bytedance/seededit-3-0-i2i-250628"
+        },
+        {
+            "id": "orq/bytedance/seedream-3-0-t2i-250415",
+            "object": "model",
+            "owned_by": "bytedance",
+            "name": "seedream-3-0-t2i-250415",
+            "type": "image",
+            "description": "Orq Router image model: bytedance/seedream-3-0-t2i-250415"
+        },
+        {
+            "id": "orq/bytedance/seedream-4-0-250828",
+            "object": "model",
+            "owned_by": "bytedance",
+            "name": "seedream-4-0-250828",
+            "type": "image",
+            "description": "Orq Router image model: bytedance/seedream-4-0-250828"
+        },
+        {
+            "id": "orq/bytedance/seedream-4-5-251128",
+            "object": "model",
+            "owned_by": "bytedance",
+            "name": "seedream-4-5-251128",
+            "type": "image",
+            "description": "Orq Router image model: bytedance/seedream-4-5-251128"
+        },
+        {
+            "id": "orq/fal/flux/dev",
+            "object": "model",
+            "owned_by": "FAL",
+            "name": "dev",
+            "type": "image",
+            "description": "Orq Router image model: fal/flux/dev"
+        },
+        {
+            "id": "orq/fal/flux/schnell",
+            "object": "model",
+            "owned_by": "FAL",
+            "name": "schnell",
+            "type": "image",
+            "description": "Orq Router image model: fal/flux/schnell"
+        },
+        {
+            "id": "orq/fal/flux-pro/new",
+            "object": "model",
+            "owned_by": "FAL",
+            "name": "new",
+            "type": "image",
+            "description": "Orq Router image model: fal/flux-pro/new"
+        },
+        {
+            "id": "orq/fal/gemini-25-flash-image",
+            "object": "model",
+            "owned_by": "FAL",
+            "name": "gemini-25-flash-image",
+            "type": "image",
+            "description": "Orq Router image model: fal/gemini-25-flash-image"
+        },
+        {
+            "id": "orq/google/imagen-3.0-fast-generate-001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "imagen-3.0-fast-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google/imagen-3.0-fast-generate-001"
+        },
+        {
+            "id": "orq/google/imagen-3.0-generate-001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "imagen-3.0-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google/imagen-3.0-generate-001"
+        },
+        {
+            "id": "orq/google/imagen-4.0-fast-generate-001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "imagen-4.0-fast-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google/imagen-4.0-fast-generate-001"
+        },
+        {
+            "id": "orq/google/imagen-4.0-generate-001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "imagen-4.0-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google/imagen-4.0-generate-001"
+        },
+        {
+            "id": "orq/google/imagen-4.0-ultra-generate-001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "imagen-4.0-ultra-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google/imagen-4.0-ultra-generate-001"
+        },
+        {
+            "id": "orq/google-ai/imagen-4.0-fast-generate-001",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "imagen-4.0-fast-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google-ai/imagen-4.0-fast-generate-001"
+        },
+        {
+            "id": "orq/google-ai/imagen-4.0-generate-001",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "imagen-4.0-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google-ai/imagen-4.0-generate-001"
+        },
+        {
+            "id": "orq/google-ai/imagen-4.0-ultra-generate-001",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "imagen-4.0-ultra-generate-001",
+            "type": "image",
+            "description": "Orq Router image model: google-ai/imagen-4.0-ultra-generate-001"
+        },
+        {
+            "id": "orq/leonardoai/leonard-diffusion-xl",
+            "object": "model",
+            "owned_by": "Leonardo AI",
+            "name": "leonard-diffusion-xl",
+            "type": "image",
+            "description": "Orq Router image model: leonardoai/leonard-diffusion-xl"
+        },
+        {
+            "id": "orq/leonardoai/leonard-kino-xl",
+            "object": "model",
+            "owned_by": "Leonardo AI",
+            "name": "leonard-kino-xl",
+            "type": "image",
+            "description": "Orq Router image model: leonardoai/leonard-kino-xl"
+        },
+        {
+            "id": "orq/leonardoai/leonard-lightning-xl",
+            "object": "model",
+            "owned_by": "Leonardo AI",
+            "name": "leonard-lightning-xl",
+            "type": "image",
+            "description": "Orq Router image model: leonardoai/leonard-lightning-xl"
+        },
+        {
+            "id": "orq/leonardoai/leonard-vision-xl",
+            "object": "model",
+            "owned_by": "Leonardo AI",
+            "name": "leonard-vision-xl",
+            "type": "image",
+            "description": "Orq Router image model: leonardoai/leonard-vision-xl"
+        },
+        {
+            "id": "orq/openai/dall-e-2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "dall-e-2",
+            "type": "image",
+            "description": "Orq Router image model: openai/dall-e-2"
+        },
+        {
+            "id": "orq/openai/gpt-image-1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-image-1",
+            "type": "image",
+            "description": "Orq Router image model: openai/gpt-image-1"
+        },
+        {
+            "id": "orq/openai/gpt-image-1.5",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-image-1.5",
+            "type": "image",
+            "description": "Orq Router image model: openai/gpt-image-1.5"
+        },
+        {
+            "id": "orq/zai/cogview-4-250304",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "cogview-4-250304",
+            "type": "image",
+            "description": "Orq Router image model: zai/cogview-4-250304"
+        }
+    ]
+}

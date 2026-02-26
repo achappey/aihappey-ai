@@ -1,0 +1,109 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "orq/cohere/rerank-english-v3.0",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "rerank-english-v3.0",
+            "type": "reranking",
+            "description": "Orq Router reranking model: cohere/rerank-english-v3.0"
+        },
+        {
+            "id": "orq/cohere/rerank-multilingual-v3.0",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "rerank-multilingual-v3.0",
+            "type": "reranking",
+            "description": "Orq Router reranking model: cohere/rerank-multilingual-v3.0"
+        },
+        {
+            "id": "orq/cohere/rerank-v3.5",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "rerank-v3.5",
+            "type": "reranking",
+            "description": "Orq Router reranking model: cohere/rerank-v3.5"
+        },
+        {
+            "id": "orq/cohere/rerank-v4.0-fast",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "rerank-v4.0-fast",
+            "type": "reranking",
+            "description": "Orq Router reranking model: cohere/rerank-v4.0-fast"
+        },
+        {
+            "id": "orq/cohere/rerank-v4.0-pro",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "rerank-v4.0-pro",
+            "type": "reranking",
+            "description": "Orq Router reranking model: cohere/rerank-v4.0-pro"
+        },
+        {
+            "id": "orq/contextualai/ctxl-rerank-v1-instruct",
+            "object": "model",
+            "owned_by": "contextualai",
+            "name": "ctxl-rerank-v1-instruct",
+            "type": "reranking",
+            "description": "Orq Router reranking model: contextualai/ctxl-rerank-v1-instruct"
+        },
+        {
+            "id": "orq/contextualai/ctxl-rerank-v2-instruct-multilingual",
+            "object": "model",
+            "owned_by": "contextualai",
+            "name": "ctxl-rerank-v2-instruct-multilingual",
+            "type": "reranking",
+            "description": "Orq Router reranking model: contextualai/ctxl-rerank-v2-instruct-multilingual"
+        },
+        {
+            "id": "orq/contextualai/ctxl-rerank-v2-instruct-multilingual-mini",
+            "object": "model",
+            "owned_by": "contextualai",
+            "name": "ctxl-rerank-v2-instruct-multilingual-mini",
+            "type": "reranking",
+            "description": "Orq Router reranking model: contextualai/ctxl-rerank-v2-instruct-multilingual-mini"
+        },
+        {
+            "id": "orq/jina/jina-colbert-v2",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "jina-colbert-v2",
+            "type": "reranking",
+            "description": "Orq Router reranking model: jina/jina-colbert-v2"
+        },
+        {
+            "id": "orq/jina/jina-reranker-v1-base-en",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "jina-reranker-v1-base-en",
+            "type": "reranking",
+            "description": "Orq Router reranking model: jina/jina-reranker-v1-base-en"
+        },
+        {
+            "id": "orq/jina/jina-reranker-v1-tiny-en",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "jina-reranker-v1-tiny-en",
+            "type": "reranking",
+            "description": "Orq Router reranking model: jina/jina-reranker-v1-tiny-en"
+        },
+        {
+            "id": "orq/jina/jina-reranker-v1-turbo-en",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "jina-reranker-v1-turbo-en",
+            "type": "reranking",
+            "description": "Orq Router reranking model: jina/jina-reranker-v1-turbo-en"
+        },
+        {
+            "id": "orq/jina/jina-reranker-v2-base-multilingual",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "jina-reranker-v2-base-multilingual",
+            "type": "reranking",
+            "description": "Orq Router reranking model: jina/jina-reranker-v2-base-multilingual"
+        }
+    ]
+}

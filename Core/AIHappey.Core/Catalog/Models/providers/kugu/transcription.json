@@ -1,0 +1,53 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "kugu/whisper-large-v3",
+            "object": "model",
+            "owned_by": "Kugu",
+            "name": "whisper-large-v3",
+            "type": "transcription",
+            "description": "Most accurate multilingual speech recognition model."
+        },
+        {
+            "id": "kugu/deepgram-nova-2",
+            "object": "model",
+            "owned_by": "Kugu",
+            "name": "deepgram-nova-2",
+            "type": "transcription",
+            "description": "Enterprise-grade real-time speech recognition."
+        },
+        {
+            "id": "kugu/faster-whisper",
+            "object": "model",
+            "owned_by": "Kugu",
+            "name": "faster-whisper",
+            "type": "transcription",
+            "description": "4x faster Whisper implementation optimized for real-time use."
+        },
+        {
+            "id": "kugu/assemblyai-best",
+            "object": "model",
+            "owned_by": "Kugu",
+            "name": "assemblyai-best",
+            "type": "transcription",
+            "description": "Advanced transcription model with AI-powered enhancement features."
+        },
+        {
+            "id": "kugu/fal-ai-text-to-speech",
+            "object": "model",
+            "owned_by": "Kugu",
+            "name": "fal-ai-text-to-speech",
+            "type": "transcription",
+            "description": "Speech-to-text processing model by Fal AI."
+        },
+        {
+            "id": "kugu/whisper-large-v3-turbo",
+            "object": "model",
+            "owned_by": "Kugu",
+            "name": "whisper-large-v3-turbo",
+            "type": "transcription",
+            "description": "Fast multilingual transcription model optimized for real-time applications."
+        }
+    ]
+}

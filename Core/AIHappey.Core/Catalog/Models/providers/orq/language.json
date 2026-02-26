@@ -1,0 +1,2941 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "orq/alibaba/qvq-max",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qvq-max",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qvq-max"
+        },
+        {
+            "id": "orq/alibaba/qwen2-5-14b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen2-5-14b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen2-5-14b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen2-5-32b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen2-5-32b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen2-5-32b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen2-5-72b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen2-5-72b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen2-5-72b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen2-5-7b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen2-5-7b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen2-5-7b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen2-5-omni-7b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen2-5-omni-7b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen2-5-omni-7b"
+        },
+        {
+            "id": "orq/alibaba/qwen2-5-vl-72b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen2-5-vl-72b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen2-5-vl-72b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen2-5-vl-7b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen2-5-vl-7b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen2-5-vl-7b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen3.5-397b-a17b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3.5-397b-a17b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3.5-397b-a17b"
+        },
+        {
+            "id": "orq/alibaba/qwen3.5-plus",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3.5-plus",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3.5-plus"
+        },
+        {
+            "id": "orq/alibaba/qwen3-14b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-14b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-14b"
+        },
+        {
+            "id": "orq/alibaba/qwen3-235b-a22b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-235b-a22b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-235b-a22b"
+        },
+        {
+            "id": "orq/alibaba/qwen3-32b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-32b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-32b"
+        },
+        {
+            "id": "orq/alibaba/qwen3-8b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-8b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-8b"
+        },
+        {
+            "id": "orq/alibaba/qwen3-asr-flash",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-asr-flash",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-asr-flash"
+        },
+        {
+            "id": "orq/alibaba/qwen3-coder-30b-a3b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-coder-30b-a3b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-coder-30b-a3b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen3-coder-480b-a35b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-coder-480b-a35b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-coder-480b-a35b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen3-coder-flash",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-coder-flash",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-coder-flash"
+        },
+        {
+            "id": "orq/alibaba/qwen3-coder-plus",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-coder-plus",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-coder-plus"
+        },
+        {
+            "id": "orq/alibaba/qwen3-livetranslate-flash-realtime",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-livetranslate-flash-realtime",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-livetranslate-flash-realtime"
+        },
+        {
+            "id": "orq/alibaba/qwen3-max",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-max",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-max"
+        },
+        {
+            "id": "orq/alibaba/qwen3-next-80b-a3b-instruct",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-next-80b-a3b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-next-80b-a3b-instruct"
+        },
+        {
+            "id": "orq/alibaba/qwen3-next-80b-a3b-thinking",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-next-80b-a3b-thinking",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-next-80b-a3b-thinking"
+        },
+        {
+            "id": "orq/alibaba/qwen3-omni-flash",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-omni-flash",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-omni-flash"
+        },
+        {
+            "id": "orq/alibaba/qwen3-omni-flash-realtime",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-omni-flash-realtime",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-omni-flash-realtime"
+        },
+        {
+            "id": "orq/alibaba/qwen3-vl-235b-a22b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-vl-235b-a22b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-vl-235b-a22b"
+        },
+        {
+            "id": "orq/alibaba/qwen3-vl-30b-a3b",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-vl-30b-a3b",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-vl-30b-a3b"
+        },
+        {
+            "id": "orq/alibaba/qwen3-vl-plus",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen3-vl-plus",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen3-vl-plus"
+        },
+        {
+            "id": "orq/alibaba/qwen-flash",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-flash",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-flash"
+        },
+        {
+            "id": "orq/alibaba/qwen-max",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-max",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-max"
+        },
+        {
+            "id": "orq/alibaba/qwen-mt-plus",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-mt-plus",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-mt-plus"
+        },
+        {
+            "id": "orq/alibaba/qwen-mt-turbo",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-mt-turbo",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-mt-turbo"
+        },
+        {
+            "id": "orq/alibaba/qwen-omni-turbo",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-omni-turbo",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-omni-turbo"
+        },
+        {
+            "id": "orq/alibaba/qwen-omni-turbo-realtime",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-omni-turbo-realtime",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-omni-turbo-realtime"
+        },
+        {
+            "id": "orq/alibaba/qwen-plus",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-plus",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-plus"
+        },
+        {
+            "id": "orq/alibaba/qwen-plus-character-ja",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-plus-character-ja",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-plus-character-ja"
+        },
+        {
+            "id": "orq/alibaba/qwen-turbo",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-turbo",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-turbo"
+        },
+        {
+            "id": "orq/alibaba/qwen-vl-max",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-vl-max",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-vl-max"
+        },
+        {
+            "id": "orq/alibaba/qwen-vl-ocr",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-vl-ocr",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-vl-ocr"
+        },
+        {
+            "id": "orq/alibaba/qwen-vl-plus",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwen-vl-plus",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwen-vl-plus"
+        },
+        {
+            "id": "orq/alibaba/qwq-plus",
+            "object": "model",
+            "owned_by": "Alibaba",
+            "name": "qwq-plus",
+            "type": "language",
+            "description": "Orq Router language model: alibaba/qwq-plus"
+        },
+        {
+            "id": "orq/anthropic/claude-3-5-haiku-20241022",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-3-5-haiku-20241022",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-3-5-haiku-20241022"
+        },
+        {
+            "id": "orq/anthropic/claude-3-5-haiku-latest",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-3-5-haiku-latest",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-3-5-haiku-latest"
+        },
+        {
+            "id": "orq/anthropic/claude-3-7-sonnet-20250219",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-3-7-sonnet-20250219",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-3-7-sonnet-20250219"
+        },
+        {
+            "id": "orq/anthropic/claude-3-7-sonnet-latest",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-3-7-sonnet-latest",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-3-7-sonnet-latest"
+        },
+        {
+            "id": "orq/anthropic/claude-3-haiku-20240307",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-3-haiku-20240307",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-3-haiku-20240307"
+        },
+        {
+            "id": "orq/anthropic/claude-haiku-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-haiku-4-5",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-haiku-4-5"
+        },
+        {
+            "id": "orq/anthropic/claude-haiku-4-5-20251001",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-haiku-4-5-20251001",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-haiku-4-5-20251001"
+        },
+        {
+            "id": "orq/anthropic/claude-opus-4-0",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-opus-4-0",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-opus-4-0"
+        },
+        {
+            "id": "orq/anthropic/claude-opus-4-1",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-opus-4-1",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-opus-4-1"
+        },
+        {
+            "id": "orq/anthropic/claude-opus-4-1-20250805",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-opus-4-1-20250805",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-opus-4-1-20250805"
+        },
+        {
+            "id": "orq/anthropic/claude-opus-4-20250514",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-opus-4-20250514",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-opus-4-20250514"
+        },
+        {
+            "id": "orq/anthropic/claude-opus-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-opus-4-5",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-opus-4-5"
+        },
+        {
+            "id": "orq/anthropic/claude-opus-4-5-20251101",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-opus-4-5-20251101",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-opus-4-5-20251101"
+        },
+        {
+            "id": "orq/anthropic/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-opus-4-6",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-opus-4-6"
+        },
+        {
+            "id": "orq/anthropic/claude-sonnet-4-0",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-sonnet-4-0",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-sonnet-4-0"
+        },
+        {
+            "id": "orq/anthropic/claude-sonnet-4-20250514",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-sonnet-4-20250514",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-sonnet-4-20250514"
+        },
+        {
+            "id": "orq/anthropic/claude-sonnet-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-sonnet-4-5",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-sonnet-4-5"
+        },
+        {
+            "id": "orq/anthropic/claude-sonnet-4-5-20250929",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-sonnet-4-5-20250929",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-sonnet-4-5-20250929"
+        },
+        {
+            "id": "orq/anthropic/claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "claude-sonnet-4-6",
+            "type": "language",
+            "description": "Orq Router language model: anthropic/claude-sonnet-4-6"
+        },
+        {
+            "id": "orq/aws/ai21.jamba-1-5-large-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "ai21.jamba-1-5-large-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/ai21.jamba-1-5-large-v1:0"
+        },
+        {
+            "id": "orq/aws/ai21.jamba-1-5-mini-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "ai21.jamba-1-5-mini-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/ai21.jamba-1-5-mini-v1:0"
+        },
+        {
+            "id": "orq/aws/amazon.nova-2-lite-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "amazon.nova-2-lite-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/amazon.nova-2-lite-v1:0"
+        },
+        {
+            "id": "orq/aws/amazon.nova-lite-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "amazon.nova-lite-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/amazon.nova-lite-v1:0"
+        },
+        {
+            "id": "orq/aws/amazon.nova-micro-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "amazon.nova-micro-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/amazon.nova-micro-v1:0"
+        },
+        {
+            "id": "orq/aws/amazon.nova-premier-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "amazon.nova-premier-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/amazon.nova-premier-v1:0"
+        },
+        {
+            "id": "orq/aws/amazon.nova-pro-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "amazon.nova-pro-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/amazon.nova-pro-v1:0"
+        },
+        {
+            "id": "orq/aws/amazon.titan-text-express-v1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "amazon.titan-text-express-v1",
+            "type": "language",
+            "description": "Orq Router language model: aws/amazon.titan-text-express-v1"
+        },
+        {
+            "id": "orq/aws/amazon.titan-text-express-v1:0:8k",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "amazon.titan-text-express-v1:0:8k",
+            "type": "language",
+            "description": "Orq Router language model: aws/amazon.titan-text-express-v1:0:8k"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-3-5-haiku-20241022-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-3-5-haiku-20241022-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-3-5-haiku-20241022-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-3-5-sonnet-20240620-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-3-5-sonnet-20241022-v2:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-3-7-sonnet-20250219-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-3-haiku-20240307-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-3-haiku-20240307-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-3-haiku-20240307-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-haiku-4-5-20251001-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-haiku-4-5-20251001-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-haiku-4-5-20251001-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-opus-4-1-20250805-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-opus-4-1-20250805-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-opus-4-1-20250805-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-opus-4-20250514-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-opus-4-20250514-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-opus-4-20250514-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-opus-4-5-20251101-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-opus-4-5-20251101-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-opus-4-5-20251101-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-opus-4-6-v1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-opus-4-6-v1",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-opus-4-6-v1"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-sonnet-4-20250514-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-sonnet-4-20250514-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-sonnet-4-20250514-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-sonnet-4-5-20250929-v1:0"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-sonnet-4-6",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-sonnet-4-6"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-v2",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-v2",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-v2"
+        },
+        {
+            "id": "orq/aws/anthropic.claude-v2:1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "anthropic.claude-v2:1",
+            "type": "language",
+            "description": "Orq Router language model: aws/anthropic.claude-v2:1"
+        },
+        {
+            "id": "orq/aws/apac.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "apac.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/apac.anthropic.claude-3-5-sonnet-20240620-v1:0"
+        },
+        {
+            "id": "orq/aws/apac.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "apac.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/apac.anthropic.claude-3-5-sonnet-20241022-v2:0"
+        },
+        {
+            "id": "orq/aws/apac.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "apac.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/apac.anthropic.claude-3-7-sonnet-20250219-v1:0"
+        },
+        {
+            "id": "orq/aws/apac.anthropic.claude-sonnet-4-20250514-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "apac.anthropic.claude-sonnet-4-20250514-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/apac.anthropic.claude-sonnet-4-20250514-v1:0"
+        },
+        {
+            "id": "orq/aws/au.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "au.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/au.anthropic.claude-haiku-4-5-20251001-v1:0"
+        },
+        {
+            "id": "orq/aws/au.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "au.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/au.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        },
+        {
+            "id": "orq/aws/cohere.command-light-text-v14",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "cohere.command-light-text-v14",
+            "type": "language",
+            "description": "Orq Router language model: aws/cohere.command-light-text-v14"
+        },
+        {
+            "id": "orq/aws/cohere.command-r-plus-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "cohere.command-r-plus-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/cohere.command-r-plus-v1:0"
+        },
+        {
+            "id": "orq/aws/cohere.command-r-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "cohere.command-r-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/cohere.command-r-v1:0"
+        },
+        {
+            "id": "orq/aws/cohere.command-text-v14",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "cohere.command-text-v14",
+            "type": "language",
+            "description": "Orq Router language model: aws/cohere.command-text-v14"
+        },
+        {
+            "id": "orq/aws/deepseek.r1-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "deepseek.r1-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/deepseek.r1-v1:0"
+        },
+        {
+            "id": "orq/aws/deepseek.v3.2-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "deepseek.v3.2-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/deepseek.v3.2-v1:0"
+        },
+        {
+            "id": "orq/aws/deepseek.v3-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "deepseek.v3-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/deepseek.v3-v1:0"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-3-5-sonnet-20240620-v1:0"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-3-7-sonnet-20250219-v1:0"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-opus-4-5-20251101-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-opus-4-5-20251101-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-opus-4-5-20251101-v1:0"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-opus-4-6-v1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-opus-4-6-v1",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-opus-4-6-v1"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-sonnet-4-20250514-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-sonnet-4-20250514-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-sonnet-4-20250514-v1:0"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        },
+        {
+            "id": "orq/aws/eu.anthropic.claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "eu.anthropic.claude-sonnet-4-6",
+            "type": "language",
+            "description": "Orq Router language model: aws/eu.anthropic.claude-sonnet-4-6"
+        },
+        {
+            "id": "orq/aws/global.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/global.anthropic.claude-haiku-4-5-20251001-v1:0"
+        },
+        {
+            "id": "orq/aws/global.anthropic.claude-opus-4-5-20251101-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "global.anthropic.claude-opus-4-5-20251101-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/global.anthropic.claude-opus-4-5-20251101-v1:0"
+        },
+        {
+            "id": "orq/aws/global.anthropic.claude-opus-4-6-v1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "global.anthropic.claude-opus-4-6-v1",
+            "type": "language",
+            "description": "Orq Router language model: aws/global.anthropic.claude-opus-4-6-v1"
+        },
+        {
+            "id": "orq/aws/global.anthropic.claude-sonnet-4-20250514-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "global.anthropic.claude-sonnet-4-20250514-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/global.anthropic.claude-sonnet-4-20250514-v1:0"
+        },
+        {
+            "id": "orq/aws/global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        },
+        {
+            "id": "orq/aws/global.anthropic.claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "global.anthropic.claude-sonnet-4-6",
+            "type": "language",
+            "description": "Orq Router language model: aws/global.anthropic.claude-sonnet-4-6"
+        },
+        {
+            "id": "orq/aws/google.gemma-3-12b-it",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "google.gemma-3-12b-it",
+            "type": "language",
+            "description": "Orq Router language model: aws/google.gemma-3-12b-it"
+        },
+        {
+            "id": "orq/aws/google.gemma-3-27b-it",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "google.gemma-3-27b-it",
+            "type": "language",
+            "description": "Orq Router language model: aws/google.gemma-3-27b-it"
+        },
+        {
+            "id": "orq/aws/google.gemma-3-4b-it",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "google.gemma-3-4b-it",
+            "type": "language",
+            "description": "Orq Router language model: aws/google.gemma-3-4b-it"
+        },
+        {
+            "id": "orq/aws/jp.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "jp.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+        },
+        {
+            "id": "orq/aws/jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "jp.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/jp.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-1-70b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-1-70b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-1-70b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-1-8b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-1-8b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-1-8b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-2-11b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-2-11b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-2-11b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-2-1b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-2-1b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-2-1b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-2-3b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-2-3b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-2-3b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-2-90b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-2-90b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-2-90b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-3-70b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-3-70b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-3-70b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-70b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-70b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-70b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama3-8b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama3-8b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama3-8b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama4-maverick-17b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama4-maverick-17b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama4-maverick-17b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/meta.llama4-scout-17b-instruct-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "meta.llama4-scout-17b-instruct-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/meta.llama4-scout-17b-instruct-v1:0"
+        },
+        {
+            "id": "orq/aws/minimax.minimax-m2",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "minimax.minimax-m2",
+            "type": "language",
+            "description": "Orq Router language model: aws/minimax.minimax-m2"
+        },
+        {
+            "id": "orq/aws/minimax.minimax-m2.1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "minimax.minimax-m2.1",
+            "type": "language",
+            "description": "Orq Router language model: aws/minimax.minimax-m2.1"
+        },
+        {
+            "id": "orq/aws/mistral.ministral-3-14b-instruct",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "mistral.ministral-3-14b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: aws/mistral.ministral-3-14b-instruct"
+        },
+        {
+            "id": "orq/aws/mistral.ministral-3-8b-instruct",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "mistral.ministral-3-8b-instruct",
+            "type": "language",
+            "description": "Orq Router language model: aws/mistral.ministral-3-8b-instruct"
+        },
+        {
+            "id": "orq/aws/mistral.mistral-7b-instruct-v0:2",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "mistral.mistral-7b-instruct-v0:2",
+            "type": "language",
+            "description": "Orq Router language model: aws/mistral.mistral-7b-instruct-v0:2"
+        },
+        {
+            "id": "orq/aws/mistral.mistral-large-2402-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "mistral.mistral-large-2402-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/mistral.mistral-large-2402-v1:0"
+        },
+        {
+            "id": "orq/aws/mistral.mixtral-8x7b-instruct-v0:1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "mistral.mixtral-8x7b-instruct-v0:1",
+            "type": "language",
+            "description": "Orq Router language model: aws/mistral.mixtral-8x7b-instruct-v0:1"
+        },
+        {
+            "id": "orq/aws/mistral.voxtral-mini-3b-2507",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "mistral.voxtral-mini-3b-2507",
+            "type": "language",
+            "description": "Orq Router language model: aws/mistral.voxtral-mini-3b-2507"
+        },
+        {
+            "id": "orq/aws/mistral.voxtral-small-24b-2507",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "mistral.voxtral-small-24b-2507",
+            "type": "language",
+            "description": "Orq Router language model: aws/mistral.voxtral-small-24b-2507"
+        },
+        {
+            "id": "orq/aws/moonshot.kimi-k2-thinking",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "moonshot.kimi-k2-thinking",
+            "type": "language",
+            "description": "Orq Router language model: aws/moonshot.kimi-k2-thinking"
+        },
+        {
+            "id": "orq/aws/moonshotai.kimi-k2.5",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "moonshotai.kimi-k2.5",
+            "type": "language",
+            "description": "Orq Router language model: aws/moonshotai.kimi-k2.5"
+        },
+        {
+            "id": "orq/aws/nvidia.nemotron-nano-12b-v2",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "nvidia.nemotron-nano-12b-v2",
+            "type": "language",
+            "description": "Orq Router language model: aws/nvidia.nemotron-nano-12b-v2"
+        },
+        {
+            "id": "orq/aws/nvidia.nemotron-nano-9b-v2",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "nvidia.nemotron-nano-9b-v2",
+            "type": "language",
+            "description": "Orq Router language model: aws/nvidia.nemotron-nano-9b-v2"
+        },
+        {
+            "id": "orq/aws/openai.gpt-oss-120b-1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "openai.gpt-oss-120b-1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/openai.gpt-oss-120b-1:0"
+        },
+        {
+            "id": "orq/aws/openai.gpt-oss-20b-1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "openai.gpt-oss-20b-1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/openai.gpt-oss-20b-1:0"
+        },
+        {
+            "id": "orq/aws/openai.gpt-oss-safeguard-120b",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "openai.gpt-oss-safeguard-120b",
+            "type": "language",
+            "description": "Orq Router language model: aws/openai.gpt-oss-safeguard-120b"
+        },
+        {
+            "id": "orq/aws/openai.gpt-oss-safeguard-20b",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "openai.gpt-oss-safeguard-20b",
+            "type": "language",
+            "description": "Orq Router language model: aws/openai.gpt-oss-safeguard-20b"
+        },
+        {
+            "id": "orq/aws/qwen.qwen3-235b-a22b-2507-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "qwen.qwen3-235b-a22b-2507-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/qwen.qwen3-235b-a22b-2507-v1:0"
+        },
+        {
+            "id": "orq/aws/qwen.qwen3-32b-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "qwen.qwen3-32b-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/qwen.qwen3-32b-v1:0"
+        },
+        {
+            "id": "orq/aws/qwen.qwen3-coder-30b-a3b-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "qwen.qwen3-coder-30b-a3b-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/qwen.qwen3-coder-30b-a3b-v1:0"
+        },
+        {
+            "id": "orq/aws/qwen.qwen3-coder-480b-a35b-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "qwen.qwen3-coder-480b-a35b-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/qwen.qwen3-coder-480b-a35b-v1:0"
+        },
+        {
+            "id": "orq/aws/qwen.qwen3-next-80b-a3b",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "qwen.qwen3-next-80b-a3b",
+            "type": "language",
+            "description": "Orq Router language model: aws/qwen.qwen3-next-80b-a3b"
+        },
+        {
+            "id": "orq/aws/qwen.qwen3-vl-235b-a22b",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "qwen.qwen3-vl-235b-a22b",
+            "type": "language",
+            "description": "Orq Router language model: aws/qwen.qwen3-vl-235b-a22b"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-3-5-haiku-20241022-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-3-5-haiku-20241022-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-3-5-haiku-20241022-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-3-5-sonnet-20240620-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-opus-4-1-20250805-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-opus-4-1-20250805-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-opus-4-1-20250805-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-opus-4-20250514-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-opus-4-20250514-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-opus-4-20250514-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-opus-4-5-20251101-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-opus-4-5-20251101-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-opus-4-5-20251101-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-opus-4-6-v1",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-opus-4-6-v1",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-opus-4-6-v1"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-sonnet-4-20250514-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-sonnet-4-20250514-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        },
+        {
+            "id": "orq/aws/us.anthropic.claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "us.anthropic.claude-sonnet-4-6",
+            "type": "language",
+            "description": "Orq Router language model: aws/us.anthropic.claude-sonnet-4-6"
+        },
+        {
+            "id": "orq/aws/writer.palmyra-x4-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "writer.palmyra-x4-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/writer.palmyra-x4-v1:0"
+        },
+        {
+            "id": "orq/aws/writer.palmyra-x5-v1:0",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "writer.palmyra-x5-v1:0",
+            "type": "language",
+            "description": "Orq Router language model: aws/writer.palmyra-x5-v1:0"
+        },
+        {
+            "id": "orq/aws/zai.glm-4.7",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "zai.glm-4.7",
+            "type": "language",
+            "description": "Orq Router language model: aws/zai.glm-4.7"
+        },
+        {
+            "id": "orq/aws/zai.glm-4.7-flash",
+            "object": "model",
+            "owned_by": "AWS Bedrock",
+            "name": "zai.glm-4.7-flash",
+            "type": "language",
+            "description": "Orq Router language model: aws/zai.glm-4.7-flash"
+        },
+        {
+            "id": "orq/azure/gpt-4.1",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-4.1",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-4.1"
+        },
+        {
+            "id": "orq/azure/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-4.1-mini",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-4.1-mini"
+        },
+        {
+            "id": "orq/azure/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-4.1-nano",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-4.1-nano"
+        },
+        {
+            "id": "orq/azure/gpt-4o",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-4o",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-4o"
+        },
+        {
+            "id": "orq/azure/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-4o-mini",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-4o-mini"
+        },
+        {
+            "id": "orq/azure/gpt-5-chat",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-5-chat",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-5-chat"
+        },
+        {
+            "id": "orq/azure/gpt-5-mini",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-5-mini",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-5-mini"
+        },
+        {
+            "id": "orq/azure/gpt-5-nano",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "gpt-5-nano",
+            "type": "language",
+            "description": "Orq Router language model: azure/gpt-5-nano"
+        },
+        {
+            "id": "orq/azure/o1",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "o1",
+            "type": "language",
+            "description": "Orq Router language model: azure/o1"
+        },
+        {
+            "id": "orq/azure/o1-mini",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "o1-mini",
+            "type": "language",
+            "description": "Orq Router language model: azure/o1-mini"
+        },
+        {
+            "id": "orq/azure/o3-mini",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "o3-mini",
+            "type": "language",
+            "description": "Orq Router language model: azure/o3-mini"
+        },
+        {
+            "id": "orq/cerebras/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "gpt-oss-120b",
+            "type": "language",
+            "description": "Orq Router language model: cerebras/gpt-oss-120b"
+        },
+        {
+            "id": "orq/cerebras/llama3.1-8b",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "llama3.1-8b",
+            "type": "language",
+            "description": "Orq Router language model: cerebras/llama3.1-8b"
+        },
+        {
+            "id": "orq/cerebras/llama-3.3-70b",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "llama-3.3-70b",
+            "type": "language",
+            "description": "Orq Router language model: cerebras/llama-3.3-70b"
+        },
+        {
+            "id": "orq/cerebras/qwen-3-235b-a22b-instruct-2507",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "qwen-3-235b-a22b-instruct-2507",
+            "type": "language",
+            "description": "Orq Router language model: cerebras/qwen-3-235b-a22b-instruct-2507"
+        },
+        {
+            "id": "orq/cerebras/qwen-3-32b",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "qwen-3-32b",
+            "type": "language",
+            "description": "Orq Router language model: cerebras/qwen-3-32b"
+        },
+        {
+            "id": "orq/cerebras/zai-glm-4.7",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "zai-glm-4.7",
+            "type": "language",
+            "description": "Orq Router language model: cerebras/zai-glm-4.7"
+        },
+        {
+            "id": "orq/cohere/c4ai-aya-expanse-32b",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "c4ai-aya-expanse-32b",
+            "type": "language",
+            "description": "Orq Router language model: cohere/c4ai-aya-expanse-32b"
+        },
+        {
+            "id": "orq/cohere/c4ai-aya-expanse-8b",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "c4ai-aya-expanse-8b",
+            "type": "language",
+            "description": "Orq Router language model: cohere/c4ai-aya-expanse-8b"
+        },
+        {
+            "id": "orq/cohere/c4ai-aya-vision-32b",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "c4ai-aya-vision-32b",
+            "type": "language",
+            "description": "Orq Router language model: cohere/c4ai-aya-vision-32b"
+        },
+        {
+            "id": "orq/cohere/c4ai-aya-vision-8b",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "c4ai-aya-vision-8b",
+            "type": "language",
+            "description": "Orq Router language model: cohere/c4ai-aya-vision-8b"
+        },
+        {
+            "id": "orq/cohere/command-a-03-2025",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-a-03-2025",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-a-03-2025"
+        },
+        {
+            "id": "orq/cohere/command-a-reasoning-08-2025",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-a-reasoning-08-2025",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-a-reasoning-08-2025"
+        },
+        {
+            "id": "orq/cohere/command-a-translate-08-2025",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-a-translate-08-2025",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-a-translate-08-2025"
+        },
+        {
+            "id": "orq/cohere/command-a-vision-07-2025",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-a-vision-07-2025",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-a-vision-07-2025"
+        },
+        {
+            "id": "orq/cohere/command-r-08-2024",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-r-08-2024",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-r-08-2024"
+        },
+        {
+            "id": "orq/cohere/command-r7b-12-2024",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-r7b-12-2024",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-r7b-12-2024"
+        },
+        {
+            "id": "orq/cohere/command-r7b-arabic-02-2025",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-r7b-arabic-02-2025",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-r7b-arabic-02-2025"
+        },
+        {
+            "id": "orq/cohere/command-r-plus-08-2024",
+            "object": "model",
+            "owned_by": "Cohere",
+            "name": "command-r-plus-08-2024",
+            "type": "language",
+            "description": "Orq Router language model: cohere/command-r-plus-08-2024"
+        },
+        {
+            "id": "orq/deepseek/deepseek-chat",
+            "object": "model",
+            "owned_by": "Deepseek",
+            "name": "deepseek-chat",
+            "type": "language",
+            "description": "Orq Router language model: deepseek/deepseek-chat"
+        },
+        {
+            "id": "orq/deepseek/deepseek-reasoner",
+            "object": "model",
+            "owned_by": "Deepseek",
+            "name": "deepseek-reasoner",
+            "type": "language",
+            "description": "Orq Router language model: deepseek/deepseek-reasoner"
+        },
+        {
+            "id": "orq/google/claude-3-5-sonnet@20241022",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-3-5-sonnet@20241022",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-3-5-sonnet@20241022"
+        },
+        {
+            "id": "orq/google/claude-3-5-sonnet-v2@20241022",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-3-5-sonnet-v2@20241022",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-3-5-sonnet-v2@20241022"
+        },
+        {
+            "id": "orq/google/claude-haiku-4-5",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-haiku-4-5",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-haiku-4-5"
+        },
+        {
+            "id": "orq/google/claude-haiku-4-5@20251001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-haiku-4-5@20251001",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-haiku-4-5@20251001"
+        },
+        {
+            "id": "orq/google/claude-opus-4@20250514",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-opus-4@20250514",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-opus-4@20250514"
+        },
+        {
+            "id": "orq/google/claude-opus-4-1@20250805",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-opus-4-1@20250805",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-opus-4-1@20250805"
+        },
+        {
+            "id": "orq/google/claude-opus-4-5@20251101",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-opus-4-5@20251101",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-opus-4-5@20251101"
+        },
+        {
+            "id": "orq/google/claude-opus-4-6@default",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-opus-4-6@default",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-opus-4-6@default"
+        },
+        {
+            "id": "orq/google/claude-sonnet-4@20250514",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-sonnet-4@20250514",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-sonnet-4@20250514"
+        },
+        {
+            "id": "orq/google/claude-sonnet-4-5@20250929",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-sonnet-4-5@20250929",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-sonnet-4-5@20250929"
+        },
+        {
+            "id": "orq/google/claude-sonnet-4-6@default",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "claude-sonnet-4-6@default",
+            "type": "language",
+            "description": "Orq Router language model: google/claude-sonnet-4-6@default"
+        },
+        {
+            "id": "orq/google/deepseek-ai/deepseek-v3.1-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "deepseek-v3.1-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/deepseek-ai/deepseek-v3.1-maas"
+        },
+        {
+            "id": "orq/google/gemini-2.0-flash",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.0-flash",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.0-flash"
+        },
+        {
+            "id": "orq/google/gemini-2.0-flash-001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.0-flash-001",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.0-flash-001"
+        },
+        {
+            "id": "orq/google/gemini-2.0-flash-lite-001",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.0-flash-lite-001",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.0-flash-lite-001"
+        },
+        {
+            "id": "orq/google/gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.5-flash",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.5-flash"
+        },
+        {
+            "id": "orq/google/gemini-2.5-flash-lite",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.5-flash-lite",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.5-flash-lite"
+        },
+        {
+            "id": "orq/google/gemini-2.5-flash-lite-preview-09-2025",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.5-flash-lite-preview-09-2025",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.5-flash-lite-preview-09-2025"
+        },
+        {
+            "id": "orq/google/gemini-2.5-flash-preview-09-2025",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.5-flash-preview-09-2025",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.5-flash-preview-09-2025"
+        },
+        {
+            "id": "orq/google/gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-2.5-pro",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-2.5-pro"
+        },
+        {
+            "id": "orq/google/gemini-3.1-pro-preview",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-3.1-pro-preview",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-3.1-pro-preview"
+        },
+        {
+            "id": "orq/google/gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-3-flash-preview",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-3-flash-preview"
+        },
+        {
+            "id": "orq/google/gemini-3-pro-preview",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gemini-3-pro-preview",
+            "type": "language",
+            "description": "Orq Router language model: google/gemini-3-pro-preview"
+        },
+        {
+            "id": "orq/google/meta/llama-3.3-70b-instruct-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "llama-3.3-70b-instruct-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/meta/llama-3.3-70b-instruct-maas"
+        },
+        {
+            "id": "orq/google/meta/llama-4-maverick-17b-128e-instruct-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "llama-4-maverick-17b-128e-instruct-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/meta/llama-4-maverick-17b-128e-instruct-maas"
+        },
+        {
+            "id": "orq/google/meta/llama-4-scout-17b-16e-instruct-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "llama-4-scout-17b-16e-instruct-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/meta/llama-4-scout-17b-16e-instruct-maas"
+        },
+        {
+            "id": "orq/google/mistral-small-2503",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "mistral-small-2503",
+            "type": "language",
+            "description": "Orq Router language model: google/mistral-small-2503"
+        },
+        {
+            "id": "orq/google/openai/gpt-oss-120b-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gpt-oss-120b-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/openai/gpt-oss-120b-maas"
+        },
+        {
+            "id": "orq/google/openai/gpt-oss-20b-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "gpt-oss-20b-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/openai/gpt-oss-20b-maas"
+        },
+        {
+            "id": "orq/google/qwen/qwen3-235b-a22b-instruct-2507-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "qwen3-235b-a22b-instruct-2507-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/qwen/qwen3-235b-a22b-instruct-2507-maas"
+        },
+        {
+            "id": "orq/google/zai-org/glm-4.7-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "glm-4.7-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/zai-org/glm-4.7-maas"
+        },
+        {
+            "id": "orq/google/zai-org/glm-5-maas",
+            "object": "model",
+            "owned_by": "Vertex AI",
+            "name": "glm-5-maas",
+            "type": "language",
+            "description": "Orq Router language model: google/zai-org/glm-5-maas"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.0-flash",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.0-flash",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.0-flash"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.0-flash-001",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.0-flash-001",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.0-flash-001"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.0-flash-lite",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.0-flash-lite",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.0-flash-lite"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.0-flash-lite-001",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.0-flash-lite-001",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.0-flash-lite-001"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.0-flash-lite-preview-02-05",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.0-flash-lite-preview-02-05",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.0-flash-lite-preview-02-05"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.5-flash",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.5-flash"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.5-flash-lite",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.5-flash-lite",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.5-flash-lite"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.5-flash-lite-preview-09-2025",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.5-flash-lite-preview-09-2025",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.5-flash-lite-preview-09-2025"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.5-flash-preview-09-2025",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.5-flash-preview-09-2025",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.5-flash-preview-09-2025"
+        },
+        {
+            "id": "orq/google-ai/gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-2.5-pro",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-2.5-pro"
+        },
+        {
+            "id": "orq/google-ai/gemini-3.1-pro-preview",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-3.1-pro-preview",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-3.1-pro-preview"
+        },
+        {
+            "id": "orq/google-ai/gemini-3.1-pro-preview-customtools",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-3.1-pro-preview-customtools",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-3.1-pro-preview-customtools"
+        },
+        {
+            "id": "orq/google-ai/gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-3-flash-preview",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-3-flash-preview"
+        },
+        {
+            "id": "orq/google-ai/gemini-3-pro-preview",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-3-pro-preview",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-3-pro-preview"
+        },
+        {
+            "id": "orq/google-ai/gemini-flash-latest",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-flash-latest",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-flash-latest"
+        },
+        {
+            "id": "orq/google-ai/gemini-flash-lite-latest",
+            "object": "model",
+            "owned_by": "Google AI",
+            "name": "gemini-flash-lite-latest",
+            "type": "language",
+            "description": "Orq Router language model: google-ai/gemini-flash-lite-latest"
+        },
+        {
+            "id": "orq/groq/llama-3.1-8b-instant",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-3.1-8b-instant",
+            "type": "language",
+            "description": "Orq Router language model: groq/llama-3.1-8b-instant"
+        },
+        {
+            "id": "orq/groq/llama-3.3-70b-versatile",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-3.3-70b-versatile",
+            "type": "language",
+            "description": "Orq Router language model: groq/llama-3.3-70b-versatile"
+        },
+        {
+            "id": "orq/groq/meta-llama/llama-4-maverick-17b-128e-instruct",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-4-maverick-17b-128e-instruct",
+            "type": "language",
+            "description": "Orq Router language model: groq/meta-llama/llama-4-maverick-17b-128e-instruct"
+        },
+        {
+            "id": "orq/groq/meta-llama/llama-4-scout-17b-16e-instruct",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-4-scout-17b-16e-instruct",
+            "type": "language",
+            "description": "Orq Router language model: groq/meta-llama/llama-4-scout-17b-16e-instruct"
+        },
+        {
+            "id": "orq/groq/meta-llama/llama-guard-4-12b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-guard-4-12b",
+            "type": "language",
+            "description": "Orq Router language model: groq/meta-llama/llama-guard-4-12b"
+        },
+        {
+            "id": "orq/groq/meta-llama/llama-prompt-guard-2-86m",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-prompt-guard-2-86m",
+            "type": "language",
+            "description": "Orq Router language model: groq/meta-llama/llama-prompt-guard-2-86m"
+        },
+        {
+            "id": "orq/groq/moonshotai/kimi-k2-instruct-0905",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "kimi-k2-instruct-0905",
+            "type": "language",
+            "description": "Orq Router language model: groq/moonshotai/kimi-k2-instruct-0905"
+        },
+        {
+            "id": "orq/groq/openai/gpt-oss-120b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "gpt-oss-120b",
+            "type": "language",
+            "description": "Orq Router language model: groq/openai/gpt-oss-120b"
+        },
+        {
+            "id": "orq/groq/openai/gpt-oss-20b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "gpt-oss-20b",
+            "type": "language",
+            "description": "Orq Router language model: groq/openai/gpt-oss-20b"
+        },
+        {
+            "id": "orq/groq/qwen/qwen3-32b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "qwen3-32b",
+            "type": "language",
+            "description": "Orq Router language model: groq/qwen/qwen3-32b"
+        },
+        {
+            "id": "orq/minimax/minimax-m2",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "minimax-m2",
+            "type": "language",
+            "description": "Orq Router language model: minimax/minimax-m2"
+        },
+        {
+            "id": "orq/minimax/minimax-m2.1",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "minimax-m2.1",
+            "type": "language",
+            "description": "Orq Router language model: minimax/minimax-m2.1"
+        },
+        {
+            "id": "orq/minimax/minimax-m2.1-lightning",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "minimax-m2.1-lightning",
+            "type": "language",
+            "description": "Orq Router language model: minimax/minimax-m2.1-lightning"
+        },
+        {
+            "id": "orq/minimax/minimax-m2.5",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "minimax-m2.5",
+            "type": "language",
+            "description": "Orq Router language model: minimax/minimax-m2.5"
+        },
+        {
+            "id": "orq/minimax/MiniMax-M2.5-highspeed",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "MiniMax-M2.5-highspeed",
+            "type": "language",
+            "description": "Orq Router language model: minimax/MiniMax-M2.5-highspeed"
+        },
+        {
+            "id": "orq/minimax/minimax-m2.5-lightning",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "minimax-m2.5-lightning",
+            "type": "language",
+            "description": "Orq Router language model: minimax/minimax-m2.5-lightning"
+        },
+        {
+            "id": "orq/minimax/minimax-m2-her",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "minimax-m2-her",
+            "type": "language",
+            "description": "Orq Router language model: minimax/minimax-m2-her"
+        },
+        {
+            "id": "orq/mistral/codestral-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "codestral-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/codestral-latest"
+        },
+        {
+            "id": "orq/mistral/devstral-2512",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "devstral-2512",
+            "type": "language",
+            "description": "Orq Router language model: mistral/devstral-2512"
+        },
+        {
+            "id": "orq/mistral/devstral-medium-2507",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "devstral-medium-2507",
+            "type": "language",
+            "description": "Orq Router language model: mistral/devstral-medium-2507"
+        },
+        {
+            "id": "orq/mistral/devstral-medium-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "devstral-medium-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/devstral-medium-latest"
+        },
+        {
+            "id": "orq/mistral/devstral-small-2505",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "devstral-small-2505",
+            "type": "language",
+            "description": "Orq Router language model: mistral/devstral-small-2505"
+        },
+        {
+            "id": "orq/mistral/devstral-small-2507",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "devstral-small-2507",
+            "type": "language",
+            "description": "Orq Router language model: mistral/devstral-small-2507"
+        },
+        {
+            "id": "orq/mistral/labs-devstral-small-2512",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "labs-devstral-small-2512",
+            "type": "language",
+            "description": "Orq Router language model: mistral/labs-devstral-small-2512"
+        },
+        {
+            "id": "orq/mistral/magistral-medium-2509",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "magistral-medium-2509",
+            "type": "language",
+            "description": "Orq Router language model: mistral/magistral-medium-2509"
+        },
+        {
+            "id": "orq/mistral/magistral-medium-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "magistral-medium-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/magistral-medium-latest"
+        },
+        {
+            "id": "orq/mistral/magistral-small-2509",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "magistral-small-2509",
+            "type": "language",
+            "description": "Orq Router language model: mistral/magistral-small-2509"
+        },
+        {
+            "id": "orq/mistral/ministral-14b-2512",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "ministral-14b-2512",
+            "type": "language",
+            "description": "Orq Router language model: mistral/ministral-14b-2512"
+        },
+        {
+            "id": "orq/mistral/ministral-3b-2410",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "ministral-3b-2410",
+            "type": "language",
+            "description": "Orq Router language model: mistral/ministral-3b-2410"
+        },
+        {
+            "id": "orq/mistral/ministral-3b-2512",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "ministral-3b-2512",
+            "type": "language",
+            "description": "Orq Router language model: mistral/ministral-3b-2512"
+        },
+        {
+            "id": "orq/mistral/ministral-3b-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "ministral-3b-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/ministral-3b-latest"
+        },
+        {
+            "id": "orq/mistral/ministral-8b-2410",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "ministral-8b-2410",
+            "type": "language",
+            "description": "Orq Router language model: mistral/ministral-8b-2410"
+        },
+        {
+            "id": "orq/mistral/ministral-8b-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "ministral-8b-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/ministral-8b-latest"
+        },
+        {
+            "id": "orq/mistral/mistral-large-2411",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-large-2411",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-large-2411"
+        },
+        {
+            "id": "orq/mistral/mistral-large-2512",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-large-2512",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-large-2512"
+        },
+        {
+            "id": "orq/mistral/mistral-large-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-large-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-large-latest"
+        },
+        {
+            "id": "orq/mistral/mistral-medium-2505",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-medium-2505",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-medium-2505"
+        },
+        {
+            "id": "orq/mistral/mistral-medium-2508",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-medium-2508",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-medium-2508"
+        },
+        {
+            "id": "orq/mistral/mistral-medium-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-medium-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-medium-latest"
+        },
+        {
+            "id": "orq/mistral/mistral-nemo",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-nemo",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-nemo"
+        },
+        {
+            "id": "orq/mistral/mistral-small-2506",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-small-2506",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-small-2506"
+        },
+        {
+            "id": "orq/mistral/mistral-small-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "mistral-small-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/mistral-small-latest"
+        },
+        {
+            "id": "orq/mistral/open-mistral-7b",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "open-mistral-7b",
+            "type": "language",
+            "description": "Orq Router language model: mistral/open-mistral-7b"
+        },
+        {
+            "id": "orq/mistral/open-mixtral-8x22b",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "open-mixtral-8x22b",
+            "type": "language",
+            "description": "Orq Router language model: mistral/open-mixtral-8x22b"
+        },
+        {
+            "id": "orq/mistral/open-mixtral-8x7b",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "open-mixtral-8x7b",
+            "type": "language",
+            "description": "Orq Router language model: mistral/open-mixtral-8x7b"
+        },
+        {
+            "id": "orq/mistral/pixtral-12b",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "pixtral-12b",
+            "type": "language",
+            "description": "Orq Router language model: mistral/pixtral-12b"
+        },
+        {
+            "id": "orq/mistral/pixtral-12b-2409",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "pixtral-12b-2409",
+            "type": "language",
+            "description": "Orq Router language model: mistral/pixtral-12b-2409"
+        },
+        {
+            "id": "orq/mistral/pixtral-large-2411",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "pixtral-large-2411",
+            "type": "language",
+            "description": "Orq Router language model: mistral/pixtral-large-2411"
+        },
+        {
+            "id": "orq/mistral/pixtral-large-latest",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "pixtral-large-latest",
+            "type": "language",
+            "description": "Orq Router language model: mistral/pixtral-large-latest"
+        },
+        {
+            "id": "orq/moonshotai/kimi-k2.5",
+            "object": "model",
+            "owned_by": "Moonshot AI",
+            "name": "kimi-k2.5",
+            "type": "language",
+            "description": "Orq Router language model: moonshotai/kimi-k2.5"
+        },
+        {
+            "id": "orq/moonshotai/kimi-k2-0711-preview",
+            "object": "model",
+            "owned_by": "Moonshot AI",
+            "name": "kimi-k2-0711-preview",
+            "type": "language",
+            "description": "Orq Router language model: moonshotai/kimi-k2-0711-preview"
+        },
+        {
+            "id": "orq/moonshotai/kimi-k2-0905-preview",
+            "object": "model",
+            "owned_by": "Moonshot AI",
+            "name": "kimi-k2-0905-preview",
+            "type": "language",
+            "description": "Orq Router language model: moonshotai/kimi-k2-0905-preview"
+        },
+        {
+            "id": "orq/moonshotai/kimi-k2-thinking",
+            "object": "model",
+            "owned_by": "Moonshot AI",
+            "name": "kimi-k2-thinking",
+            "type": "language",
+            "description": "Orq Router language model: moonshotai/kimi-k2-thinking"
+        },
+        {
+            "id": "orq/moonshotai/kimi-k2-thinking-turbo",
+            "object": "model",
+            "owned_by": "Moonshot AI",
+            "name": "kimi-k2-thinking-turbo",
+            "type": "language",
+            "description": "Orq Router language model: moonshotai/kimi-k2-thinking-turbo"
+        },
+        {
+            "id": "orq/moonshotai/kimi-k2-turbo-preview",
+            "object": "model",
+            "owned_by": "Moonshot AI",
+            "name": "kimi-k2-turbo-preview",
+            "type": "language",
+            "description": "Orq Router language model: moonshotai/kimi-k2-turbo-preview"
+        },
+        {
+            "id": "orq/openai/codex-mini-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "codex-mini-latest",
+            "type": "language",
+            "description": "Orq Router language model: openai/codex-mini-latest"
+        },
+        {
+            "id": "orq/openai/gpt-3.5-turbo",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-3.5-turbo"
+        },
+        {
+            "id": "orq/openai/gpt-3.5-turbo-0125",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-0125",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-3.5-turbo-0125"
+        },
+        {
+            "id": "orq/openai/gpt-3.5-turbo-16k",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-16k",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-3.5-turbo-16k"
+        },
+        {
+            "id": "orq/openai/gpt-4.1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4.1"
+        },
+        {
+            "id": "orq/openai/gpt-4.1-2025-04-14",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4.1-2025-04-14"
+        },
+        {
+            "id": "orq/openai/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4.1-mini"
+        },
+        {
+            "id": "orq/openai/gpt-4.1-mini-2025-04-14",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4.1-mini-2025-04-14"
+        },
+        {
+            "id": "orq/openai/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4.1-nano"
+        },
+        {
+            "id": "orq/openai/gpt-4.1-nano-2025-04-14",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano-2025-04-14",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4.1-nano-2025-04-14"
+        },
+        {
+            "id": "orq/openai/gpt-4-0125-preview",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-0125-preview",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4-0125-preview"
+        },
+        {
+            "id": "orq/openai/gpt-4o",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4o"
+        },
+        {
+            "id": "orq/openai/gpt-4o-2024-05-13",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4o-2024-05-13"
+        },
+        {
+            "id": "orq/openai/gpt-4o-2024-08-06",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4o-2024-08-06"
+        },
+        {
+            "id": "orq/openai/gpt-4o-2024-11-20",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4o-2024-11-20"
+        },
+        {
+            "id": "orq/openai/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4o-mini"
+        },
+        {
+            "id": "orq/openai/gpt-4o-mini-2024-07-18",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4o-mini-2024-07-18"
+        },
+        {
+            "id": "orq/openai/gpt-4-turbo",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-turbo",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4-turbo"
+        },
+        {
+            "id": "orq/openai/gpt-4-turbo-2024-04-09",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-turbo-2024-04-09",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-4-turbo-2024-04-09"
+        },
+        {
+            "id": "orq/openai/gpt-5",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5"
+        },
+        {
+            "id": "orq/openai/gpt-5.1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.1",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.1"
+        },
+        {
+            "id": "orq/openai/gpt-5.1-chat-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.1-chat-latest",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.1-chat-latest"
+        },
+        {
+            "id": "orq/openai/gpt-5.1-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.1-codex",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.1-codex"
+        },
+        {
+            "id": "orq/openai/gpt-5.1-codex-max",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.1-codex-max",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.1-codex-max"
+        },
+        {
+            "id": "orq/openai/gpt-5.1-codex-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.1-codex-mini",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.1-codex-mini"
+        },
+        {
+            "id": "orq/openai/gpt-5.2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.2",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.2"
+        },
+        {
+            "id": "orq/openai/gpt-5.2-chat-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.2-chat-latest",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.2-chat-latest"
+        },
+        {
+            "id": "orq/openai/gpt-5.2-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.2-codex",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.2-codex"
+        },
+        {
+            "id": "orq/openai/gpt-5.2-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.2-pro",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.2-pro"
+        },
+        {
+            "id": "orq/openai/gpt-5.3-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.3-codex",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.3-codex"
+        },
+        {
+            "id": "orq/openai/gpt-5.3-codex-spark",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.3-codex-spark",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5.3-codex-spark"
+        },
+        {
+            "id": "orq/openai/gpt-5-chat-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-chat-latest",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5-chat-latest"
+        },
+        {
+            "id": "orq/openai/gpt-5-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-codex",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5-codex"
+        },
+        {
+            "id": "orq/openai/gpt-5-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-mini",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5-mini"
+        },
+        {
+            "id": "orq/openai/gpt-5-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-nano",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5-nano"
+        },
+        {
+            "id": "orq/openai/gpt-5-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-pro",
+            "type": "language",
+            "description": "Orq Router language model: openai/gpt-5-pro"
+        },
+        {
+            "id": "orq/openai/o1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o1",
+            "type": "language",
+            "description": "Orq Router language model: openai/o1"
+        },
+        {
+            "id": "orq/openai/o1-2024-12-17",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o1-2024-12-17",
+            "type": "language",
+            "description": "Orq Router language model: openai/o1-2024-12-17"
+        },
+        {
+            "id": "orq/openai/o1-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o1-pro",
+            "type": "language",
+            "description": "Orq Router language model: openai/o1-pro"
+        },
+        {
+            "id": "orq/openai/o3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o3",
+            "type": "language",
+            "description": "Orq Router language model: openai/o3"
+        },
+        {
+            "id": "orq/openai/o3-2025-04-16",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o3-2025-04-16",
+            "type": "language",
+            "description": "Orq Router language model: openai/o3-2025-04-16"
+        },
+        {
+            "id": "orq/openai/o3-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o3-mini",
+            "type": "language",
+            "description": "Orq Router language model: openai/o3-mini"
+        },
+        {
+            "id": "orq/openai/o3-mini-2025-01-31",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o3-mini-2025-01-31",
+            "type": "language",
+            "description": "Orq Router language model: openai/o3-mini-2025-01-31"
+        },
+        {
+            "id": "orq/openai/o3-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o3-pro",
+            "type": "language",
+            "description": "Orq Router language model: openai/o3-pro"
+        },
+        {
+            "id": "orq/openai/o4-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o4-mini",
+            "type": "language",
+            "description": "Orq Router language model: openai/o4-mini"
+        },
+        {
+            "id": "orq/openai/o4-mini-2025-04-16",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o4-mini-2025-04-16",
+            "type": "language",
+            "description": "Orq Router language model: openai/o4-mini-2025-04-16"
+        },
+        {
+            "id": "orq/perplexity/sonar",
+            "object": "model",
+            "owned_by": "Perplexity",
+            "name": "sonar",
+            "type": "language",
+            "description": "Orq Router language model: perplexity/sonar"
+        },
+        {
+            "id": "orq/perplexity/sonar-deep-research",
+            "object": "model",
+            "owned_by": "Perplexity",
+            "name": "sonar-deep-research",
+            "type": "language",
+            "description": "Orq Router language model: perplexity/sonar-deep-research"
+        },
+        {
+            "id": "orq/perplexity/sonar-pro",
+            "object": "model",
+            "owned_by": "Perplexity",
+            "name": "sonar-pro",
+            "type": "language",
+            "description": "Orq Router language model: perplexity/sonar-pro"
+        },
+        {
+            "id": "orq/perplexity/sonar-reasoning",
+            "object": "model",
+            "owned_by": "Perplexity",
+            "name": "sonar-reasoning",
+            "type": "language",
+            "description": "Orq Router language model: perplexity/sonar-reasoning"
+        },
+        {
+            "id": "orq/perplexity/sonar-reasoning-pro",
+            "object": "model",
+            "owned_by": "Perplexity",
+            "name": "sonar-reasoning-pro",
+            "type": "language",
+            "description": "Orq Router language model: perplexity/sonar-reasoning-pro"
+        },
+        {
+            "id": "orq/togetherai/deepseek-ai/DeepSeek-R1",
+            "object": "model",
+            "owned_by": "Together AI",
+            "name": "DeepSeek-R1",
+            "type": "language",
+            "description": "Orq Router language model: togetherai/deepseek-ai/DeepSeek-R1"
+        },
+        {
+            "id": "orq/togetherai/deepseek-ai/DeepSeek-V3",
+            "object": "model",
+            "owned_by": "Together AI",
+            "name": "DeepSeek-V3",
+            "type": "language",
+            "description": "Orq Router language model: togetherai/deepseek-ai/DeepSeek-V3"
+        },
+        {
+            "id": "orq/togetherai/deepseek-ai/DeepSeek-V3.1",
+            "object": "model",
+            "owned_by": "Together AI",
+            "name": "DeepSeek-V3.1",
+            "type": "language",
+            "description": "Orq Router language model: togetherai/deepseek-ai/DeepSeek-V3.1"
+        },
+        {
+            "id": "orq/togetherai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "object": "model",
+            "owned_by": "Together AI",
+            "name": "Llama-3.3-70B-Instruct-Turbo",
+            "type": "language",
+            "description": "Orq Router language model: togetherai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
+        },
+        {
+            "id": "orq/togetherai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+            "object": "model",
+            "owned_by": "Together AI",
+            "name": "Llama-4-Maverick-17B-128E-Instruct-FP8",
+            "type": "language",
+            "description": "Orq Router language model: togetherai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
+        },
+        {
+            "id": "orq/togetherai/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+            "object": "model",
+            "owned_by": "Together AI",
+            "name": "Llama-4-Scout-17B-16E-Instruct",
+            "type": "language",
+            "description": "Orq Router language model: togetherai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+        },
+        {
+            "id": "orq/togetherai/meta-llama/Llama-Guard-4-12B",
+            "object": "model",
+            "owned_by": "Together AI",
+            "name": "Llama-Guard-4-12B",
+            "type": "language",
+            "description": "Orq Router language model: togetherai/meta-llama/Llama-Guard-4-12B"
+        },
+        {
+            "id": "orq/zai/glm-4.5",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.5",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.5"
+        },
+        {
+            "id": "orq/zai/glm-4.5-air",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.5-air",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.5-air"
+        },
+        {
+            "id": "orq/zai/glm-4.5-flash",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.5-flash",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.5-flash"
+        },
+        {
+            "id": "orq/zai/glm-4.5v",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.5v",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.5v"
+        },
+        {
+            "id": "orq/zai/glm-4.6",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.6",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.6"
+        },
+        {
+            "id": "orq/zai/glm-4.6v",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.6v",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.6v"
+        },
+        {
+            "id": "orq/zai/glm-4.7",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.7",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.7"
+        },
+        {
+            "id": "orq/zai/glm-4.7-flash",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-4.7-flash",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-4.7-flash"
+        },
+        {
+            "id": "orq/zai/glm-5",
+            "object": "model",
+            "owned_by": "Z AI",
+            "name": "glm-5",
+            "type": "language",
+            "description": "Orq Router language model: zai/glm-5"
+        }
+    ]
+}

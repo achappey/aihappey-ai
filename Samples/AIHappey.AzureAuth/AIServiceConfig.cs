@@ -166,6 +166,14 @@ public class AIServiceConfig
     public ProviderConfig? YourVoic { get; set; }
     public ProviderConfig? FishAudio { get; set; }
     public ProviderConfig? LOVO { get; set; }
+    public ProviderConfig? Verbatik { get; set; }
+    public ProviderConfig? Cartesia { get; set; }
+    public ProviderConfig? Vapi { get; set; }
+    public ProviderConfig? SmallestAI { get; set; }
+    public ProviderConfig? Orq { get; set; }
+    public ProviderConfig? Typecast { get; set; }
+    public ProviderConfig? UnrealSpeech { get; set; }
+    public ProviderConfig? Kugu { get; set; }
 }
 
 public class ProviderConfig

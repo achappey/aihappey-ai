@@ -1,0 +1,125 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "kugu/elevenlabs-turbo-v2.5",
+            "object": "model",
+            "owned_by": "ElevenLabs",
+            "name": "elevenlabs-turbo-v2.5",
+            "type": "speech",
+            "description": "Ultra-fast multilingual text-to-speech with natural prosody."
+        },
+        {
+            "id": "kugu/elevenlabs-eleven-v3",
+            "object": "model",
+            "owned_by": "ElevenLabs",
+            "name": "elevenlabs-eleven-v3",
+            "type": "speech",
+            "description": "Highly expressive TTS with advanced emotion modeling."
+        },
+        {
+            "id": "kugu/google-chirp-3-hd",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "google-chirp-3-hd",
+            "type": "speech",
+            "description": "Google's premium high-definition text-to-speech model."
+        },
+        {
+            "id": "kugu/openai-tts-1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "openai-tts-1",
+            "type": "speech",
+            "description": "Fast OpenAI text-to-speech model optimized for real-time applications."
+        },
+        {
+            "id": "kugu/openai-tts-1-hd",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "openai-tts-1-hd",
+            "type": "speech",
+            "description": "High-definition OpenAI text-to-speech model."
+        },
+        {
+            "id": "kugu/xtts-v2",
+            "object": "model",
+            "owned_by": "Coqui",
+            "name": "xtts-v2",
+            "type": "speech",
+            "description": "Cross-lingual TTS with zero-shot voice cloning capabilities."
+        },
+        {
+            "id": "kugu/tortoise-tts",
+            "object": "model",
+            "owned_by": "Tortoise",
+            "name": "tortoise-tts",
+            "type": "speech",
+            "description": "High-quality multi-voice text-to-speech model."
+        },
+        {
+            "id": "kugu/fish-speech-1.5",
+            "object": "model",
+            "owned_by": "Fish Audio",
+            "name": "fish-speech-1.5",
+            "type": "speech",
+            "description": "High-quality neural text-to-speech model."
+        },
+        {
+            "id": "kugu/minimax-speech-02-hd",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "minimax-speech-02-hd",
+            "type": "speech",
+            "description": "High-definition speech synthesis model by Minimax."
+        },
+        {
+            "id": "kugu/parler-tts-mini-multilingual-v1.1",
+            "object": "model",
+            "owned_by": "Parler TTS",
+            "name": "parler-tts-mini-multilingual-v1.1",
+            "type": "speech",
+            "description": "High-quality multilingual open text-to-speech model optimized for expressive voice generation."
+        },
+        {
+            "id": "kugu/bark",
+            "object": "model",
+            "owned_by": "Suno",
+            "name": "bark",
+            "type": "speech",
+            "description": "Generative audio model capable of speech, music, and non-verbal sounds."
+        },
+        {
+            "id": "kugu/chatterbox-pro",
+            "object": "model",
+            "owned_by": "Resemble AI",
+            "name": "chatterbox-pro",
+            "type": "speech",
+            "description": "Production-grade text-to-speech model focused on high-fidelity voice cloning and enterprise use."
+        },
+        {
+            "id": "kugu/kimi-audio-7b-instruct",
+            "object": "model",
+            "owned_by": "Moonshot AI",
+            "name": "kimi-audio-7b-instruct",
+            "type": "speech",
+            "description": "Large-scale audio generation and speech model with instruction-following capability."
+        },
+        {
+            "id": "kugu/seamless-streaming",
+            "object": "model",
+            "owned_by": "Meta",
+            "name": "seamless-streaming",
+            "type": "speech",
+            "description": "Real-time multilingual speech synthesis and translation model."
+        },
+        {
+            "id": "kugu/voice-cloning",
+            "object": "model",
+            "owned_by": "Minimax",
+            "name": "voice-cloning",
+            "type": "speech",
+            "description": "High-quality neural voice cloning model optimized for production deployment."
+        }
+    ]
+}

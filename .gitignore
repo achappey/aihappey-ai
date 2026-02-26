@@ -39,6 +39,7 @@ dist/
 **/dist/
 **/public/bundle*.*
 **/fakton/
+scripts/
 
 # Build results
 [Dd]ebug/

@@ -1,0 +1,1272 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "vapi/Anthropic/claude-3-opus-20240229",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude 3 Opus (20240229)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-3-sonnet-20240229",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude 3 Sonnet (20240229)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-3-haiku-20240307",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude 3 Haiku (20240307)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-3-5-sonnet-20240620",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude 3.5 Sonnet (20240620)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-3-5-sonnet-20241022",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude 3.5 Sonnet (20241022)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-3-5-haiku-20241022",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude 3.5 Haiku (20241022)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-3-7-sonnet-20250219",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude 3.7 Sonnet (20250219)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-opus-4-20250514",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude Opus 4 (20250514)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-opus-4-5-20251101",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude Opus 4.5 (20251101)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude Opus 4.6",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-sonnet-4-20250514",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude Sonnet 4 (20250514)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-sonnet-4-5-20250929",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude Sonnet 4.5 (20250929)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Anthropic/claude-haiku-4-5-20251001",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude Haiku 4.5 (20251001)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-3-opus-20240229",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude 3 Opus (20240229)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-3-sonnet-20240229",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude 3 Sonnet (20240229)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-3-haiku-20240307",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude 3 Haiku (20240307)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-3-5-sonnet-20240620",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude 3.5 Sonnet (20240620)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-3-5-sonnet-20241022",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude 3.5 Sonnet (20241022)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-3-5-haiku-20241022",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude 3.5 Haiku (20241022)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-3-7-sonnet-20250219",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude 3.7 Sonnet (20250219)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-opus-4-20250514",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude Opus 4 (20250514)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-opus-4-5-20251101",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude Opus 4.5 (20251101)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude Opus 4.6",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-sonnet-4-20250514",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude Sonnet 4 (20250514)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-sonnet-4-5-20250929",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude Sonnet 4.5 (20250929)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/AnthropicBedrock/claude-haiku-4-5-20251001",
+            "object": "model",
+            "owned_by": "AnthropicBedrock",
+            "name": "Claude Haiku 4.5 (20251001)",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Cerebras/llama3.1-8b",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "llama3.1-8b",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Cerebras/llama-3.3-70b",
+            "object": "model",
+            "owned_by": "Cerebras",
+            "name": "llama-3.3-70b",
+            "type": "language"
+        },
+        {
+            "id": "vapi/DeepSeek/deepseek-chat",
+            "object": "model",
+            "owned_by": "DeepSeek",
+            "name": "deepseek-chat",
+            "type": "language"
+        },
+        {
+            "id": "vapi/DeepSeek/deepseek-reasoner",
+            "object": "model",
+            "owned_by": "DeepSeek",
+            "name": "deepseek-reasoner",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-3-flash-preview",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.5-pro",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.5-flash",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.5-flash-lite",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.5-flash-lite",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.0-flash-thinking-exp",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.0-flash-thinking-exp",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.0-pro-exp-02-05",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.0-pro-exp-02-05",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.0-flash",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.0-flash",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.0-flash-lite",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.0-flash-lite",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.0-flash-exp",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.0-flash-exp",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-2.0-flash-realtime-exp",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-2.0-flash-realtime-exp",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-1.5-flash",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-1.5-flash",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-1.5-flash-002",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-1.5-flash-002",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-1.5-pro",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-1.5-pro",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-1.5-pro-002",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-1.5-pro-002",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Google/gemini-1.0-pro",
+            "object": "model",
+            "owned_by": "Google",
+            "name": "gemini-1.0-pro",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/openai-gpt-oss-20b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "openai-gpt-oss-20b",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/openai-gpt-oss-120b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "openai-gpt-oss-120b",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/deepseek-r1-distill-llama-70b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "deepseek-r1-distill-llama-70b",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/llama-3.3-70b-versatile",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-3.3-70b-versatile",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/llama-3.1-405b-reasoning",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-3.1-405b-reasoning",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/llama-3.1-8b-instant",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama-3.1-8b-instant",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/llama3-8b-8192",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama3-8b-8192",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/llama3-70b-8192",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "llama3-70b-8192",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/gemma2-9b-it",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "gemma2-9b-it",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/moonshotai-kimi-k2-instruct-0905",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "moonshotai-kimi-k2-instruct-0905",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/meta-llama-llama-4-maverick-17b-128e-instruct",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "meta-llama-llama-4-maverick-17b-128e-instruct",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/meta-llama-llama-4-scout-17b-16e-instruct",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "meta-llama-llama-4-scout-17b-16e-instruct",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/mistral-saba-24b",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "mistral-saba-24b",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/compound-beta",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "compound-beta",
+            "type": "language"
+        },
+        {
+            "id": "vapi/Groq/compound-beta-mini",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "compound-beta-mini",
+            "type": "language"
+        },
+        {
+            "id": "vapi/InflectionAI/inflection_3_pi",
+            "object": "model",
+            "owned_by": "InflectionAI",
+            "name": "inflection_3_pi",
+            "type": "language"
+        },
+        {
+            "id": "vapi/XAI/grok-beta",
+            "object": "model",
+            "owned_by": "XAI",
+            "name": "grok-beta",
+            "type": "language"
+        },
+        {
+            "id": "vapi/XAI/grok-2",
+            "object": "model",
+            "owned_by": "XAI",
+            "name": "grok-2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/XAI/grok-3",
+            "object": "model",
+            "owned_by": "XAI",
+            "name": "grok-3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/XAI/grok-4-fast-reasoning",
+            "object": "model",
+            "owned_by": "XAI",
+            "name": "grok-4-fast-reasoning",
+            "type": "language"
+        },
+        {
+            "id": "vapi/XAI/grok-4-fast-non-reasoning",
+            "object": "model",
+            "owned_by": "XAI",
+            "name": "grok-4-fast-non-reasoning",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5.2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5.2-chat-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.2-chat-latest",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5.1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.1",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5.1-chat-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5.1-chat-latest",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5-chat-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-chat-latest",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-mini",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-5-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-5-nano",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-nano-2025-04-14",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano-2025-04-14",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/chatgpt-4o-latest",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "chatgpt-4o-latest",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/o3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/o3-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o3-mini",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/o4-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o4-mini",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/o1-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o1-mini",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/o1-mini-2024-09-12",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "o1-mini-2024-09-12",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-realtime-preview-2024-10-01",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-realtime-preview-2024-10-01",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-realtime-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-realtime-preview-2024-12-17",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-realtime-preview-2024-12-17",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-realtime-preview-2024-12-17",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-realtime-2025-08-28",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-realtime-2025-08-28",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-realtime-mini-2025-12-15",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-realtime-mini-2025-12-15",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-2024-07-18",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-05-13",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-08-06",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-turbo",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-turbo",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-turbo-2024-04-09",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-turbo-2024-04-09",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-turbo-preview",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-turbo-preview",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-0125-preview",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-0125-preview",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-0613",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-0613",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-0125",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-0125",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-1106",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-1106",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-16k",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-16k",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-0613",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-0613",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:eastus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:eastus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:westeurope",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:westeurope",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:germanywestcentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:germanywestcentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:polandcentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:polandcentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-2025-04-14:spaincentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-2025-04-14:spaincentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:eastus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:eastus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:westeurope",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:westeurope",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:germanywestcentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:germanywestcentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:polandcentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:polandcentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-mini-2025-04-14:spaincentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-mini-2025-04-14:spaincentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-nano-2025-04-14:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano-2025-04-14:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-nano-2025-04-14:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano-2025-04-14:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-nano-2025-04-14:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano-2025-04-14:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-nano-2025-04-14:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano-2025-04-14:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4.1-nano-2025-04-14:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4.1-nano-2025-04-14:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:swedencentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:swedencentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:eastus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:eastus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:westeurope",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:westeurope",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:germanywestcentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:germanywestcentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:polandcentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:polandcentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-11-20:spaincentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-11-20:spaincentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-08-06:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-08-06:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-08-06:eastus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06:eastus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-08-06:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-08-06:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-08-06:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-08-06:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-2024-07-18:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-2024-07-18:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-2024-07-18:eastus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18:eastus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-2024-07-18:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-2024-07-18:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-mini-2024-07-18:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-2024-07-18:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-05-13:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-05-13:eastus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13:eastus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-05-13:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-05-13:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-05-13:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4o-2024-05-13:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-2024-05-13:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-turbo-2024-04-09:eastus2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-turbo-2024-04-09:eastus2",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-0125-preview:eastus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-0125-preview:eastus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-0125-preview:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-0125-preview:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-0125-preview:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-0125-preview:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:australia",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:australia",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:canadaeast",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:canadaeast",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:france",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:france",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:india",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:india",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:norway",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:norway",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:swedencentral",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:swedencentral",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:uk",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:uk",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:westus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-1106-preview:westus3",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-1106-preview:westus3",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-4-0613:canadaeast",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4-0613:canadaeast",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-0125:canadaeast",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-0125:canadaeast",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-0125:northcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-0125:northcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-0125:southcentralus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-0125:southcentralus",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-1106:canadaeast",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-1106:canadaeast",
+            "type": "language"
+        },
+        {
+            "id": "vapi/OpenAI/gpt-3.5-turbo-1106:westus",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-3.5-turbo-1106:westus",
+            "type": "language"
+        }
+    ]
+}

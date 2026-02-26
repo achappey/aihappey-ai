@@ -16,6 +16,13 @@
       "type": "language"
     },
     {
+      "id": "baseten/zai-org/GLM-5",
+      "object": "model",
+      "owned_by": "Baseten",
+      "name": "zai-org/GLM-5",
+      "type": "language"
+    },
+    {
       "id": "baseten/moonshotai/Kimi-K2-Thinking",
       "object": "model",
       "owned_by": "Baseten",

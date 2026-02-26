@@ -1,0 +1,3260 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "vapi/RimeAIVoice/arcana/abbie",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/abbie",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/allison",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/allison",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/ally",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/ally",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/alona",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/alona",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/amber",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/amber",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/ana",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/ana",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/antoine",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/antoine",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/armon",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/armon",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/brenda",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/brenda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/brittany",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/brittany",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/carol",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/carol",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/colin",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/colin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/courtney",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/courtney",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/elena",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/elena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/elliot",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/elliot",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/eva",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/eva",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/geoff",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/geoff",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/gerald",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/gerald",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/hank",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/hank",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/helen",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/helen",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/hera",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/hera",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/jen",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/jen",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/joe",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/joe",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/joy",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/joy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/juan",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/juan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/kendra",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/kendra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/kendrick",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/kendrick",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/kenneth",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/kenneth",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/kevin",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/kevin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/kris",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/kris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/linda",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/linda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/madison",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/madison",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/marge",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/marge",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/marina",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/marina",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/marissa",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/marta",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/marta",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/arcana/maya",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "arcana/maya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/abbie",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/abbie",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/allison",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/allison",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/ally",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/ally",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/alona",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/alona",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/amber",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/amber",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/ana",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/ana",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/antoine",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/antoine",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/armon",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/armon",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/brenda",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/brenda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/brittany",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/brittany",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/carol",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/carol",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/colin",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/colin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/courtney",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/courtney",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/elena",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/elena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/elliot",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/elliot",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/eva",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/eva",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/geoff",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/geoff",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/gerald",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/gerald",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/hank",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/hank",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/helen",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/helen",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/hera",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/hera",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/jen",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/jen",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/joe",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/joe",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/joy",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/joy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/juan",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/juan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/kendra",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/kendra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/kendrick",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/kendrick",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/kenneth",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/kenneth",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/kevin",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/kevin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/kris",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/kris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/linda",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/linda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/madison",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/madison",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/marge",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/marge",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/marina",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/marina",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/marissa",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/marta",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/marta",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mistv2/maya",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mistv2/maya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/abbie",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/abbie",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/allison",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/allison",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/ally",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/ally",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/alona",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/alona",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/amber",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/amber",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/ana",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/ana",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/antoine",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/antoine",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/armon",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/armon",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/brenda",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/brenda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/brittany",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/brittany",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/carol",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/carol",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/colin",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/colin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/courtney",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/courtney",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/elena",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/elena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/elliot",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/elliot",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/eva",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/eva",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/geoff",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/geoff",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/gerald",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/gerald",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/hank",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/hank",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/helen",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/helen",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/hera",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/hera",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/jen",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/jen",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/joe",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/joe",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/joy",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/joy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/juan",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/juan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/kendra",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/kendra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/kendrick",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/kendrick",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/kenneth",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/kenneth",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/kevin",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/kevin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/kris",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/kris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/linda",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/linda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/madison",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/madison",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/marge",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/marge",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/marina",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/marina",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/marissa",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/marta",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/marta",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/RimeAIVoice/mist/maya",
+            "object": "model",
+            "owned_by": "RimeAIVoice",
+            "name": "mist/maya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/alloy",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/alloy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/echo",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/echo",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/fable",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/fable",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/onyx",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/onyx",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/nova",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/nova",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/shimmer",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/shimmer",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/marin",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/marin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1/cedar",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1/cedar",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/alloy",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/alloy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/echo",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/echo",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/fable",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/fable",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/onyx",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/onyx",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/nova",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/nova",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/shimmer",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/shimmer",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/marin",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/marin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/tts-1-hd/cedar",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "tts-1-hd/cedar",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/alloy",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/alloy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/echo",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/echo",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/fable",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/fable",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/onyx",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/onyx",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/nova",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/nova",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/shimmer",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/shimmer",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/marin",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/marin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/OpenAIVoice/gpt-4o-mini-tts/cedar",
+            "object": "model",
+            "owned_by": "OpenAIVoice",
+            "name": "gpt-4o-mini-tts/cedar",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/asteria",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/asteria",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/luna",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/luna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/stella",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/stella",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/athena",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/athena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/hera",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/hera",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/orion",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/orion",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/arcas",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/arcas",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/perseus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/perseus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/angus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/angus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/orpheus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/orpheus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/helios",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/helios",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/zeus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/zeus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/thalia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/thalia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/andromeda",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/andromeda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/helena",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/helena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/apollo",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/apollo",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/aries",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/aries",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/amalthea",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/amalthea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/atlas",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/atlas",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/aurora",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/aurora",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/callista",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/callista",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/cora",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/cora",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/cordelia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/cordelia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/delia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/delia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/draco",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/draco",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/electra",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/electra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/harmonia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/harmonia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/hermes",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/hermes",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/hyperion",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/hyperion",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/iris",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/iris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/janus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/janus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/juno",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/juno",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/jupiter",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/jupiter",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/mars",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/mars",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/minerva",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/minerva",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/neptune",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/neptune",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/odysseus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/odysseus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/ophelia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/ophelia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/pandora",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/pandora",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/phoebe",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/phoebe",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/pluto",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/pluto",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/saturn",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/saturn",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/selene",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/selene",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/theia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/theia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/vesta",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/vesta",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/celeste",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/celeste",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/estrella",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/estrella",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/nestor",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/nestor",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/sirio",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/sirio",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/carina",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/carina",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/alvaro",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/alvaro",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/diana",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/diana",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/aquila",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/aquila",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/selena",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/selena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura/javier",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura/javier",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/asteria",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/asteria",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/luna",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/luna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/stella",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/stella",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/athena",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/athena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/hera",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/hera",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/orion",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/orion",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/arcas",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/arcas",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/perseus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/perseus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/angus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/angus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/orpheus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/orpheus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/helios",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/helios",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/zeus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/zeus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/thalia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/thalia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/andromeda",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/andromeda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/helena",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/helena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/apollo",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/apollo",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/aries",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/aries",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/amalthea",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/amalthea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/atlas",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/atlas",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/aurora",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/aurora",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/callista",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/callista",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/cora",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/cora",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/cordelia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/cordelia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/delia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/delia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/draco",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/draco",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/electra",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/electra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/harmonia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/harmonia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/hermes",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/hermes",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/hyperion",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/hyperion",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/iris",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/iris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/janus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/janus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/juno",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/juno",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/jupiter",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/jupiter",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/mars",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/mars",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/minerva",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/minerva",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/neptune",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/neptune",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/odysseus",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/odysseus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/ophelia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/ophelia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/pandora",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/pandora",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/phoebe",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/phoebe",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/pluto",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/pluto",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/saturn",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/saturn",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/selene",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/selene",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/theia",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/theia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/vesta",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/vesta",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/celeste",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/celeste",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/estrella",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/estrella",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/nestor",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/nestor",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/sirio",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/sirio",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/carina",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/carina",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/alvaro",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/alvaro",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/diana",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/diana",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/aquila",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/aquila",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/selena",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/selena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/DeepgramVoice/aura-2/javier",
+            "object": "model",
+            "owned_by": "DeepgramVoice",
+            "name": "aura-2/javier",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/jennifer",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/jennifer",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/melissa",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/melissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/will",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/will",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/chris",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/chris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/matt",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/matt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/jack",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/jack",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/ruby",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/ruby",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/davis",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/davis",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/donna",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/donna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0/michael",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0/michael",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/jennifer",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/jennifer",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/melissa",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/melissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/will",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/will",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/chris",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/chris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/matt",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/matt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/jack",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/jack",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/ruby",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/ruby",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/davis",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/davis",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/donna",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/donna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayHT2.0-turbo/michael",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayHT2.0-turbo/michael",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/jennifer",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/jennifer",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/melissa",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/melissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/will",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/will",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/chris",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/chris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/matt",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/matt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/jack",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/jack",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/ruby",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/ruby",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/davis",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/davis",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/donna",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/donna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/Play3.0-mini/michael",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "Play3.0-mini/michael",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/jennifer",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/jennifer",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/melissa",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/melissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/will",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/will",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/chris",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/chris",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/matt",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/matt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/jack",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/jack",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/ruby",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/ruby",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/davis",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/davis",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/donna",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/donna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/PlayHTVoice/PlayDialog/michael",
+            "object": "model",
+            "owned_by": "PlayHTVoice",
+            "name": "PlayDialog/michael",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/emily",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/emily",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/jasmine",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/jasmine",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/arman",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/arman",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/james",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/james",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/mithali",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/mithali",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/aravind",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/aravind",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/raj",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/raj",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/diya",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/diya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/raman",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/raman",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/ananya",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/ananya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/isha",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/isha",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/william",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/william",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/aarav",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/aarav",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/monika",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/monika",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/niharika",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/niharika",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/deepika",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/deepika",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/raghav",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/raghav",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/kajal",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/kajal",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/radhika",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/radhika",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/mansi",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/mansi",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/nisha",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/nisha",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/saurabh",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/saurabh",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/pooja",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/pooja",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/saina",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/saina",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/SmallestAIVoice/lightning/sanya",
+            "object": "model",
+            "owned_by": "SmallestAIVoice",
+            "name": "lightning/sanya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Alex",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Alex",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Ashley",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Ashley",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Craig",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Craig",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Deborah",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Deborah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Dennis",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Dennis",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Edward",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Edward",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Elizabeth",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Elizabeth",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Hades",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Hades",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Julia",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Julia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Pixie",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Pixie",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Mark",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Mark",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Olivia",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Olivia",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Priya",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Priya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Ronald",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Ronald",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Sarah",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Sarah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Shaun",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Shaun",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Theodore",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Theodore",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Timothy",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Timothy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Wendy",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Wendy",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Dominus",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Dominus",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Hana",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Hana",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Clive",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Clive",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Carter",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Carter",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Blake",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Blake",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Luna",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Luna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Yichen",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Yichen",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Xiaoyin",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Xiaoyin",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Xinyi",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Xinyi",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Jing",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Jing",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Erik",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Erik",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Katrien",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Katrien",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Lennart",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Lennart",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Lore",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Lore",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Alain",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Alain",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Hélène",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Hélène",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Mathieu",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Mathieu",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Étienne",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Étienne",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Johanna",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Johanna",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Josef",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Josef",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Gianni",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Gianni",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Orietta",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Orietta",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Asuka",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Asuka",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Satoshi",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Satoshi",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Hyunwoo",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Hyunwoo",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Minji",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Minji",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Seojun",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Seojun",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Yoona",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Yoona",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Szymon",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Szymon",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Wojciech",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Wojciech",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Heitor",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Heitor",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Maitê",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Maitê",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Diego",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Diego",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Lupita",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Lupita",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Miguel",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Miguel",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Rafael",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Rafael",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Svetlana",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Svetlana",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Elena",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Elena",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Dmitry",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Dmitry",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Nikolai",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Nikolai",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Riya",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Riya",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Manoj",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Manoj",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Yael",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Yael",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Oren",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Oren",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Nour",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Nour",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/InworldVoice/inworld-tts-1/Omar",
+            "object": "model",
+            "owned_by": "InworldVoice",
+            "name": "inworld-tts-1/Omar",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/burt",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/burt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/marissa",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/andrea",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/andrea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/sarah",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/sarah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/phillip",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/phillip",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/steve",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/steve",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/joseph",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/joseph",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/myra",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/myra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/paula",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/paula",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/ryan",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/ryan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/drew",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/drew",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/paul",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/paul",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/mrb",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/mrb",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/matilda",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/matilda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_multilingual_v2/mark",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_multilingual_v2/mark",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/burt",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/burt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/marissa",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/andrea",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/andrea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/sarah",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/sarah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/phillip",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/phillip",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/steve",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/steve",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/joseph",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/joseph",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/myra",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/myra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/paula",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/paula",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/ryan",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/ryan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/drew",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/drew",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/paul",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/paul",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/mrb",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/mrb",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/matilda",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/matilda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2/mark",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2/mark",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/burt",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/burt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/marissa",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/andrea",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/andrea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/sarah",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/sarah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/phillip",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/phillip",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/steve",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/steve",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/joseph",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/joseph",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/myra",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/myra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/paula",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/paula",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/ryan",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/ryan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/drew",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/drew",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/paul",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/paul",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/mrb",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/mrb",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/matilda",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/matilda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_turbo_v2_5/mark",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_turbo_v2_5/mark",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/burt",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/burt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/marissa",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/andrea",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/andrea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/sarah",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/sarah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/phillip",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/phillip",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/steve",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/steve",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/joseph",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/joseph",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/myra",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/myra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/paula",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/paula",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/ryan",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/ryan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/drew",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/drew",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/paul",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/paul",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/mrb",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/mrb",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/matilda",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/matilda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2/mark",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2/mark",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/burt",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/burt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/marissa",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/andrea",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/andrea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/sarah",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/sarah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/phillip",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/phillip",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/steve",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/steve",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/joseph",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/joseph",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/myra",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/myra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/paula",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/paula",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/ryan",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/ryan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/drew",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/drew",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/paul",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/paul",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/mrb",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/mrb",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/matilda",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/matilda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_flash_v2_5/mark",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_flash_v2_5/mark",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/burt",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/burt",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/marissa",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/marissa",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/andrea",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/andrea",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/sarah",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/sarah",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/phillip",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/phillip",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/steve",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/steve",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/joseph",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/joseph",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/myra",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/myra",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/paula",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/paula",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/ryan",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/ryan",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/drew",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/drew",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/paul",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/paul",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/mrb",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/mrb",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/matilda",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/matilda",
+            "type": "speech"
+        },
+        {
+            "id": "vapi/ElevenLabsVoice/eleven_monolingual_v1/mark",
+            "object": "model",
+            "owned_by": "ElevenLabsVoice",
+            "name": "eleven_monolingual_v1/mark",
+            "type": "speech"
+        }
+    ]
+}

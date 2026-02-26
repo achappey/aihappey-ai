@@ -83,6 +83,7 @@ using AIHappey.Core.Providers.JSON2Video;
 using AIHappey.Core.Providers.GreenPT;
 using AIHappey.Core.Providers.RelaxAI;
 using AIHappey.Core.Providers.RegoloAI;
+using AIHappey.Core.Providers.Kugu;
 using AIHappey.Core.Providers.ARKLabs;
 using AIHappey.Core.Providers.IONOS;
 using AIHappey.Core.Providers.BergetAI;
@@ -165,7 +166,14 @@ using AIHappey.Core.Providers.Forefront;
 using AIHappey.Core.Providers.AICC;
 using AIHappey.Core.Providers.YourVoic;
 using AIHappey.Core.Providers.FishAudio;
+using AIHappey.Core.Providers.Cartesia;
 using AIHappey.Core.Providers.LOVO;
+using AIHappey.Core.Providers.Verbatik;
+using AIHappey.Core.Providers.Vapi;
+using AIHappey.Core.Providers.SmallestAI;
+using AIHappey.Core.Providers.Orq;
+using AIHappey.Core.Providers.Typecast;
+using AIHappey.Core.Providers.UnrealSpeech;
 
 namespace AIHappey.Core.AI;
 
@@ -259,6 +267,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GreenPTProvider>();
         services.AddSingleton<IModelProvider, RelaxAIProvider>();
         services.AddSingleton<IModelProvider, RegoloAIProvider>();
+        services.AddSingleton<IModelProvider, KuguProvider>();
         services.AddSingleton<IModelProvider, ARKLabsProvider>();
         services.AddSingleton<IModelProvider, IONOSProvider>();
         services.AddSingleton<IModelProvider, BergetAIProvider>();
@@ -338,7 +347,14 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AICCProvider>();
         services.AddSingleton<IModelProvider, YourVoicProvider>();
         services.AddSingleton<IModelProvider, FishAudioProvider>();
+        services.AddSingleton<IModelProvider, CartesiaProvider>();
         services.AddSingleton<IModelProvider, LOVOProvider>();
+        services.AddSingleton<IModelProvider, VerbatikProvider>();
+        services.AddSingleton<IModelProvider, SmallestAIProvider>();
+        services.AddSingleton<IModelProvider, OrqProvider>();
+        services.AddSingleton<IModelProvider, TypecastProvider>();
+        services.AddSingleton<IModelProvider, UnrealSpeechProvider>();
+        services.AddSingleton<IModelProvider, VapiProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

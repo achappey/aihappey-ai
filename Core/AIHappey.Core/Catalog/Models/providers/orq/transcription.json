@@ -1,0 +1,69 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "orq/azure/whisper",
+            "object": "model",
+            "owned_by": "Azure",
+            "name": "whisper",
+            "type": "transcription",
+            "description": "Orq Router transcription model: azure/whisper"
+        },
+        {
+            "id": "orq/elevenlabs/scribe_v1",
+            "object": "model",
+            "owned_by": "Eleven Labs",
+            "name": "scribe_v1",
+            "type": "transcription",
+            "description": "Orq Router transcription model: elevenlabs/scribe_v1"
+        },
+        {
+            "id": "orq/groq/whisper-large-v3",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "whisper-large-v3",
+            "type": "transcription",
+            "description": "Orq Router transcription model: groq/whisper-large-v3"
+        },
+        {
+            "id": "orq/groq/whisper-large-v3-turbo",
+            "object": "model",
+            "owned_by": "Groq",
+            "name": "whisper-large-v3-turbo",
+            "type": "transcription",
+            "description": "Orq Router transcription model: groq/whisper-large-v3-turbo"
+        },
+        {
+            "id": "orq/mistral/voxtral-mini-2507",
+            "object": "model",
+            "owned_by": "Mistral",
+            "name": "voxtral-mini-2507",
+            "type": "transcription",
+            "description": "Orq Router transcription model: mistral/voxtral-mini-2507"
+        },
+        {
+            "id": "orq/openai/gpt-4o-mini-transcribe",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-mini-transcribe",
+            "type": "transcription",
+            "description": "Orq Router transcription model: openai/gpt-4o-mini-transcribe"
+        },
+        {
+            "id": "orq/openai/gpt-4o-transcribe",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "gpt-4o-transcribe",
+            "type": "transcription",
+            "description": "Orq Router transcription model: openai/gpt-4o-transcribe"
+        },
+        {
+            "id": "orq/openai/whisper-1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "whisper-1",
+            "type": "transcription",
+            "description": "Orq Router transcription model: openai/whisper-1"
+        }
+    ]
+}

@@ -1,0 +1,418 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "vapi/DeepgramTranscriber/flux-general-en",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "flux-general-en",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-3",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-3",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-3-general",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-3-general",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-3-medical",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-3-medical",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-general",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-general",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-meeting",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-meeting",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-phonecall",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-phonecall",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-finance",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-finance",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-conversationalai",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-conversationalai",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-voicemail",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-voicemail",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-video",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-video",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-medical",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-medical",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-drivethru",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-drivethru",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-2-automotive",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-2-automotive",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-general",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-general",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-phonecall",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-phonecall",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/nova-medical",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "nova-medical",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/enhanced",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "enhanced",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/enhanced-general",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "enhanced-general",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/enhanced-meeting",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "enhanced-meeting",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/enhanced-phonecall",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "enhanced-phonecall",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/enhanced-finance",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "enhanced-finance",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base-general",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base-general",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base-meeting",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base-meeting",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base-phonecall",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base-phonecall",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base-finance",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base-finance",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base-conversationalai",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base-conversationalai",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base-voicemail",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base-voicemail",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/base-video",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "base-video",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/DeepgramTranscriber/whisper",
+            "object": "model",
+            "owned_by": "DeepgramTranscriber",
+            "name": "whisper",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/ElevenLabsTranscriber/scribe_v1",
+            "object": "model",
+            "owned_by": "ElevenLabsTranscriber",
+            "name": "scribe_v1",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/ElevenLabsTranscriber/scribe_v2",
+            "object": "model",
+            "owned_by": "ElevenLabsTranscriber",
+            "name": "scribe_v2",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/ElevenLabsTranscriber/scribe_v2_realtime",
+            "object": "model",
+            "owned_by": "ElevenLabsTranscriber",
+            "name": "scribe_v2_realtime",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GladiaTranscriber/fast",
+            "object": "model",
+            "owned_by": "GladiaTranscriber",
+            "name": "fast",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GladiaTranscriber/accurate",
+            "object": "model",
+            "owned_by": "GladiaTranscriber",
+            "name": "accurate",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GladiaTranscriber/solaria-1",
+            "object": "model",
+            "owned_by": "GladiaTranscriber",
+            "name": "solaria-1",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-3-flash-preview",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-3-flash-preview",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.5-pro",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.5-flash",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.5-flash-lite",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.5-flash-lite",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.0-flash-thinking-exp",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.0-flash-thinking-exp",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.0-pro-exp-02-05",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.0-pro-exp-02-05",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.0-flash",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.0-flash",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.0-flash-lite",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.0-flash-lite",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.0-flash-exp",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.0-flash-exp",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-2.0-flash-realtime-exp",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-2.0-flash-realtime-exp",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-1.5-flash",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-1.5-flash",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-1.5-flash-002",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-1.5-flash-002",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-1.5-pro",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-1.5-pro",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-1.5-pro-002",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-1.5-pro-002",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/GoogleTranscriber/gemini-1.0-pro",
+            "object": "model",
+            "owned_by": "GoogleTranscriber",
+            "name": "gemini-1.0-pro",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/SpeechmaticsTranscriber/default",
+            "object": "model",
+            "owned_by": "SpeechmaticsTranscriber",
+            "name": "default",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/TalkscriberTranscriber/whisper",
+            "object": "model",
+            "owned_by": "TalkscriberTranscriber",
+            "name": "whisper",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/OpenAITranscriber/gpt-4o-transcribe",
+            "object": "model",
+            "owned_by": "OpenAITranscriber",
+            "name": "gpt-4o-transcribe",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/OpenAITranscriber/gpt-4o-mini-transcribe",
+            "object": "model",
+            "owned_by": "OpenAITranscriber",
+            "name": "gpt-4o-mini-transcribe",
+            "type": "transcription"
+        },
+        {
+            "id": "vapi/CartesiaTranscriber/ink-whisper",
+            "object": "model",
+            "owned_by": "CartesiaTranscriber",
+            "name": "ink-whisper",
+            "type": "transcription"
+        }
+    ]
+}
