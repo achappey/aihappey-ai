@@ -1,0 +1,75 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "chaingpt/general_assistant",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "general_assistant",
+      "type": "language"
+    },
+    {
+      "id": "chaingpt/smart_contract_generator",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "smart_contract_generator",
+      "type": "language"
+    },
+    {
+      "id": "llmlayer/velogen",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "velogen",
+      "type": "image"
+    },
+    {
+      "id": "llmlayer/nebula_forge_xl",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "nebula_forge_xl",
+      "type": "image"
+    },
+    {
+      "id": "llmlayer/VisionaryForge",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "VisionaryForge",
+      "type": "image"
+    },
+    {
+      "id": "llmlayer/Dale3",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "DALL·E 3",
+      "type": "image"
+    },
+    {
+      "id": "llmlayer/nft/velogen",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "velogen NFT",
+      "type": "image"
+    },
+    {
+      "id": "llmlayer/nft/nebula_forge_xl",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "nebula_forge_xl NFT",
+      "type": "image"
+    },
+    {
+      "id": "llmlayer/nft/VisionaryForge",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "VisionaryForge NFT",
+      "type": "image"
+    },
+    {
+      "id": "llmlayer/nft/Dale3",
+      "object": "model",
+      "owned_by": "ChainGPT",
+      "name": "DALL·E 3 NFT",
+      "type": "image"
+    }
+  ]
+}

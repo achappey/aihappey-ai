@@ -184,7 +184,10 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["ionet"] = "X-IOnet-Key",
             ["avian"] = "X-Avian-Key",
             ["llmapi"] = "X-LLMAPI-Key",
-            ["llmlayer"] = "X-LLMLayer-Key"
+            ["llmlayer"] = "X-LLMLayer-Key",
+            ["simplismart"] = "X-Simplismart-Key",
+            ["chaingpt"] = "X-ChainGPT-Key",
+            ["routeway"] = "X-Routeway-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

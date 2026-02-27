@@ -190,6 +190,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "avian" => _config.Avian?.ApiKey,
             "llmapi" => _config.LLMAPI?.ApiKey,
             "llmlayer" => _config.LLMLayer?.ApiKey,
+            "simplismart" => _config.Simplismart?.ApiKey,
+            "chaingpt" => _config.ChainGPT?.ApiKey,
+            "routeway" => _config.Routeway?.ApiKey,
             _ => null
         };
 }

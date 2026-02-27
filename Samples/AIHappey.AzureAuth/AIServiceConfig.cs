@@ -183,6 +183,9 @@ public class AIServiceConfig
     public ProviderConfig? Avian { get; set; }
     public ProviderConfig? LLMAPI { get; set; }
     public ProviderConfig? LLMLayer { get; set; }
+    public ProviderConfig? Simplismart { get; set; }
+    public ProviderConfig? ChainGPT { get; set; }
+    public ProviderConfig? Routeway { get; set; }
 }
 
 public class ProviderConfig

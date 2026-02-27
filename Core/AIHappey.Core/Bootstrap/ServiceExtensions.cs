@@ -183,6 +183,9 @@ using AIHappey.Core.Providers.IOnet;
 using AIHappey.Core.Providers.Avian;
 using AIHappey.Core.Providers.LLMAPI;
 using AIHappey.Core.Providers.LLMLayer;
+using AIHappey.Core.Providers.Simplismart;
+using AIHappey.Core.Providers.Routeway;
+using AIHappey.Core.Providers.ChainGPT;
 
 namespace AIHappey.Core.AI;
 
@@ -373,6 +376,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AvianProvider>();
         services.AddSingleton<IModelProvider, LLMAPIProvider>();
         services.AddSingleton<IModelProvider, LLMLayerProvider>();
+        services.AddSingleton<IModelProvider, SimplismartProvider>();
+        services.AddSingleton<IModelProvider, RoutewayProvider>();
+        services.AddSingleton<IModelProvider, ChainGPTProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
