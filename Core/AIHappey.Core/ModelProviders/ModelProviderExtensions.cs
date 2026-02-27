@@ -7,9 +7,7 @@ namespace AIHappey.Core.AI;
 public static class ModelProviderExtensions
 {
     public static async Task<IEnumerable<Model>> ListModels(this IModelProvider modelProvider, string? key)
-    => string.IsNullOrWhiteSpace(key)
-        ? await Task.FromResult<IEnumerable<Model>>([])
-        : await Task.FromResult<IEnumerable<Model>>(modelProvider.GetIdentifier().GetModels());
+        => await Task.FromResult<IEnumerable<Model>>(modelProvider.GetIdentifier().GetModels());
 
     public static async Task<Model> GetModel(this IModelProvider modelProvider,
       string? modelId,
@@ -19,9 +17,9 @@ public static class ModelProviderExtensions
         var models = await modelProvider.ListModels(cancellationToken);
         var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
             ?? throw new ArgumentException(modelId);
-        
+
         model.Type ??= model.Id.GuessModelType();
-        
+
         return model;
     }
 
