@@ -6,21 +6,21 @@
             "object": "model",
             "owned_by": "ContextualAI",
             "name": "ctxl-rerank-v2-instruct-multilingual",
-            "type": "rerank"
+            "type": "reranking"
         },
         {
             "id": "contextualai/ctxl-rerank-v2-instruct-multilingual-mini",
             "object": "model",
             "owned_by": "ContextualAI",
             "name": "ctxl-rerank-v2-instruct-multilingual-mini",
-            "type": "rerank"
+            "type": "reranking"
         },
         {
             "id": "contextualai/ctxl-rerank-v1-instruct",
             "object": "model",
             "owned_by": "ContextualAI",
             "name": "ctxl-rerank-v1-instruct",
-            "type": "rerank"
+            "type": "reranking"
         }
     ]
 }

@@ -186,6 +186,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "uvoiceai" => _config.UVoiceAI?.ApiKey,
             "astica" => _config.Astica?.ApiKey,
             "heygen" => _config.HeyGen?.ApiKey,
+            "ionet" => _config.IOnet?.ApiKey,
             _ => null
         };
 }

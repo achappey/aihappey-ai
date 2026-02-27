@@ -5,9 +5,9 @@
             "id": "asyncai/asyncflow_v2.0",
             "object": "model",
             "owned_by": "asyncAI",
-            "name": "AsyncFlow V2 (English)",
+            "name": "AsyncFlow V2",
             "type": "speech",
-            "description": "AsyncFlow V2 (English)"
+            "description": "[DEPRECATED] English Only Model"
         },
         {
             "id": "asyncai/asyncflow_multilingual_v1.0",
@@ -15,7 +15,15 @@
             "owned_by": "asyncAI",
             "name": "AsyncFlow Multilingual V1",
             "type": "speech",
-            "description": "AsyncFlow Multilingual V1"
+            "description": "[DEPRECATED] Multilingual Model"
+        },
+        {
+            "id": "asyncai/async_flash_v1.0",
+            "object": "model",
+            "owned_by": "asyncAI",
+            "name": "Async Flash v1.0",
+            "type": "speech",
+            "description": "Fastest model, designed for real-time and low-latency applications"
         }
     ]
 }

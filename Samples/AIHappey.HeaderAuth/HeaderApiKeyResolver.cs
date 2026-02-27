@@ -180,7 +180,8 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["supertone"] = "X-Supertone-Key",
             ["uvoiceai"] = "X-UVoiceAI-Key",
             ["astica"] = "X-Astica-Key",
-            ["heygen"] = "X-HeyGen-Key"
+            ["heygen"] = "X-HeyGen-Key",
+            ["ionet"] = "X-IOnet-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

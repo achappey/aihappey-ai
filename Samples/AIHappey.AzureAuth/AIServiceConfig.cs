@@ -179,6 +179,7 @@ public class AIServiceConfig
     public ProviderConfig? UVoiceAI { get; set; }
     public ProviderConfig? Astica { get; set; }
     public ProviderConfig? HeyGen { get; set; }
+    public ProviderConfig? IOnet { get; set; }
 }
 
 public class ProviderConfig

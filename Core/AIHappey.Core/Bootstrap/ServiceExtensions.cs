@@ -179,6 +179,7 @@ using AIHappey.Core.Providers.UnrealSpeech;
 using AIHappey.Core.Providers.Supertone;
 using AIHappey.Core.Providers.UVoiceAI;
 using AIHappey.Core.Providers.Astica;
+using AIHappey.Core.Providers.IOnet;
 
 namespace AIHappey.Core.AI;
 
@@ -365,6 +366,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SupertoneProvider>();
         services.AddSingleton<IModelProvider, UVoiceAIProvider>();
         services.AddSingleton<IModelProvider, AsticaProvider>();
+        services.AddSingleton<IModelProvider, IOnetProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

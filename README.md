@@ -96,6 +96,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Infomaniak     | ✅        | ✅                | ❌            | ❌        | ✅                     | ✅                       | ➖               | ✅          | ➖          |
 | Infraxa        | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          |
 | Inworld        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
+| IOnet          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | IONOS          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Jina           | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ✅          | ➖          |
 | JSON2Video     | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ✅          |

@@ -2,6 +2,7 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
@@ -22,7 +23,7 @@ public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFac
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No asyncAI API key.");
 
-        _client.BaseAddress ??= new Uri("https://api.async.ai/");
+        _client.BaseAddress ??= new Uri("https://api.async.com/");
 
         _client.DefaultRequestHeaders.Remove("x-api-key");
         _client.DefaultRequestHeaders.Add("x-api-key", key);
@@ -35,8 +36,7 @@ public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFac
         => throw new NotImplementedException();
 
     public async Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.SpeechSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
+        => await this.SpeechSamplingAsync(chatRequest, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -45,11 +45,14 @@ public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFac
             yield return p;
     }
 
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
+
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -62,7 +65,7 @@ public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFac
         throw new NotImplementedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -72,7 +75,7 @@ public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFac
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
 
