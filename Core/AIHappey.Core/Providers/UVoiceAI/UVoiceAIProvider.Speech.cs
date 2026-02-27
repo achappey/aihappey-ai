@@ -193,7 +193,7 @@ public partial class UVoiceAIProvider
             && contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
             return true;
 
-        var prefix = Encoding.UTF8.GetString(bytes.Take(64).ToArray()).TrimStart();
+        var prefix = Encoding.UTF8.GetString([.. bytes.Take(64)]).TrimStart();
         return prefix.StartsWith("{", StringComparison.Ordinal) || prefix.StartsWith("[", StringComparison.Ordinal);
     }
 

@@ -17,10 +17,9 @@ public partial class SupertoneProvider
 
         var voices = await GetAllVoicesAsync(cancellationToken);
 
-        return BuildDynamicVoiceModels(voices)
+        return [.. BuildDynamicVoiceModels(voices)
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .ToList();
+            .Select(g => g.First())];
     }
 
     private async Task<IReadOnlyList<SupertoneVoice>> GetAllVoicesAsync(CancellationToken cancellationToken)
@@ -206,9 +205,7 @@ public partial class SupertoneProvider
                 values.Add(s.Trim());
         }
 
-        return values
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        return [.. values.Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
     private static string? ReadCaseInsensitiveString(JsonElement obj, string propertyName)

@@ -34,7 +34,7 @@ public partial class NLPCloudProvider
             case NLPCloudModelKind.Paraphrasing:
             {
                 var text = BuildParaphrasingInput(messages);
-                var paraphrased = await SendParaphrasingAsync(baseModel, text, cancellationToken).ConfigureAwait(false);
+                var paraphrased = await SendParaphrasingAsync(baseModel, text, cancellationToken);
                 var itemIdParaphrase = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult
@@ -62,7 +62,7 @@ public partial class NLPCloudProvider
             case NLPCloudModelKind.Summarization:
             {
                 var text = BuildSummarizationInput(messages);
-                var summary = await SendSummarizationAsync(baseModel, text, cancellationToken).ConfigureAwait(false);
+                var summary = await SendSummarizationAsync(baseModel, text, cancellationToken);
                 var itemIdSummary = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult
@@ -90,7 +90,7 @@ public partial class NLPCloudProvider
             case NLPCloudModelKind.IntentClassification:
             {
                 var text = BuildIntentClassificationInput(messages);
-                var intent = await SendIntentClassificationAsync(baseModel, text, cancellationToken).ConfigureAwait(false);
+                var intent = await SendIntentClassificationAsync(baseModel, text, cancellationToken);
                 var itemIdIntent = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult
@@ -118,7 +118,7 @@ public partial class NLPCloudProvider
             case NLPCloudModelKind.CodeGeneration:
             {
                 var instruction = BuildCodeGenerationInput(messages);
-                var code = await SendCodeGenerationAsync(baseModel, instruction, cancellationToken).ConfigureAwait(false);
+                var code = await SendCodeGenerationAsync(baseModel, instruction, cancellationToken);
                 var itemIdCode = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult
@@ -146,7 +146,7 @@ public partial class NLPCloudProvider
             case NLPCloudModelKind.GrammarSpellingCorrection:
             {
                 var text = BuildGrammarSpellingCorrectionInput(messages);
-                var correction = await SendGrammarSpellingCorrectionAsync(baseModel, text, cancellationToken).ConfigureAwait(false);
+                var correction = await SendGrammarSpellingCorrectionAsync(baseModel, text, cancellationToken);
                 var itemIdCorrection = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult
@@ -174,7 +174,7 @@ public partial class NLPCloudProvider
             case NLPCloudModelKind.KeywordsKeyphrasesExtraction:
             {
                 var text = BuildKeywordsKeyphrasesExtractionInput(messages);
-                var keywords = await SendKeywordsKeyphrasesExtractionAsync(baseModel, text, cancellationToken).ConfigureAwait(false);
+                var keywords = await SendKeywordsKeyphrasesExtractionAsync(baseModel, text, cancellationToken);
                 var itemIdKeywords = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult
@@ -203,7 +203,7 @@ public partial class NLPCloudProvider
             {
                 var text = BuildTranslationInput(messages);
                 var targetLanguage = GetTranslationTargetLanguageFromModel(model);
-                var translated = await SendTranslationAsync(baseModel, text, targetLanguage, cancellationToken).ConfigureAwait(false);
+                var translated = await SendTranslationAsync(baseModel, text, targetLanguage, cancellationToken);
                 var itemIdTranslation = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult
@@ -235,7 +235,7 @@ public partial class NLPCloudProvider
                     messages,
                     stream: false);
 
-                var result = await SendChatbotAsync(model, payload, cancellationToken).ConfigureAwait(false);
+                var result = await SendChatbotAsync(model, payload, cancellationToken);
                 var itemId = Guid.NewGuid().ToString("n");
 
                 return new ResponseResult

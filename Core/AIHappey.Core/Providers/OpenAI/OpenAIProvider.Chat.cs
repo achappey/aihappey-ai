@@ -86,7 +86,7 @@ public partial class OpenAIProvider
                         throw new FormatException("Invalid Data URI");
 
                     // get the base64 part only
-                    string base64 = dataUrl.Substring(commaIndex + 1);
+                    string base64 = dataUrl[(commaIndex + 1)..];
 
                     await using var ms = new MemoryStream(Convert.FromBase64String(base64));
                     var provider = new FileExtensionContentTypeProvider();

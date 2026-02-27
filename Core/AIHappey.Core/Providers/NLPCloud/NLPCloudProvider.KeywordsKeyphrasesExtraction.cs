@@ -42,18 +42,18 @@ public partial class NLPCloudProvider
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!resp.IsSuccessStatusCode)
         {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
             throw new HttpRequestException($"NLPCloud API error: {err}");
         }
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
         var result = await JsonSerializer.DeserializeAsync<NLPCloudKeywordsKeyphrasesExtractionResponse>(
             stream,
             JsonSerializerOptions.Web,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
 
         if (result is null || result.KeywordsAndKeyphrases is null || result.KeywordsAndKeyphrases.Count == 0)
             throw new InvalidOperationException("Empty NLPCloud keywords and keyphrases extraction response.");
@@ -66,7 +66,7 @@ public partial class NLPCloudProvider
         string text,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var result = await SendKeywordsKeyphrasesExtractionAsync(model, text, cancellationToken).ConfigureAwait(false);
+        var result = await SendKeywordsKeyphrasesExtractionAsync(model, text, cancellationToken);
         foreach (var keyword in result)
         {
             if (!string.IsNullOrWhiteSpace(keyword))

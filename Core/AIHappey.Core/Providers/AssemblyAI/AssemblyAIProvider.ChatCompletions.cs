@@ -48,7 +48,7 @@ public partial class AssemblyAIProvider
         // AssemblyAI LLM Gateway does NOT support server-side streaming.
         // We simulate streaming by performing a non-stream request and converting the single
         // response into a small sequence of OpenAI-style chunks.
-        var result = await CompleteChatAsync(options, cancellationToken).ConfigureAwait(false);
+        var result = await CompleteChatAsync(options, cancellationToken);
 
         var id = string.IsNullOrWhiteSpace(result.Id) ? Guid.NewGuid().ToString("n") : result.Id;
         var created = result.Created != 0 ? result.Created : DateTimeOffset.UtcNow.ToUnixTimeSeconds();

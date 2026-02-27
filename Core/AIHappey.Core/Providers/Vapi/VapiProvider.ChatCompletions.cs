@@ -13,7 +13,7 @@ public partial class VapiProvider
         ArgumentNullException.ThrowIfNull(options);
 
         var request = ToResponseRequest(options, stream: false);
-        var response = await ResponsesAsyncInternal(request, cancellationToken).ConfigureAwait(false);
+        var response = await ResponsesAsyncInternal(request, cancellationToken);
 
         var model = NormalizeIncomingModel(response.Model, options.Model);
         var text = ExtractAssistantText(response.Output);

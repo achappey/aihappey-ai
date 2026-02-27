@@ -69,7 +69,7 @@ public partial class RunpodProvider
         ChatCompletionOptions options,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var completion = await CompleteChatAsync(options, cancellationToken).ConfigureAwait(false);
+        var completion = await CompleteChatAsync(options, cancellationToken);
         var content = string.Empty;
 
         var firstChoice = completion.Choices.FirstOrDefault();

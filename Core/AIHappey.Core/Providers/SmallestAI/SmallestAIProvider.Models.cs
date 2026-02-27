@@ -30,10 +30,9 @@ public partial class SmallestAIProvider
         models.AddRange(BuildDynamicVoiceModels(LightningV31Model, v31Voices));
         models.AddRange(BuildDynamicVoiceModels(LightningV2Model, v2Voices));
 
-        return models
+        return [.. models
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .ToList();
+            .Select(g => g.First())];
     }
 
     private async Task<IReadOnlyList<SmallestAIVoice>> GetVoicesAsync(string model, CancellationToken cancellationToken)
@@ -105,9 +104,7 @@ public partial class SmallestAIProvider
                 DisplayName = displayName,
                 Gender = gender,
                 Accent = accent,
-                Languages = languages
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList()
+                Languages = [.. languages.Distinct(StringComparer.OrdinalIgnoreCase)]
             });
         }
 

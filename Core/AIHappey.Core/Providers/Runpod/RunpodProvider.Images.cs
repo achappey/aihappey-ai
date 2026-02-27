@@ -50,9 +50,9 @@ public partial class RunpodProvider
         using var submitResp = await _client.PostAsync(
             route,
             new StringContent(payloadJson, Encoding.UTF8, MediaTypeNames.Application.Json),
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
 
-        var submitRaw = await submitResp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        var submitRaw = await submitResp.Content.ReadAsStringAsync(cancellationToken);
         if (!submitResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Runpod image request failed ({(int)submitResp.StatusCode}): {submitRaw}");
 
@@ -83,8 +83,8 @@ public partial class RunpodProvider
                 continue;
             }
 
-            using var mediaResp = await _client.GetAsync(imageUrl, cancellationToken).ConfigureAwait(false);
-            var bytes = await mediaResp.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+            using var mediaResp = await _client.GetAsync(imageUrl, cancellationToken);
+            var bytes = await mediaResp.Content.ReadAsByteArrayAsync(cancellationToken);
             if (!mediaResp.IsSuccessStatusCode)
             {
                 var text = Encoding.UTF8.GetString(bytes);

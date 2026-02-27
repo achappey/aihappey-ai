@@ -41,7 +41,7 @@ public partial class RelaxAIProvider
 
         // RelaxAI deep-research endpoint does not support SSE.
         // Simulate chat-completions streaming via synthetic chunks.
-        var result = await CompleteChatAsync(options, cancellationToken).ConfigureAwait(false);
+        var result = await CompleteChatAsync(options, cancellationToken);
 
         var id = string.IsNullOrWhiteSpace(result.Id) ? Guid.NewGuid().ToString("n") : result.Id;
         var created = result.Created != 0 ? result.Created : DateTimeOffset.UtcNow.ToUnixTimeSeconds();

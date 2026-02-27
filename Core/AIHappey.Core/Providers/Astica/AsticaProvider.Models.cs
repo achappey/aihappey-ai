@@ -26,10 +26,9 @@ public partial class AsticaProvider
             .Select(g => g.First())
             .Select(BuildVoiceModel));
 
-        return models
+        return [.. models
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .ToList();
+            .Select(g => g.First())];
     }
 
     private async Task<IReadOnlyList<AsticaVoice>> GetVoicesAsync(string apiKey, CancellationToken cancellationToken)

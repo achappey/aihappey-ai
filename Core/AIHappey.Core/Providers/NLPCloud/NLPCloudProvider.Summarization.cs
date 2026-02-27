@@ -126,18 +126,18 @@ public partial class NLPCloudProvider
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!resp.IsSuccessStatusCode)
         {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
             throw new HttpRequestException($"NLPCloud API error: {err}");
         }
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
         var result = await JsonSerializer.DeserializeAsync<NLPCloudSummarizationResponse>(
             stream,
             JsonSerializerOptions.Web,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
 
         if (result is null || string.IsNullOrWhiteSpace(result.SummaryText))
             throw new InvalidOperationException("Empty NLPCloud summarization response.");
@@ -150,7 +150,7 @@ public partial class NLPCloudProvider
         string text,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var result = await SendSummarizationAsync(model, text, cancellationToken).ConfigureAwait(false);
+        var result = await SendSummarizationAsync(model, text, cancellationToken);
         if (!string.IsNullOrWhiteSpace(result))
             yield return result;
     }

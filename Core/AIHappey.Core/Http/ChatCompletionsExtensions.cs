@@ -29,11 +29,11 @@ public static class ChatCompletionsExtensions
         //   var payload = JsonSerializer.SerializeToElement(options);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
-        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-        await ThrowIfNotSuccess(resp, ct).ConfigureAwait(false);
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        await ThrowIfNotSuccess(resp, ct);
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-        var result = await JsonSerializer.DeserializeAsync<ChatCompletion>(stream, cancellationToken: ct).ConfigureAwait(false);
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        var result = await JsonSerializer.DeserializeAsync<ChatCompletion>(stream, cancellationToken: ct);
 
         if (result is null)
             throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
@@ -72,15 +72,15 @@ public static class ChatCompletionsExtensions
         var payload = JsonSerializer.SerializeToElement(options);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
-        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-        await ThrowIfNotSuccess(resp, ct).ConfigureAwait(false);
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        await ThrowIfNotSuccess(resp, ct);
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
 
         while (!reader.EndOfStream && !ct.IsCancellationRequested)
         {
-            var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            var line = await reader.ReadLineAsync(ct);
             if (line is null) yield break;
 
             if (line.Length == 0) continue; // keepalive
@@ -112,7 +112,7 @@ public static class ChatCompletionsExtensions
     {
         if (resp.IsSuccessStatusCode) return;
 
-        var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct);
         throw new HttpRequestException($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
     }
 }

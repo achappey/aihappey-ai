@@ -33,19 +33,19 @@ public partial class RunpodProvider
         var route = BuildRunSyncRoute(modelId);
 
         var attemptA = BuildMessagesPayload(messages, temperature, maxTokens, topP, topK);
-        var respA = await PostRunpodAsync(route, attemptA, cancellationToken).ConfigureAwait(false);
+        var respA = await PostRunpodAsync(route, attemptA, cancellationToken);
         if (respA.IsSuccessStatusCode)
-            return await ParseRunpodDocAsync(respA, cancellationToken).ConfigureAwait(false);
+            return await ParseRunpodDocAsync(respA, cancellationToken);
 
-        var bodyA = await respA.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        var bodyA = await respA.Content.ReadAsStringAsync(cancellationToken);
 
         var prompt = BuildPrompt(messages);
         var attemptB = BuildPromptPayload(prompt, temperature, maxTokens, topP, topK);
-        var respB = await PostRunpodAsync(route, attemptB, cancellationToken).ConfigureAwait(false);
+        var respB = await PostRunpodAsync(route, attemptB, cancellationToken);
         if (respB.IsSuccessStatusCode)
-            return await ParseRunpodDocAsync(respB, cancellationToken).ConfigureAwait(false);
+            return await ParseRunpodDocAsync(respB, cancellationToken);
 
-        var bodyB = await respB.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        var bodyB = await respB.Content.ReadAsStringAsync(cancellationToken);
 
         throw new HttpRequestException(
             $"Runpod native request failed for model '{modelId}'. First attempt: {(int)respA.StatusCode} {respA.ReasonPhrase}: {bodyA}. " +
@@ -64,8 +64,8 @@ public partial class RunpodProvider
         if (string.IsNullOrWhiteSpace(jobId))
             throw new ArgumentException("Job id is required.", nameof(jobId));
 
-        using var resp = await _client.GetAsync($"{modelId}/status/{jobId}", cancellationToken).ConfigureAwait(false);
-        var raw = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var resp = await _client.GetAsync($"{modelId}/status/{jobId}", cancellationToken);
+        var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
             throw new HttpRequestException($"Runpod status error: {(int)resp.StatusCode} {resp.ReasonPhrase}: {raw}");
@@ -89,16 +89,16 @@ public partial class RunpodProvider
         var route = BuildRunRoute(modelId);
         var attemptA = BuildMessagesPayload(messages, temperature, maxTokens, topP, topK);
 
-        using var respA = await PostRunpodAsync(route, attemptA, cancellationToken).ConfigureAwait(false);
-        var rawA = await respA.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var respA = await PostRunpodAsync(route, attemptA, cancellationToken);
+        var rawA = await respA.Content.ReadAsStringAsync(cancellationToken);
 
         if (respA.IsSuccessStatusCode)
             return ParseRunSubmission(rawA);
 
         var prompt = BuildPrompt(messages);
         var attemptB = BuildPromptPayload(prompt, temperature, maxTokens, topP, topK);
-        using var respB = await PostRunpodAsync(route, attemptB, cancellationToken).ConfigureAwait(false);
-        var rawB = await respB.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var respB = await PostRunpodAsync(route, attemptB, cancellationToken);
+        var rawB = await respB.Content.ReadAsStringAsync(cancellationToken);
 
         if (respB.IsSuccessStatusCode)
             return ParseRunSubmission(rawB);
@@ -264,12 +264,12 @@ public partial class RunpodProvider
         };
 
         return await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-            .ConfigureAwait(false);
+            ;
     }
 
     private static async Task<JsonDocument> ParseRunpodDocAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
-        var raw = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
         return JsonDocument.Parse(raw);
     }
 
@@ -424,7 +424,7 @@ public partial class RunpodProvider
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var statusDoc = await GetRunpodStatusAsync(model, jobId, cancellationToken).ConfigureAwait(false);
+            using var statusDoc = await GetRunpodStatusAsync(model, jobId, cancellationToken);
             var root = statusDoc.RootElement;
 
             var status = root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String
@@ -441,7 +441,7 @@ public partial class RunpodProvider
                 throw new InvalidOperationException($"Runpod job {jobId} failed with status '{status}': {root.GetRawText()}");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
         }
 
         throw new TimeoutException($"Runpod job {jobId} did not complete in time.");

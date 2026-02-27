@@ -88,7 +88,7 @@ public static class ResponseExtensions
     private static string EscapeJsonFragment(this string s)
     {
         var json = JsonSerializer.Serialize(s); // e.g. "\"print(\\\"hi\\\")\\n\""
-        return json.Substring(1, json.Length - 2); // remove the surrounding quotes
+        return json[1..^1]; // remove the surrounding quotes
     }
 
     public static async IAsyncEnumerable<UIMessagePart> GetSourceUiPartsFromCompleted(

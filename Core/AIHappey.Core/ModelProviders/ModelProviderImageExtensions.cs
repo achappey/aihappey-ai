@@ -166,14 +166,14 @@ public static class ModelProviderImageExtensions
         if (commaIndex < 0)
             throw new FormatException("Invalid data URL: missing comma.");
 
-        var header = input.Substring(5, commaIndex - 5); // strip "data:"
+        var header = input[5..commaIndex]; // strip "data:"
         var payload = input[(commaIndex + 1)..];
 
         string? mimeType = null;
 
         var semiIndex = header.IndexOf(';');
         if (semiIndex >= 0)
-            mimeType = header.Substring(0, semiIndex);
+            mimeType = header[..semiIndex];
         else if (!string.IsNullOrWhiteSpace(header))
             mimeType = header;
 

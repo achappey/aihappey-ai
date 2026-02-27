@@ -186,6 +186,14 @@ using AIHappey.Core.Providers.LLMLayer;
 using AIHappey.Core.Providers.Simplismart;
 using AIHappey.Core.Providers.Routeway;
 using AIHappey.Core.Providers.ChainGPT;
+using AIHappey.Core.Providers.CheapestInference;
+using AIHappey.Core.Providers.Tetrate;
+using AIHappey.Core.Providers.Clod;
+using AIHappey.Core.Providers.GitHub;
+using AIHappey.Core.Providers.WAI;
+using AIHappey.Core.Providers.Venice;
+using AIHappey.Core.Providers.QuiverAI;
+using AIHappey.Core.Providers.KissAPI;
 
 namespace AIHappey.Core.AI;
 
@@ -379,6 +387,14 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SimplismartProvider>();
         services.AddSingleton<IModelProvider, RoutewayProvider>();
         services.AddSingleton<IModelProvider, ChainGPTProvider>();
+        services.AddSingleton<IModelProvider, CheapestInferenceProvider>();
+        services.AddSingleton<IModelProvider, TetrateProvider>();
+        services.AddSingleton<IModelProvider, ClodProvider>();
+        services.AddSingleton<IModelProvider, GitHubProvider>();
+        services.AddSingleton<IModelProvider, WAIProvider>();
+        services.AddSingleton<IModelProvider, VeniceProvider>();
+        services.AddSingleton<IModelProvider, QuiverAIProvider>();
+        services.AddSingleton<IModelProvider, KissAPIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

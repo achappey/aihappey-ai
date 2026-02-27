@@ -187,7 +187,15 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["llmlayer"] = "X-LLMLayer-Key",
             ["simplismart"] = "X-Simplismart-Key",
             ["chaingpt"] = "X-ChainGPT-Key",
-            ["routeway"] = "X-Routeway-Key"
+            ["routeway"] = "X-Routeway-Key",
+            ["cheapestinference"] = "X-CheapestInference-Key",
+            ["tetrate"] = "X-Tetrate-Key",
+            ["clod"] = "X-Clod-Key",
+            ["github"] = "X-GitHub-Key",
+            ["wai"] = "X-WAI-Key",
+            ["venice"] = "X-Venice-Key",
+            ["quiverai"] = "X-QuiverAI-Key",
+            ["kissapi"] = "X-KissAPI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -17,7 +17,7 @@ public partial class UVoiceAIProvider
 
         var voices = await GetVoicesAsync(cancellationToken);
 
-        return voices
+        return [.. voices
             .Select(v => new Model
             {
                 Id = BuildModelId(v.VoiceId),
@@ -28,8 +28,7 @@ public partial class UVoiceAIProvider
                 Tags = BuildVoiceTags(v)
             })
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .ToList();
+            .Select(g => g.First())];
     }
 
     private async Task<IReadOnlyList<UVoiceVoice>> GetVoicesAsync(CancellationToken cancellationToken)

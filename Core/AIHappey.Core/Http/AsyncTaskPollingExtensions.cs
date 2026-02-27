@@ -31,7 +31,7 @@ public static class AsyncTaskPollingExtensions
             cancellationToken.ThrowIfCancellationRequested();
             attempt++;
 
-            var current = await poll(cancellationToken).ConfigureAwait(false);
+            var current = await poll(cancellationToken);
             if (isTerminal(current))
                 return current;
 
@@ -41,7 +41,7 @@ public static class AsyncTaskPollingExtensions
             if (timeout.HasValue && DateTime.UtcNow - start >= timeout.Value)
                 throw new TimeoutException($"Polling exceeded timeout ({timeout}).");
 
-            await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(interval, cancellationToken);
         }
     }
 }

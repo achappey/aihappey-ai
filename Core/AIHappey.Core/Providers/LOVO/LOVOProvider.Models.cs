@@ -204,9 +204,7 @@ public partial class LOVOProvider
                 ids.Add(id.Trim());
         }
 
-        return ids
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        return [.. ids.Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
     private static string? ReadString(JsonElement obj, string name)

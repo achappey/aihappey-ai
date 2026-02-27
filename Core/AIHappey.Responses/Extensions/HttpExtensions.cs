@@ -36,7 +36,7 @@ public static class HttpExtensions
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-        await ThrowIfNotSuccess(resp, ct).ConfigureAwait(false);
+        await ThrowIfNotSuccess(resp, ct);
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         var result = await JsonSerializer.DeserializeAsync<ResponseResult>(stream, cancellationToken: ct);
@@ -68,15 +68,15 @@ public static class HttpExtensions
         var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
-        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-        await ThrowIfNotSuccess(resp, ct).ConfigureAwait(false);
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        await ThrowIfNotSuccess(resp, ct);
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
 
         while (!reader.EndOfStream && !ct.IsCancellationRequested)
         {
-            var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            var line = await reader.ReadLineAsync(ct);
             if (line is null) yield break;
 
             if (line.Length == 0) continue; // keepalive
@@ -108,7 +108,7 @@ public static class HttpExtensions
     {
         if (resp.IsSuccessStatusCode) return;
 
-        var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct);
         throw new HttpRequestException($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
     }
 }

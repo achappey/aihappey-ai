@@ -110,18 +110,18 @@ public partial class NLPCloudProvider
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!resp.IsSuccessStatusCode)
         {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
             throw new HttpRequestException($"NLPCloud API error: {err}");
         }
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
         var result = await JsonSerializer.DeserializeAsync<NLPCloudTranslationResponse>(
             stream,
             JsonSerializerOptions.Web,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
 
         if (result is null || string.IsNullOrWhiteSpace(result.TranslationText))
             throw new InvalidOperationException("Empty NLPCloud translation response.");
@@ -135,7 +135,7 @@ public partial class NLPCloudProvider
         string targetLanguage,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var result = await SendTranslationAsync(model, text, targetLanguage, cancellationToken).ConfigureAwait(false);
+        var result = await SendTranslationAsync(model, text, targetLanguage, cancellationToken);
         if (!string.IsNullOrWhiteSpace(result))
             yield return result;
     }

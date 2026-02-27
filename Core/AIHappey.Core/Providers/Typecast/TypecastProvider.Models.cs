@@ -16,10 +16,9 @@ public partial class TypecastProvider
         ApplyAuthHeader();
 
         var voices = await GetVoicesAsync(cancellationToken);
-        return BuildDynamicVoiceModels(voices)
+        return [.. BuildDynamicVoiceModels(voices)
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .ToList();
+            .Select(g => g.First())];
     }
 
     private async Task<IReadOnlyList<TypecastVoice>> GetVoicesAsync(CancellationToken cancellationToken)
@@ -179,9 +178,7 @@ public partial class TypecastProvider
                 values.Add(s.Trim());
         }
 
-        return values
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        return [.. values.Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
     private static string? ReadString(JsonElement obj, string name)

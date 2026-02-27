@@ -40,7 +40,7 @@ public partial class InworldProvider : IModelProvider
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => await ChatCompletionsCompleteChatAsync(options, cancellationToken).ConfigureAwait(false);
+        => await ChatCompletionsCompleteChatAsync(options, cancellationToken);
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => ChatCompletionsCompleteChatStreamingAsync(options, cancellationToken);

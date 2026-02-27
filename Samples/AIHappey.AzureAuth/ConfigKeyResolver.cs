@@ -193,6 +193,15 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "simplismart" => _config.Simplismart?.ApiKey,
             "chaingpt" => _config.ChainGPT?.ApiKey,
             "routeway" => _config.Routeway?.ApiKey,
+            "cheapestinference" => _config.CheapestInference?.ApiKey,
+            "tetrate" => _config.Tetrate?.ApiKey,
+            "clod" => _config.Clod?.ApiKey,
+            "github" => _config.GitHub?.ApiKey,
+            "wai" => _config.WAI?.ApiKey,
+            "venice" => _config.Venice?.ApiKey,
+            "quiverai" => _config.QuiverAI?.ApiKey,
+            "kissapi" => _config.KissAPI?.ApiKey,
             _ => null
         };
 }
+

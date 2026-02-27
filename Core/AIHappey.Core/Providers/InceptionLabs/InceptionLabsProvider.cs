@@ -120,7 +120,7 @@ public partial class InceptionLabsProvider : IModelProvider
         var completion = await _client.GetChatCompletion(
             chatOptions,
             relativeUrl: relativeUrl,
-            ct: cancellationToken).ConfigureAwait(false);
+            ct: cancellationToken);
 
         var text = ExtractAssistantText(completion);
         return BuildResponseResult(completion.Id, completion.Created, completion.Model, text, completion.Usage, options);
