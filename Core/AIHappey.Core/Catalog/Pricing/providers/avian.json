@@ -1,0 +1,26 @@
+{
+  "avian/deepseek/deepseek-v3.2": {
+    "pricing": {
+      "input": "0.00000026",
+      "output": "0.00000038"
+    }
+  },
+  "avian/minimax/minimax-m2.5": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000011"
+    }
+  },
+  "avian/z-ai/glm-5": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.00000255"
+    }
+  },
+  "avian/moonshotai/kimi-k2.5": {
+    "pricing": {
+      "input": "0.00000045",
+      "output": "0.0000022"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "avian/deepseek/deepseek-v3.2",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.2",
+      "type": "language",
+      "context_window": 163000
+    },
+    {
+      "id": "avian/minimax/minimax-m2.5",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.5",
+      "type": "language",
+      "context_window": 196000
+    },
+    {
+      "id": "avian/z-ai/glm-5",
+      "object": "model",
+      "owned_by": "Z.AI",
+      "name": "glm-5",
+      "type": "language",
+      "context_window": 205000
+    },
+    {
+      "id": "avian/moonshotai/kimi-k2.5",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "kimi-k2.5",
+      "type": "language",
+      "context_window": 262000
+    }
+  ]
+}

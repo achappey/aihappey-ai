@@ -1,0 +1,33 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "llmlayer/llmlayer-web",
+      "object": "model",
+      "owned_by": "LLMLayer",
+      "name": "llmlayer-web",
+      "type": "language"
+    },
+    {
+      "id": "llmlayer/llmlayer-fast",
+      "object": "model",
+      "owned_by": "LLMLayer",
+      "name": "llmlayer-fast",
+      "type": "language"
+    },
+    {
+      "id": "llmlayer/openai/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "gpt-4o-mini",
+      "type": "language"
+    },
+    {
+      "id": "llmlayer/openai/gpt-5.1",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "gpt-5.1",
+      "type": "language"
+    }
+  ]
+}

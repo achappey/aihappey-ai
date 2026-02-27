@@ -1,14 +1,14 @@
 using System.Text.Json.Serialization;
 
-namespace AIHappey.Common.Model.Providers.AsyncAI;
+namespace AIHappey.Common.Model.Providers.Async;
 
-public sealed class AsyncAISpeechProviderMetadata
+public sealed class AsyncSpeechProviderMetadata
 {
     [JsonPropertyName("voice")]
-    public AsyncAIVoice? Voice { get; set; }
+    public AsyncVoice? Voice { get; set; }
 
     [JsonPropertyName("output_format")]
-    public AsyncAIOutputFormat? OutputFormat { get; set; }
+    public AsyncOutputFormat? OutputFormat { get; set; }
 
     /// <summary>
     /// Force to synthesize speech in the specified language (ISO 639-1), regardless of detected language.
@@ -29,7 +29,7 @@ public sealed class AsyncAISpeechProviderMetadata
     public int? Stability { get; set; }
 }
 
-public sealed class AsyncAIOutputFormat
+public sealed class AsyncOutputFormat
 {
     [JsonPropertyName("container")]
     public string? Container { get; set; } // raw | mp3 | wav
@@ -51,7 +51,7 @@ public sealed class AsyncAIOutputFormat
 }
 
 
-public sealed class AsyncAIVoice
+public sealed class AsyncVoice
 {
     [JsonPropertyName("mode")]
     public string Mode { get; set; } = "id";

@@ -37,7 +37,7 @@ public class AIServiceConfig
     public ProviderConfig? Tinfoil { get; set; }
     public ProviderConfig? Nebius { get; set; }
     public ProviderConfig? Baseten { get; set; }
-    public ProviderConfig? AsyncAI { get; set; }
+    public ProviderConfig? Async { get; set; }
     public ProviderConfig? Replicate { get; set; }
     public ProviderConfig? VoyageAI { get; set; }
     public ProviderConfig? ContextualAI { get; set; }
@@ -180,6 +180,9 @@ public class AIServiceConfig
     public ProviderConfig? Astica { get; set; }
     public ProviderConfig? HeyGen { get; set; }
     public ProviderConfig? IOnet { get; set; }
+    public ProviderConfig? Avian { get; set; }
+    public ProviderConfig? LLMAPI { get; set; }
+    public ProviderConfig? LLMLayer { get; set; }
 }
 
 public class ProviderConfig

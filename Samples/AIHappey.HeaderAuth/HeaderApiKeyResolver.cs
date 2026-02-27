@@ -41,7 +41,7 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
             ["cloudrift"] = "X-CloudRift-Key",
-            ["asyncai"] = "X-AsyncAI-Key",
+            ["async"] = "X-Async-Key",
             ["replicate"] = "X-Replicate-Key",
             ["baseten"] = "X-Baseten-Key",
             ["speechify"] = "X-Speechify-Key",
@@ -181,7 +181,10 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["uvoiceai"] = "X-UVoiceAI-Key",
             ["astica"] = "X-Astica-Key",
             ["heygen"] = "X-HeyGen-Key",
-            ["ionet"] = "X-IOnet-Key"
+            ["ionet"] = "X-IOnet-Key",
+            ["avian"] = "X-Avian-Key",
+            ["llmapi"] = "X-LLMAPI-Key",
+            ["llmlayer"] = "X-LLMLayer-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

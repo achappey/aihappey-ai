@@ -1,12 +1,12 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.AsyncAI;
+using AIHappey.Common.Model.Providers.Async;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.AsyncAI;
+namespace AIHappey.Core.Providers.Async;
 
-public partial class AsyncAIProvider
+public partial class AsyncProvider
 {
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
@@ -18,10 +18,10 @@ public partial class AsyncAIProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<AsyncAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<AsyncSpeechProviderMetadata>(GetIdentifier());
         var voiceId = request.Voice ?? metadata?.Voice?.Id;
         if (string.IsNullOrWhiteSpace(voiceId))
-            throw new ArgumentException("'voice' (asyncAI voice UUID) is required.");
+            throw new ArgumentException("'voice' (async voice UUID) is required.");
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();

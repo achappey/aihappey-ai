@@ -45,7 +45,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "cloudrift" => _config.CloudRift?.ApiKey,
             "baseten" => _config.Baseten?.ApiKey,
             "azure" => _config.Azure?.ApiKey,
-            "asyncai" => _config.AsyncAI?.ApiKey,
+            "async" => _config.Async?.ApiKey,
             "replicate" => _config.Replicate?.ApiKey,
             "contextualai" => _config.ContextualAI?.ApiKey,
             "voyageai" => _config.VoyageAI?.ApiKey,
@@ -187,6 +187,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "astica" => _config.Astica?.ApiKey,
             "heygen" => _config.HeyGen?.ApiKey,
             "ionet" => _config.IOnet?.ApiKey,
+            "avian" => _config.Avian?.ApiKey,
+            "llmapi" => _config.LLMAPI?.ApiKey,
+            "llmlayer" => _config.LLMLayer?.ApiKey,
             _ => null
         };
 }

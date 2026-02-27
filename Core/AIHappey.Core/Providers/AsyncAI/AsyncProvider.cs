@@ -7,21 +7,21 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.AsyncAI;
+namespace AIHappey.Core.Providers.Async;
 
-public partial class AsyncAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+public partial class AsyncProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     : IModelProvider
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient();
 
-    public string GetIdentifier() => "asyncai";
+    public string GetIdentifier() => "async";
 
     private void ApplyAuthHeader()
     {
         var key = keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No asyncAI API key.");
+            throw new InvalidOperationException("No async API key.");
 
         _client.BaseAddress ??= new Uri("https://api.async.com/");
 

@@ -2,25 +2,25 @@
     "object": "list",
     "data": [
         {
-            "id": "asyncai/asyncflow_v2.0",
+            "id": "async/asyncflow_v2.0",
             "object": "model",
-            "owned_by": "asyncAI",
+            "owned_by": "async",
             "name": "AsyncFlow V2",
             "type": "speech",
             "description": "[DEPRECATED] English Only Model"
         },
         {
-            "id": "asyncai/asyncflow_multilingual_v1.0",
+            "id": "async/asyncflow_multilingual_v1.0",
             "object": "model",
-            "owned_by": "asyncAI",
+            "owned_by": "async",
             "name": "AsyncFlow Multilingual V1",
             "type": "speech",
             "description": "[DEPRECATED] Multilingual Model"
         },
         {
-            "id": "asyncai/async_flash_v1.0",
+            "id": "async/async_flash_v1.0",
             "object": "model",
-            "owned_by": "asyncAI",
+            "owned_by": "async",
             "name": "Async Flash v1.0",
             "type": "speech",
             "description": "Fastest model, designed for real-time and low-latency applications"

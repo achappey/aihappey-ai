@@ -38,7 +38,7 @@ using AIHappey.Core.Providers.Tinfoil;
 using AIHappey.Core.Providers.xAI;
 using AIHappey.Core.Providers.Zai;
 using AIHappey.Core.Providers.Azure;
-using AIHappey.Core.Providers.AsyncAI;
+using AIHappey.Core.Providers.Async;
 using Microsoft.Extensions.DependencyInjection;
 using AIHappey.Core.Providers.VoyageAI;
 using AIHappey.Core.Providers.ContextualAI;
@@ -180,6 +180,9 @@ using AIHappey.Core.Providers.Supertone;
 using AIHappey.Core.Providers.UVoiceAI;
 using AIHappey.Core.Providers.Astica;
 using AIHappey.Core.Providers.IOnet;
+using AIHappey.Core.Providers.Avian;
+using AIHappey.Core.Providers.LLMAPI;
+using AIHappey.Core.Providers.LLMLayer;
 
 namespace AIHappey.Core.AI;
 
@@ -230,7 +233,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ReplicateProvider>();
         services.AddSingleton<IModelProvider, BasetenProvider>();
         services.AddSingleton<IModelProvider, AzureProvider>();
-        services.AddSingleton<IModelProvider, AsyncAIProvider>();
+        services.AddSingleton<IModelProvider, AsyncProvider>();
         services.AddSingleton<IModelProvider, VoyageAIProvider>();
         services.AddSingleton<IModelProvider, ContextualAIProvider>();
         services.AddSingleton<IModelProvider, SarvamProvider>();
@@ -367,6 +370,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, UVoiceAIProvider>();
         services.AddSingleton<IModelProvider, AsticaProvider>();
         services.AddSingleton<IModelProvider, IOnetProvider>();
+        services.AddSingleton<IModelProvider, AvianProvider>();
+        services.AddSingleton<IModelProvider, LLMAPIProvider>();
+        services.AddSingleton<IModelProvider, LLMLayerProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
