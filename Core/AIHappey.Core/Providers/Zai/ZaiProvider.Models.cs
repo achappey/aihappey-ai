@@ -2,21 +2,25 @@ using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider 
+public partial class ZaiProvider
 {
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        ApplyAuthHeader();
-
         return ZaiLanguageModels;
     }
 
     public static IReadOnlyList<Model> ZaiLanguageModels =>
     [
+        new()
+        {
+            Id = "zai/glm-5",
+            Name = "glm-5",
+            ContextWindow = 200_000,
+            MaxTokens = 128_000,
+            Type = "language",
+            OwnedBy = "z.ai"
+        },
         new()
         {
             Id = "zai/glm-4.7-flash",

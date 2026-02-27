@@ -9,6 +9,7 @@ using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Runway;
 
@@ -37,7 +38,8 @@ public partial class RunwayProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+          => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

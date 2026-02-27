@@ -7,6 +7,8 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Gladia;
 
@@ -35,6 +37,8 @@ public partial class GladiaProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("x-gladia-key", key);
     }
 
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -56,24 +60,21 @@ public partial class GladiaProvider : IModelProvider
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
-
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => this.StreamTranscriptionAsync(chatRequest, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
@@ -88,7 +89,7 @@ public partial class GladiaProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerOptions.Web)

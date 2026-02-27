@@ -8,12 +8,6 @@ public partial class NovitaProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-
-        ApplyAuthHeader();
-
         using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
         using var resp = await _client.SendAsync(req, cancellationToken);
 
@@ -29,10 +23,7 @@ public partial class NovitaProvider
         var models = new List<Model>();
         var root = doc.RootElement;
 
-        // ✅ root is already an array
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                 ? dataEl.EnumerateArray()
                 : Enumerable.Empty<JsonElement>();
 
