@@ -1,0 +1,82 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "netmind/wan2.6-i2v",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "wan2.6-i2v",
+      "type": "video"
+    },
+    {
+      "id": "netmind/wan2.5-i2v-preview",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "wan2.5-i2v-preview",
+      "type": "video"
+    },
+    {
+      "id": "netmind/wan-2.2-t2v-fast",
+      "object": "model",
+      "owned_by": "PrunaAI",
+      "name": "wan-2.2-t2v-fast",
+      "type": "video"
+    },
+    {
+      "id": "netmind/wan-2.2-i2v-fast",
+      "object": "model",
+      "owned_by": "PrunaAI",
+      "name": "wan-2.2-i2v-fast",
+      "type": "video"
+    },
+    {
+      "id": "netmind/hailuo-02",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "hailuo-02",
+      "type": "video"
+    },
+    {
+      "id": "netmind/ltx-video-13b",
+      "object": "model",
+      "owned_by": "Lightricks",
+      "name": "ltx-video-13b",
+      "type": "video"
+    },
+    {
+      "id": "netmind/kling-v2.1-master",
+      "object": "model",
+      "owned_by": "Kuaishou",
+      "name": "kling-v2.1-master",
+      "type": "video"
+    },
+    {
+      "id": "netmind/veo3-fast",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "veo3-fast",
+      "type": "video"
+    },
+    {
+      "id": "netmind/veo3",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "veo3",
+      "type": "video"
+    },
+    {
+      "id": "netmind/haipervideo2.5",
+      "object": "model",
+      "owned_by": "Haiper",
+      "name": "haipervideo2.5",
+      "type": "video"
+    },
+    {
+      "id": "netmind/doubao-seedance-1-0-pro-250528",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "doubao-seedance-1-0-pro-250528",
+      "type": "video"
+    }
+  ]
+}

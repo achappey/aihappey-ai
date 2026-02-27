@@ -1,0 +1,159 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "netmind/wan2.6-image",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "wan2.6-image",
+      "type": "image"
+    },
+    {
+      "id": "netmind/wan2.5-i2i-preview",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "wan2.5-i2i-preview",
+      "type": "image"
+    },
+    {
+      "id": "netmind/nano-banana-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "nano-banana-pro",
+      "type": "image"
+    },
+    {
+      "id": "netmind/photomaker",
+      "object": "model",
+      "owned_by": "PhotoMaker",
+      "name": "photomaker",
+      "type": "image"
+    },
+    {
+      "id": "netmind/qwen-image",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen-image",
+      "type": "image"
+    },
+    {
+      "id": "netmind/recraft-v3",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "recraft-v3",
+      "type": "image"
+    },
+    {
+      "id": "netmind/flux-pro-kontext",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "flux-pro-kontext",
+      "type": "image"
+    },
+    {
+      "id": "netmind/flux-pro-v1.1",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "flux-pro-v1.1",
+      "type": "image"
+    },
+    {
+      "id": "netmind/nano-banana",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "nano-banana",
+      "type": "image"
+    },
+    {
+      "id": "netmind/controlnet-scribble",
+      "object": "model",
+      "owned_by": "ControlNet",
+      "name": "controlnet-scribble",
+      "type": "image"
+    },
+    {
+      "id": "netmind/haiperimage1.0",
+      "object": "model",
+      "owned_by": "Haiper",
+      "name": "haiperimage1.0",
+      "type": "image"
+    },
+    {
+      "id": "netmind/flux.1-depth-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "flux.1-depth-dev",
+      "type": "image"
+    },
+    {
+      "id": "netmind/flux.1-canny-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "flux.1-canny-dev",
+      "type": "image"
+    },
+    {
+      "id": "netmind/flux.1-redux-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "flux.1-redux-dev",
+      "type": "image"
+    },
+    {
+      "id": "netmind/flux.1-fill-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "flux.1-fill-dev",
+      "type": "image"
+    },
+    {
+      "id": "netmind/flux.1-schnell",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "flux.1-schnell",
+      "type": "image"
+    },
+    {
+      "id": "netmind/stable-diffusion-3.5-large",
+      "object": "model",
+      "owned_by": "Stability AI",
+      "name": "stable-diffusion-3.5-large",
+      "type": "image"
+    },
+    {
+      "id": "netmind/stable-diffusion-v1-5",
+      "object": "model",
+      "owned_by": "Stability AI",
+      "name": "stable-diffusion-v1-5",
+      "type": "image"
+    },
+    {
+      "id": "netmind/hunyuan3d-2.1",
+      "object": "model",
+      "owned_by": "Tencent",
+      "name": "hunyuan3d-2.1",
+      "type": "image"
+    },
+    {
+      "id": "netmind/triposr",
+      "object": "model",
+      "owned_by": "Tripo AI",
+      "name": "triposr",
+      "type": "image"
+    },
+    {
+      "id": "netmind/hyper3d-rodin",
+      "object": "model",
+      "owned_by": "Hyper3D",
+      "name": "hyper3d-rodin",
+      "type": "image"
+    },
+    {
+      "id": "netmind/triposr-3d",
+      "object": "model",
+      "owned_by": "Tripo AI",
+      "name": "triposr-3d",
+      "type": "image"
+    }
+  ]
+}

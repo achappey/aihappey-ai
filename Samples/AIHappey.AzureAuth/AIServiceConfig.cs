@@ -194,6 +194,8 @@ public class AIServiceConfig
     public ProviderConfig? Venice { get; set; }
     public ProviderConfig? QuiverAI { get; set; }
     public ProviderConfig? KissAPI { get; set; }
+    public ProviderConfig? ZenMux { get; set; }
+    public ProviderConfig? NetMind { get; set; }
 }
 
 public class ProviderConfig

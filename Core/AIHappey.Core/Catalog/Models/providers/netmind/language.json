@@ -1,0 +1,333 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "netmind/minimax-m2.5",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.5",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "netmind/kimi-k2.5",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "kimi-k2.5",
+      "type": "multimodal",
+      "context_window": 262000
+    },
+    {
+      "id": "netmind/glm-5",
+      "object": "model",
+      "owned_by": "Z.ai",
+      "name": "glm-5",
+      "type": "language",
+      "context_window": 203000
+    },
+    {
+      "id": "netmind/glm-4.7",
+      "object": "model",
+      "owned_by": "Z.ai",
+      "name": "glm-4.7",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "netmind/deepseek-v3.1-terminus",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.1-terminus",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-flash-preview",
+      "type": "multimodal",
+      "context_window": 1024000
+    },
+    {
+      "id": "netmind/deepseek-v3.2",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.2",
+      "type": "language",
+      "context_window": 160000
+    },
+    {
+      "id": "netmind/gemini-3-pro-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-pro-preview",
+      "type": "multimodal",
+      "context_window": 1024000
+    },
+    {
+      "id": "netmind/glm-4.6",
+      "object": "model",
+      "owned_by": "Z.ai",
+      "name": "glm-4.6",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "netmind/deepseek-v3.2-exp",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.2-exp",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/qwen3-vl-235b-a22b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-vl-235b-a22b-instruct",
+      "type": "vision-language",
+      "context_window": 256000
+    },
+    {
+      "id": "netmind/qwen3-next-80b-a3b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-next-80b-a3b-instruct",
+      "type": "language",
+      "context_window": 256000
+    },
+    {
+      "id": "netmind/qwen3-next-80b-a3b-thinking",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-next-80b-a3b-thinking",
+      "type": "language",
+      "context_window": 256000
+    },
+    {
+      "id": "netmind/deepseek-v3.1",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.1",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-oss-120b",
+      "type": "language",
+      "context_window": 131000
+    },
+    {
+      "id": "netmind/qwen3-235b-a22b-instruct-2507",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-235b-a22b-instruct-2507",
+      "type": "language",
+      "context_window": 262000
+    },
+    {
+      "id": "netmind/qwen3-coder-480b-a35b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-coder-480b-a35b-instruct",
+      "type": "language",
+      "context_window": 262000
+    },
+    {
+      "id": "netmind/qwen3-coder-30b-a3b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-coder-30b-a3b-instruct",
+      "type": "language",
+      "context_window": 262000
+    },
+    {
+      "id": "netmind/kimi-k2-instruct",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "kimi-k2-instruct",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/deepseek-v3-0324",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3-0324",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/gemma-3-27b-it",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma-3-27b-it",
+      "type": "multimodal",
+      "context_window": 16000
+    },
+    {
+      "id": "netmind/gemma-3-12b-it",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma-3-12b-it",
+      "type": "multimodal",
+      "context_window": 16000
+    },
+    {
+      "id": "netmind/qwen3-235b-a22b",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-235b-a22b",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/qwen3-32b",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-32b",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/qwen3-8b",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-8b",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/qwen3-30b-a3b",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-30b-a3b",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/llama-4-maverick-17b-128e-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama-4-maverick-17b-128e-instruct",
+      "type": "language",
+      "context_window": 512000
+    },
+    {
+      "id": "netmind/llama-3.3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama-3.3-70b-instruct",
+      "type": "language",
+      "context_window": 4000
+    },
+    {
+      "id": "netmind/meta-llama-3.1-405b",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "meta-llama-3.1-405b",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/qwen2.5-72b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen2.5-72b-instruct",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/qwen3-vl-8b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen3-vl-8b-instruct",
+      "type": "vision-language",
+      "context_window": 24000
+    },
+    {
+      "id": "netmind/gemma3-12b-multiturn-mentalhealth-id",
+      "object": "model",
+      "owned_by": "Community",
+      "name": "gemma3-12b-multiturn-mentalhealth-id",
+      "type": "language",
+      "context_window": 16000
+    },
+    {
+      "id": "netmind/doubao-1.5-vision-pro",
+      "object": "model",
+      "owned_by": "Doubao",
+      "name": "doubao-1.5-vision-pro",
+      "type": "vision-language",
+      "context_window": 32000
+    },
+    {
+      "id": "netmind/doubao-1.5-pro",
+      "object": "model",
+      "owned_by": "Doubao",
+      "name": "doubao-1.5-pro",
+      "type": "language",
+      "context_window": 32000
+    },
+    {
+      "id": "netmind/deepseek-v3-turbo",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3-turbo",
+      "type": "language",
+      "context_window": 64000
+    },
+    {
+      "id": "netmind/deepseek-r1-turbo",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-r1-turbo",
+      "type": "language",
+      "context_window": 64000
+    },
+    {
+      "id": "netmind/qwen2.5-vl-72b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen2.5-vl-72b-instruct",
+      "type": "vision-language",
+      "context_window": 8000
+    },
+    {
+      "id": "netmind/qwen2.5-vl-32b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen2.5-vl-32b-instruct",
+      "type": "vision-language",
+      "context_window": 8000
+    },
+    {
+      "id": "netmind/deepseek-v3",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "netmind/meta-llama-3.1-8b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "meta-llama-3.1-8b-instruct",
+      "type": "language",
+      "context_window": 4000
+    },
+    {
+      "id": "netmind/qwen2.5-7b-instruct",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "qwen2.5-7b-instruct",
+      "type": "language",
+      "context_window": 110000
+    }
+  ]
+}

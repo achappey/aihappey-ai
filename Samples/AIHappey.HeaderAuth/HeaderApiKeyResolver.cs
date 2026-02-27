@@ -195,7 +195,9 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["wai"] = "X-WAI-Key",
             ["venice"] = "X-Venice-Key",
             ["quiverai"] = "X-QuiverAI-Key",
-            ["kissapi"] = "X-KissAPI-Key"
+            ["kissapi"] = "X-KissAPI-Key",
+            ["zenmux"] = "X-ZenMux-Key",
+            ["netmind"] = "X-NetMind-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

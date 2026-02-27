@@ -201,6 +201,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "venice" => _config.Venice?.ApiKey,
             "quiverai" => _config.QuiverAI?.ApiKey,
             "kissapi" => _config.KissAPI?.ApiKey,
+            "zenmux" => _config.ZenMux?.ApiKey,
+            "netmind" => _config.NetMind?.ApiKey,
             _ => null
         };
 }

@@ -1,0 +1,47 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "netmind/whisper",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "whisper",
+            "type": "transcription"
+        },
+        {
+            "id": "netmind/vibevoice-7b",
+            "object": "model",
+            "owned_by": "Microsoft",
+            "name": "vibevoice-7b",
+            "type": "speech"
+        },
+        {
+            "id": "netmind/speech-02-hd",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "speech-02-hd",
+            "type": "speech"
+        },
+        {
+            "id": "netmind/eleven-v3",
+            "object": "model",
+            "owned_by": "ElevenLabs",
+            "name": "eleven-v3",
+            "type": "speech"
+        },
+        {
+            "id": "netmind/chatterbox",
+            "object": "model",
+            "owned_by": "Resemble AI",
+            "name": "chatterbox",
+            "type": "speech"
+        },
+        {
+            "id": "netmind/mmaudio",
+            "object": "model",
+            "owned_by": "MMAudio",
+            "name": "mmaudio",
+            "type": "speech"
+        }
+    ]
+}

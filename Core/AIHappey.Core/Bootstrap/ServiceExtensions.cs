@@ -194,6 +194,8 @@ using AIHappey.Core.Providers.WAI;
 using AIHappey.Core.Providers.Venice;
 using AIHappey.Core.Providers.QuiverAI;
 using AIHappey.Core.Providers.KissAPI;
+using AIHappey.Core.Providers.ZenMux;
+using AIHappey.Core.Providers.NetMind;
 
 namespace AIHappey.Core.AI;
 
@@ -395,6 +397,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, VeniceProvider>();
         services.AddSingleton<IModelProvider, QuiverAIProvider>();
         services.AddSingleton<IModelProvider, KissAPIProvider>();
+        services.AddSingleton<IModelProvider, ZenMuxProvider>();
+        services.AddSingleton<IModelProvider, NetMindProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
