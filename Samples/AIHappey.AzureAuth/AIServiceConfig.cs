@@ -203,6 +203,11 @@ public class AIServiceConfig
     public ProviderConfig? APIFree { get; set; }
     public ProviderConfig? ModelsLab { get; set; }
     public ProviderConfig? Hicap { get; set; }
+    public ProviderConfig? Prakasa { get; set; }
+    public ProviderConfig? MegaLLM { get; set; }
+    public ProviderConfig? Infron { get; set; }
+    public ProviderConfig? LongCat { get; set; }
+    public ProviderConfig? AIsa { get; set; }
 }
 
 public class ProviderConfig

@@ -204,7 +204,12 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["modal"] = "X-Modal-Key",
             ["apifree"] = "X-APIFree-Key",
             ["modelslab"] = "X-ModelsLab-Key",
-            ["hicap"] = "X-Hicap-Key"
+            ["hicap"] = "X-Hicap-Key",
+            ["prakasa"] = "X-Prakasa-Key",
+            ["megallm"] = "X-MegaLLM-Key",
+            ["infron"] = "X-Infron-Key",
+            ["longcat"] = "X-LongCat-Key",
+            ["aisa"] = "X-AIsa-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -210,6 +210,11 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "apifree" => _config.APIFree?.ApiKey,
             "modelslab" => _config.ModelsLab?.ApiKey,
             "hicap" => _config.Hicap?.ApiKey,
+            "prakasa" => _config.Prakasa?.ApiKey,
+            "megallm" => _config.MegaLLM?.ApiKey,
+            "infron" => _config.Infron?.ApiKey,
+            "longcat" => _config.LongCat?.ApiKey,
+            "aisa" => _config.AIsa?.ApiKey,
             _ => null
         };
 }
