@@ -1,6 +1,5 @@
 using AIHappey.Core.AI;
 using AIHappey.Responses;
-using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.FishAudio;

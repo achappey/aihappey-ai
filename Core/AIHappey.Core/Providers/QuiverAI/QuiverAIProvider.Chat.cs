@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 

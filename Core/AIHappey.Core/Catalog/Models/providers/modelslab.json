@@ -1,0 +1,47 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "modelslab/cogvideox",
+      "object": "model",
+      "owned_by": "ModelsLab",
+      "name": "cogvideox",
+      "type": "video"
+    },
+    {
+      "id": "modelslab/wanx",
+      "object": "model",
+      "owned_by": "ModelsLab",
+      "name": "wanx",
+      "type": "video"
+    },
+    {
+      "id": "modelslab/wan2.2",
+      "object": "model",
+      "owned_by": "ModelsLab",
+      "name": "wan2.2",
+      "type": "video"
+    },
+    {
+      "id": "modelslab/wan2.1",
+      "object": "model",
+      "owned_by": "ModelsLab",
+      "name": "wan2.1",
+      "type": "video"
+    },
+    {
+      "id": "modelslab/music_gen",
+      "object": "model",
+      "owned_by": "ModelsLab",
+      "name": "music_gen",
+      "type": "speech"
+    },
+    {
+      "id": "modelslab/sfx",
+      "object": "model",
+      "owned_by": "ModelsLab",
+      "name": "sfx",
+      "type": "speech"
+    }
+  ]
+}

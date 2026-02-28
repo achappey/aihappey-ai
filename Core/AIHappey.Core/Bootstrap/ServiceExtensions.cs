@@ -196,6 +196,13 @@ using AIHappey.Core.Providers.QuiverAI;
 using AIHappey.Core.Providers.KissAPI;
 using AIHappey.Core.Providers.ZenMux;
 using AIHappey.Core.Providers.NetMind;
+using AIHappey.Core.Providers.APIyi;
+using AIHappey.Core.Providers.WidnAI;
+using AIHappey.Core.Providers.Thaura;
+using AIHappey.Core.Providers.Modal;
+using AIHappey.Core.Providers.APIFree;
+using AIHappey.Core.Providers.ModelsLab;
+using AIHappey.Core.Providers.Hicap;
 
 namespace AIHappey.Core.AI;
 
@@ -399,6 +406,13 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, KissAPIProvider>();
         services.AddSingleton<IModelProvider, ZenMuxProvider>();
         services.AddSingleton<IModelProvider, NetMindProvider>();
+        services.AddSingleton<IModelProvider, APIyiProvider>();
+        services.AddSingleton<IModelProvider, WidnAIProvider>();
+        services.AddSingleton<IModelProvider, ThauraProvider>();
+        services.AddSingleton<IModelProvider, ModalProvider>();
+        services.AddSingleton<IModelProvider, APIFreeProvider>();
+        services.AddSingleton<IModelProvider, ModelsLabProvider>();
+        services.AddSingleton<IModelProvider, HicapProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

@@ -196,6 +196,13 @@ public class AIServiceConfig
     public ProviderConfig? KissAPI { get; set; }
     public ProviderConfig? ZenMux { get; set; }
     public ProviderConfig? NetMind { get; set; }
+    public ProviderConfig? APIyi { get; set; }
+    public ProviderConfig? WidnAI { get; set; }
+    public ProviderConfig? Thaura { get; set; }
+    public ProviderConfig? Modal { get; set; }
+    public ProviderConfig? APIFree { get; set; }
+    public ProviderConfig? ModelsLab { get; set; }
+    public ProviderConfig? Hicap { get; set; }
 }
 
 public class ProviderConfig

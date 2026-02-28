@@ -203,6 +203,13 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "kissapi" => _config.KissAPI?.ApiKey,
             "zenmux" => _config.ZenMux?.ApiKey,
             "netmind" => _config.NetMind?.ApiKey,
+            "apiyi" => _config.APIyi?.ApiKey,
+            "widnai" => _config.WidnAI?.ApiKey,
+            "thaura" => _config.Thaura?.ApiKey,
+            "modal" => _config.Modal?.ApiKey,
+            "apifree" => _config.APIFree?.ApiKey,
+            "modelslab" => _config.ModelsLab?.ApiKey,
+            "hicap" => _config.Hicap?.ApiKey,
             _ => null
         };
 }

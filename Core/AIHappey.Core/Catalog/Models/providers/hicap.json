@@ -1,0 +1,208 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "hicap/gpt-5.2",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5.2",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-5.2-chat-latest",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5.2-chat-latest",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-5.1",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5.1",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-5.1-chat-latest",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5.1-chat-latest",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-5",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-5-chat",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5-chat",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-5-mini",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5-mini",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-5-nano",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-5-nano",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-4o",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-4o",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-4o-mini",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-4.1",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-4.1",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-4.1-mini",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gpt-4.1-nano",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gpt-4.1-nano",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-sonnet-4.5",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-sonnet-4.5",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-haiku-4.5",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-haiku-4.5",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-sonnet-4",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-sonnet-4",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-opus-4.5",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-opus-4.5",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-opus-4.1",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-opus-4.1",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-opus-4",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-opus-4",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-3.7-sonnet",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-3.7-sonnet",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-3.5-sonnet",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-3.5-sonnet",
+      "type": "language"
+    },
+    {
+      "id": "hicap/claude-3.5-haiku",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "claude-3.5-haiku",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gemini-3-pro-preview",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gemini-3-pro-preview",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gemini-3-flash-preview",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gemini-2.5-pro",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gemini-2.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gemini-2.5-flash-lite",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gemini-2.5-flash-lite",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gemini-2.0-flash",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gemini-2.0-flash",
+      "type": "language"
+    },
+    {
+      "id": "hicap/gemini-2.0-flash-lite",
+      "object": "model",
+      "owned_by": "Hicap",
+      "name": "gemini-2.0-flash-lite",
+      "type": "language"
+    }
+  ]
+}

@@ -197,7 +197,14 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["quiverai"] = "X-QuiverAI-Key",
             ["kissapi"] = "X-KissAPI-Key",
             ["zenmux"] = "X-ZenMux-Key",
-            ["netmind"] = "X-NetMind-Key"
+            ["netmind"] = "X-NetMind-Key",
+            ["apiyi"] = "X-APIyi-Key",
+            ["widnai"] = "X-WidnAI-Key",
+            ["thaura"] = "X-Thaura-Key",
+            ["modal"] = "X-Modal-Key",
+            ["apifree"] = "X-APIFree-Key",
+            ["modelslab"] = "X-ModelsLab-Key",
+            ["hicap"] = "X-Hicap-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
