@@ -209,7 +209,14 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["megallm"] = "X-MegaLLM-Key",
             ["infron"] = "X-Infron-Key",
             ["longcat"] = "X-LongCat-Key",
-            ["aisa"] = "X-AIsa-Key"
+            ["aisa"] = "X-AIsa-Key",
+            ["evolinkai"] = "X-EvoLinkAI-Key",
+            ["zenlayer"] = "X-Zenlayer-Key",
+            ["aihubmix"] = "X-AIHubMix-Key",
+            ["uniapi"] = "X-UniAPI-Key",
+            ["openaihk"] = "X-OpenAIHK-Key",
+            ["apekey"] = "X-Apekey-Key",
+            ["apertis"] = "X-Apertis-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

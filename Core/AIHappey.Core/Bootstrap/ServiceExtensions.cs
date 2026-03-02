@@ -208,6 +208,14 @@ using AIHappey.Core.Providers.MegaLLM;
 using AIHappey.Core.Providers.Infron;
 using AIHappey.Core.Providers.LongCat;
 using AIHappey.Core.Providers.AIsa;
+using AIHappey.Core.Providers.EvoLinkAI;
+using AIHappey.Core.Providers.Zenlayer;
+using AIHappey.Core.Providers.AIHubMix;
+using AIHappey.Core.Providers.UniAPI;
+using AIHappey.Core.Providers.OpenAIHK;
+using AIHappey.Core.Providers.AIForHire;
+using AIHappey.Core.Providers.Apekey;
+using AIHappey.Core.Providers.Apertis;
 
 namespace AIHappey.Core.AI;
 
@@ -423,6 +431,14 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, InfronProvider>();
         services.AddSingleton<IModelProvider, LongCatProvider>();
         services.AddSingleton<IModelProvider, AIsaProvider>();
+        services.AddSingleton<IModelProvider, EvoLinkAIProvider>();
+        services.AddSingleton<IModelProvider, ZenlayerProvider>();
+        services.AddSingleton<IModelProvider, AIHubMixProvider>();
+        services.AddSingleton<IModelProvider, UniAPIProvider>();
+        services.AddSingleton<IModelProvider, OpenAIHKProvider>();
+        services.AddSingleton<IModelProvider, AIForHireProvider>();
+        services.AddSingleton<IModelProvider, ApekeyProvider>();
+        services.AddSingleton<IModelProvider, ApertisProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

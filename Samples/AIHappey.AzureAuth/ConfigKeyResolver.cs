@@ -215,6 +215,13 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "infron" => _config.Infron?.ApiKey,
             "longcat" => _config.LongCat?.ApiKey,
             "aisa" => _config.AIsa?.ApiKey,
+            "evolinkai" => _config.EvoLinkAI?.ApiKey,
+            "zenlayer" => _config.Zenlayer?.ApiKey,
+            "aihubmix" => _config.AIHubMix?.ApiKey,
+            "uniapi" => _config.UniAPI?.ApiKey,
+            "openaihk" => _config.OpenAIHK?.ApiKey,
+            "apekey" => _config.Apekey?.ApiKey,
+            "apertis" => _config.Apertis?.ApiKey,
             _ => null
         };
 }

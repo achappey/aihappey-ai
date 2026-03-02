@@ -208,6 +208,13 @@ public class AIServiceConfig
     public ProviderConfig? Infron { get; set; }
     public ProviderConfig? LongCat { get; set; }
     public ProviderConfig? AIsa { get; set; }
+    public ProviderConfig? EvoLinkAI { get; set; }
+    public ProviderConfig? Zenlayer { get; set; }
+    public ProviderConfig? AIHubMix { get; set; }
+    public ProviderConfig? UniAPI { get; set; }
+    public ProviderConfig? OpenAIHK { get; set; }
+    public ProviderConfig? Apekey { get; set; }
+    public ProviderConfig? Apertis { get; set; }
 }
 
 public class ProviderConfig

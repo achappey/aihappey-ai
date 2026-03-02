@@ -1,0 +1,46 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "apekey/auto",
+            "object": "model",
+            "description": "Intelligent routing - automatically selects the best provider and model based on the request."
+        },
+        {
+            "id": "apekey/llama-3.3-70b-versatile",
+            "object": "model",
+            "owned_by": "groq",
+            "description": "Groq Llama 3.3 70B - Fast inference with high quality"
+        },
+        {
+            "id": "apekey/llama-3.1-8b-instant",
+            "object": "model",
+            "owned_by": "groq",
+            "description": "Groq Llama 3.1 8B - Fastest inference"
+        },
+        {
+            "id": "apekey/meta-llama/Llama-3.2-3B-Instruct-Turbo",
+            "object": "model",
+            "owned_by": "together",
+            "description": "Together AI Llama 3.2 3B - Most cost-effective"
+        },
+        {
+            "id": "apekey/meta-llama/Llama-3.1-8B-Instruct",
+            "object": "model",
+            "owned_by": "together",
+            "description": "Together AI Llama 3.1 8B - Good balance"
+        },
+        {
+            "id": "apekey/accounts/fireworks/models/llama-v3p1-8b-instruct",
+            "object": "model",
+            "owned_by": "fireworks",
+            "description": "Fireworks AI Llama 3.1 8B - Fast and reliable"
+        },
+        {
+            "id": "apekey/accounts/fireworks/models/llama-v3p3-70b-instruct",
+            "object": "model",
+            "owned_by": "fireworks",
+            "description": "Fireworks AI Llama 3.3 70B - High quality for complex tasks"
+        }
+    ]
+}
