@@ -30,7 +30,10 @@ public partial class KiloProvider
 
         foreach (var el in arr)
         {
-            Model model = new();
+            Model model = new()
+            {
+                Type = "language"
+            };
 
             if (el.TryGetProperty("id", out var idEl))
             {

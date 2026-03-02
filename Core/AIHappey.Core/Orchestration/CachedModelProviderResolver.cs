@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
@@ -48,28 +49,57 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
             if (_modelProviderMap != null && DateTimeOffset.UtcNow < _expiresAt)
                 return;
 
+            /*   var providerArray = providers as IModelProvider[] ?? [.. providers];
+
+               var tasks = providerArray.Select(async provider =>
+               {
+                   try
+                   {
+                       var models = await provider.ListModels(ct);
+                       return (Provider: provider, Models: models?.ToList());
+                   }
+                   catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                   {
+                       throw;
+                   }
+                   catch
+                   {
+                       // provider temporarily down → ignore
+                       return (Provider: provider, Models: (List<Model>?)null);
+                   }
+               });
+   */
+
             var providerArray = providers as IModelProvider[] ?? [.. providers];
 
-            var tasks = providerArray.Select(async provider =>
-            {
-                try
-                {
-                    var models = await provider.ListModels(ct);
-                    return (Provider: provider, Models: models?.ToList());
-                }
-                catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                {
-                    throw;
-                }
-                catch
-                {
-                    // provider temporarily down → ignore
-                    return (Provider: provider, Models: (List<Model>?)null);
-                }
-            });
+            var results = new ConcurrentBag<(IModelProvider Provider, List<Model>? Models)>();
 
-            var resolved = await Task.WhenAll(tasks);
+            await Parallel.ForEachAsync(
+                providerArray,
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = 40,
+                    CancellationToken = ct
+                },
+                async (provider, token) =>
+                {
+                    try
+                    {
+                        var models = await provider.ListModels(token);
+                        results.Add((provider, models?.ToList()));
+                    }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch
+                    {
+                        // provider temporarily down → ignore
+                        results.Add((provider, null));
+                    }
+                });
 
+            var resolved = results.ToList();
             var providerResults = new Dictionary<IModelProvider, List<Model>>();
 
             foreach (var r in resolved)
@@ -77,8 +107,6 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
                 if (r.Models is { Count: > 0 })
                     providerResults[r.Provider] = r.Models;
             }
-
-
 
             var hasAnyModels = providerResults.Values.Any(v => v.Count > 0);
 

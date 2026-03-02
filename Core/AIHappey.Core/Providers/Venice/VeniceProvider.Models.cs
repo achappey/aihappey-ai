@@ -150,6 +150,107 @@ public partial class VeniceProvider
                 models.Add(model);
         }
 
+        models.AddRange(await ListCharacterModels(cancellationToken));
+
+        models.AddRange(GetIdentifier().GetModels());
+
+        return models
+            .Where(a => !string.IsNullOrWhiteSpace(a.Id))
+            .GroupBy(a => a.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(a => a.First());
+    }
+
+    private async Task<IEnumerable<Model>> ListCharacterModels(CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return [];
+
+        ApplyAuthHeader();
+
+        var models = new List<Model>();
+        const int pageSize = 100;
+        var offset = 0;
+
+        while (true)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, $"v1/characters?limit={pageSize}&offset={offset}");
+            using var resp = await _client.SendAsync(req, cancellationToken);
+
+            if (!resp.IsSuccessStatusCode)
+                return models;
+
+            await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
+                break;
+
+            var pageCount = 0;
+
+            foreach (var el in dataEl.EnumerateArray())
+            {
+                pageCount++;
+
+                var baseModelId = el.TryGetProperty("modelId", out var modelIdEl)
+                    ? modelIdEl.GetString()
+                    : null;
+
+                var characterSlug = el.TryGetProperty("slug", out var slugEl)
+                    ? slugEl.GetString()
+                    : null;
+
+                if (string.IsNullOrWhiteSpace(baseModelId) || string.IsNullOrWhiteSpace(characterSlug))
+                    continue;
+
+                var characterName = el.TryGetProperty("name", out var nameEl)
+                    ? nameEl.GetString()
+                    : null;
+
+                var description = el.TryGetProperty("description", out var descEl)
+                    ? descEl.GetString()
+                    : null;
+
+                var tags = new List<string>
+                {
+                    "character",
+                    $"character_slug:{characterSlug}",
+                    $"base_model:{baseModelId}"
+                };
+
+                if (el.TryGetProperty("webEnabled", out var webEnabledEl) && webEnabledEl.ValueKind == JsonValueKind.True)
+                    tags.Add("web-enabled");
+
+                if (el.TryGetProperty("adult", out var adultEl) && adultEl.ValueKind == JsonValueKind.True)
+                    tags.Add("adult");
+
+                if (el.TryGetProperty("tags", out var apiTagsEl) && apiTagsEl.ValueKind == JsonValueKind.Array)
+                {
+                    tags.AddRange(
+                        apiTagsEl.EnumerateArray()
+                            .Select(a => a.GetString())
+                            .Where(a => !string.IsNullOrWhiteSpace(a))!
+                            .Select(a => $"character_tag:{a}")
+                    );
+                }
+
+                models.Add(new Model
+                {
+                    Id = $"{baseModelId}:character_slug={characterSlug}".ToModelId(GetIdentifier()),
+                    Name = string.IsNullOrWhiteSpace(characterName) ? characterSlug : characterName,
+                    Description = description,
+                    Type = "language",
+                    OwnedBy = nameof(Venice),
+                    Tags = [.. tags.Distinct()]
+                });
+            }
+
+            if (pageCount == 0)
+                break;
+
+            offset += pageSize;
+        }
+
         return models;
     }
 }

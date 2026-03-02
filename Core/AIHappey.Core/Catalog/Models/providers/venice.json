@@ -1,0 +1,117 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "venice/qwen-edit",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "qwen-edit",
+      "type": "image",
+      "description": "Image editing model based on Qwen, optimized for prompt-guided visual modifications and transformations."
+    },
+    {
+      "id": "venice/flux-2-max-edit",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "flux-2-max-edit",
+      "type": "image",
+      "description": "High-capacity Flux 2 Max model for advanced image editing with strong detail preservation and compositional control."
+    },
+    {
+      "id": "venice/gpt-image-1-5-edit",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "gpt-image-1-5-edit",
+      "type": "image",
+      "description": "GPT-based image editing model supporting structured prompt-driven visual refinement and content replacement."
+    },
+    {
+      "id": "venice/nano-banana-2-edit",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "nano-banana-2-edit",
+      "type": "image",
+      "description": "Efficient Nano Banana v2 image editing model designed for fast, lightweight visual transformations."
+    },
+    {
+      "id": "venice/nano-banana-pro-edit",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "nano-banana-pro-edit",
+      "type": "image",
+      "description": "Pro-tier Nano Banana image editing model with enhanced fidelity and advanced editing capabilities."
+    },
+    {
+      "id": "venice/seedream-v4-edit",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "seedream-v4-edit",
+      "type": "image",
+      "description": "Seedream v4 image editing model focused on creative and stylistic transformations."
+    },
+    {
+      "id": "venice/seedream-v5-lite-edit",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "seedream-v5-lite-edit",
+      "type": "image",
+      "description": "Lightweight Seedream v5 image editing model optimized for lower latency and efficient processing."
+    },
+    {
+      "id": "venice/z-image-turbo",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "z-image-turbo",
+      "type": "image",
+      "description": "Turbo image generation model optimized for fast inference and rapid visual content creation."
+    },
+    {
+      "id": "venice/upscale",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "upscale",
+      "type": "image",
+      "description": "Upscale or enhance an image based on the supplied parameters. Using a scale of 1 with enhance enabled will only run the enhancer."
+    },
+    {
+      "id": "venice/background-remove",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "upscale",
+      "type": "image",
+      "description": "Remove the background from an image using AI."
+    },
+    {
+      "id": "venice/nvidia/parakeet-tdt-0.6b-v3",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "nvidia/parakeet-tdt-0.6b-v3",
+      "type": "transcription",
+      "description": "NVIDIA Parakeet TDT 0.6B v3 automatic speech recognition model for high-quality transcription tasks."
+    },
+    {
+      "id": "venice/openai/whisper-large-v3",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "openai/whisper-large-v3",
+      "type": "transcription",
+      "description": "Whisper Large v3 speech-to-text model optimized for multilingual and high-accuracy transcription."
+    },
+    {
+      "id": "venice/tts-kokoro",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "tts-kokoro",
+      "type": "speech",
+      "description": "Text-to-speech model for natural voice synthesis and spoken audio generation."
+    },
+    {
+      "id": "venice/wan-2.5-preview-image-to-video",
+      "object": "model",
+      "owned_by": "Venice",
+      "name": "wan-2.5-preview-image-to-video",
+      "type": "video",
+      "description": "Image-to-video generation model enabling motion synthesis and animated visual content creation."
+    }
+  ]
+}

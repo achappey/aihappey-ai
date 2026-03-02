@@ -49,16 +49,31 @@ public partial class VeniceProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Venice).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var staticModels = GetIdentifier().GetModels();
+        var model = staticModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.GetModel()!));
+        if (model != null)
+        {
+            return (model?.Type) switch
+            {
+                "speech" => await this.SpeechSamplingAsync(chatRequest,
+                                        cancellationToken: cancellationToken),
+                "image" => await this.ImageSamplingAsync(chatRequest,
+                                        cancellationToken: cancellationToken),
+                _ => throw new NotImplementedException(),
+            };
+        }
+
+        return await this.ChatCompletionsSamplingAsync(chatRequest,
+                                         cancellationToken: cancellationToken);
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => VeniceTranscriptionRequest(imageRequest, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => VeniceSpeechRequest(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -77,10 +92,8 @@ public partial class VeniceProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => ImageRequestVenice(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+        => VeniceVideoRequest(request, cancellationToken);
 }

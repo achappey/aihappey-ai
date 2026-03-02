@@ -158,7 +158,7 @@ public class AIModelProviderResolver(
             }
         }
 
-        return result;
+        return result.ToDictionary(a => a.Key, a => a.Value);
     }
 
     public async Task<IModelProvider> Resolve(string model, CancellationToken ct = default)
