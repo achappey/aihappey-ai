@@ -217,6 +217,7 @@ public class AIServiceConfig
     public ProviderConfig? Apertis { get; set; }
     public ProviderConfig? WisdomGate { get; set; }
     public ProviderConfig? Smooth { get; set; }
+    public ProviderConfig? Speechactors { get; set; }
 }
 
 public class ProviderConfig

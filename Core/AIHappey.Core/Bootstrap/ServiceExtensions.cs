@@ -218,6 +218,7 @@ using AIHappey.Core.Providers.Apekey;
 using AIHappey.Core.Providers.Apertis;
 using AIHappey.Core.Providers.WisdomGate;
 using AIHappey.Core.Providers.Smooth;
+using AIHappey.Core.Providers.Speechactors;
 
 namespace AIHappey.Core.AI;
 
@@ -445,6 +446,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ApertisProvider>();
         services.AddSingleton<IModelProvider, WisdomGateProvider>();
         services.AddSingleton<IModelProvider, SmoothProvider>();
+        services.AddSingleton<IModelProvider, SpeechactorsProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

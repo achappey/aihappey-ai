@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "pollinations/turbo",
+      "object": "model",
+      "owned_by": "Pollinations",
+      "name": "Pollinations Turbo",
+      "type": "image"
+    },
+    {
+      "id": "pollinations/flux",
+      "object": "model",
+      "owned_by": "Pollinations",
+      "name": "flux",
+      "type": "image"
+    }
+  ]
+}

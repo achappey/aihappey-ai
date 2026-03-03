@@ -51,38 +51,6 @@ public partial class PollinationsProvider : IModelProvider
         Output = 0
     };
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default) =>
-        await Task.FromResult<IEnumerable<Model>>(_context.HttpContext?.User?.Identity?.IsAuthenticated != true
-        ? [new Model()
-            {
-                OwnedBy = nameof(Pollinations),
-                Name = "Pollinations " + nameof(OpenAI),
-                Type = "language",
-                Pricing = Free,
-                Id = nameof(OpenAI).ToLowerInvariant().ToModelId(GetIdentifier())
-            }, new Model()
-            {
-                OwnedBy = nameof(Pollinations),
-                Type = "language",
-                Pricing = Free,
-                Name = "Pollinations " + nameof(Mistral),
-                Id = nameof(Mistral).ToLowerInvariant().ToModelId(GetIdentifier())
-            }, new Model()
-            {
-                OwnedBy = nameof(Pollinations),
-                Type = "image",
-                Pricing = Free,
-                Name = "Pollinations Flux",
-                Id = "flux".ToModelId(GetIdentifier())
-            }, new Model()
-            {
-                OwnedBy = nameof(Pollinations),
-                Type = "image",
-                Pricing = Free,
-                Name = "Pollinations Turbo",
-                Id = "turbo".ToModelId(GetIdentifier())
-            }] : []);
-
     public async Task<CreateMessageResult> SamplingAsync(
      CreateMessageRequestParams chatRequest,
      CancellationToken cancellationToken = default)

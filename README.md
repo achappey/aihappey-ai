@@ -189,6 +189,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Segmind        | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | SmallestAI     | ✅        | 🟡                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Smooth         | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Speechactors   | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Speechify      | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Speechmatics   | ✅        | ❌                | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | StabilityAI    | ✅        | ❌                | 🟡            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ➖          |
