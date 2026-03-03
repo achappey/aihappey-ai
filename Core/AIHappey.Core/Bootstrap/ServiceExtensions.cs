@@ -224,6 +224,8 @@ using AIHappey.Core.Providers.Neosantara;
 using AIHappey.Core.Providers.RedPill;
 using AIHappey.Core.Providers.BlazeRail;
 using AIHappey.Core.Providers.Mangaba;
+using AIHappey.Core.Providers.Aether;
+using AIHappey.Core.Providers.ReGraph;
 
 namespace AIHappey.Core.AI;
 
@@ -457,6 +459,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RedPillProvider>();
         services.AddSingleton<IModelProvider, BlazeRailProvider>();
         services.AddSingleton<IModelProvider, MangabaProvider>();
+        services.AddSingleton<IModelProvider, AetherProvider>();
+        services.AddSingleton<IModelProvider, ReGraphProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

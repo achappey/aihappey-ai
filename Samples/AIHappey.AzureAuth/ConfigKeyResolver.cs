@@ -230,6 +230,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "redpill" => _config.RedPill?.ApiKey,
             "blazerail" => _config.BlazeRail?.ApiKey,
             "mangaba" => _config.Mangaba?.ApiKey,
+            "aether" => _config.Aether?.ApiKey,
+            "regraph" => _config.ReGraph?.ApiKey,
             _ => null
         };
 }

@@ -224,7 +224,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["neosantara"] = "X-Neosantara-Key",
             ["redpill"] = "X-RedPill-Key",
             ["blazerail"] = "X-BlazeRail-Key",
-            ["mangaba"] = "X-Mangaba-Key"
+            ["mangaba"] = "X-Mangaba-Key",
+            ["aether"] = "X-Aether-Key",
+            ["regraph"] = "X-ReGraph-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

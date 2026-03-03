@@ -223,6 +223,8 @@ public class AIServiceConfig
     public ProviderConfig? RedPill { get; set; }
     public ProviderConfig? Mangaba { get; set; }
     public ProviderConfig? BlazeRail { get; set; }
+    public ProviderConfig? Aether { get; set; }
+    public ProviderConfig? ReGraph { get; set; }
 }
 
 public class ProviderConfig
