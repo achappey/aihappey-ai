@@ -222,7 +222,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["speechactors"] = "X-Speechactors-Key",
             ["gptproto"] = "X-GPTProto-Key",
             ["neosantara"] = "X-Neosantara-Key",
-            ["redpill"] = "X-RedPill-Key"
+            ["redpill"] = "X-RedPill-Key",
+            ["blazerail"] = "X-BlazeRail-Key",
+            ["mangaba"] = "X-Mangaba-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

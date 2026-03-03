@@ -221,6 +221,8 @@ public class AIServiceConfig
     public ProviderConfig? GPTProto { get; set; }
     public ProviderConfig? Neosantara { get; set; }
     public ProviderConfig? RedPill { get; set; }
+    public ProviderConfig? Mangaba { get; set; }
+    public ProviderConfig? BlazeRail { get; set; }
 }
 
 public class ProviderConfig

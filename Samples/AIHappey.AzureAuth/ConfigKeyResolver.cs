@@ -228,6 +228,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "gptproto" => _config.GPTProto?.ApiKey,
             "neosantara" => _config.Neosantara?.ApiKey,
             "redpill" => _config.RedPill?.ApiKey,
+            "blazerail" => _config.BlazeRail?.ApiKey,
+            "mangaba" => _config.Mangaba?.ApiKey,
             _ => null
         };
 }

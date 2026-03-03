@@ -47,6 +47,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Bineric        | ✅        | ✅                | ❌            | 🟡        | ➖                     | ❌                       | ✅               | ➖          | ➖          |
 | Blackbox       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | BlackForestLabs| ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| BlazeRail      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Bria           | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | BrowserUse     | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | BytePlus       | ✅        | ✅                | ✅            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
@@ -129,6 +130,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LOVO           | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | LumaAI         | ✅        | ❌                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | MancerAI       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Mangaba        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | MatterAI       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | MegaLLM        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | MegaNova       | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ❌          | ❌          |
