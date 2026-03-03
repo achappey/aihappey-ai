@@ -77,6 +77,6 @@ public partial class HeyGenProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => HeyGenVideoRequest(request, cancellationToken);
 }
 

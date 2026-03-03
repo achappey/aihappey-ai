@@ -216,7 +216,9 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
             ["uniapi"] = "X-UniAPI-Key",
             ["openaihk"] = "X-OpenAIHK-Key",
             ["apekey"] = "X-Apekey-Key",
-            ["apertis"] = "X-Apertis-Key"
+            ["apertis"] = "X-Apertis-Key",
+            ["wisdomgate"] = "X-WisdomGate-Key",
+            ["smooth"] = "X-Smooth-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

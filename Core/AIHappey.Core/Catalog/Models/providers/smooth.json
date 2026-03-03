@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "smooth/smooth-agent",
+      "object": "model",
+      "owned_by": "Smooth",
+      "name": "Smooth Agent",
+      "type": "language"
+    }
+  ]
+}

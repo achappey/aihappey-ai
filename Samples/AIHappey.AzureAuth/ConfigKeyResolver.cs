@@ -222,6 +222,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "openaihk" => _config.OpenAIHK?.ApiKey,
             "apekey" => _config.Apekey?.ApiKey,
             "apertis" => _config.Apertis?.ApiKey,
+            "wisdomgate" => _config.WisdomGate?.ApiKey,
+            "smooth" => _config.Smooth?.ApiKey,
             _ => null
         };
 }

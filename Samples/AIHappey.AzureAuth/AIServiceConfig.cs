@@ -215,6 +215,8 @@ public class AIServiceConfig
     public ProviderConfig? OpenAIHK { get; set; }
     public ProviderConfig? Apekey { get; set; }
     public ProviderConfig? Apertis { get; set; }
+    public ProviderConfig? WisdomGate { get; set; }
+    public ProviderConfig? Smooth { get; set; }
 }
 
 public class ProviderConfig

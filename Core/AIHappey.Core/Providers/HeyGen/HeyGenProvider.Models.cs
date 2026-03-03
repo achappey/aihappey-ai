@@ -20,7 +20,14 @@ public partial class HeyGenProvider
         voices.AddRange(await GetVoicesByTypeAsync("public", cancellationToken));
         voices.AddRange(await GetVoicesByTypeAsync("private", cancellationToken));
 
-        return BuildDynamicVoiceModels(voices);
+        var voiceModels = BuildDynamicVoiceModels(voices);
+
+        return [..voiceModels, new Model() {
+            Type = "video",
+            Id = "video_agent".ToModelId(GetIdentifier()),
+            Name = "Video Agent",
+            Description = "Generate videos with a one-shot prompt to Video Agent."
+        }];
     }
 
     private async Task<IReadOnlyList<HeyGenVoice>> GetVoicesByTypeAsync(string type, CancellationToken cancellationToken)
