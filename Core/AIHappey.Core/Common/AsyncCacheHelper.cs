@@ -1,0 +1,30 @@
+using Microsoft.Extensions.Caching.Memory;
+
+namespace AIHappey.Core.AI;
+
+public sealed class AsyncCacheHelper(IMemoryCache memoryCache)
+{
+    private readonly IMemoryCache _memoryCache = memoryCache;
+
+    public async Task<T> GetOrCreateAsync<T>(
+        string key,
+        Func<CancellationToken, Task<T>> factory,
+        TimeSpan baseTtl,
+        int jitterMinutes = 0,
+        CancellationToken cancellationToken = default)
+    {
+        var value = await _memoryCache.GetOrCreateAsync(key, async entry =>
+        {
+            var ttl = baseTtl;
+
+            if (jitterMinutes > 0)
+                ttl += TimeSpan.FromMinutes(Random.Shared.Next(0, jitterMinutes));
+
+            entry.AbsoluteExpirationRelativeToNow = ttl;
+
+            return await factory(cancellationToken);
+        });
+
+        return value!;
+    }
+}

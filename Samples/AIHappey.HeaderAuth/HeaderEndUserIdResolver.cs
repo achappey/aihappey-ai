@@ -9,27 +9,14 @@ namespace AIHappey.HeaderAuth;
 /// Canonical input format: sorted provider=value pairs joined with '|'.
 /// </summary>
 public sealed class HeaderEndUserIdResolver(
-    IHttpContextAccessor http,
+    HeaderApiKeySnapshot snapshot,
     EndUserIdHasher hasher) : IEndUserIdResolver
 {
     public string? Resolve(ChatRequest chatRequest)
     {
-        var ctx = http.HttpContext;
-        if (ctx == null)
-            return null;
-
-        var entries = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        var headers = ctx.Request.Headers;
-
-        foreach (var kv in HeaderApiKeyResolver.SupportedProviderHeaders)
-        {
-            var headerName = kv.Value;
-            var value = headers[headerName].FirstOrDefault()
-                ?? headers[headerName.ToLowerInvariant()].FirstOrDefault();
-
-            if (!string.IsNullOrWhiteSpace(value))
-                entries[kv.Key.ToLowerInvariant()] = value.Trim();
-        }
+        var entries = snapshot.ProviderKeys
+            .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+            .ToDictionary(kv => kv.Key.ToLowerInvariant(), kv => kv.Value.Trim(), StringComparer.Ordinal);
 
         if (entries.Count == 0)
             return null;

@@ -14,10 +14,14 @@ public partial class OpenCodeProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public OpenCodeProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public OpenCodeProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://opencode.ai/zen/");
     }

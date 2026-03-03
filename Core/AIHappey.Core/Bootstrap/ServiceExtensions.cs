@@ -227,6 +227,8 @@ public static class ServiceExtensions
     {
         services.TryAddSingleton<EndUserIdHasher>();
         services.TryAddSingleton<IEndUserIdResolver, NullEndUserIdResolver>();
+        services.AddMemoryCache();
+        services.AddSingleton<AsyncCacheHelper>();
 
         services.AddSingleton<IModelProvider, EchoProvider>();
         services.AddSingleton<IModelProvider, OpenAIProvider>();

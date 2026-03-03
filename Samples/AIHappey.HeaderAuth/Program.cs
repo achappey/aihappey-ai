@@ -35,6 +35,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSingleton<IAIModelProviderResolver, AIModelProviderResolver>();
+builder.Services.AddSingleton<HeaderApiKeySnapshot>();
 builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();
 builder.Services.AddProviders();

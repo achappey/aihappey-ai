@@ -13,10 +13,14 @@ public partial class ClodProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public ClodProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public ClodProvider(IApiKeyResolver keyResolver, 
+        IHttpClientFactory httpClientFactory,
+        AsyncCacheHelper memoryCache)
     {
         _keyResolver = keyResolver;
+        _memoryCache = memoryCache;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://newapp.clod.io/");
     }

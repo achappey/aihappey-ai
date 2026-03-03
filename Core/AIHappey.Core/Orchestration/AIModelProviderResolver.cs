@@ -17,6 +17,7 @@ public class AIModelProviderResolver(
 
     private static readonly TimeSpan VercelCacheTtl = TimeSpan.FromHours(6);
     private static readonly TimeSpan VercelNegativeCacheTtl = TimeSpan.FromMinutes(5);
+    private const int MaxParallelModelListing = 8;
 
     private async Task<IReadOnlyList<Model>?> FetchVercelModels(CancellationToken ct)
     {
@@ -80,27 +81,12 @@ public class AIModelProviderResolver(
     {
         var result = new Dictionary<string, (Model, IModelProvider)>(StringComparer.OrdinalIgnoreCase);
 
-        // ---- 1) resolve all provider models SEQUENTIALLY ----
+        // ---- 1) resolve all provider models in PARALLEL (bounded concurrency) ----
         var providerArray = providers as IModelProvider[] ?? [.. providers];
+        var providerResults = await LoadProviderModelsParallel(providerArray, ct);
 
-        foreach (var provider in providerArray)
+        foreach (var (provider, models) in providerResults)
         {
-            IEnumerable<Model> models;
-
-            try
-            {
-                models = await provider.ListModels(ct);
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch
-            {
-                // provider down → skip
-                models = [];
-            }
-
             foreach (var model in models)
                 result[model.Id] = (model, provider);
         }
@@ -159,6 +145,37 @@ public class AIModelProviderResolver(
         }
 
         return result.ToDictionary(a => a.Key, a => a.Value);
+    }
+
+    private async Task<IReadOnlyList<(IModelProvider Provider, IEnumerable<Model> Models)>> LoadProviderModelsParallel(
+        IModelProvider[] providerArray,
+        CancellationToken ct)
+    {
+        var gate = new SemaphoreSlim(MaxParallelModelListing, MaxParallelModelListing);
+        var tasks = providerArray.Select(async provider =>
+        {
+            await gate.WaitAsync(ct);
+            try
+            {
+                var models = await provider.ListModels(ct);
+                return (Provider: provider, Models: models);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // provider down → skip
+                return (Provider: provider, Models: Enumerable.Empty<Model>());
+            }
+            finally
+            {
+                gate.Release();
+            }
+        });
+
+        return await Task.WhenAll(tasks);
     }
 
     public async Task<IModelProvider> Resolve(string model, CancellationToken ct = default)

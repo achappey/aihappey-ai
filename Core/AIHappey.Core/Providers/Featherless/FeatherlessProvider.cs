@@ -13,10 +13,15 @@ public partial class FeatherlessProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public FeatherlessProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+
+    public FeatherlessProvider(IApiKeyResolver keyResolver,
+        IHttpClientFactory httpClientFactory,
+        AsyncCacheHelper asyncCacheHelper)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.featherless.ai/");
     }

@@ -2,7 +2,7 @@ using AIHappey.Core.Contracts;
 
 namespace AIHappey.HeaderAuth;
 
-public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
+public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolver
 {
     private static readonly Dictionary<string, string> ProviderHeaders =
         new(StringComparer.OrdinalIgnoreCase)
@@ -223,18 +223,5 @@ public class HeaderApiKeyResolver(IHttpContextAccessor http) : IApiKeyResolver
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
 
-    public string? Resolve(string provider)
-    {
-        var ctx = http.HttpContext;
-        if (ctx == null)
-            return null;
-
-        if (!ProviderHeaders.TryGetValue(provider, out var headerName))
-            return null;
-
-        // Try canonical name, then lowercase variant
-        var headers = ctx.Request.Headers;
-        return headers[headerName].FirstOrDefault()
-            ?? headers[headerName.ToLowerInvariant()].FirstOrDefault();
-    }
+    public string? Resolve(string provider) => snapshot.Resolve(provider);
 }
