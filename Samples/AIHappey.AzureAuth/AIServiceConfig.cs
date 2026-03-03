@@ -218,6 +218,9 @@ public class AIServiceConfig
     public ProviderConfig? WisdomGate { get; set; }
     public ProviderConfig? Smooth { get; set; }
     public ProviderConfig? Speechactors { get; set; }
+    public ProviderConfig? GPTProto { get; set; }
+    public ProviderConfig? Neosantara { get; set; }
+    public ProviderConfig? RedPill { get; set; }
 }
 
 public class ProviderConfig

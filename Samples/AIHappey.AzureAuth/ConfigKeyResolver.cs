@@ -225,6 +225,9 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "wisdomgate" => _config.WisdomGate?.ApiKey,
             "smooth" => _config.Smooth?.ApiKey,
             "speechactors" => _config.Speechactors?.ApiKey,
+            "gptproto" => _config.GPTProto?.ApiKey,
+            "neosantara" => _config.Neosantara?.ApiKey,
+            "redpill" => _config.RedPill?.ApiKey,
             _ => null
         };
 }

@@ -94,6 +94,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Google         | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          |
 | GoogleTranslate| ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | GooseAI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| GPTProto       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Groq           | ✅        | ❌                | ❌            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | GTranslate     | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Haimaker       | ✅        | ✅                | ❌            | ❌        | ✅                     | ✅                       | ➖               | ➖          | ✅          |
@@ -143,6 +144,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NLPCloud       | ✅        | 🟡                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Nscale         | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Nebius         | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| Neosantara     | ✅        | ✅                | ✅            | ✅        | ❌                     | ❌                       | ➖               | ➖          | ➖          |
 | NetMind        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Nextbit        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | NVIDIA         | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -169,6 +171,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | PublicAI       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ❌          | ➖          |
 | QuiverAI       | ✅        | ✅                | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Recraft        | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| RedPill        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | RegoloAI       | ✅        | ✅                | ❌            | ❌        | ✅                     | ✅                       | ➖               | ✅          | ➖          |
 | RekaAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
 | RelaxAI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          |

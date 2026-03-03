@@ -219,7 +219,10 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["apertis"] = "X-Apertis-Key",
             ["wisdomgate"] = "X-WisdomGate-Key",
             ["smooth"] = "X-Smooth-Key",
-            ["speechactors"] = "X-Speechactors-Key"
+            ["speechactors"] = "X-Speechactors-Key",
+            ["gptproto"] = "X-GPTProto-Key",
+            ["neosantara"] = "X-Neosantara-Key",
+            ["redpill"] = "X-RedPill-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
