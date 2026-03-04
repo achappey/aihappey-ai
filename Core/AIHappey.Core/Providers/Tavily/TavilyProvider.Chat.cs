@@ -130,12 +130,6 @@ public partial class TavilyProvider
             SourceId = source.Url,
             Url = source.Url,
             Title = source.Title,
-            ProviderMetadata = string.IsNullOrWhiteSpace(source.Favicon)
-                ? null
-                : new Dictionary<string, object>
-                {
-                    ["favicon"] = source.Favicon!
-                }
         };
 
 
