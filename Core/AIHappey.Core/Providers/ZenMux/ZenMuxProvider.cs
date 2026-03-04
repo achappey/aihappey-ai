@@ -16,9 +16,14 @@ public partial class ZenMuxProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public ZenMuxProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public ZenMuxProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://zenmux.ai/api/");
     }

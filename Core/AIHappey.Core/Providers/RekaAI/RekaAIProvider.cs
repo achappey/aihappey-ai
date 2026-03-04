@@ -28,7 +28,6 @@ public partial class RekaAIProvider : IModelProvider
             throw new InvalidOperationException($"No {nameof(RekaAI)} API key.");
 
         _client.DefaultRequestHeaders.Remove("X-Api-Key");
-        _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Add("X-Api-Key", key);
     }
 

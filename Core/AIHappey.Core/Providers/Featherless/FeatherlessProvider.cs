@@ -13,9 +13,9 @@ public partial class FeatherlessProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+
     private readonly AsyncCacheHelper _memoryCache;
-
-
+    
     public FeatherlessProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory,
         AsyncCacheHelper asyncCacheHelper)

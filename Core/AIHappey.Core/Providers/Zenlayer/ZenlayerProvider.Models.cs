@@ -9,9 +9,8 @@ public partial class ZenlayerProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-                if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
-
 
         ApplyAuthHeader();
 
@@ -21,7 +20,7 @@ public partial class ZenlayerProvider
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"PublicAI API error: {err}");
+            throw new Exception($"Zenlayer API error: {err}");
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);

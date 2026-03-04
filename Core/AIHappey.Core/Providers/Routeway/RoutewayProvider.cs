@@ -13,10 +13,14 @@ public partial class RoutewayProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public RoutewayProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public RoutewayProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.routeway.ai/");
     }

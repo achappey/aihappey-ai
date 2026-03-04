@@ -6,24 +6,19 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
-namespace AIHappey.Core.Providers.Aether;
+namespace AIHappey.Core.Providers.NEARAI;
 
-public partial class AetherProvider : IModelProvider
+public partial class NEARAIProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
-    
-    private readonly AsyncCacheHelper _memoryCache;
 
-    public AetherProvider(IApiKeyResolver keyResolver,
-        AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+    public NEARAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.aetherapi.dev/");
+        _client.BaseAddress = new Uri("https://cloud-api.near.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -31,7 +26,7 @@ public partial class AetherProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Aether)} API key.");
+            throw new InvalidOperationException($"No {nameof(NEARAI)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -52,10 +47,12 @@ public partial class AetherProvider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(Aether).ToLowerInvariant();
+    public string GetIdentifier() => nameof(NEARAI).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

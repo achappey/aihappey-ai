@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.AIForHire;
+namespace AIHappey.Core.Providers.PixelDojo;
 
-public partial class AIForHireProvider
+public partial class PixelDojoProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -20,7 +20,7 @@ public partial class AIForHireProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AIForHire API error: {err}");
+                    throw new Exception($"PixelDojo API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -29,7 +29,7 @@ public partial class AIForHireProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                var arr = root.TryGetProperty("models", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -37,14 +37,17 @@ public partial class AIForHireProvider
                 {
                     Model model = new();
 
-                    if (el.TryGetProperty("id", out var idEl))
+                    if (el.TryGetProperty("apiId", out var idEl))
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Id;
+
+                    if (el.TryGetProperty("description", out var descriptionEl))
+                        model.Description = descriptionEl.GetString() ?? string.Empty;
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);

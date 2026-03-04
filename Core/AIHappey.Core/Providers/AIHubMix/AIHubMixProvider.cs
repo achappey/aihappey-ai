@@ -14,9 +14,14 @@ public partial class AIHubMixProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public AIHubMixProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public AIHubMixProvider(IApiKeyResolver keyResolver,
+    AsyncCacheHelper asyncCacheHelper,
+    IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://aihubmix.com/");
     }

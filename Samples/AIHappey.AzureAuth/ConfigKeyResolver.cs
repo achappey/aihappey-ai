@@ -232,6 +232,12 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "mangaba" => _config.Mangaba?.ApiKey,
             "aether" => _config.Aether?.ApiKey,
             "regraph" => _config.ReGraph?.ApiKey,
+            "electronhub" => _config.ElectronHub?.ApiKey,
+            "dandolo" => _config.Dandolo?.ApiKey,
+            "glio" => _config.Glio?.ApiKey,
+            "pixeldojo" => _config.PixelDojo?.ApiKey,
+            "navyai" => _config.NavyAI?.ApiKey,
+            "nearai" => _config.NEARAI?.ApiKey,
             _ => null
         };
 }

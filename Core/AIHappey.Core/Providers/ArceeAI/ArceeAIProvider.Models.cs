@@ -12,7 +12,6 @@ public partial class ArceeAIProvider
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-
         ApplyAuthHeader();
 
         using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");

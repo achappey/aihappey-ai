@@ -1,0 +1,26 @@
+{
+    "aionlabs/aion-rp-llama-3.1-8b": {
+        "pricing": {
+            "input": "0.0000008",
+            "output": "0.0000016"
+        }
+    },
+    "aionlabs/aion-1.0-mini": {
+        "pricing": {
+            "input": "0.0000007",
+            "output": "0.0000014"
+        }
+    },
+    "aionlabs/aion-1.0": {
+        "pricing": {
+            "input": "0.000004",
+            "output": "0.000008"
+        }
+    },
+    "aionlabs/aion-2.0": {
+        "pricing": {
+            "input": "0.0000008",
+            "output": "0.0000016"
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "arceeai/trinity-mini": {
+    "pricing": {
+      "input": "0.000000045",
+      "output": "0.00000015"
+    }
+  },
+  "arceeai/trinity-large": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.000001"
+    }
+  }
+}

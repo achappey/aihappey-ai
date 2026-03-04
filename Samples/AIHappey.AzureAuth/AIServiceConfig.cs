@@ -225,6 +225,12 @@ public class AIServiceConfig
     public ProviderConfig? BlazeRail { get; set; }
     public ProviderConfig? Aether { get; set; }
     public ProviderConfig? ReGraph { get; set; }
+    public ProviderConfig? ElectronHub { get; set; }
+    public ProviderConfig? Dandolo { get; set; }
+    public ProviderConfig? Glio { get; set; }
+    public ProviderConfig? PixelDojo { get; set; }
+    public ProviderConfig? NavyAI { get; set; }
+    public ProviderConfig? NEARAI { get; set; }
 }
 
 public class ProviderConfig

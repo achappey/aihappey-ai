@@ -14,9 +14,14 @@ public partial class RequestyProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public RequestyProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public RequestyProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://router.requesty.ai/");
     }

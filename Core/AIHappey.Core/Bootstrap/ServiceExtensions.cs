@@ -226,6 +226,12 @@ using AIHappey.Core.Providers.BlazeRail;
 using AIHappey.Core.Providers.Mangaba;
 using AIHappey.Core.Providers.Aether;
 using AIHappey.Core.Providers.ReGraph;
+using AIHappey.Core.Providers.ElectronHub;
+using AIHappey.Core.Providers.Dandolo;
+using AIHappey.Core.Providers.Glio;
+using AIHappey.Core.Providers.PixelDojo;
+using AIHappey.Core.Providers.NavyAI;
+using AIHappey.Core.Providers.NEARAI;
 
 namespace AIHappey.Core.AI;
 
@@ -461,6 +467,13 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MangabaProvider>();
         services.AddSingleton<IModelProvider, AetherProvider>();
         services.AddSingleton<IModelProvider, ReGraphProvider>();
+        services.AddSingleton<IModelProvider, ElectronHubProvider>();
+        services.AddSingleton<IModelProvider, DandoloProvider>();
+        services.AddSingleton<IModelProvider, GlioProvider>();
+        services.AddSingleton<IModelProvider, PixelDojoProvider>();
+        services.AddSingleton<IModelProvider, NavyAIProvider>();
+        services.AddSingleton<IModelProvider, NEARAIProvider>();
+        
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

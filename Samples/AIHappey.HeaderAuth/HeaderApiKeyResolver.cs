@@ -226,7 +226,13 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["blazerail"] = "X-BlazeRail-Key",
             ["mangaba"] = "X-Mangaba-Key",
             ["aether"] = "X-Aether-Key",
-            ["regraph"] = "X-ReGraph-Key"
+            ["regraph"] = "X-ReGraph-Key",
+            ["electronhub"] = "X-ElectronHub-Key",
+            ["dandolo"] = "X-Dandolo-Key",
+            ["glio"] = "X-Glio-Key",
+            ["pixeldojo"] = "X-PixelDojo-Key",
+            ["navyai"] = "X-NavyAI-Key",
+            ["nearai"] = "X-NEARAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

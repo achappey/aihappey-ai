@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.AIForHire;
+namespace AIHappey.Core.Providers.Glio;
 
-public partial class AIForHireProvider
+public partial class GlioProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -14,13 +14,14 @@ public partial class AIForHireProvider
             cacheKey,
             async ct =>
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models/");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AIForHire API error: {err}");
+                    throw new Exception($"Glio API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -29,7 +30,7 @@ public partial class AIForHireProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                var arr = root.TryGetProperty("models", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -43,8 +44,14 @@ public partial class AIForHireProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Id;
+
+                    if (el.TryGetProperty("type", out var typeEl))
+                        model.Type = typeEl.GetString() ?? string.Empty;
+
+                    if (model.Type == "text")
+                        model.Type = "language";
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);

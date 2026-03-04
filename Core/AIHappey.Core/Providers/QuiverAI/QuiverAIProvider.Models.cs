@@ -8,6 +8,9 @@ public partial class QuiverAIProvider
 {
     private async Task<IEnumerable<Model>> ListModelsLiveAsync(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return [];
+
         ApplyAuthHeader();
 
         using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
