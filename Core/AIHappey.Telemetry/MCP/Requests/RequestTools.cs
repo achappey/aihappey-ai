@@ -13,7 +13,20 @@ public class RequestTools
     // -------------------------
     // Helpers
     // -------------------------
-    private static StatsWindow Days(int days) => StatsWindow.LastDaysUtc(days <= 0 ? 1 : days);
+    private static StatsWindow Range(DateTime startDateTimeUtc, DateTime? endDateTimeUtc)
+    {
+        if (startDateTimeUtc.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("startDateTimeUtc must be provided in UTC.", nameof(startDateTimeUtc));
+
+        var end = endDateTimeUtc ?? DateTime.UtcNow;
+        if (end.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("endDateTimeUtc must be provided in UTC when specified.", nameof(endDateTimeUtc));
+
+        if (end <= startDateTimeUtc)
+            throw new ArgumentException("endDateTimeUtc must be greater than startDateTimeUtc.", nameof(endDateTimeUtc));
+
+        return new StatsWindow(startDateTimeUtc, end);
+    }
 
     // -------------------------
     // TELEMETRY: Overview
@@ -22,13 +35,14 @@ public class RequestTools
     [McpServerTool(Title = "Telemetry overview", Name = "ai_requests_overview",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIRequests_Overview(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.GetOverviewAsync(Days(days), ct);
+        var res = await s.GetOverviewAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
         return new EmbeddedResourceBlock()
         {
             Resource = new TextResourceContents()
@@ -47,13 +61,14 @@ public class RequestTools
     [McpServerTool(Title = "Telemetry daily activity", Name = "ai_requests_daily_activity",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIRequests_DailyActivity(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.GetDailyActivityAsync(Days(days), ct);
+        var res = await s.GetDailyActivityAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
 
         return new EmbeddedResourceBlock()
         {
@@ -74,13 +89,14 @@ public class RequestTools
     [McpServerTool(Title = "Telemetry request types", Name = "ai_requests_request_types",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIRequests_RequestTypes(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.GetRequestTypesAsync(Days(days), ct);
+        var res = await s.GetRequestTypesAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
         return new EmbeddedResourceBlock()
         {
             Resource = new TextResourceContents()
@@ -99,13 +115,14 @@ public class RequestTools
     [McpServerTool(Title = "Telemetry token stats", Name = "ai_requests_token_stats",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIRequests_TokenStats(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.GetTokenStatsAsync(Days(days), ct);
+        var res = await s.GetTokenStatsAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
         return new EmbeddedResourceBlock()
         {
             Resource = new TextResourceContents()
@@ -124,13 +141,14 @@ public class RequestTools
     [McpServerTool(Title = "Telemetry latency stats", Name = "ai_requests_latency_stats",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIRequests_LatencyStats(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.GetLatencyStatsAsync(Days(days), ct);
+        var res = await s.GetLatencyStatsAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
         return new EmbeddedResourceBlock()
         {
             Resource = new TextResourceContents()

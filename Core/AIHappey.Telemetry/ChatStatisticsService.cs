@@ -20,6 +20,7 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         {
             r.InputTokens,
             r.TotalTokens,
+            OutputTokens = r.TotalTokens - r.InputTokens,
             r.UserId,
             r.ModelId,
             LatMs = EF.Functions.DateDiffMillisecond(r.StartedAt, r.EndedAt)
@@ -29,6 +30,7 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         var activeUsers = overview.Select(x => x.UserId).Distinct().Count();
         var distinctModels = overview.Select(x => x.ModelId).Distinct().Count();
         var tokensIn = overview.Sum(x => x.InputTokens);
+        var tokensOut = overview.Sum(x => x.OutputTokens);
         var tokensTot = overview.Sum(x => x.TotalTokens);
         var avgLatency = overview.Count == 0 ? 0.0 : overview.Average(x => x.LatMs);
 
@@ -46,6 +48,7 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             DistinctModels: distinctModels,
             AvgLatency: TimeSpan.FromMilliseconds(avgLatency),
             SumInputTokens: tokensIn,
+            SumOutputTokens: tokensOut,
             SumTotalTokens: tokensTot);
     }
 
@@ -59,6 +62,8 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             {
                 Offset = EF.Functions.DateDiffDay(baseDay, r.StartedAt), // int
                 r.UserId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
                 r.TotalTokens
             })
             .GroupBy(x => x.Offset)
@@ -67,7 +72,9 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
                 Offset = g.Key,
                 Requests = g.Count(),
                 Users = g.Select(x => x.UserId).Distinct().Count(),
-                Tokens = g.Sum(x => x.TotalTokens)
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens)
             })
             .OrderBy(x => x.Offset)
             .ToListAsync(ct);
@@ -76,7 +83,7 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             .Select(x =>
             {
                 var day = baseDay.AddDays(x.Offset);
-                return new TimeBucketStat(DateOnly.FromDateTime(day), x.Requests, x.Users, x.Tokens);
+                return new TimeBucketStat(DateOnly.FromDateTime(day), x.Requests, x.Users, x.InputTokens, x.OutputTokens, x.TotalTokens);
             })];
     }
 
@@ -92,11 +99,18 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         return new RequestTypeBreakdown(chat, sampling, completion);
     }
 
-    public async Task<IReadOnlyList<KeyCountStat>> TopUsersAsync(StatsWindow w, int top = 10,
+    public async Task<IReadOnlyList<TopUserStat>> TopUsersAsync(StatsWindow w, int top = 10,
         TopOrder order = TopOrder.Requests, CancellationToken ct = default)
     {
-        var q = InWindow(db, w)
-            .Select(r => new { r.UserId, r.TotalTokens, r.StartedAt, r.EndedAt });
+        var q = InWindow(db, w).Select(r => new
+        {
+            r.UserId,
+            r.InputTokens,
+            OutputTokens = r.TotalTokens - r.InputTokens,
+            r.TotalTokens,
+            r.StartedAt,
+            r.EndedAt
+        });
 
         var agg = await q
             .GroupBy(x => x.UserId)
@@ -105,7 +119,9 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             {
                 g.Key,
                 Requests = g.Count(),
-                Tokens = g.Sum(x => x.TotalTokens),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens),
                 Duration = g.Sum(x =>
                     (long?)EF.Functions.DateDiffMillisecond(x.StartedAt, x.EndedAt) ?? 0L)
             })
@@ -116,29 +132,41 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             .ToDictionaryAsync(u => u.Id, u => u.Username, ct);
 
         var ordered = order == TopOrder.Tokens
-            ? agg.OrderByDescending(a => a.Tokens)
+            ? agg.OrderByDescending(a => a.TotalTokens)
             : order == TopOrder.Requests ?
             agg.OrderByDescending(a => a.Requests) : agg.OrderByDescending(a => a.Duration);
 
         return [.. ordered.Take(top)
-            .Select(a => new KeyCountStat(
+            .Select(a => new TopUserStat(
                 users.TryGetValue(a.Key, out var name) ? name : $"user:{a.Key}",
-                 order switch
-                 {
-                     TopOrder.Tokens => Math.Min(a.Tokens, int.MaxValue),
-                     TopOrder.Requests => a.Requests,
-                     _ => (int)a.Duration / 1000 // convert ms → seconds here
-                 }
+                a.Requests,
+                a.InputTokens,
+                a.OutputTokens,
+                a.TotalTokens,
+                (int)a.Duration / 1000 // convert ms → seconds here
             ))];
 
     }
 
     public async Task<IReadOnlyList<ModelUsageStat>> TopModelsAsync(StatsWindow w, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
     {
-        var q = InWindow(db, w).Select(r => new { r.ModelId, r.TotalTokens });
+        var q = InWindow(db, w).Select(r => new
+        {
+            r.ModelId,
+            r.InputTokens,
+            OutputTokens = r.TotalTokens - r.InputTokens,
+            r.TotalTokens
+        });
 
         var agg = await q.GroupBy(x => x.ModelId)
-            .Select(g => new { g.Key, Requests = g.Count(), Tokens = g.Sum(x => x.TotalTokens) })
+            .Select(g => new
+            {
+                g.Key,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens)
+            })
             .ToListAsync(ct);
 
         // join to Model + Provider
@@ -154,18 +182,18 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         var merged = from a in agg
                      join m in models on a.Key equals m.Id
                      let provider = providers.TryGetValue(m.ProviderId, out var pn) ? pn : $"provider:{m.ProviderId}"
-                     select new ModelUsageStat(provider, m.ModelName, a.Requests, a.Tokens);
+                     select new ModelUsageStat(provider, m.ModelName, a.Requests, a.InputTokens, a.OutputTokens, a.TotalTokens);
 
         var ordered = order == TopOrder.Tokens
-            ? merged.OrderByDescending(x => x.Tokens)
+            ? merged.OrderByDescending(x => x.TotalTokens)
             : merged.OrderByDescending(x => x.Requests);
 
         return [.. ordered.Take(top)];
     }
 
-    public sealed record ToolTokenAgg(int ToolId, int Tokens);
+    public sealed record ToolTokenAgg(int ToolId, int InputTokens, int OutputTokens, int TotalTokens);
 
-    public async Task<IReadOnlyList<KeyCountStat>> TopToolsAsync(StatsWindow w, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
+    public async Task<IReadOnlyList<TopToolStat>> TopToolsAsync(StatsWindow w, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
     {
         // Requests in window -> RequestTools -> Tools
         var requestIds = await InWindow(db, w).Select(r => r.Id).ToListAsync(ct);
@@ -177,32 +205,47 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             .Select(g => new { g.Key, Requests = g.Count() })
             .ToListAsync(ct);
 
-        var tokensPerTool = order == TopOrder.Tokens
-                ? await (from x in rt
-                         join r in db.Requests.AsNoTracking() on x.RequestId equals r.Id
-                         group r by x.ToolId into g
-                         select new ToolTokenAgg(g.Key, g.Sum(r => r.TotalTokens)))
-                        .ToListAsync(ct)
-                : new List<ToolTokenAgg>();
+        var tokensPerTool = await (from x in rt
+                                   join r in db.Requests.AsNoTracking() on x.RequestId equals r.Id
+                                   group r by x.ToolId into g
+                                   select new ToolTokenAgg(
+                                       g.Key,
+                                       g.Sum(r => r.InputTokens),
+                                       g.Sum(r => r.TotalTokens - r.InputTokens),
+                                       g.Sum(r => r.TotalTokens)))
+                        .ToListAsync(ct);
 
         var toolNames = await db.Tools.AsNoTracking()
             .Where(t => aggReq.Select(a => a.Key).Contains(t.Id))
             .ToDictionaryAsync(t => t.Id, t => t.ToolName, ct);
 
-        IEnumerable<(int id, int val)> ordered =
-            order == TopOrder.Tokens
-            ? aggReq.Join(tokensPerTool, a => a.Key, t => t.ToolId, (a, t) => (id: a.Key, val: t.Tokens))
-                    .OrderByDescending(x => x.val)
-            : aggReq.Select(a => (id: a.Key, val: a.Requests))
-                    .OrderByDescending(x => x.val);
+        var merged = from a in aggReq
+                     join t in tokensPerTool on a.Key equals t.ToolId into tj
+                     from t in tj.DefaultIfEmpty(new ToolTokenAgg(a.Key, 0, 0, 0))
+                     select new TopToolStat(
+                         toolNames.TryGetValue(a.Key, out var n) ? n : $"tool:{a.Key}",
+                         a.Requests,
+                         t.InputTokens,
+                         t.OutputTokens,
+                         t.TotalTokens);
 
-        return [.. ordered.Take(top).Select(x => new KeyCountStat(toolNames.TryGetValue(x.id, out var n) ? n : $"tool:{x.id}", x.val))];
+        var ordered = order == TopOrder.Tokens
+            ? merged.OrderByDescending(x => x.TotalTokens)
+            : merged.OrderByDescending(x => x.Requests);
+
+        return [.. ordered.Take(top)];
     }
 
-    public async Task<IReadOnlyList<KeyCountStat>> TopProvidersAsync(StatsWindow w, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
+    public async Task<IReadOnlyList<TopProviderStat>> TopProvidersAsync(StatsWindow w, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
     {
         var q = InWindow(db, w)
-            .Select(r => new { r.ModelId, r.TotalTokens });
+            .Select(r => new
+            {
+                r.ModelId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens
+            });
 
         // model -> provider
         var modelToProvider = await db.Models.AsNoTracking()
@@ -211,7 +254,14 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
 
         var providerAgg = (await q.ToListAsync(ct))
             .GroupBy(x => modelToProvider.TryGetValue(x.ModelId, out var pid) ? pid : -1)
-            .Select(g => new { ProviderId = g.Key, Requests = g.Count(), Tokens = g.Sum(x => x.TotalTokens) })
+            .Select(g => new
+            {
+                ProviderId = g.Key,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens)
+            })
             .ToList();
 
         var providerNames = await db.Providers.AsNoTracking()
@@ -219,12 +269,16 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             .ToDictionaryAsync(p => p.Id, p => p.Name, ct);
 
         var ordered = order == TopOrder.Tokens
-            ? providerAgg.OrderByDescending(a => a.Tokens)
+            ? providerAgg.OrderByDescending(a => a.TotalTokens)
             : providerAgg.OrderByDescending(a => a.Requests);
 
         return [.. ordered.Take(top)
-            .Select(a => new KeyCountStat(providerNames.TryGetValue(a.ProviderId, out var n) ? n : $"provider:{a.ProviderId}",
-                                          order == TopOrder.Tokens ? a.Tokens : a.Requests))];
+            .Select(a => new TopProviderStat(
+                providerNames.TryGetValue(a.ProviderId, out var n) ? n : $"provider:{a.ProviderId}",
+                a.Requests,
+                a.InputTokens,
+                a.OutputTokens,
+                a.TotalTokens))];
     }
 
     public async Task<TokenStats> GetTokenStatsAsync(StatsWindow w, CancellationToken ct = default)
@@ -233,7 +287,7 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
 
         var list = await q.ToListAsync(ct);
         if (list.Count == 0)
-            return new TokenStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            return new TokenStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
         static int Pctl(IReadOnlyList<int> data, double p)
         {
@@ -243,12 +297,14 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         }
 
         var ins = list.Select(x => x.InputTokens).OrderBy(x => x).ToList();
+        var outs = list.Select(x => x.TotalTokens - x.InputTokens).OrderBy(x => x).ToList();
         var tots = list.Select(x => x.TotalTokens).OrderBy(x => x).ToList();
 
         return new TokenStats(
-            MinInput: ins.First(), P50Input: Pctl(ins, 0.50), P95Input: Pctl(ins, 0.95), MaxInput: ins.Last(),
-            MinTotal: tots.First(), P50Total: Pctl(tots, 0.50), P95Total: Pctl(tots, 0.95), MaxTotal: tots.Last(),
-            AvgInput: ins.Average(), AvgTotal: tots.Average());
+            MinInputTokens: ins.First(), P50InputTokens: Pctl(ins, 0.50), P95InputTokens: Pctl(ins, 0.95), MaxInputTokens: ins.Last(),
+            MinOutputTokens: outs.First(), P50OutputTokens: Pctl(outs, 0.50), P95OutputTokens: Pctl(outs, 0.95), MaxOutputTokens: outs.Last(),
+            MinTotalTokens: tots.First(), P50TotalTokens: Pctl(tots, 0.50), P95TotalTokens: Pctl(tots, 0.95), MaxTotalTokens: tots.Last(),
+            AvgInputTokens: ins.Average(), AvgOutputTokens: outs.Average(), AvgTotalTokens: tots.Average());
     }
 
     public async Task<LatencyStats> GetLatencyStatsAsync(StatsWindow w, CancellationToken ct = default)

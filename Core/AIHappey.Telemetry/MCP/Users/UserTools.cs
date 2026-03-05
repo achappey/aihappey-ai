@@ -13,7 +13,20 @@ public class UserTools
     // -------------------------
     // Helpers
     // -------------------------
-    private static StatsWindow Days(int days) => StatsWindow.LastDaysUtc(days <= 0 ? 1 : days);
+    private static StatsWindow Range(DateTime startDateTimeUtc, DateTime? endDateTimeUtc)
+    {
+        if (startDateTimeUtc.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("startDateTimeUtc must be provided in UTC.", nameof(startDateTimeUtc));
+
+        var end = endDateTimeUtc ?? DateTime.UtcNow;
+        if (end.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("endDateTimeUtc must be provided in UTC when specified.", nameof(endDateTimeUtc));
+
+        if (end <= startDateTimeUtc)
+            throw new ArgumentException("endDateTimeUtc must be greater than startDateTimeUtc.", nameof(endDateTimeUtc));
+
+        return new StatsWindow(startDateTimeUtc, end);
+    }
 
     private static TopOrder ParseOrder(string? order) =>
         string.Equals(order, "tokens", StringComparison.OrdinalIgnoreCase) ? TopOrder.Tokens :
@@ -27,7 +40,8 @@ public class UserTools
     [McpServerTool(Title = "Telemetry top users", Name = "ai_users_top_users",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIUsers_TopUsers(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         [Description("Max items to return.")] int top,
         [Description("Order by 'requests' (default), 'tokens' or 'duration'.")] string? order,
         IServiceProvider services,
@@ -35,7 +49,7 @@ public class UserTools
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.TopUsersAsync(Days(days), Math.Max(1, top), ParseOrder(order), ct);
+        var res = await s.TopUsersAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
         return new EmbeddedResourceBlock()
         {
             Resource = new TextResourceContents()
@@ -53,13 +67,14 @@ public class UserTools
         Idempotent = true,
         ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIUsers_NewUsersPerDay(
-          [Description("Lookback window in days (UTC).")] int days,
+          [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+          [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
           IServiceProvider services,
           RequestContext<CallToolRequestParams> _,
           CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var data = await s.GetNewUsersPerDayAsync(Days(days), ct);
+        var data = await s.GetNewUsersPerDayAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
 
         var payload = data.Select(d => new { day = d.Day.ToString("yyyy-MM-dd"), new_users = d.Count });
 
@@ -78,7 +93,7 @@ public class UserTools
     // -------------------------
     // Daily Active Users (DAU)
     // -------------------------
-    [Description("Daily distinct active users over a lookback window.")]
+    [Description("Daily distinct active users over an explicit UTC datetime range.")]
     [McpServerTool(
         Title = "Daily active users",
         Name = "ai_users_daily_active_users",
@@ -86,16 +101,14 @@ public class UserTools
         ReadOnly = true,
         OpenWorld = false)]
     public static async Task<ContentBlock?> AIUsers_DailyActiveUsers(
-        [Description("Lookback window in days (UTC). Default 180 (≈6 months).")]
-        int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
-        if (days <= 0) days = 180;
-
         var stats = services.GetRequiredService<IChatStatisticsService>();
-        var data = await stats.GetDailyDistinctUsersAsync(Days(days), ct);
+        var data = await stats.GetDailyDistinctUsersAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
 
         // -> [{ "day": "yyyy-MM-dd", "active_users": number }]
         var payload = data.Select(d => new
@@ -118,7 +131,7 @@ public class UserTools
     // -------------------------
     // Cumulative Distinct Users (growth curve)
     // -------------------------
-    [Description("Cumulative distinct users per day over a lookback window (growth curve).")]
+    [Description("Cumulative distinct users per day over an explicit UTC datetime range (growth curve).")]
     [McpServerTool(
         Title = "Cumulative distinct users",
         Name = "ai_users_cumulative_users",
@@ -126,16 +139,14 @@ public class UserTools
         ReadOnly = true,
         OpenWorld = false)]
     public static async Task<ContentBlock?> AIUsers_CumulativeUsers(
-        [Description("Lookback window in days (UTC). Default 180 (≈6 months).")]
-        int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
-        if (days <= 0) days = 180;
-
         var stats = services.GetRequiredService<IChatStatisticsService>();
-        var cumulative = await stats.GetCumulativeDistinctUsersAsync(Days(days), ct);
+        var cumulative = await stats.GetCumulativeDistinctUsersAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
 
         // -> [{ "day": "yyyy-MM-dd", "cumulative_users": number }]
         var payload = cumulative.Select(d => new

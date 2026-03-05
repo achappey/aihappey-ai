@@ -11,7 +11,20 @@ namespace AIHappey.Telemetry.MCP.Models;
 public class ModelTools
 {
     // Helpers (private)
-    private static StatsWindow Days(int days) => StatsWindow.LastDaysUtc(days <= 0 ? 1 : days);
+    private static StatsWindow Range(DateTime startDateTimeUtc, DateTime? endDateTimeUtc)
+    {
+        if (startDateTimeUtc.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("startDateTimeUtc must be provided in UTC.", nameof(startDateTimeUtc));
+
+        var end = endDateTimeUtc ?? DateTime.UtcNow;
+        if (end.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("endDateTimeUtc must be provided in UTC when specified.", nameof(endDateTimeUtc));
+
+        if (end <= startDateTimeUtc)
+            throw new ArgumentException("endDateTimeUtc must be greater than startDateTimeUtc.", nameof(endDateTimeUtc));
+
+        return new StatsWindow(startDateTimeUtc, end);
+    }
 
     private static TopOrder ParseOrder(string? order) =>
         string.Equals(order, "tokens", StringComparison.OrdinalIgnoreCase) ? TopOrder.Tokens : TopOrder.Requests;
@@ -22,7 +35,8 @@ public class ModelTools
     [Description("Top models by requests or tokens.")]
     [McpServerTool(Title = "Telemetry top models", Name = "ai_models_top_models", Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIModels_TopModels(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         [Description("Max items to return.")] int top,
         [Description("Order by 'requests' (default) or 'tokens'.")] string? order,
         IServiceProvider services,
@@ -30,7 +44,7 @@ public class ModelTools
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.TopModelsAsync(Days(days), Math.Max(1, top), ParseOrder(order), ct);
+        var res = await s.TopModelsAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
         return new EmbeddedResourceBlock()
         {
             Resource = new TextResourceContents()
@@ -46,10 +60,11 @@ public class ModelTools
     // TELEMETRY: Top Providers
     // -------------------------
     [Description("Top providers by requests or tokens.")]
-    [McpServerTool(Title = "Telemetry top providers", Name = "ai_models_top_providers", 
+    [McpServerTool(Title = "Telemetry top providers", Name = "ai_models_top_providers",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<ContentBlock?> AIModels_TopProviders(
-        [Description("Lookback window in days (UTC).")] int days,
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         [Description("Max items to return.")] int top,
         [Description("Order by 'requests' (default) or 'tokens'.")] string? order,
         IServiceProvider services,
@@ -57,7 +72,7 @@ public class ModelTools
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
-        var res = await s.TopProvidersAsync(Days(days), Math.Max(1, top), ParseOrder(order), ct);
+        var res = await s.TopProvidersAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
         return new EmbeddedResourceBlock()
         {
             Resource = new TextResourceContents()
