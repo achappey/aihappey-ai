@@ -244,6 +244,7 @@ public class AIServiceConfig
     public ProviderConfig? KittenStack { get; set; }
     public ProviderConfig? PacketAI { get; set; }
     public ProviderConfig? EdenAI { get; set; }
+    public ProviderConfig? WebsearchAPI { get; set; }
 }
 
 public class ProviderConfig

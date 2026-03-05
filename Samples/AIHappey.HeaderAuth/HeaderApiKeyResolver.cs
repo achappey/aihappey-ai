@@ -246,6 +246,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["kittenstack"] = "X-KittenStack-Key",
             ["packetai"] = "X-PacketAI-Key",
             ["edenai"] = "X-EdenAI-Key",
+            ["websearchapi"] = "X-WebsearchAPI-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -251,6 +251,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "kittenstack" => _config.KittenStack?.ApiKey,
             "packetai" => _config.PacketAI?.ApiKey,
             "edenai" => _config.EdenAI?.ApiKey,
+            "websearchapi" => _config.WebsearchAPI?.ApiKey,
             _ => null
         };
 }

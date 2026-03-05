@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "websearchapi/WebSearch",
+      "object": "model",
+      "owned_by": "WebsearchAPI",
+      "name": "WebSearch",
+      "type": "language",
+      "description": "WebSearchAPI.ai offers a powerful search API built on Google's search infrastructure, enhanced with AI-powered content extraction capabilities."
+    }
+  ]
+}
