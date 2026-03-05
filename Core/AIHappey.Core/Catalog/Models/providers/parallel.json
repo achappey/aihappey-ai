@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "parallel/speed",
+      "object": "model",
+      "owned_by": "Parallel",
+      "name": "Parallel Speed",
+      "type": "language",
+      "description": "Low latency across a broad range of use cases."
+    },
+    {
+      "id": "parallel/lite",
+      "object": "model",
+      "owned_by": "Parallel",
+      "name": "Parallel Lite",
+      "type": "language",
+      "description": "Simple lookups, basic metadata."
+    },
+    {
+      "id": "parallel/base",
+      "object": "model",
+      "owned_by": "Parallel",
+      "name": "Parallel Base",
+      "type": "language",
+      "description": "Standard enrichments, factual queries."
+    },
+    {
+      "id": "parallel/core",
+      "object": "model",
+      "owned_by": "Parallel",
+      "name": "Parallel Core",
+      "type": "language",
+      "description": "Complex research, multi-source synthesis."
+    }
+  ]
+}

@@ -34,7 +34,7 @@ public partial class ZyphraProvider
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new InvalidOperationException($"No {nameof(Zyphra)} API key.");
 
-        var model = NormalizeZyphraModelId(request.Model);
+        var (model, modelVoice) = ParseZyphraSpeechModelAndVoice(request.Model);
         var outputMimeType = NormalizeZyphraMimeType(request.OutputFormat);
         var zyphraOptions = TryGetZyphraOptions(request);
 
@@ -44,8 +44,10 @@ public partial class ZyphraProvider
             ["model"] = model
         };
 
-        if (!string.IsNullOrWhiteSpace(request.Voice))
-            payload["default_voice_name"] = request.Voice.Trim();
+        var requestVoice = string.IsNullOrWhiteSpace(request.Voice) ? null : request.Voice.Trim();
+        var effectiveVoice = modelVoice ?? requestVoice;
+        if (!string.IsNullOrWhiteSpace(effectiveVoice))
+            payload["default_voice_name"] = effectiveVoice;
 
         if (!string.IsNullOrWhiteSpace(request.Language))
             payload["language_iso_code"] = request.Language.Trim();
@@ -57,6 +59,14 @@ public partial class ZyphraProvider
             payload["mime_type"] = outputMimeType;
 
         MergeZyphraOptions(payload, zyphraOptions);
+
+        // Model shortcut voices (baseModel/voice) are authoritative.
+        // Ensure provider options cannot override the voice selected by model id.
+        if (!string.IsNullOrWhiteSpace(modelVoice))
+        {
+            payload["default_voice_name"] = modelVoice;
+            payload["voice_name"] = modelVoice;
+        }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/text-to-speech")
         {
@@ -95,6 +105,28 @@ public partial class ZyphraProvider
                 ModelId = model
             }
         };
+    }
+
+    private static (string BaseModelId, string? VoiceName) ParseZyphraSpeechModelAndVoice(string model)
+    {
+        var localModel = NormalizeZyphraModelId(model);
+        if (string.IsNullOrWhiteSpace(localModel))
+            throw new ArgumentException("Model is required.", nameof(model));
+
+        var slashIndex = localModel.IndexOf('/');
+        if (slashIndex < 0)
+            return (localModel, null);
+
+        if (slashIndex == 0 || slashIndex >= localModel.Length - 1)
+            throw new ArgumentException("Zyphra speech model must include both base model id and voice name in the form '[baseModel]/[voiceName]'.", nameof(model));
+
+        var baseModelId = localModel[..slashIndex].Trim();
+        var voiceName = localModel[(slashIndex + 1)..].Trim();
+
+        if (string.IsNullOrWhiteSpace(baseModelId) || string.IsNullOrWhiteSpace(voiceName))
+            throw new ArgumentException("Zyphra speech model must include both base model id and voice name in the form '[baseModel]/[voiceName]'.", nameof(model));
+
+        return (baseModelId, voiceName);
     }
 
     private static string NormalizeZyphraModelId(string model)

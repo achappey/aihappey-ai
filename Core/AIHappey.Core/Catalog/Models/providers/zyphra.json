@@ -14,6 +14,150 @@
       "owned_by": "Zyphra",
       "name": "zonos-v0.1-hybrid",
       "type": "speech"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/american_female",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / American Female",
+      "type": "speech",
+      "description": "Standard American English female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/american_male",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / American Male",
+      "type": "speech",
+      "description": "Standard American English male voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/anime_girl",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / Anime Girl",
+      "type": "speech",
+      "description": "Stylized anime girl character voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/british_female",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / British Female",
+      "type": "speech",
+      "description": "British English female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/british_male",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / British Male",
+      "type": "speech",
+      "description": "British English male voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/energetic_boy",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / Energetic Boy",
+      "type": "speech",
+      "description": "Energetic young male voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/energetic_girl",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / Energetic Girl",
+      "type": "speech",
+      "description": "Energetic young female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/japanese_female",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / Japanese Female",
+      "type": "speech",
+      "description": "Japanese female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-transformer/japanese_male",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-transformer / Japanese Male",
+      "type": "speech",
+      "description": "Japanese male voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/american_female",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / American Female",
+      "type": "speech",
+      "description": "Standard American English female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/american_male",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / American Male",
+      "type": "speech",
+      "description": "Standard American English male voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/anime_girl",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / Anime Girl",
+      "type": "speech",
+      "description": "Stylized anime girl character voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/british_female",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / British Female",
+      "type": "speech",
+      "description": "British English female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/british_male",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / British Male",
+      "type": "speech",
+      "description": "British English male voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/energetic_boy",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / Energetic Boy",
+      "type": "speech",
+      "description": "Energetic young male voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/energetic_girl",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / Energetic Girl",
+      "type": "speech",
+      "description": "Energetic young female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/japanese_female",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / Japanese Female",
+      "type": "speech",
+      "description": "Japanese female voice"
+    },
+    {
+      "id": "zyphra/zonos-v0.1-hybrid/japanese_male",
+      "object": "model",
+      "owned_by": "Zyphra",
+      "name": "zonos-v0.1-hybrid / Japanese Male",
+      "type": "speech",
+      "description": "Japanese male voice"
     }
   ]
 }

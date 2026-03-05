@@ -64,8 +64,8 @@ public partial class FeatherlessProvider
 
                 return models;
             },
-            baseTtl: TimeSpan.FromMinutes(10),
-            jitterMinutes: 5,
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
 }

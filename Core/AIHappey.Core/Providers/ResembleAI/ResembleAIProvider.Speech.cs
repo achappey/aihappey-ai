@@ -40,10 +40,23 @@ public partial class ResembleAIProvider
 
         var metadata = request.GetProviderMetadata<ResembleAISpeechProviderMetadata>(GetIdentifier());
 
-        // Required: voice_uuid
-        var voiceUuid = (request.Voice ?? metadata?.VoiceUuid)?.Trim();
+        var (baseModelId, modelVoiceUuid) = ParseSpeechModelAndVoice(request.Model);
+
+        // Required: voice_uuid (from model-id or explicit request/provider metadata)
+        var voiceUuid = (modelVoiceUuid ?? request.Voice ?? metadata?.VoiceUuid)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceUuid))
             throw new ArgumentException("ResembleAI requires a voice UUID. Provide SpeechRequest.voice or providerOptions.resembleai.voice_uuid.", nameof(request));
+
+        if (!string.IsNullOrWhiteSpace(modelVoiceUuid))
+        {
+            if (!string.IsNullOrWhiteSpace(request.Voice)
+                && !string.Equals(request.Voice.Trim(), modelVoiceUuid, StringComparison.OrdinalIgnoreCase))
+                warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+
+            if (!string.IsNullOrWhiteSpace(metadata?.VoiceUuid)
+                && !string.Equals(metadata.VoiceUuid.Trim(), modelVoiceUuid, StringComparison.OrdinalIgnoreCase))
+                warnings.Add(new { type = "ignored", feature = "providerOptions.resembleai.voice_uuid", reason = "voice is derived from model id" });
+        }
 
         var outputFormat = NormalizeResembleOutputFormat(
             request.OutputFormat
@@ -54,7 +67,7 @@ public partial class ResembleAIProvider
         {
             ["voice_uuid"] = voiceUuid,
             ["data"] = request.Text,
-            ["model"] = request.Model,
+            ["model"] = baseModelId,
         };
 
         if (!string.IsNullOrWhiteSpace(metadata?.ProjectUuid))
@@ -117,6 +130,36 @@ public partial class ResembleAIProvider
                 Body = doc.RootElement.Clone()
             }
         };
+    }
+
+    private (string BaseModelId, string? VoiceUuid) ParseSpeechModelAndVoice(string model)
+    {
+        var localModel = ExtractProviderLocalModelId(model);
+        if (string.IsNullOrWhiteSpace(localModel))
+            throw new ArgumentException("Model is required.", nameof(model));
+
+        var slashIndex = localModel.IndexOf('/');
+        if (slashIndex < 0)
+        {
+            if (!IsSupportedSpeechBaseModel(localModel))
+                throw new NotSupportedException($"ResembleAI speech model '{model}' is not supported.");
+
+            return (localModel, null);
+        }
+
+        if (slashIndex == 0 || slashIndex >= localModel.Length - 1)
+            throw new ArgumentException("ResembleAI speech model must include both base model id and voice UUID in the form '[baseModel]/[voiceUuid]'.", nameof(model));
+
+        var baseModelId = localModel[..slashIndex].Trim();
+        var voiceUuid = localModel[(slashIndex + 1)..].Trim();
+
+        if (string.IsNullOrWhiteSpace(baseModelId) || string.IsNullOrWhiteSpace(voiceUuid))
+            throw new ArgumentException("ResembleAI speech model must include both base model id and voice UUID in the form '[baseModel]/[voiceUuid]'.", nameof(model));
+
+        if (!IsSupportedSpeechBaseModel(baseModelId))
+            throw new NotSupportedException($"ResembleAI speech base model '{baseModelId}' is not supported.");
+
+        return (baseModelId, voiceUuid);
     }
 
     private static string? NormalizeResembleOutputFormat(string? outputFormat)

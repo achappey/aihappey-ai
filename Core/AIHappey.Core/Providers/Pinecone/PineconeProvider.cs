@@ -3,6 +3,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Pinecone;
 
@@ -11,10 +12,15 @@ public partial class PineconeProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public PineconeProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public PineconeProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.pinecone.io/");
     }

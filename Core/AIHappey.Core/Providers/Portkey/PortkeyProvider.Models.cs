@@ -8,48 +8,59 @@ public partial class PortkeyProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-                if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
+        var cacheKey = this.GetCacheKey(key);
 
-        ApplyAuthHeader();
-
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?offset=10000");
-        using var resp = await _client.SendAsync(req, cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"Portkey API error: {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        var models = new List<Model>();
-        var root = doc.RootElement;
-
-        // ✅ root is already an array
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                ? dataEl.EnumerateArray()
-                : Enumerable.Empty<JsonElement>();
-
-        foreach (var el in arr)
-        {
-            Model model = new();
-
-            if (el.TryGetProperty("id", out var idEl))
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                model.Name = idEl.GetString() ?? "";
-            }
+                ApplyAuthHeader();
 
-            if (!string.IsNullOrEmpty(model.Id))
-                models.Add(model);
-        }
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?offset=10000");
+                using var resp = await _client.SendAsync(req, cancellationToken);
 
-        return models;
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    throw new Exception($"Portkey API error: {err}");
+                }
+
+                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+                var models = new List<Model>();
+                var root = doc.RootElement;
+
+                // ✅ root is already an array
+                var arr = root.ValueKind == JsonValueKind.Array
+                    ? root.EnumerateArray()
+                    : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                        ? dataEl.EnumerateArray()
+                        : Enumerable.Empty<JsonElement>();
+
+                foreach (var el in arr)
+                {
+                    Model model = new();
+
+                    if (el.TryGetProperty("id", out var idEl))
+                    {
+                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = idEl.GetString() ?? "";
+                    }
+
+                    if (!string.IsNullOrEmpty(model.Id))
+                        models.Add(model);
+                }
+
+                return models;
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 }

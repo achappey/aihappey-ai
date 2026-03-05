@@ -10,12 +10,12 @@
       "description": "Audixa Base"
     },
     {
-      "id": "audixa/advance",
+      "id": "audixa/advanced",
       "object": "model",
       "owned_by": "Audixa",
-      "name": "Audixa Advance",
+      "name": "Audixa Advanced",
       "type": "speech",
-      "description": "Audixa Advance"
+      "description": "Audixa Advanced"
     }
   ]
 }

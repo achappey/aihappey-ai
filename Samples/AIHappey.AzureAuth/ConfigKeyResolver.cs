@@ -238,6 +238,19 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "pixeldojo" => _config.PixelDojo?.ApiKey,
             "navyai" => _config.NavyAI?.ApiKey,
             "nearai" => _config.NEARAI?.ApiKey,
+            "parallel" => _config.Parallel?.ApiKey,
+            "nanogpt" => _config.NanoGPT?.ApiKey,
+            "aibramha" => _config.AIBramha?.ApiKey,
+            "ghostbot" => _config.Ghostbot?.ApiKey,
+            "routmy" => _config.Routmy?.ApiKey,
+            "poe" => _config.Poe?.ApiKey,
+            "askarc" => _config.AskARC?.ApiKey,
+            "synthetic" => _config.Synthetic?.ApiKey,
+            "renderful" => _config.Renderful?.ApiKey,
+            "tigercity" => _config.TigerCity?.ApiKey,
+            "kittenstack" => _config.KittenStack?.ApiKey,
+            "packetai" => _config.PacketAI?.ApiKey,
+            "edenai" => _config.EdenAI?.ApiKey,
             _ => null
         };
 }

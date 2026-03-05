@@ -232,7 +232,20 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["glio"] = "X-Glio-Key",
             ["pixeldojo"] = "X-PixelDojo-Key",
             ["navyai"] = "X-NavyAI-Key",
-            ["nearai"] = "X-NEARAI-Key"
+            ["nearai"] = "X-NEARAI-Key",
+            ["parallel"] = "X-Parallel-Key",
+            ["nanogpt"] = "X-NanoGPT-Key",
+            ["aibramha"] = "X-AIBramha-Key",
+            ["ghostbot"] = "X-Ghostbot-Key",
+            ["routmy"] = "X-Routmy-Key",
+            ["poe"] = "X-Poe-Key",
+            ["askarc"] = "X-AskARC-Key",
+            ["synthetic"] = "X-Synthetic-Key",
+            ["renderful"] = "X-Renderful-Key",
+            ["tigercity"] = "X-TigerCity-Key",
+            ["kittenstack"] = "X-KittenStack-Key",
+            ["packetai"] = "X-PacketAI-Key",
+            ["edenai"] = "X-EdenAI-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

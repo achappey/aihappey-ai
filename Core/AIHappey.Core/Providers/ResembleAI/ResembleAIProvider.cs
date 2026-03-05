@@ -45,14 +45,13 @@ public partial class ResembleAIProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
-
-        return GetIdentifier().GetModels();
+        return await ListModelsInternal(cancellationToken);
     }
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(chatRequest.GetModel()!))
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.GetModel()!))
             ?? throw new ArgumentException(chatRequest.GetModel()!);
 
         if (model.Type == "speech")
@@ -73,7 +72,8 @@ public partial class ResembleAIProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
             ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "transcription")
@@ -101,7 +101,8 @@ public partial class ResembleAIProvider : IModelProvider
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(modelId))
+        var models = await ListModels(cancellationToken);
+        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
           ?? throw new ArgumentException(modelId);
 
         if (model.Type == "speech")

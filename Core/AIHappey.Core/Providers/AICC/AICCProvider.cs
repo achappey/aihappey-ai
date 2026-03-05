@@ -13,10 +13,15 @@ public partial class AICCProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public AICCProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public AICCProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.ai.cc/");
     }

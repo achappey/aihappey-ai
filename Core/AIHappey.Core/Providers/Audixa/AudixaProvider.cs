@@ -40,9 +40,6 @@ public partial class AudixaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Audixa).ToLowerInvariant();
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => await this.SpeechSamplingAsync(chatRequest, cancellationToken);
 

@@ -232,6 +232,19 @@ using AIHappey.Core.Providers.Glio;
 using AIHappey.Core.Providers.PixelDojo;
 using AIHappey.Core.Providers.NavyAI;
 using AIHappey.Core.Providers.NEARAI;
+using AIHappey.Core.Providers.Parallel;
+using AIHappey.Core.Providers.NanoGPT;
+using AIHappey.Core.Providers.AIBramha;
+using AIHappey.Core.Providers.Ghostbot;
+using AIHappey.Core.Providers.Routmy;
+using AIHappey.Core.Providers.Poe;
+using AIHappey.Core.Providers.AskARC;
+using AIHappey.Core.Providers.Synthetic;
+using AIHappey.Core.Providers.Renderful;
+using AIHappey.Core.Providers.TigerCity;
+using AIHappey.Core.Providers.KittenStack;
+using AIHappey.Core.Providers.PacketAI;
+using AIHappey.Core.Providers.EdenAI;
 
 namespace AIHappey.Core.AI;
 
@@ -473,7 +486,19 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PixelDojoProvider>();
         services.AddSingleton<IModelProvider, NavyAIProvider>();
         services.AddSingleton<IModelProvider, NEARAIProvider>();
-        
+        services.AddSingleton<IModelProvider, ParallelProvider>();
+        services.AddSingleton<IModelProvider, NanoGPTProvider>();
+        services.AddSingleton<IModelProvider, AIBramhaProvider>();
+        services.AddSingleton<IModelProvider, GhostbotProvider>();
+        services.AddSingleton<IModelProvider, RoutmyProvider>();
+        services.AddSingleton<IModelProvider, PoeProvider>();
+        services.AddSingleton<IModelProvider, AskARCProvider>();
+        services.AddSingleton<IModelProvider, SyntheticProvider>();
+        services.AddSingleton<IModelProvider, RenderfulProvider>();
+        services.AddSingleton<IModelProvider, TigerCityProvider>();
+        services.AddSingleton<IModelProvider, KittenStackProvider>();
+        services.AddSingleton<IModelProvider, PacketAIProvider>();
+        services.AddSingleton<IModelProvider, EdenAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
@@ -6,6 +8,21 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderExtensions
 {
+    public static string CacheKeyFromApiKey(string apiKey)
+    {
+        var bytes = Encoding.UTF8.GetBytes(apiKey);
+        var hash = SHA256.HashData(bytes);
+        return Convert.ToHexString(hash); // safe cache key
+    }
+
+    public static string GetCacheKey(this IModelProvider modelProvider, string? apiKey = null)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return $"models:{modelProvider.GetIdentifier()}";
+
+        return $"models:{modelProvider.GetIdentifier()}:{CacheKeyFromApiKey(apiKey)}";
+    }
+
     public static async Task<IEnumerable<Model>> ListModels(this IModelProvider modelProvider, string? key)
         => await Task.FromResult<IEnumerable<Model>>(modelProvider.GetIdentifier().GetModels());
 

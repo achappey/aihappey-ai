@@ -49,7 +49,9 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
             if (_modelProviderMap != null && DateTimeOffset.UtcNow < _expiresAt)
                 return;
 
-            var providerArray = providers as IModelProvider[] ?? [.. providers];
+            var providerArray = (providers as IModelProvider[] ?? [.. providers])
+                    .OrderBy(_ => Random.Shared.Next())
+                    .ToArray();
 
             var results = new ConcurrentBag<(IModelProvider Provider, List<Model>? Models)>();
 
@@ -57,7 +59,7 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
                 providerArray,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = 40,
+                    MaxDegreeOfParallelism = Math.Min(providerArray.Length, 32),
                     CancellationToken = ct
                 },
                 async (provider, token) =>

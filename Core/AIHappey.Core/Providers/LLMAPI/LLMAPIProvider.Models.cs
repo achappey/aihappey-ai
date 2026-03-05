@@ -10,7 +10,7 @@ public partial class LLMAPIProvider
     public async Task<IEnumerable<Model>> ListModels(
      CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"models:{GetIdentifier()}";
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
@@ -106,8 +106,8 @@ public partial class LLMAPIProvider
 
                 return models;
             },
-            baseTtl: TimeSpan.FromMinutes(10),
-            jitterMinutes: 5,
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
 }

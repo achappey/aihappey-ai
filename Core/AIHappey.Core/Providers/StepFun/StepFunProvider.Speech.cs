@@ -28,10 +28,24 @@ public partial class StepFunProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
         var metadata = request.GetProviderMetadata<StepFunSpeechProviderMetadata>(GetIdentifier());
+        var (baseModelId, modelVoiceId) = ParseSpeechModelAndVoice(request.Model);
 
-        var voice = !string.IsNullOrWhiteSpace(request.Voice)
-            ? request.Voice.Trim()
-            : metadata?.Voice?.Trim();
+        var voice = (modelVoiceId ?? request.Voice ?? metadata?.Voice)?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(modelVoiceId))
+        {
+            if (!string.IsNullOrWhiteSpace(request.Voice)
+                && !string.Equals(request.Voice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+            {
+                warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(metadata?.Voice)
+                && !string.Equals(metadata.Voice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+            {
+                warnings.Add(new { type = "ignored", feature = "providerOptions.stepfun.voice", reason = "voice is derived from model id" });
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(voice))
             throw new ArgumentException("Voice is required for StepFun speech endpoint.", nameof(request));
@@ -53,7 +67,7 @@ public partial class StepFunProvider
 
         var payload = new Dictionary<string, object?>
         {
-            ["model"] = request.Model,
+            ["model"] = baseModelId,
             ["input"] = request.Text,
             ["voice"] = voice,
             ["response_format"] = outputFormat
@@ -116,6 +130,41 @@ public partial class StepFunProvider
                 }
             }
         };
+    }
+
+    private (string BaseModelId, string? VoiceId) ParseSpeechModelAndVoice(string model)
+    {
+        var localModel = ExtractProviderLocalModelId(model);
+        if (string.IsNullOrWhiteSpace(localModel))
+            throw new ArgumentException("Model is required.", nameof(model));
+
+        var slashIndex = localModel.IndexOf('/');
+        if (slashIndex < 0)
+            return (localModel, null);
+
+        if (slashIndex == 0 || slashIndex >= localModel.Length - 1)
+            throw new ArgumentException("StepFun speech model must include both base model id and voice id in the form '[baseModel]/[voiceId]'.", nameof(model));
+
+        var baseModelId = localModel[..slashIndex].Trim();
+        var voiceId = localModel[(slashIndex + 1)..].Trim();
+
+        if (string.IsNullOrWhiteSpace(baseModelId) || string.IsNullOrWhiteSpace(voiceId))
+            throw new ArgumentException("StepFun speech model must include both base model id and voice id in the form '[baseModel]/[voiceId]'.", nameof(model));
+
+        return (baseModelId, voiceId);
+    }
+
+    private string ExtractProviderLocalModelId(string modelId)
+    {
+        if (string.IsNullOrWhiteSpace(modelId))
+            return string.Empty;
+
+        var providerPrefix = GetIdentifier() + "/";
+        var trimmed = modelId.Trim();
+
+        return trimmed.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)
+            ? trimmed[providerPrefix.Length..]
+            : trimmed;
     }
 
     private static StepFunSpeechVoiceLabel? NormalizeVoiceLabel(StepFunSpeechVoiceLabel? label, string? requestLanguage)

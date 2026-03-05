@@ -231,6 +231,19 @@ public class AIServiceConfig
     public ProviderConfig? PixelDojo { get; set; }
     public ProviderConfig? NavyAI { get; set; }
     public ProviderConfig? NEARAI { get; set; }
+    public ProviderConfig? Parallel { get; set; }
+    public ProviderConfig? NanoGPT { get; set; }
+    public ProviderConfig? AIBramha { get; set; }
+    public ProviderConfig? Ghostbot { get; set; }
+    public ProviderConfig? Routmy { get; set; }
+    public ProviderConfig? Poe { get; set; }
+    public ProviderConfig? AskARC { get; set; }
+    public ProviderConfig? Synthetic { get; set; }
+    public ProviderConfig? Renderful { get; set; }
+    public ProviderConfig? TigerCity { get; set; }
+    public ProviderConfig? KittenStack { get; set; }
+    public ProviderConfig? PacketAI { get; set; }
+    public ProviderConfig? EdenAI { get; set; }
 }
 
 public class ProviderConfig

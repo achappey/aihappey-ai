@@ -59,6 +59,7 @@ public sealed partial class TinfoilProvider
             {
                 "chat" or "code" or "title" or "safety" => "language",
                 "audio" => "transcription",
+                "tts" => "speech",
                 _ => type
             };
 

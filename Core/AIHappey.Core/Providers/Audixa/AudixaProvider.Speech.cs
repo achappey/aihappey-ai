@@ -25,8 +25,8 @@ public partial class AudixaProvider
             throw new ArgumentException("Text is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
-        if (request.Model.Contains('/'))
-            throw new ArgumentException("Audixa model must be 'base' or 'advance' (no provider prefix).", nameof(request));
+
+        var (resolvedModel, modelVoice) = ResolveModelAndVoice(request.Model);
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
@@ -40,9 +40,16 @@ public partial class AudixaProvider
 
         var metadata = request.GetProviderMetadata<AudixaSpeechProviderMetadata>(GetIdentifier());
 
-        var voice = (request.Voice ?? metadata?.Voice)?.Trim();
+        var voice = (modelVoice ?? request.Voice ?? metadata?.Voice)?.Trim();
         if (string.IsNullOrWhiteSpace(voice))
             throw new ArgumentException("Audixa requires a voice. Provide SpeechRequest.voice or providerOptions.audixa.voice.", nameof(request));
+
+        if (!string.IsNullOrWhiteSpace(modelVoice)
+            && !string.IsNullOrWhiteSpace(request.Voice)
+            && !string.Equals(modelVoice, request.Voice.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+        }
 
         var speed = request.Speed ?? metadata?.Speed;
         var emotion = metadata?.Emotion;
@@ -53,7 +60,7 @@ public partial class AudixaProvider
         {
             ["text"] = request.Text,
             ["voice"] = voice,
-            ["model"] = request.Model,
+            ["model"] = resolvedModel,
         };
 
         if (speed is not null)
@@ -147,7 +154,7 @@ public partial class AudixaProvider
         var providerMetadata = new Dictionary<string, JsonElement>
         {
             ["generation_id"] = JsonSerializer.SerializeToElement(generationId, JsonSerializerOptions.Web),
-            ["model"] = JsonSerializer.SerializeToElement(request.Model, JsonSerializerOptions.Web),
+            ["model"] = JsonSerializer.SerializeToElement(resolvedModel, JsonSerializerOptions.Web),
             ["voice"] = JsonSerializer.SerializeToElement(voice, JsonSerializerOptions.Web)
         };
 
@@ -173,7 +180,7 @@ public partial class AudixaProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = resolvedModel,
                 Body = new
                 {
                     create = createDoc.RootElement.Clone(),
@@ -181,6 +188,30 @@ public partial class AudixaProvider
                 }
             }
         };
+    }
+
+    private (string model, string? voiceId) ResolveModelAndVoice(string model)
+    {
+        var raw = model.Trim();
+        var providerPrefix = GetIdentifier() + "/";
+        if (raw.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            raw = raw[providerPrefix.Length..];
+
+        if (string.Equals(raw, "base", StringComparison.OrdinalIgnoreCase))
+            return ("base", null);
+
+        if (string.Equals(raw, "advanced", StringComparison.OrdinalIgnoreCase))
+            return ("advanced", null);
+
+        var parts = raw.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 2
+            && (string.Equals(parts[0], "base", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(parts[0], "advanced", StringComparison.OrdinalIgnoreCase)))
+        {
+            return (parts[0].ToLowerInvariant(), parts[1]);
+        }
+
+        throw new ArgumentException("Audixa model must be 'base', 'advanced', 'base/{voiceId}', or 'advanced/{voiceId}'.", nameof(model));
     }
 }
 
