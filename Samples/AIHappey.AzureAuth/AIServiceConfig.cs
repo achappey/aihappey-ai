@@ -247,6 +247,7 @@ public class AIServiceConfig
     public ProviderConfig? WebsearchAPI { get; set; }
     public ProviderConfig? NimbleWay { get; set; }
     public ProviderConfig? Eachlabs { get; set; }
+    public ProviderConfig? Valyu { get; set; }
 }
 
 public class ProviderConfig

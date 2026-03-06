@@ -249,6 +249,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["websearchapi"] = "X-WebsearchAPI-Key",
             ["nimbleway"] = "X-NimbleWay-Key",
             ["eachlabs"] = "X-Eachlabs-Key",
+            ["valyu"] = "X-Valyu-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

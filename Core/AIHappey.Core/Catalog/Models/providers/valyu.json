@@ -1,0 +1,69 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "valyu/deepresearch/fast",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Deep Research Fast",
+      "type": "language",
+      "description": "Quick queries, batch processing. Max 10 steps."
+    },
+    {
+      "id": "valyu/deepresearch/standard",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Deep Research Standard",
+      "type": "language",
+      "description": "Balanced research. Max 15 steps."
+    },
+    {
+      "id": "valyu/deepresearch/heavy",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Deep Research Heavy",
+      "type": "language",
+      "description": "Complex topics requiring deep analysis. Max 15 steps."
+    },
+    {
+      "id": "valyu/deepresearch/max",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Deep Research Max",
+      "type": "language",
+      "description": "Exhaustive research with maximum quality. Max 25 steps."
+    },
+    {
+      "id": "valyu/answer/all",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Answer All",
+      "type": "language",
+      "description": "Web and proprietary sources."
+    },
+    {
+      "id": "valyu/answer/web",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Answer Web",
+      "type": "language",
+      "description": "Web search only."
+    },
+    {
+      "id": "valyu/answer/proprietary",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Answer Proprietary",
+      "type": "language",
+      "description": "Academic, financial, and premium sources only."
+    },
+    {
+      "id": "valyu/answer/news",
+      "object": "model",
+      "owned_by": "Valyu",
+      "name": "Valyu Answer News",
+      "type": "language",
+      "description": "News articles only."
+    }
+  ]
+}

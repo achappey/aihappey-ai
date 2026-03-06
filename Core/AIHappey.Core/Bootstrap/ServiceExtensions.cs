@@ -248,6 +248,7 @@ using AIHappey.Core.Providers.EdenAI;
 using AIHappey.Core.Providers.NimbleWay;
 using AIHappey.Core.Providers.WebsearchAPI;
 using AIHappey.Core.Providers.Eachlabs;
+using AIHappey.Core.Providers.Valyu;
 
 namespace AIHappey.Core.AI;
 
@@ -505,6 +506,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, WebsearchAPIProvider>();
         services.AddSingleton<IModelProvider, NimbleWayProvider>();
         services.AddSingleton<IModelProvider, EachlabsProvider>();
+        services.AddSingleton<IModelProvider, ValyuProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

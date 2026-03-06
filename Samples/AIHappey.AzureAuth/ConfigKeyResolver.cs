@@ -254,6 +254,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "websearchapi" => _config.WebsearchAPI?.ApiKey,
             "nimbleway" => _config.NimbleWay?.ApiKey,
             "eachlabs" => _config.Eachlabs?.ApiKey,
+            "valyu" => _config.Valyu?.ApiKey,
             _ => null
         };
 }
