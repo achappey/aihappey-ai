@@ -19,7 +19,9 @@ public partial class WebsearchAPIProvider
     {
         var payload = new Dictionary<string, object?>
         {
-            ["query"] = query
+            ["query"] = query,
+            ["includeAnswer"] = true,
+            ["includeContent"] = true
         };
 
         if (passthrough is not null)
@@ -89,18 +91,14 @@ public partial class WebsearchAPIProvider
             return string.Empty;
 
         var lines = new List<string>();
-        foreach (var msg in all)
-        {
-            var text = string.Join("\n", msg.Parts
-                .OfType<TextUIPart>()
-                .Select(p => p.Text)
-                .Where(t => !string.IsNullOrWhiteSpace(t)));
+        var msg = all.LastOrDefault(a => a.Role == Role.user);
 
-            if (!string.IsNullOrWhiteSpace(text))
-                lines.Add($"{msg.Role}: {text}");
-        }
+        var text = string.Join("\n", msg?.Parts
+            .OfType<TextUIPart>()
+            .Select(p => p.Text)
+            .Where(t => !string.IsNullOrWhiteSpace(t)) ?? []);
 
-        return string.Join("\n\n", lines);
+        return text;
     }
 
     private static string BuildPromptFromResponseRequest(ResponseRequest request)

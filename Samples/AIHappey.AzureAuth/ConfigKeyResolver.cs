@@ -252,6 +252,8 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "packetai" => _config.PacketAI?.ApiKey,
             "edenai" => _config.EdenAI?.ApiKey,
             "websearchapi" => _config.WebsearchAPI?.ApiKey,
+            "nimbleway" => _config.NimbleWay?.ApiKey,
+            "eachlabs" => _config.Eachlabs?.ApiKey,
             _ => null
         };
 }

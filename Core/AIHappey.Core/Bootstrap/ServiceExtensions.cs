@@ -245,6 +245,9 @@ using AIHappey.Core.Providers.TigerCity;
 using AIHappey.Core.Providers.KittenStack;
 using AIHappey.Core.Providers.PacketAI;
 using AIHappey.Core.Providers.EdenAI;
+using AIHappey.Core.Providers.NimbleWay;
+using AIHappey.Core.Providers.WebsearchAPI;
+using AIHappey.Core.Providers.Eachlabs;
 
 namespace AIHappey.Core.AI;
 
@@ -499,6 +502,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, KittenStackProvider>();
         services.AddSingleton<IModelProvider, PacketAIProvider>();
         services.AddSingleton<IModelProvider, EdenAIProvider>();
+        services.AddSingleton<IModelProvider, WebsearchAPIProvider>();
+        services.AddSingleton<IModelProvider, NimbleWayProvider>();
+        services.AddSingleton<IModelProvider, EachlabsProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

@@ -245,6 +245,8 @@ public class AIServiceConfig
     public ProviderConfig? PacketAI { get; set; }
     public ProviderConfig? EdenAI { get; set; }
     public ProviderConfig? WebsearchAPI { get; set; }
+    public ProviderConfig? NimbleWay { get; set; }
+    public ProviderConfig? Eachlabs { get; set; }
 }
 
 public class ProviderConfig
