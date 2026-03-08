@@ -248,6 +248,50 @@ public class AIServiceConfig
     public ProviderConfig? NimbleWay { get; set; }
     public ProviderConfig? Eachlabs { get; set; }
     public ProviderConfig? Valyu { get; set; }
+    public ProviderConfig? LaoZhang { get; set; }
+    public ProviderConfig? JiekouAI { get; set; }
+    public ProviderConfig? Syllogy { get; set; }
+    public ProviderConfig? LiteRouter { get; set; }
+    public ProviderConfig? ARWriter { get; set; }
+    public ProviderConfig? Qiniu { get; set; }
+    public ProviderConfig? Lunos { get; set; }
+    public ProviderConfig? MaritacaAI { get; set; }
+    public ProviderConfig? CloudFerro { get; set; }
+    public ProviderConfig? ArliAI { get; set; }
+    public ProviderConfig? DataForSEO { get; set; }
+    public ProviderConfig? JigsawStack { get; set; }
+    public ProviderConfig? Ishi { get; set; }
+    public ProviderConfig? PayPerQ { get; set; }
+    public ProviderConfig? Swarms { get; set; }
+    public ProviderConfig? DocsRouter { get; set; }
+    public ProviderConfig? OCRSkill { get; set; }
+    public ProviderConfig? SkillBoss { get; set; }
+    public ProviderConfig? Nexusify { get; set; }
+    public ProviderConfig? Jatevo { get; set; }
+    public ProviderConfig? LitAI { get; set; }
+    public ProviderConfig? PixCode { get; set; }
+    public ProviderConfig? Anannas { get; set; }
+    public ProviderConfig? Answira { get; set; }
+    public ProviderConfig? AiMo { get; set; }
+    public ProviderConfig? LemonData { get; set; }
+    public ProviderConfig? APIPod { get; set; }
+    public ProviderConfig? FullAI { get; set; }
+    public ProviderConfig? TokenFlux { get; set; }
+    public ProviderConfig? Assisters { get; set; }
+    public ProviderConfig? LLMWise { get; set; }
+    public ProviderConfig? CaseDev { get; set; }
+    public ProviderConfig? ModelRouter { get; set; }
+    public ProviderConfig? MultiverseAI { get; set; }
+    public ProviderConfig? Lava { get; set; }
+    public ProviderConfig? ApiAirforce { get; set; }
+    public ProviderConfig? SmartAIPI { get; set; }
+    public ProviderConfig? MaximoAI { get; set; }
+    public ProviderConfig? LLMPath { get; set; }
+    public ProviderConfig? Rime { get; set; }
+    public ProviderConfig? Noiz { get; set; }
+    public ProviderConfig? Gradium { get; set; }
+    public ProviderConfig? VoiceAI { get; set; }
+
 }
 
 public class ProviderConfig

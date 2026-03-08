@@ -205,7 +205,7 @@ public class AIModelProviderResolver(
         {
             Data = [.. map.Values
                 .Select(v => v.Model)
-                .Where(m => m.Type != "embedding" && m.Type != "rerank")
+                .Where(m => m.Type != "embedding")
                 .OrderByDescending(m => m.Created)]
         };
     }

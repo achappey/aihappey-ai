@@ -1,0 +1,453 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "jigsawstack/summary/text",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Summary (text)",
+      "type": "language",
+      "description": "Generate a summary as a continuous paragraph."
+    },
+    {
+      "id": "jigsawstack/summary/points",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Summary (points)",
+      "type": "language",
+      "description": "Generate a summary in bullet points."
+    },
+    {
+      "id": "jigsawstack/web/search",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "AI Search",
+      "type": "language",
+      "description": "Effortlessly search the Web and get access to high-quality results powered with AI."
+    },
+    {
+      "id": "jigsawstack/web/deep_research",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Deep Research",
+      "type": "language",
+      "description": "Effortlessly run deep research and get high-quality results powered with AI."
+    },
+    {
+      "id": "jigsawstack/translate/af",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Afrikaans",
+      "type": "language",
+      "description": "Afrikaans"
+    },
+    {
+      "id": "jigsawstack/translate/am",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Amharic",
+      "type": "language",
+      "description": "አማርኛ"
+    },
+    {
+      "id": "jigsawstack/translate/ar",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Arabic",
+      "type": "language",
+      "description": "العربية"
+    },
+    {
+      "id": "jigsawstack/translate/as",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Assamese",
+      "type": "language",
+      "description": "অসমীয়া"
+    },
+    {
+      "id": "jigsawstack/translate/az",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Azerbaijani",
+      "type": "language",
+      "description": "Azərbaycanca / آذربايجان"
+    },
+    {
+      "id": "jigsawstack/translate/ba",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Bashkir",
+      "type": "language",
+      "description": "Башҡорт"
+    },
+    {
+      "id": "jigsawstack/translate/be",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Belarusian",
+      "type": "language",
+      "description": "Беларуская"
+    },
+    {
+      "id": "jigsawstack/translate/bg",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Bulgarian",
+      "type": "language",
+      "description": "Български"
+    },
+    {
+      "id": "jigsawstack/translate/bn",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Bengali",
+      "type": "language",
+      "description": "বাংলা"
+    },
+    {
+      "id": "jigsawstack/translate/bo",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Tibetan",
+      "type": "language",
+      "description": "བོད་ཡིག / Bod skad"
+    },
+    {
+      "id": "jigsawstack/translate/br",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Breton",
+      "type": "language",
+      "description": "Brezhoneg"
+    },
+    {
+      "id": "jigsawstack/translate/bs",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Bosnian",
+      "type": "language",
+      "description": "Bosanski"
+    },
+    {
+      "id": "jigsawstack/translate/ca",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Catalan",
+      "type": "language",
+      "description": "Català"
+    },
+    {
+      "id": "jigsawstack/translate/ch",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Chamorro",
+      "type": "language",
+      "description": "Chamoru"
+    },
+    {
+      "id": "jigsawstack/translate/co",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Corsican",
+      "type": "language",
+      "description": "Corsu"
+    },
+    {
+      "id": "jigsawstack/translate/cs",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Czech",
+      "type": "language",
+      "description": "Česky"
+    },
+    {
+      "id": "jigsawstack/translate/cy",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Welsh",
+      "type": "language",
+      "description": "Cymraeg"
+    },
+    {
+      "id": "jigsawstack/translate/da",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Danish",
+      "type": "language",
+      "description": "Dansk"
+    },
+    {
+      "id": "jigsawstack/translate/de",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to German",
+      "type": "language",
+      "description": "Deutsch"
+    },
+    {
+      "id": "jigsawstack/translate/dv",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Divehi",
+      "type": "language",
+      "description": "ދިވެހިބަސް"
+    },
+    {
+      "id": "jigsawstack/translate/dz",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Dzongkha",
+      "type": "language",
+      "description": "ཇོང་ཁ"
+    },
+    {
+      "id": "jigsawstack/translate/el",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Greek",
+      "type": "language",
+      "description": "Ελληνικά"
+    },
+    {
+      "id": "jigsawstack/translate/en",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to English",
+      "type": "language",
+      "description": "English"
+    },
+    {
+      "id": "jigsawstack/translate/es",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Spanish",
+      "type": "language",
+      "description": "Español"
+    },
+    {
+      "id": "jigsawstack/translate/et",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Estonian",
+      "type": "language",
+      "description": "Eesti"
+    },
+    {
+      "id": "jigsawstack/translate/eu",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Basque",
+      "type": "language",
+      "description": "Euskara"
+    },
+    {
+      "id": "jigsawstack/translate/fa",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Persian",
+      "type": "language",
+      "description": "فارسی"
+    },
+    {
+      "id": "jigsawstack/translate/fi",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Finnish",
+      "type": "language",
+      "description": "Suomi"
+    },
+    {
+      "id": "jigsawstack/translate/fr",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to French",
+      "type": "language",
+      "description": "Français"
+    },
+    {
+      "id": "jigsawstack/translate/he",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Hebrew",
+      "type": "language",
+      "description": "עברית"
+    },
+    {
+      "id": "jigsawstack/translate/hi",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Hindi",
+      "type": "language",
+      "description": "हिन्दी"
+    },
+    {
+      "id": "jigsawstack/translate/id",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Indonesian",
+      "type": "language",
+      "description": "Bahasa Indonesia"
+    },
+    {
+      "id": "jigsawstack/translate/it",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Italian",
+      "type": "language",
+      "description": "Italiano"
+    },
+    {
+      "id": "jigsawstack/translate/ja",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Japanese",
+      "type": "language",
+      "description": "日本語"
+    },
+    {
+      "id": "jigsawstack/translate/jv",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Javanese",
+      "type": "language",
+      "description": "Basa Jawa"
+    },
+    {
+      "id": "jigsawstack/translate/ko",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Korean",
+      "type": "language",
+      "description": "한국어"
+    },
+    {
+      "id": "jigsawstack/translate/mr",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Marathi",
+      "type": "language",
+      "description": "मराठी"
+    },
+    {
+      "id": "jigsawstack/translate/ms",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Malay",
+      "type": "language",
+      "description": "Bahasa Melayu"
+    },
+    {
+      "id": "jigsawstack/translate/nl",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Dutch",
+      "type": "language",
+      "description": "Nederlands"
+    },
+    {
+      "id": "jigsawstack/translate/pl",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Polish",
+      "type": "language",
+      "description": "Polski"
+    },
+    {
+      "id": "jigsawstack/translate/pt",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Portuguese",
+      "type": "language",
+      "description": "Português"
+    },
+    {
+      "id": "jigsawstack/translate/ru",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Russian",
+      "type": "language",
+      "description": "Русский"
+    },
+    {
+      "id": "jigsawstack/translate/sv",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Swedish",
+      "type": "language",
+      "description": "Svenska"
+    },
+    {
+      "id": "jigsawstack/translate/ta",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Tamil",
+      "type": "language",
+      "description": "தமிழ்"
+    },
+    {
+      "id": "jigsawstack/translate/te",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Telugu",
+      "type": "language",
+      "description": "తెలుగు"
+    },
+    {
+      "id": "jigsawstack/translate/th",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Thai",
+      "type": "language",
+      "description": "ไทย / Phasa Thai"
+    },
+    {
+      "id": "jigsawstack/translate/tr",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Turkish",
+      "type": "language",
+      "description": "Türkçe"
+    },
+    {
+      "id": "jigsawstack/translate/uk",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Ukrainian",
+      "type": "language",
+      "description": "Українська"
+    },
+    {
+      "id": "jigsawstack/translate/ur",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Urdu",
+      "type": "language",
+      "description": "اردو"
+    },
+    {
+      "id": "jigsawstack/translate/vi",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Vietnamese",
+      "type": "language",
+      "description": "Tiếng Việt"
+    },
+    {
+      "id": "jigsawstack/translate/zh",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Chinese",
+      "type": "language",
+      "description": "中文"
+    },
+    {
+      "id": "jigsawstack/translate/zu",
+      "object": "model",
+      "owned_by": "JigsawStack",
+      "name": "Translate to Zulu",
+      "type": "language",
+      "description": "isiZulu"
+    }
+  ]
+}

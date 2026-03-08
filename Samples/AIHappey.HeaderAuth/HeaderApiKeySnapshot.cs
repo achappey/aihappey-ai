@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Http;
 
 namespace AIHappey.HeaderAuth;
 

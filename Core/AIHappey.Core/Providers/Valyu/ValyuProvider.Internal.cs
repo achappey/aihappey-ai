@@ -19,11 +19,11 @@ public partial class ValyuProvider
 
     private static bool IsAnswerModel(string? model)
         => !string.IsNullOrWhiteSpace(model)
-           && model.StartsWith("valyu/answer/", StringComparison.OrdinalIgnoreCase);
+           && model.StartsWith("answer/", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsDeepResearchModel(string? model)
         => !string.IsNullOrWhiteSpace(model)
-           && model.StartsWith("valyu/deepresearch/", StringComparison.OrdinalIgnoreCase);
+           && model.StartsWith("deepresearch/", StringComparison.OrdinalIgnoreCase);
 
     private static string ResolveAnswerSearchType(string? model)
     {

@@ -10,6 +10,7 @@ public partial class AsticaProvider
     private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
     {
         var apiKey = _keyResolver.Resolve(GetIdentifier());
+        
         if (string.IsNullOrWhiteSpace(apiKey))
             return [];
 

@@ -13,9 +13,13 @@ public partial class BinericProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public BinericProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public BinericProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.bineric.com/");
     }
@@ -52,7 +56,7 @@ public partial class BinericProvider : IModelProvider
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         var modelId = chatRequest.GetModel();
-        
+
         if (modelId == "Text to Speech")
             return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
         else if (modelId == "Speech to Text")

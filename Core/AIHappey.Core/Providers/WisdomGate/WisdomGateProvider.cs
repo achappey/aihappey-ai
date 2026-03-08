@@ -5,7 +5,6 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.WisdomGate;
 

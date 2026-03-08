@@ -1,9 +1,7 @@
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
-using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Extensions;
-using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.BrowserUse;
 
@@ -21,76 +19,125 @@ public partial class BrowserUseProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var request = new ResponseRequest
+        var prompt = BuildPromptFromUiMessages(chatRequest.Messages);
+        if (string.IsNullOrWhiteSpace(prompt))
+            throw new InvalidOperationException("BrowserUse requires non-empty input.");
+
+        var createRequest = new BrowserUseCreateTaskRequest
         {
-            Model = chatRequest.Model,
-            Temperature = chatRequest.Temperature,
-            MaxOutputTokens = chatRequest.MaxOutputTokens,
-            Text = chatRequest.ResponseFormat,
-            Input = BuildPromptFromUiMessages(chatRequest.Messages),
-            Stream = true
+            Task = prompt,
+            Llm = chatRequest.Model,
+            MaxSteps = chatRequest.MaxOutputTokens ?? 100,
+            StructuredOutput = TryExtractStructuredOutputSchemaString(chatRequest.ResponseFormat)
         };
 
         var textStarted = false;
         string? streamId = null;
+        var emittedAnyText = false;
 
-        await foreach (var part in ExecuteResponsesStreamingAsync(request, cancellationToken))
+        await foreach (var evt in StreamNativeTaskAsync(createRequest, cancellationToken))
         {
-            switch (part)
+            switch (evt)
             {
-                case ResponseOutputTextDelta delta:
-                    streamId ??= delta.ItemId;
-                    if (!textStarted)
-                    {
-                        yield return streamId.ToTextStartUIMessageStreamPart();
-                        textStarted = true;
-                    }
+                case BrowserUseNativeCreatedStreamEvent created:
+                    streamId = $"msg_{created.Created.Id}";
+                    break;
 
-                    yield return new TextDeltaUIMessageStreamPart
+                case BrowserUseNativeActionStreamEvent actionEvent:
+                    streamId ??= $"msg_{actionEvent.Action.TaskId}";
+
+                    var toolTitle = chatRequest.Tools?.FirstOrDefault(t => t.Name == actionEvent.Action.ToolName)?.Title;
+
+                  /*  yield return new ToolCallStreamingStartPart
                     {
-                        Id = streamId,
-                        Delta = delta.Delta
+                        ToolCallId = actionEvent.Action.ToolCallId,
+                        ToolName = actionEvent.Action.ToolName,
+                        ProviderExecuted = true,
+                        Title = toolTitle
+                    };*/
+
+                    yield return new ToolCallPart
+                    {
+                        ToolCallId = actionEvent.Action.ToolCallId,
+                        ToolName = actionEvent.Action.ToolName,
+                        Input = actionEvent.Action.Input,
+                        ProviderExecuted = true,
+                        Title = toolTitle
                     };
-                    break;
 
-                case ResponseOutputTextDone done:
-                    if (!string.IsNullOrWhiteSpace(streamId) && textStarted)
+                    yield return new ToolOutputAvailablePart
                     {
-                        yield return streamId!.ToTextEndUIMessageStreamPart();
-                        textStarted = false;
+                        ToolCallId = actionEvent.Action.ToolCallId,
+                        ProviderExecuted = true,
+                        Output = actionEvent.Action.Output
+                    };
+
+                    if (actionEvent.Action.IsDone && !string.IsNullOrWhiteSpace(actionEvent.Action.DoneText))
+                    {
+                        emittedAnyText = true;
+
+                        streamId ??= $"msg_{Guid.NewGuid():n}";
+                        if (!textStarted)
+                        {
+                            yield return streamId.ToTextStartUIMessageStreamPart();
+                            textStarted = true;
+                        }
+
+                        yield return new TextDeltaUIMessageStreamPart
+                        {
+                            Id = streamId,
+                            Delta = actionEvent.Action.DoneText
+                        };
                     }
                     break;
 
-                case ResponseCompleted completed:
-                    if (!string.IsNullOrWhiteSpace(streamId) && textStarted)
+                case BrowserUseNativeTerminalStreamEvent terminalEvent:
+                    streamId ??= $"msg_{terminalEvent.Terminal.Task.Id}";
+
+                    if (!emittedAnyText && !string.IsNullOrWhiteSpace(terminalEvent.Terminal.OutputText))
                     {
-                        yield return streamId!.ToTextEndUIMessageStreamPart();
-                        textStarted = false;
+                        if (!textStarted)
+                        {
+                            yield return streamId.ToTextStartUIMessageStreamPart();
+                            textStarted = true;
+                        }
+
+                        yield return new TextDeltaUIMessageStreamPart
+                        {
+                            Id = streamId,
+                            Delta = terminalEvent.Terminal.OutputText
+                        };
                     }
 
-                    yield return "stop".ToFinishUIPart(
-                        model: chatRequest.Model,
-                        outputTokens: 0,
-                        inputTokens: 0,
-                        totalTokens: 0,
-                        temperature: chatRequest.Temperature);
-                    break;
-
-                case ResponseFailed failed:
-                    if (!string.IsNullOrWhiteSpace(streamId) && textStarted)
-                    {
+                    if (textStarted && !string.IsNullOrWhiteSpace(streamId))
                         yield return streamId!.ToTextEndUIMessageStreamPart();
-                        textStarted = false;
+
+                    textStarted = false;
+
+                    if (IsFinished(terminalEvent.Terminal.Status.Status))
+                    {
+                        yield return "stop".ToFinishUIPart(
+                            model: chatRequest.Model,
+                            outputTokens: 0,
+                            inputTokens: 0,
+                            totalTokens: 0,
+                            temperature: chatRequest.Temperature);
+                    }
+                    else
+                    {
+                        var err = terminalEvent.Terminal.Status.Output;
+                        if (!string.IsNullOrWhiteSpace(err))
+                            yield return err!.ToErrorUIPart();
+
+                        yield return "error".ToFinishUIPart(
+                            model: chatRequest.Model,
+                            outputTokens: 0,
+                            inputTokens: 0,
+                            totalTokens: 0,
+                            temperature: chatRequest.Temperature);
                     }
 
-                    yield return (failed.Response.Error?.Message ?? "BrowserUse task failed.").ToErrorUIPart();
-                    yield return "error".ToFinishUIPart(
-                        model: chatRequest.Model,
-                        outputTokens: 0,
-                        inputTokens: 0,
-                        totalTokens: 0,
-                        temperature: chatRequest.Temperature);
-                    break;
+                    yield break;
             }
         }
     }

@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "ocrskill/ocrskill-v2-sota",
+      "object": "model",
+      "name": "OCRSkill V2 SOTA",
+      "description": "OCRSkill OpenAI-compatible OCR vision model for text extraction from documents and images.",
+      "ownedBy": "ocrskill",
+      "type": "language"
+    }
+  ]
+}

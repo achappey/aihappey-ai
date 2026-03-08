@@ -59,7 +59,7 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
                 providerArray,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = Math.Min(providerArray.Length, 32),
+                    MaxDegreeOfParallelism = Math.Min(providerArray.Length, 8),
                     CancellationToken = ct
                 },
                 async (provider, token) =>
@@ -226,7 +226,6 @@ public class CachedModelProviderResolver(IApiKeyResolver apiKeyResolver,
                 .Values
                 .Select(v => v.Model)
                 .Where(a => a.Type != "embedding")
-                .Where(a => a.Type != "rerank")
                 .OrderByDescending(m => m.Created)]
         };
     }
