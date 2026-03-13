@@ -1,10 +1,10 @@
 # aihappey-ai
 
-A multi-provider **.NET AI backend** exposing key AI endpoints.
+A multi-provider **.NET AI inference gateway** exposing key AI endpoints.
 
 No smart routing fairy. No shiny admin portal. No hidden logic maze.
 Just providers flattened to capabilities, normalized hard, exposed through open contracts.
-Boring on purpose.
+Stateless. Boring on purpose.
 
 Access 140k+ models from your favorite client.
 
@@ -17,21 +17,31 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | 302AI          | ✅        | ✅                | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ❌          | ✅          |
 | Abliberation   | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Aether         | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Agabeyogluai   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| AgentAIGateway | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Agentics       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AI21           | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| AIBadgr        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| AICredits      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AIBramha       | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          |
 | AICC           | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ❌               | ➖          | ✅          |
+| AINative       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AIForHire      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AIHubMix       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| AIRouter       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| AISieuRe       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AIML           | ✅        | ❌                | 🟡            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ➖          |
 | AIsa           | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AiMo           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AionLabs       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Alibaba        | ✅        | ✅                | ✅            | ✅        | ✅                     | ✅                       | ➖               | ➖          | ✅          |
+| AlphaNeural    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AmazonBedrock  | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Anannas        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Answira        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Anthropic      | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Apertis        | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          |
+| AndyAPI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | ApiAirforce    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | APIFree        | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          |
 | APIpie         | ✅        | ✅                | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ❌          |
@@ -44,6 +54,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ARWriter       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | ASIOne         | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AskARC         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| AskCodi        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | AssemblyAI     | ✅        | ✅                | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
 | Assisters      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Astica         | ✅        | ❌                | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ➖          |
@@ -53,6 +64,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Avian          | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Azerion        | ✅        | ✅                | ❌            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | Azure          | ✅        | 🟡                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
+| BazaarLink     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Baseten        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | BergetAI       | ✅        | ✅                | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ✅          | ➖          |
 | Bineric        | ✅        | ✅                | ❌            | 🟡        | ➖                     | ❌                       | ✅               | ➖          | ➖          |
@@ -61,6 +73,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | BlazeRail      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Bria           | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | BrowserUse     | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Brainiall      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | BytePlus       | ✅        | ✅                | ✅            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | Bytez          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
 | CAMBAI         | ✅        | ✅                | ✅            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
@@ -72,17 +85,21 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | CheapestInf... | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Cirrascale     | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ➖                       | ➖               | ✅          | ➖          |
 | Clod           | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Claudible      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Cline          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | CloudFerro     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | CloudRift      | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Cohere         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          |
 | CometAPI       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | ContextualAI   | ❌        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          |
 | Cortecs        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Corriente      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Crazyrouter    | ✅        | ✅                | ❌            | ❌        | ❌                     | ❌                       | ❌               | ❌          | ❌          |
 | Daglo          | ✅        | ✅                | ❌            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Dandolo        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Databricks     | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | DataForSEO     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| DreamGen       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | DeAPI          | ✅        | ❌                | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ✅          |
 | Decart         | ✅        | ❌                | ❌            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | Deepbricks     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -92,40 +109,53 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Deepgram       | ✅        | ❌                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | DigitalOcean   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | DocsRouter     | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Dubrify        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| EAGM           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Eachlabs       | ❌        | ❌                | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          |
+| Edgee          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Echo           | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | EdenAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Eliza          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| EmbraceableAI  | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | ElectronHub    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | ElevenLabs     | ✅        | ❌                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Euqai          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | EUrouter       | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| EzAI           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | EverypixelLabs | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | EvoLinkAI      | ✅        | ✅                | ❌            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ❌          |
 | Exa            | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Featherless    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | FishAudio      | ✅        | ❌                | ❌            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Fireworks      | ✅        | ✅                | ✅            | 🟡        | ✅                     | ✅                       | ➖               | ✅          | ➖          |
+| Fal            | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Forefront      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Freepik        | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
+| FreedomGPT     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Friendli       | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | FullAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| FastRouter     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Ghostbot       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | GitHub         | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Glama          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Gladia         | ✅        | ❌                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
 | Glio           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | GMICloud       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Google         | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          |
 | GoogleTranslate| ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | GooseAI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| GonkaGate      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | GPTProto       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Gradium        | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Groq           | ✅        | ❌                | ❌            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | GTranslate     | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Haimaker       | ✅        | ✅                | ❌            | ❌        | ✅                     | ✅                       | ➖               | ➖          | ✅          |
+| Hanzo          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Helicone       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | HeyGen         | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Hicap          | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | HorayAI        | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| HuggingFace    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Hyperbolic     | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ➖          |
 | Hyperstack     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Ideogram       | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
@@ -139,12 +169,17 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | IOnet          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | IONOS          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Ishi           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| IonRouter      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Jatevo         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | JiekouAI       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | JigsawStack    | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Jina           | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ✅          | ➖          |
 | JSON2Video     | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ✅          |
+| JKAIHub        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Kilo           | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Keyplex        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| KimiK2         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Kirha          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | KittenStack    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | KissAPI        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | KlingAI        | ✅        | ❌                | 🟡            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
@@ -155,14 +190,20 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LemonData      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LiteRouter     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Lingvanex      | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ✅          | ➖          |
+| Lexi           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| LLM7           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LLMAPI         | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LLMGateway     | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| LLMHubIFS      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| LLMkiwi        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LLMLayer       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| LogicosLLMHub  | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LLMPath        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LLMWise        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LongCat        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | LOVO           | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | LumaAI         | ✅        | ❌                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
+| Lumenfall      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Lunos          | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | MancerAI       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Mangaba        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -171,9 +212,11 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | MaximoAI       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | MegaLLM        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | MegaNova       | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ❌          | ❌          |
+| Mia21          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Mistral        | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ➖               | ➖          | ➖          |
 | MiniMax        | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
 | Modal          | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| ModelSync      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | ModelRouter    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | ModelsLab      | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
 | ModernMT       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -186,6 +229,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NanoGPT        | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          |
 | NEARAI         | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          |
 | NLPCloud       | ✅        | 🟡                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
+| NRPNautilus    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Nscale         | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Nebius         | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Neosantara     | ✅        | ✅                | ✅            | ✅        | ❌                     | ❌                       | ➖               | ➖          | ➖          |
@@ -195,6 +239,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Noiz           | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | NVIDIA         | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | NousResearch   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| NovAI          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Novita         | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ✅                       | ✅               | ✅          | ➖          |
 | OCRSkill       | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | OhMyGPT        | ✅        | ✅                | ❌            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ➖          |
@@ -202,6 +247,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | OpenAI         | ✅        | ✅                | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          |
 | OpenAIHK       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | OpenCode       | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| OpenLimits     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | OpenRouter     | ✅        | ❌                | ❌            | ❌        | ❌                     | ❌                       | ➖               | ➖          | ➖          |
 | OpperAI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          |
 | Orq            | ✅        | ❌                | ❌            | ❌        | ❌                     | ❌                       | ❌               | ❌          | ➖          |
@@ -218,6 +264,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Poe            | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Pollinations   | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Portkey        | ✅        | ✅                | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ➖          |
+| Puter          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Prakasa        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | PrimeIntellect | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | PublicAI       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ❌          | ➖          |
@@ -235,7 +282,9 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ResembleAI     | ✅        | ❌                | 🟡            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Reve           | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | Rime           | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
+| RoutePlex      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Routeway       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Routstr        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Routmy         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Runpod         | ✅        | ✅                | ❌            | 🟡        | ✅                     | ❌                       | ✅               | ✅          | ➖          |
 | Runware        | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
@@ -243,6 +292,9 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | SambaNova      | ✅        | ✅                | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          |
 | Sarvam         | ✅        | ✅                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Scaleway       | ✅        | ✅                | ✅            | ❌        | ➖                     | ✅                       | ➖               | ✅          | ➖          |
+| Setapp         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| Shakespeare    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| ShuttleAI      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | SiliconFlow    | ✅        | ✅                | 🟡            | 🟡        | ✅                     | ✅                       | ✅               | ✅          | ✅          |
 | Simplismart    | ✅        | ✅                | ❌            | ❌        | ❌                     | ❌                       | ➖               | ➖          | ➖          |
 | SEALION        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -257,9 +309,12 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | StabilityAI    | ✅        | ❌                | 🟡            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ➖          |
 | StepFun        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Straico        | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ➖          |
+| SovereignAPI   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| SurferCloud    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Sudo           | ✅        | ✅                | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
 | SunoAPI        | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | SUPA           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| SUFY           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Supertone      | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Swarms         | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Syllogy        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
@@ -270,6 +325,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | TencentHunyuan | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Tetrate        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Thaura         | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| TextSynth      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | TigerCity      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Tinfoil        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Together       | ✅        | ❌                | ❌            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          |
@@ -279,13 +335,16 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Typecast       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | UniAPI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | UnrealSpeech   | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
+| Unbound        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Upstage        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
+| UplinkAPI      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | UVoiceAI       | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Valyu          | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Vapi           | ✅        | 🟡                | 🟡            | 🟡        | ➖                     | ❌                       | ❌               | ➖          | ➖          |
 | Venice         | ✅        | ✅                | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ✅          |
 | Verbatik       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | Verda          | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          |
+| VIABLELab      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | Vidu           | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          |
 | VoiceAI        | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          |
 | VoyageAI       | ❌        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          |
@@ -293,6 +352,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | WebsearchAPI   | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | WidnAI         | ✅        | ✅                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | WisdomGate     | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
+| Writer         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          |
 | xAI            | ✅        | ❌                | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ✅          |
 | YourVoic       | ✅        | ❌                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          |
 | Zai            | ✅        | ✅                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ✅          |

@@ -1,0 +1,50 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cline/anthropic/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Anthropic"
+    },
+    {
+      "id": "cline/anthropic/claude-sonnet-4-5",
+      "object": "model",
+      "owned_by": "Anthropic"
+    },
+    {
+      "id": "cline/openai/gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI"
+    },
+    {
+      "id": "cline/google/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "Google"
+    },
+    {
+      "id": "cline/deepseek/deepseek-chat",
+      "object": "model",
+      "owned_by": "DeepSeek"
+    },
+    {
+      "id": "cline/x-ai/grok-3",
+      "object": "model",
+      "owned_by": "xAI"
+    },
+    {
+      "id": "cline/minimax/minimax-m2.5",
+      "object": "model",
+      "owned_by": "MiniMax"
+    },
+    {
+      "id": "cline/kwaipilot/kat-coder-pro",
+      "object": "model",
+      "owned_by": "Kwaipilot"
+    },
+    {
+      "id": "cline/z-ai/glm-5",
+      "object": "model",
+      "owned_by": "Z-AI"
+    }
+  ]
+}

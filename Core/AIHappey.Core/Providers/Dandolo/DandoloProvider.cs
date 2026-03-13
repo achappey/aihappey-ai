@@ -18,7 +18,7 @@ public partial class DandoloProvider : IModelProvider
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.dandolo.ai/");
+        _client.BaseAddress = new Uri("https://api.dandolo.ai/api/");
     }
 
     private void ApplyAuthHeader()

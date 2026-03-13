@@ -1,0 +1,93 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "textsynth/mistral_7B",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "mistral_7B",
+      "type": "language",
+      "description": "Mistral 7B is a 7 billion parameter language model with a 8K token context length outperforming Llama2 13B on many tests."
+    },
+    {
+      "id": "textsynth/llama3_8B",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "llama3_8B",
+      "type": "language",
+      "description": "Llama3 8B is a 8 billion parameter language model with a 8K token context length trained on 15T tokens. There are specific use restrictions associated with this model."
+    },
+    {
+      "id": "textsynth/llama3.1_8B_instruct",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "llama3.1_8B_instruct",
+      "type": "language",
+      "description": "Llama3.1 8B Instruct is a 8 billion parameter chat model. The context length is currently limited to 8K tokens. There are specific use restrictions associated with this model."
+    },
+    {
+      "id": "textsynth/gemma3_27B_it",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "gemma3_27B_it",
+      "type": "language",
+      "description": "Gemma 3 27B instruct is a 27 billion parameter language model with a 128K token context length. There are specific use restrictions associated with this model."
+    },
+    {
+      "id": "textsynth/llama3.3_70B_instruct",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "llama3.3_70B_instruct",
+      "type": "language",
+      "description": "Llama3.3 70B instruct is a 70 billion parameter chat model. The context length is currently limited to 8K tokens. There are specific use restrictions associated with this model."
+    },
+    {
+      "id": "textsynth/gptj_6B",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "gptj_6B",
+      "type": "language",
+      "description": "GPT-J is a 6 billion parameter language model with a 2K token context length trained on the Pile (825 GB of text data) published by EleutherAI."
+    },
+    {
+      "id": "textsynth/madlad400_7B",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "madlad400_7B",
+      "type": "language",
+      "description": "MADLAD400 7B is a 7 billion parameter language model specialized for translation. It supports multilingual translation between about 400 languages. See the translate endpoint."
+    },
+    {
+      "id": "textsynth/stable_diffusion",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "stable_diffusion",
+      "type": "image",
+      "description": "Stable Diffusion is a 1 billion parameter text to image model trained to generate 512x512 pixel images from English text (sd-v1-4.ckpt checkpoint). See the text_to_image endpoint. There are specific use restrictions associated with this model."
+    },
+    {
+      "id": "textsynth/whisper_large_v3",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "whisper_large_v3",
+      "type": "transcription",
+      "description": "Whisper Large v3 is a 1.5 billion parameter model for speech to text transcription in 100 languages. See the transcript endpoint."
+    },
+    {
+      "id": "textsynth/parler_tts_large",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large",
+      "type": "speech",
+      "description": "Parler-TTS v1 is a 2.2 billion parameter model for Text to Speech in English. See the speech endpoint."
+    },
+    {
+      "id": "textsynth/bge_large_en_v1.5",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "bge_large_en_v1.5",
+      "type": "embedding",
+      "description": "BGE-Large-EN-v1.5 is an embedding model suitable for RAG. See the embeddings endpoint."
+    }
+  ]
+}

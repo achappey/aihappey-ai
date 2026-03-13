@@ -292,6 +292,71 @@ using AIHappey.Core.Providers.MaximoAI;
 using AIHappey.Core.Providers.LLMPath;
 using AIHappey.Core.Providers.Noiz;
 using AIHappey.Core.Providers.Rime;
+using AIHappey.Core.Providers.IonRouter;
+using AIHappey.Core.Providers.FreedomGPT;
+using AIHappey.Core.Providers.PixIA;
+using AIHappey.Core.Providers.AISieuRe;
+using AIHappey.Core.Providers.Kirha;
+using AIHappey.Core.Providers.SUFY;
+using AIHappey.Core.Providers.LogicosLLMHub;
+using AIHappey.Core.Providers.LLMHubIFS;
+using AIHappey.Core.Providers.AlphaNeural;
+using AIHappey.Core.Providers.ShuttleAI;
+using AIHappey.Core.Providers.Claudible;
+using AIHappey.Core.Providers.SurferCloud;
+using AIHappey.Core.Providers.Hanzo;
+using AIHappey.Core.Providers.EmbraceableAI;
+using AIHappey.Core.Providers.Routstr;
+using AIHappey.Core.Providers.Setapp;
+using AIHappey.Core.Providers.Writer;
+using AIHappey.Core.Providers.Glama;
+using AIHappey.Core.Providers.Brainiall;
+using AIHappey.Core.Providers.Agabeyogluai;
+using AIHappey.Core.Providers.AIRouter;
+using AIHappey.Core.Providers.Agentics;
+using AIHappey.Core.Providers.Gatewayz;
+using AIHappey.Core.Providers.UplinkAPI;
+using AIHappey.Core.Providers.SovereignAPI;
+using AIHappey.Core.Providers.NRPNautilus;
+using AIHappey.Core.Providers.EAGM;
+using AIHappey.Core.Providers.Edgee;
+using AIHappey.Core.Providers.VIABLELab;
+using AIHappey.Core.Providers.DreamGen;
+using AIHappey.Core.Providers.LLM7;
+using AIHappey.Core.Providers.KimiK2;
+using AIHappey.Core.Providers.Keyplex;
+using AIHappey.Core.Providers.LLMkiwi;
+using AIHappey.Core.Providers.CheapGrok;
+using AIHappey.Core.Providers.Lexi;
+using AIHappey.Core.Providers.Eliza;
+using AIHappey.Core.Providers.OpenLimits;
+using AIHappey.Core.Providers.ArkRoute;
+using AIHappey.Core.Providers.AINative;
+using AIHappey.Core.Providers.AIBadgr;
+using AIHappey.Core.Providers.Unbound;
+using AIHappey.Core.Providers.Corriente;
+using AIHappey.Core.Providers.Shakespeare;
+using AIHappey.Core.Providers.Cline;
+using AIHappey.Core.Providers.BazaarLink;
+using AIHappey.Core.Providers.Puter;
+using AIHappey.Core.Providers.RoutePlex;
+using AIHappey.Core.Providers.NovAI;
+using AIHappey.Core.Providers.Lumenfall;
+using AIHappey.Core.Providers.Fal;
+using AIHappey.Core.Providers.Mia21;
+using AIHappey.Core.Providers.JKAIHub;
+using AIHappey.Core.Providers.TextSynth;
+using AIHappey.Core.Providers.ModelSync;
+using AIHappey.Core.Providers.HuggingFace;
+using AIHappey.Core.Providers.EzAI;
+using AIHappey.Core.Providers.AskCodi;
+using AIHappey.Core.Providers.Martian;
+using AIHappey.Core.Providers.GonkaGate;
+using AIHappey.Core.Providers.FastRouter;
+using AIHappey.Core.Providers.AgentAIGateway;
+using AIHappey.Core.Providers.AICredits;
+using AIHappey.Core.Providers.Dubrify;
+using AIHappey.Core.Providers.AndyAPI;
 
 namespace AIHappey.Core.AI;
 
@@ -593,7 +658,71 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GradiumProvider>();
         services.AddSingleton<IModelProvider, VoiceAIProvider>();
         services.AddSingleton<IModelProvider, RimeProvider>();
-
+        services.AddSingleton<IModelProvider, IonRouterProvider>();
+        services.AddSingleton<IModelProvider, FreedomGPTProvider>();
+        services.AddSingleton<IModelProvider, PixIAProvider>();
+        services.AddSingleton<IModelProvider, AISieuReProvider>();
+        services.AddSingleton<IModelProvider, KirhaProvider>();
+        services.AddSingleton<IModelProvider, SUFYProvider>();
+        services.AddSingleton<IModelProvider, LogicosLLMHubProvider>();
+        services.AddSingleton<IModelProvider, LLMHubIFSProvider>();
+        services.AddSingleton<IModelProvider, AlphaNeuralProvider>();
+        services.AddSingleton<IModelProvider, ShuttleAIProvider>();
+        services.AddSingleton<IModelProvider, ClaudibleProvider>();
+        services.AddSingleton<IModelProvider, SurferCloudProvider>();
+        services.AddSingleton<IModelProvider, HanzoProvider>();
+        services.AddSingleton<IModelProvider, EmbraceableAIProvider>();
+        services.AddSingleton<IModelProvider, RoutstrProvider>();
+        services.AddSingleton<IModelProvider, SetappProvider>();
+        services.AddSingleton<IModelProvider, WriterProvider>();
+        services.AddSingleton<IModelProvider, GlamaProvider>();
+        services.AddSingleton<IModelProvider, BrainiallProvider>();
+        services.AddSingleton<IModelProvider, AgabeyogluaiProvider>();
+        services.AddSingleton<IModelProvider, AIRouterProvider>();
+        services.AddSingleton<IModelProvider, AgenticsProvider>();
+        services.AddSingleton<IModelProvider, GatewayzProvider>();
+        services.AddSingleton<IModelProvider, UplinkAPIProvider>();
+        services.AddSingleton<IModelProvider, SovereignAPIProvider>();
+        services.AddSingleton<IModelProvider, NRPNautilusProvider>();
+        services.AddSingleton<IModelProvider, EAGMProvider>();
+        services.AddSingleton<IModelProvider, EdgeeProvider>();
+        services.AddSingleton<IModelProvider, VIABLELabProvider>();
+        services.AddSingleton<IModelProvider, DreamGenProvider>();
+        services.AddSingleton<IModelProvider, LLM7Provider>();
+        services.AddSingleton<IModelProvider, KimiK2Provider>();
+        services.AddSingleton<IModelProvider, KeyplexProvider>();
+        services.AddSingleton<IModelProvider, LLMkiwiProvider>();
+        services.AddSingleton<IModelProvider, CheapGrokProvider>();
+        services.AddSingleton<IModelProvider, LexiProvider>();
+        services.AddSingleton<IModelProvider, ElizaProvider>();
+        services.AddSingleton<IModelProvider, OpenLimitsProvider>();
+        services.AddSingleton<IModelProvider, ArkRouteProvider>();
+        services.AddSingleton<IModelProvider, AINativeProvider>();
+        services.AddSingleton<IModelProvider, AIBadgrProvider>();
+        services.AddSingleton<IModelProvider, UnboundProvider>();
+        services.AddSingleton<IModelProvider, CorrienteProvider>();
+        services.AddSingleton<IModelProvider, ShakespeareProvider>();
+        services.AddSingleton<IModelProvider, ClineProvider>();
+        services.AddSingleton<IModelProvider, BazaarLinkProvider>();
+        services.AddSingleton<IModelProvider, PuterProvider>();
+        services.AddSingleton<IModelProvider, RoutePlexProvider>();
+        services.AddSingleton<IModelProvider, NovAIProvider>();
+        services.AddSingleton<IModelProvider, LumenfallProvider>();
+        services.AddSingleton<IModelProvider, Mia21Provider>();
+        services.AddSingleton<IModelProvider, JKAIHubProvider>();
+        services.AddSingleton<IModelProvider, FalProvider>();
+        services.AddSingleton<IModelProvider, TextSynthProvider>();
+        services.AddSingleton<IModelProvider, ModelSyncProvider>();
+        services.AddSingleton<IModelProvider, HuggingFaceProvider>();
+        services.AddSingleton<IModelProvider, EzAIProvider>();
+        services.AddSingleton<IModelProvider, AskCodiProvider>();
+        services.AddSingleton<IModelProvider, MartianProvider>();
+        services.AddSingleton<IModelProvider, GonkaGateProvider>();
+        services.AddSingleton<IModelProvider, FastRouterProvider>();
+        services.AddSingleton<IModelProvider, AgentAIGatewayProvider>();
+        services.AddSingleton<IModelProvider, AICreditsProvider>();
+        services.AddSingleton<IModelProvider, DubrifyProvider>();
+        services.AddSingleton<IModelProvider, AndyAPIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
@@ -601,16 +730,10 @@ public static class ServiceExtensions
         Action<IKernelMemoryBuilder> configure,
         KernelMemoryBuilderBuildOptions buildOptions)
     {
-        // 1. Maak een nieuwe builder
         var builder = new KernelMemoryBuilder(services);
-
-        // 2. Voer de configuratie uit
         configure(builder);
 
-        // 3. Bouw met je eigen opties
         var memoryClient = builder.Build(buildOptions);
-
-        // 4. Registreer de client
         services.AddSingleton(memoryClient);
 
         return services;

@@ -49,10 +49,8 @@ public partial class TetrateProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Tetrate).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

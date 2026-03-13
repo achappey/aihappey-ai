@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "kirha/kirha",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "kirha",
+      "type": "language",
+      "description": "Primary model, optimized for high-quality, context-aware responses. Best for complex queries requiring reasoning."
+    },
+    {
+      "id": "kirha/kirha-flash",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "kirha-flash",
+      "type": "language",
+      "description": "Faster, lightweight variant for low-latency use cases. Best for high-throughput applications."
+    }
+  ]
+}

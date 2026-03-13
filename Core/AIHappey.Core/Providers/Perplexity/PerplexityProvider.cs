@@ -85,22 +85,14 @@ public class PerplexityProvider : IModelProvider
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-
-        ApplyAuthHeader();
-
-        return await Task.FromResult<List<Model>>([.. PerplexityModels.SonarModels, .. PerplexityModels.AgentModels]);
-    }
+            => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        if (PerplexityModels.AgentModels.Any(a => a.Id.EndsWith($"/{chatRequest.Model}")))
+        if (!chatRequest.Model.StartsWith($"{GetIdentifier()}/sonar"))
         {
             var tools = new List<dynamic>();
 
@@ -292,7 +284,7 @@ public class PerplexityProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (!PerplexityModels.AgentModels.Any(a => a.Id.EndsWith($"/{options.Model}")))
+        if (options.Model?.StartsWith($"{GetIdentifier()}/sonar") == true)
         {
             throw new NotImplementedException();
         }
@@ -305,7 +297,7 @@ public class PerplexityProvider : IModelProvider
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (!PerplexityModels.AgentModels.Any(a => a.Id.EndsWith($"/{options.Model}")))
+        if (options.Model?.StartsWith($"{GetIdentifier()}/sonar") == true)
         {
             throw new NotImplementedException();
         }

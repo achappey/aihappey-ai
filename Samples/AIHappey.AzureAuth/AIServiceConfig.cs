@@ -291,7 +291,71 @@ public class AIServiceConfig
     public ProviderConfig? Noiz { get; set; }
     public ProviderConfig? Gradium { get; set; }
     public ProviderConfig? VoiceAI { get; set; }
-
+    public ProviderConfig? IonRouter { get; set; }
+    public ProviderConfig? FreedomGPT { get; set; }
+    public ProviderConfig? PixIA { get; set; }
+    public ProviderConfig? AISieuRe { get; set; }
+    public ProviderConfig? Kirha { get; set; }
+    public ProviderConfig? SUFY { get; set; }
+    public ProviderConfig? LogicosLLMHub { get; set; }
+    public ProviderConfig? LLMHubIFS { get; set; }
+    public ProviderConfig? ShuttleAI { get; set; }
+    public ProviderConfig? AlphaNeural { get; set; }
+    public ProviderConfig? Writer { get; set; }
+    public ProviderConfig? Setapp { get; set; }
+    public ProviderConfig? Routstr { get; set; }
+    public ProviderConfig? Hanzo { get; set; }
+    public ProviderConfig? SurferCloud { get; set; }
+    public ProviderConfig? Claudible { get; set; }
+    public ProviderConfig? EmbraceableAI { get; set; }
+    public ProviderConfig? Glama { get; set; }
+    public ProviderConfig? Brainiall { get; set; }
+    public ProviderConfig? Agabeyogluai { get; set; }
+    public ProviderConfig? AIRouter { get; set; }
+    public ProviderConfig? Agentics { get; set; }
+    public ProviderConfig? Gatewayz { get; set; }
+    public ProviderConfig? UplinkAPI { get; set; }
+    public ProviderConfig? SovereignAPI { get; set; }
+    public ProviderConfig? NRPNautilus { get; set; }
+    public ProviderConfig? EAGM { get; set; }
+    public ProviderConfig? Edgee { get; set; }
+    public ProviderConfig? VIABLELab { get; set; }
+    public ProviderConfig? DreamGen { get; set; }
+    public ProviderConfig? LLM7 { get; set; }
+    public ProviderConfig? KimiK2 { get; set; }
+    public ProviderConfig? Keyplex { get; set; }
+    public ProviderConfig? LLMkiwi { get; set; }
+    public ProviderConfig? CheapGrok { get; set; }
+    public ProviderConfig? Lexi { get; set; }
+    public ProviderConfig? Eliza { get; set; }
+    public ProviderConfig? OpenLimits { get; set; }
+    public ProviderConfig? ArkRoute { get; set; }
+    public ProviderConfig? AINative { get; set; }
+    public ProviderConfig? AIBadgr { get; set; }
+    public ProviderConfig? Unbound { get; set; }
+    public ProviderConfig? Corriente { get; set; }
+    public ProviderConfig? Shakespeare { get; set; }
+    public ProviderConfig? Cline { get; set; }
+    public ProviderConfig? BazaarLink { get; set; }
+    public ProviderConfig? Puter { get; set; }
+    public ProviderConfig? RoutePlex { get; set; }
+    public ProviderConfig? NovAI { get; set; }
+    public ProviderConfig? Lumenfall { get; set; }
+    public ProviderConfig? Fal { get; set; }
+    public ProviderConfig? Mia21 { get; set; }
+    public ProviderConfig? JKAIHub { get; set; }
+    public ProviderConfig? TextSynth { get; set; }
+    public ProviderConfig? ModelSync { get; set; }
+    public ProviderConfig? EzAI { get; set; }
+    public ProviderConfig? AskCodi { get; set; }
+    public ProviderConfig? Martian { get; set; }
+    public ProviderConfig? GonkaGate { get; set; }
+    public ProviderConfig? FastRouter { get; set; }
+    public ProviderConfig? AgentAIGateway { get; set; }
+    public ProviderConfig? AICredits { get; set; }
+    public ProviderConfig? Dubrify { get; set; }
+    public ProviderConfig? AndyAPI { get; set; }
+    
 }
 
 public class ProviderConfig
