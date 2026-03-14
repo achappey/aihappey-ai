@@ -355,6 +355,7 @@ public class AIServiceConfig
     public ProviderConfig? AICredits { get; set; }
     public ProviderConfig? Dubrify { get; set; }
     public ProviderConfig? AndyAPI { get; set; }
+    public ProviderConfig? AKI { get; set; }
     
 }
 

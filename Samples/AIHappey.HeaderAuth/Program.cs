@@ -7,6 +7,7 @@ using AIHappey.Core.MCP;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Orchestration;
 using AIHappey.Core.Models;
+using AIHappey.Core.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder.WebHost.ConfigureKestrel(o =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<EndUserIdHashingOptions>(builder.Configuration.GetSection("EndUserIdHashing"));
+builder.Services.Configure<ModelListingStorageOptions>(builder.Configuration.GetSection("ModelListingStorage"));
 
 // CORS for SPA (adjust origin as needed)
 builder.Services.AddCors(options =>
@@ -34,12 +36,24 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddSingleton<IAIModelProviderResolver, AIModelProviderResolver>();
+builder.Services.AddSingleton<StorageBackedModelProviderResolver>();
+builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
 builder.Services.AddSingleton<HeaderApiKeySnapshot>();
 builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();
 builder.Services.AddProviders();
 builder.Services.AddHttpClient();
+
+var headerModelListingStorage = builder.Configuration.GetSection("ModelListingStorage").Get<ModelListingStorageOptions>();
+if (!string.IsNullOrWhiteSpace(headerModelListingStorage?.ConnectionString))
+{
+    builder.Services.AddSingleton<IModelListingSnapshotStore, AzureBlobModelListingSnapshotStore>();
+    builder.Services.AddSingleton<IModelListingRefreshQueue, AzureQueueModelListingRefreshQueue>();
+
+    if (!string.IsNullOrWhiteSpace(headerModelListingStorage.QueueName))
+        builder.Services.AddHostedService<StorageBackedModelRefreshWorker>();
+}
+
 builder.Services.AddMcpServers(CoreMcpDefinitions.GetDefinitions());
 
 builder.Services.AddControllers().AddJsonOptions(o =>

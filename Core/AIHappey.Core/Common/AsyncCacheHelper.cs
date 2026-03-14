@@ -6,6 +6,21 @@ public sealed class AsyncCacheHelper(IMemoryCache memoryCache)
 {
     private readonly IMemoryCache _memoryCache = memoryCache;
 
+    public bool TryGetValue<T>(string key, out T? value)
+    {
+        if (_memoryCache.TryGetValue(key, out var raw) && raw is T typed)
+        {
+            value = typed;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    public void Set<T>(string key, T value, TimeSpan ttl)
+        => _memoryCache.Set(key, value, ttl);
+
     public async Task<T> GetOrCreateAsync<T>(
         string key,
         Func<CancellationToken, Task<T>> factory,

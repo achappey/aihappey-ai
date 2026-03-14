@@ -357,6 +357,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agentaigateway"] = "X-AgentAIGateway-Key",
             ["dubrify"] = "X-Dubrify-Key",
             ["andyapi"] = "X-AndyAPI-Key",
+            ["aki"] = "X-AKI-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

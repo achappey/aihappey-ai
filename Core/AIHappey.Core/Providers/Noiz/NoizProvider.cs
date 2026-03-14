@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;

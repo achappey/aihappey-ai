@@ -1,13 +1,14 @@
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
-namespace AIHappey.Core.Providers.Mia21;
+namespace AIHappey.Core.Providers.AKI;
 
-public partial class Mia21Provider : IModelProvider
+public partial class AKIProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -15,13 +16,13 @@ public partial class Mia21Provider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public Mia21Provider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public AKIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.mia21.com/");
+        _client.BaseAddress = new Uri("https://aki.io/");
     }
 
     private void ApplyAuthHeader()
@@ -29,10 +30,9 @@ public partial class Mia21Provider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Mia21)} API key.");
+            throw new InvalidOperationException($"No {nameof(AKI)} API key.");
 
-        _client.DefaultRequestHeaders.Remove("X-API-Key");
-        _client.DefaultRequestHeaders.Add("X-API-Key", key);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -51,7 +51,7 @@ public partial class Mia21Provider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(Mia21).ToLowerInvariant();
+    public string GetIdentifier() => nameof(AKI).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

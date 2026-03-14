@@ -362,6 +362,7 @@ public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolv
             "agentaigateway" => _config.AgentAIGateway?.ApiKey,
             "dubrify" => _config.Dubrify?.ApiKey,
             "andyapi" => _config.AndyAPI?.ApiKey,
+            "aki" => _config.AKI?.ApiKey,
             _ => null
         };
 }

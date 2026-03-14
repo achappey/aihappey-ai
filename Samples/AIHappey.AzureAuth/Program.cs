@@ -17,6 +17,7 @@ using AIHappey.Core.Orchestration;
 using AIHappey.Core.Providers.AmazonBedrock;
 using AIHappey.Core.Providers.Databricks;
 using AIHappey.Core.Providers.Modal;
+using AIHappey.Core.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,13 +47,17 @@ builder.Services.Configure<DatabricksProviderOptions>(
 builder.Services.Configure<ModalProviderOptions>(
     builder.Configuration.GetSection("AIServices:Modal"));
 
+builder.Services.Configure<ModelListingStorageOptions>(
+    builder.Configuration.GetSection("ModelListingStorage"));
+
 var telemetryDb = builder.Configuration.GetSection("TelemetryDatabase").Get<string>();
 var kernelMemoryConfig = builder.Configuration.GetSection("AIServices:KernelMemory").Get<ProviderConfig>();
 var openAiConfig = builder.Configuration.GetSection("AIServices:OpenAI").Get<ProviderConfig>();
 
 builder.Services.AddTelemetryServices(telemetryDb!);
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<IAIModelProviderResolver, CachedModelProviderResolver>();
+builder.Services.AddSingleton<StorageBackedModelProviderResolver>();
+builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
 // Add authentication/authorization
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
@@ -76,6 +81,16 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IApiKeyResolver, ConfigKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, AzureEndUserIdResolver>();
 builder.Services.AddProviders();
+
+var modelListingStorage = builder.Configuration.GetSection("ModelListingStorage").Get<ModelListingStorageOptions>();
+if (!string.IsNullOrWhiteSpace(modelListingStorage?.ConnectionString))
+{
+    builder.Services.AddSingleton<IModelListingSnapshotStore, AzureBlobModelListingSnapshotStore>();
+    builder.Services.AddSingleton<IModelListingRefreshQueue, AzureQueueModelListingRefreshQueue>();
+
+    if (!string.IsNullOrWhiteSpace(modelListingStorage.QueueName))
+        builder.Services.AddHostedService<StorageBackedModelRefreshWorker>();
+}
 
 if (!string.IsNullOrEmpty(kernelMemoryConfig?.Endpoint)
     && !string.IsNullOrEmpty(openAiConfig?.ApiKey))

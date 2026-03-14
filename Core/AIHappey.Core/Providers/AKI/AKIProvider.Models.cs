@@ -2,26 +2,32 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.ModelRouter;
+namespace AIHappey.Core.Providers.AKI;
 
-public partial class ModelRouterProvider
+public partial class AKIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        var key = _keyResolver.Resolve(GetIdentifier());
 
-        var cacheKey = this.GetCacheKey();
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+        var cacheKey = this.GetCacheKey(key);
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
+
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"ModelRouter API error: {err}");
+                    throw new Exception($"AKI API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -44,8 +50,10 @@ public partial class ModelRouterProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
+
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
+
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);

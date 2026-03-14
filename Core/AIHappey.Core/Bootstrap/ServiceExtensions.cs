@@ -357,6 +357,9 @@ using AIHappey.Core.Providers.AgentAIGateway;
 using AIHappey.Core.Providers.AICredits;
 using AIHappey.Core.Providers.Dubrify;
 using AIHappey.Core.Providers.AndyAPI;
+using AIHappey.Core.Providers.AKI;
+using AIHappey.Core.Storage;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.AI;
 
@@ -368,6 +371,9 @@ public static class ServiceExtensions
         services.TryAddSingleton<IEndUserIdResolver, NullEndUserIdResolver>();
         services.AddMemoryCache();
         services.AddSingleton<AsyncCacheHelper>();
+        services.AddOptions<ModelListingStorageOptions>();
+        services.TryAddSingleton<IModelListingSnapshotStore, NullModelListingSnapshotStore>();
+        services.TryAddSingleton<IModelListingRefreshQueue, NullModelListingRefreshQueue>();
 
         services.AddSingleton<IModelProvider, EchoProvider>();
         services.AddSingleton<IModelProvider, OpenAIProvider>();
@@ -723,6 +729,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AICreditsProvider>();
         services.AddSingleton<IModelProvider, DubrifyProvider>();
         services.AddSingleton<IModelProvider, AndyAPIProvider>();
+        services.AddSingleton<IModelProvider, AKIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

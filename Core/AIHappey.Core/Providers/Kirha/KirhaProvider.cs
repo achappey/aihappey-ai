@@ -6,8 +6,6 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
-using AIHappey.Responses;
-using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Core.Providers.Kirha;
 
