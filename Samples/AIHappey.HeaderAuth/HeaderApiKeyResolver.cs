@@ -358,10 +358,40 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["dubrify"] = "X-Dubrify-Key",
             ["andyapi"] = "X-AndyAPI-Key",
             ["aki"] = "X-AKI-Key",
+            ["getgoapi"] = "X-GetGoAPI-Key",
+            ["blockrun"] = "X-BlockRun-Key",
+            ["neuralwatt"] = "X-Neuralwatt-Key",
+            ["toapis"] = "X-ToAPIs-Key",
+            ["onekey"] = "X-OneKey-Key",
+            ["atxp"] = "X-ATXP-Key",
+            ["nagaai"] = "X-NagaAI-Key",
+            ["sargalay"] = "X-Sargalay-Key",
+            ["zeabur"] = "X-Zeabur-Key",
+            ["inferlink"] = "X-InferLink-Key",
+            ["chainhub"] = "X-ChainHub-Key",
+            ["clawswitch"] = "X-ClawSwitch-Key",
+            ["ultrasafe"] = "X-UltraSafe-Key",
+            ["llmcloud"] = "X-LLMCloud-Key",
+            ["railwail"] = "X-Railwail-Key",
+            ["knoxchat"] = "X-KnoxChat-Key",
+            ["vlmrun"] = "X-VLMRun-Key",
+            ["vogent"] = "X-Vogent-Key",
+            ["tikhubai"] = "X-TikHubAI-Key",
+            ["yougetai"] = "X-YouGetAI-Key",
+            ["preapi"] = "X-PreAPI-Key",
+            ["elkapi"] = "X-ElkAPI-Key",
+            ["vultr"] = "X-Vultr-Key",
+            ["ofoxai"] = "X-OfoxAI-Key",
+            ["dedaluslabs"] = "X-DedalusLabs-Key",
+            ["world3"] = "X-World3-Key",
+            ["voidai"] = "X-VoidAI-Key",
+            ["vibecodecheap"] = "X-VibeCodeCheap-Key",
+            ["modelmax"] = "X-ModelMax-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
 
     public string? Resolve(string provider) => snapshot.Resolve(provider);
 }
+
 

@@ -6,9 +6,9 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.Vogent;
 
-public partial class AKIProvider : IModelProvider
+public partial class VogentProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -16,13 +16,13 @@ public partial class AKIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public AKIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public VogentProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://aki.io/");
+        _client.BaseAddress = new Uri("https://api.vogent.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -30,46 +30,33 @@ public partial class AKIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(AKI)} API key.");
+            throw new InvalidOperationException($"No {nameof(Vogent)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        throw new NotImplementedException();
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        throw new NotImplementedException();
     }
 
-    public string GetIdentifier() => nameof(AKI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Vogent).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var imageModels = GetIdentifier().GetModels();
-
-        if (imageModels.Any(a => a.Id.EndsWith(chatRequest.GetModel()!)))
-        {
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        throw new NotImplementedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => SpeechRequestInternal(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -85,6 +72,9 @@ public partial class AKIProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)

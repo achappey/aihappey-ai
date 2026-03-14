@@ -5,10 +5,11 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.UltraSafe;
 
-public partial class AKIProvider : IModelProvider
+public partial class UltraSafeProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -16,21 +17,24 @@ public partial class AKIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public AKIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public UltraSafeProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://aki.io/");
+        _client.BaseAddress = new Uri("https://app.us.inc/api/");
     }
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+          => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(AKI)} API key.");
+            throw new InvalidOperationException($"No {nameof(UltraSafe)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -40,7 +44,9 @@ public partial class AKIProvider : IModelProvider
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+             options,
+             relativeUrl: "v2/chat/completions",
+             ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -48,21 +54,16 @@ public partial class AKIProvider : IModelProvider
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+                    options,
+                    relativeUrl: "v2/chat/completions",
+                    ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(AKI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(UltraSafe).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var imageModels = GetIdentifier().GetModels();
-
-        if (imageModels.Any(a => a.Id.EndsWith(chatRequest.GetModel()!)))
-        {
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        throw new NotImplementedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -85,6 +86,9 @@ public partial class AKIProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)

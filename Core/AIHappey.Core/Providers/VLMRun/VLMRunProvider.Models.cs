@@ -1,17 +1,18 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.VLMRun;
 
-public partial class AKIProvider
+public partial class VLMRunProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
+            return [];
 
         var cacheKey = this.GetCacheKey(key);
 
@@ -27,40 +28,38 @@ public partial class AKIProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AKI API error: {err}");
+                    throw new Exception($"VLMRun API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
                 var models = new List<Model>();
-                var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                        ? dataEl.EnumerateArray()
-                        : Enumerable.Empty<JsonElement>();
-
-                foreach (var el in arr)
+                foreach (var el in doc.RootElement.EnumerateArray())
                 {
-                    Model model = new();
+                    if (!el.TryGetProperty("model", out var modelEl) ||
+                        !el.TryGetProperty("domain", out var domainEl))
+                        continue;
 
-                    if (el.TryGetProperty("id", out var idEl))
+                    var modelName = modelEl.GetString();
+                    var domain = domainEl.GetString();
+
+                    if (string.IsNullOrWhiteSpace(modelName) || string.IsNullOrWhiteSpace(domain))
+                        continue;
+
+                    var id = $"{modelName}/{domain}";
+
+                    models.Add(new Model
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
-                    }
-
-
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
-
-
-                    if (!string.IsNullOrEmpty(model.Id))
-                        models.Add(model);
+                        Id = id.ToModelId(GetIdentifier()),
+                        Name = id,
+                        OwnedBy = modelName
+                    });
                 }
 
                 models.AddRange(GetIdentifier().GetModels());
-                
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

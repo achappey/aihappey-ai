@@ -356,7 +356,36 @@ public class AIServiceConfig
     public ProviderConfig? Dubrify { get; set; }
     public ProviderConfig? AndyAPI { get; set; }
     public ProviderConfig? AKI { get; set; }
-    
+    public ProviderConfig? GetGoAPI { get; set; }
+    public ProviderConfig? BlockRun { get; set; }
+    public ProviderConfig? Neuralwatt { get; set; }
+    public ProviderConfig? ToAPIs { get; set; }
+    public ProviderConfig? OneKey { get; set; }
+    public ProviderConfig? ATXP { get; set; }
+    public ProviderConfig? NagaAI { get; set; }
+    public ProviderConfig? Sargalay { get; set; }
+    public ProviderConfig? Zeabur { get; set; }
+    public ProviderConfig? InferLink { get; set; }
+    public ProviderConfig? ChainHub { get; set; }
+    public ProviderConfig? ClawSwitch { get; set; }
+    public ProviderConfig? UltraSafe { get; set; }
+    public ProviderConfig? LLMCloud { get; set; }
+    public ProviderConfig? Railwail { get; set; }
+    public ProviderConfig? KnoxChat { get; set; }
+    public ProviderConfig? VLMRun { get; set; }
+    public ProviderConfig? Vogent { get; set; }
+    public ProviderConfig? YouGetAI { get; set; }
+    public ProviderConfig? TikHubAI { get; set; }
+    public ProviderConfig? PreAPI { get; set; }
+    public ProviderConfig? ElkAPI { get; set; }
+    public ProviderConfig? Vultr { get; set; }
+    public ProviderConfig? OfoxAI { get; set; }
+    public ProviderConfig? DedalusLabs { get; set; }
+    public ProviderConfig? World3 { get; set; }
+    public ProviderConfig? VoidAI { get; set; }
+    public ProviderConfig? VibeCodeCheap { get; set; }
+    public ProviderConfig? ModelMax { get; set; }
+
 }
 
 public class ProviderConfig

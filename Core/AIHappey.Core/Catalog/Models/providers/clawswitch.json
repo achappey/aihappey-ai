@@ -1,0 +1,109 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "clawswitch/auto",
+      "object": "model",
+      "owned_by": "ClawSwitch",
+      "name": "auto",
+      "type": "language",
+      "description": "Smart routing that automatically selects the optimal model based on request complexity and cost."
+    },
+    {
+      "id": "clawswitch/simple",
+      "object": "model",
+      "owned_by": "ClawSwitch",
+      "name": "simple",
+      "type": "language",
+      "description": "Routes simple tasks (greetings, formatting, lookups) to fast low-cost models like Claude Haiku or GPT-4o-mini."
+    },
+    {
+      "id": "clawswitch/standard",
+      "object": "model",
+      "owned_by": "ClawSwitch",
+      "name": "standard",
+      "type": "language",
+      "description": "Routes typical workloads such as coding, summaries, and Q&A to balanced models like Haiku, GPT-4o-mini, or Kimi."
+    },
+    {
+      "id": "clawswitch/complex",
+      "object": "model",
+      "owned_by": "ClawSwitch",
+      "name": "complex",
+      "type": "language",
+      "description": "Routes complex reasoning and analysis tasks to higher quality models like Claude Sonnet or GPT-4o."
+    },
+    {
+      "id": "clawswitch/premium",
+      "object": "model",
+      "owned_by": "ClawSwitch",
+      "name": "premium",
+      "type": "language",
+      "description": "Routes critical and high reasoning workloads to top tier models such as Claude Opus, GPT-4 Turbo, or Gemini Pro."
+    },
+    {
+      "id": "clawswitch/claude-sonnet-4-20250514",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-sonnet-4-20250514",
+      "type": "language",
+      "description": "Claude Sonnet 4 optimized for coding, reasoning, and analysis."
+    },
+    {
+      "id": "clawswitch/claude-opus-4-20250514",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4-20250514",
+      "type": "language",
+      "description": "Claude Opus 4 top-tier model for complex reasoning and high quality outputs."
+    },
+    {
+      "id": "clawswitch/claude-haiku-4-5-20251001",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-haiku-4-5-20251001",
+      "type": "language",
+      "description": "Claude Haiku 4.5 fast low-cost model for lightweight tasks."
+    },
+    {
+      "id": "clawswitch/gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o",
+      "type": "language",
+      "description": "OpenAI GPT-4o general-purpose model."
+    },
+    {
+      "id": "clawswitch/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o-mini",
+      "type": "language",
+      "description": "OpenAI GPT-4o mini optimized for speed and cost efficiency."
+    },
+    {
+      "id": "clawswitch/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-2.5-pro",
+      "type": "language",
+      "description": "Google Gemini 2.5 Pro with strong reasoning and long context capabilities."
+    },
+    {
+      "id": "clawswitch/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-2.5-flash",
+      "type": "language",
+      "description": "Google Gemini 2.5 Flash optimized for fast responses and low cost."
+    },
+    {
+      "id": "clawswitch/moonshot/kimi-k2.5",
+      "object": "model",
+      "owned_by": "Moonshot",
+      "name": "moonshot/kimi-k2.5",
+      "type": "language",
+      "description": "Moonshot Kimi K2.5 model with large context window and very low cost."
+    }
+  ]
+}

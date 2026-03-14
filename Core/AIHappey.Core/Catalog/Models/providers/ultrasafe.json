@@ -1,0 +1,61 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "ultrasafe/usf-mini",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-mini",
+      "type": "language",
+      "description": "Base UltraSafe model for general use with balanced performance and efficiency."
+    },
+    {
+      "id": "ultrasafe/usf-healthcare",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-healthcare",
+      "type": "language",
+      "description": "Specialized in medical knowledge, healthcare protocols, clinical guidelines, medical research, anatomy, physiology, pharmacology, and healthcare systems."
+    },
+    {
+      "id": "ultrasafe/usf-finance",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-finance",
+      "type": "language",
+      "description": "Expert in finance, economics, investments, markets, banking, accounting, financial planning, and business strategy."
+    },
+    {
+      "id": "ultrasafe/usf-code",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-code",
+      "type": "language",
+      "description": "Proficient in software development, programming languages, algorithms, system design, debugging, and software engineering best practices."
+    },
+    {
+      "id": "ultrasafe/usf-psychology",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-psychology",
+      "type": "language",
+      "description": "Specialized in psychology, mental health, behavioral analysis, and therapeutic approaches."
+    },
+    {
+      "id": "ultrasafe/usf-saudi-arabic",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-saudi-arabic",
+      "type": "language",
+      "description": "Specialized in Arabic language, Saudi culture, Islamic principles, and regional expertise."
+    },
+    {
+      "id": "ultrasafe/usf-japanese",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-japanese",
+      "type": "language",
+      "description": "Specialized in Japanese language, culture, business etiquette, and regional expertise."
+    }
+  ]
+}

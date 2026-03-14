@@ -360,6 +360,35 @@ using AIHappey.Core.Providers.AndyAPI;
 using AIHappey.Core.Providers.AKI;
 using AIHappey.Core.Storage;
 using AIHappey.Core.Models;
+using AIHappey.Core.Providers.GetGoAPI;
+using AIHappey.Core.Providers.BlockRun;
+using AIHappey.Core.Providers.Neuralwatt;
+using AIHappey.Core.Providers.ToAPIs;
+using AIHappey.Core.Providers.OneKey;
+using AIHappey.Core.Providers.ATXP;
+using AIHappey.Core.Providers.NagaAI;
+using AIHappey.Core.Providers.Sargalay;
+using AIHappey.Core.Providers.Zeabur;
+using AIHappey.Core.Providers.InferLink;
+using AIHappey.Core.Providers.ChainHub;
+using AIHappey.Core.Providers.ClawSwitch;
+using AIHappey.Core.Providers.UltraSafe;
+using AIHappey.Core.Providers.LLMCloud;
+using AIHappey.Core.Providers.Railwail;
+using AIHappey.Core.Providers.KnoxChat;
+using AIHappey.Core.Providers.VLMRun;
+using AIHappey.Core.Providers.Vogent;
+using AIHappey.Core.Providers.TikHubAI;
+using AIHappey.Core.Providers.YouGetAI;
+using AIHappey.Core.Providers.PreAPI;
+using AIHappey.Core.Providers.ElkAPI;
+using AIHappey.Core.Providers.Vultr;
+using AIHappey.Core.Providers.OfoxAI;
+using AIHappey.Core.Providers.DedalusLabs;
+using AIHappey.Core.Providers.World3;
+using AIHappey.Core.Providers.VoidAI;
+using AIHappey.Core.Providers.VibeCodeCheap;
+using AIHappey.Core.Providers.ModelMax;
 
 namespace AIHappey.Core.AI;
 
@@ -541,7 +570,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HeyGenProvider>();
         services.AddSingleton<IModelProvider, CartesiaProvider>();
         services.AddSingleton<IModelProvider, LOVOProvider>();
-        services.AddSingleton<IModelProvider, EverypixelLabsProvider>();
+        //services.AddSingleton<IModelProvider, EverypixelLabsProvider>();
         services.AddSingleton<IModelProvider, VerbatikProvider>();
         services.AddSingleton<IModelProvider, SmallestAIProvider>();
         services.AddSingleton<IModelProvider, OrqProvider>();
@@ -595,7 +624,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, NeosantaraProvider>();
         services.AddSingleton<IModelProvider, RedPillProvider>();
         services.AddSingleton<IModelProvider, BlazeRailProvider>();
-        services.AddSingleton<IModelProvider, MangabaProvider>();
+        //services.AddSingleton<IModelProvider, MangabaProvider>();
         services.AddSingleton<IModelProvider, AetherProvider>();
         services.AddSingleton<IModelProvider, ReGraphProvider>();
         services.AddSingleton<IModelProvider, ElectronHubProvider>();
@@ -630,7 +659,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LunosProvider>();
         services.AddSingleton<IModelProvider, MaritacaAIProvider>();
         services.AddSingleton<IModelProvider, CloudFerroProvider>();
-        services.AddSingleton<IModelProvider, ArliAIProvider>();
+        //services.AddSingleton<IModelProvider, ArliAIProvider>();
         services.AddSingleton<IModelProvider, DataForSEOProvider>();
         services.AddSingleton<IModelProvider, JigsawStackProvider>();
         services.AddSingleton<IModelProvider, IshiProvider>();
@@ -730,6 +759,35 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, DubrifyProvider>();
         services.AddSingleton<IModelProvider, AndyAPIProvider>();
         services.AddSingleton<IModelProvider, AKIProvider>();
+        services.AddSingleton<IModelProvider, GetGoAPIProvider>();
+        services.AddSingleton<IModelProvider, BlockRunProvider>();
+        services.AddSingleton<IModelProvider, NeuralwattProvider>();
+        services.AddSingleton<IModelProvider, ToAPIsProvider>();
+        services.AddSingleton<IModelProvider, OneKeyProvider>();
+        services.AddSingleton<IModelProvider, ATXPProvider>();
+        services.AddSingleton<IModelProvider, NagaAIProvider>();
+        services.AddSingleton<IModelProvider, SargalayProvider>();
+        services.AddSingleton<IModelProvider, ZeaburProvider>();
+        services.AddSingleton<IModelProvider, InferLinkProvider>();
+        services.AddSingleton<IModelProvider, ChainHubProvider>();
+        services.AddSingleton<IModelProvider, ClawSwitchProvider>();
+        services.AddSingleton<IModelProvider, UltraSafeProvider>();
+        services.AddSingleton<IModelProvider, LLMCloudProvider>();
+        services.AddSingleton<IModelProvider, RailwailProvider>();
+        services.AddSingleton<IModelProvider, KnoxChatProvider>();
+        services.AddSingleton<IModelProvider, VLMRunProvider>();
+        services.AddSingleton<IModelProvider, VogentProvider>();
+        services.AddSingleton<IModelProvider, TikHubAIProvider>();
+        services.AddSingleton<IModelProvider, YouGetAIProvider>();
+        services.AddSingleton<IModelProvider, PreAPIProvider>();
+        services.AddSingleton<IModelProvider, ElkAPIProvider>();
+        services.AddSingleton<IModelProvider, VultrProvider>();
+        services.AddSingleton<IModelProvider, OfoxAIProvider>();
+        services.AddSingleton<IModelProvider, DedalusLabsProvider>();
+        services.AddSingleton<IModelProvider, World3Provider>();
+        services.AddSingleton<IModelProvider, VoidAIProvider>();
+        services.AddSingleton<IModelProvider, VibeCodeCheapProvider>();
+        services.AddSingleton<IModelProvider, ModelMaxProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

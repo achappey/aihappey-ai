@@ -1,0 +1,33 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "aki/flux2_klein",
+      "object": "model",
+      "owned_by": "AKI",
+      "name": "flux2_klein",
+      "type": "image"
+    },
+    {
+      "id": "aki/qwen_image",
+      "object": "model",
+      "owned_by": "AKI",
+      "name": "qwen_image",
+      "type": "image"
+    },
+    {
+      "id": "aki/qwen_image_edit",
+      "object": "model",
+      "owned_by": "AKI",
+      "name": "qwen_image_edit",
+      "type": "image"
+    },
+    {
+      "id": "aki/z_image_turbo",
+      "object": "model",
+      "owned_by": "AKI",
+      "name": "z_image_turbo",
+      "type": "image"
+    }
+  ]
+}

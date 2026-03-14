@@ -1,0 +1,35 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "vlmrun/vlmrun-orion-1",
+      "object": "model",
+      "owned_by": "vlmrun",
+      "name": "vlmrun-orion-1"
+    },
+    {
+      "id": "vlmrun/vlmrun-orion-1:lite",
+      "object": "model",
+      "owned_by": "vlmrun",
+      "name": "vlmrun-orion-1:lite"
+    },
+    {
+      "id": "vlmrun/vlmrun-orion-1:auto",
+      "object": "model",
+      "owned_by": "vlmrun",
+      "name": "vlmrun-orion-1:auto"
+    },
+    {
+      "id": "vlmrun/vlmrun-orion-1:fast",
+      "object": "model",
+      "owned_by": "vlmrun",
+      "name": "vlmrun-orion-1:fast"
+    },
+    {
+      "id": "vlmrun/vlmrun-orion-1:pro",
+      "object": "model",
+      "owned_by": "vlmrun",
+      "name": "vlmrun-orion-1:pro"
+    }
+  ]
+}

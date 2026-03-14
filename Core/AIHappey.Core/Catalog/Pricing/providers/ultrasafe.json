@@ -1,0 +1,44 @@
+{
+  "ultrasafe/usf-mini": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000060"
+    }
+  },
+  "ultrasafe/usf-healthcare": {
+    "pricing": {
+      "input": "0.00000085",
+      "output": "0.00000425"
+    }
+  },
+  "ultrasafe/usf-finance": {
+    "pricing": {
+      "input": "0.00000085",
+      "output": "0.00000425"
+    }
+  },
+  "ultrasafe/usf-code": {
+    "pricing": {
+      "input": "0.00000085",
+      "output": "0.00000425"
+    }
+  },
+  "ultrasafe/usf-psychology": {
+    "pricing": {
+      "input": "0.00000085",
+      "output": "0.00000425"
+    }
+  },
+  "ultrasafe/usf-saudi-arabic": {
+    "pricing": {
+      "input": "0.00000085",
+      "output": "0.00000425"
+    }
+  },
+  "ultrasafe/usf-japanese": {
+    "pricing": {
+      "input": "0.00000085",
+      "output": "0.00000425"
+    }
+  }
+}

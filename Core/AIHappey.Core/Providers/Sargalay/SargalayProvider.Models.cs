@@ -1,10 +1,11 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.Sargalay;
 
-public partial class AKIProvider
+public partial class SargalayProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -27,7 +28,7 @@ public partial class AKIProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AKI API error: {err}");
+                    throw new Exception($"Sargalay API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -50,17 +51,19 @@ public partial class AKIProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
+                    if (el.TryGetProperty("context_length", out var contextLengthEl))
+                        model.ContextWindow = contextLengthEl.GetInt32();
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
 
+                    if (el.TryGetProperty("description", out var orgEl))
+                        model.Description = orgEl.GetString() ?? "";
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

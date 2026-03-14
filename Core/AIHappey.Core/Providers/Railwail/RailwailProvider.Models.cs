@@ -2,32 +2,25 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.Railwail;
 
-public partial class AKIProvider
+public partial class RailwailProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
-
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AKI API error: {err}");
+                    throw new Exception($"Railwail API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -35,6 +28,7 @@ public partial class AKIProvider
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
+
 
                 var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
@@ -50,17 +44,22 @@ public partial class AKIProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
+                    if (el.TryGetProperty("context_length", out var contextLengthEl))
+                        model.ContextWindow = contextLengthEl.GetInt32();
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
+                    if (el.TryGetProperty("description", out var descriptionEl))
+                        model.Description = descriptionEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

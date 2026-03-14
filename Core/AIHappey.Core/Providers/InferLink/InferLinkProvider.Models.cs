@@ -2,24 +2,20 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.InferLink;
 
-public partial class AKIProvider
+public partial class InferLinkProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
 
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
+
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
@@ -27,7 +23,7 @@ public partial class AKIProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AKI API error: {err}");
+                    throw new Exception($"InferLink API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -36,22 +32,25 @@ public partial class AKIProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                        ? dataEl.EnumerateArray()
-                        : Enumerable.Empty<JsonElement>();
+                // ✅ root is already an array
+                var arr = root.EnumerateArray();
 
                 foreach (var el in arr)
                 {
                     Model model = new();
 
-                    if (el.TryGetProperty("id", out var idEl))
+                    if (el.TryGetProperty("Model", out var idEl))
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
                     }
+                 
+
+                    if (el.TryGetProperty("Description", out var descEl))
+                        model.Description = descEl.GetString() ?? "";
 
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
+                    if (el.TryGetProperty("Provider", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
 
@@ -59,8 +58,6 @@ public partial class AKIProvider
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

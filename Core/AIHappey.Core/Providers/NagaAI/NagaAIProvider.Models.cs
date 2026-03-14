@@ -1,33 +1,28 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.NagaAI;
 
-public partial class AKIProvider
+public partial class NagaAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
 
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
-
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AKI API error: {err}");
+                    throw new Exception($"NagaAI API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -50,17 +45,43 @@ public partial class AKIProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
+                    if (el.TryGetProperty("context_window", out var contextLengthEl))
+                        model.ContextWindow = contextLengthEl.GetInt32();
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
+                        model.OwnedBy = orgEl.GetString() ?? string.Empty;
 
+                    if (el.TryGetProperty("display_name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
+
+                    if (el.TryGetProperty("description", out var descriptionEl))
+                        model.Description = descriptionEl.GetString() ?? string.Empty;
+
+
+                    if (el.TryGetProperty("pricing", out var pricingEl) &&
+                            pricingEl.ValueKind == JsonValueKind.Object &&
+                            pricingEl.TryGetProperty("per_input_token", out var inEl) &&
+                            pricingEl.TryGetProperty("per_output_token", out var outEl) &&
+                            inEl.ValueKind == JsonValueKind.Number &&
+                            outEl.ValueKind == JsonValueKind.Number)
+                    {
+                        var inputPrice = inEl.GetDecimal();
+                        var outputPrice = outEl.GetDecimal();
+
+                        if (inputPrice > 0 && outputPrice > 0)
+                        {
+                            model.Pricing = new ModelPricing
+                            {
+                                Input = inputPrice,
+                                Output = outputPrice
+                            };
+                        }
+                    }
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

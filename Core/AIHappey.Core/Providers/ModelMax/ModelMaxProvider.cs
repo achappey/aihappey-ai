@@ -6,9 +6,9 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.ModelMax;
 
-public partial class AKIProvider : IModelProvider
+public partial class ModelMaxProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -16,13 +16,13 @@ public partial class AKIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public AKIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public ModelMaxProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://aki.io/");
+        _client.BaseAddress = new Uri("https://api.modelmax.io/");
     }
 
     private void ApplyAuthHeader()
@@ -30,7 +30,7 @@ public partial class AKIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(AKI)} API key.");
+            throw new InvalidOperationException($"No {nameof(ModelMax)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -51,18 +51,11 @@ public partial class AKIProvider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(AKI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(ModelMax).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var imageModels = GetIdentifier().GetModels();
-
-        if (imageModels.Any(a => a.Id.EndsWith(chatRequest.GetModel()!)))
-        {
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        throw new NotImplementedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -85,6 +78,9 @@ public partial class AKIProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)

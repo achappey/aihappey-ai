@@ -2,32 +2,28 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.AKI;
+namespace AIHappey.Core.Providers.World3;
 
-public partial class AKIProvider
+public partial class World3Provider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
 
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?page_size=100");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AKI API error: {err}");
+                    throw new Exception($"World3 API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -36,7 +32,7 @@ public partial class AKIProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                var arr = root.TryGetProperty("items", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -46,21 +42,26 @@ public partial class AKIProvider
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        model.Id = idEl.GetRawText()?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = idEl.GetRawText() ?? "";
                     }
 
+                    if (el.TryGetProperty("context_length", out var contextLengthEl))
+                        model.ContextWindow = contextLengthEl.GetInt32();
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
+                    if (el.TryGetProperty("vendor", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
+                    if (el.TryGetProperty("model_name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
+
+                    if (el.TryGetProperty("description", out var descriptionEl))
+                        model.Description = descriptionEl.GetString() ?? "";
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

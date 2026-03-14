@@ -245,27 +245,35 @@ public class StorageBackedModelProviderResolver(
 
     private async Task EnrichModelsAsync(Dictionary<string, (Model Model, IModelProvider Provider)> merged, CancellationToken ct)
     {
-        var vercelModels = await FetchVercelModels(ct);
-
         foreach (var key in merged.Keys.ToList())
         {
-            var enrich = vercelModels?.FirstOrDefault(v => key.EndsWith(v.Id, StringComparison.OrdinalIgnoreCase));
             var model = merged[key].Model;
 
             model.Type ??= model.Id.GuessModelType() ?? string.Empty;
 
-            if (enrich == null)
-                continue;
-
-            model.ContextWindow ??= enrich.ContextWindow;
-            model.MaxTokens ??= enrich.MaxTokens;
-            model.Created ??= enrich.Created;
-            model.Pricing ??= enrich.Pricing;
-            model.Tags ??= enrich.Tags;
-            model.Type ??= enrich.Type;
-            model.Description ??= enrich.Description;
-            model.OwnedBy ??= enrich.OwnedBy;
         }
+
+        /* var vercelModels = await FetchVercelModels(ct);
+
+         foreach (var key in merged.Keys.ToList())
+         {
+             var enrich = vercelModels?.FirstOrDefault(v => key.EndsWith(v.Id, StringComparison.OrdinalIgnoreCase));
+             var model = merged[key].Model;
+
+             model.Type ??= model.Id.GuessModelType() ?? string.Empty;
+
+             if (enrich == null)
+                 continue;
+
+             model.ContextWindow ??= enrich.ContextWindow;
+             model.MaxTokens ??= enrich.MaxTokens;
+             model.Created ??= enrich.Created;
+             model.Pricing ??= enrich.Pricing;
+             model.Tags ??= enrich.Tags;
+             model.Type ??= enrich.Type;
+             model.Description ??= enrich.Description;
+             model.OwnedBy ??= enrich.OwnedBy;
+         }*/
 
         var modelsByBase = merged.Values
             .Select(v => v.Model)
