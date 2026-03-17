@@ -18,6 +18,7 @@ using AIHappey.Core.Providers.AmazonBedrock;
 using AIHappey.Core.Providers.Databricks;
 using AIHappey.Core.Providers.Modal;
 using AIHappey.Core.Storage;
+using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,12 @@ builder.WebHost.ConfigureKestrel(o =>
 // Add services to the container.
 builder.Services.Configure<AIServiceConfig>(
     builder.Configuration.GetSection("AIServices"));
+
+builder.Services.Configure<KeyVaultOptions>(
+    builder.Configuration.GetSection("KeyVault"));
+
+builder.Services.Configure<AzureAdClientOptions>(
+    builder.Configuration.GetSection("AzureAd"));
 
 builder.Services.Configure<EndUserIdHashingOptions>(
     builder.Configuration.GetSection("EndUserIdHashing"));
@@ -56,6 +63,7 @@ var openAiConfig = builder.Configuration.GetSection("AIServices:OpenAI").Get<Pro
 
 builder.Services.AddTelemetryServices(telemetryDb!);
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<StorageBackedModelProviderResolver>();
 builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
 // Add authentication/authorization
@@ -123,8 +131,6 @@ if (!string.IsNullOrEmpty(kernelMemoryConfig?.Endpoint)
     builder.Services.AddSingleton<IModelProvider, KernelMemoryProvider>();
     builder.Services.AddSingleton<OpenAIProvider>();
 }
-
-//builder.Services.AddMemoryCache();
 
 var allMcpServers = CoreMcpDefinitions.GetDefinitions()
     .Concat(TelemetryMcpDefinitions.GetDefinitions())

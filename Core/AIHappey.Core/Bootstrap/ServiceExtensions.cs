@@ -389,6 +389,8 @@ using AIHappey.Core.Providers.World3;
 using AIHappey.Core.Providers.VoidAI;
 using AIHappey.Core.Providers.VibeCodeCheap;
 using AIHappey.Core.Providers.ModelMax;
+using AIHappey.Core.Providers.Yollomi;
+using AIHappey.Core.Providers.Infercom;
 
 namespace AIHappey.Core.AI;
 
@@ -659,7 +661,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LunosProvider>();
         services.AddSingleton<IModelProvider, MaritacaAIProvider>();
         services.AddSingleton<IModelProvider, CloudFerroProvider>();
-        //services.AddSingleton<IModelProvider, ArliAIProvider>();
+        services.AddSingleton<IModelProvider, ArliAIProvider>();
         services.AddSingleton<IModelProvider, DataForSEOProvider>();
         services.AddSingleton<IModelProvider, JigsawStackProvider>();
         services.AddSingleton<IModelProvider, IshiProvider>();
@@ -788,6 +790,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, VoidAIProvider>();
         services.AddSingleton<IModelProvider, VibeCodeCheapProvider>();
         services.AddSingleton<IModelProvider, ModelMaxProvider>();
+        services.AddSingleton<IModelProvider, YollomiProvider>();
+        services.AddSingleton<IModelProvider, InfercomProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

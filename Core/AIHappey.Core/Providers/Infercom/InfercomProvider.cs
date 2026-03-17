@@ -6,9 +6,9 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
-namespace AIHappey.Core.Providers.ArceeAI;
+namespace AIHappey.Core.Providers.Infercom;
 
-public partial class ArceeAIProvider : IModelProvider
+public partial class InfercomProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -16,14 +16,13 @@ public partial class ArceeAIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public ArceeAIProvider(IApiKeyResolver keyResolver,
-        AsyncCacheHelper asyncCacheHelper,
-         IHttpClientFactory httpClientFactory)
+    public InfercomProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.arcee.ai/api/");
+        _client.BaseAddress = new Uri("https://api.infercom.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -31,7 +30,7 @@ public partial class ArceeAIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(ArceeAI)} API key.");
+            throw new InvalidOperationException($"No {nameof(Infercom)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -52,10 +51,12 @@ public partial class ArceeAIProvider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(ArceeAI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Infercom).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -3,32 +3,26 @@ using System.Text.Json;
 using AIHappey.Core.Models;
 using System.Globalization;
 
-namespace AIHappey.Core.Providers.ArceeAI;
+namespace AIHappey.Core.Providers.Infercom;
 
-public partial class ArceeAIProvider
+public partial class InfercomProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
 
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
-
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"ArceeAI API error: {err}");
+                    throw new Exception($"Infercom API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -51,47 +45,36 @@ public partial class ArceeAIProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("name", out var nameEl))
-                        model.Name = nameEl.GetString() ?? model.Id;
-
-                    if (el.TryGetProperty("description", out var descriptionEl))
-                        model.Description = descriptionEl.GetString() ?? string.Empty;
-
                     if (el.TryGetProperty("context_length", out var contextLengthEl))
                         model.ContextWindow = contextLengthEl.GetInt32();
 
-                    if (el.TryGetProperty("max_output_length", out var maxOutputEl))
-                        model.MaxTokens = maxOutputEl.GetInt32();
+                    if (el.TryGetProperty("max_completion_tokens", out var maxTokensEl))
+                        model.MaxTokens = maxTokensEl.GetInt32();
+
+                    if (el.TryGetProperty("owned_by", out var orgEl))
+                        model.OwnedBy = orgEl.GetString() ?? "";
 
                     if (el.TryGetProperty("pricing", out var pricingEl) &&
-                            pricingEl.ValueKind == JsonValueKind.Object)
+                                pricingEl.ValueKind == JsonValueKind.Object)
                     {
-                        decimal? input = null;
-                        decimal? output = null;
+                        var inputPrice = pricingEl.TryGetProperty("prompt", out var inEl)
+                            ? inEl.GetString() : null;
 
-                        if (pricingEl.TryGetProperty("prompt", out var inEl))
-                        {
-                            input = inEl.ValueKind == JsonValueKind.String
-                                ? decimal.Parse(inEl.GetString()!, CultureInfo.InvariantCulture)
-                                : inEl.GetDecimal();
-                        }
+                        var outputPrice = pricingEl.TryGetProperty("completion", out var outEl)
+                            ? outEl.GetString() : null;
 
-                        if (pricingEl.TryGetProperty("completion", out var outEl))
-                        {
-                            output = outEl.ValueKind == JsonValueKind.String
-                                ? decimal.Parse(outEl.GetString()!, CultureInfo.InvariantCulture)
-                                : outEl.GetDecimal();
-                        }
-
-                        if (input.HasValue && output.HasValue && input != 0 && output != 0)
+                        if (decimal.TryParse(inputPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var input) &&
+                            decimal.TryParse(outputPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var output) &&
+                            input > 0 && output > 0)
                         {
                             model.Pricing = new ModelPricing
                             {
-                                Input = input.Value,
-                                Output = output.Value
+                                Input = input,
+                                Output = output
                             };
                         }
                     }
+
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }

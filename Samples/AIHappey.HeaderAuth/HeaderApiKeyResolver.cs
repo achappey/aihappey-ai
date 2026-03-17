@@ -387,6 +387,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["voidai"] = "X-VoidAI-Key",
             ["vibecodecheap"] = "X-VibeCodeCheap-Key",
             ["modelmax"] = "X-ModelMax-Key",
+            ["yollomi"] = "X-Yollomi-Key",
+            ["infercom"] = "X-Infercom-Key",
+            ["raxai"] = "X-RaxAI-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

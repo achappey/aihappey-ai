@@ -1,398 +1,124 @@
 using AIHappey.Core.Contracts;
+using Azure;
+using Azure.Security.KeyVault.Secrets;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using System.Reflection;
+using Azure.Identity;
 
 namespace AIHappey.AzureAuth;
 
-public class ConfigKeyResolver(IOptions<AIServiceConfig> config) : IApiKeyResolver
+public class ConfigKeyResolver : IApiKeyResolver
 {
-    private readonly AIServiceConfig _config = config.Value;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
+    private static readonly IReadOnlyDictionary<string, PropertyInfo> ProviderProperties = typeof(AIServiceConfig)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.PropertyType == typeof(ProviderConfig))
+        .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
+    private readonly AIServiceConfig _config;
+    private readonly IMemoryCache _cache;
+    private readonly SecretClient? _secretClient;
+
+    public ConfigKeyResolver(
+        IOptions<AIServiceConfig> config,
+        IOptions<KeyVaultOptions> keyVaultOptions,
+        IOptions<AzureAdClientOptions> azureAdOptions,
+        IMemoryCache cache)
+    {
+        _config = config.Value;
+        _cache = cache;
+
+        var vaultUri = keyVaultOptions.Value.VaultUri;
+        var azureAd = azureAdOptions.Value;
+
+        if (Uri.TryCreate(vaultUri, UriKind.Absolute, out var uri)
+            && !string.IsNullOrWhiteSpace(azureAd.TenantId)
+            && !string.IsNullOrWhiteSpace(azureAd.ClientId)
+            && !string.IsNullOrWhiteSpace(azureAd.Secret))
+        {
+            _secretClient = new SecretClient(
+                uri,
+                new ClientSecretCredential(azureAd.TenantId, azureAd.ClientId, azureAd.Secret));
+        }
+    }
 
     public string? Resolve(string provider)
-        => provider switch
+    {
+        if (!ProviderProperties.TryGetValue(provider, out var property))
         {
-            "mistral" => _config.Mistral?.ApiKey,
-            "groq" => _config.Groq?.ApiKey,
-            "openai" => _config.OpenAI?.ApiKey,
-            "google" => _config.Google?.ApiKey,
-            "cohere" => _config.Cohere?.ApiKey,
-            "together" => _config.Together?.ApiKey,
-            "runway" => _config.Runway?.ApiKey,
-            "aiml" => _config.AIML?.ApiKey,
-            "xai" => _config.XAI?.ApiKey,
-            "nscale" => _config.Nscale?.ApiKey,
-            "novita" => _config.Novita?.ApiKey,
-            "cerebras" => _config.Cerebras?.ApiKey,
-            "sambanova" => _config.SambaNova?.ApiKey,
-            "fireworks" => _config.Fireworks?.ApiKey,
-            "hyperbolic" => _config.Hyperbolic?.ApiKey,
-            "zai" => _config.Zai?.ApiKey,
-            "scaleway" => _config.Scaleway?.ApiKey,
-            "stabilityai" => _config.StabilityAI?.ApiKey,
-            "perplexity" => _config.Perplexity?.ApiKey,
-            "jina" => _config.Jina?.ApiKey,
-            "anthropic" => _config.Anthropic?.ApiKey,
-            "elevenlabs" => _config.ElevenLabs?.ApiKey,
-            "telnyx" => _config.Telnyx?.ApiKey,
-            "alibaba" => _config.Alibaba?.ApiKey,
-            "canopywave" => _config.CanopyWave?.ApiKey,
-            "nvidia" => _config.NVIDIA?.ApiKey,
-            "tinfoil" => _config.Tinfoil?.ApiKey,
-            "runware" => _config.Runware?.ApiKey,
-            "nebius" => _config.Nebius?.ApiKey,
-            "deepinfra" => _config.DeepInfra?.ApiKey,
-            "deepseek" => _config.DeepSeek?.ApiKey,
-            "inferencenet" => _config.Inferencenet?.ApiKey,
-            "cloudrift" => _config.CloudRift?.ApiKey,
-            "baseten" => _config.Baseten?.ApiKey,
-            "azure" => _config.Azure?.ApiKey,
-            "async" => _config.Async?.ApiKey,
-            "replicate" => _config.Replicate?.ApiKey,
-            "contextualai" => _config.ContextualAI?.ApiKey,
-            "voyageai" => _config.VoyageAI?.ApiKey,
-            "minimax" => _config.MiniMax?.ApiKey,
-            "deepgram" => _config.Deepgram?.ApiKey,
-            "assemblyai" => _config.AssemblyAI?.ApiKey,
-            "sarvam" => _config.Sarvam?.ApiKey,
-            "kernelmemory" => _config.KernelMemory?.ApiKey,
-            "resembleai" => _config.ResembleAI?.ApiKey,
-            "speechify" => _config.Speechify?.ApiKey,
-            "ttsreader" => _config.TTSReader?.ApiKey,
-            "speechmatics" => _config.Speechmatics?.ApiKey,
-            "hyperstack" => _config.Hyperstack?.ApiKey,
-            "gladia" => _config.Gladia?.ApiKey,
-            "verda" => _config.Verda?.ApiKey,
-            "audixa" => _config.Audixa?.ApiKey,
-            "freepik" => _config.Freepik?.ApiKey,
-            "ai21" => _config.AI21?.ApiKey,
-            "murfai" => _config.MurfAI?.ApiKey,
-            "lingvanex" => _config.Lingvanex?.ApiKey,
-            "googletranslate" => _config.GoogleTranslate?.ApiKey,
-            "modernmt" => _config.ModernMT?.ApiKey,
-            "lectoai" => _config.LectoAI?.ApiKey,
-            "bria" => _config.Bria?.ApiKey,
-            "friendli" => _config.Friendli?.ApiKey,
-            "publicai" => _config.PublicAI?.ApiKey,
-            "primeintellect" => _config.PrimeIntellect?.ApiKey,
-            "ovhcloud" => _config.OVHcloud?.ApiKey,
-            "gmicloud" => _config.GMICloud?.ApiKey,
-            "byteplus" => _config.BytePlus?.ApiKey,
-            "nlpcloud" => _config.NLPCloud?.ApiKey,
-            "moonshot" => _config.Moonshot?.ApiKey,
-            "upstage" => _config.Upstage?.ApiKey,
-            "siliconflow" => _config.SiliconFlow?.ApiKey,
-            "cirrascale" => _config.Cirrascale?.ApiKey,
-            "klingai" => _config.KlingAI?.ApiKey,
-            "euqai" => _config.Euqai?.ApiKey,
-            "vidu" => _config.Vidu?.ApiKey,
-            "reve" => _config.Reve?.ApiKey,
-            "decart" => _config.Decart?.ApiKey,
-            "json2video" => _config.JSON2Video?.ApiKey,
-            "greenpt" => _config.GreenPT?.ApiKey,
-            "relaxai" => _config.RelaxAI?.ApiKey,
-            "regoloai" => _config.RegoloAI?.ApiKey,
-            "arklabs" => _config.ARKLabs?.ApiKey,
-            "ionos" => _config.IONOS?.ApiKey,
-            "bergetai" => _config.BergetAI?.ApiKey,
-            "opperai" => _config.OpperAI?.ApiKey,
-            "gcore" => _config.Gcore?.ApiKey,
-            "cortecs" => _config.Cortecs?.ApiKey,
-            "inworld" => _config.Inworld?.ApiKey,
-            "eurouter" => _config.EUrouter?.ApiKey,
-            "requesty" => _config.Requesty?.ApiKey,
-            "sudo" => _config.Sudo?.ApiKey,
-            "portkey" => _config.Portkey?.ApiKey,
-            "deepl" => _config.DeepL?.ApiKey,
-            "cometapi" => _config.CometAPI?.ApiKey,
-            "nextbit" => _config.Nextbit?.ApiKey,
-            "deepbricks" => _config.Deepbricks?.ApiKey,
-            "segmind" => _config.Segmind?.ApiKey,
-            "rekaai" => _config.RekaAI?.ApiKey,
-            "openrouter" => _config.OpenRouter?.ApiKey,
-            "ai302" => _config.AI302?.ApiKey,
-            "matterai" => _config.MatterAI?.ApiKey,
-            "bytez" => _config.Bytez?.ApiKey,
-            "sunoapi" => _config.SunoAPI?.ApiKey,
-            "horayai" => _config.HorayAI?.ApiKey,
-            "synexa" => _config.Synexa?.ApiKey,
-            "recraft" => _config.Recraft?.ApiKey,
-            "atlascloud" => _config.AtlasCloud?.ApiKey,
-            "bineric" => _config.Bineric?.ApiKey,
-            "digitalocean" => _config.DigitalOcean?.ApiKey,
-            "gooseai" => _config.GooseAI?.ApiKey,
-            "supa" => _config.SUPA?.ApiKey,
-            "runpod" => _config.Runpod?.ApiKey,
-            "meganova" => _config.MegaNova?.ApiKey,
-            "llmgateway" => _config.LLMGateway?.ApiKey,
-            "abliteration" => _config.Abliteration?.ApiKey,
-            "amazonbedrock" => _config.AmazonBedrock?.ApiKey,
-            "parasail" => _config.Parasail?.ApiKey,
-            "mancerai" => _config.MancerAI?.ApiKey,
-            "kilo" => _config.Kilo?.ApiKey,
-            "tinker" => _config.Tinker?.ApiKey,
-            "helicone" => _config.Helicone?.ApiKey,
-            "nousresearch" => _config.NousResearch?.ApiKey,
-            "paraloncloud" => _config.ParalonCloud?.ApiKey,
-            "asione" => _config.ASIOne?.ApiKey,
-            "apipie" => _config.APIpie?.ApiKey,
-            "stepfun" => _config.StepFun?.ApiKey,
-            "sealion" => _config.SEALION?.ApiKey,
-            "tencenthunyuan" => _config.TencentHunyuan?.ApiKey,
-            "deapi" => _config.DeAPI?.ApiKey,
-            "infomaniak" => _config.Infomaniak?.ApiKey,
-            "tavily" => _config.Tavily?.ApiKey,
-            "opencode" => _config.OpenCode?.ApiKey,
-            "haimaker" => _config.Haimaker?.ApiKey,
-            "straico" => _config.Straico?.ApiKey,
-            "monica" => _config.Monica?.ApiKey,
-            "cambai" => _config.CAMBAI?.ApiKey,
-            "morpheus" => _config.Morpheus?.ApiKey,
-            "arceeai" => _config.ArceeAI?.ApiKey,
-            "exa" => _config.Exa?.ApiKey,
-            "featherless" => _config.Featherless?.ApiKey,
-            "blackbox" => _config.Blackbox?.ApiKey,
-            "ohmygpt" => _config.OhMyGPT?.ApiKey,
-            "ideogram" => _config.Ideogram?.ApiKey,
-            "pinecone" => _config.Pinecone?.ApiKey,
-            "zyphra" => _config.Zyphra?.ApiKey,
-            "picsart" => _config.Picsart?.ApiKey,
-            "azerion" => _config.Azerion?.ApiKey,
-            "blackforestlabs" => _config.BlackForestLabs?.ApiKey,
-            "aionlabs" => _config.AionLabs?.ApiKey,
-            "lumaai" => _config.LumaAI?.ApiKey,
-            "truefoundry" => _config.TrueFoundry?.ApiKey,
-            "databricks" => _config.Databricks?.ApiKey,
-            "browseruse" => _config.BrowserUse?.ApiKey,
-            "inferencesh" => _config.Inferencesh?.ApiKey,
-            "crazyrouter" => _config.Crazyrouter?.ApiKey,
-            "infraxa" => _config.Infraxa?.ApiKey,
-            "inceptionlabs" => _config.InceptionLabs?.ApiKey,
-            "daglo" => _config.Daglo?.ApiKey,
-            "opeai" => _config.OPEAI?.ApiKey,
-            "forefront" => _config.Forefront?.ApiKey,
-            "aicc" => _config.AICC?.ApiKey,
-            "yourvoic" => _config.YourVoic?.ApiKey,
-            "fishaudio" => _config.FishAudio?.ApiKey,
-            "lovo" => _config.LOVO?.ApiKey,
-            "verbatik" => _config.Verbatik?.ApiKey,
-            "cartesia" => _config.Cartesia?.ApiKey,
-            "vapi" => _config.Vapi?.ApiKey,
-            "smallestai" => _config.SmallestAI?.ApiKey,
-            "orq" => _config.Orq?.ApiKey,
-            "typecast" => _config.Typecast?.ApiKey,
-            "unrealspeech" => _config.UnrealSpeech?.ApiKey,
-            "kugu" => _config.Kugu?.ApiKey,
-            "everypixellabs" => _config.EverypixelLabs?.ApiKey,
-            "supertone" => _config.Supertone?.ApiKey,
-            "uvoiceai" => _config.UVoiceAI?.ApiKey,
-            "astica" => _config.Astica?.ApiKey,
-            "heygen" => _config.HeyGen?.ApiKey,
-            "ionet" => _config.IOnet?.ApiKey,
-            "avian" => _config.Avian?.ApiKey,
-            "llmapi" => _config.LLMAPI?.ApiKey,
-            "llmlayer" => _config.LLMLayer?.ApiKey,
-            "simplismart" => _config.Simplismart?.ApiKey,
-            "chaingpt" => _config.ChainGPT?.ApiKey,
-            "routeway" => _config.Routeway?.ApiKey,
-            "cheapestinference" => _config.CheapestInference?.ApiKey,
-            "tetrate" => _config.Tetrate?.ApiKey,
-            "clod" => _config.Clod?.ApiKey,
-            "github" => _config.GitHub?.ApiKey,
-            "wai" => _config.WAI?.ApiKey,
-            "venice" => _config.Venice?.ApiKey,
-            "quiverai" => _config.QuiverAI?.ApiKey,
-            "kissapi" => _config.KissAPI?.ApiKey,
-            "zenmux" => _config.ZenMux?.ApiKey,
-            "netmind" => _config.NetMind?.ApiKey,
-            "apiyi" => _config.APIyi?.ApiKey,
-            "widnai" => _config.WidnAI?.ApiKey,
-            "thaura" => _config.Thaura?.ApiKey,
-            "modal" => _config.Modal?.ApiKey,
-            "apifree" => _config.APIFree?.ApiKey,
-            "modelslab" => _config.ModelsLab?.ApiKey,
-            "hicap" => _config.Hicap?.ApiKey,
-            "prakasa" => _config.Prakasa?.ApiKey,
-            "megallm" => _config.MegaLLM?.ApiKey,
-            "infron" => _config.Infron?.ApiKey,
-            "longcat" => _config.LongCat?.ApiKey,
-            "aisa" => _config.AIsa?.ApiKey,
-            "evolinkai" => _config.EvoLinkAI?.ApiKey,
-            "zenlayer" => _config.Zenlayer?.ApiKey,
-            "aihubmix" => _config.AIHubMix?.ApiKey,
-            "uniapi" => _config.UniAPI?.ApiKey,
-            "openaihk" => _config.OpenAIHK?.ApiKey,
-            "apekey" => _config.Apekey?.ApiKey,
-            "apertis" => _config.Apertis?.ApiKey,
-            "wisdomgate" => _config.WisdomGate?.ApiKey,
-            "smooth" => _config.Smooth?.ApiKey,
-            "speechactors" => _config.Speechactors?.ApiKey,
-            "gptproto" => _config.GPTProto?.ApiKey,
-            "neosantara" => _config.Neosantara?.ApiKey,
-            "redpill" => _config.RedPill?.ApiKey,
-            "blazerail" => _config.BlazeRail?.ApiKey,
-            "mangaba" => _config.Mangaba?.ApiKey,
-            "aether" => _config.Aether?.ApiKey,
-            "regraph" => _config.ReGraph?.ApiKey,
-            "electronhub" => _config.ElectronHub?.ApiKey,
-            "dandolo" => _config.Dandolo?.ApiKey,
-            "glio" => _config.Glio?.ApiKey,
-            "pixeldojo" => _config.PixelDojo?.ApiKey,
-            "navyai" => _config.NavyAI?.ApiKey,
-            "nearai" => _config.NEARAI?.ApiKey,
-            "parallel" => _config.Parallel?.ApiKey,
-            "nanogpt" => _config.NanoGPT?.ApiKey,
-            "aibramha" => _config.AIBramha?.ApiKey,
-            "ghostbot" => _config.Ghostbot?.ApiKey,
-            "routmy" => _config.Routmy?.ApiKey,
-            "poe" => _config.Poe?.ApiKey,
-            "askarc" => _config.AskARC?.ApiKey,
-            "synthetic" => _config.Synthetic?.ApiKey,
-            "renderful" => _config.Renderful?.ApiKey,
-            "tigercity" => _config.TigerCity?.ApiKey,
-            "kittenstack" => _config.KittenStack?.ApiKey,
-            "packetai" => _config.PacketAI?.ApiKey,
-            "edenai" => _config.EdenAI?.ApiKey,
-            "websearchapi" => _config.WebsearchAPI?.ApiKey,
-            "nimbleway" => _config.NimbleWay?.ApiKey,
-            "eachlabs" => _config.Eachlabs?.ApiKey,
-            "valyu" => _config.Valyu?.ApiKey,
-            "laozhang" => _config.LaoZhang?.ApiKey,
-            "jiekouai" => _config.JiekouAI?.ApiKey,
-            "syllogy" => _config.Syllogy?.ApiKey,
-            "literouter" => _config.LiteRouter?.ApiKey,
-            "arwriter" => _config.ARWriter?.ApiKey,
-            "qiniu" => _config.Qiniu?.ApiKey,
-            "lunos" => _config.Lunos?.ApiKey,
-            "maritacaai" => _config.MaritacaAI?.ApiKey,
-            "cloudferro" => _config.CloudFerro?.ApiKey,
-            "arliai" => _config.ArliAI?.ApiKey,
-            "dataforseo" => _config.DataForSEO?.ApiKey,
-            "jigsawstack" => _config.JigsawStack?.ApiKey,
-            "ishi" => _config.Ishi?.ApiKey,
-            "payperq" => _config.PayPerQ?.ApiKey,
-            "swarms" => _config.Swarms?.ApiKey,
-            "docsrouter" => _config.DocsRouter?.ApiKey,
-            "ocrskill" => _config.OCRSkill?.ApiKey,
-            "skillboss" => _config.SkillBoss?.ApiKey,
-            "nexusify" => _config.Nexusify?.ApiKey,
-            "jatevo" => _config.Jatevo?.ApiKey,
-            "litai" => _config.LitAI?.ApiKey,
-            "pixcode" => _config.PixCode?.ApiKey,
-            "anannas" => _config.Anannas?.ApiKey,
-            "answira" => _config.Answira?.ApiKey,
-            "tokenflux" => _config.TokenFlux?.ApiKey,
-            "lemondata" => _config.LemonData?.ApiKey,
-            "aimo" => _config.AiMo?.ApiKey,
-            "apipod" => _config.APIPod?.ApiKey,
-            "fullai" => _config.FullAI?.ApiKey,
-            "assisters" => _config.Assisters?.ApiKey,
-            "llmwise" => _config.LLMWise?.ApiKey,
-            "casedev" => _config.CaseDev?.ApiKey,
-            "modelrouter" => _config.ModelRouter?.ApiKey,
-            "multiverseai" => _config.MultiverseAI?.ApiKey,
-            "lava" => _config.Lava?.ApiKey,
-            "apiairforce" => _config.ApiAirforce?.ApiKey,
-            "smartaipi" => _config.SmartAIPI?.ApiKey,
-            "maximoai" => _config.MaximoAI?.ApiKey,
-            "llmpath" => _config.LLMPath?.ApiKey,
-            "rime" => _config.Rime?.ApiKey,
-            "noiz" => _config.Noiz?.ApiKey,
-            "gradium" => _config.Gradium?.ApiKey,
-            "voiceai" => _config.VoiceAI?.ApiKey,
-            "pixia" => _config.PixIA?.ApiKey,
-            "ionrouter" => _config.IonRouter?.ApiKey,
-            "aisieure" => _config.AISieuRe?.ApiKey,
-            "freedomgpt" => _config.FreedomGPT?.ApiKey,
-            "kirha" => _config.Kirha?.ApiKey,
-            "sufy" => _config.SUFY?.ApiKey,
-            "logicosllmhub" => _config.LogicosLLMHub?.ApiKey,
-            "llmhubifs" => _config.LLMHubIFS?.ApiKey,
-            "shuttleai" => _config.ShuttleAI?.ApiKey,
-            "alphaneural" => _config.AlphaNeural?.ApiKey,
-            "writer" => _config.Writer?.ApiKey,
-            "setapp" => _config.Setapp?.ApiKey,
-            "routstr" => _config.Routstr?.ApiKey,
-            "hanzo" => _config.Hanzo?.ApiKey,
-            "surfercloud" => _config.SurferCloud?.ApiKey,
-            "claudible" => _config.Claudible?.ApiKey,
-            "embraceableai" => _config.EmbraceableAI?.ApiKey,
-            "glama" => _config.Glama?.ApiKey,
-            "brainiall" => _config.Brainiall?.ApiKey,
-            "agabeyogluai" => _config.Agabeyogluai?.ApiKey,
-            "airouter" => _config.AIRouter?.ApiKey,
-            "agentics" => _config.Agentics?.ApiKey,
-            "gatewayz" => _config.Gatewayz?.ApiKey,
-            "uplinkapi" => _config.UplinkAPI?.ApiKey,
-            "sovereignapi" => _config.SovereignAPI?.ApiKey,
-            "nrpnautilus" => _config.NRPNautilus?.ApiKey,
-            "eagm" => _config.EAGM?.ApiKey,
-            "edgee" => _config.Edgee?.ApiKey,
-            "viablelab" => _config.VIABLELab?.ApiKey,
-            "dreamgen" => _config.DreamGen?.ApiKey,
-            "llm7" => _config.LLM7?.ApiKey,
-            "kimik2" => _config.KimiK2?.ApiKey,
-            "keyplex" => _config.Keyplex?.ApiKey,
-            "llmkiwi" => _config.LLMkiwi?.ApiKey,
-            "cheapgrok" => _config.CheapGrok?.ApiKey,
-            "lexi" => _config.Lexi?.ApiKey,
-            "eliza" => _config.Eliza?.ApiKey,
-            "openlimits" => _config.OpenLimits?.ApiKey,
-            "arkroute" => _config.ArkRoute?.ApiKey,
-            "ainative" => _config.AINative?.ApiKey,
-            "aibadgr" => _config.AIBadgr?.ApiKey,
-            "unbound" => _config.Unbound?.ApiKey,
-            "corriente" => _config.Corriente?.ApiKey,
-            "shakespeare" => _config.Shakespeare?.ApiKey,
-            "cline" => _config.Cline?.ApiKey,
-            "novai" => _config.NovAI?.ApiKey,
-            "routeplex" => _config.RoutePlex?.ApiKey,
-            "bazaarlink" => _config.BazaarLink?.ApiKey,
-            "puter" => _config.Puter?.ApiKey,
-            "lumenfall" => _config.Lumenfall?.ApiKey,
-            "fal" => _config.Fal?.ApiKey,
-            "mia21" => _config.Mia21?.ApiKey,
-            "jkaihub" => _config.JKAIHub?.ApiKey,
-            "textsynth" => _config.TextSynth?.ApiKey,
-            "modelsync" => _config.ModelSync?.ApiKey,
-            "ezai" => _config.EzAI?.ApiKey,
-            "askcodi" => _config.AskCodi?.ApiKey,
-            "martian" => _config.Martian?.ApiKey,
-            "gonkagate" => _config.GonkaGate?.ApiKey,
-            "fastrouter" => _config.FastRouter?.ApiKey,
-            "aicredits" => _config.AICredits?.ApiKey,
-            "agentaigateway" => _config.AgentAIGateway?.ApiKey,
-            "dubrify" => _config.Dubrify?.ApiKey,
-            "andyapi" => _config.AndyAPI?.ApiKey,
-            "aki" => _config.AKI?.ApiKey,
-            "getgoapi" => _config.GetGoAPI?.ApiKey,
-            "blockrun" => _config.BlockRun?.ApiKey,
-            "neuralwatt" => _config.Neuralwatt?.ApiKey,
-            "toapis" => _config.ToAPIs?.ApiKey,
-            "onekey" => _config.OneKey?.ApiKey,
-            "atxp" => _config.ATXP?.ApiKey,
-            "nagaai" => _config.NagaAI?.ApiKey,
-            "sargalay" => _config.Sargalay?.ApiKey,
-            "zeabur" => _config.Zeabur?.ApiKey,
-            "inferlink" => _config.InferLink?.ApiKey,
-            "chainhub" => _config.ChainHub?.ApiKey,
-            "clawswitch" => _config.ClawSwitch?.ApiKey,
-            "ultrasafe" => _config.UltraSafe?.ApiKey,
-            "llmcloud" => _config.LLMCloud?.ApiKey,
-            "railwail" => _config.Railwail?.ApiKey,
-            "knoxchat" => _config.KnoxChat?.ApiKey,
-            "vlmrun" => _config.VLMRun?.ApiKey,
-            "vogent" => _config.Vogent?.ApiKey,
-            "tikhubai" => _config.TikHubAI?.ApiKey,
-            "yougetai" => _config.YouGetAI?.ApiKey,
-            "preapi" => _config.PreAPI?.ApiKey,
-            "elkapi" => _config.ElkAPI?.ApiKey,
-            "vultr" => _config.Vultr?.ApiKey,
-            "ofoxai" => _config.OfoxAI?.ApiKey,
-            "dedaluslabs" => _config.DedalusLabs?.ApiKey,
-            "world3" => _config.World3?.ApiKey,
-            "voidai" => _config.VoidAI?.ApiKey,
-            "vibecodecheap" => _config.VibeCodeCheap?.ApiKey,
-            "modelmax" => _config.ModelMax?.ApiKey,
-            _ => null
-        };
+            return null;
+        }
+
+        var keyVaultApiKey = ResolveFromKeyVaultIfAvailable(property.Name);
+        if (!string.IsNullOrWhiteSpace(keyVaultApiKey))
+        {
+            return keyVaultApiKey;
+        }
+
+        return (property.GetValue(_config) as ProviderConfig)?.ApiKey;
+    }
+
+    private string? ResolveFromKeyVaultIfAvailable(string secretName)
+    {
+        if (_secretClient is null)
+        {
+            return null;
+        }
+
+        var availableSecretNames = GetAvailableSecretNames();
+        if (!availableSecretNames.Contains(secretName))
+        {
+            return null;
+        }
+
+        return _cache.GetOrCreate($"keyvault-apikey:{secretName}", entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+
+            try
+            {
+                KeyVaultSecret secret = _secretClient.GetSecret(secretName).Value;
+                return string.IsNullOrWhiteSpace(secret.Value) ? null : secret.Value;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        });
+    }
+
+    private HashSet<string> GetAvailableSecretNames()
+    {
+        if (_secretClient is null)
+        {
+            return [];
+        }
+
+        return _cache.GetOrCreate("keyvault-apikey:names", entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            try
+            {
+                foreach (var secretProperty in _secretClient.GetPropertiesOfSecrets())
+                {
+                    names.Add(secretProperty.Name);
+                }
+            }
+            catch
+            {
+                return [];
+            }
+
+            return names;
+        }) ?? [];
+    }
 }
 

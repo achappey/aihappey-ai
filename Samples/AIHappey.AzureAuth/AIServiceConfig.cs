@@ -385,6 +385,9 @@ public class AIServiceConfig
     public ProviderConfig? VoidAI { get; set; }
     public ProviderConfig? VibeCodeCheap { get; set; }
     public ProviderConfig? ModelMax { get; set; }
+    public ProviderConfig? Yollomi { get; set; }
+    public ProviderConfig? Infercom { get; set; }
+    public ProviderConfig? RaxAI { get; set; }
 
 }
 
@@ -395,5 +398,19 @@ public class ProviderConfig
     public string? Endpoint { get; set; } = null!;
 
     public string? DefaultModel { get; set; } = null!;
+}
+
+public class KeyVaultOptions
+{
+    public string? VaultUri { get; set; }
+}
+
+public class AzureAdClientOptions
+{
+    public string? TenantId { get; set; }
+
+    public string? ClientId { get; set; }
+
+    public string? Secret { get; set; }
 }
 
