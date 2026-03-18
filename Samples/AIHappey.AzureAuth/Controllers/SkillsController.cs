@@ -20,12 +20,21 @@ public class SkillsController(IAISkillProviderResolver resolver) : ControllerBas
         CancellationToken cancellationToken)
         => Ok(await _resolver.ResolveSkills(after, limit, order, cancellationToken));
 
-    [HttpGet("{skillId}/content")]
+    [HttpGet("{providerId}/{skillId}/content")]
     [Authorize]
-    public async Task<IActionResult> GetContent(string skillId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetContent(
+    string skillId,
+    string? providerId,
+    CancellationToken cancellationToken)
     {
-        var bundle = await _resolver.RetrieveSkillContent(WebUtility.UrlDecode(skillId), cancellationToken);
+        var fullId = providerId is not null
+            ? $"{providerId}/{skillId}"
+            : skillId;
+
+        var bundle = await _resolver.RetrieveSkillContent(fullId, cancellationToken);
+
         return File(bundle, "application/zip", $"{skillId}.zip");
     }
+
 }
 
