@@ -476,12 +476,12 @@ curl "$BASE_URL/api/chat" \
   }'
 ```
 
-#### POST /chat/completions (OpenAI-compatible)
+#### POST /v1/chat/completions (OpenAI-compatible)
 
 Non-streaming:
 
 ```bash
-curl "$BASE_URL/chat/completions" \
+curl "$BASE_URL/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
@@ -495,7 +495,7 @@ curl "$BASE_URL/chat/completions" \
 Streaming:
 
 ```bash
-curl "$BASE_URL/chat/completions" \
+curl "$BASE_URL/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
@@ -507,12 +507,12 @@ curl "$BASE_URL/chat/completions" \
   }'
 ```
 
-#### POST /responses (OpenAI-compatible)
+#### POST /v1/responses (OpenAI-compatible)
 
 Non-streaming:
 
 ```bash
-curl "$BASE_URL/responses" \
+curl "$BASE_URL/v1/responses" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
@@ -524,7 +524,7 @@ curl "$BASE_URL/responses" \
 Streaming:
 
 ```bash
-curl "$BASE_URL/responses" \
+curl "$BASE_URL/v1/responses" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
@@ -532,6 +532,20 @@ curl "$BASE_URL/responses" \
     "stream": true,
     "input": "Stream a 2-sentence summary about AIHappey"
   }'
+```
+
+#### GET /v1/models
+
+```bash
+curl "$BASE_URL/v1/models" \
+  -H "X-OpenAI-Key: $API_KEY"
+```
+
+#### GET /v1/skills
+
+```bash
+curl "$BASE_URL/v1/skills" \
+  -H "X-OpenAI-Key: $API_KEY"
 ```
 
 #### POST /api/rerank
@@ -648,13 +662,6 @@ curl "$BASE_URL/v1/videos" \
     "resolution": "720x1280",
     "n": 1
   }'
-```
-
-#### GET /v1/models
-
-```bash
-curl "$BASE_URL/v1/models" \
-  -H "X-OpenAI-Key: $API_KEY"
 ```
 
 ## Core MCP servers (Model Context Protocol)

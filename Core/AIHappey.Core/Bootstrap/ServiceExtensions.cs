@@ -406,8 +406,12 @@ public static class ServiceExtensions
         services.TryAddSingleton<IModelListingSnapshotStore, NullModelListingSnapshotStore>();
         services.TryAddSingleton<IModelListingRefreshQueue, NullModelListingRefreshQueue>();
 
+        services.AddSingleton<OpenAIProvider>();
+        services.AddSingleton<ISkillProvider>(sp => sp.GetRequiredService<OpenAIProvider>());
+        services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<OpenAIProvider>());
+
         services.AddSingleton<IModelProvider, EchoProvider>();
-        services.AddSingleton<IModelProvider, OpenAIProvider>();
+        //services.AddSingleton<IModelProvider, OpenAIProvider>();
         services.AddSingleton<IModelProvider, CloudRiftProvider>();
         services.AddSingleton<IModelProvider, TinfoilProvider>();
         services.AddSingleton<IModelProvider, DeepInfraProvider>();

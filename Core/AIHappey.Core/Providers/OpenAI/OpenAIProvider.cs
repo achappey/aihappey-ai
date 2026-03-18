@@ -6,21 +6,25 @@ using OpenAI.Containers;
 using OpenAI.Files;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Common.Model.Skills;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider : IModelProvider
+public partial class OpenAIProvider : IModelProvider, ISkillProvider
 {
     private readonly HttpClient _client;
+    private readonly AsyncCacheHelper _memoryCache;
     private readonly IApiKeyResolver _keyResolver;
     private readonly IEndUserIdResolver _endUserIdResolver;
 
     public OpenAIProvider(
         IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory,
+        AsyncCacheHelper memoryCache,
         IEndUserIdResolver endUserIdResolver)
     {
         _keyResolver = keyResolver;
+        _memoryCache = memoryCache;
         _endUserIdResolver = endUserIdResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.openai.com/");
@@ -78,5 +82,4 @@ public partial class OpenAIProvider : IModelProvider
     {
         throw new NotSupportedException();
     }
-
 }

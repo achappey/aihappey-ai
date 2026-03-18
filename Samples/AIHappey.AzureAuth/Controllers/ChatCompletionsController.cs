@@ -8,7 +8,7 @@ using AIHappey.Core.Contracts;
 namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
-[Route("chat/completions")]
+[Route("v1/chat/completions")]
 public class ChatCompletionsController(IAIModelProviderResolver resolver) : ControllerBase
 {
     private readonly IAIModelProviderResolver _resolver = resolver;

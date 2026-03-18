@@ -66,6 +66,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<StorageBackedModelProviderResolver>();
 builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
+builder.Services.AddSingleton<IAISkillProviderResolver, SkillProviderResolver>();
 // Add authentication/authorization
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));

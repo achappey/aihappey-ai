@@ -8,7 +8,7 @@ using AIHappey.Core.Contracts;
 namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
-[Route("responses")]
+[Route("v1/responses")]
 public class ResponsesController(IAIModelProviderResolver resolver) : ControllerBase
 {
     private readonly IAIModelProviderResolver _resolver = resolver;

@@ -38,6 +38,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<StorageBackedModelProviderResolver>();
 builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
+builder.Services.AddSingleton<IAISkillProviderResolver, SkillProviderResolver>();
 builder.Services.AddSingleton<HeaderApiKeySnapshot>();
 builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();

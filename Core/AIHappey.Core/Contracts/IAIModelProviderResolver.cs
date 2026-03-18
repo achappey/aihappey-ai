@@ -1,3 +1,4 @@
+using AIHappey.Common.Model.Skills;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Contracts;

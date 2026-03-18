@@ -130,7 +130,7 @@ public class ProviderTools
         {
             StructuredContent = JsonSerializer.SerializeToElement(new
             {
-                models
+                data = models
             }, JsonSerializerOptions.Web)
         };
     }

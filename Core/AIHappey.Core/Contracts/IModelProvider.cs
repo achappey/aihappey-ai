@@ -4,6 +4,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
+using AIHappey.Common.Model.Skills;
 
 namespace AIHappey.Core.Contracts;
 
@@ -20,6 +21,10 @@ public interface IModelProvider
     IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default);
 
     Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default);
+
+    //  Task<IEnumerable<Skill>> ListSkills(CancellationToken cancellationToken = default);
+
+    //  Task<Stream> RetrieveSkillContent(string skillId, CancellationToken cancellationToken = default);
 
     Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default);
 
