@@ -72,7 +72,10 @@ public class StorageBackedModelProviderResolver(
 
         await RefreshProviderSnapshotAsync(provider, ct);
 
-        var refreshed = await BuildAggregateResponseAsync(ct);
+        var refreshed = await BuildAggregateFromStoredSnapshotsAsync(provider.GetIdentifier(), providerCacheKey, ct);
+        if (refreshed.ModelProviderMap.Count == 0)
+            return;
+
         await SaveAggregateSnapshotAsync(refreshed, ct);
         memoryCache.Set(GetAggregateMemoryCacheKey(), refreshed, _options.MemoryCacheTtl);
     }
@@ -166,19 +169,63 @@ public class StorageBackedModelProviderResolver(
 
             await EnrichModelsAsync(merged, ct);
 
-            var refreshAfterUtc = DateTimeOffset.UtcNow.Add(_options.AggregateRefreshAfter).AddMinutes(Random.Shared.Next(0, Math.Max(1, _options.AggregateRefreshJitterMinutes)));
-            var providerStates = providerSnapshots
-                .Select(kvp => new StoredResolvedProviderState
-                {
-                    ProviderId = kvp.Key.GetIdentifier(),
-                    CacheKey = kvp.Value.CacheKey,
-                    StoredAtUtc = kvp.Value.StoredAtUtc,
-                    RefreshAfterUtc = kvp.Value.RefreshAfterUtc,
-                    ExpiresAtUtc = kvp.Value.ExpiresAtUtc
-                })
-                .ToList();
+            var refreshAfterUtc = BuildAggregateRefreshAfterUtc();
+            var providerStates = BuildProviderStates(providerSnapshots);
 
             return new AggregateModelsCacheEntry(merged, refreshAfterUtc, providerStates);
+        }
+        finally
+        {
+            _aggregateRefreshLock.Release();
+        }
+    }
+
+    private async Task<AggregateModelsCacheEntry> BuildAggregateFromStoredSnapshotsAsync(
+        string refreshedProviderId,
+        string refreshedProviderCacheKey,
+        CancellationToken ct)
+    {
+        await _aggregateRefreshLock.WaitAsync(ct);
+        try
+        {
+            var aggregateSnapshot = await snapshotStore.GetAggregateSnapshotAsync(BuildAggregateSnapshotKey(), ct);
+            var providerStates = (aggregateSnapshot?.Providers ?? [])
+                .GroupBy(state => BuildQueuedProviderKey(state.ProviderId, state.CacheKey), StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .ToList();
+
+            if (!providerStates.Any(state =>
+                    string.Equals(state.ProviderId, refreshedProviderId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(state.CacheKey, refreshedProviderCacheKey, StringComparison.Ordinal)))
+            {
+                providerStates.Add(new StoredResolvedProviderState
+                {
+                    ProviderId = refreshedProviderId,
+                    CacheKey = refreshedProviderCacheKey
+                });
+            }
+
+            var providerSnapshots = new Dictionary<IModelProvider, StoredProviderModelSnapshot>();
+
+            foreach (var state in providerStates)
+            {
+                var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), state.ProviderId, StringComparison.OrdinalIgnoreCase));
+                if (provider == null)
+                    continue;
+
+                var snapshot = await LoadServableProviderSnapshotAsync(state.ProviderId, state.CacheKey, queueRefreshIfStale: true, ct);
+                if (snapshot == null)
+                    continue;
+
+                providerSnapshots[provider] = snapshot;
+            }
+
+            var merged = MergeProviderSnapshots(providerSnapshots);
+            if (merged.Count == 0)
+                return new AggregateModelsCacheEntry(merged, BuildAggregateRefreshAfterUtc(), []);
+
+            await EnrichModelsAsync(merged, ct);
+            return new AggregateModelsCacheEntry(merged, BuildAggregateRefreshAfterUtc(), BuildProviderStates(providerSnapshots));
         }
         finally
         {
@@ -191,14 +238,9 @@ public class StorageBackedModelProviderResolver(
         if (!TryGetProviderCacheKey(provider, out var providerCacheKey))
             return null;
 
-        var snapshot = await snapshotStore.GetProviderSnapshotAsync(provider.GetIdentifier(), providerCacheKey, ct);
-        if (snapshot?.Models.Count > 0)
-        {
-            if (snapshot.RefreshAfterUtc <= DateTimeOffset.UtcNow)
-                await QueueProviderRefreshAsync(provider.GetIdentifier(), providerCacheKey);
-
+        var snapshot = await LoadServableProviderSnapshotAsync(provider.GetIdentifier(), providerCacheKey, queueRefreshIfStale: true, ct);
+        if (snapshot != null)
             return snapshot;
-        }
 
         return await RefreshProviderSnapshotAsync(provider, ct);
     }
@@ -408,6 +450,44 @@ public class StorageBackedModelProviderResolver(
 
         return map;
     }
+
+    private async Task<StoredProviderModelSnapshot?> LoadServableProviderSnapshotAsync(
+        string providerId,
+        string providerCacheKey,
+        bool queueRefreshIfStale,
+        CancellationToken ct)
+    {
+        var snapshot = await snapshotStore.GetProviderSnapshotAsync(providerId, providerCacheKey, ct);
+        if (snapshot?.Models.Count <= 0)
+            return null;
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (snapshot.RefreshAfterUtc <= now && queueRefreshIfStale)
+            await QueueProviderRefreshAsync(providerId, providerCacheKey);
+
+        if (snapshot.ExpiresAtUtc <= now)
+            return null;
+
+        return snapshot;
+    }
+
+    private DateTimeOffset BuildAggregateRefreshAfterUtc()
+        => DateTimeOffset.UtcNow
+            .Add(_options.AggregateRefreshAfter)
+            .AddMinutes(Random.Shared.Next(0, Math.Max(1, _options.AggregateRefreshJitterMinutes)));
+
+    private static List<StoredResolvedProviderState> BuildProviderStates(Dictionary<IModelProvider, StoredProviderModelSnapshot> providerSnapshots)
+        => providerSnapshots
+            .Select(kvp => new StoredResolvedProviderState
+            {
+                ProviderId = kvp.Key.GetIdentifier(),
+                CacheKey = kvp.Value.CacheKey,
+                StoredAtUtc = kvp.Value.StoredAtUtc,
+                RefreshAfterUtc = kvp.Value.RefreshAfterUtc,
+                ExpiresAtUtc = kvp.Value.ExpiresAtUtc
+            })
+            .ToList();
 
     private string BuildAggregateSnapshotKey()
     {
