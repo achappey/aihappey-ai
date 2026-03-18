@@ -463,10 +463,10 @@ public class StorageBackedModelProviderResolver(
 
         var now = DateTimeOffset.UtcNow;
 
-        if (snapshot.RefreshAfterUtc <= now && queueRefreshIfStale)
+        if (snapshot?.RefreshAfterUtc <= now && queueRefreshIfStale)
             await QueueProviderRefreshAsync(providerId, providerCacheKey);
 
-        if (snapshot.ExpiresAtUtc <= now)
+        if (snapshot?.ExpiresAtUtc <= now)
             return null;
 
         return snapshot;
