@@ -130,7 +130,7 @@ public class StorageBackedModelProviderResolver(
         try
         {
             var providerSnapshots = new Dictionary<IModelProvider, StoredProviderModelSnapshot>();
-            var providerArray = GetConfiguredProviders().OrderBy(_ => Random.Shared.Next()).ToArray();
+            var providerArray = GetAggregateProviders().OrderBy(_ => Random.Shared.Next()).ToArray();
 
             await Parallel.ForEachAsync(
                 providerArray,
@@ -153,7 +153,16 @@ public class StorageBackedModelProviderResolver(
 
             var merged = MergeProviderSnapshots(providerSnapshots);
             if (merged.Count == 0)
-                throw new InvalidOperationException("No models resolved from any provider.");
+            {
+                if (!_options.DisableModelDiscovery)
+                    throw new InvalidOperationException("No models resolved from any provider.");
+
+                var emptyRefreshAfterUtc = DateTimeOffset.UtcNow
+                    .Add(_options.AggregateRefreshAfter)
+                    .AddMinutes(Random.Shared.Next(0, Math.Max(1, _options.AggregateRefreshJitterMinutes)));
+
+                return new AggregateModelsCacheEntry(merged, emptyRefreshAfterUtc, []);
+            }
 
             await EnrichModelsAsync(merged, ct);
 
@@ -402,7 +411,7 @@ public class StorageBackedModelProviderResolver(
 
     private string BuildAggregateSnapshotKey()
     {
-        var parts = GetConfiguredProviders()
+        var parts = GetAggregateProviders()
             .Select(provider =>
             {
                 var key = apiKeyResolver.Resolve(provider.GetIdentifier());
@@ -422,6 +431,14 @@ public class StorageBackedModelProviderResolver(
     private string GetAggregateMemoryCacheKey() => AggregateMemoryCachePrefix + BuildAggregateSnapshotKey();
 
     private IEnumerable<IModelProvider> GetConfiguredProviders() => providers as IModelProvider[] ?? [.. providers];
+
+    private IEnumerable<IModelProvider> GetAggregateProviders()
+        => !_options.DisableModelDiscovery
+            ? GetConfiguredProviders()
+            : GetConfiguredProviders().Where(HasConfiguredApiKey);
+
+    private bool HasConfiguredApiKey(IModelProvider provider)
+        => !string.IsNullOrWhiteSpace(apiKeyResolver.Resolve(provider.GetIdentifier()));
 
     private bool TryGetProviderCacheKey(IModelProvider provider, out string cacheKey)
     {
