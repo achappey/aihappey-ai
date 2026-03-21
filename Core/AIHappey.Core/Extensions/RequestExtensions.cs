@@ -2,11 +2,17 @@ using AIHappey.Vercel.Models;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Extensions;
 
 public static class RequestExtensions
 {
+    public static Dictionary<string, Dictionary<string, object>> ToProviderMetadata(
+           this Dictionary<string, object> metadata, string id)
+        => new()
+        { { id, metadata } };
+
     public static ChatRequest ToChatRequest(
             this UIRequest uIRequest)
     => new()
@@ -48,8 +54,8 @@ public static class RequestExtensions
             ]
     };
 
-    public static string ToDataUrl(
-        this string data, string mimeType) => $"data:{mimeType};base64,{data}";
+  //  public static string ToDataUrl(
+   //     this string data, string mimeType) => $"data:{mimeType};base64,{data}";
 
     public static string ToDataUrl(
         this BinaryData data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data)}";
@@ -63,7 +69,7 @@ public static class RequestExtensions
 
     public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
 
-    public static string RemoveDataUrlPrefix(this string input)
+ /*   public static string RemoveDataUrlPrefix(this string input)
     {
         if (string.IsNullOrWhiteSpace(input))
             return input;
@@ -75,7 +81,7 @@ public static class RequestExtensions
             return input;
 
         return input[(commaIndex + 1)..];
-    }
+    }*/
 
 
 }

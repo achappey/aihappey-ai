@@ -1,0 +1,25 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "akashml/deepseek-ai/DeepSeek-V3.2",
+      "object": "model",
+      "owned_by": "akashml"
+    },
+    {
+      "id": "akashml/Qwen/Qwen3-30B-A3B",
+      "object": "model",
+      "owned_by": "akashml"
+    },
+    {
+      "id": "akashml/MiniMaxAI/MiniMax-M2.5",
+      "object": "model",
+      "owned_by": "akashml"
+    },
+    {
+      "id": "akashml/meta-llama/Llama-3.3-70B-Instruct",
+      "object": "model",
+      "owned_by": "akashml"
+    }
+  ]
+}

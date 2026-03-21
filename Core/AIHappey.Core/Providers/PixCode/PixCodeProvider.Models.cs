@@ -50,6 +50,16 @@ public partial class PixCodeProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
+                    if (model.Id.Contains("audio/minimax-speech"))
+                    {
+                        model.Type = "speech";
+                    }
+
+                    if (model.Id.Contains("audio/minimax-voice-cloning"))
+                    {
+                        continue;
+                    }
+
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 

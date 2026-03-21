@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using AIHappey.Core.Contracts;
-using System.Net;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -18,19 +17,37 @@ public class SkillsController(IAISkillProviderResolver resolver) : ControllerBas
         CancellationToken cancellationToken)
         => Ok(await _resolver.ResolveSkills(after, limit, order, cancellationToken));
 
+    [HttpGet("{providerId}/{skillId}/versions")]
+    public async Task<IActionResult> GetVersions(
+        string providerId,
+        string skillId,
+        [FromQuery] string? after,
+        [FromQuery] int? limit,
+        [FromQuery] string? order,
+        CancellationToken cancellationToken)
+        => Ok(await _resolver.ResolveSkillVersions($"{providerId}/{skillId}", after, limit, order, cancellationToken));
+
     [HttpGet("{providerId}/{skillId}/content")]
     public async Task<IActionResult> GetContent(
-    string skillId,
-    string? providerId,
-    CancellationToken cancellationToken)
+        string providerId,
+        string skillId,
+        CancellationToken cancellationToken)
     {
-        var fullId = providerId is not null
-            ? $"{providerId}/{skillId}"
-            : skillId;
-
-        var bundle = await _resolver.RetrieveSkillContent(fullId, cancellationToken);
+        var bundle = await _resolver.RetrieveSkillContent($"{providerId}/{skillId}", cancellationToken);
 
         return File(bundle, "application/zip", $"{skillId}.zip");
+    }
+
+    [HttpGet("{providerId}/{skillId}/versions/{version}/content")]
+    public async Task<IActionResult> GetVersionContent(
+        string providerId,
+        string skillId,
+        string version,
+        CancellationToken cancellationToken)
+    {
+        var bundle = await _resolver.RetrieveSkillVersionContent($"{providerId}/{skillId}", version, cancellationToken);
+
+        return File(bundle, "application/zip", $"{skillId}-{version}.zip");
     }
 }
 

@@ -10,7 +10,7 @@ internal static class OCRSkillProviderMapping
     {
         return new ChatCompletionOptions
         {
-            Model = options.Model,
+            Model = options.Model!,
             Temperature = options.Temperature,
             Stream = options.Stream,
             ParallelToolCalls = options.ParallelToolCalls ?? true,

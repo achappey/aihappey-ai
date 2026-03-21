@@ -1,0 +1,516 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "replicate/black-forest-labs/flux-pro",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Pro",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-1.1-pro-ultra",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Pro Ultra",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-1.1-pro-ultra-finetuned",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Pro Ultra (Finetuned)",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Dev",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-schnell",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Schnell",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-fill-pro",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Fill Pro",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-kontext-pro",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Kontext Pro",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-kontext-max",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Kontext Max",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-2-pro",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 2 Pro",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-2-max",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 2 Max",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-2-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 2 Dev",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-2-flex",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 2 Flex",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-pro-finetuned",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Pro (Finetuned)",
+      "type": "image"
+    },
+    {
+      "id": "replicate/black-forest-labs/flux-krea-dev",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX Krea Dev",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/imagen-3",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Imagen 3",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/imagen-3-fast",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Imagen 3 Fast",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/imagen-4",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Imagen 4",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/imagen-4-fast",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Imagen 4 Fast",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/imagen-4-ultra",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Imagen 4 Ultra",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/nano-banana",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Nano Banana",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/nano-banana-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Nano Banana Pro",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/gemini-2.5-flash-image",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 2.5 Flash Image",
+      "type": "image"
+    },
+    {
+      "id": "replicate/google/upscaler",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Google Image Upscaler",
+      "type": "image"
+    },
+    {
+      "id": "replicate/ideogram-ai/ideogram-v2",
+      "object": "model",
+      "owned_by": "Ideogram",
+      "name": "Ideogram v2",
+      "type": "image"
+    },
+    {
+      "id": "replicate/ideogram-ai/ideogram-v2-turbo",
+      "object": "model",
+      "owned_by": "Ideogram",
+      "name": "Ideogram v2 Turbo",
+      "type": "image"
+    },
+    {
+      "id": "replicate/ideogram-ai/ideogram-v3-balanced",
+      "object": "model",
+      "owned_by": "Ideogram",
+      "name": "Ideogram v3 Balanced",
+      "type": "image"
+    },
+    {
+      "id": "replicate/ideogram-ai/ideogram-v3-quality",
+      "object": "model",
+      "owned_by": "Ideogram",
+      "name": "Ideogram v3 Quality",
+      "type": "image"
+    },
+    {
+      "id": "replicate/ideogram-ai/ideogram-v3-turbo",
+      "object": "model",
+      "owned_by": "Ideogram",
+      "name": "Ideogram v3 Turbo",
+      "type": "image"
+    },
+    {
+      "id": "replicate/recraft-ai/recraft-v3",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft v3",
+      "type": "image"
+    },
+    {
+      "id": "replicate/recraft-ai/recraft-v3-svg",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft v3 SVG",
+      "type": "image"
+    },
+    {
+      "id": "replicate/recraft-ai/recraft-vectorize",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft Vectorize",
+      "type": "image"
+    },
+    {
+      "id": "replicate/recraft-ai/recraft-crisp-upscale",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft Crisp Upscale",
+      "type": "image"
+    },
+    {
+      "id": "replicate/recraft-ai/recraft-creative-upscale",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft Creative Upscale",
+      "type": "image"
+    },
+    {
+      "id": "replicate/recraft-ai/recraft-remove-background",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft Remove Background",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bria/image-3.2",
+      "object": "model",
+      "owned_by": "Bria",
+      "name": "Bria Image 3.2",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bria/generate-background",
+      "object": "model",
+      "owned_by": "Bria",
+      "name": "Bria Background",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bria/remove-background",
+      "object": "model",
+      "owned_by": "Bria",
+      "name": "Bria Remove Background",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bria/eraser",
+      "object": "model",
+      "owned_by": "Bria",
+      "name": "Bria Eraser",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bria/genfill",
+      "object": "model",
+      "owned_by": "Bria",
+      "name": "Bria GenFill",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bria/expand-image",
+      "object": "model",
+      "owned_by": "Bria",
+      "name": "Bria Expand Image",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bria/increase-resolution",
+      "object": "model",
+      "owned_by": "Bria",
+      "name": "Bria Increase Resolution",
+      "type": "image"
+    },
+    {
+      "id": "replicate/qwen/qwen-image",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen Image",
+      "type": "image"
+    },
+    {
+      "id": "replicate/qwen/qwen-image-2512",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen Image 2512",
+      "type": "image"
+    },
+    {
+      "id": "replicate/qwen/qwen-image-edit",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen Image Edit",
+      "type": "image"
+    },
+    {
+      "id": "replicate/qwen/qwen-image-edit-plus",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen Image Edit Plus",
+      "type": "image"
+    },
+    {
+      "id": "replicate/qwen/qwen-image-edit-2511",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen Image Edit 2511",
+      "type": "image"
+    },
+    {
+      "id": "replicate/qwen/qwen-image-edit-plus-lora",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen Image Edit Plus (LoRA)",
+      "type": "image"
+    },
+    {
+      "id": "replicate/stability-ai/stable-diffusion-3.5-large",
+      "object": "model",
+      "owned_by": "Stability AI",
+      "name": "Stable Diffusion 3.5 Large",
+      "type": "image"
+    },
+    {
+      "id": "replicate/stability-ai/stable-diffusion-3.5-large-turbo",
+      "object": "model",
+      "owned_by": "Stability AI",
+      "name": "Stable Diffusion 3.5 Large Turbo",
+      "type": "image"
+    },
+    {
+      "id": "replicate/stability-ai/stable-diffusion-3.5-medium",
+      "object": "model",
+      "owned_by": "Stability AI",
+      "name": "Stable Diffusion 3.5 Medium",
+      "type": "image"
+    },
+    {
+      "id": "replicate/nightmareai/real-esrgan",
+      "object": "model",
+      "owned_by": "NightmareAI",
+      "name": "Real-ESRGAN",
+      "type": "image"
+    },
+    {
+      "id": "replicate/topazlabs/image-upscale",
+      "object": "model",
+      "owned_by": "Topaz Labs",
+      "name": "Topaz Image Upscale",
+      "type": "image"
+    },
+    {
+      "id": "replicate/philz1337x/crystal-upscaler",
+      "object": "model",
+      "owned_by": "Philz1337x",
+      "name": "Crystal Upscaler",
+      "type": "image"
+    },
+    {
+      "id": "replicate/prunaai/p-image",
+      "object": "model",
+      "owned_by": "PrunaAI",
+      "name": "P-Image",
+      "type": "image"
+    },
+    {
+      "id": "replicate/prunaai/z-image-turbo",
+      "object": "model",
+      "owned_by": "PrunaAI",
+      "name": "Z-Image Turbo",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bytedance/seedream-4",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Seedream 4",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bytedance/seedream-4.5",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Seedream 4.5",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bytedance/dreamina-3.1",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Dreamina 3.1",
+      "type": "image"
+    },
+    {
+      "id": "replicate/bytedance/seedream-3",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "Seedream 3",
+      "type": "image"
+    },
+    {
+      "id": "replicate/reve/create",
+      "object": "model",
+      "owned_by": "Reve",
+      "name": "Reve Create",
+      "type": "image"
+    },
+    {
+      "id": "replicate/reve/edit",
+      "object": "model",
+      "owned_by": "Reve",
+      "name": "Reve Edit",
+      "type": "image"
+    },
+    {
+      "id": "replicate/reve/remix",
+      "object": "model",
+      "owned_by": "Reve",
+      "name": "Reve Remix",
+      "type": "image"
+    },
+    {
+      "id": "replicate/reve/edit-fast",
+      "object": "model",
+      "owned_by": "Reve",
+      "name": "Reve Edit Fast",
+      "type": "image"
+    },
+    {
+      "id": "replicate/tencent/hunyuan-image-3",
+      "object": "model",
+      "owned_by": "Tencent",
+      "name": "Hunyuan Image 3",
+      "type": "image"
+    },
+    {
+      "id": "replicate/tencent/hunyuan-image-2.1",
+      "object": "model",
+      "owned_by": "Tencent",
+      "name": "Hunyuan Image 2.1",
+      "type": "image"
+    },
+    {
+      "id": "replicate/xai/grok-2-image",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "Grok 2 Image",
+      "type": "image"
+    },
+    {
+      "id": "replicate/runwayml/gen4-image",
+      "object": "model",
+      "owned_by": "Runway",
+      "name": "Gen-4 Image",
+      "type": "image"
+    },
+    {
+      "id": "replicate/runwayml/gen4-image-turbo",
+      "object": "model",
+      "owned_by": "Runway",
+      "name": "Gen-4 Image Turbo",
+      "type": "image"
+    },
+    {
+      "id": "replicate/luma/photon",
+      "object": "model",
+      "owned_by": "Luma",
+      "name": "Photon",
+      "type": "image"
+    },
+    {
+      "id": "replicate/luma/photon-flash",
+      "object": "model",
+      "owned_by": "Luma",
+      "name": "Photon Flash",
+      "type": "image"
+    },
+    {
+      "id": "replicate/luma/reframe-image",
+      "object": "model",
+      "owned_by": "Luma",
+      "name": "Reframe Image",
+      "type": "image"
+    },
+    {
+      "id": "replicate/minimax/image-01",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "Minimax Image 01",
+      "type": "image"
+    },
+    {
+      "id": "replicate/wan-video/wan-2.2-image",
+      "object": "model",
+      "owned_by": "Wan",
+      "name": "Wan 2.2 Image",
+      "type": "image"
+    }
+  ]
+}

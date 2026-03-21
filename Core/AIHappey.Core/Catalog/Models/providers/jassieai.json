@@ -1,0 +1,86 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "jassieai/jassie-pulse",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Pulse",
+      "type": "language",
+      "description": "Lightning-fast text intelligence that never forgets. Hold million-token conversations, get perfectly structured JSON on demand, and ship multilingual experiences — all at the lowest cost per token in the lineup.",
+      "context_window": 1000000
+    },
+    {
+      "id": "jassieai/jassie-bolt",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Bolt",
+      "type": "language",
+      "description": "See, read, and reason — all at once. Processes text, images, and video together, delivering breakthrough accuracy on complex reasoning, vision, and agentic tasks."
+    },
+    {
+      "id": "jassieai/jassie-pixel",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Pixel",
+      "type": "image",
+      "description": "Generate photorealistic 2K images from a single prompt with fine-grained control, reference guidance, and reproducible outputs."
+    },
+    {
+      "id": "jassieai/jassie-pixel-x",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Pixel X",
+      "type": "image",
+      "description": "4K image generation with maximum detail and control. Designed for print-ready and production-grade visual outputs."
+    },
+    {
+      "id": "jassieai/jassie-vibe",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Vibe",
+      "type": "video",
+      "description": "Generate 720p video clips with audio from text or images. Fast, consistent, and ideal for prototyping and social content."
+    },
+    {
+      "id": "jassieai/jassie-motion",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Motion",
+      "type": "video",
+      "description": "Full HD 1080p video generation with smooth motion and cinematic quality, suitable for professional content production."
+    },
+    {
+      "id": "jassieai/jassie-cinema-4k",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Cinema",
+      "type": "video",
+      "description": "4K long-form video generation with scene continuity, intelligent camera work, and cinematic storytelling."
+    },
+    {
+      "id": "jassieai/jassie-beat",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Beat",
+      "type": "speech",
+      "description": "Generate full multi-instrument music tracks from text prompts, including optional lyrics and production-ready stems."
+    },
+    {
+      "id": "jassieai/jassie-code",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Code",
+      "type": "language",
+      "description": "Advanced coding model that writes, refactors, and debugs across multiple languages with deep codebase understanding."
+    },
+    {
+      "id": "jassieai/jassie-web",
+      "object": "model",
+      "owned_by": "JassieAI",
+      "name": "Jassie Web",
+      "type": "language",
+      "description": "Provides real-time web access with citation-backed structured responses, designed for agents, RAG pipelines, and live data retrieval."
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Vogent;
-using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 

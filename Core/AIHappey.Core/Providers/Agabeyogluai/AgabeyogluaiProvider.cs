@@ -32,7 +32,8 @@ public partial class AgabeyogluaiProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(Agabeyogluai)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        _client.DefaultRequestHeaders.Remove("x-api-key");
+        _client.DefaultRequestHeaders.Add("x-api-key", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)

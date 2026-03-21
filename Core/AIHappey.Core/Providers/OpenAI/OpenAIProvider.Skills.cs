@@ -44,12 +44,45 @@ public partial class OpenAIProvider
         return bundleStream;
     }
 
+    public async Task<Stream> RetrieveSkillVersionContent(string skillId, string version, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(skillId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+
+        var upstreamSkillId = StripProviderPrefix(skillId);
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"v1/skills/{Uri.EscapeDataString(upstreamSkillId)}/versions/{Uri.EscapeDataString(version)}/content");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
+
+        using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var bundleStream = new MemoryStream();
+        await responseStream.CopyToAsync(bundleStream, cancellationToken);
+        bundleStream.Position = 0;
+
+        return bundleStream;
+    }
+
     private static string BuildSkillsListUri(string? after)
     {
         if (string.IsNullOrWhiteSpace(after))
             return "v1/skills";
 
         return $"v1/skills?after={Uri.EscapeDataString(after)}";
+    }
+
+    private static string BuildSkillVersionsListUri(string skillId, string? after)
+    {
+        var baseUri = $"v1/skills/{Uri.EscapeDataString(skillId)}/versions";
+
+        if (string.IsNullOrWhiteSpace(after))
+            return baseUri;
+
+        return $"{baseUri}?after={Uri.EscapeDataString(after)}";
     }
 
     private async Task<IEnumerable<Skill>> FetchSkillsFromOpenAI(CancellationToken cancellationToken)
@@ -65,7 +98,7 @@ public partial class OpenAIProvider
             using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            var page = await response.Content.ReadFromJsonAsync<SkillList>(cancellationToken: cancellationToken);
+            var page = await response.Content.ReadFromJsonAsync<DataList<Skill>>(cancellationToken: cancellationToken);
             if (page?.Data != null)
                 skills.AddRange(page.Data.Select(PrefixSkillId));
 
@@ -75,10 +108,9 @@ public partial class OpenAIProvider
         }
         while (!string.IsNullOrWhiteSpace(after));
 
-        return skills
+        return [.. skills
             .GroupBy(skill => skill.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First())
-            .ToList();
+            .Select(group => group.First())];
     }
 
     private Skill PrefixSkillId(Skill skill)
@@ -130,5 +162,86 @@ public partial class OpenAIProvider
                && !string.IsNullOrWhiteSpace(split.Model)
             ? split.Model
             : skillId;
+    }
+
+
+    public async Task<IEnumerable<SkillVersion>> ListSkillVersions(string skillId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+            return [];
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(skillId);
+
+        return await FetchSkillVersionsFromOpenAI(skillId, cancellationToken);
+    }
+
+    private async Task<IEnumerable<SkillVersion>> FetchSkillVersionsFromOpenAI(string skillId, CancellationToken cancellationToken)
+    {
+        var upstreamSkillId = StripProviderPrefix(skillId);
+        var versions = new List<SkillVersion>();
+        string? after = null;
+
+        do
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, BuildSkillVersionsListUri(upstreamSkillId, after));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
+
+            using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var page = await response.Content.ReadFromJsonAsync<DataList<SkillVersion>>(cancellationToken: cancellationToken);
+            if (page?.Data != null)
+                versions.AddRange(page.Data.Select(version => PrefixSkillVersion(version, skillId)));
+
+            after = page is { HasMore: true } && !string.IsNullOrWhiteSpace(page.LastId)
+                ? page.LastId
+                : null;
+        }
+        while (!string.IsNullOrWhiteSpace(after));
+
+        return [.. versions
+            .GroupBy(version => version.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())];
+    }
+
+    private SkillVersion PrefixSkillVersion(SkillVersion version, string fallbackSkillId)
+    {
+        var normalizedSkillId = fallbackSkillId;
+        var skillId = version.SkillId ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(skillId))
+        {
+            if (!skillId.Contains('/', StringComparison.Ordinal))
+            {
+                normalizedSkillId = skillId.ToModelId(GetIdentifier());
+            }
+            else
+            {
+                var split = skillId.SplitModelId();
+                if (string.Equals(split.Provider, GetIdentifier(), StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(split.Model))
+                {
+                    normalizedSkillId = skillId;
+                }
+                else
+                {
+                    normalizedSkillId = skillId.ToModelId(GetIdentifier());
+                }
+            }
+        }
+
+        if (string.Equals(normalizedSkillId, version.SkillId, StringComparison.Ordinal))
+            return version;
+
+        return new SkillVersion
+        {
+            Id = version.Id,
+            Object = version.Object,
+            CreatedAt = version.CreatedAt,
+            Description = version.Description,
+            Name = version.Name,
+            SkillId = normalizedSkillId,
+            Version = version.Version
+        };
     }
 }

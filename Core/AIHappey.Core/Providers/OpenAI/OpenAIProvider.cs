@@ -6,7 +6,6 @@ using OpenAI.Containers;
 using OpenAI.Files;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using AIHappey.Common.Model.Skills;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -82,4 +81,5 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider
     {
         throw new NotSupportedException();
     }
+
 }

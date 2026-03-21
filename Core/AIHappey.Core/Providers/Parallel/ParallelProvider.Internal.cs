@@ -219,7 +219,7 @@ public partial class ParallelProvider
             Temperature = chatRequest.Temperature,
             Stream = stream,
             Messages = messages,
-            Tools = (chatRequest.Tools ?? [])
+            Tools = [.. (chatRequest.Tools ?? [])
                 .Select(t => new
                 {
                     type = "function",
@@ -232,8 +232,7 @@ public partial class ParallelProvider
                             : t.InputSchema)
                     }
                 })
-                .Cast<object>()
-                .ToArray(),
+                .Cast<object>()],
             ToolChoice = chatRequest.ToolChoice,
             ResponseFormat = chatRequest.ResponseFormat
         };

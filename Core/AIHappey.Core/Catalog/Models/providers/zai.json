@@ -1,0 +1,185 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "zai/glm-5",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-5",
+      "type": "language",
+      "context_window": 200000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "zai/glm-4.7-flash",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.7-flash",
+      "type": "language",
+      "context_window": 200000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "zai/glm-4.7-flashx",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.7-flashx",
+      "type": "language",
+      "context_window": 200000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "zai/glm-4.7",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.7",
+      "type": "language",
+      "description": "Latest flagship GLM-4.7 model, a foundational model specifically designed for agent applications.",
+      "context_window": 200000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "zai/glm-4.6",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.6",
+      "type": "language",
+      "description": "Previous-generation GLM flagship model with strong general reasoning and agent capabilities.",
+      "context_window": 200000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "zai/glm-4.5",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5",
+      "type": "language",
+      "description": "GLM-4.5 base model offering balanced performance for general-purpose and agent workloads.",
+      "context_window": 128000,
+      "max_tokens": 96000
+    },
+    {
+      "id": "zai/glm-4.5-air",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-air",
+      "type": "language",
+      "description": "Lightweight GLM-4.5 variant optimized for faster inference and lower latency.",
+      "context_window": 128000,
+      "max_tokens": 96000
+    },
+    {
+      "id": "zai/glm-4.5-x",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-x",
+      "type": "language",
+      "description": "Enhanced GLM-4.5 variant with stronger reasoning and extended capability depth.",
+      "context_window": 128000,
+      "max_tokens": 96000
+    },
+    {
+      "id": "zai/glm-4.5-airx",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-airx",
+      "type": "language",
+      "description": "Hybrid GLM-4.5 model combining efficiency of AIR with enhanced reasoning performance.",
+      "context_window": 128000,
+      "max_tokens": 96000
+    },
+    {
+      "id": "zai/glm-4.5-flash",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.5-flash",
+      "type": "language",
+      "description": "Ultra-fast GLM-4.5 variant optimized for low-latency, high-throughput workloads.",
+      "context_window": 128000,
+      "max_tokens": 96000
+    },
+    {
+      "id": "zai/glm-4-32b-0414-128k",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4-32b-0414-128k",
+      "type": "language",
+      "description": "GLM-4 32B model with a 128k context window, suited for long-context reasoning and document-heavy tasks.",
+      "context_window": 128000,
+      "max_tokens": 16000
+    },
+    {
+      "id": "zai/glm-4.6v",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.6v",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "zai/glm-4.6v-flashx",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.6v-flashx",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "zai/glm-4.6v-flash",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.6v-flash",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "zai/cogview-4-250304",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "cogview-4-250304",
+      "type": "image"
+    },
+    {
+      "id": "zai/glm-image",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-image",
+      "type": "image"
+    },
+    {
+      "id": "zai/glm-asr-2512",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-asr-2512",
+      "type": "transcription"
+    },
+    {
+      "id": "zai/cogvideox-3",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "cogvideox-3",
+      "type": "video"
+    },
+    {
+      "id": "zai/viduq1-text",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "viduq1-text",
+      "type": "video"
+    },
+    {
+      "id": "zai/viduq1-image",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "viduq1-image",
+      "type": "video"
+    },
+    {
+      "id": "zai/vidu2-image",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "vidu2-image",
+      "type": "video"
+    }
+  ]
+}

@@ -14,9 +14,13 @@ public partial class OVHcloudProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public OVHcloudProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public OVHcloudProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://oai.endpoints.kepler.ai.cloud.ovh.net/");
     }

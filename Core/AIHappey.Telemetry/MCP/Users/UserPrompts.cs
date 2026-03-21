@@ -11,7 +11,7 @@ public class UserPrompts
     public static string TopUsersRecent(
         [Description("The number of users to retrieve (e.g., 10, 20, 50)")] string topXUsers,
         [Description("The number of past days to include (e.g., 14 for two weeks, 30 for one month)")] string days) =>
-        $"Run three queries over the past {days} days: (1) top {topXUsers} users by total duration, (2) top {topXUsers} users by request count, (3) top {topXUsers} users by tokens used. Merge results so the final list is ranked by duration (format duration as mm:ss), enriched with request and token counts.";
+        $"First call the 'User window summary' tool for the past {days} days to get exact totals. Then call the 'User aggregate reconciliation' tool to verify whether top-{topXUsers} is complete enough for leaderboard-only use. Finally call the 'User aggregates' tool ordered by duration, requests and tokens as needed, and present the top {topXUsers} users. Do not reconstruct exact totals from a top-N leaderboard alone.";
 
     [McpServerPrompt(Name = "user-growth-chart", Title = "User growth chart"), Description("Track growth of distinct users")]
     public static string UserGrowthChart() =>
@@ -19,7 +19,7 @@ public class UserPrompts
 
     [McpServerPrompt(Name = "tokens-per-user-chart", Title = "Tokens per user chart"), Description("Token consumption per user")]
     public static string TokensPerUserChart() =>
-        "Compute the average total tokens per user for the past month and show it as a horizontal bar chart ranking users from highest to lowest.";
+        "Use the 'User window summary' tool for exact monthly totals, then use the 'User aggregates' tool ordered by tokens to build a horizontal bar chart ranking users from highest to lowest. Prefer the paged aggregate endpoint over a top-N leaderboard when exact reconciliation matters.";
 
     [McpServerPrompt(Name = "new-users-per-day", Title = "New users per day"), Description("Monitor onboarding of new users")]
     public static string NewUsersPerDay() =>
@@ -29,6 +29,13 @@ public class UserPrompts
     [McpServerPrompt(Name = "active-users-by-department",
         Title = "Active users by department")]
     public static string ActiveUsersByDepartment() =>
-        "Find the top 100 active users from the last month. Then use the 'Group users by department' tool (with includeEmpty = false) to fetch department data for memberType 'User'. Create a pie chart showing total duration per department. If no department data is available, return the top 50 users with their total duration in plain text.";
+        "First use the 'User window summary' tool to capture exact totals for the last month. Then use the 'User aggregates' tool to fetch a paged, audit-safe user list with normalized identifiers and duration. Next use the 'User identifier health' tool to identify non-email or collision risks before calling the 'Group users by department' tool (with includeEmpty = false) for memberType 'User'. Build the department visualisation only after the identifier layer is trustworthy; otherwise return a clearly marked user-level fallback.";
+
+    [McpServerPrompt(Name = "user-audit-reconciliation", Title = "User audit reconciliation"),
+        Description("Prove whether a top-N user ranking is safe to use for exact totals.")]
+    public static string UserAuditReconciliation(
+        [Description("The number of top users to compare, for example 50, 100 or 200.")] string topXUsers,
+        [Description("The number of past days to include.")] string days) =>
+        $"Use the 'User window summary' tool over the past {days} days for exact totals. Then call the 'User aggregate reconciliation' tool with top={topXUsers} and order='tokens'. If the ranking is not complete, use the 'User aggregates' tool with paging to inspect the full population instead of trusting top-N totals.";
 
 }

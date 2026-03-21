@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
@@ -15,6 +16,16 @@ public sealed partial class AI21Provider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (IsMaestroModel(chatRequest.Model))
+        {
+            ApplyAuthHeader();
+
+            await foreach (var part in ExecuteMaestroUiStreamAsync(chatRequest, cancellationToken))
+                yield return part;
+
+            yield break;
+        }
+
         // AI21 streaming cannot be used with tools; if tools exist, emit error UI part.
         if (chatRequest.Tools?.Count > 0)
         {

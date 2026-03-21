@@ -34,7 +34,7 @@ public class ToolTools
     // -------------------------
     [Description("Top tools by requests or tokens.")]
     [McpServerTool(Title = "Telemetry top tools", Name = "ai_tools_top_tools", Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> Telemetry_TopTools(
+    public static async Task<CallToolResult?> Telemetry_TopTools(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         [Description("Max items to return.")] int top,
@@ -45,14 +45,10 @@ public class ToolTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.TopToolsAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
-        return new EmbeddedResourceBlock()
+
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://top/tools",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
         };
     }
 }

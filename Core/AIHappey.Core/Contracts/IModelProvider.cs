@@ -4,7 +4,6 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
-using AIHappey.Common.Model.Skills;
 
 namespace AIHappey.Core.Contracts;
 

@@ -16,14 +16,21 @@ public partial class AmazonBedrockProvider : IModelProvider
     private readonly HttpClient _client;
 
     private readonly string? _endpoint;
-    public AmazonBedrockProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, IOptions<AmazonProviderOptions> options)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public AmazonBedrockProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory,
+        IOptions<AmazonProviderOptions> options)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _endpoint = options.Value.Endpoint;
         _client = httpClientFactory.CreateClient();
 
         if (!string.IsNullOrEmpty(_endpoint))
             _client.BaseAddress = new Uri($"https://bedrock.{_endpoint}.amazonaws.com/");
+
     }
 
     private void ApplyAuthHeader()

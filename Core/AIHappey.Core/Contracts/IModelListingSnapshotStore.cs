@@ -9,6 +9,10 @@ public interface IModelListingSnapshotStore
         string cacheKey,
         CancellationToken cancellationToken = default);
 
+    Task<StoredProviderModelSnapshot?> GetLatestProviderSnapshotAsync(
+        string providerId,
+        CancellationToken cancellationToken = default);
+
     Task SaveProviderSnapshotAsync(
         string providerId,
         string cacheKey,
@@ -17,6 +21,9 @@ public interface IModelListingSnapshotStore
 
     Task<StoredResolvedModelSnapshot?> GetAggregateSnapshotAsync(
         string aggregateKey,
+        CancellationToken cancellationToken = default);
+
+    Task<StoredResolvedModelSnapshot?> GetLatestAggregateSnapshotAsync(
         CancellationToken cancellationToken = default);
 
     Task SaveAggregateSnapshotAsync(

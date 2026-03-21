@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.Skills;
 
-public class SkillList
+public class DataList<T>
 {
     [JsonPropertyName("object")]
     public string Object { get; set; } = "list";
@@ -17,5 +17,5 @@ public class SkillList
     public string FirstId { get; set; } = default!;
 
     [JsonPropertyName("data")]
-    public IEnumerable<Skill>? Data { get; set; }
+    public IEnumerable<T>? Data { get; set; }
 }

@@ -63,12 +63,22 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
 
     public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        if (IsMaestroModel(options.Model))
+            return ExecuteMaestroResponsesAsync(options, cancellationToken);
+
+        throw new NotSupportedException("AI21 responses are only implemented for Maestro models.");
     }
 
     public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        if (IsMaestroModel(options.Model))
+            return ExecuteMaestroResponsesStreamingAsync(options, cancellationToken);
+
+        throw new NotSupportedException("AI21 response streaming is only implemented for Maestro models.");
     }
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)

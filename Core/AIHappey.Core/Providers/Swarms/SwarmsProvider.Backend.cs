@@ -106,7 +106,7 @@ public partial class SwarmsProvider
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
 
-        return models is IReadOnlyList<SwarmsBackendModel> list ? list : models.ToList();
+        return models is IReadOnlyList<SwarmsBackendModel> list ? list : [.. models];
     }
 
     private async Task<SwarmsResolvedModel> ResolveModelAsync(string exposedModelId, CancellationToken cancellationToken)
@@ -552,11 +552,10 @@ public partial class SwarmsProvider
 
         return tagsEl.ValueKind switch
         {
-            JsonValueKind.Array => tagsEl.EnumerateArray()
+            JsonValueKind.Array => [.. tagsEl.EnumerateArray()
                 .Where(x => x.ValueKind == JsonValueKind.String)
                 .Select(x => x.GetString()!)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToArray(),
+                .Where(x => !string.IsNullOrWhiteSpace(x))],
             JsonValueKind.String => tagsEl.GetString()?
                 .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
             _ => null

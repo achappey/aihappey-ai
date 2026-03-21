@@ -54,7 +54,7 @@ public partial class LaoZhangProvider
                     }
 
                     if (el.TryGetProperty("created", out var createdEl))
-                        model.Created = createdEl.GetInt32();
+                        model.Created = createdEl.GetInt64();
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";

@@ -9,88 +9,98 @@ public partial class OVHcloudProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-        using var resp = await _client.SendAsync(req, cancellationToken);
+        var cacheKey = this.GetCacheKey();
 
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"OVHcloud API error: {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        var models = new List<Model>();
-        var root = doc.RootElement;
-
-        // ✅ root is already an array
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                ? dataEl.EnumerateArray()
-                : Enumerable.Empty<JsonElement>();
-
-        foreach (var el in arr)
-        {
-            Model model = new();
-
-            if (el.TryGetProperty("id", out var idEl))
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                model.Name = idEl.GetString() ?? "";
-            }
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var resp = await _client.SendAsync(req, cancellationToken);
 
-            if (IsImageModel(model.Id))
-                model.Type = "image";
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    throw new Exception($"OVHcloud API error: {err}");
+                }
 
-            if (el.TryGetProperty("context_length", out var contextLengthEl))
-                model.ContextWindow = contextLengthEl.GetInt32();
+                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-            if (el.TryGetProperty("owned_by", out var orgEl))
-                model.OwnedBy = orgEl.GetString() ?? "";
+                var models = new List<Model>();
+                var root = doc.RootElement;
 
-            if (el.TryGetProperty("pricing", out var pricingEl) &&
-                pricingEl.ValueKind == JsonValueKind.Object)
-            {
-                var inputPrice = pricingEl.TryGetProperty("input", out var inEl)
-                        ? inEl.GetRawText() : null;
+                // ✅ root is already an array
+                var arr = root.ValueKind == JsonValueKind.Array
+                    ? root.EnumerateArray()
+                    : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                        ? dataEl.EnumerateArray()
+                        : Enumerable.Empty<JsonElement>();
 
-                var outputPrice = pricingEl.TryGetProperty("output", out var outEl)
-                        ? outEl.GetRawText() : null;
+                foreach (var el in arr)
+                {
+                    Model model = new();
 
-                if (!string.IsNullOrEmpty(outputPrice)
-                    && !string.IsNullOrEmpty(inputPrice)
-                    && !outputPrice.Equals("0")
-                    && !inputPrice.Equals("0"))
-                    model.Pricing = new ModelPricing
+                    if (el.TryGetProperty("id", out var idEl))
                     {
-                        Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
-                        Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture)
-                    };
-            }
+                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = idEl.GetString() ?? "";
+                    }
 
-            if (!string.IsNullOrEmpty(model.Id))
-                models.Add(model);
-        }
+                    if (IsImageModel(model.Id))
+                        model.Type = "image";
 
-        var owner = nameof(OVHcloud);
-        foreach (var ttsModel in TtsModels)
-        {
-            var id = ttsModel.ToModelId(GetIdentifier());
-            if (models.Any(m => string.Equals(m.Id, id, StringComparison.OrdinalIgnoreCase)))
-                continue;
+                    if (el.TryGetProperty("context_length", out var contextLengthEl))
+                        model.ContextWindow = contextLengthEl.GetInt32();
 
-            models.Add(new Model
-            {
-                Id = id,
-                Name = ttsModel,
-                OwnedBy = owner,
-                Type = "speech"
-            });
-        }
+                    if (el.TryGetProperty("owned_by", out var orgEl))
+                        model.OwnedBy = orgEl.GetString() ?? "";
 
-        return models;
+                    if (el.TryGetProperty("pricing", out var pricingEl) &&
+                        pricingEl.ValueKind == JsonValueKind.Object)
+                    {
+                        var inputPrice = pricingEl.TryGetProperty("input", out var inEl)
+                                ? inEl.GetRawText() : null;
+
+                        var outputPrice = pricingEl.TryGetProperty("output", out var outEl)
+                                ? outEl.GetRawText() : null;
+
+                        if (!string.IsNullOrEmpty(outputPrice)
+                            && !string.IsNullOrEmpty(inputPrice)
+                            && !outputPrice.Equals("0")
+                            && !inputPrice.Equals("0"))
+                            model.Pricing = new ModelPricing
+                            {
+                                Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
+                                Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture)
+                            };
+                    }
+
+                    if (!string.IsNullOrEmpty(model.Id))
+                        models.Add(model);
+                }
+
+                var owner = nameof(OVHcloud);
+                foreach (var ttsModel in TtsModels)
+                {
+                    var id = ttsModel.ToModelId(GetIdentifier());
+                    if (models.Any(m => string.Equals(m.Id, id, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+
+                    models.Add(new Model
+                    {
+                        Id = id,
+                        Name = ttsModel,
+                        OwnedBy = owner,
+                        Type = "speech"
+                    });
+                }
+
+                return models;
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     public static bool IsImageModel(string model)

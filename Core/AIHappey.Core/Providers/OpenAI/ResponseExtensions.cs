@@ -233,8 +233,17 @@ public static class ResponseExtensions
                 }
             };
 
-            yield return content.Value.ToArray()
-                .ToFileUIPart(contentType);
+            var uiFile = content.Value.ToArray()
+                            .ToFileUIPart(contentType, new Dictionary<string, Dictionary<string, object>?>()
+            {
+                    {"openai", new Dictionary<string, object>()
+                            {
+                                {"filename", cfc.Filename!}
+                            }
+                                }
+            });
+
+            yield return uiFile;
 
             yield break;
         }

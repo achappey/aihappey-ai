@@ -5,18 +5,23 @@ using AIHappey.Common.Model;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Mistral;
 
 public partial class MistralProvider : IModelProvider
 {
     private readonly HttpClient _client;
-    
+
     private readonly IApiKeyResolver _keyResolver;
 
-    public MistralProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public MistralProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.mistral.ai/");
     }

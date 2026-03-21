@@ -9,6 +9,12 @@ public sealed partial class AI21Provider
 {
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
+        if (IsMaestroModel(options.Model))
+        {
+            ApplyAuthHeader();
+            return await ExecuteMaestroChatCompletionAsync(options, cancellationToken);
+        }
+
         ApplyAuthHeader();
 
         ArgumentNullException.ThrowIfNull(options);
@@ -60,6 +66,16 @@ public sealed partial class AI21Provider
         ChatCompletionOptions options,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        if (IsMaestroModel(options.Model))
+        {
+            ApplyAuthHeader();
+
+            await foreach (var update in ExecuteMaestroChatCompletionStreamingAsync(options, cancellationToken))
+                yield return update;
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         ArgumentNullException.ThrowIfNull(options);

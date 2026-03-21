@@ -14,9 +14,14 @@ public partial class PrimeIntellectProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public PrimeIntellectProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public PrimeIntellectProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.pinference.ai/api/");
     }

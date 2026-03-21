@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Azure;
 using Azure.Storage.Queues;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;

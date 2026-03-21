@@ -1,0 +1,292 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "replicate/openai/gpt-5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-5-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5 Mini",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-5-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5 Nano",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-5-structured",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5 Structured",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-5.2",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5.2",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-5.1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5.1",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-5-pro",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5 Pro",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-4.1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4.1",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4.1 Mini",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-4.1-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4.1 Nano",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4o",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4o Mini",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/o1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "o1 Reasoning",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/o1-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "o1 Mini",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/o4-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "o4 Mini",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-OSS 120B",
+      "type": "language"
+    },
+    {
+      "id": "replicate/openai/gpt-oss-20b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-OSS 20B",
+      "type": "language"
+    },
+    {
+      "id": "replicate/anthropic/claude-4.5-sonnet",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude 4.5 Sonnet",
+      "type": "language"
+    },
+    {
+      "id": "replicate/anthropic/claude-4.5-haiku",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude 4.5 Haiku",
+      "type": "language"
+    },
+    {
+      "id": "replicate/anthropic/claude-4-sonnet",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude 4 Sonnet",
+      "type": "language"
+    },
+    {
+      "id": "replicate/anthropic/claude-3.7-sonnet",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude 3.7 Sonnet",
+      "type": "language"
+    },
+    {
+      "id": "replicate/anthropic/claude-3.5-sonnet",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude 3.5 Sonnet",
+      "type": "language"
+    },
+    {
+      "id": "replicate/anthropic/claude-3.5-haiku",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude 3.5 Haiku",
+      "type": "language"
+    },
+    {
+      "id": "replicate/xai/grok-4",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "Grok 4",
+      "type": "language"
+    },
+    {
+      "id": "replicate/meta/meta-llama-3.1-405b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "LLaMA 3.1 405B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/meta/llama-4-scout-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "LLaMA 4 Scout Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/meta/llama-4-maverick-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "LLaMA 4 Maverick Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/meta/meta-llama-3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "LLaMA 3 70B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/meta/meta-llama-3-8b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "LLaMA 3 8B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/deepseek-ai/deepseek-r1",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "DeepSeek R1",
+      "type": "language"
+    },
+    {
+      "id": "replicate/deepseek-ai/deepseek-v3.1",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "DeepSeek V3.1",
+      "type": "language"
+    },
+    {
+      "id": "replicate/deepseek-ai/deepseek-v3",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "DeepSeek V3",
+      "type": "language"
+    },
+    {
+      "id": "replicate/qwen/qwen3-235b-a22b-instruct-2507",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen3 235B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/ibm-granite/granite-4.0-h-small",
+      "object": "model",
+      "owned_by": "IBM",
+      "name": "Granite 4.0 H Small",
+      "type": "language"
+    },
+    {
+      "id": "replicate/ibm-granite/granite-3.3-8b-instruct",
+      "object": "model",
+      "owned_by": "IBM",
+      "name": "Granite 3.3 8B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/ibm-granite/granite-3.2-8b-instruct",
+      "object": "model",
+      "owned_by": "IBM",
+      "name": "Granite 3.2 8B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/ibm-granite/granite-3.1-8b-instruct",
+      "object": "model",
+      "owned_by": "IBM",
+      "name": "Granite 3.1 8B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/ibm-granite/granite-3.1-2b-instruct",
+      "object": "model",
+      "owned_by": "IBM",
+      "name": "Granite 3.1 2B Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/snowflake/snowflake-arctic-instruct",
+      "object": "model",
+      "owned_by": "Snowflake",
+      "name": "Snowflake Arctic Instruct",
+      "type": "language"
+    },
+    {
+      "id": "replicate/moonshotai/kimi-k2-thinking",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "Kimi K2 Thinking",
+      "type": "language"
+    },
+    {
+      "id": "replicate/perceptron-ai-inc/isaac-0.1",
+      "object": "model",
+      "owned_by": "Perceptron AI",
+      "name": "Isaac 0.1",
+      "type": "language"
+    }
+  ]
+}

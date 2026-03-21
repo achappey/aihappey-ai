@@ -44,7 +44,7 @@ public class SkillProviderResolver(
            ?? _providers.FirstOrDefault()
            ?? throw new NotSupportedException("No skill providers found.");
 
-    public async Task<SkillList> ResolveSkills(
+    public async Task<DataList<Skill>> ResolveSkills(
         string? after = null,
         int? limit = null,
         string? order = null,
@@ -70,7 +70,7 @@ public class SkillProviderResolver(
 
         var page = orderedSkills.Take(pageSize).ToList();
 
-        return new SkillList
+        return new DataList<Skill>
         {
             Object = "list",
             Data = page,
@@ -86,6 +86,15 @@ public class SkillProviderResolver(
 
         var provider = await Resolve(skillId, ct);
         return await provider.RetrieveSkillContent(skillId, ct);
+    }
+
+    public async Task<Stream> RetrieveSkillVersionContent(string skillId, string version, CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(skillId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+
+        var provider = await Resolve(skillId, ct);
+        return await provider.RetrieveSkillVersionContent(skillId, version, ct);
     }
 
     private async Task<Dictionary<string, (Skill Skill, ISkillProvider Provider)>> GetAggregateMapAsync(CancellationToken ct)
@@ -165,5 +174,149 @@ public class SkillProviderResolver(
         return normalizedOrder == "asc"
             ? skills.OrderBy(skill => skill.CreatedAt ?? long.MinValue).ThenBy(skill => skill.Id, StringComparer.Ordinal)
             : skills.OrderByDescending(skill => skill.CreatedAt ?? long.MinValue).ThenBy(skill => skill.Id, StringComparer.Ordinal);
+    }
+
+    public async Task<DataList<SkillVersion>> ResolveSkillVersions(
+        string skillId,
+        string? after = null,
+        int? limit = null,
+        string? order = null,
+        CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(skillId);
+
+        var provider = await Resolve(skillId, ct);
+        var orderedVersions = ApplyVersionOrdering(
+                (await provider.ListSkillVersions(skillId, ct)).Select(version => NormalizeSkillVersion(version, provider.GetIdentifier(), skillId)),
+                order)
+            .ToList();
+
+        if (!string.IsNullOrWhiteSpace(after))
+        {
+            var afterIndex = orderedVersions.FindIndex(version =>
+                string.Equals(version.Id, after, StringComparison.Ordinal));
+
+            if (afterIndex >= 0)
+                orderedVersions = [.. orderedVersions.Skip(afterIndex + 1)];
+        }
+
+        var pageSize = limit.GetValueOrDefault(orderedVersions.Count);
+        if (pageSize <= 0)
+            pageSize = orderedVersions.Count;
+
+        var page = orderedVersions.Take(pageSize).ToList();
+
+        return new DataList<SkillVersion>
+        {
+            Object = "list",
+            Data = page,
+            FirstId = page.FirstOrDefault()?.Id ?? string.Empty,
+            LastId = page.LastOrDefault()?.Id ?? string.Empty,
+            HasMore = orderedVersions.Count > page.Count
+        };
+    }
+
+    private static SkillVersion NormalizeSkillVersion(SkillVersion version, string providerId, string fallbackSkillId)
+    {
+        var normalizedSkillId = fallbackSkillId;
+        var skillId = version.SkillId ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(skillId))
+        {
+            if (!skillId.Contains('/', StringComparison.Ordinal))
+            {
+                normalizedSkillId = skillId.ToModelId(providerId);
+            }
+            else
+            {
+                var split = skillId.SplitModelId();
+                normalizedSkillId = string.Equals(split.Provider, providerId, StringComparison.OrdinalIgnoreCase)
+                                   && !string.IsNullOrWhiteSpace(split.Model)
+                    ? skillId
+                    : skillId.ToModelId(providerId);
+            }
+        }
+
+        if (string.Equals(normalizedSkillId, version.SkillId, StringComparison.Ordinal))
+            return version;
+
+        return new SkillVersion
+        {
+            Id = version.Id,
+            Object = version.Object,
+            CreatedAt = version.CreatedAt,
+            Description = version.Description,
+            Name = version.Name,
+            SkillId = normalizedSkillId,
+            Version = version.Version
+        };
+    }
+
+    private static IEnumerable<SkillVersion> ApplyVersionOrdering(IEnumerable<SkillVersion> versions, string? order)
+    {
+        var normalizedOrder = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase)
+            ? "asc"
+            : "desc";
+
+        var orderedVersions = versions.ToList();
+        orderedVersions.Sort(CompareSkillVersions);
+
+        if (normalizedOrder == "desc")
+            orderedVersions.Reverse();
+
+        return orderedVersions;
+    }
+
+    private static int CompareSkillVersions(SkillVersion? left, SkillVersion? right)
+    {
+        var versionComparison = CompareVersionNumbers(left?.Version, right?.Version);
+        if (versionComparison != 0)
+            return versionComparison;
+
+        var createdAtComparison = Nullable.Compare(left?.CreatedAt, right?.CreatedAt);
+        if (createdAtComparison != 0)
+            return createdAtComparison;
+
+        return StringComparer.Ordinal.Compare(left?.Id, right?.Id);
+    }
+
+    private static int CompareVersionNumbers(string? left, string? right)
+    {
+        var leftParts = ParseVersionParts(left);
+        var rightParts = ParseVersionParts(right);
+
+        if (leftParts != null && rightParts != null)
+        {
+            var maxLength = Math.Max(leftParts.Length, rightParts.Length);
+            for (var index = 0; index < maxLength; index++)
+            {
+                var leftPart = index < leftParts.Length ? leftParts[index] : 0;
+                var rightPart = index < rightParts.Length ? rightParts[index] : 0;
+                var partComparison = leftPart.CompareTo(rightPart);
+                if (partComparison != 0)
+                    return partComparison;
+            }
+
+            return 0;
+        }
+
+        return StringComparer.Ordinal.Compare(left ?? string.Empty, right ?? string.Empty);
+    }
+
+    private static int[]? ParseVersionParts(string? version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+            return [];
+
+        var parts = version.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var values = new int[parts.Length];
+
+        for (var index = 0; index < parts.Length; index++)
+        {
+            if (!int.TryParse(parts[index], out values[index]))
+                return null;
+        }
+
+        return values;
     }
 }

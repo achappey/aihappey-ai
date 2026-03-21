@@ -1,8 +1,10 @@
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
-using Microsoft.Extensions.Options;
-using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Vercel.Models;
+using Azure.Storage.Blobs;
+using Microsoft.Extensions.Options;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -12,10 +14,13 @@ namespace AIHappey.Core.Providers.Azure;
 /// </summary>
 public sealed partial class AzureProvider(
     IApiKeyResolver keyResolver,
-    IOptions<AzureProviderOptions> options) : IModelProvider
+    IOptions<AzureProviderOptions> options,
+    AsyncCacheHelper memoryCache) : IModelProvider, ISkillProvider
 {
     private readonly IApiKeyResolver _keyResolver = keyResolver;
+    private readonly AsyncCacheHelper _memoryCache = memoryCache;
     private readonly string? _endpoint = options.Value.Endpoint;
+    private readonly BlobContainerClient? _skillsContainerClient = CreateSkillsContainerClient(options.Value.SkillsStorage);
 
     public string GetIdentifier() => "azure";
 

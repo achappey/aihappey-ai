@@ -10,11 +10,12 @@ public static class UIPartExtensions
     public static bool IsAudio(this UIMessagePart? part)
         => part is FileUIPart fileUIPart && fileUIPart.MediaType.StartsWith("audio/");
 
-    public static FileUIPart ToFileUIPart(this byte[] bytes, string mimeType)
+    public static FileUIPart ToFileUIPart(this byte[] bytes, string mimeType, Dictionary<string, Dictionary<string, object>?>? metadata = null)
         => new()
         {
             MediaType = mimeType,
-            Url = $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}"
+            Url = $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}",
+            ProviderMetadata = metadata
         };
 
     public static IEnumerable<FileUIPart> GetImages(this IEnumerable<UIMessagePart>? parts)
@@ -86,7 +87,7 @@ public static class UIPartExtensions
     public static ErrorUIPart ToErrorUIPart(this string error)
         => new()
         {
-            ErrorText = error
+            ErrorText = error ?? "Something went wrong"
         };
 
     public static AbortUIPart ToAbortUIPart(this string reason)

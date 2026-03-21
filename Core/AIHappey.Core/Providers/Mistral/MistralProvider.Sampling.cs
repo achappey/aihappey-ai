@@ -15,6 +15,8 @@ public partial class MistralProvider
     {
         ApplyAuthHeader();
 
+        var conversationTarget = ResolveConversationTarget(chatRequest.GetModel());
+
         // Build inputs from your UI message model (text + image_url only)
         var inputs = chatRequest.Messages
             // .Where(m => m.Role != Role.system)
@@ -58,7 +60,6 @@ public partial class MistralProvider
 
         var payload = new JsonObject
         {
-            ["model"] = chatRequest.GetModel(),
             ["stream"] = false,
             ["store"] = false,
             ["instructions"] = chatRequest.SystemPrompt,
@@ -69,6 +70,8 @@ public partial class MistralProvider
                 ["max_tokens"] = chatRequest.MaxTokens
             }
         };
+
+        ApplyConversationTarget(payload, conversationTarget);
 
         if (tools.Count > 0)
         {
@@ -90,7 +93,7 @@ public partial class MistralProvider
             return new CreateMessageResult
             {
                 Role = Role.Assistant,
-                Model = chatRequest.GetModel() ?? "mistral",
+                Model = conversationTarget.ExposedModelId,
                 StopReason = "error",
                 Content = [$"Mistral conversations error: {(string.IsNullOrWhiteSpace(body) ? resp.ReasonPhrase : body)}"
                     .ToTextContentBlock()]
@@ -103,7 +106,7 @@ public partial class MistralProvider
         var outputs = json?["outputs"]?.AsArray();
 
         // Defaults
-        string resolvedModel = chatRequest.GetModel() ?? "mistral";
+        string resolvedModel = conversationTarget.ExposedModelId;
         string accumulatedText = string.Empty;
         List<ContentBlock> contentBlocks = [];
 
@@ -115,7 +118,7 @@ public partial class MistralProvider
 
             if (firstOut is not null)
             {
-                resolvedModel = firstOut?["model"]?.GetValue<string>() ?? resolvedModel;
+                resolvedModel = NormalizeReportedModel(firstOut?["model"]?.GetValue<string>(), conversationTarget);
 
                 var contentNode = firstOut?["content"];
                 if (contentNode is null)

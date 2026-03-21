@@ -15,9 +15,14 @@ public partial class NovitaProvider : IModelProvider
     private readonly HttpClient _client;
     private readonly IHttpClientFactory _factory;
 
-    public NovitaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public NovitaProvider(IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.novita.ai/openai/");
         _factory = httpClientFactory;

@@ -31,7 +31,7 @@ public sealed partial class ReplicateProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var model = imageRequest.Model;
+        var model = NormalizeModelId(imageRequest.Model);
         EnsureSupportedModel(model);
 
         var metadata = imageRequest.GetProviderMetadata<ReplicateImageProviderMetadata>(GetIdentifier());

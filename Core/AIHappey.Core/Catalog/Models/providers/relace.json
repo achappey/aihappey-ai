@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "relace/relace-apply-3",
+      "object": "model",
+      "owned_by": "Relace",
+      "name": "relace-apply-3",
+      "type": "language"
+    },
+    {
+      "id": "relace/rank",
+      "object": "model",
+      "owned_by": "Relace",
+      "name": "Rank Code",
+      "type": "reranking"
+    }
+  ]
+}

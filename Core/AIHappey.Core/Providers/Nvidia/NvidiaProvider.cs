@@ -14,7 +14,7 @@ namespace AIHappey.Core.Providers.Nvidia;
 /// Default base URL: https://integrate.api.nvidia.com/
 /// Endpoint: POST /v1/chat/completions
 /// </summary>
-public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory) : IModelProvider
+public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper asyncCacheHelper) : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
 

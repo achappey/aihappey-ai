@@ -1,0 +1,45 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "iapp/chinda-thaillm-4b",
+      "object": "model",
+      "owned_by": "iApp",
+      "name": "Chinda Thai LLM 4B",
+      "type": "language",
+      "description": "Welcome to Chinda Thai LLM 4B API, an open-source Thai Large Language Model developed by iApp Technology in collaboration with AIEAT (AI Engineering Association of Thailand). Chinda is powered by the Qwen3 4B architecture, optimized for Thai language understanding and generation."
+    },
+    {
+      "id": "iapp/deepseek-3p2",
+      "object": "model",
+      "owned_by": "iApp",
+      "name": "DeepSeek-V3.2",
+      "type": "language",
+      "description": "Welcome to iApp DeepSeek-V3.2 API, powered by the latest DeepSeek-V3.2 model. This API provides access to one of the most advanced open-source large language models with exceptional reasoning capabilities, competitive performance against GPT-4 and Claude Sonnet, and full OpenAI-compatible interface."
+    },
+    {
+      "id": "iapp/thanoy",
+      "object": "model",
+      "owned_by": "iApp",
+      "name": "Thanoy Legal AI Chatbot",
+      "type": "language",
+      "description": "Welcome to iApp Thanoy Legal AI Chatbot, an AI-powered legal consultant developed by iApp Technology Co., Ltd. Our API provides intelligent legal advice and consultation through an advanced chatbot system."
+    },
+    {
+      "id": "iapp/gemini-2.5-flash-image",
+      "object": "model",
+      "owned_by": "iApp",
+      "name": "Nanobanana",
+      "type": "language",
+      "description": "Fast generation, simple graphics, quick prototypes."
+    },
+    {
+      "id": "iapp/gemini-3-pro-image-preview",
+      "object": "model",
+      "owned_by": "iApp",
+      "name": "Nanobanana Pro",
+      "type": "language",
+      "description": "High-quality output, complex scenes, detailed artwork, 4K resolution, correct Thai text in images."
+    }
+  ]
+}

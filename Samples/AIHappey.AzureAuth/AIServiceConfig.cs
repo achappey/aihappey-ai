@@ -388,6 +388,38 @@ public class AIServiceConfig
     public ProviderConfig? Yollomi { get; set; }
     public ProviderConfig? Infercom { get; set; }
     public ProviderConfig? RaxAI { get; set; }
+    public ProviderConfig? AIDuet { get; set; }
+    public ProviderConfig? PiAPI { get; set; }
+    public ProviderConfig? YouCom { get; set; }
+    public ProviderConfig? IApp { get; set; }
+    public ProviderConfig? OODAAI { get; set; }
+    public ProviderConfig? StealthGPT { get; set; }
+    public ProviderConfig? JassieAI { get; set; }
+    public ProviderConfig? Messari { get; set; }
+    public ProviderConfig? MemoryRouter { get; set; }
+    public ProviderConfig? ImageRouter { get; set; }
+    public ProviderConfig? Cailos { get; set; }
+    public ProviderConfig? CodexForMe { get; set; }
+    public ProviderConfig? RunAPI { get; set; }
+    public ProviderConfig? BaseAPI { get; set; }
+    public ProviderConfig? YYClaw { get; set; }
+    public ProviderConfig? GateRouter { get; set; }
+    public ProviderConfig? TeamDay { get; set; }
+    public ProviderConfig? OXOAPI { get; set; }
+    public ProviderConfig? Chutes { get; set; }
+    public ProviderConfig? XiaomiMIMO { get; set; }
+    public ProviderConfig? Ambient { get; set; }
+    public ProviderConfig? SwitchpointAI { get; set; }
+    public ProviderConfig? Ollama { get; set; }
+    public ProviderConfig? Vivgrid { get; set; }
+    public ProviderConfig? Relace { get; set; }
+    public ProviderConfig? Inflection { get; set; }
+    public ProviderConfig? LangDB { get; set; }
+    public ProviderConfig? Baidu { get; set; }
+    public ProviderConfig? Morph { get; set; }
+    public ProviderConfig? StreamLake { get; set; }
+    public ProviderConfig? AkashML { get; set; }
+    
 
 }
 

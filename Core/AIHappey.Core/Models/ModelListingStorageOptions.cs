@@ -10,6 +10,8 @@ public class ModelListingStorageOptions
 
     public string? QueueName { get; set; }
 
+    public bool IncludeApiKeysInSnapshotIdentity { get; set; } = true;
+
     public TimeSpan ProviderRefreshAfter { get; set; } = TimeSpan.FromHours(8);
 
     public int ProviderRefreshJitterMinutes { get; set; } = 480;

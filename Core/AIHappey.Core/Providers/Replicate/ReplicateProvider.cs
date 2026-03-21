@@ -10,11 +10,6 @@ using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Replicate;
 
-/// <summary>
-/// Replicate (sync-mode) images provider.
-/// Base URL: https://api.replicate.com/
-/// Uses: POST /v1/models/{owner}/{model}/predictions with Prefer: wait=60.
-/// </summary>
 public sealed partial class ReplicateProvider(
     IApiKeyResolver keyResolver,
     IHttpClientFactory httpClientFactory) : IModelProvider
@@ -43,7 +38,7 @@ public sealed partial class ReplicateProvider(
     }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();   
+        => throw new NotImplementedException();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -66,7 +61,7 @@ public sealed partial class ReplicateProvider(
         throw new NotSupportedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -81,7 +76,7 @@ public sealed partial class ReplicateProvider(
         throw new NotImplementedException();
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
     }

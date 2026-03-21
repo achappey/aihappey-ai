@@ -20,6 +20,14 @@
       "description": "Jamba2 Mini blends efficiency and steerability into a 12B-active parameters model, delivering reliable output on core enterprise workflows.",
       "context_window": 256000,
       "max_tokens": 4096
+    },
+    {
+      "id": "ai21/maestro",
+      "object": "model",
+      "owned_by": "AI21",
+      "name": "Maestro",
+      "type": "language",
+      "description": "AI21 Maestro is an AI system for rapidly creating and deploying RAG agents that automate high-value, data-intensive business tasks. At the core of AI21 Maestro is a new type of agent intelligence, optimized to find the smartest way to search, reason, validate, and adapt in real time to accomplish tasks, while staying within your cost and latency requirements."
     }
   ]
 }

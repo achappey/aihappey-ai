@@ -19,9 +19,14 @@ public partial class AIMLProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public AIMLProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public AIMLProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.aimlapi.com/");
         _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));

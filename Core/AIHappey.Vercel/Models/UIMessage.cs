@@ -133,7 +133,7 @@ public class ReasoningEndUIPart : UIMessagePart
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("providerMetadata")]
-    public Dictionary<string, object>? ProviderMetadata { get; init; }
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 
@@ -329,7 +329,7 @@ public class SourceUIPart : UIMessagePart
 
     [JsonPropertyName("providerMetadata")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public Dictionary<string, object>? ProviderMetadata { get; init; }
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 public class SourceDocumentPart : UIMessagePart
@@ -367,9 +367,9 @@ public class FileUIPart : UIMessagePart
     [JsonPropertyName("url")]
     public string Url { get; init; } = default!;
 
-    //   [JsonPropertyName("providerMetadata")]
-    //  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    // public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
 }
 
 

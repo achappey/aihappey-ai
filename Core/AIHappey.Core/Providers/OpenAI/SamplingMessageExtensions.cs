@@ -92,14 +92,10 @@ public static class SamplingMessageExtensions
         if (webSearch is null)
             return null;
 
-        var size =
-            webSearch["search_context_size"] is JsonValue v &&
-            v.TryGetValue<string>(out var sizeStr)
-                ? sizeStr
-                : null;
-
-        return ResponseTool.CreateWebSearchTool(searchContextSize: size);
+     
+        return ResponseTool.CreateWebSearchTool();
     }
+    
     public static ResponseTool? ToFileSearchTool(this JsonObject? obj)
     {
         var fileSearch = GetOpenAITool(obj, "file_search");

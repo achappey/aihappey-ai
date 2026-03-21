@@ -58,7 +58,7 @@ public partial class NimbleWayProvider
         {
             Answer = response.Answer,
             RequestId = response.RequestId,
-            Results = response.Results
+            Results = [.. response.Results
                 .Where(r => !string.IsNullOrWhiteSpace(r.Url))
                 .Select(r => new NimbleWayResultItem
                 {
@@ -66,8 +66,7 @@ public partial class NimbleWayProvider
                     Url = r.Url,
                     Description = r.Description,
                     Content = r.Content
-                })
-                .ToList(),
+                })],
             Metadata = new Dictionary<string, object?>
             {
                 ["requestId"] = response.RequestId,

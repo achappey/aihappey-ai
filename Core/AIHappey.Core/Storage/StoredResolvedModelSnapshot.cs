@@ -30,6 +30,8 @@ public sealed class StoredResolvedProviderState
 
     public string CacheKey { get; set; } = string.Empty;
 
+    public string? SourceCacheKey { get; set; }
+
     public DateTimeOffset StoredAtUtc { get; set; }
 
     public DateTimeOffset RefreshAfterUtc { get; set; }

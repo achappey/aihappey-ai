@@ -32,7 +32,8 @@ public class ConfigKeyResolver : IApiKeyResolver
         var vaultUri = keyVaultOptions.Value.VaultUri;
         var azureAd = azureAdOptions.Value;
 
-        if (Uri.TryCreate(vaultUri, UriKind.Absolute, out var uri)
+        if (!string.IsNullOrWhiteSpace(vaultUri)
+            && Uri.TryCreate(vaultUri, UriKind.Absolute, out var uri)
             && !string.IsNullOrWhiteSpace(azureAd.TenantId)
             && !string.IsNullOrWhiteSpace(azureAd.ClientId)
             && !string.IsNullOrWhiteSpace(azureAd.Secret))

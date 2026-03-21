@@ -1,0 +1,40 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "morph/morph-v3-fast",
+      "object": "model",
+      "owned_by": "Morph",
+      "name": "morph-v3-fast",
+      "type": "language"
+    },
+    {
+      "id": "morph/morph-v3-large",
+      "object": "model",
+      "owned_by": "Morph",
+      "name": "morph-v3-large",
+      "type": "language"
+    },
+    {
+      "id": "morph/auto",
+      "object": "model",
+      "owned_by": "Morph",
+      "name": "auto",
+      "type": "language"
+    },
+    {
+      "id": "morph/morph-rerank-v4",
+      "object": "model",
+      "owned_by": "Morph",
+      "name": "Rerank",
+      "type": "reranking"
+    },
+    {
+      "id": "morph/morph-warp-grep-v2.1",
+      "object": "model",
+      "owned_by": "Morph",
+      "name": "morph-warp-grep-v2.1",
+      "type": "language"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "aiduet/claude-opus-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4-6",
+      "type": "language",
+      "description": "Planning, code review, orchestration."
+    },
+    {
+      "id": "aiduet/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4",
+      "type": "language",
+      "description": "Code generation, fast execution."
+    }
+  ]
+}

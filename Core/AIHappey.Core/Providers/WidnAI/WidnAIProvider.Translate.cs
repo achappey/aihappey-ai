@@ -111,12 +111,11 @@ public partial class WidnAIProvider
     }
 
     private static List<string> ExtractSamplingTexts(CreateMessageRequestParams chatRequest)
-        => chatRequest.Messages
+        => [.. chatRequest.Messages
             .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
             .SelectMany(m => m.Content.OfType<TextContentBlock>())
             .Select(b => b.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
+            .Where(t => !string.IsNullOrWhiteSpace(t))];
 
     private async Task<IReadOnlyList<string>> TranslateAsync(
         IReadOnlyList<string> sourceTexts,
@@ -159,7 +158,7 @@ public partial class WidnAIProvider
         var translated = parsed?.TargetText ?? [];
 
         if (translated.Count >= sourceTexts.Count)
-            return translated.Take(sourceTexts.Count).ToList();
+            return [.. translated.Take(sourceTexts.Count)];
 
         var padded = translated.ToList();
         while (padded.Count < sourceTexts.Count)

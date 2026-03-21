@@ -3,6 +3,7 @@ using System.ClientModel.Primitives;
 using System.Net.Mime;
 using System.Text;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using Microsoft.AspNetCore.StaticFiles;
 using OpenAI.Containers;
@@ -12,15 +13,15 @@ namespace AIHappey.Core.Providers.OpenAI;
 
 public static class OpenAIModelExtensions
 {
-    public static Dictionary<string, object> ToProviderMetadata(this Dictionary<string, object> metadata)
-         => new()
-         { { Constants.OpenAI, metadata } };
+    public static Dictionary<string, Dictionary<string, object>> ToProviderMetadata(
+            this Dictionary<string, object> metadata)
+         => metadata.ToProviderMetadata(Constants.OpenAI);
 
     public static Model ToModel(this OpenAIModel source) => new()
     {
         Id = source.Id.ToModelId(Constants.OpenAI),
         Name = source.Id,
-        Tags = source.Id.Contains("transcribe") || source.Id.Contains("whisper") 
+        Tags = source.Id.Contains("transcribe") || source.Id.Contains("whisper")
             ? ["real-time"] : null,
         Created = source.CreatedAt.ToUnixTimeSeconds(),
         OwnedBy = nameof(OpenAI),

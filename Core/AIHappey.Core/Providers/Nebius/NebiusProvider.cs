@@ -15,7 +15,7 @@ namespace AIHappey.Core.Providers.Nebius;
 /// - POST /v1/images/generations
 /// - GET  /v1/models
 /// </summary>
-public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper asyncCacheHelper)
     : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);

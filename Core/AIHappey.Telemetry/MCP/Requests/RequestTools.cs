@@ -34,7 +34,7 @@ public class RequestTools
     [Description("High-level telemetry: requests, users, tools, models, avg latency, token sums.")]
     [McpServerTool(Title = "Telemetry overview", Name = "ai_requests_overview",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIRequests_Overview(
+    public static async Task<CallToolResult?> AIRequests_Overview(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
@@ -43,15 +43,12 @@ public class RequestTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.GetOverviewAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
-        return new EmbeddedResourceBlock()
+
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://overview",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(res, JsonSerializerOptions.Web)
         };
+
     }
 
     // -------------------------
@@ -60,7 +57,7 @@ public class RequestTools
     [Description("Daily buckets: requests, unique users, total tokens.")]
     [McpServerTool(Title = "Telemetry daily activity", Name = "ai_requests_daily_activity",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIRequests_DailyActivity(
+    public static async Task<CallToolResult?> AIRequests_DailyActivity(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
@@ -70,16 +67,10 @@ public class RequestTools
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.GetDailyActivityAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
 
-        return new EmbeddedResourceBlock()
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://activity",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
         };
-
     }
 
     // -------------------------
@@ -88,7 +79,7 @@ public class RequestTools
     [Description("Counts per request type (Chat, Sampling, Completion).")]
     [McpServerTool(Title = "Telemetry request types", Name = "ai_requests_request_types",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIRequests_RequestTypes(
+    public static async Task<CallToolResult?> AIRequests_RequestTypes(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
@@ -97,14 +88,10 @@ public class RequestTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.GetRequestTypesAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
-        return new EmbeddedResourceBlock()
+
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://requestTypes",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(res, JsonSerializerOptions.Web)
         };
     }
 
@@ -114,7 +101,7 @@ public class RequestTools
     [Description("Token stats: min, p50, p95, max, average for input & total.")]
     [McpServerTool(Title = "Telemetry token stats", Name = "ai_requests_token_stats",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIRequests_TokenStats(
+    public static async Task<CallToolResult?> AIRequests_TokenStats(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
@@ -123,14 +110,10 @@ public class RequestTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.GetTokenStatsAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
-        return new EmbeddedResourceBlock()
+
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://tokens",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(res, JsonSerializerOptions.Web)
         };
     }
 
@@ -140,7 +123,7 @@ public class RequestTools
     [Description("Latency stats: min, p50, p95, max, average (ms).")]
     [McpServerTool(Title = "Telemetry latency stats", Name = "ai_requests_latency_stats",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIRequests_LatencyStats(
+    public static async Task<CallToolResult?> AIRequests_LatencyStats(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         IServiceProvider services,
@@ -149,14 +132,10 @@ public class RequestTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.GetLatencyStatsAsync(Range(startDateTimeUtc, endDateTimeUtc), ct);
-        return new EmbeddedResourceBlock()
+
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://latency",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(res, JsonSerializerOptions.Web)
         };
     }
 }

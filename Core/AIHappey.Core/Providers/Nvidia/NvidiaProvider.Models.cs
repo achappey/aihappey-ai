@@ -8,48 +8,58 @@ public partial class NvidiaProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-        using var resp = await _client.SendAsync(req, cancellationToken);
+        var cacheKey = this.GetCacheKey();
 
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"{nameof(Nvidia).ToUpperInvariant()} API error: {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        var root = doc.RootElement;
-        var data = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-            ? dataEl
-            : default;
-
-        if (data.ValueKind != JsonValueKind.Array)
-            return [];
-
-        return [.. data
-            .EnumerateArray()
-            .Select(m =>
+        return await asyncCacheHelper.GetOrCreateAsync<IEnumerable<Model>>(
+            cacheKey,
+            async ct =>
             {
-                var id = m.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
-                var created = m.TryGetProperty("created", out var cEl) && cEl.ValueKind == JsonValueKind.Number
-                    ? cEl.GetInt64()
-                    : 0;
-                var ownedBy = m.TryGetProperty("owned_by", out var oEl) ? oEl.GetString() : null;
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var resp = await _client.SendAsync(req, cancellationToken);
 
-                return new Model
+                if (!resp.IsSuccessStatusCode)
                 {
-                    Id = (id ?? string.Empty).ToModelId(GetIdentifier()),
-                    Name = id ?? string.Empty,
-                    OwnedBy = ownedBy ?? nameof(Nvidia).ToUpperInvariant(),
-                    Created = created,
-                    Type = "language",
-                };
-            })
-            .Where(m => !string.IsNullOrWhiteSpace(m.Id))
-            .DistinctBy(m => m.Id)
-            .OrderByDescending(m => m.Created)];
+                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    throw new Exception($"{nameof(Nvidia).ToUpperInvariant()} API error: {err}");
+                }
+
+                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+                var root = doc.RootElement;
+                var data = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                    ? dataEl
+                    : default;
+
+                if (data.ValueKind != JsonValueKind.Array)
+                    return [];
+
+                return [.. data
+                    .EnumerateArray()
+                    .Select(m =>
+                    {
+                        var id = m.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
+                        var created = m.TryGetProperty("created", out var cEl) && cEl.ValueKind == JsonValueKind.Number
+                            ? cEl.GetInt64()
+                            : 0;
+                        var ownedBy = m.TryGetProperty("owned_by", out var oEl) ? oEl.GetString() : null;
+
+                        return new Model
+                        {
+                            Id = (id ?? string.Empty).ToModelId(GetIdentifier()),
+                            Name = id ?? string.Empty,
+                            OwnedBy = ownedBy ?? nameof(Nvidia).ToUpperInvariant(),
+                            Created = created,
+                            Type = "language",
+                        };
+                    })
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Id))
+                    .DistinctBy(m => m.Id)
+                    .OrderByDescending(m => m.Created)];
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
 }

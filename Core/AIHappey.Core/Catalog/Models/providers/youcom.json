@@ -1,0 +1,51 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "youcom/lite",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Lite Research",
+      "type": "language",
+      "description": "Returns answers quickly. Good for straightforward questions that just need a fast, reliable answer."
+    },
+    {
+      "id": "youcom/standard",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Standard Research",
+      "type": "language",
+      "description": "The default. Balances speed and depth, a good fit for most questions."
+    },
+    {
+      "id": "youcom/deep",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Deep Research",
+      "type": "language",
+      "description": "Spends more time researching and cross-referencing sources. Use this when accuracy and thoroughness matter more than speed."
+    },
+    {
+      "id": "youcom/exhaustive",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Exhaustive Research",
+      "type": "language",
+      "description": "The most thorough option. Explores the topic as fully as possible, best suited for complex research tasks where you want the highest quality result."
+    },
+    {
+      "id": "youcom/express",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Express Agent",
+      "type": "language"
+    },
+    {
+      "id": "youcom/advanced",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Advanced Agent",
+      "type": "language"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -12,9 +13,13 @@ public partial class XAIProvider : IModelProvider
 
     private readonly IApiKeyResolver _keyResolver;
 
-    public XAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public XAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
 
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.x.ai/");
@@ -39,7 +44,7 @@ public partial class XAIProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => SpeechRequestInternal(imageRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

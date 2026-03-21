@@ -57,7 +57,7 @@ public partial class MaritacaAIProvider
                         model.ContextWindow = contextLengthEl.GetInt32();
 
                     if (el.TryGetProperty("created", out var createdEl))
-                        model.Created = createdEl.GetInt32();
+                        model.Created = createdEl.GetInt64();
 
                     if (el.TryGetProperty("top_provider", out var paramEl) &&
                                         paramEl.TryGetProperty("max_completion_tokens", out var tokenEl))

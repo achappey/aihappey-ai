@@ -28,6 +28,7 @@ public partial class MistralProvider
         }
 
         var url = "/v1/conversations";
+        var conversationTarget = ResolveConversationTarget(chatRequest.Model);
 
         ApplyAuthHeader();
 
@@ -83,7 +84,6 @@ public partial class MistralProvider
 
         var payload = new JsonObject
         {
-            ["model"] = chatRequest.Model,
             ["stream"] = true,
             ["store"] = false,
             ["instructions"] = system,
@@ -94,6 +94,8 @@ public partial class MistralProvider
                 ["max_tokens"] = chatRequest.MaxOutputTokens
             }
         };
+
+        ApplyConversationTarget(payload, conversationTarget);
 
         if (tools.Count > 0)
         {
@@ -132,7 +134,7 @@ public partial class MistralProvider
         bool textStarted = false;
         bool sawDone = false;
 
-        string modelId = chatRequest.Model;
+        string modelId = conversationTarget.ExposedModelId;
         int inputTokens = 0, outputTokens = 0, totalTokens = 0;
 
         while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
@@ -165,7 +167,7 @@ public partial class MistralProvider
 
                 case "message.output.delta":
                     {
-                        modelId = node?["model"]?.GetValue<string>() ?? modelId;
+                        modelId = NormalizeReportedModel(node?["model"]?.GetValue<string>(), conversationTarget);
                         streamId ??= node?["id"]?.GetValue<string>() ?? Guid.NewGuid().ToString("n");
 
                         var contentNode = node?["content"];

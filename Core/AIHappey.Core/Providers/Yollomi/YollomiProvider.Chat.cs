@@ -1,6 +1,4 @@
-using AIHappey.Core.AI;
 using AIHappey.Common.Model;
-using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Yollomi;

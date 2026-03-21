@@ -12,6 +12,9 @@ public sealed class OpenAiProviderMetadata
     [JsonPropertyName("file_search")]
     public OpenAiFileSearch? FileSearch { get; set; }
 
+    [JsonPropertyName("shell")]
+    public ShellTool? Shell { get; set; }
+
     [JsonPropertyName("code_interpreter")]
     public CodeInterpreter? CodeInterpreter { get; set; }
 

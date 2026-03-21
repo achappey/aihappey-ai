@@ -34,7 +34,7 @@ public class ModelTools
     // -------------------------
     [Description("Top models by requests or tokens.")]
     [McpServerTool(Title = "Telemetry top models", Name = "ai_models_top_models", Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIModels_TopModels(
+    public static async Task<CallToolResult?> AIModels_TopModels(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         [Description("Max items to return.")] int top,
@@ -45,14 +45,10 @@ public class ModelTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.TopModelsAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
-        return new EmbeddedResourceBlock()
+
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://top/models",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
         };
     }
 
@@ -62,7 +58,7 @@ public class ModelTools
     [Description("Top providers by requests or tokens.")]
     [McpServerTool(Title = "Telemetry top providers", Name = "ai_models_top_providers",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIModels_TopProviders(
+    public static async Task<CallToolResult?> AIModels_TopProviders(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         [Description("Max items to return.")] int top,
@@ -73,14 +69,10 @@ public class ModelTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.TopProvidersAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
-        return new EmbeddedResourceBlock()
+
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://top/providers",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
         };
     }
 }

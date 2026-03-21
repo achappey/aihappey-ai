@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Text.Json;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Kirha;
 
@@ -47,7 +48,7 @@ public partial class KirhaProvider
             yield return new ReasoningEndUIPart
             {
                 Id = reasoning.Id,
-                ProviderMetadata = reasoningMetadata
+                ProviderMetadata = reasoningMetadata.ToProviderMetadata("kirha")
             };
         }
 

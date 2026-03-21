@@ -26,7 +26,7 @@ public sealed class StorageBackedModelRefreshWorker(
             var message = await refreshQueue.ReceiveAsync(stoppingToken);
             if (message == null)
             {
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 continue;
             }
 

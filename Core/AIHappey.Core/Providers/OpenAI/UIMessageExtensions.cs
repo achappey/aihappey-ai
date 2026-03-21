@@ -6,6 +6,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Vercel.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -89,18 +90,21 @@ public static class UIMessageExtensions
         {
             var location = metadata.WebSearch?.UserLocation;
 
-            options.Tools.Add(CreateCustomTool("web_search", new Dictionary<string, object?>()
-            {
-                { "search_context_size",  metadata.WebSearch?.SearchContextSize },
-                { "user_location",  location != null
-                    ? new OpenAiUserLocation() {
-                        Country = location.Country,
-                        City = location.City,
-                        Region = location.Region,
-                        Timezone = location.Timezone
-                    }
-                    : null }
-             }));
+            var meta = !string.IsNullOrEmpty(location?.City) &&
+                !string.IsNullOrEmpty(location?.Region) &&
+                !string.IsNullOrEmpty(location?.Country) &&
+                !string.IsNullOrEmpty(location?.Timezone) ?
+                new Dictionary<string, object?>()
+             {
+                 { "user_location",  new OpenAiUserLocation() {
+                         Country = location.Country,
+                         City = location.City,
+                         Region = location.Region,
+                         Timezone = location.Timezone
+                     } }
+             } : null;
+
+            options.Tools.Add(CreateCustomTool("web_search", meta));
         }
 
         if (metadata?.FileSearch != null)
@@ -112,6 +116,17 @@ public static class UIMessageExtensions
                 options.Tools.Add(ResponseTool.CreateFileSearchTool(metadata?.FileSearch.VectorStoreIds,
                     maxResultCount: metadata?.FileSearch.MaxNumResults));
             }
+        }
+
+        if (metadata?.Shell != null)
+        {
+            options.Tools.Add(
+                   CreateCustomTool("shell", new Dictionary<string, object?>
+                   {
+                       ["environment"] = JsonSerializer.Deserialize<object>(
+                        JsonSerializer.Serialize(metadata.Shell.Environment, JsonSerializerOptions.Web))
+                   })
+               );
         }
 
         if (metadata?.CodeInterpreter != null)
@@ -198,7 +213,9 @@ public static class UIMessageExtensions
         foreach (var part in parts)
         {
             if (part.ProviderMetadata == null ||
-                !part.ProviderMetadata.TryGetValue("Type", out var typeObj) ||
+                !part.ProviderMetadata.ContainsKey("openai") ||
+                !part.ProviderMetadata.TryGetValue("openai", out var openaiObj) ||
+                !openaiObj.TryGetValue("Type", out var typeObj) ||
                 typeObj is not string type)
             {
                 continue;

@@ -2,21 +2,22 @@ using AIHappey.Core.AI;
 using Mscc.GenerativeAI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Google;
 
 public static class GoogleExtensions
 {
-     public static Part? ToImagePart(
-        this ImageFile imageContentBlock) =>
-        new()
-        {
-            InlineData = new()
-            {
-                MimeType = imageContentBlock.MediaType,
-                Data = imageContentBlock.Data
-            }
-        };
+    public static Part? ToImagePart(
+       this ImageFile imageContentBlock) =>
+       new()
+       {
+           InlineData = new()
+           {
+               MimeType = imageContentBlock.MediaType,
+               Data = imageContentBlock.Data
+           }
+       };
 
 
     public static ImageAspectRatio? ToImageAspectRatio(this string? value) =>
@@ -89,7 +90,7 @@ public static class GoogleExtensions
                             { "License", citation.License ?? string.Empty },
                             { "StartIndex", citation.StartIndex! },
                             { "EndIndex", citation.EndIndex! }
-                            }
+                            }.ToProviderMetadata("google")
             };
 
 
@@ -119,7 +120,7 @@ public static class GoogleExtensions
 
     public static string Identifier() => nameof(Google).ToLowerInvariant();
 
-    public static Dictionary<string, object> ToProviderMetadata(this Dictionary<string, object> metadata)
+    public static Dictionary<string, Dictionary<string, object>> ToProviderMetadata(this Dictionary<string, object> metadata)
         => new()
         { { Identifier(), metadata } };
 

@@ -12,7 +12,7 @@ public partial class SwarmsProvider
 
         var backendModels = await GetAvailableBackendModelsAsync(cancellationToken);
 
-        return backendModels.Select(backendModel => new Model
+        return [.. backendModels.Select(backendModel => new Model
         {
             Id = backendModel.Id.ToModelId(GetIdentifier()),
             Object = "model",
@@ -24,6 +24,6 @@ public partial class SwarmsProvider
             Type = backendModel.Type,
             Tags = backendModel.Tags?.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
             Pricing = backendModel.Pricing
-        }).ToList();
+        })];
     }
 }

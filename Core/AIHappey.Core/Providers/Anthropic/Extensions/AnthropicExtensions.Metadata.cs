@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using AIHappey.Core.Extensions;
 using Anthropic.SDK.Common;
 using Anthropic.SDK.Messaging;
 using ANT = Anthropic.SDK;
@@ -8,9 +9,9 @@ namespace AIHappey.Core.Providers.Anthropic.Extensions;
 public static partial class AnthropicExtensions
 {
 
-    public static Dictionary<string, object> ToProviderMetadata(this Dictionary<string, object> metadata)
-          => new()
-          { { AnthropicConstants.AnthropicIdentifier, metadata } };
+    public static Dictionary<string, Dictionary<string, object>> ToProviderMetadata(
+            this Dictionary<string, object> metadata)
+          => metadata.ToProviderMetadata(AnthropicConstants.AnthropicIdentifier);
 
     public static ThinkingParameters? ToThinkingConfig(this JsonObject? obj)
     {

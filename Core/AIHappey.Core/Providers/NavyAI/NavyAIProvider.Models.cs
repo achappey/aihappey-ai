@@ -40,6 +40,12 @@ public partial class NavyAIProvider
             if (el.TryGetProperty("owned_by", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
 
+            if (model.Id.Contains("eleven"))
+                model.Type = "speech";
+
+            if (model.Id.Contains("scribe"))
+                model.Type = "transcription";
+
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);
         }

@@ -290,7 +290,7 @@ public static class StreamingUpdateExtensions
                                 { "Type", nameof(UriCitationMessageAnnotation) },
                                 { "StartIndex", uriCitationMessageAnnotation.StartIndex! },
                                 { "EndIndex", uriCitationMessageAnnotation.EndIndex! }
-                            }
+                            }.ToProviderMetadata()
                         };
                     }
                     else if (annotationItem is FileCitationMessageAnnotation fileCitationMessageAnnotation)
@@ -307,7 +307,7 @@ public static class StreamingUpdateExtensions
                                 { "FileId", fileCitationMessageAnnotation.FileId },
                                 { "Filename", fileCitationMessageAnnotation.Filename },
                                 { "Index", fileCitationMessageAnnotation.Index }
-                            }
+                            }.ToProviderMetadata()
                         };
                     }
                     else if (annotationItem is FilePathMessageAnnotation filePathMessageAnnotation)
@@ -324,8 +324,7 @@ public static class StreamingUpdateExtensions
                                 { "Type", nameof(FilePathMessageAnnotation) },
                                 { "FileId", filePathMessageAnnotation.FileId },
                                 { "Index", filePathMessageAnnotation.Index }
-                            }
-
+                            }.ToProviderMetadata()
                         };
                     }
                 }

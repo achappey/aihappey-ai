@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "stealthgpt/stealthify",
+      "object": "model",
+      "owned_by": "StealthGPT",
+      "name": "Writer & Humanizer",
+      "type": "language",
+      "description": "Allows you to generate new content or rephrase existing text to be undetectable by AI detection tools."
+    },
+    {
+      "id": "stealthgpt/stealthify/articles",
+      "object": "model",
+      "owned_by": "StealthGPT",
+      "name": "Blog Writer",
+      "type": "language",
+      "description": "Generates complete, undetectable blog articles with relevant, high-quality images in markdown format, optimized for SEO."
+    }
+  ]
+}

@@ -6,16 +6,14 @@
       "object": "model",
       "owned_by": "Audixa",
       "name": "Audixa Base",
-      "type": "speech",
-      "description": "Audixa Base"
+      "type": "speech"
     },
     {
       "id": "audixa/advanced",
       "object": "model",
       "owned_by": "Audixa",
       "name": "Audixa Advanced",
-      "type": "speech",
-      "description": "Audixa Advanced"
+      "type": "speech"
     }
   ]
 }

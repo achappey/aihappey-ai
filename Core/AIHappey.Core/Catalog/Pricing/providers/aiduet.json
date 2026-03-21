@@ -1,0 +1,14 @@
+{
+  "aiduet/claude-opus-4-6": {
+    "pricing": {
+      "input": "0.000004",
+      "output": "0.000020"
+    }
+  },
+  "aiduet/gpt-5.4": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000008"
+    }
+  }
+}

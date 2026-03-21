@@ -8,71 +8,82 @@ public partial class NovitaProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-        using var resp = await _client.SendAsync(req, cancellationToken);
 
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"API error: {err}");
-        }
+        var cacheKey = this.GetCacheKey();
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        var models = new List<Model>();
-        var root = doc.RootElement;
-
-        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                ? dataEl.EnumerateArray()
-                : Enumerable.Empty<JsonElement>();
-
-        foreach (var el in arr)
-        {
-            Model model = new();
-
-            if (el.TryGetProperty("id", out var idEl))
-                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-
-            if (el.TryGetProperty("context_size", out var contextLengthEl))
-                model.ContextWindow = contextLengthEl.GetInt32();
-
-            model.Type = "language";
-
-            if (el.TryGetProperty("display_name", out var orgEl))
-                model.Name = orgEl.GetString() ?? "";
-
-            if (el.TryGetProperty("max_output_tokens", out var maxTokensEl))
-                model.MaxTokens = maxTokensEl.GetInt32();
-
-            if (el.TryGetProperty("description", out var descEl))
-                model.Description = descEl.GetString() ?? "";
-
-            if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                var unix = createdEl.GetInt64();
-                model.Created = unix;
-            }
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var resp = await _client.SendAsync(req, cancellationToken);
 
-            if (el.TryGetProperty("input_token_price_per_m", out var inputPrice)
-             && inputPrice.ValueKind == JsonValueKind.Number
-             && el.TryGetProperty("output_token_price_per_m", out var outputPrice)
-             && outputPrice.ValueKind == JsonValueKind.Number)
-            {
-                /*  model.Pricing = new ModelPricing
-                  {
-                      Input = inputPrice.GetInt32().ToString(),
-                      Output = outputPrice.GetInt32().ToString(),
-                  };*/
-            }
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    throw new Exception($"API error: {err}");
+                }
+
+                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+                var models = new List<Model>();
+                var root = doc.RootElement;
+
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                        ? dataEl.EnumerateArray()
+                        : Enumerable.Empty<JsonElement>();
+
+                foreach (var el in arr)
+                {
+                    Model model = new();
+
+                    if (el.TryGetProperty("id", out var idEl))
+                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
+
+                    if (el.TryGetProperty("context_size", out var contextLengthEl))
+                        model.ContextWindow = contextLengthEl.GetInt32();
+
+                    model.Type = "language";
+
+                    if (el.TryGetProperty("display_name", out var orgEl))
+                        model.Name = orgEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("max_output_tokens", out var maxTokensEl))
+                        model.MaxTokens = maxTokensEl.GetInt32();
+
+                    if (el.TryGetProperty("description", out var descEl))
+                        model.Description = descEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
+                    {
+                        var unix = createdEl.GetInt64();
+                        model.Created = unix;
+                    }
+
+                    if (el.TryGetProperty("input_token_price_per_m", out var inputPrice)
+                     && inputPrice.ValueKind == JsonValueKind.Number
+                     && el.TryGetProperty("output_token_price_per_m", out var outputPrice)
+                     && outputPrice.ValueKind == JsonValueKind.Number)
+                    {
+                        /*  model.Pricing = new ModelPricing
+                          {
+                              Input = inputPrice.GetInt32().ToString(),
+                              Output = outputPrice.GetInt32().ToString(),
+                          };*/
+                    }
 
 
-            if (!string.IsNullOrEmpty(model.Id))
-                models.Add(model);
-        }
+                    if (!string.IsNullOrEmpty(model.Id))
+                        models.Add(model);
+                }
 
-        models.AddRange(StaticModels(GetIdentifier()));
-        return models;
+                models.AddRange(StaticModels(GetIdentifier()));
+                return models;
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
 
     }
 

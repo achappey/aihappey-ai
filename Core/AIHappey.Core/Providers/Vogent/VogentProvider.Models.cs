@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using System.Globalization;
 
 namespace AIHappey.Core.Providers.Vogent;
 
@@ -128,10 +127,9 @@ public partial class VogentProvider
         }
         while (!string.IsNullOrWhiteSpace(cursor));
 
-        return voices
+        return [.. voices
             .GroupBy(v => v.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .ToArray();
+            .Select(g => g.First())];
     }
 
     private static IEnumerable<Model> BuildDynamicVoiceModels(IEnumerable<VogentVoice> voices)

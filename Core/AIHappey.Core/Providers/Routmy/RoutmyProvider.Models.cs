@@ -44,7 +44,7 @@ public partial class RoutmyProvider
                     }
 
                     if (el.TryGetProperty("created", out var createdEl))
-                        model.Created = createdEl.GetInt32();
+                        model.Created = createdEl.GetInt64();
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
