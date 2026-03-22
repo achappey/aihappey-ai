@@ -1,122 +1,36 @@
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using AIHappey.Common.Model.ChatCompletions;
 
 namespace AIHappey.Core.Providers.Cortecs;
 
 public partial class CortecsProvider
 {
-    public async Task<ChatCompletion> ChatCompletionsCompleteChatAsync(
+    public async Task<ChatCompletion> CompleteChatAsync(
         ChatCompletionOptions options,
         CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(options);
 
         if (options.Stream == true)
             throw new ArgumentException("Use CompleteChatStreamingAsync for stream=true.", nameof(options));
 
-        var payload = BuildCortecsChatPayload(options, stream: false);
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
-        {
-            Content = new StringContent(JsonSerializer.Serialize(payload, JsonSerializerOptions.Web), Encoding.UTF8, "application/json")
-        };
-
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new HttpRequestException($"Cortecs error: {(int)resp.StatusCode} {resp.ReasonPhrase}: {raw}");
-
-        using var doc = JsonDocument.Parse(raw);
-
-        var id = doc.RootElement.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
-        var model = doc.RootElement.TryGetProperty("model", out var mEl) ? mEl.GetString() : null;
-        var created = doc.RootElement.TryGetProperty("created", out var cEl) && cEl.TryGetInt64(out var epoch)
-            ? epoch
-            : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-        object? usage = null;
-        if (doc.RootElement.TryGetProperty("usage", out var uEl))
-            usage = JsonSerializer.Deserialize<object>(uEl.GetRawText(), JsonSerializerOptions.Web);
-
-        object[] choices = [];
-        if (doc.RootElement.TryGetProperty("choices", out var chEl) && chEl.ValueKind == JsonValueKind.Array)
-            choices = JsonSerializer.Deserialize<object[]>(chEl.GetRawText(), JsonSerializerOptions.Web) ?? [];
-
-        return new ChatCompletion
-        {
-            Id = id ?? Guid.NewGuid().ToString("n"),
-            Created = created,
-            Model = model ?? options.Model,
-            Choices = choices,
-            Usage = usage
-        };
+        var payload = MapChatCompletionsRequestToNative(options, stream: false);
+        var native = await SendNativeAsync(payload, cancellationToken);
+        return MapNativeToChatCompletion(native, options.Model);
     }
 
-    public async IAsyncEnumerable<ChatCompletionUpdate> ChatCompletionsCompleteChatStreamingAsync(
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(options);
-
-        var payload = BuildCortecsChatPayload(options, stream: true);
-        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
-        {
-            Content = new StringContent(json, Encoding.UTF8, "application/json")
-        };
-
-        req.Headers.Accept.Clear();
-        req.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
-
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"Cortecs stream error: {(int)resp.StatusCode} {resp.ReasonPhrase}: {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
-        {
-            var line = await reader.ReadLineAsync(cancellationToken);
-            if (line is null) yield break;
-            if (line.Length == 0) continue;
-            if (line.StartsWith(':')) continue;
-            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) continue;
-
-            var data = line["data:".Length..].Trim();
-            if (data.Length == 0) continue;
-            if (data is "[DONE]" or "[done]") yield break;
-
-            ChatCompletionUpdate? evt;
-            try
-            {
-                evt = JsonSerializer.Deserialize<ChatCompletionUpdate>(data, JsonSerializerOptions.Web);
-            }
-            catch
-            {
-                JsonNode? root = JsonNode.Parse(data);
-                var inner = root?["data"];
-                evt = inner is null ? null : inner.Deserialize<ChatCompletionUpdate>(JsonSerializerOptions.Web);
-            }
-
-            if (evt is not null)
-                yield return evt;
-        }
+        var payload = MapChatCompletionsRequestToNative(options, stream: true);
+        await foreach (var chunk in SendNativeStreamingAsync(payload, cancellationToken))
+            yield return MapNativeToChatCompletionUpdate(chunk, options.Model);
     }
 
-    private static object BuildCortecsChatPayload(ChatCompletionOptions options, bool stream)
+    private static object MapChatCompletionsRequestToNative(ChatCompletionOptions options, bool stream)
     {
         var messages = options.Messages.ToCortecsMessages().ToList();
         var tools = options.Tools is { } t && t.Any()
@@ -157,15 +71,62 @@ public partial class CortecsProvider
         return payload;
     }
 
-    private static void AddIfPresent(JsonElement root, IDictionary<string, object?> payload, string propertyName)
+    private static ChatCompletion MapNativeToChatCompletion(JsonElement native, string fallbackModel)
     {
-        if (!root.TryGetProperty(propertyName, out var prop))
-            return;
+        var id = native.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
+        var model = native.TryGetProperty("model", out var mEl) ? mEl.GetString() : null;
+        var created = native.TryGetProperty("created", out var cEl) && cEl.TryGetInt64(out var epoch)
+            ? epoch
+            : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        if (prop.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return;
+        object? usage = null;
+        if (native.TryGetProperty("usage", out var uEl))
+            usage = JsonSerializer.Deserialize<object>(uEl.GetRawText(), JsonSerializerOptions.Web);
 
-        payload[propertyName] = JsonSerializer.Deserialize<object>(prop.GetRawText(), JsonSerializerOptions.Web);
+        object[] choices = [];
+        if (native.TryGetProperty("choices", out var chEl) && chEl.ValueKind == JsonValueKind.Array)
+            choices = JsonSerializer.Deserialize<object[]>(chEl.GetRawText(), JsonSerializerOptions.Web) ?? [];
+
+        return new ChatCompletion
+        {
+            Id = id ?? Guid.NewGuid().ToString("n"),
+            Object = native.TryGetProperty("object", out var oEl) && oEl.ValueKind == JsonValueKind.String
+                ? (oEl.GetString() ?? "chat.completion")
+                : "chat.completion",
+            Created = created,
+            Model = model ?? fallbackModel,
+            Choices = choices,
+            Usage = usage
+        };
+    }
+
+    private static ChatCompletionUpdate MapNativeToChatCompletionUpdate(JsonElement native, string fallbackModel)
+    {
+        var id = native.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;
+        var model = native.TryGetProperty("model", out var mEl) ? mEl.GetString() : null;
+        var created = native.TryGetProperty("created", out var cEl) && cEl.TryGetInt64(out var epoch)
+            ? epoch
+            : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        object? usage = null;
+        if (native.TryGetProperty("usage", out var uEl))
+            usage = JsonSerializer.Deserialize<object>(uEl.GetRawText(), JsonSerializerOptions.Web);
+
+        object[] choices = [];
+        if (native.TryGetProperty("choices", out var chEl) && chEl.ValueKind == JsonValueKind.Array)
+            choices = JsonSerializer.Deserialize<object[]>(chEl.GetRawText(), JsonSerializerOptions.Web) ?? [];
+
+        return new ChatCompletionUpdate
+        {
+            Id = id ?? Guid.NewGuid().ToString("n"),
+            Object = native.TryGetProperty("object", out var oEl) && oEl.ValueKind == JsonValueKind.String
+                ? (oEl.GetString() ?? "chat.completion.chunk")
+                : "chat.completion.chunk",
+            Created = created,
+            Model = model ?? fallbackModel,
+            Choices = choices,
+            Usage = usage
+        };
     }
 }
 

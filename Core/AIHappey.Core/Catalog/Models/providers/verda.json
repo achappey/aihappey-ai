@@ -77,6 +77,13 @@
             "owned_by": "Verda",
             "name": "FLUX.2 [klein] Base 9B",
             "type": "image"
+        },
+        {
+            "id": "verda/whisper",
+            "object": "model",
+            "owned_by": "Verda",
+            "name": "Whisper",
+            "type": "transcription"
         }
     ]
 }

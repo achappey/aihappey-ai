@@ -16,8 +16,13 @@ public partial class CohereProvider : IModelProvider
 
     private readonly IApiKeyResolver _keyResolver;
 
-    public CohereProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public CohereProvider(IApiKeyResolver keyResolver, 
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _keyResolver = keyResolver;
         _client.BaseAddress = new Uri("https://api.cohere.com/");

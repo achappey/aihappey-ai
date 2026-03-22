@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Cortecs;
@@ -116,6 +117,58 @@ public static class CortecsCompletionsMappingExtensions
                 parameters = a.InputSchema
             }
         });
+
+    public static IEnumerable<object> ToCortecsTools(this IEnumerable<ResponseToolDefinition> tools)
+    {
+        foreach (var tool in tools)
+        {
+            var el = JsonSerializer.SerializeToElement(tool, J);
+
+            if (el.TryGetProperty("type", out var typeEl)
+                && typeEl.ValueKind == JsonValueKind.String
+                && string.Equals(typeEl.GetString(), "function", StringComparison.OrdinalIgnoreCase))
+            {
+                if (el.TryGetProperty("function", out var fnEl) && fnEl.ValueKind == JsonValueKind.Object)
+                {
+                    yield return JsonSerializer.Deserialize<object>(el.GetRawText(), J)!;
+                    continue;
+                }
+
+                var name = el.TryGetProperty("name", out var nEl) && nEl.ValueKind == JsonValueKind.String
+                    ? nEl.GetString()
+                    : null;
+
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    var description = el.TryGetProperty("description", out var dEl) && dEl.ValueKind == JsonValueKind.String
+                        ? dEl.GetString()
+                        : null;
+
+                    object? parameters = null;
+                    if (el.TryGetProperty("parameters", out var pEl)
+                        && pEl.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                    {
+                        parameters = JsonSerializer.Deserialize<object>(pEl.GetRawText(), J);
+                    }
+
+                    yield return new
+                    {
+                        type = "function",
+                        function = new
+                        {
+                            name,
+                            description,
+                            parameters
+                        }
+                    };
+
+                    continue;
+                }
+            }
+
+            yield return JsonSerializer.Deserialize<object>(el.GetRawText(), J)!;
+        }
+    }
 
     public static string ToCortecsContentString(this JsonElement content)
     {

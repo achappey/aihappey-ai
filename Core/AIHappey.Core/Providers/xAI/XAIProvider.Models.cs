@@ -132,9 +132,7 @@ public partial class XAIProvider
             Id = BaseSpeechModel.ToModelId(XAIRequestExtensions.XAIIdentifier),
             OwnedBy = ProviderName,
             Type = "speech",
-            Name = "xAI Text-to-Speech",
-            Description = "xAI base TTS model. Language may be supplied via request.language or providerOptions.xai.language. Voice may be supplied via request.voice or providerOptions.xai.voice_id.",
-            Tags = ["tts", $"model:{BaseSpeechModel}", "base"]
+            Name = "xAI Text-to-Speech"
         };
 
         foreach (var language in SupportedTtsLanguages)
@@ -144,9 +142,8 @@ public partial class XAIProvider
                 Id = $"{BaseSpeechModel}/{language.Code}".ToModelId(XAIRequestExtensions.XAIIdentifier),
                 OwnedBy = ProviderName,
                 Type = "speech",
-                Name = $"xAI TTS ({language.DisplayName})",
-                Description = $"xAI text-to-speech with language fixed to {language.DisplayName}. Voice remains selectable.",
-                Tags = ["tts", $"model:{BaseSpeechModel}", $"language:{language.Code}", "shortcut:language"]
+                Name = $"xAI TTS {language.DisplayName}",
+                Description = $"xAI text-to-speech with {language.DisplayName} language."
             };
 
             foreach (var voice in voices)
@@ -156,9 +153,8 @@ public partial class XAIProvider
                     Id = $"{BaseSpeechModel}/{language.Code}/{voice.VoiceId}".ToModelId(XAIRequestExtensions.XAIIdentifier),
                     OwnedBy = ProviderName,
                     Type = "speech",
-                    Name = $"xAI TTS ({language.DisplayName} · {voice.Name})",
-                    Description = $"xAI text-to-speech with language fixed to {language.DisplayName} and voice fixed to {voice.Name} ({voice.VoiceId}).",
-                    Tags = BuildSpeechTags(language, voice)
+                    Name = $"xAI TTS {language.DisplayName} {voice.Name}",
+                    Description = $"xAI text-to-speech with {language.DisplayName} language and {voice.Name} voice."
                 };
             }
         }
@@ -166,23 +162,6 @@ public partial class XAIProvider
 
     private static bool IsValidTtsVoice(XAITtsVoice voice)
         => !string.IsNullOrWhiteSpace(voice.VoiceId);
-
-    private static IEnumerable<string> BuildSpeechTags(XAITtsLanguage language, XAITtsVoice voice)
-    {
-        var tags = new List<string>
-        {
-            "tts",
-            $"model:{BaseSpeechModel}",
-            $"language:{language.Code}",
-            $"voice:{voice.VoiceId}",
-            "shortcut:voice"
-        };
-
-        if (!string.IsNullOrWhiteSpace(voice.Language))
-            tags.Add($"voice_language:{voice.Language}");
-
-        return tags;
-    }
 
     private static string NormalizeTtsLanguage(string language)
     {
