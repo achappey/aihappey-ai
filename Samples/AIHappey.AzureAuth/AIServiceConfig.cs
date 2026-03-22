@@ -428,6 +428,9 @@ public class AIServiceConfig
     public ProviderConfig? SelinaAI { get; set; }
     public ProviderConfig? LMRouter { get; set; }
     public ProviderConfig? OpenPipe { get; set; }
+    public ProviderConfig? NONKYCAI { get; set; }
+    public ProviderConfig? ClawPlaza { get; set; }
+    public ProviderConfig? ModelBridge { get; set; }
     
 
 }

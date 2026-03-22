@@ -2,24 +2,18 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.GreenPT;
+namespace AIHappey.Core.Providers.ClawPlaza;
 
-public partial class GreenPTProvider
+public partial class ClawPlazaProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
+        var cacheKey = this.GetCacheKey();
 
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
-
-        return await _memoryCache.GetOrCreateAsync<List<Model>>(
+        return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
@@ -27,7 +21,7 @@ public partial class GreenPTProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"GreenPT API error: {err}");
+                    throw new Exception($"ClawPlaza API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -36,10 +30,7 @@ public partial class GreenPTProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                // ✅ root is already an array
-                var arr = root.ValueKind == JsonValueKind.Array
-                    ? root.EnumerateArray()
-                    : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -53,10 +44,7 @@ public partial class GreenPTProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (model.Id.StartsWith("green-s"))
-                    {
-                        model.Type = "transcription";
-                    }
+
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
@@ -65,17 +53,10 @@ public partial class GreenPTProvider
                         models.Add(model);
                 }
 
-                models.Add(new()
-                {
-                    Id = "green-rerank".ToModelId(GetIdentifier()),
-                    Name = "green-rerank"
-                });
-
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
-
     }
 }

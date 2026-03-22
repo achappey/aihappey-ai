@@ -430,6 +430,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["selinaai"] = "X-SelinaAI-Key",
             ["lmrouter"] = "X-LMRouter-Key",
             ["openpipe"] = "X-OpenPipe-Key",
+            ["nonkycai"] = "X-NONKYCAI-Key",
+            ["clawplaza"] = "X-ClawPlaza-Key",
+            ["modelbridge"] = "X-ModelBridge-Key",
 
         };
 

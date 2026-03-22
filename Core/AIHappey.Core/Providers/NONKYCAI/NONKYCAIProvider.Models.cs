@@ -1,11 +1,10 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using System.Globalization;
 
-namespace AIHappey.Core.Providers.Routeway;
+namespace AIHappey.Core.Providers.NONKYCAI;
 
-public partial class RoutewayProvider
+public partial class NONKYCAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -15,13 +14,14 @@ public partial class RoutewayProvider
             cacheKey,
             async ct =>
             {
+
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"Routeway API error: {err}");
+                    throw new Exception($"NONKYCAI API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -47,48 +47,53 @@ public partial class RoutewayProvider
                     if (el.TryGetProperty("context_length", out var contextLengthEl))
                         model.ContextWindow = contextLengthEl.GetInt32();
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
-
-                    if (el.TryGetProperty("short_name", out var nameEl))
-                        model.Name = nameEl.GetString() ?? model.Id;
-
                     if (el.TryGetProperty("description", out var descriptionEl))
-                        model.Description = descriptionEl.GetString() ?? string.Empty;
+                        model.Description = descriptionEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
 
                     if (el.TryGetProperty("pricing", out var pricingEl) &&
-                            pricingEl.ValueKind == JsonValueKind.Object)
+                        pricingEl.ValueKind == JsonValueKind.Object)
                     {
-                        decimal? inputPrice = null;
-                        decimal? outputPrice = null;
+                        decimal? input = null;
+                        decimal? output = null;
+                        decimal? cacheRead = null;
+                        decimal? cacheWrite = null;
 
-                        if (pricingEl.TryGetProperty("input", out var inEl) &&
-                            inEl.ValueKind == JsonValueKind.Object &&
-                            inEl.TryGetProperty("price_per_token_usd", out var inPriceEl))
+                        if (pricingEl.TryGetProperty("prompt", out var promptEl) &&
+                            promptEl.ValueKind == JsonValueKind.Number)
                         {
-                            if (inPriceEl.ValueKind == JsonValueKind.String)
-                                inputPrice = decimal.Parse(inPriceEl.GetString()!, CultureInfo.InvariantCulture);
-                            else if (inPriceEl.ValueKind == JsonValueKind.Number)
-                                inputPrice = inPriceEl.GetDecimal();
+                            input = promptEl.GetDecimal();
                         }
 
-                        if (pricingEl.TryGetProperty("output", out var outEl) &&
-                            outEl.ValueKind == JsonValueKind.Object &&
-                            outEl.TryGetProperty("price_per_token_usd", out var outPriceEl))
+                        if (pricingEl.TryGetProperty("completion", out var completionEl) &&
+                            completionEl.ValueKind == JsonValueKind.Number)
                         {
-                            if (outPriceEl.ValueKind == JsonValueKind.String)
-                                outputPrice = decimal.Parse(outPriceEl.GetString()!, CultureInfo.InvariantCulture);
-                            else if (outPriceEl.ValueKind == JsonValueKind.Number)
-                                outputPrice = outPriceEl.GetDecimal();
+                            output = completionEl.GetDecimal();
                         }
 
-                        if (inputPrice.HasValue && outputPrice.HasValue &&
-                            inputPrice.Value > 0 && outputPrice.Value > 0)
+                        if (pricingEl.TryGetProperty("input_cache_read", out var readEl) &&
+                            readEl.ValueKind == JsonValueKind.Number)
+                        {
+                            cacheRead = readEl.GetDecimal();
+                        }
+
+                        if (pricingEl.TryGetProperty("input_cache_write", out var writeEl) &&
+                            writeEl.ValueKind == JsonValueKind.Number)
+                        {
+                            cacheWrite = writeEl.GetDecimal();
+                        }
+
+                        if (input.HasValue && output.HasValue &&
+                            input.Value > 0 && output.Value > 0)
                         {
                             model.Pricing = new ModelPricing
                             {
-                                Input = inputPrice.Value,
-                                Output = outputPrice.Value
+                                Input = input.Value,
+                                Output = output.Value,
+                                InputCacheRead = cacheRead,
+                                InputCacheWrite = cacheWrite
                             };
                         }
                     }

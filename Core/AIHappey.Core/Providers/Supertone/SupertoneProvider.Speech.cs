@@ -134,10 +134,7 @@ public partial class SupertoneProvider
 
     private static (string TtsModelId, string VoiceId) ParseModelAndVoiceFromModel(string model)
     {
-        if (!model.StartsWith(SupertoneModelPrefix, StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException($"{ProviderName} model '{model}' is not supported. Expected '{SupertoneModelPrefix}[modelId]/[voiceId]'.");
-
-        var tail = model[SupertoneModelPrefix.Length..].Trim();
+        var tail = model;
         var slashIndex = tail.LastIndexOf('/');
 
         if (slashIndex <= 0 || slashIndex >= tail.Length - 1)

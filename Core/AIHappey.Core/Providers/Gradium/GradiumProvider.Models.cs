@@ -8,29 +8,44 @@ public partial class GradiumProvider
 {
     private const string BaseSpeechModel = "default";
 
-    private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
-        ApplyAuthHeader();
+        var key = _keyResolver.Resolve(GetIdentifier());
 
-        var models = new List<Model>
-        {
-            new()
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+        var cacheKey = this.GetCacheKey(key);
+
+        return await _memoryCache.GetOrCreateAsync<List<Model>>(
+            cacheKey,
+            async ct =>
             {
-                Id = BaseSpeechModel.ToModelId(GetIdentifier()),
-                OwnedBy = ProviderName,
-                Type = "speech",
-                Name = BaseSpeechModel,
-                Description = $"{ProviderName} base TTS model. Voice may be supplied via request.voice, providerOptions.gradium.voice_id, or model id.",
-                Tags = ["tts", $"model:{BaseSpeechModel}", "base"]
-            }
-        };
+                ApplyAuthHeader();
 
-        var voices = await GetVoicesAsync(cancellationToken);
-        models.AddRange(BuildDynamicVoiceModels(voices));
+                var models = new List<Model>
+                {
+                    new()
+                    {
+                        Id = BaseSpeechModel.ToModelId(GetIdentifier()),
+                        OwnedBy = ProviderName,
+                        Type = "speech",
+                        Name = BaseSpeechModel,
+                        Description = $"{ProviderName} base TTS model. Voice may be supplied via request.voice, providerOptions.gradium.voice_id, or model id.",
+                        Tags = ["tts", $"model:{BaseSpeechModel}", "base"]
+                    }
+                };
 
-        return [.. models
+                var voices = await GetVoicesAsync(cancellationToken);
+                models.AddRange(BuildDynamicVoiceModels(voices));
+
+                return [.. models
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())];
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<IReadOnlyList<GradiumVoice>> GetVoicesAsync(CancellationToken cancellationToken)

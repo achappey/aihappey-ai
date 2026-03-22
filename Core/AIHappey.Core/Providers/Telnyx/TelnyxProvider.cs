@@ -15,9 +15,13 @@ public partial class TelnyxProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
-    public TelnyxProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public TelnyxProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.telnyx.com/v2/");
     }

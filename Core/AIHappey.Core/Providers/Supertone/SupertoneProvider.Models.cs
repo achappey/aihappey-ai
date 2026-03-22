@@ -1,25 +1,36 @@
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Supertone;
 
 public partial class SupertoneProvider
 {
-    private const string SupertoneModelPrefix = "supertone/";
 
-    private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var voices = await GetAllVoicesAsync(cancellationToken);
+        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
+                var voices = await GetAllVoicesAsync(cancellationToken);
 
-        return [.. BuildDynamicVoiceModels(voices)
+                return [.. BuildDynamicVoiceModels(voices)
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())];
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<IReadOnlyList<SupertoneVoice>> GetAllVoicesAsync(CancellationToken cancellationToken)
@@ -124,7 +135,7 @@ public partial class SupertoneProvider
 
     private Model BuildVoiceModel(SupertoneVoice voice, string modelId)
     {
-        var id = $"{SupertoneModelPrefix}{modelId}/{voice.VoiceId}";
+        var id = $"{modelId}/{voice.VoiceId}".ToModelId(GetIdentifier());
 
         var displayName = string.IsNullOrWhiteSpace(voice.Name) ? voice.VoiceId : voice.Name.Trim();
         var age = NormalizeMetaValue(voice.Age, "unknown age");

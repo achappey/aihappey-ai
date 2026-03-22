@@ -430,6 +430,9 @@ using AIHappey.Core.Providers.Clauddy;
 using AIHappey.Core.Providers.SelinaAI;
 using AIHappey.Core.Providers.LMRouter;
 using AIHappey.Core.Providers.OpenPipe;
+using AIHappey.Core.Providers.NONKYCAI;
+using AIHappey.Core.Providers.ClawPlaza;
+using AIHappey.Core.Providers.ModelBridge;
 
 namespace AIHappey.Core.AI;
 
@@ -541,7 +544,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CortecsProvider>();
         services.AddSingleton<IModelProvider, EUrouterProvider>();
         services.AddSingleton<IModelProvider, RequestyProvider>();
-        services.AddSingleton<IModelProvider, SudoProvider>();
+        //services.AddSingleton<IModelProvider, SudoProvider>();
         services.AddSingleton<IModelProvider, PortkeyProvider>();
         services.AddSingleton<IModelProvider, DeepLProvider>();
         services.AddSingleton<IModelProvider, CometAPIProvider>();
@@ -877,6 +880,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SelinaAIProvider>();
         services.AddSingleton<IModelProvider, LMRouterProvider>();
         services.AddSingleton<IModelProvider, OpenPipeProvider>();
+        services.AddSingleton<IModelProvider, NONKYCAIProvider>();
+        services.AddSingleton<IModelProvider, ClawPlazaProvider>();
+        services.AddSingleton<IModelProvider, ModelBridgeProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

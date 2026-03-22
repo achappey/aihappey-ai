@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AIHappey.Core.Models;
 using System.Globalization;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.EUrouter;
 
@@ -8,7 +9,7 @@ public partial class EUrouterProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"models:{GetIdentifier()}";
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,

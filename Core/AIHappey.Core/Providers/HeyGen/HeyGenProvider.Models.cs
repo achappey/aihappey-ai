@@ -6,28 +6,37 @@ namespace AIHappey.Core.Providers.HeyGen;
 
 public partial class HeyGenProvider
 {
-    private const string HeyGenVoiceModelPrefix = "";
-
-    private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var voices = new List<HeyGenVoice>();
-        voices.AddRange(await GetVoicesByTypeAsync("public", cancellationToken));
-        voices.AddRange(await GetVoicesByTypeAsync("private", cancellationToken));
+        return await _memoryCache.GetOrCreateAsync<List<Model>>(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
 
-        var voiceModels = BuildDynamicVoiceModels(voices);
+                var voices = new List<HeyGenVoice>();
+                voices.AddRange(await GetVoicesByTypeAsync("public", cancellationToken));
+                voices.AddRange(await GetVoicesByTypeAsync("private", cancellationToken));
 
-        return [..voiceModels, new Model() {
+                var voiceModels = BuildDynamicVoiceModels(voices);
+
+                return [..voiceModels, new Model() {
             Type = "video",
             Id = "video_agent".ToModelId(GetIdentifier()),
             Name = "Video Agent",
             Description = "Generate videos with a one-shot prompt to Video Agent."
         }];
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<IReadOnlyList<HeyGenVoice>> GetVoicesByTypeAsync(string type, CancellationToken cancellationToken)
@@ -177,7 +186,7 @@ public partial class HeyGenProvider
             .Where(IsValidVoice)
             .Select(v => new Model
             {
-                Id = $"{HeyGenVoiceModelPrefix}{v.Id}".ToModelId(GetIdentifier()),
+                Id = $"{v.Id}".ToModelId(GetIdentifier()),
                 OwnedBy = ProviderName,
                 Type = "speech",
                 Name = BuildVoiceDisplayName(v),

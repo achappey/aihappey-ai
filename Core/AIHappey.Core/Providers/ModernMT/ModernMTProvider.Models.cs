@@ -9,13 +9,26 @@ public sealed partial class ModernMTProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        // Avoid throwing during model discovery when the key is not configured.
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return [];
+        var key = _keyResolver.Resolve(GetIdentifier());
 
-        ApplyAuthHeader();
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        return await ListTranslationModelsAsync(cancellationToken);
+        var cacheKey = this.GetCacheKey(key);
+
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
+                
+                return await ListTranslationModelsAsync(cancellationToken);
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
+
     }
 
     private async Task<IEnumerable<Model>> ListTranslationModelsAsync(CancellationToken cancellationToken)

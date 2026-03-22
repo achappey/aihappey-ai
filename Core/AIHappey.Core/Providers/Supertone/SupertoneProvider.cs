@@ -3,7 +3,6 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
@@ -18,10 +17,13 @@ public partial class SupertoneProvider : IModelProvider
 
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public SupertoneProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public SupertoneProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://supertoneapi.com/");
     }
@@ -43,10 +45,6 @@ public partial class SupertoneProvider : IModelProvider
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await ListModelsInternal(cancellationToken);
-
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => this.SpeechSamplingAsync(chatRequest, cancellationToken);
 

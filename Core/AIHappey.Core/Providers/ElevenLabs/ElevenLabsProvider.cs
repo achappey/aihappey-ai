@@ -9,7 +9,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
-public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper asyncCacheHelper)
     : IModelProvider
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient();

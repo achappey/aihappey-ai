@@ -8,18 +8,29 @@ public partial class OpperAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
+        var cacheKey = this.GetCacheKey(key);
 
-        ApplyAuthHeader();
+        return await _memoryCache.GetOrCreateAsync<List<Model>>(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
 
-        var languageTask = ListLanguageModels(cancellationToken);
-        var rerankTask = ListRerankModels(cancellationToken);
+                var languageTask = ListLanguageModels(cancellationToken);
+                var rerankTask = ListRerankModels(cancellationToken);
 
-        await Task.WhenAll(languageTask, rerankTask);
+                await Task.WhenAll(languageTask, rerankTask);
 
-        return [.. languageTask.Result, .. rerankTask.Result];
+                return [.. languageTask.Result, .. rerankTask.Result];
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
 
