@@ -1,0 +1,152 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "selinaai/gpt-5.4",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-5.4",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-5.4-mini",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-5.4-mini",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-5.4-nano",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-5.4-nano",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-5.4-pro",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-5.4-pro",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-4o",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-4o",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-4o-mini",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-4.1",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-4.1",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-4.1-mini",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/gpt-4.1-nano",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "gpt-4.1-nano",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/o3",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "o3",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/o3-mini",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "o3-mini",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/o4-mini",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "o4-mini",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/claude-opus-4-6",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "claude-opus-4-6",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/claude-opus-4-5",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "claude-opus-4-5",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "claude-sonnet-4-6",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/claude-sonnet-4-5",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "claude-sonnet-4-5",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/claude-sonnet-4",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "claude-sonnet-4",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/claude-haiku-4-5",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "claude-haiku-4-5",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/grok-4.20-reasoning",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "grok-4.20-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/grok-4-1-fast",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "grok-4-1-fast",
+      "type": "language"
+    },
+    {
+      "id": "selinaai/grok-2",
+      "object": "model",
+      "owned_by": "selinaai",
+      "name": "grok-2",
+      "type": "language"
+    }
+  ]
+}

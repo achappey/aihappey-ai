@@ -419,6 +419,15 @@ public class AIServiceConfig
     public ProviderConfig? Morph { get; set; }
     public ProviderConfig? StreamLake { get; set; }
     public ProviderConfig? AkashML { get; set; }
+    public ProviderConfig? EmbyAI { get; set; }
+    public ProviderConfig? Cortex { get; set; }
+    public ProviderConfig? Perceptron { get; set; }
+    public ProviderConfig? MuleRun { get; set; }
+    public ProviderConfig? SudoRouter { get; set; }
+    public ProviderConfig? Clauddy { get; set; }
+    public ProviderConfig? SelinaAI { get; set; }
+    public ProviderConfig? LMRouter { get; set; }
+    public ProviderConfig? OpenPipe { get; set; }
     
 
 }

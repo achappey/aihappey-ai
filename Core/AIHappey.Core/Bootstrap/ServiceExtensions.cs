@@ -421,6 +421,15 @@ using AIHappey.Core.Providers.Baidu;
 using AIHappey.Core.Providers.Morph;
 using AIHappey.Core.Providers.StreamLake;
 using AIHappey.Core.Providers.AkashML;
+using AIHappey.Core.Providers.EmbyAI;
+using AIHappey.Core.Providers.Cortex;
+using AIHappey.Core.Providers.Perceptron;
+using AIHappey.Core.Providers.MuleRun;
+using AIHappey.Core.Providers.SudoRouter;
+using AIHappey.Core.Providers.Clauddy;
+using AIHappey.Core.Providers.SelinaAI;
+using AIHappey.Core.Providers.LMRouter;
+using AIHappey.Core.Providers.OpenPipe;
 
 namespace AIHappey.Core.AI;
 
@@ -859,6 +868,15 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MorphProvider>();
         services.AddSingleton<IModelProvider, StreamLakeProvider>();
         services.AddSingleton<IModelProvider, AkashMLProvider>();
+        services.AddSingleton<IModelProvider, EmbyAIProvider>();
+        services.AddSingleton<IModelProvider, CortexProvider>();
+        services.AddSingleton<IModelProvider, PerceptronProvider>();
+        services.AddSingleton<IModelProvider, MuleRunProvider>();
+        services.AddSingleton<IModelProvider, SudoRouterProvider>();
+        services.AddSingleton<IModelProvider, ClauddyProvider>();
+        services.AddSingleton<IModelProvider, SelinaAIProvider>();
+        services.AddSingleton<IModelProvider, LMRouterProvider>();
+        services.AddSingleton<IModelProvider, OpenPipeProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

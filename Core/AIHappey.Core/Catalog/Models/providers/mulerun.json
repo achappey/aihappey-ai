@@ -1,0 +1,243 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "mulerun/gpt-5.4",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-5.4",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-5.2",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-5.2",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-5",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-5",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-5-mini",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-5-mini",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-5-nano",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-5-nano",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-5-codex",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-5-codex",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-4.1",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-4.1",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-4.1-mini",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gpt-4.1-nano",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gpt-4.1-nano",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gemini-3-pro-preview",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gemini-3-pro-preview",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gemini-2.5-pro",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gemini-2.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gemini-2.5-flash-lite",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gemini-2.5-flash-lite",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gemini-2.5-flash-image-preview",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gemini-2.5-flash-image-preview",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/gemini-2.5-flash-image",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "gemini-2.5-flash-image",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-sonnet-4-5",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-sonnet-4-5",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-sonnet-4-0",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-sonnet-4-0",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-haiku-4-5",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-haiku-4-5",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-opus-4-5",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-opus-4-5",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-opus-4-1",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-opus-4-1",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-opus-4-0",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-opus-4-0",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/qwen3-max",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "qwen3-max",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/qwen-plus",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "qwen-plus",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/qwen-flash",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "qwen-flash",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/qwen3-vl-plus",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "qwen3-vl-plus",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/qwen3-vl-flash",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "qwen3-vl-flash",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/glm-4.6",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "glm-4.6",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/kimi-k2",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "kimi-k2",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-sonnet-4-5",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-sonnet-4-5",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-sonnet-4-0",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-sonnet-4-0",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-haiku-4-5",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-haiku-4-5",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-opus-4-5",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-opus-4-5",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-opus-4-1",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-opus-4-1",
+      "type": "language"
+    },
+    {
+      "id": "mulerun/claude-opus-4-0",
+      "object": "model",
+      "owned_by": "MuleRun",
+      "name": "claude-opus-4-0",
+      "type": "language"
+    }
+  ]
+}

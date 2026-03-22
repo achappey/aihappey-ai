@@ -4,6 +4,7 @@ using Azure.Storage.Blobs;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using Microsoft.Extensions.Options;
+using Azure.Storage.Blobs.Models;
 
 namespace AIHappey.Core.Storage;
 
@@ -161,7 +162,10 @@ public sealed class AzureBlobModelListingSnapshotStore : IModelListingSnapshotSt
 
         var candidates = new List<(string Name, DateTimeOffset LastModifiedUtc)>();
 
-        await foreach (var blobItem in _containerClient.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+        await foreach (var blobItem in _containerClient.GetBlobsAsync(
+                traits: BlobTraits.None,
+                states: BlobStates.None,
+                prefix: prefix, cancellationToken: cancellationToken))
         {
             if (string.IsNullOrWhiteSpace(blobItem.Name))
                 continue;

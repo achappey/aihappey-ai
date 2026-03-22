@@ -132,7 +132,10 @@ public sealed partial class AzureProvider
         var versionPrefix = BuildVersionPrefix(normalizedSkillId, normalizedVersion);
 
         var blobItems = new List<BlobItem>();
-        await foreach (var blobItem in GetSkillsContainerClient().GetBlobsAsync(prefix: versionPrefix, cancellationToken: cancellationToken))
+        await foreach (var blobItem in GetSkillsContainerClient().GetBlobsAsync(
+            traits: BlobTraits.None,
+            states: BlobStates.None,
+                prefix: versionPrefix, cancellationToken: cancellationToken))
             blobItems.Add(blobItem);
 
         if (blobItems.Count == 0)
@@ -185,7 +188,10 @@ public sealed partial class AzureProvider
 
         var inventory = new Dictionary<string, SkillRecord>(StringComparer.OrdinalIgnoreCase);
 
-        await foreach (var blobItem in GetSkillsContainerClient().GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+        await foreach (var blobItem in GetSkillsContainerClient().GetBlobsAsync(
+                traits: BlobTraits.None,
+                states: BlobStates.None,
+                prefix: prefix, cancellationToken: cancellationToken))
         {
             var parts = blobItem.Name.Split('/', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (parts.Length < 3)

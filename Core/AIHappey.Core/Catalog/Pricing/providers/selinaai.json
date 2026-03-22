@@ -1,0 +1,128 @@
+{
+  "selinaai/gpt-5.4": {
+    "pricing": {
+      "input": "0.00000313",
+      "output": "0.00001875"
+    }
+  },
+  "selinaai/gpt-5.4-mini": {
+    "pricing": {
+      "input": "0.00000094",
+      "output": "0.00000563"
+    }
+  },
+  "selinaai/gpt-5.4-nano": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.00000156"
+    }
+  },
+  "selinaai/gpt-5.4-pro": {
+    "pricing": {
+      "input": "0.0000375",
+      "output": "0.000225"
+    }
+  },
+  "selinaai/gpt-4o": {
+    "pricing": {
+      "input": "0.00000313",
+      "output": "0.0000125"
+    }
+  },
+  "selinaai/gpt-4o-mini": {
+    "pricing": {
+      "input": "0.00000019",
+      "output": "0.00000075"
+    }
+  },
+  "selinaai/gpt-4.1": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.00001"
+    }
+  },
+  "selinaai/gpt-4.1-mini": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.000002"
+    }
+  },
+  "selinaai/gpt-4.1-nano": {
+    "pricing": {
+      "input": "0.00000013",
+      "output": "0.0000005"
+    }
+  },
+  "selinaai/o3": {
+    "pricing": {
+      "input": "0.0000125",
+      "output": "0.00005"
+    }
+  },
+  "selinaai/o3-mini": {
+    "pricing": {
+      "input": "0.00000138",
+      "output": "0.0000055"
+    }
+  },
+  "selinaai/o4-mini": {
+    "pricing": {
+      "input": "0.00000138",
+      "output": "0.0000055"
+    }
+  },
+  "selinaai/claude-opus-4-6": {
+    "pricing": {
+      "input": "0.00000625",
+      "output": "0.00003125"
+    }
+  },
+  "selinaai/claude-opus-4-5": {
+    "pricing": {
+      "input": "0.00000625",
+      "output": "0.00003125"
+    }
+  },
+  "selinaai/claude-sonnet-4-6": {
+    "pricing": {
+      "input": "0.00000375",
+      "output": "0.00001875"
+    }
+  },
+  "selinaai/claude-sonnet-4-5": {
+    "pricing": {
+      "input": "0.00000375",
+      "output": "0.00001875"
+    }
+  },
+  "selinaai/claude-sonnet-4": {
+    "pricing": {
+      "input": "0.00000375",
+      "output": "0.00001875"
+    }
+  },
+  "selinaai/claude-haiku-4-5": {
+    "pricing": {
+      "input": "0.00000125",
+      "output": "0.00000625"
+    }
+  },
+  "selinaai/grok-4.20-reasoning": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.0000075"
+    }
+  },
+  "selinaai/grok-4-1-fast": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.00000063"
+    }
+  },
+  "selinaai/grok-2": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.0000125"
+    }
+  }
+}

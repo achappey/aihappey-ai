@@ -421,6 +421,15 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["morph"] = "X-Morph-Key",
             ["streamlake"] = "X-StreamLake-Key",
             ["akashml"] = "X-AkashML-Key",
+            ["embyai"] = "X-EmbyAI-Key",
+            ["cortex"] = "X-Cortex-Key",
+            ["perceptron"] = "X-Perceptron-Key",
+            ["mulerun"] = "X-MuleRun-Key",
+            ["sudorouter"] = "X-SudoRouter-Key",
+            ["clauddy"] = "X-Clauddy-Key",
+            ["selinaai"] = "X-SelinaAI-Key",
+            ["lmrouter"] = "X-LMRouter-Key",
+            ["openpipe"] = "X-OpenPipe-Key",
 
         };
 
