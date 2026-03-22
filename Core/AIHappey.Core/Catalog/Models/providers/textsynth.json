@@ -82,6 +82,166 @@
       "description": "Parler-TTS v1 is a 2.2 billion parameter model for Text to Speech in English. See the speech endpoint."
     },
     {
+      "id": "textsynth/parler_tts_large/Will",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Will",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Will."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Eric",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Eric",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Eric."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Laura",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Laura",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Laura."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Alisa",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Alisa",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Alisa."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Patrick",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Patrick",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Patrick."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Rose",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Rose",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Rose."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Jerry",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Jerry",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Jerry."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Jordan",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Jordan",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Jordan."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Lauren",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Lauren",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Lauren."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Jenna",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Jenna",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Jenna."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Karen",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Karen",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Karen."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Rick",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Rick",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Rick."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Bill",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Bill",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Bill."
+    },
+    {
+      "id": "textsynth/parler_tts_large/James",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · James",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice James."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Yann",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Yann",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Yann."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Emily",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Emily",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Emily."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Anna",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Anna",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Anna."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Jon",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Jon",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Jon."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Brenda",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Brenda",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Brenda."
+    },
+    {
+      "id": "textsynth/parler_tts_large/Barbara",
+      "object": "model",
+      "owned_by": "TextSynth",
+      "name": "parler_tts_large · Barbara",
+      "type": "speech",
+      "description": "TextSynth Parler-TTS voice Barbara."
+    },
+    {
       "id": "textsynth/bge_large_en_v1.5",
       "object": "model",
       "owned_by": "TextSynth",
