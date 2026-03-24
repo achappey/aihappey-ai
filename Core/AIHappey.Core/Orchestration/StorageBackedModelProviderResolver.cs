@@ -23,6 +23,11 @@ public class StorageBackedModelProviderResolver(
 {
     private const string AggregateMemoryCachePrefix = "resolver:aggregate:";
     private readonly ModelListingStorageOptions _options = options.Value;
+    private readonly IApiKeyPresenceResolver? _apiKeyPresenceResolver = apiKeyResolver as IApiKeyPresenceResolver;
+    private readonly HashSet<string> _alwaysIncludeProviders = (options.Value.AlwaysIncludeProviders ?? [])
+        .Where(providerId => !string.IsNullOrWhiteSpace(providerId))
+        .Select(providerId => providerId.Trim())
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim _aggregateRefreshLock = new(1, 1);
     private readonly ConcurrentDictionary<string, byte> _queuedRefreshes = new(StringComparer.OrdinalIgnoreCase);
     private int _backgroundAggregateRefreshRunning;
@@ -72,9 +77,15 @@ public class StorageBackedModelProviderResolver(
         if (!string.Equals(providerCacheKey, request.CacheKey, StringComparison.Ordinal))
             return;
 
-        await RefreshProviderSnapshotAsync(provider, ct);
+        var refreshedProviderSnapshot = await RefreshProviderSnapshotAsync(provider, ct);
+        if (refreshedProviderSnapshot == null)
+            return;
 
-        var refreshed = await BuildAggregateFromStoredSnapshotsAsync(provider.GetIdentifier(), providerCacheKey, ct);
+        var refreshed = await BuildAggregateFromStoredSnapshotsAsync(
+            provider.GetIdentifier(),
+            providerCacheKey,
+            refreshedProviderSnapshot,
+            ct);
         if (refreshed.ModelProviderMap.Count == 0)
             return;
 
@@ -112,6 +123,13 @@ public class StorageBackedModelProviderResolver(
         var exactBaseline = TryCreateAggregateBaseline(aggregateSnapshot);
         if (exactBaseline != null)
         {
+            if (UseKeyedFirstProviderSelection)
+            {
+                var expandedExact = await TryExpandWithCachedNonKeyedProvidersAsync(exactBaseline, ct);
+                if (expandedExact != null)
+                    exactBaseline = expandedExact;
+            }
+
             var repairedExact = await TryRepairAggregateFromMissingProviderSnapshotsAsync(
                 exactBaseline,
                 aggregateSnapshot!.RefreshAfterUtc,
@@ -139,7 +157,7 @@ public class StorageBackedModelProviderResolver(
             return CreateCacheEntryFromBaseline(exactBaseline, aggregateSnapshot.RefreshAfterUtc);
         }
 
-        if (!_options.IncludeApiKeysInSnapshotIdentity)
+        if (!_options.IncludeApiKeysInSnapshotIdentity || UseKeyedFirstProviderSelection)
         {
             var latestAggregateSnapshot = await snapshotStore.GetLatestAggregateSnapshotAsync(ct);
             var latestBaseline = TryCreateAggregateBaseline(latestAggregateSnapshot);
@@ -195,6 +213,13 @@ public class StorageBackedModelProviderResolver(
 
             var providerSnapshots = new Dictionary<IModelProvider, StoredProviderModelSnapshot>();
             var providerArray = GetAggregateProviders().OrderBy(_ => Random.Shared.Next()).ToArray();
+
+            if (UseKeyedFirstProviderSelection && providerArray.Length == 0)
+            {
+                logger.LogInformation(
+                    "Keyed-first model discovery is active for {AggregateKey}. No request-keyed providers were found; only non-expired cached providers from baseline are eligible.",
+                    BuildAggregateSnapshotKey());
+            }
 
             await Parallel.ForEachAsync(
                 providerArray,
@@ -270,6 +295,7 @@ public class StorageBackedModelProviderResolver(
     private async Task<AggregateModelsCacheEntry> BuildAggregateFromStoredSnapshotsAsync(
         string refreshedProviderId,
         string refreshedProviderCacheKey,
+        StoredProviderModelSnapshot refreshedProviderSnapshot,
         CancellationToken ct)
     {
         await _aggregateRefreshLock.WaitAsync(ct);
@@ -277,68 +303,12 @@ public class StorageBackedModelProviderResolver(
         {
             var aggregateSnapshot = await GetPreferredAggregateSnapshotAsync(BuildAggregateSnapshotKey(), ct);
             var baseline = await GetAggregateBaselineAsync(aggregateSnapshot, ct);
-            var providerStates = (aggregateSnapshot?.Providers ?? [])
-                .GroupBy(state => BuildQueuedProviderKey(state.ProviderId, state.CacheKey), StringComparer.OrdinalIgnoreCase)
-                .Select(group => group.First())
-                .ToList();
-
-            foreach (var provider in GetAggregateProviders())
-            {
-                if (!TryGetProviderCacheKey(provider, out var providerCacheKey))
-                    continue;
-
-                if (providerStates.Any(state => string.Equals(state.ProviderId, provider.GetIdentifier(), StringComparison.OrdinalIgnoreCase)))
-                    continue;
-
-                providerStates.Add(new StoredResolvedProviderState
-                {
-                    ProviderId = provider.GetIdentifier(),
-                    CacheKey = providerCacheKey,
-                    SourceCacheKey = providerCacheKey
-                });
-            }
-
-            if (!providerStates.Any(state =>
-                    string.Equals(state.ProviderId, refreshedProviderId, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(state.CacheKey, refreshedProviderCacheKey, StringComparison.Ordinal)))
-            {
-                providerStates.Add(new StoredResolvedProviderState
-                {
-                    ProviderId = refreshedProviderId,
-                    CacheKey = refreshedProviderCacheKey,
-                    SourceCacheKey = refreshedProviderCacheKey
-                });
-            }
-
-            providerStates = [.. NormalizeProviderStates(providerStates)];
-
             var providerSnapshots = new Dictionary<IModelProvider, StoredProviderModelSnapshot>();
+            var refreshedProvider = providers.FirstOrDefault(p =>
+                string.Equals(p.GetIdentifier(), refreshedProviderId, StringComparison.OrdinalIgnoreCase));
 
-            foreach (var state in providerStates)
-            {
-                var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), state.ProviderId, StringComparison.OrdinalIgnoreCase));
-                if (provider == null)
-                    continue;
-
-                var snapshot = await GetOrRefreshProviderSnapshotAsync(
-                    provider,
-                    state.SourceCacheKey ?? state.CacheKey,
-                    ct);
-
-                if (snapshot == null)
-                {
-                    logger.LogWarning(
-                        "Aggregate rebuild for {AggregateKey} could not obtain a snapshot for configured provider {ProviderId}. CacheKey={CacheKey} SourceCacheKey={SourceCacheKey}.",
-                        BuildAggregateSnapshotKey(),
-                        state.ProviderId,
-                        state.CacheKey,
-                        state.SourceCacheKey ?? state.CacheKey);
-
-                    continue;
-                }
-
-                providerSnapshots[provider] = snapshot;
-            }
+            if (refreshedProvider != null)
+                providerSnapshots[refreshedProvider] = refreshedProviderSnapshot;
 
             var mergeResult = MergeProviderSnapshots(providerSnapshots, baseline);
             var merged = mergeResult.ModelProviderMap;
@@ -362,7 +332,7 @@ public class StorageBackedModelProviderResolver(
             await EnrichModelsAsync(merged, ct);
 
             logger.LogInformation(
-                "Rebuilt aggregate {AggregateKey} from stored provider snapshots after refreshing provider {ProviderId}. Models: {ModelCount}. Refreshed providers available: {RefreshedProviderCount}. Preserved providers from baseline: {PreservedProviderCount}.",
+                "Rebuilt aggregate {AggregateKey} after refreshing provider {ProviderId}. Models: {ModelCount}. Updated providers: {UpdatedProviderCount}. Preserved providers from baseline: {PreservedProviderCount}.",
                 BuildAggregateSnapshotKey(),
                 refreshedProviderId,
                 merged.Count,
@@ -734,6 +704,83 @@ public class StorageBackedModelProviderResolver(
         return new AggregateBaseline(snapshot, restored);
     }
 
+    private async Task<AggregateBaseline?> TryExpandWithCachedNonKeyedProvidersAsync(
+        AggregateBaseline baseline,
+        CancellationToken ct)
+    {
+        var latestSnapshot = await snapshotStore.GetLatestAggregateSnapshotAsync(ct);
+        var latestBaseline = TryCreateAggregateBaseline(latestSnapshot);
+        if (latestBaseline == null || latestSnapshot == null)
+            return null;
+
+        if (string.Equals(latestSnapshot.AggregateKey, baseline.Snapshot.AggregateKey, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var now = DateTimeOffset.UtcNow;
+        var cachedProviderIds = latestSnapshot.Providers
+            .Where(state => state.ExpiresAtUtc > now)
+            .GroupBy(state => state.ProviderId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.OrderByDescending(state => state.StoredAtUtc).First())
+            .Select(state => state.ProviderId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (cachedProviderIds.Count == 0)
+            return null;
+
+        var merged = new Dictionary<string, (Model Model, IModelProvider Provider)>(baseline.ModelProviderMap, StringComparer.OrdinalIgnoreCase);
+        var initialCount = merged.Count;
+
+        foreach (var entry in latestSnapshot.Entries)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Model.Id) || !cachedProviderIds.Contains(entry.ProviderId))
+                continue;
+
+            var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), entry.ProviderId, StringComparison.OrdinalIgnoreCase));
+            if (provider == null)
+                continue;
+
+            if (HasConfiguredProviderKey(provider))
+                continue;
+
+            merged.TryAdd(entry.Model.Id, (entry.Model, provider));
+        }
+
+        var additionalStates = latestSnapshot.Providers
+            .Where(state => cachedProviderIds.Contains(state.ProviderId))
+            .Where(state =>
+            {
+                var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), state.ProviderId, StringComparison.OrdinalIgnoreCase));
+                return provider != null && !HasConfiguredProviderKey(provider);
+            })
+            .ToList();
+
+        if (merged.Count == initialCount && additionalStates.Count == 0)
+            return null;
+
+        var mergedSnapshot = new StoredResolvedModelSnapshot
+        {
+            AggregateKey = baseline.Snapshot.AggregateKey,
+            StoredAtUtc = baseline.Snapshot.StoredAtUtc,
+            RefreshAfterUtc = baseline.Snapshot.RefreshAfterUtc,
+            ExpiresAtUtc = baseline.Snapshot.ExpiresAtUtc,
+            Entries = [..
+                merged.Values.Select(v => new StoredResolvedModelEntry
+                {
+                    ProviderId = v.Provider.GetIdentifier(),
+                    Model = v.Model
+                })],
+            Providers = [.. NormalizeProviderStates(baseline.Snapshot.Providers.Concat(additionalStates))]
+        };
+
+        logger.LogInformation(
+            "Expanded keyed-first aggregate {AggregateKey} with {AddedModelCount} cached non-keyed models from latest aggregate snapshot {LatestAggregateKey}.",
+            baseline.Snapshot.AggregateKey,
+            merged.Count - initialCount,
+            latestSnapshot.AggregateKey);
+
+        return new AggregateBaseline(mergedSnapshot, merged);
+    }
+
     private AggregateModelsCacheEntry CreateCacheEntryFromBaseline(
         AggregateBaseline baseline,
         DateTimeOffset refreshAfterUtc)
@@ -909,9 +956,18 @@ public class StorageBackedModelProviderResolver(
     private IEnumerable<IModelProvider> GetConfiguredProviders() => providers as IModelProvider[] ?? [.. providers];
 
     private IEnumerable<IModelProvider> GetAggregateProviders()
-        => !_options.DisableModelDiscovery
+        => UseKeyedFirstProviderSelection
+            ? GetConfiguredProviders().Where(HasConfiguredProviderKey)
+            : !_options.DisableModelDiscovery
             ? GetConfiguredProviders()
             : GetConfiguredProviders().Where(HasConfiguredApiKey);
+
+    private bool UseKeyedFirstProviderSelection
+        => _options.IncludeApiKeysInSnapshotIdentity && _apiKeyPresenceResolver != null;
+
+    private bool HasConfiguredProviderKey(IModelProvider provider)
+        => _apiKeyPresenceResolver?.HasConfiguredKey(provider.GetIdentifier()) == true
+           || _alwaysIncludeProviders.Contains(provider.GetIdentifier());
 
     private bool HasConfiguredApiKey(IModelProvider provider)
         => !string.IsNullOrWhiteSpace(apiKeyResolver.Resolve(provider.GetIdentifier()));

@@ -2,7 +2,7 @@ using AIHappey.Core.Contracts;
 
 namespace AIHappey.HeaderAuth;
 
-public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolver
+public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolver, IApiKeyPresenceResolver
 {
     private static readonly Dictionary<string, string> ProviderHeaders =
         new(StringComparer.OrdinalIgnoreCase)
@@ -443,6 +443,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
 
     public string? Resolve(string provider) => snapshot.Resolve(provider);
+
+    public bool HasConfiguredKey(string provider)
+        => !string.IsNullOrWhiteSpace(snapshot.Resolve(provider));
 }
 
 

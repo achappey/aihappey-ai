@@ -12,6 +12,12 @@ public class ModelListingStorageOptions
 
     public bool IncludeApiKeysInSnapshotIdentity { get; set; } = true;
 
+    /// <summary>
+    /// Provider identifiers that should always be included in discovery attempts,
+    /// even when keyed-first header-auth filtering is active.
+    /// </summary>
+    public string[] AlwaysIncludeProviders { get; set; } = [];
+
     public TimeSpan ProviderRefreshAfter { get; set; } = TimeSpan.FromHours(8);
 
     public int ProviderRefreshJitterMinutes { get; set; } = 480;
