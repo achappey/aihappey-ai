@@ -431,6 +431,9 @@ public class AIServiceConfig
     public ProviderConfig? NONKYCAI { get; set; }
     public ProviderConfig? ClawPlaza { get; set; }
     public ProviderConfig? ModelBridge { get; set; }
+    public ProviderConfig? SimpleLLM { get; set; }
+    public ProviderConfig? Privatemode { get; set; }
+    public ProviderConfig? Tensorix { get; set; }
     
 
 }

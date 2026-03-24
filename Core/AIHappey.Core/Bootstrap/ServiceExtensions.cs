@@ -433,6 +433,9 @@ using AIHappey.Core.Providers.OpenPipe;
 using AIHappey.Core.Providers.NONKYCAI;
 using AIHappey.Core.Providers.ClawPlaza;
 using AIHappey.Core.Providers.ModelBridge;
+using AIHappey.Core.Providers.SimpleLLM;
+using AIHappey.Core.Providers.Privatemode;
+using AIHappey.Core.Providers.Tensorix;
 
 namespace AIHappey.Core.AI;
 
@@ -885,6 +888,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, NONKYCAIProvider>();
         services.AddSingleton<IModelProvider, ClawPlazaProvider>();
         services.AddSingleton<IModelProvider, ModelBridgeProvider>();
+        services.AddSingleton<IModelProvider, SimpleLLMProvider>();
+        services.AddSingleton<IModelProvider, PrivatemodeProvider>();
+        services.AddSingleton<IModelProvider, TensorixProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(
