@@ -9,7 +9,7 @@ public partial class RedPillProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"models:{GetIdentifier()}";
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
@@ -82,6 +82,8 @@ public partial class RedPillProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
+
+                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },

@@ -8,7 +8,7 @@ public partial class RequestyProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"models:{GetIdentifier()}";
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
@@ -35,7 +35,10 @@ public partial class RequestyProvider
 
                 foreach (var el in arr)
                 {
-                    Model model = new();
+                    Model model = new()
+                    {
+                        Type = "language"
+                    };
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
@@ -87,6 +90,13 @@ public partial class RequestyProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
+
+                models.AddRange(GetIdentifier().GetModels());
+
+                models = [.. models
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Id))
+                    .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.First())];
 
                 return models;
             },

@@ -1,0 +1,54 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "redpill/stability/stable-diffusion-3-5-large",
+            "object": "model",
+            "owned_by": "RedPill",
+            "name": "stable-diffusion-3-5-large",
+            "type": "image"
+        },
+        {
+            "id": "redpill/stability/stable-diffusion-3-5-medium",
+            "object": "model",
+            "owned_by": "RedPill",
+            "name": "stable-diffusion-3-5-medium",
+            "type": "image"
+        },
+        {
+            "id": "redpill/stability/stable-diffusion-ultra",
+            "object": "model",
+            "owned_by": "RedPill",
+            "name": "stable-diffusion-ultra",
+            "type": "image"
+        },
+        {
+            "id": "redpill/recraft/recraft-v3",
+            "object": "model",
+            "owned_by": "RedPill",
+            "name": "recraft-v3",
+            "type": "image"
+        },
+        {
+            "id": "redpill/recraft/recraft-v3-svg",
+            "object": "model",
+            "owned_by": "RedPill",
+            "name": "recraft-v3-svg",
+            "type": "image"
+        },
+        {
+            "id": "redpill/openai/dall-e-3",
+            "object": "model",
+            "owned_by": "RedPill",
+            "name": "dall-e-3",
+            "type": "image"
+        },
+        {
+            "id": "redpill/segmind/sd3-turbo",
+            "object": "model",
+            "owned_by": "RedPill",
+            "name": "sd3-turbo",
+            "type": "image"
+        }
+    ]
+}

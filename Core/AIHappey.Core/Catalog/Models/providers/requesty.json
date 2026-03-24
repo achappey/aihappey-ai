@@ -1,0 +1,17 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "requesty/azure/openai/gpt-image-1",
+      "object": "model",
+      "owned_by": "Requesty",
+      "type": "image"
+    },
+    {
+      "id": "requesty/azure/openai/gpt-image-1.5",
+      "object": "model",
+      "owned_by": "Requesty",
+      "type": "image"
+    }
+  ]
+}
