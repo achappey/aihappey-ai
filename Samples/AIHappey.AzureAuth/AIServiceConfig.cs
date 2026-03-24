@@ -434,6 +434,7 @@ public class AIServiceConfig
     public ProviderConfig? SimpleLLM { get; set; }
     public ProviderConfig? Privatemode { get; set; }
     public ProviderConfig? Tensorix { get; set; }
+    public ProviderConfig? SchatziAI { get; set; }
     
 
 }

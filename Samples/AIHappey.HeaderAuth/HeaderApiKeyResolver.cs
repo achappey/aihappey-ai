@@ -436,6 +436,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["simplellm"] = "X-SimpleLLM-Key",
             ["privatemode"] = "X-Privatemode-Key",
             ["tensorix"] = "X-Tensorix-Key",
+            ["schatziai"] = "X-SchatziAI-Key",
 
         };
 

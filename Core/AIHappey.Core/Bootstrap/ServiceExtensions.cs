@@ -436,6 +436,7 @@ using AIHappey.Core.Providers.ModelBridge;
 using AIHappey.Core.Providers.SimpleLLM;
 using AIHappey.Core.Providers.Privatemode;
 using AIHappey.Core.Providers.Tensorix;
+using AIHappey.Core.Providers.SchatziAI;
 
 namespace AIHappey.Core.AI;
 
@@ -891,6 +892,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SimpleLLMProvider>();
         services.AddSingleton<IModelProvider, PrivatemodeProvider>();
         services.AddSingleton<IModelProvider, TensorixProvider>();
+        services.AddSingleton<IModelProvider, SchatziAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

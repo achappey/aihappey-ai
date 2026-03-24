@@ -104,10 +104,15 @@ public class SkillProviderResolver(
         foreach (var provider in GetAggregateProviders())
         {
             var providerId = provider.GetIdentifier();
-            var skills = await provider.ListSkills(ct);
 
-            foreach (var skill in skills.Select(skill => NormalizeSkill(skill, providerId)))
-                map[skill.Id] = (skill, provider);
+            try
+            {
+                var skills = await provider.ListSkills(ct);
+
+                foreach (var skill in skills.Select(skill => NormalizeSkill(skill, providerId)))
+                    map[skill.Id] = (skill, provider);
+            }
+            catch (Exception) { } // Do not fail on single provider fail
         }
 
         return map;
