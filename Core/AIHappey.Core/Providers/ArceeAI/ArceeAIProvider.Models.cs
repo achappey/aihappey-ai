@@ -57,8 +57,10 @@ public partial class ArceeAIProvider
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? string.Empty;
 
-                    if (el.TryGetProperty("context_length", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("max_output_length", out var maxOutputEl))
                         model.MaxTokens = maxOutputEl.GetInt32();

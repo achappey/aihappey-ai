@@ -49,8 +49,10 @@ public partial class SchatziAIProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("context_window", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_window", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? string.Empty;

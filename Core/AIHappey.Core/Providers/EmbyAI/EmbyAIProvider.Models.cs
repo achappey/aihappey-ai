@@ -48,8 +48,10 @@ public partial class EmbyAIProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("context_length", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("max_output_tokens", out var maxOutput))
                         model.MaxTokens = maxOutput.GetInt32();

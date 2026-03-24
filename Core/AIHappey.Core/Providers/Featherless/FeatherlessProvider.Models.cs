@@ -46,8 +46,10 @@ public partial class FeatherlessProvider
                     if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
                         model.Created = createdEl.GetInt64();
 
-                    if (el.TryGetProperty("context_length", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("max_completion_tokens", out var maxTokenEl))
                         model.MaxTokens = maxTokenEl.GetInt32();

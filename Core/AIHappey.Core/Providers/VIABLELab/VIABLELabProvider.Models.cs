@@ -43,8 +43,10 @@ public partial class VIABLELabProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("context_window", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_window", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("max_output_tokens", out var maxOutput))
                         model.MaxTokens = maxOutput.GetInt32();

@@ -50,8 +50,10 @@ public partial class OVHcloudProvider
                     if (IsImageModel(model.Id))
                         model.Type = "image";
 
-                    if (el.TryGetProperty("context_length", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";

@@ -44,8 +44,10 @@ public partial class NONKYCAIProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("context_length", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? "";

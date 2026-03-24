@@ -44,8 +44,10 @@ public partial class RedPillProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("context_length", out var contextLengthEl))
-                        model.ContextWindow = contextLengthEl.GetInt32();
+                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                        v.ValueKind == JsonValueKind.Number
+                            ? v.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("name", out var nameEl))
                         model.Name = nameEl.GetString() ?? model.Id;
