@@ -20,9 +20,13 @@ public partial class OrqProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
 
-    public OrqProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public OrqProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.orq.ai/v2/router/");
     }
@@ -37,14 +41,6 @@ public partial class OrqProvider : IModelProvider
             throw new InvalidOperationException($"No {ProviderName} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key.Trim());
-    }
-
-    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return Task.FromResult<IEnumerable<Model>>([]);
-
-        return Task.FromResult<IEnumerable<Model>>(GetIdentifier().GetModels());
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
