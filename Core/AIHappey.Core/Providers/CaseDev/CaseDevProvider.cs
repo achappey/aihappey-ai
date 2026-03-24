@@ -8,7 +8,7 @@ using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.CaseDev;
 
-public partial class CaseDevProvider : IModelProvider
+public partial class CaseDevProvider : IModelProvider, ISkillProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

@@ -730,7 +730,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AiMoProvider>();
         services.AddSingleton<IModelProvider, AssistersProvider>();
         services.AddSingleton<IModelProvider, LLMWiseProvider>();
-        services.AddSingleton<IModelProvider, CaseDevProvider>();
+        services.AddSingleton<CaseDevProvider>();
+        services.AddSingleton<ISkillProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
+        services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
         services.AddSingleton<IModelProvider, ModelRouterProvider>();
         services.AddSingleton<IModelProvider, MultiverseAIProvider>();
         services.AddSingleton<IModelProvider, LavaProvider>();
