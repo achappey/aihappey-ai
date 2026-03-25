@@ -6,9 +6,9 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
-namespace AIHappey.Core.Providers.VibeCodeCheap;
+namespace AIHappey.Core.Providers.GPTsAPI;
 
-public partial class VibeCodeCheapProvider : IModelProvider
+public partial class GPTsAPIProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -16,13 +16,13 @@ public partial class VibeCodeCheapProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public VibeCodeCheapProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public GPTsAPIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.vibecodecheap.com/");
+        _client.BaseAddress = new Uri("https://api.gptsapi.net/");
     }
 
     private void ApplyAuthHeader()
@@ -30,7 +30,7 @@ public partial class VibeCodeCheapProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(VibeCodeCheap)} API key.");
+            throw new InvalidOperationException($"No {nameof(GPTsAPI)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -51,7 +51,7 @@ public partial class VibeCodeCheapProvider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(VibeCodeCheap).ToLowerInvariant();
+    public string GetIdentifier() => nameof(GPTsAPI).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

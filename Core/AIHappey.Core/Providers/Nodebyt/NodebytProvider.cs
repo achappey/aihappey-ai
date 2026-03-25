@@ -6,9 +6,9 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
-namespace AIHappey.Core.Providers.SovereignAPI;
+namespace AIHappey.Core.Providers.Nodebyt;
 
-public partial class SovereignAPIProvider : IModelProvider
+public partial class NodebytProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -16,13 +16,13 @@ public partial class SovereignAPIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public SovereignAPIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public NodebytProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.sovereign-api.com/");
+        _client.BaseAddress = new Uri("https://api.nodebyt.com/");
     }
 
     private void ApplyAuthHeader()
@@ -30,7 +30,7 @@ public partial class SovereignAPIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(SovereignAPI)} API key.");
+            throw new InvalidOperationException($"No {nameof(Nodebyt)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -51,7 +51,7 @@ public partial class SovereignAPIProvider : IModelProvider
                     options, ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(SovereignAPI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Nodebyt).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

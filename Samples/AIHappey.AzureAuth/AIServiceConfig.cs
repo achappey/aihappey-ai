@@ -92,7 +92,6 @@ public class AIServiceConfig
     public ProviderConfig? Inworld { get; set; }
     public ProviderConfig? EUrouter { get; set; }
     public ProviderConfig? Requesty { get; set; }
-    public ProviderConfig? Sudo { get; set; }
     public ProviderConfig? Portkey { get; set; }
     public ProviderConfig? DeepL { get; set; }
     public ProviderConfig? CometAPI { get; set; }
@@ -221,7 +220,7 @@ public class AIServiceConfig
     public ProviderConfig? GPTProto { get; set; }
     public ProviderConfig? Neosantara { get; set; }
     public ProviderConfig? RedPill { get; set; }
-    public ProviderConfig? Mangaba { get; set; }
+    //public ProviderConfig? Mangaba { get; set; }
     public ProviderConfig? BlazeRail { get; set; }
     public ProviderConfig? Aether { get; set; }
     public ProviderConfig? ReGraph { get; set; }
@@ -315,7 +314,6 @@ public class AIServiceConfig
     public ProviderConfig? Agentics { get; set; }
     public ProviderConfig? Gatewayz { get; set; }
     public ProviderConfig? UplinkAPI { get; set; }
-    public ProviderConfig? SovereignAPI { get; set; }
     public ProviderConfig? NRPNautilus { get; set; }
     public ProviderConfig? EAGM { get; set; }
     public ProviderConfig? Edgee { get; set; }
@@ -383,7 +381,6 @@ public class AIServiceConfig
     public ProviderConfig? DedalusLabs { get; set; }
     public ProviderConfig? World3 { get; set; }
     public ProviderConfig? VoidAI { get; set; }
-    public ProviderConfig? VibeCodeCheap { get; set; }
     public ProviderConfig? ModelMax { get; set; }
     public ProviderConfig? Yollomi { get; set; }
     public ProviderConfig? Infercom { get; set; }
@@ -435,6 +432,8 @@ public class AIServiceConfig
     public ProviderConfig? Privatemode { get; set; }
     public ProviderConfig? Tensorix { get; set; }
     public ProviderConfig? SchatziAI { get; set; }
+    public ProviderConfig? Nodebyt { get; set; }
+    public ProviderConfig? GPTsAPI { get; set; }
     
 
 }

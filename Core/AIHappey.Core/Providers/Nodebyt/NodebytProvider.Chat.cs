@@ -3,9 +3,9 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.VibeCodeCheap;
+namespace AIHappey.Core.Providers.Nodebyt;
 
-public partial class VibeCodeCheapProvider
+public partial class NodebytProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

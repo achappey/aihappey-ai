@@ -92,7 +92,6 @@ using AIHappey.Core.Providers.Cortecs;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AIHappey.Core.Providers.EUrouter;
 using AIHappey.Core.Providers.Requesty;
-using AIHappey.Core.Providers.Sudo;
 using AIHappey.Core.Providers.Portkey;
 using AIHappey.Core.Providers.DeepL;
 using AIHappey.Core.Providers.CometAPI;
@@ -314,7 +313,6 @@ using AIHappey.Core.Providers.AIRouter;
 using AIHappey.Core.Providers.Agentics;
 using AIHappey.Core.Providers.Gatewayz;
 using AIHappey.Core.Providers.UplinkAPI;
-using AIHappey.Core.Providers.SovereignAPI;
 using AIHappey.Core.Providers.NRPNautilus;
 using AIHappey.Core.Providers.EAGM;
 using AIHappey.Core.Providers.Edgee;
@@ -385,7 +383,6 @@ using AIHappey.Core.Providers.OfoxAI;
 using AIHappey.Core.Providers.DedalusLabs;
 using AIHappey.Core.Providers.World3;
 using AIHappey.Core.Providers.VoidAI;
-using AIHappey.Core.Providers.VibeCodeCheap;
 using AIHappey.Core.Providers.ModelMax;
 using AIHappey.Core.Providers.Yollomi;
 using AIHappey.Core.Providers.Infercom;
@@ -437,6 +434,8 @@ using AIHappey.Core.Providers.SimpleLLM;
 using AIHappey.Core.Providers.Privatemode;
 using AIHappey.Core.Providers.Tensorix;
 using AIHappey.Core.Providers.SchatziAI;
+using AIHappey.Core.Providers.Nodebyt;
+using AIHappey.Core.Providers.GPTsAPI;
 
 namespace AIHappey.Core.AI;
 
@@ -548,7 +547,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CortecsProvider>();
         services.AddSingleton<IModelProvider, EUrouterProvider>();
         services.AddSingleton<IModelProvider, RequestyProvider>();
-        //services.AddSingleton<IModelProvider, SudoProvider>();
         services.AddSingleton<IModelProvider, PortkeyProvider>();
         services.AddSingleton<IModelProvider, DeepLProvider>();
         services.AddSingleton<IModelProvider, CometAPIProvider>();
@@ -677,7 +675,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, NeosantaraProvider>();
         services.AddSingleton<IModelProvider, RedPillProvider>();
         services.AddSingleton<IModelProvider, BlazeRailProvider>();
-        //services.AddSingleton<IModelProvider, MangabaProvider>();
         services.AddSingleton<IModelProvider, AetherProvider>();
         services.AddSingleton<IModelProvider, ReGraphProvider>();
         services.AddSingleton<IModelProvider, ElectronHubProvider>();
@@ -772,7 +769,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AgenticsProvider>();
         services.AddSingleton<IModelProvider, GatewayzProvider>();
         services.AddSingleton<IModelProvider, UplinkAPIProvider>();
-        services.AddSingleton<IModelProvider, SovereignAPIProvider>();
+        //services.AddSingleton<IModelProvider, SovereignAPIProvider>();
         services.AddSingleton<IModelProvider, NRPNautilusProvider>();
         services.AddSingleton<IModelProvider, EAGMProvider>();
         services.AddSingleton<IModelProvider, EdgeeProvider>();
@@ -841,7 +838,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, DedalusLabsProvider>();
         services.AddSingleton<IModelProvider, World3Provider>();
         services.AddSingleton<IModelProvider, VoidAIProvider>();
-        //services.AddSingleton<IModelProvider, VibeCodeCheapProvider>();
         services.AddSingleton<IModelProvider, ModelMaxProvider>();
         services.AddSingleton<IModelProvider, YollomiProvider>();
         services.AddSingleton<IModelProvider, InfercomProvider>();
@@ -893,6 +889,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PrivatemodeProvider>();
         services.AddSingleton<IModelProvider, TensorixProvider>();
         services.AddSingleton<IModelProvider, SchatziAIProvider>();
+        services.AddSingleton<IModelProvider, NodebytProvider>();
+        services.AddSingleton<IModelProvider, GPTsAPIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

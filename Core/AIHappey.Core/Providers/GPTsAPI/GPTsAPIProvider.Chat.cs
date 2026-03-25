@@ -3,9 +3,9 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.SovereignAPI;
+namespace AIHappey.Core.Providers.GPTsAPI;
 
-public partial class SovereignAPIProvider
+public partial class GPTsAPIProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

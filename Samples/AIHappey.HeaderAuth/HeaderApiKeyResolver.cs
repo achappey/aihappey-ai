@@ -94,7 +94,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["inworld"] = "X-Inworld-Key",
             ["eurouter"] = "X-EUrouter-Key",
             ["requesty"] = "X-Requesty-Key",
-            ["sudo"] = "X-Sudo-Key",
             ["portkey"] = "X-Portkey-Key",
             ["deepl"] = "X-DeepL-Key",
             ["cometapi"] = "X-CometAPI-Key",
@@ -224,7 +223,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["neosantara"] = "X-Neosantara-Key",
             ["redpill"] = "X-RedPill-Key",
             ["blazerail"] = "X-BlazeRail-Key",
-            ["mangaba"] = "X-Mangaba-Key",
             ["aether"] = "X-Aether-Key",
             ["regraph"] = "X-ReGraph-Key",
             ["electronhub"] = "X-ElectronHub-Key",
@@ -385,7 +383,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["dedaluslabs"] = "X-DedalusLabs-Key",
             ["world3"] = "X-World3-Key",
             ["voidai"] = "X-VoidAI-Key",
-            ["vibecodecheap"] = "X-VibeCodeCheap-Key",
             ["modelmax"] = "X-ModelMax-Key",
             ["yollomi"] = "X-Yollomi-Key",
             ["infercom"] = "X-Infercom-Key",
@@ -437,6 +434,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["privatemode"] = "X-Privatemode-Key",
             ["tensorix"] = "X-Tensorix-Key",
             ["schatziai"] = "X-SchatziAI-Key",
+            ["nodebyt"] = "X-Nodebyt-Key",
+            ["gptsapi"] = "X-GPTsAPI-Key",
 
         };
 

@@ -1,10 +1,11 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
-namespace AIHappey.Core.Providers.VibeCodeCheap;
+namespace AIHappey.Core.Providers.Nodebyt;
 
-public partial class VibeCodeCheapProvider
+public partial class NodebytProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -27,7 +28,7 @@ public partial class VibeCodeCheapProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"VibeCodeCheap API error: {err}");
+                    throw new Exception($"Nodebyt API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -36,25 +37,20 @@ public partial class VibeCodeCheapProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                // ✅ root is already an array
-                var arr = root.EnumerateArray();
+
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                        ? dataEl.EnumerateArray()
+                        : Enumerable.Empty<JsonElement>();
 
                 foreach (var el in arr)
                 {
                     Model model = new();
 
-                    if (el.TryGetProperty("name", out var idEl))
+                    if (el.TryGetProperty("id", out var idEl))
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
                     }
-
-
-                    if (el.TryGetProperty("provider", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
-
-                    if (el.TryGetProperty("display_name", out var nameEl))
-                        model.Name = nameEl.GetString() ?? model.Name;
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
