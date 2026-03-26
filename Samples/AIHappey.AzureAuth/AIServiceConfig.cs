@@ -169,7 +169,7 @@ public class AIServiceConfig
     public ProviderConfig? Cartesia { get; set; }
     public ProviderConfig? Vapi { get; set; }
     public ProviderConfig? SmallestAI { get; set; }
-    public ProviderConfig? Orq { get; set; }
+    public ProviderConfig? OrqRouter { get; set; }
     public ProviderConfig? Typecast { get; set; }
     public ProviderConfig? UnrealSpeech { get; set; }
     public ProviderConfig? Kugu { get; set; }
@@ -434,6 +434,7 @@ public class AIServiceConfig
     public ProviderConfig? SchatziAI { get; set; }
     public ProviderConfig? Nodebyt { get; set; }
     public ProviderConfig? GPTsAPI { get; set; }
+    public ProviderConfig? OrqAgentRuntime { get; set; }
     
 
 }

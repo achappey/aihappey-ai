@@ -171,7 +171,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["cartesia"] = "X-Cartesia-Key",
             ["vapi"] = "X-Vapi-Key",
             ["smallestai"] = "X-SmallestAI-Key",
-            ["orq"] = "X-Orq-Key",
+            ["orqrouter"] = "X-OrqRouter-Key",
             ["typecast"] = "X-Typecast-Key",
             ["unrealspeech"] = "X-UnrealSpeech-Key",
             ["kugu"] = "X-Kugu-Key",
@@ -436,6 +436,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["schatziai"] = "X-SchatziAI-Key",
             ["nodebyt"] = "X-Nodebyt-Key",
             ["gptsapi"] = "X-GPTsAPI-Key",
+            ["orqagentrunime"] = "X-OrqAgentRuntime-Key",
 
         };
 
