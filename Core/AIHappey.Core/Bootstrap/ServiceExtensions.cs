@@ -449,6 +449,14 @@ using AIHappey.Core.Providers.Magisterium;
 using AIHappey.Core.Providers.MumeAI;
 using AIHappey.Core.Providers.Lacesse;
 using AIHappey.Core.Providers.UncensoredChat;
+using AIHappey.Core.Providers.OpenGateway;
+using AIHappey.Core.Providers.AppLingo;
+using AIHappey.Core.Providers.OrbGPU;
+using AIHappey.Core.Providers.OmniaKey;
+using AIHappey.Core.Providers.NebulaBlock;
+using AIHappey.Core.Providers.Nouswise;
+using AIHappey.Core.Providers.Shengsuanyun;
+using AIHappey.Core.Providers.OpenSourceAIHub;
 
 namespace AIHappey.Core.AI;
 
@@ -917,6 +925,14 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MumeAIProvider>();
         services.AddSingleton<IModelProvider, LacesseProvider>();
         services.AddSingleton<IModelProvider, UncensoredChatProvider>();
+        services.AddSingleton<IModelProvider, OpenGatewayProvider>();
+        services.AddSingleton<IModelProvider, AppLingoProvider>();
+        services.AddSingleton<IModelProvider, OrbGPUProvider>();
+        services.AddSingleton<IModelProvider, OmniaKeyProvider>();
+        services.AddSingleton<IModelProvider, NebulaBlockProvider>();
+        services.AddSingleton<IModelProvider, NouswiseProvider>();
+        services.AddSingleton<IModelProvider, ShengsuanyunProvider>();
+        services.AddSingleton<IModelProvider, OpenSourceAIHubProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

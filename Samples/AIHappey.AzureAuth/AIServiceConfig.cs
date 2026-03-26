@@ -447,6 +447,14 @@ public class AIServiceConfig
     public ProviderConfig? MumeAI { get; set; }
     public ProviderConfig? Lacesse { get; set; }
     public ProviderConfig? UncensoredChat { get; set; }
+    public ProviderConfig? OrbGPU { get; set; }
+    public ProviderConfig? AppLingo { get; set; }
+    public ProviderConfig? OpenGateway { get; set; }
+    public ProviderConfig? OmniaKey { get; set; }
+    public ProviderConfig? NebulaBlock { get; set; }
+    public ProviderConfig? Nouswise { get; set; }
+    public ProviderConfig? Shengsuanyun { get; set; }
+    public ProviderConfig? OpenSourceAIHub { get; set; }
 }
 
 public class ProviderConfig

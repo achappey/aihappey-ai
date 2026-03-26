@@ -1,0 +1,2463 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "opensourceaihub/oah/claude-3-haiku-20240307",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-3-haiku-20240307",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-haiku-4-5-20251001",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-haiku-4-5-20251001",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-opus-4-1-20250805",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-opus-4-1-20250805",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-opus-4-20250514",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-opus-4-20250514",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-opus-4-5-20251101",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-opus-4-5-20251101",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-opus-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-opus-4-6",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-sonnet-4-20250514",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-sonnet-4-20250514",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-sonnet-4-5-20250929",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-sonnet-4-5-20250929",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "oah/claude-sonnet-4-6",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-235B-A22B",
+      "object": "model",
+      "owned_by": "Together.ai",
+      "name": "oah/Qwen/Qwen3-235B-A22B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-R1",
+      "object": "model",
+      "owned_by": "Together.ai",
+      "name": "oah/deepseek-ai/DeepSeek-R1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-V3",
+      "object": "model",
+      "owned_by": "Together.ai, DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-V3",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "object": "model",
+      "owned_by": "Together.ai, DeepInfra",
+      "name": "oah/meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "object": "model",
+      "owned_by": "Together.ai, DeepInfra",
+      "name": "oah/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "object": "model",
+      "owned_by": "Together.ai, DeepInfra",
+      "name": "oah/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "object": "model",
+      "owned_by": "Together.ai, DeepInfra",
+      "name": "oah/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "object": "model",
+      "owned_by": "Together.ai, DeepInfra",
+      "name": "oah/mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/codestral-2508",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/codestral-2508",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/codestral-embed",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/codestral-embed",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/codestral-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/codestral-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/devstral-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/devstral-2512",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/devstral-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/devstral-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/devstral-medium-2507",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/devstral-medium-2507",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/devstral-medium-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/devstral-medium-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/devstral-small-2507",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/devstral-small-2507",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/devstral-small-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/devstral-small-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/labs-devstral-small-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/labs-devstral-small-2512",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/labs-leanstral-2603",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/labs-leanstral-2603",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/labs-mistral-small-creative",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/labs-mistral-small-creative",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/magistral-medium-2509",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/magistral-medium-2509",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/magistral-medium-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/magistral-medium-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/magistral-small-2509",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/magistral-small-2509",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/magistral-small-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/magistral-small-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ministral-14b-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/ministral-14b-2512",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ministral-14b-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/ministral-14b-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ministral-3b-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/ministral-3b-2512",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ministral-3b-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/ministral-3b-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ministral-8b-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/ministral-8b-2512",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ministral-8b-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/ministral-8b-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-embed",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-embed",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-large-2411",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-large-2411",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-large-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-large-2512",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-large-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-large-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-large-pixtral-2411",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-large-pixtral-2411",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-medium",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-medium",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-medium-2505",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-medium-2505",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-medium-2508",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-medium-2508",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-medium-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-medium-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-ocr-2503",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-ocr-2503",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-ocr-2505",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-ocr-2505",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-ocr-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-ocr-2512",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-ocr-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-ocr-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-small-2506",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-small-2506",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-small-2603",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-small-2603",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-small-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-small-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-tiny-2407",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-tiny-2407",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-tiny-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-tiny-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-vibe-cli-fast",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-vibe-cli-fast",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-vibe-cli-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-vibe-cli-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistral-vibe-cli-with-tools",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/mistral-vibe-cli-with-tools",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/open-mistral-nemo",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/open-mistral-nemo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/open-mistral-nemo-2407",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/open-mistral-nemo-2407",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/pixtral-large-2411",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/pixtral-large-2411",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/pixtral-large-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/pixtral-large-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-2507",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-2507",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-2602",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-2602",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-latest",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-realtime-2602",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-realtime-2602",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-realtime-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-realtime-latest",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-transcribe-2507",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-transcribe-2507",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-transcribe-realtime-2602",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-transcribe-realtime-2602",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-tts-2603",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-tts-2603",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-mini-tts-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-mini-tts-latest",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-small-2507",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-small-2507",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/voxtral-small-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "oah/voxtral-small-latest",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/allam-2-7b",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/allam-2-7b",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/groq/compound",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/groq/compound",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/groq/compound-mini",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/groq/compound-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/llama-3.1-8b-instant",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/llama-3.1-8b-instant",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/llama-3.3-70b-versatile",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/llama-3.3-70b-versatile",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/llama-4-scout-17b-16e-instruct",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/meta-llama/llama-4-scout-17b-16e-instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/moonshotai/kimi-k2-instruct",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/moonshotai/kimi-k2-instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/moonshotai/kimi-k2-instruct-0905",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/moonshotai/kimi-k2-instruct-0905",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/openai/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "Groq, DeepInfra",
+      "name": "oah/openai/gpt-oss-120b",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/openai/gpt-oss-20b",
+      "object": "model",
+      "owned_by": "Groq, DeepInfra",
+      "name": "oah/openai/gpt-oss-20b",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/qwen/qwen3-32b",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "oah/qwen/qwen3-32b",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deep-research-pro-preview-12-2025",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/deep-research-pro-preview-12-2025",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.0-flash",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.0-flash",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.0-flash-001",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.0-flash-001",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.0-flash-lite",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.0-flash-lite",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.0-flash-lite-001",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.0-flash-lite-001",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-computer-use-preview-10-2025",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-computer-use-preview-10-2025",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-flash-image",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-flash-image",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-flash-lite",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-flash-lite",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-flash-lite-preview-09-2025",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-flash-lite-preview-09-2025",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-flash-preview-tts",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-flash-preview-tts",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-pro",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-2.5-pro-preview-tts",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-2.5-pro-preview-tts",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-3-flash-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-3-pro-image-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-3-pro-image-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-3-pro-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-3-pro-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-3.1-flash-image-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-3.1-flash-image-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-3.1-flash-lite-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-3.1-flash-lite-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-3.1-pro-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-3.1-pro-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-3.1-pro-preview-customtools",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-3.1-pro-preview-customtools",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-flash-latest",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-flash-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-flash-lite-latest",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-flash-lite-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-pro-latest",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-pro-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemini-robotics-er-1.5-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemini-robotics-er-1.5-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemma-3-12b-it",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemma-3-12b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemma-3-1b-it",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemma-3-1b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemma-3-27b-it",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemma-3-27b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemma-3-4b-it",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemma-3-4b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemma-3n-e2b-it",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemma-3n-e2b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gemma-3n-e4b-it",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/gemma-3n-e4b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/nano-banana-pro-preview",
+      "object": "model",
+      "owned_by": "Google Gemini",
+      "name": "oah/nano-banana-pro-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-3",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-3",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-3-mini",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-3-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4-0709",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4-0709",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4-1-fast-non-reasoning",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4-1-fast-non-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4-1-fast-reasoning",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4-1-fast-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4-fast-non-reasoning",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4-fast-non-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4-fast-reasoning",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4-fast-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4.20-0309-non-reasoning",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4.20-0309-non-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4.20-0309-reasoning",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4.20-0309-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-4.20-multi-agent-0309",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-4.20-multi-agent-0309",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-code-fast-1",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-code-fast-1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-imagine-image",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-imagine-image",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-imagine-image-pro",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-imagine-image-pro",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/grok-imagine-video",
+      "object": "model",
+      "owned_by": "xAI (Grok)",
+      "name": "oah/grok-imagine-video",
+      "type": "video"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/Bria-3.2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/Bria-3.2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/Bria-3.2-vector",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/Bria-3.2-vector",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/blur_background",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/blur_background",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/enhance",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/enhance",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/erase",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/erase",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/erase_foreground",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/erase_foreground",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/expand",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/expand",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/fibo",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/fibo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/fibo_edit",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/fibo_edit",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/gen_fill",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/gen_fill",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/remove_background",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/remove_background",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Bria/replace_background",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Bria/replace_background",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ByteDance/Seed-1.8",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/ByteDance/Seed-1.8",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ByteDance/Seed-2.0-mini",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/ByteDance/Seed-2.0-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ByteDance/Seedream-4",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/ByteDance/Seedream-4",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ByteDance/Seedream-4.5",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/ByteDance/Seedream-4.5",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ClarityAI/creative",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/ClarityAI/creative",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/ClarityAI/crystal",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/ClarityAI/crystal",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Gryphe/MythoMax-L2-13b",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Gryphe/MythoMax-L2-13b",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/MiniMaxAI/MiniMax-M2.1",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/MiniMaxAI/MiniMax-M2.1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/MiniMaxAI/MiniMax-M2.5",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/MiniMaxAI/MiniMax-M2.5",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/NousResearch/Hermes-3-Llama-3.1-405B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/NousResearch/Hermes-3-Llama-3.1-405B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/NousResearch/Hermes-3-Llama-3.1-70B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/NousResearch/Hermes-3-Llama-3.1-70B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/PaddlePaddle/PaddleOCR-VL-0.9B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/PaddlePaddle/PaddleOCR-VL-0.9B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/PrunaAI/p-image",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/PrunaAI/p-image",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/PrunaAI/p-image-Edit",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/PrunaAI/p-image-Edit",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen-Image-Edit",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen-Image-Edit",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen-Image-Edit-Max",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen-Image-Edit-Max",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen-Image-Max",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen-Image-Max",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen2.5-72B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen2.5-72B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen2.5-VL-32B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen2.5-VL-32B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-14B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-14B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-30B-A3B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-30B-A3B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-32B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-32B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-Coder-480B-A35B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-Coder-480B-A35B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-Max",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-Max",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-Max-Thinking",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-Max-Thinking",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-Next-80B-A3B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-Next-80B-A3B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-VL-235B-A22B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-VL-235B-A22B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3-VL-30B-A3B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3-VL-30B-A3B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Qwen/Qwen3.5-122B-A10B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Qwen/Qwen3.5-122B-A10B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Sao10K/L3-8B-Lunaris-v1-Turbo",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Sao10K/L3-8B-Lunaris-v1-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Sao10K/L3.1-70B-Euryale-v2.2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Sao10K/L3.1-70B-Euryale-v2.2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Sao10K/L3.3-70B-Euryale-v2.3",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Sao10K/L3.3-70B-Euryale-v2.3",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Wan-AI/Wan2.6-Image-Edit",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Wan-AI/Wan2.6-Image-Edit",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/Wan-AI/Wan2.6-T2I",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/Wan-AI/Wan2.6-T2I",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/allenai/Olmo-3.1-32B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/allenai/Olmo-3.1-32B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/allenai/olmOCR-2-7B-1025",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/allenai/olmOCR-2-7B-1025",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/anthropic/claude-3-7-sonnet-latest",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/anthropic/claude-3-7-sonnet-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/anthropic/claude-4-opus",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/anthropic/claude-4-opus",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/anthropic/claude-4-sonnet",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/anthropic/claude-4-sonnet",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-OCR",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-OCR",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-R1-0528",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-R1-0528",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-R1-0528-Turbo",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-R1-0528-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-V3-0324",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-V3-0324",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-V3.1",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-V3.1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-V3.1-Terminus",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-V3.1-Terminus",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/DeepSeek-V3.2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/DeepSeek-V3.2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/Janus-Pro-1B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/Janus-Pro-1B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/deepseek-ai/Janus-Pro-7B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/deepseek-ai/Janus-Pro-7B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/google/gemini-1.5-flash",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/google/gemini-1.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/google/gemini-1.5-flash-8b",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/google/gemini-1.5-flash-8b",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/google/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/google/gemini-2.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/google/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/google/gemini-2.5-pro",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/google/gemma-3-12b-it",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/google/gemma-3-12b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/google/gemma-3-27b-it",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/google/gemma-3-27b-it",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/google/gemma-3-4b-it",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/google/gemma-3-4b-it",
+      "type": "language"
+    },
+   
+    {
+      "id": "opensourceaihub/oah/meta-llama/Llama-3.2-11B-Vision-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/meta-llama/Llama-3.2-11B-Vision-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Llama-Guard-4-12B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/meta-llama/Llama-Guard-4-12B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Meta-Llama-3-8B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/meta-llama/Meta-Llama-3-8B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Meta-Llama-3.1-70B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/meta-llama/Meta-Llama-3.1-70B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/microsoft/phi-4",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/microsoft/phi-4",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistralai/Mistral-Nemo-Instruct-2407",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/mistralai/Mistral-Nemo-Instruct-2407",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistralai/Mistral-Small-24B-Instruct-2501",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/mistralai/Mistral-Small-24B-Instruct-2501",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/moonshotai/Kimi-K2-Instruct-0905",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/moonshotai/Kimi-K2-Instruct-0905",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/moonshotai/Kimi-K2-Thinking",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/moonshotai/Kimi-K2-Thinking",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/moonshotai/Kimi-K2.5",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/moonshotai/Kimi-K2.5",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/moonshotai/Kimi-K2.5-Turbo",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/moonshotai/Kimi-K2.5-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/nvidia/Llama-3.1-Nemotron-70B-Instruct",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/nvidia/Llama-3.1-Nemotron-70B-Instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/nvidia/NVIDIA-Nemotron-Nano-12B-v2-VL",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/nvidia/NVIDIA-Nemotron-Nano-12B-v2-VL",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/nvidia/NVIDIA-Nemotron-Nano-9B-v2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/nvidia/NVIDIA-Nemotron-Nano-9B-v2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/nvidia/Nemotron-3-Nano-30B-A3B",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/nvidia/Nemotron-3-Nano-30B-A3B",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/openai/gpt-oss-120b-Turbo",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/openai/gpt-oss-120b-Turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sentence-transformers/all-MiniLM-L12-v2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/sentence-transformers/all-MiniLM-L12-v2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sentence-transformers/all-MiniLM-L6-v2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/sentence-transformers/all-MiniLM-L6-v2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sentence-transformers/all-mpnet-base-v2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/sentence-transformers/all-mpnet-base-v2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sentence-transformers/clip-ViT-B-32",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/sentence-transformers/clip-ViT-B-32",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sentence-transformers/clip-ViT-B-32-multilingual-v1",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/sentence-transformers/clip-ViT-B-32-multilingual-v1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sentence-transformers/multi-qa-mpnet-base-dot-v1",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/sentence-transformers/multi-qa-mpnet-base-dot-v1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sentence-transformers/paraphrase-MiniLM-L6-v2",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/sentence-transformers/paraphrase-MiniLM-L6-v2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/shibing624/text2vec-base-chinese",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/shibing624/text2vec-base-chinese",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/thenlper/gte-base",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/thenlper/gte-base",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/thenlper/gte-large",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/thenlper/gte-large",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/zai-org/GLM-4.6",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/zai-org/GLM-4.6",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/zai-org/GLM-4.6V",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/zai-org/GLM-4.6V",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/zai-org/GLM-4.7",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/zai-org/GLM-4.7",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/zai-org/GLM-4.7-Flash",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/zai-org/GLM-4.7-Flash",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/zai-org/GLM-5",
+      "object": "model",
+      "owned_by": "DeepInfra",
+      "name": "oah/zai-org/GLM-5",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/babbage-002",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/babbage-002",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/chatgpt-image-latest",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/chatgpt-image-latest",
+      "type": "image"
+    },
+    {
+      "id": "opensourceaihub/oah/davinci-002",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/davinci-002",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-3.5-turbo",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-3.5-turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-3.5-turbo-0125",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-3.5-turbo-0125",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-3.5-turbo-1106",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-3.5-turbo-1106",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-3.5-turbo-16k",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-3.5-turbo-16k",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-3.5-turbo-instruct",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-3.5-turbo-instruct",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-3.5-turbo-instruct-0914",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-3.5-turbo-instruct-0914",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4-0125-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4-0125-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4-0613",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4-0613",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4-1106-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4-1106-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4-turbo",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4-turbo",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4-turbo-2024-04-09",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4-turbo-2024-04-09",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4-turbo-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4-turbo-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4.1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4.1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4.1-2025-04-14",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4.1-2025-04-14",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4.1-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4.1-mini-2025-04-14",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4.1-mini-2025-04-14",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4.1-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4.1-nano",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4.1-nano-2025-04-14",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4.1-nano-2025-04-14",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-2024-05-13",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-2024-05-13",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-2024-08-06",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-2024-08-06",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-2024-11-20",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-2024-11-20",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-audio-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-audio-preview",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-audio-preview-2024-12-17",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-audio-preview-2024-12-17",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-audio-preview-2025-06-03",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-audio-preview-2025-06-03",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-2024-07-18",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-2024-07-18",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-audio-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-audio-preview",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-audio-preview-2024-12-17",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-audio-preview-2024-12-17",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-realtime-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-realtime-preview",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-realtime-preview-2024-12-17",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-realtime-preview-2024-12-17",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-search-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-search-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-search-preview-2025-03-11",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-search-preview-2025-03-11",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-transcribe",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-transcribe",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-transcribe-2025-03-20",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-transcribe-2025-03-20",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-transcribe-2025-12-15",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-transcribe-2025-12-15",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-tts",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-tts",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-tts-2025-03-20",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-tts-2025-03-20",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-mini-tts-2025-12-15",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-mini-tts-2025-12-15",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-realtime-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-realtime-preview",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-realtime-preview-2024-12-17",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-realtime-preview-2024-12-17",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-realtime-preview-2025-06-03",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-realtime-preview-2025-06-03",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-search-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-search-preview",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-search-preview-2025-03-11",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-search-preview-2025-03-11",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-transcribe",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-transcribe",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-4o-transcribe-diarize",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-4o-transcribe-diarize",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-2025-08-07",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-2025-08-07",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-chat-latest",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-chat-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-codex",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-mini-2025-08-07",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-mini-2025-08-07",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-nano",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-nano-2025-08-07",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-nano-2025-08-07",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-pro",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-pro",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-pro-2025-10-06",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-pro-2025-10-06",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-search-api",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-search-api",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5-search-api-2025-10-14",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5-search-api-2025-10-14",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.1-2025-11-13",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.1-2025-11-13",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.1-chat-latest",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.1-chat-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.1-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.1-codex",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.1-codex-max",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.1-codex-max",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.1-codex-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.1-codex-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.2",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.2",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.2-2025-12-11",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.2-2025-12-11",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.2-chat-latest",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.2-chat-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.2-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.2-codex",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.2-pro",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.2-pro",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.2-pro-2025-12-11",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.2-pro-2025-12-11",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.3-chat-latest",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.3-chat-latest",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.3-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.3-codex",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4-2026-03-05",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4-2026-03-05",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4-mini-2026-03-17",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4-mini-2026-03-17",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4-nano",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4-nano-2026-03-17",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4-nano-2026-03-17",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4-pro",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4-pro",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-5.4-pro-2026-03-05",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-5.4-pro-2026-03-05",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-audio",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-audio",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-audio-1.5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-audio-1.5",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-audio-2025-08-28",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-audio-2025-08-28",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-audio-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-audio-mini",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-audio-mini-2025-10-06",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-audio-mini-2025-10-06",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-audio-mini-2025-12-15",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-audio-mini-2025-12-15",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-image-1.5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-image-1.5",
+      "type": "image"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-realtime-1.5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-realtime-1.5",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-realtime-2025-08-28",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-realtime-2025-08-28",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-realtime-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-realtime-mini",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-realtime-mini-2025-10-06",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-realtime-mini-2025-10-06",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-realtime-mini-2025-12-15",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-realtime-mini-2025-12-15",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/o1-pro",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o1-pro",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o1-pro-2025-03-19",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o1-pro-2025-03-19",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o3",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o3",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o3-2025-04-16",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o3-2025-04-16",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o3-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o3-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o3-mini-2025-01-31",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o3-mini-2025-01-31",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o4-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o4-mini",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o4-mini-2025-04-16",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o4-mini-2025-04-16",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o4-mini-deep-research",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o4-mini-deep-research",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o4-mini-deep-research-2025-06-26",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o4-mini-deep-research-2025-06-26",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/sora-2",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/sora-2",
+      "type": "video"
+    },
+    {
+      "id": "opensourceaihub/oah/sora-2-pro",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/sora-2-pro",
+      "type": "video"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-image-1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-image-1",
+      "type": "image"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-image-1-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-image-1-mini",
+      "type": "image"
+    },
+    {
+      "id": "opensourceaihub/oah/gpt-realtime",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/gpt-realtime",
+      "type": "audio"
+    },
+    {
+      "id": "opensourceaihub/oah/o1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o1",
+      "type": "language"
+    },
+    {
+      "id": "opensourceaihub/oah/o1-2024-12-17",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "oah/o1-2024-12-17",
+      "type": "language"
+    }
+  ]
+}

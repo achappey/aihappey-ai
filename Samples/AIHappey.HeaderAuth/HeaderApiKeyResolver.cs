@@ -449,6 +449,14 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mumeai"] = "X-MumeAI-Key",
             ["lacesse"] = "X-Lacesse-Key",
             ["uncensoredchat"] = "X-UncensoredChat-Key",
+            ["applingo"] = "X-AppLingo-Key",
+            ["orbgpu"] = "X-OrbGPU-Key",
+            ["opengateway"] = "X-OpenGateway-Key",
+            ["omniakey"] = "X-OmniaKey-Key",
+            ["nebulablock"] = "X-NebulaBlock-Key",
+            ["nouswise"] = "X-Nouswise-Key",
+            ["shengsuanyun"] = "X-Shengsuanyun-Key",
+            ["opensourceaihub"] = "X-OpenSourceAIHub-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

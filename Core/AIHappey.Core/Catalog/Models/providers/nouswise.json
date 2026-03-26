@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "nouswise/standard",
+      "object": "model",
+      "owned_by": "Nouswise",
+      "name": "Standard",
+      "type": "language",
+      "description": "Provides reliable citations for single-hop questions."
+    },
+    {
+      "id": "nouswise/advanced",
+      "object": "model",
+      "owned_by": "Nouswise",
+      "name": "Advanced",
+      "type": "language",
+      "description": "Excels in multi-hop questions—connecting multiple pieces of information."
+    }
+  ]
+}
