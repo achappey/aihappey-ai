@@ -16,7 +16,7 @@ public partial class InfercomProvider
             cacheKey,
             async ct =>
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?verbose=true");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -43,6 +43,17 @@ public partial class InfercomProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                    }
+
+                    if (el.TryGetProperty("sn_metadata", out var snEl) &&
+                        snEl.ValueKind == JsonValueKind.Object &&
+                        snEl.TryGetProperty("region", out var regionEl) &&
+                        regionEl.ValueKind == JsonValueKind.String)
+                    {
+                        var region = regionEl.GetString();
+
+                        if (!string.IsNullOrWhiteSpace(region))
+                            model.Name += $" ({region})";
                     }
 
                     model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
