@@ -153,6 +153,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | FastRouter     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | FishAudio      | ✅        | ❌                | ❌            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | Fireworks      | ✅        | ✅                | ✅            | 🟡        | ✅                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
+| FiveDock       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Forefront      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Fortytwo       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Foureverland   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -213,6 +214,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | JSON2Video     | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | JKAIHub        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Kilo           | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Key4U          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Keyplex        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | KimiK2         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Kirha          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -223,6 +225,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Kugu           | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | LangDB         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LaoZhang       | ✅        | ✅                | ❌            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
+| Lacesse        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Lava           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LectoAI        | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LemonData      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -246,6 +249,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LumaAI         | ✅        | ❌                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Lumenfall      | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Lunos          | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Magisterium    | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MancerAI       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MaritacaAI     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Martian        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -271,6 +275,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Morpheus       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | MuleRun        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MultiverseAI   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| MumeAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MurfAI         | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | NagaAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | NavyAI         | ✅        | ✅                | ❌            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
@@ -414,6 +419,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Typecast       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | UniAPI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | UltraSafe      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| UncensoredChat | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | UnrealSpeech   | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Unbound        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Upstage        | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -436,6 +442,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Vultr          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | WAI            | ✅        | ✅                | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | WebsearchAPI   | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| WesenAI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | WidnAI         | ✅        | ✅                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | WisdomGate     | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | World3         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

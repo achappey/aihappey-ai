@@ -442,7 +442,13 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["oraicle"] = "X-Oraicle-Key",
             ["foureverland"] = "X-Foureverland-Key",
             ["distributeai"] = "X-DistributeAI-Key",
-
+            ["wesenai"] = "X-WesenAI-Key",
+            ["key4u"] = "X-Key4U-Key",
+            ["fivedock"] = "X-FiveDock-Key",
+            ["magisterium"] = "X-Magisterium-Key",
+            ["mumeai"] = "X-MumeAI-Key",
+            ["lacesse"] = "X-Lacesse-Key",
+            ["uncensoredchat"] = "X-UncensoredChat-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

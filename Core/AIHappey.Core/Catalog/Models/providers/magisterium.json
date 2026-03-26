@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "magisterium/magisterium-1",
+      "object": "model",
+      "owned_by": "Magisterium",
+      "name": "magisterium-1",
+      "type": "language"
+    }
+  ]
+}

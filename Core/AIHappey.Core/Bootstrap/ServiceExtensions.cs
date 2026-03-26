@@ -442,6 +442,13 @@ using AIHappey.Core.Providers.Fortytwo;
 using AIHappey.Core.Providers.Oraicle;
 using AIHappey.Core.Providers.Foureverland;
 using AIHappey.Core.Providers.DistributeAI;
+using AIHappey.Core.Providers.WesenAI;
+using AIHappey.Core.Providers.Key4U;
+using AIHappey.Core.Providers.FiveDock;
+using AIHappey.Core.Providers.Magisterium;
+using AIHappey.Core.Providers.MumeAI;
+using AIHappey.Core.Providers.Lacesse;
+using AIHappey.Core.Providers.UncensoredChat;
 
 namespace AIHappey.Core.AI;
 
@@ -903,6 +910,13 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OraicleProvider>();
         services.AddSingleton<IModelProvider, FoureverlandProvider>();
         services.AddSingleton<IModelProvider, DistributeAIProvider>();
+        services.AddSingleton<IModelProvider, WesenAIProvider>();
+        services.AddSingleton<IModelProvider, Key4UProvider>();
+        services.AddSingleton<IModelProvider, FiveDockProvider>();
+        services.AddSingleton<IModelProvider, MagisteriumProvider>();
+        services.AddSingleton<IModelProvider, MumeAIProvider>();
+        services.AddSingleton<IModelProvider, LacesseProvider>();
+        services.AddSingleton<IModelProvider, UncensoredChatProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

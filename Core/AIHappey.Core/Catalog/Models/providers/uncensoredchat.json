@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "uncensoredchat/uncensored-v2",
+      "object": "model",
+      "owned_by": "UncensoredChat",
+      "name": "uncensored-v2",
+      "type": "language",
+      "description": "High-performance model for general conversation and complex reasoning tasks."
+    }
+  ]
+}

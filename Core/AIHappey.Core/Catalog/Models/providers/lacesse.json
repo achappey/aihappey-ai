@@ -1,0 +1,41 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "lacesse/llama-3.3-70b-versatile",
+      "object": "model",
+      "owned_by": "Lacesse",
+      "name": "Llama 3 70B",
+      "type": "language",
+      "description": "70B parameter model optimized for high-precision instruction following, deep reasoning, complex RAG pipelines, multi-step logic, and advanced code generation.",
+      "context_window": 131072
+    },
+    {
+      "id": "lacesse/llama-3.1-8b-instant",
+      "object": "model",
+      "owned_by": "Lacesse",
+      "name": "Llama 3 8B",
+      "type": "language",
+      "description": "8B parameter low-latency model designed for high-throughput tasks, real-time chatbots, bulk classification, data extraction, and large-scale summarization.",
+      "context_window": 131072
+    },
+    {
+      "id": "lacesse/qwen-2.5-32b",
+      "object": "model",
+      "owned_by": "Lacesse",
+      "name": "Qwen 3 32B",
+      "type": "language",
+      "description": "32B parameter multilingual model with strong coding capabilities, suited for translation, large document parsing, financial/legal analysis, and codebase reasoning.",
+      "context_window": 131072
+    },
+    {
+      "id": "lacesse/openai/gpt-oss-20b",
+      "object": "model",
+      "owned_by": "Lacesse",
+      "name": "GPT OSS 20B",
+      "type": "language",
+      "description": "20B parameter aligned general-purpose model for conversational AI, creative writing, safe content generation, and dynamic agent-style interactions.",
+      "context_window": 131072
+    }
+  ]
+}
