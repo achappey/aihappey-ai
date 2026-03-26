@@ -1,0 +1,26 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "distributeai/llama-3.1-8b",
+      "object": "model",
+      "owned_by": "distributeai",
+      "name": "Llama-3.1 8B",
+      "type": "language"
+    },
+    {
+      "id": "distributeai/llama-3.3-70b",
+      "object": "model",
+      "owned_by": "distributeai",
+      "name": "Llama-3.3 70B",
+      "type": "language"
+    },
+    {
+      "id": "distributeai/flux.1-dev",
+      "object": "model",
+      "owned_by": "distributeai",
+      "name": "Flux.1 [dev]",
+      "type": "image"
+    }
+  ]
+}

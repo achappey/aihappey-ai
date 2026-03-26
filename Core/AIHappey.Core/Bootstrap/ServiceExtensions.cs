@@ -439,6 +439,9 @@ using AIHappey.Core.Providers.Nodebyt;
 using AIHappey.Core.Providers.GPTsAPI;
 using AIHappey.Core.Providers.EmberCloud;
 using AIHappey.Core.Providers.Fortytwo;
+using AIHappey.Core.Providers.Oraicle;
+using AIHappey.Core.Providers.Foureverland;
+using AIHappey.Core.Providers.DistributeAI;
 
 namespace AIHappey.Core.AI;
 
@@ -897,6 +900,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GPTsAPIProvider>();
         services.AddSingleton<IModelProvider, EmberCloudProvider>();
         services.AddSingleton<IModelProvider, FortytwoProvider>();
+        services.AddSingleton<IModelProvider, OraicleProvider>();
+        services.AddSingleton<IModelProvider, FoureverlandProvider>();
+        services.AddSingleton<IModelProvider, DistributeAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

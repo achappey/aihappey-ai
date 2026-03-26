@@ -437,8 +437,9 @@ public class AIServiceConfig
     public ProviderConfig? OrqAgentRuntime { get; set; }
     public ProviderConfig? EmberCloud { get; set; }
     public ProviderConfig? Fortytwo { get; set; }
-    
-
+    public ProviderConfig? Oraicle { get; set; }
+    public ProviderConfig? Foureverland { get; set; }
+    public ProviderConfig? DistributeAI { get; set; }
 }
 
 public class ProviderConfig

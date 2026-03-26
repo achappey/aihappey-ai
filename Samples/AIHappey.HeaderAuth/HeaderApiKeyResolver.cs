@@ -439,6 +439,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["orqagentrunime"] = "X-OrqAgentRuntime-Key",
             ["embercloud"] = "X-EmberCloud-Key",
             ["fortytwo"] = "X-Fortytwo-Key",
+            ["oraicle"] = "X-Oraicle-Key",
+            ["foureverland"] = "X-Foureverland-Key",
+            ["distributeai"] = "X-DistributeAI-Key",
 
         };
 

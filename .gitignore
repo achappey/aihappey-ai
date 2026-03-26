@@ -29,7 +29,6 @@ nupkg/
 *.Development.json
 *.Fakton.*
 *.dev.*
-*dist*
 .clinerules
 *node_modules*
 .env
