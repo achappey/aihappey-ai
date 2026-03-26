@@ -6,16 +6,19 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using AIHappey.Responses.Extensions;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
 
-namespace AIHappey.Core.Providers.Blackbox;
+namespace AIHappey.Core.Providers.BLACKBOX;
 
-public partial class BlackboxProvider : IModelProvider
+public partial class BLACKBOXProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    public BlackboxProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public BLACKBOXProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
@@ -27,7 +30,7 @@ public partial class BlackboxProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Blackbox)} API key.");
+            throw new InvalidOperationException($"No {nameof(BLACKBOX)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -39,6 +42,9 @@ public partial class BlackboxProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (IsNativeAgentModel(options.Model))
+            return await CompleteNativeAgentChatAsync(options, cancellationToken);
+
         return await _client.GetChatCompletion(
              options,
              relativeUrl: "chat/completions",
@@ -49,13 +55,16 @@ public partial class BlackboxProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (IsNativeAgentModel(options.Model))
+            return CompleteNativeAgentChatStreamingAsync(options, cancellationToken);
+
         return _client.GetChatCompletionUpdates(
                     options,
                     relativeUrl: "chat/completions",
                     ct: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(Blackbox).ToLowerInvariant();
+    public string GetIdentifier() => nameof(BLACKBOX).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
@@ -71,14 +80,27 @@ public partial class BlackboxProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        if (IsNativeAgentModel(options.Model))
+            return await ExecuteNativeAgentResponsesAsync(options, cancellationToken);
+
+        return await _client.GetResponses(
+                   options, ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        if (IsNativeAgentModel(options.Model))
+            return ExecuteNativeAgentResponsesStreamingAsync(options, cancellationToken);
+
+        return _client.GetResponsesUpdates(
+           options,
+           ct: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

@@ -78,9 +78,10 @@ public static class ChatCompletionsExtensions
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
 
-        while (!reader.EndOfStream && !ct.IsCancellationRequested)
+        string? line;
+        while (!ct.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(ct)) != null)
         {
-            var line = await reader.ReadLineAsync(ct);
             if (line is null) yield break;
 
             if (line.Length == 0) continue; // keepalive

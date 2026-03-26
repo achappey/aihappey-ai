@@ -116,9 +116,10 @@ public partial class GroqProvider
         int? inputTokens = null, outputTokens = null, totalTokens = null, reasoningTokens = null;
         var activeReasoning = new HashSet<string>();
 
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        string? line;
+        while (!cancellationToken.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(cancellationToken)) != null)
         {
-            var line = await reader.ReadLineAsync();
             if (line is null) break;
             if (line.Length == 0) continue;
             if (line.StartsWith(":")) continue;

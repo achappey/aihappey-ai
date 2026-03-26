@@ -125,9 +125,10 @@ public partial class CortecsProvider
             }
         }
 
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+         string? line;
+        while (!cancellationToken.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(cancellationToken)) != null)
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null) break;
             if (line.Length == 0) continue;
             if (line.StartsWith(':')) continue;

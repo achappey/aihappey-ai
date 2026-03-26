@@ -141,7 +141,7 @@ public class AIServiceConfig
     public ProviderConfig? ArceeAI { get; set; }
     public ProviderConfig? Exa { get; set; }
     public ProviderConfig? Featherless { get; set; }
-    public ProviderConfig? Blackbox { get; set; }
+    public ProviderConfig? BLACKBOX { get; set; }
     public ProviderConfig? OhMyGPT { get; set; }
     public ProviderConfig? Ideogram { get; set; }
     public ProviderConfig? Pinecone { get; set; }

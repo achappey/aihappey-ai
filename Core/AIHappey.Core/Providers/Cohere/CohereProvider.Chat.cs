@@ -71,9 +71,10 @@ public partial class CohereProvider
         // Some servers use SSE header "event:", others put "event" in data JSON.
         string? sseEventHeader = null;
 
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        string? line;
+        while (!cancellationToken.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(cancellationToken)) != null)
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null) break;
             if (line.Length == 0) { sseEventHeader = null; continue; } // event separator
             if (line.StartsWith(':')) continue;                         // comment

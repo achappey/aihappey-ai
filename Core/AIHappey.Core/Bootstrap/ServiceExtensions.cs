@@ -142,7 +142,7 @@ using AIHappey.Core.Providers.Morpheus;
 using AIHappey.Core.Providers.ArceeAI;
 using AIHappey.Core.Providers.Exa;
 using AIHappey.Core.Providers.Featherless;
-using AIHappey.Core.Providers.Blackbox;
+using AIHappey.Core.Providers.BLACKBOX;
 using AIHappey.Core.Providers.OhMyGPT;
 using AIHappey.Core.Providers.Ideogram;
 using AIHappey.Core.Providers.Pinecone;
@@ -595,7 +595,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ArceeAIProvider>();
         services.AddSingleton<IModelProvider, ExaProvider>();
         services.AddSingleton<IModelProvider, FeatherlessProvider>();
-        services.AddSingleton<IModelProvider, BlackboxProvider>();
+        services.AddSingleton<IModelProvider, BLACKBOXProvider>();
         services.AddSingleton<IModelProvider, OhMyGPTProvider>();
         services.AddSingleton<IModelProvider, IdeogramProvider>();
         services.AddSingleton<IModelProvider, PineconeProvider>();

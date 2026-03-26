@@ -104,10 +104,10 @@ public sealed partial class AI21Provider
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
 
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        string? line;
+        while (!cancellationToken.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(cancellationToken)) != null)
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
-            if (line is null) yield break;
             if (line.Length == 0) continue;
             if (line.StartsWith(':')) continue;
             if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) continue;

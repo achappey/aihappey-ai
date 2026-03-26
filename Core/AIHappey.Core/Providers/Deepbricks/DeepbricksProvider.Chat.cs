@@ -44,9 +44,10 @@ public partial class DeepbricksProvider
         int completionTokens = 0;
         int totalTokens = 0;
 
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+         string? line;
+        while (!cancellationToken.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(cancellationToken)) != null)
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null)
                 break;
 

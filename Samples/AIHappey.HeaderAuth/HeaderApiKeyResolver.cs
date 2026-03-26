@@ -143,7 +143,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["arceeai"] = "X-ArceeAI-Key",
             ["exa"] = "X-Exa-Key",
             ["featherless"] = "X-Featherless-Key",
-            ["blackbox"] = "X-Blackbox-Key",
+            ["blackbox"] = "X-BLACKBOX-Key",
             ["ohmygpt"] = "X-OhMyGPT-Key",
             ["ideogram"] = "X-Ideogram-Key",
             ["pinecone"] = "X-Pinecone-Key",

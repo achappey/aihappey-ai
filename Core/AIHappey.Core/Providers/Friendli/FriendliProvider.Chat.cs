@@ -68,9 +68,10 @@ public partial class FriendliProvider
 
         int promptTokens = 0, completionTokens = 0, totalTokens = 0;
 
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+         string? line;
+        while (!cancellationToken.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(cancellationToken)) != null)
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null) break;
             if (line.Length == 0) continue;
             if (line.StartsWith(':')) continue;
