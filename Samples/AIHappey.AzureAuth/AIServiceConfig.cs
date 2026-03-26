@@ -435,6 +435,8 @@ public class AIServiceConfig
     public ProviderConfig? Nodebyt { get; set; }
     public ProviderConfig? GPTsAPI { get; set; }
     public ProviderConfig? OrqAgentRuntime { get; set; }
+    public ProviderConfig? EmberCloud { get; set; }
+    public ProviderConfig? Fortytwo { get; set; }
     
 
 }

@@ -437,6 +437,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["nodebyt"] = "X-Nodebyt-Key",
             ["gptsapi"] = "X-GPTsAPI-Key",
             ["orqagentrunime"] = "X-OrqAgentRuntime-Key",
+            ["embercloud"] = "X-EmberCloud-Key",
+            ["fortytwo"] = "X-Fortytwo-Key",
 
         };
 
