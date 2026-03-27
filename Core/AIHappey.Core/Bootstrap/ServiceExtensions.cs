@@ -457,6 +457,15 @@ using AIHappey.Core.Providers.NebulaBlock;
 using AIHappey.Core.Providers.Nouswise;
 using AIHappey.Core.Providers.Shengsuanyun;
 using AIHappey.Core.Providers.OpenSourceAIHub;
+using AIHappey.Core.Providers.Citadelis;
+using AIHappey.Core.Providers.Finora;
+using AIHappey.Core.Providers.CairoCoder;
+using AIHappey.Core.Providers.GeekAI;
+using AIHappey.Core.Providers.BayStone;
+using AIHappey.Core.Providers.AIMagicx;
+using AIHappey.Core.Providers.Octagon;
+using AIHappey.Core.Providers.Nataris;
+using AIHappey.Core.Providers.TheRouterAI;
 
 namespace AIHappey.Core.AI;
 
@@ -933,6 +942,16 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, NouswiseProvider>();
         services.AddSingleton<IModelProvider, ShengsuanyunProvider>();
         services.AddSingleton<IModelProvider, OpenSourceAIHubProvider>();
+        services.AddSingleton<IModelProvider, CitadelisProvider>();
+        services.AddSingleton<IModelProvider, FinoraProvider>();
+        services.AddSingleton<IModelProvider, CairoCoderProvider>();
+        services.AddSingleton<IModelProvider, GeekAIProvider>();
+        services.AddSingleton<IModelProvider, BayStoneProvider>();
+        services.AddSingleton<IModelProvider, AIMagicxProvider>();
+        services.AddSingleton<IModelProvider, OctagonProvider>();
+        services.AddSingleton<IModelProvider, NatarisProvider>();
+        services.AddSingleton<IModelProvider, TheRouterAIProvider>();
+        
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

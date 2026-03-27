@@ -457,6 +457,15 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["nouswise"] = "X-Nouswise-Key",
             ["shengsuanyun"] = "X-Shengsuanyun-Key",
             ["opensourceaihub"] = "X-OpenSourceAIHub-Key",
+            ["citadelis"] = "X-Citadelis-Key",
+            ["finora"] = "X-Finora-Key",
+            ["cairocoder"] = "X-CairoCoder-Key",
+            ["geekai"] = "X-GeekAI-Key",
+            ["baystone"] = "X-BayStone-Key",
+            ["aimagicx"] = "X-AIMagicx-Key",
+            ["octagon"] = "X-Octagon-Key",
+            ["nataris"] = "X-Nataris-Key",
+            ["therouterai"] = "X-TheRouterAI-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

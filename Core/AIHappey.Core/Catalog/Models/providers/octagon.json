@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "octagon/octagon-agent",
+      "object": "model",
+      "owned_by": "Octagon",
+      "name": "Octagon Agent",
+      "type": "language",
+      "description": "An intelligent orchestrator for specialized Public and Private Market agents."
+    },
+    {
+      "id": "octagon/octagon-prediction-markets-agent",
+      "object": "model",
+      "owned_by": "Octagon",
+      "name": "Octagon Prediction Markets Agent",
+      "type": "language",
+      "description": "A high-fidelity research agent engineered for prediction market intelligence. It automates deep-dive reporting by analyzing Kalshi event dynamics, catalysts, and probability discrepancies to provide a structured view of trade opportunities."
+    },
+    {
+      "id": "octagon/octagon-deep-research-agent",
+      "object": "model",
+      "owned_by": "Octagon",
+      "name": "Octagon Deep Research Agent",
+      "type": "language",
+      "description": "A comprehensive agent that can utilize multiple sources for deep research analysis."
+    }
+  ]
+}
