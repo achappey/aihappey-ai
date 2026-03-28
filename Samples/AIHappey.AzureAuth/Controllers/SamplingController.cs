@@ -18,9 +18,6 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
     [Authorize]
     public async Task<IActionResult> Post([FromBody] CreateMessageRequestParams requestDto, CancellationToken cancellationToken)
     {
-        //var model = requestDto.GetModel() ?? throw new Exception("Model missing");
-        // var provider = await _resolver.Resolve(model, cancellationToken);
-
         var models = requestDto.ModelPreferences?.Hints?.Select(a => a.Name).OfType<string>() ?? [];
         IModelProvider? provider = null;
 
@@ -35,7 +32,6 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
             }
             catch (Exception)
             {
-                //    provider = _resolver.GetProvider();
             }
         }
 

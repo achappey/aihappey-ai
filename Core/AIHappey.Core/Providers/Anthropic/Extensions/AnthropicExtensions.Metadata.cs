@@ -84,9 +84,10 @@ public static partial class AnthropicExtensions
         if (root?[AnthropicConstants.AnthropicIdentifier] is not JsonObject a)
             return null;
 
-        return a[tool] as JsonObject;
+        return a.TryGetPropertyValue(tool, out var value) && value is JsonObject o
+            ? o
+            : null;
     }
-
 
     public static IReadOnlyList<string>? ToAnthropicBetaFeatures(this JsonObject? obj)
     {
@@ -127,10 +128,12 @@ public static partial class AnthropicExtensions
 
         return ServerTools.GetWebSearchTool(maxUses: maxUses);
     }
+    
     public static ANT.Common.Tool? ToCodeExecution(this JsonObject? obj)
     {
-        return GetAnthropicTool(obj, "code_execution") is not null
-            ? new Function("code_execution", "code_execution_20250825", [])
-            : null;
+        if (GetAnthropicTool(obj, "code_execution") is null)
+            return null;
+
+        return new Function("code_execution", "code_execution_20250825", []);
     }
 }
