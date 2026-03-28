@@ -16,6 +16,9 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
         var models = requestDto.ModelPreferences?.Hints?.Select(a => a.Name).OfType<string>() ?? [];
         IModelProvider? provider = null;
 
+        if (!models.Any())
+            return BadRequest("Sampling requires at least one model hint.");
+            
         foreach (var model in models)
         {
             try
