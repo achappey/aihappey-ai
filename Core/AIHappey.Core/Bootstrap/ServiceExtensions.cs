@@ -466,6 +466,17 @@ using AIHappey.Core.Providers.AIMagicx;
 using AIHappey.Core.Providers.Octagon;
 using AIHappey.Core.Providers.Nataris;
 using AIHappey.Core.Providers.TheRouterAI;
+using AIHappey.Core.Providers.GateMind;
+using AIHappey.Core.Providers.LXG2IT;
+using AIHappey.Core.Providers.Moltkey;
+using AIHappey.Core.Providers.Aichixia;
+using AIHappey.Core.Providers.EuGPT;
+using AIHappey.Core.Providers.TEAI;
+using AIHappey.Core.Providers.API1SBS;
+using AIHappey.Core.Providers.Paul;
+using AIHappey.Core.Providers.Radient;
+using AIHappey.Core.Providers.AIHorde;
+using AIHappey.Core.Providers.WiseRouter;
 
 namespace AIHappey.Core.AI;
 
@@ -951,7 +962,18 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OctagonProvider>();
         services.AddSingleton<IModelProvider, NatarisProvider>();
         services.AddSingleton<IModelProvider, TheRouterAIProvider>();
-        
+        services.AddSingleton<IModelProvider, GateMindProvider>();
+        services.AddSingleton<IModelProvider, LXG2ITProvider>();
+        services.AddSingleton<IModelProvider, MoltkeyProvider>();
+        services.AddSingleton<IModelProvider, AichixiaProvider>();
+        services.AddSingleton<IModelProvider, EuGPTProvider>();
+        services.AddSingleton<IModelProvider, TEAIProvider>();
+        services.AddSingleton<IModelProvider, API1SBSProvider>();
+        services.AddSingleton<IModelProvider, PaulProvider>();
+        services.AddSingleton<IModelProvider, RadientProvider>();
+        services.AddSingleton<IModelProvider, AIHordeProvider>();
+        services.AddSingleton<IModelProvider, WiseRouterProvider>();
+
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

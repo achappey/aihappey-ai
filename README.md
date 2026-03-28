@@ -6,7 +6,7 @@ No smart routing fairy. No shiny admin portal. No hidden logic maze.
 Just providers flattened to capabilities, normalized hard, exposed through open contracts.
 Stateless. Boring on purpose.
 
-Access 140k+ models from your favorite client.
+Access 160k+ models from your favorite client.
 
 ## Provider Support Matrix
 
@@ -24,9 +24,11 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AIBadgr        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIBramha       | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AICC           | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ❌               | ➖          | ✅          | ➖          |
+| Aichixia       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AICredits      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIDuet         | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIForHire      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| AIHorde        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIHubMix       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIMagicx       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AINative       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -47,6 +49,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Anthropic      | ✅        | ❌                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Apertis        | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | AndyAPI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| API1SBS        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ApiAirforce    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | APIFree        | ✅        | ✅                | ❌            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | APIpie         | ✅        | ✅                | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ❌          | ➖          |
@@ -147,6 +150,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ElkAPI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ElevenLabs     | ✅        | ❌                | 🟡            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | EmbyAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| EuGPT          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Euqai          | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EUrouter       | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EzAI           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -167,6 +171,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | FreedomGPT     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Friendli       | ✅        | ❌                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | FullAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| GateMind       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | GateRouter     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Gatewayz       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | GeekAI         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -256,6 +261,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LumaAI         | ✅        | ❌                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Lumenfall      | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Lunos          | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| LXG2IT         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Magisterium    | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MancerAI       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MaritacaAI     | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -276,6 +282,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ModelRouter    | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ModelsLab      | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | ModernMT       | ✅        | ❌                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Moltkey        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Monica         | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Moonshot       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Morph          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -335,6 +342,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Parallel       | ✅        | ✅                | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ParalonCloud   | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Parasail       | ✅        | ✅                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Paul           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | PayPerQ        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Perceptron     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Perplexity     | ✅        | 🟡                | 🟡            | ✅        | ➖                     | ➖                       | ❌               | ➖          | ➖          | ➖          |
@@ -355,6 +363,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | PublicAI       | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ❌          | ➖          | ➖          |
 | Qiniu          | ✅        | ✅                | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | QuiverAI       | ✅        | ✅                | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Radient        | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Railwail       | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | RaxAI          | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Recraft        | ✅        | ❌                | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -417,6 +426,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Synexa         | ✅        | ✅                | ✅            | ✅        | ✅                     | ✅                       | ➖               | ➖          | ✅          | ➖          |
 | Synthetic      | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Tavily         | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| TEAI           | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TeamDay        | ✅        | ✅                | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Telnyx         | ✅        | ✅                | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
 | TencentHunyuan | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -462,6 +472,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | WesenAI        | ✅        | ✅                | ❌            | ❌        | ➖                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | WidnAI         | ✅        | ✅                | 🟡            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | WisdomGate     | ✅        | ✅                | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
+| WiseRouter     | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | World3         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Writer         | ✅        | ✅                | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | xAI            | ✅        | ❌                | ✅            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |

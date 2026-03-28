@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "radient/auto",
+      "object": "model",
+      "owned_by": "Radient",
+      "name": "auto",
+      "type": "language",
+      "description": "Let Radient automatically select the best model for the job and save money"
+    }
+  ]
+}

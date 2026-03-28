@@ -464,6 +464,18 @@ public class AIServiceConfig
     public ProviderConfig? Octagon { get; set; }
     public ProviderConfig? Nataris { get; set; }
     public ProviderConfig? TheRouterAI { get; set; }
+    public ProviderConfig? GateMind { get; set; }
+    public ProviderConfig? LXG2IT { get; set; }
+    public ProviderConfig? Moltkey { get; set; }
+    public ProviderConfig? Aichixia { get; set; }
+    public ProviderConfig? EuGPT { get; set; }
+    public ProviderConfig? TEAI { get; set; }
+    public ProviderConfig? API1SBS { get; set; }
+    public ProviderConfig? Paul { get; set; }
+    public ProviderConfig? Radient { get; set; }
+    public ProviderConfig? AIHorde { get; set; }
+    public ProviderConfig? WiseRouter { get; set; }
+    
 }
 
 public class ProviderConfig

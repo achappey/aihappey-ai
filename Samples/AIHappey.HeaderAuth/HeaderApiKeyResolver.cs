@@ -466,6 +466,17 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["octagon"] = "X-Octagon-Key",
             ["nataris"] = "X-Nataris-Key",
             ["therouterai"] = "X-TheRouterAI-Key",
+            ["gatemind"] = "X-GateMind-Key",
+            ["lxg2it"] = "X-LXG2IT-Key",
+            ["moltkey"] = "X-Moltkey-Key",
+            ["aichixia"] = "X-Aichixia-Key",
+            ["eugpt"] = "X-EuGPT-Key",
+            ["teai"] = "X-TEAI-Key",
+            ["api1sbs"] = "X-API1SBS-Key",
+            ["paul"] = "X-Paul-Key",
+            ["radient"] = "X-Radient-Key",
+            ["aihorde"] = "X-AIHorde-Key",
+            ["wiserouter"] = "X-WiseRouter-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

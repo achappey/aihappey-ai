@@ -1,0 +1,85 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "moltkey/openai/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4",
+      "type": "language",
+      "description": "Default model. State-of-the-art reasoning."
+    },
+    {
+      "id": "moltkey/openai/gpt-5.4-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4-mini",
+      "type": "language",
+      "description": "Fast, cheap, great for most tasks."
+    },
+    {
+      "id": "moltkey/openai/gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o",
+      "type": "language",
+      "description": "Multimodal, vision capable."
+    },
+    {
+      "id": "moltkey/anthropic/claude-opus-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4-6",
+      "type": "language",
+      "description": "Top-tier reasoning, long context."
+    },
+    {
+      "id": "moltkey/anthropic/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-sonnet-4-6",
+      "type": "language",
+      "description": "Fast + smart, best value Claude."
+    },
+    {
+      "id": "moltkey/anthropic/claude-3-haiku-20240307",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3-haiku-20240307",
+      "type": "language",
+      "description": "Ultra-fast, lowest cost Claude."
+    },
+    {
+      "id": "moltkey/groq/llama-3.3-70b-versatile",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "llama-3.3-70b-versatile",
+      "type": "language",
+      "description": "Open-source, extreme inference speed."
+    },
+    {
+      "id": "moltkey/groq/llama-3.1-8b-instant",
+      "object": "model",
+      "owned_by": "Groq",
+      "name": "llama-3.1-8b-instant",
+      "type": "language",
+      "description": "Tiny + ultra-fast for simple tasks."
+    },
+    {
+      "id": "moltkey/perplexity/sonar",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "sonar",
+      "type": "language",
+      "description": "Web-grounded answers with citations."
+    },
+    {
+      "id": "moltkey/perplexity/sonar-pro",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "sonar-pro",
+      "type": "language",
+      "description": "Higher quality web search + reasoning."
+    }
+  ]
+}
