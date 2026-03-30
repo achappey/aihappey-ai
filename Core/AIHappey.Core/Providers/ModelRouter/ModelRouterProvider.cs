@@ -22,7 +22,7 @@ public partial class ModelRouterProvider : IModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.modelrouter.io/");
+        _client.BaseAddress = new Uri("https://api.modelrouter.app/");
     }
 
     private void ApplyAuthHeader()
