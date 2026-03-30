@@ -477,6 +477,16 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["radient"] = "X-Radient-Key",
             ["aihorde"] = "X-AIHorde-Key",
             ["wiserouter"] = "X-WiseRouter-Key",
+            ["pellet"] = "X-Pellet-Key",
+            ["bleep"] = "X-Bleep-Key",
+            ["commonstack"] = "X-Commonstack-Key",
+            ["llama"] = "X-Llama-Key",
+            ["ninjachat"] = "X-NinjaChat-Key",
+            ["mimicxai"] = "X-MIMICXAI-Key",
+            ["sawtia"] = "X-SawtIA-Key",
+            ["runtimo"] = "X-Runtimo-Key",
+            ["awstore"] = "X-AWstore-Key",
+            ["huboteng"] = "X-HubotEng-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

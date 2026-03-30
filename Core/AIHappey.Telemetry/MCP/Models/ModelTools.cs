@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;

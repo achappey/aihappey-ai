@@ -1,10 +1,8 @@
-using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.YouCom;

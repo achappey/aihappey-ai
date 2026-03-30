@@ -477,6 +477,16 @@ using AIHappey.Core.Providers.Paul;
 using AIHappey.Core.Providers.Radient;
 using AIHappey.Core.Providers.AIHorde;
 using AIHappey.Core.Providers.WiseRouter;
+using AIHappey.Core.Providers.Pellet;
+using AIHappey.Core.Providers.Bleep;
+using AIHappey.Core.Providers.Commonstack;
+using AIHappey.Core.Providers.Llama;
+using AIHappey.Core.Providers.NinjaChat;
+using AIHappey.Core.Providers.MIMICXAI;
+using AIHappey.Core.Providers.SawtIA;
+using AIHappey.Core.Providers.Runtimo;
+using AIHappey.Core.Providers.AWstore;
+using AIHappey.Core.Providers.HubotEng;
 
 namespace AIHappey.Core.AI;
 
@@ -973,7 +983,16 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RadientProvider>();
         services.AddSingleton<IModelProvider, AIHordeProvider>();
         services.AddSingleton<IModelProvider, WiseRouterProvider>();
-
+        services.AddSingleton<IModelProvider, PelletProvider>();
+        services.AddSingleton<IModelProvider, BleepProvider>();
+        services.AddSingleton<IModelProvider, CommonstackProvider>();
+        services.AddSingleton<IModelProvider, LlamaProvider>();
+        services.AddSingleton<IModelProvider, NinjaChatProvider>();
+        services.AddSingleton<IModelProvider, MIMICXAIProvider>();
+        services.AddSingleton<IModelProvider, SawtIAProvider>();
+        services.AddSingleton<IModelProvider, RuntimoProvider>();
+        services.AddSingleton<IModelProvider, AWstoreProvider>();
+        services.AddSingleton<IModelProvider, HubotEngProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

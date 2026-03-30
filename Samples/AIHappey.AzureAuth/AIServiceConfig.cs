@@ -475,6 +475,16 @@ public class AIServiceConfig
     public ProviderConfig? Radient { get; set; }
     public ProviderConfig? AIHorde { get; set; }
     public ProviderConfig? WiseRouter { get; set; }
+    public ProviderConfig? Pellet { get; set; }
+    public ProviderConfig? Bleep { get; set; }
+    public ProviderConfig? Commonstack { get; set; }
+    public ProviderConfig? Llama { get; set; }
+    public ProviderConfig? NinjaChat { get; set; }
+    public ProviderConfig? MIMICXAI { get; set; }
+    public ProviderConfig? SawtIA { get; set; }
+    public ProviderConfig? Runtimo { get; set; }
+    public ProviderConfig? AWstore { get; set; }
+    public ProviderConfig? HubotEng { get; set; }
     
 }
 
