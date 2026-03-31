@@ -485,6 +485,12 @@ public class AIServiceConfig
     public ProviderConfig? Runtimo { get; set; }
     public ProviderConfig? AWstore { get; set; }
     public ProviderConfig? HubotEng { get; set; }
+    public ProviderConfig? Codzen { get; set; }
+    public ProviderConfig? OpusCode { get; set; }
+    public ProviderConfig? Concentrate { get; set; }
+    public ProviderConfig? LEAPERone { get; set; }
+    public ProviderConfig? Lumecoder { get; set; }
+    public ProviderConfig? Clankie { get; set; }
     
 }
 

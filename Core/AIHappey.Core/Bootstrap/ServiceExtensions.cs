@@ -487,6 +487,12 @@ using AIHappey.Core.Providers.SawtIA;
 using AIHappey.Core.Providers.Runtimo;
 using AIHappey.Core.Providers.AWstore;
 using AIHappey.Core.Providers.HubotEng;
+using AIHappey.Core.Providers.Codzen;
+using AIHappey.Core.Providers.OpusCode;
+using AIHappey.Core.Providers.Concentrate;
+using AIHappey.Core.Providers.LEAPERone;
+using AIHappey.Core.Providers.Lumecoder;
+using AIHappey.Core.Providers.Clankie;
 
 namespace AIHappey.Core.AI;
 
@@ -993,6 +999,12 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RuntimoProvider>();
         services.AddSingleton<IModelProvider, AWstoreProvider>();
         services.AddSingleton<IModelProvider, HubotEngProvider>();
+        services.AddSingleton<IModelProvider, CodzenProvider>();
+        services.AddSingleton<IModelProvider, OpusCodeProvider>();
+        services.AddSingleton<IModelProvider, ConcentrateProvider>();
+        services.AddSingleton<IModelProvider, LEAPERoneProvider>();
+        services.AddSingleton<IModelProvider, LumecoderProvider>();
+        services.AddSingleton<IModelProvider, ClankieProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

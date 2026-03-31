@@ -487,6 +487,13 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["runtimo"] = "X-Runtimo-Key",
             ["awstore"] = "X-AWstore-Key",
             ["huboteng"] = "X-HubotEng-Key",
+            ["codzen"] = "X-Codzen-Key",
+            ["opuscode"] = "X-OpusCode-Key",
+            ["concentrate"] = "X-Concentrate-Key",
+            ["leaperone"] = "X-LEAPERone-Key",
+            ["lumecoder"] = "X-Lumecoder-Key",
+            ["clankie"] = "X-Clankie-Key",
+            
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
@@ -496,5 +503,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
     public bool HasConfiguredKey(string provider)
         => !string.IsNullOrWhiteSpace(snapshot.Resolve(provider));
 }
+
+
 
 
