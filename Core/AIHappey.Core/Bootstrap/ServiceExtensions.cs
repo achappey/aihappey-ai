@@ -493,6 +493,10 @@ using AIHappey.Core.Providers.Concentrate;
 using AIHappey.Core.Providers.LEAPERone;
 using AIHappey.Core.Providers.Lumecoder;
 using AIHappey.Core.Providers.Clankie;
+using AIHappey.Core.Providers.MoleAPI;
+using AIHappey.Core.Providers.AiApiWorld;
+using AIHappey.Core.Providers.TensorBlock;
+using AIHappey.Core.Providers.Blink;
 
 namespace AIHappey.Core.AI;
 
@@ -1005,6 +1009,10 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LEAPERoneProvider>();
         services.AddSingleton<IModelProvider, LumecoderProvider>();
         services.AddSingleton<IModelProvider, ClankieProvider>();
+        services.AddSingleton<IModelProvider, MoleAPIProvider>();
+        services.AddSingleton<IModelProvider, AiApiWorldProvider>();
+        services.AddSingleton<IModelProvider, TensorBlockProvider>();
+        services.AddSingleton<IModelProvider, BlinkProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

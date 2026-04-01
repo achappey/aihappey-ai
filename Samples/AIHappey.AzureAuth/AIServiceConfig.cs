@@ -491,6 +491,10 @@ public class AIServiceConfig
     public ProviderConfig? LEAPERone { get; set; }
     public ProviderConfig? Lumecoder { get; set; }
     public ProviderConfig? Clankie { get; set; }
+    public ProviderConfig? MoleAPI { get; set; }
+    public ProviderConfig? AiApiWorld { get; set; }
+    public ProviderConfig? TensorBlock { get; set; }
+    public ProviderConfig? Blink { get; set; }
     
 }
 

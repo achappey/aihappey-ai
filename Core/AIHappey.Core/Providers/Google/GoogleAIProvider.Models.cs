@@ -7,34 +7,46 @@ public partial class GoogleAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(keyResolver.Resolve(GetIdentifier())))
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
+        var cacheKey = this.GetCacheKey(key);
 
-        var googleAI = GetClient();
-        var generativeModel = googleAI.GenerativeModel();
-        var models = await generativeModel.ListModels(pageSize: 1000);
-
-        string[] excludedSubstrings = [
-            "embedding",
-            "native",
-        ];
-
-        return models
-            .Select(a =>
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                var id = a.Name?.Split("/").LastOrDefault() ?? string.Empty;
+                var googleAI = GetClient();
+                var generativeModel = googleAI.GenerativeModel();
+                var models = await generativeModel.ListModels(pageSize: 1000);
 
-                GoogleAIModels.ModelCreatedAt.TryGetValue(id, out var createdAt);
+                string[] excludedSubstrings = [
+                    "embedding",
+                    "native",
+                ];
 
-                return new Model()
-                {
-                    Name = a.DisplayName!,
-                    OwnedBy = Google,
-                    Id = id.ToModelId(GetIdentifier()),
-                    Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
-                };
-            })
-            .Where(a => excludedSubstrings.All(z => a.Id?.Contains(z) != true));
+                return models
+                    .Select(a =>
+                    {
+                        var id = a.Name?.Split("/").LastOrDefault() ?? string.Empty;
+
+                        GoogleAIModels.ModelCreatedAt.TryGetValue(id, out var createdAt);
+
+                        return new Model()
+                        {
+                            Name = a.DisplayName!,
+                            OwnedBy = Google,
+                            Id = id.ToModelId(GetIdentifier()),
+                            Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
+                        };
+                    })
+                    .Where(a => excludedSubstrings.All(z => a.Id?.Contains(z) != true));
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 }

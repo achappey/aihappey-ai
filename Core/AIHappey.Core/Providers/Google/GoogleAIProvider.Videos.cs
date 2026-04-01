@@ -27,7 +27,7 @@ public partial class GoogleAIProvider
         if (request.Image is not null)
             throw new InvalidOperationException("Google Veo video generation currently supports text-only requests.");
 
-        var key = keyResolver.Resolve(GetIdentifier());
+        var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No Google API key.");
 

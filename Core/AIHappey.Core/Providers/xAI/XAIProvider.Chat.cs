@@ -17,6 +17,38 @@ public partial class XAIProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+
+        var model = await this.GetModel(chatRequest.Model, cancellationToken);
+
+        switch (model.Type)
+        {
+            case "image":
+                {
+                    await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
+                        yield return p;
+
+                    yield break;
+                }
+            case "speech":
+                {
+                    await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                        yield return p;
+
+                    yield break;
+                }
+            case "video":
+                {
+                    await foreach (var p in this.StreamVideoAsync(chatRequest, cancellationToken))
+                        yield return p;
+
+                    yield break;
+                }
+
+            default:
+                break;
+        }
+
+
         ApplyAuthHeader();
 
         // using var req = chatRequest.BuildXAIStreamRequest(GetIdentifier());

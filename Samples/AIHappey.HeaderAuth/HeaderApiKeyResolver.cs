@@ -493,6 +493,10 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["leaperone"] = "X-LEAPERone-Key",
             ["lumecoder"] = "X-Lumecoder-Key",
             ["clankie"] = "X-Clankie-Key",
+            ["moleapi"] = "X-MoleAPI-Key",
+            ["aiapiworld"] = "X-AiApiWorld-Key",
+            ["tensorblock"] = "X-TensorBlock-Key",
+            ["blink"] = "X-Blink-Key",
             
         };
 

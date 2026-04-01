@@ -14,6 +14,36 @@ public partial class GoogleAIProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(request.Model, cancellationToken);
+
+        switch (model.Type)
+        {
+            case "image":
+                {
+                    await foreach (var p in this.StreamImageAsync(request, cancellationToken))
+                        yield return p;
+
+                    yield break;
+                }
+            case "speech":
+                {
+                    await foreach (var p in this.StreamSpeechAsync(request, cancellationToken))
+                        yield return p;
+
+                    yield break;
+                }
+            case "video":
+                {
+                    await foreach (var p in this.StreamVideoAsync(request, cancellationToken))
+                        yield return p;
+
+                    yield break;
+                }
+
+            default:
+                break;
+        }
+
         var googleAI = GetClient();
         var metadata = request.GetProviderMetadata<GoogleProviderMetadata>(GetIdentifier());
 
