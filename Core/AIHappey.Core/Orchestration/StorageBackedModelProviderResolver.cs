@@ -561,7 +561,7 @@ public class StorageBackedModelProviderResolver(
             var models = group.ToList();
 
             var contextWindow = models.FirstOrDefault(m => m.ContextWindow != null)?.ContextWindow;
-            var maxTokens = models.FirstOrDefault(m => m.MaxTokens != null)?.MaxTokens;
+            var maxTokens = models.FirstOrDefault(m => m.MaxTokens != null && m.MaxTokens != 0)?.MaxTokens;
             var created = models.FirstOrDefault(m => m.Created != null)?.Created;
             var tags = models.FirstOrDefault(m => m.Tags?.Any() == true)?.Tags;
             var description = models.FirstOrDefault(m => !string.IsNullOrEmpty(m.Description))?.Description;

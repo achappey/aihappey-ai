@@ -22,7 +22,8 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
     [Authorize]
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
-        var provider = await _resolver.Resolve(chatRequest.Model, cancellationToken);
+        var requestedModelId = chatRequest.Model;
+        var provider = await _resolver.Resolve(requestedModelId, cancellationToken);
         var startedAt = DateTime.UtcNow;
 
         Response.ContentType = "text/event-stream";
@@ -37,14 +38,17 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
         {
             await foreach (var response in provider.StreamAsync(chatRequest, cancellationToken))
             {
-                if (response != null)
+                var streamPart = response;
+
+                if (streamPart != null)
                 {
-                    if (response is FinishUIPart finishUIPart1)
+                    if (streamPart is FinishUIPart finishUIPart1)
                     {
                         finishUIPart = finishUIPart1;
+                        streamPart = finishUIPart;
                     }
 
-                    await Response.WriteAsync($"data: {JsonSerializer.Serialize(response, JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
+                    await Response.WriteAsync($"data: {JsonSerializer.Serialize(streamPart, JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
                     await Response.Body.FlushAsync(cancellationToken);
                 }
             }

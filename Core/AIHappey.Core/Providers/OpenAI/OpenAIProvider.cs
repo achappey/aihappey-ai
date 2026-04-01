@@ -49,24 +49,38 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-        var client = new OpenAIModelClient(GetKey());
+        var cacheKey = this.GetCacheKey(key);
 
-        var models = await client.GetModelsAsync(cancellationToken);
+        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+            cacheKey,
+            async ct =>
+            {
+                var client = new OpenAIModelClient(GetKey());
 
-        var result = models.Value
-            .Where(a => !DeprecatedModels.Contains(a.Id))
-            .ToModels();
+                var models = await client.GetModelsAsync(cancellationToken);
 
-        return [..result, new Model() {
-            Id = "whisper-1/translate".ToModelId(GetIdentifier()),
-            Description = "Translate audio to English",
-            Name = "whisper-1 Translate to English",
-            OwnedBy = nameof(OpenAI),
-            Type = "transcription"
-            }];
+                var result = models.Value
+                    .Where(a => !DeprecatedModels.Contains(a.Id))
+                    .ToModels()
+                    .ToList()
+                    .WithPricing(GetIdentifier());
+
+                return [..result, new Model() {
+                    Id = "whisper-1/translate".ToModelId(GetIdentifier()),
+                    Description = "Translate audio to English",
+                    Name = "whisper-1 Translate to English",
+                    OwnedBy = nameof(OpenAI),
+                    Type = "transcription"
+                    }];
+            },
+        baseTtl: TimeSpan.FromHours(4),
+        jitterMinutes: 480,
+        cancellationToken: cancellationToken);
     }
 
     private readonly IEnumerable<string> DeprecatedModels = [

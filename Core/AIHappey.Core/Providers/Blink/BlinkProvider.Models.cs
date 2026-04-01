@@ -96,10 +96,47 @@ public partial class BlinkProvider
                         models.Add(model);
                 }
 
+                AddBlinkSpeechModels(models);
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+    }
+
+    private void AddBlinkSpeechModels(List<Model> models)
+    {
+        foreach (var baseModel in BlinkSpeechModels)
+        {
+            AddModelIfMissing(models, new Model
+            {
+                Id = baseModel.ToModelId(GetIdentifier()),
+                Name = baseModel,
+                OwnedBy = nameof(Blink),
+                Type = "speech",
+                Description = $"Blink text-to-speech base model '{baseModel}'. Voice can be supplied via request.voice or model shortcut '{baseModel}/{{voice}}'."
+            });
+
+            foreach (var voice in BlinkSpeechVoices)
+            {
+                AddModelIfMissing(models, new Model
+                {
+                    Id = $"{baseModel}/{voice}".ToModelId(GetIdentifier()),
+                    Name = $"{baseModel}/{voice}",
+                    OwnedBy = nameof(Blink),
+                    Type = "speech",
+                    Description = $"Blink text-to-speech model '{baseModel}' with preset voice '{voice}'."
+                });
+            }
+        }
+    }
+
+    private static void AddModelIfMissing(List<Model> models, Model model)
+    {
+        if (models.Any(m => string.Equals(m.Id, model.Id, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        models.Add(model);
     }
 }

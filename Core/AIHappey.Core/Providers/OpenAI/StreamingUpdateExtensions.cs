@@ -6,6 +6,7 @@ using ModelContextProtocol.Protocol;
 using System.Net.Mime;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -14,7 +15,9 @@ public static class StreamingUpdateExtensions
     private static readonly Dictionary<string, (string callId, string name, string args)> _toolCallArgs = [];
 
     public static async IAsyncEnumerable<UIMessagePart> ToStreamingResponseUpdate(this StreamingResponseUpdate update,
-        ContainerClient openAIFileClient, object? StructuredOutputs = null)
+        ContainerClient openAIFileClient,
+        object? StructuredOutputs = null,
+        ModelPricing? pricing = null)
     {
 
         if (update is StreamingResponseErrorUpdate streamingResponseErrorUpdate)
@@ -379,8 +382,7 @@ public static class StreamingUpdateExtensions
 
         if (update is StreamingResponseCompletedUpdate completedUpdate)
         {
-
-            yield return "stop".ToFinishUIPart(
+            var finish = "stop".ToFinishUIPart(
                 completedUpdate.Response.Model,
                 completedUpdate.Response.Usage.OutputTokenCount,
                 completedUpdate.Response.Usage.InputTokenCount,
@@ -388,6 +390,8 @@ public static class StreamingUpdateExtensions
                 temperature: completedUpdate.Response.Temperature,
                 reasoningTokens: completedUpdate.Response.Usage.OutputTokenDetails.ReasoningTokenCount
             );
+
+            yield return ModelCostMetadataEnricher.AddCost(finish, pricing);
         }
     }
 }

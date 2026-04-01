@@ -15,6 +15,29 @@ public static class ModelProviderExtensions
         return Convert.ToHexString(hash); // safe cache key
     }
 
+    public static IEnumerable<Model> WithPricing(this IEnumerable<Model> models, string identifier)
+    {
+        var pricing = identifier.GetPricing() ?? [];
+        List<Model> list = [.. models];
+
+        foreach (var model in list)
+        {
+            if (pricing.TryGetValue(model.Id, out var value))
+                model.Pricing = value;
+        }
+
+        return list;
+    }
+
+
+    public static async Task<ModelPricing?> ResolveCatalogPricingForModelAsync(this IModelProvider modelProvider,
+        string? modelId, CancellationToken cancellationToken)
+    {
+        var model = await modelProvider.GetModel(modelId, cancellationToken);
+
+        return model?.Pricing;
+    }
+
     public static string GetCacheKey(this IModelProvider modelProvider, string? apiKey = null)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -90,13 +113,25 @@ public static class ModelProviderExtensions
 
     public static Dictionary<string, ModelPricing>? GetPricing(this string provider)
     {
-        var modelResponseJson = TryReadPricingFile(provider);
-        if (string.IsNullOrWhiteSpace(modelResponseJson))
+        var json = TryReadPricingFile(provider);
+        if (string.IsNullOrWhiteSpace(json))
             return [];
 
-        var modelResponse = JsonSerializer.Deserialize<Dictionary<string, ModelPricing>>(modelResponseJson, JsonSerializerOptions.Web);
+        using var doc = JsonDocument.Parse(json);
 
-        return modelResponse;
+        var result = new Dictionary<string, ModelPricing>();
+
+        foreach (var item in doc.RootElement.EnumerateObject())
+        {
+            if (!item.Value.TryGetProperty("pricing", out var pricing))
+                continue;
+
+            var parsed = pricing.Deserialize<ModelPricing>(JsonSerializerOptions.Web);
+            if (parsed is not null)
+                result[item.Name] = parsed;
+        }
+
+        return result;
     }
 
     private static List<string> TryReadCatalogFiles(string provider)

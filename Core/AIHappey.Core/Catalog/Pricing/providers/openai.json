@@ -4,6 +4,13 @@
       "output": "0.10"
     }
   },
+  "openai/gpt-5.2-2025-12-11": {
+    "pricing": {
+      "input": "0.00000175",
+      "input_cache_read": "0.000000175",
+      "output": "0.000014"
+    }
+  },
   "openai/gpt-5.2": {
     "pricing": {
       "input": "0.00000175",
@@ -97,7 +104,21 @@
       "output": "0.000015"
     }
   },
+  "openai/gpt-5.4-2026-03-05": {
+    "pricing": {
+      "input": "0.0000025",
+      "input_cache_read": "0.00000025",
+      "output": "0.000015"
+    }
+  },
   "openai/gpt-5.4-mini": {
+    "pricing": {
+      "input": "0.00000075",
+      "input_cache_read": "0.000000075",
+      "output": "0.0000045"
+    }
+  },
+  "openai/gpt-5.4-mini-2026-03-17": {
     "pricing": {
       "input": "0.00000075",
       "input_cache_read": "0.000000075",
@@ -109,6 +130,27 @@
       "input": "0.0000002",
       "input_cache_read": "0.00000002",
       "output": "0.00000125"
+    }
+  },
+  "openai/gpt-5.4-nano-2026-03-17": {
+    "pricing": {
+      "input": "0.0000002",
+      "input_cache_read": "0.00000002",
+      "output": "0.00000125"
+    }
+  },
+  "openai/gpt-5.3-chat-latest": {
+    "pricing": {
+      "input": "0.00000175",
+      "input_cache_read": "0.000000175",
+      "output": "0.000014"
+    }
+  },
+  "openai/gpt-5.3-codex": {
+    "pricing": {
+      "input": "0.00000175",
+      "input_cache_read": "0.000000175",
+      "output": "0.000014"
     }
   }
 }

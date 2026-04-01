@@ -1,0 +1,117 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "blink/tts-1",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1",
+      "type": "speech",
+      "description": "Blink text-to-speech model optimized for lower latency."
+    },
+    {
+      "id": "blink/tts-1-hd",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1-hd",
+      "type": "speech",
+      "description": "Blink high-quality text-to-speech model with improved output fidelity."
+    },
+    {
+      "id": "blink/tts-1/alloy",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1/alloy",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1 with the alloy voice preset."
+    },
+    {
+      "id": "blink/tts-1/echo",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1/echo",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1 with the echo voice preset."
+    },
+    {
+      "id": "blink/tts-1/fable",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1/fable",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1 with the fable voice preset."
+    },
+    {
+      "id": "blink/tts-1/onyx",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1/onyx",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1 with the onyx voice preset."
+    },
+    {
+      "id": "blink/tts-1/nova",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1/nova",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1 with the nova voice preset."
+    },
+    {
+      "id": "blink/tts-1/shimmer",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1/shimmer",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1 with the shimmer voice preset."
+    },
+    {
+      "id": "blink/tts-1-hd/alloy",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1-hd/alloy",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1-hd with the alloy voice preset."
+    },
+    {
+      "id": "blink/tts-1-hd/echo",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1-hd/echo",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1-hd with the echo voice preset."
+    },
+    {
+      "id": "blink/tts-1-hd/fable",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1-hd/fable",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1-hd with the fable voice preset."
+    },
+    {
+      "id": "blink/tts-1-hd/onyx",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1-hd/onyx",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1-hd with the onyx voice preset."
+    },
+    {
+      "id": "blink/tts-1-hd/nova",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1-hd/nova",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1-hd with the nova voice preset."
+    },
+    {
+      "id": "blink/tts-1-hd/shimmer",
+      "object": "model",
+      "owned_by": "Blink",
+      "name": "tts-1-hd/shimmer",
+      "type": "speech",
+      "description": "Blink speech shortcut model using tts-1-hd with the shimmer voice preset."
+    }
+  ]
+}
