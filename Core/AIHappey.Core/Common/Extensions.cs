@@ -38,6 +38,7 @@ public static class UIMessagePartExtensions
             || modelId.Contains("sd3.5")
             || modelId.Contains("dalle")
             || modelId.Contains("ideogram")
+            || modelId.Contains("riverflow")
             || modelId.Contains("kandinsky")
             || modelId.Contains("datacte/proteus")
             || modelId.Contains("dreamshaper")

@@ -23,7 +23,7 @@ public partial class SyntheticProvider : IModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.synthetic.new/openai/");
+        _client.BaseAddress = new Uri("https://api.synthetic.new/");
     }
 
     private void ApplyAuthHeader()
@@ -41,7 +41,9 @@ public partial class SyntheticProvider : IModelProvider
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+             options,
+             relativeUrl: "openai/v1/chat/completions",
+             ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -49,7 +51,9 @@ public partial class SyntheticProvider : IModelProvider
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+                    options,
+                    relativeUrl: "openai/v1/chat/completions",
+                    ct: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Synthetic).ToLowerInvariant();
@@ -89,13 +93,31 @@ public partial class SyntheticProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    public async Task<JsonElement> MessagesAsync(
+       JsonElement request,
+       Dictionary<string, string> headers,
+       CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.PostMessages(
+            request,
+            headers,
+            relativeUrl: "anthropic/v1/messages",
+            ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            relativeUrl: "anthropic/v1/messages",
+            ct: cancellationToken);
     }
 }

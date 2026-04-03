@@ -144,13 +144,41 @@ public partial class AnthropicProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    public async Task<JsonElement> MessagesAsync(
+      JsonElement request,
+      Dictionary<string, string> headers,
+      CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.PostMessages(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            ct: cancellationToken);
     }
+
+    private void ApplyAuthHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException($"No {nameof(Anthropic)} API key.");
+
+        _client.DefaultRequestHeaders.Remove("X-API-Key");
+        _client.DefaultRequestHeaders.Add("X-API-Key", key);
+    }
+
 }

@@ -13,6 +13,7 @@ public partial class SyntheticProvider
         ApplyAuthHeader();
 
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
+            url: "openai/v1/chat/completions",
             cancellationToken: cancellationToken))
             yield return update;
     }

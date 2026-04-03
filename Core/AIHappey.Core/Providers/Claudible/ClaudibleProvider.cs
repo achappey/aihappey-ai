@@ -31,25 +31,20 @@ public partial class ClaudibleProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Claudible)} API key.");
+            throw new InvalidOperationException($"No {nameof(Anthropic)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        _client.DefaultRequestHeaders.Remove("X-API-Key");
+        _client.DefaultRequestHeaders.Add("X-API-Key", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        throw new NotImplementedException();
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        throw new NotImplementedException();
     }
 
     public string GetIdentifier() => nameof(Claudible).ToLowerInvariant();
@@ -89,13 +84,30 @@ public partial class ClaudibleProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+
+    public async Task<JsonElement> MessagesAsync(
+       JsonElement request,
+       Dictionary<string, string> headers,
+       CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.PostMessages(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 }

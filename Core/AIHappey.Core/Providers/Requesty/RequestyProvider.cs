@@ -88,13 +88,29 @@ public partial class RequestyProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    public async Task<JsonElement> MessagesAsync(
+       JsonElement request,
+       Dictionary<string, string> headers,
+       CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.PostMessages(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 }

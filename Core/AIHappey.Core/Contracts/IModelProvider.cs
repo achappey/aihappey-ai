@@ -40,10 +40,12 @@ public interface IModelProvider
 
     Task<JsonElement> MessagesAsync(
         JsonElement request,
+        Dictionary<string, string> headers,
         CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
         JsonElement request,
+        Dictionary<string, string> headers,
         CancellationToken cancellationToken = default);
 
 }

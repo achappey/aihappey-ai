@@ -48,6 +48,10 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
 
         var forwarded = JsonSerializer.SerializeToElement(dict);
 
+        var headers = Request.Headers
+                          .Where(a => a.Key.StartsWith("anthropic-"))
+                          .ToDictionary(h => h.Key, h => h.Value.ToString(), StringComparer.OrdinalIgnoreCase);
+
         // streaming?
         if (body.TryGetProperty("stream", out var streamProp) &&
             streamProp.ValueKind == JsonValueKind.True)
@@ -56,7 +60,7 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
 
             await using var writer = new StreamWriter(Response.Body);
 
-            await foreach (var chunk in provider.MessagesStreamingAsync(forwarded, cancellationToken))
+            await foreach (var chunk in provider.MessagesStreamingAsync(forwarded, headers, cancellationToken))
             {
                 await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
                 await writer.FlushAsync(cancellationToken);
@@ -70,7 +74,7 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
 
         try
         {
-            var result = await provider.MessagesAsync(forwarded, cancellationToken);
+            var result = await provider.MessagesAsync(forwarded, headers, cancellationToken);
             return Ok(result);
         }
         catch (Exception e)
