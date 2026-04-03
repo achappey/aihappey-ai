@@ -1,0 +1,120 @@
+{
+    "openai/gpt-5.4": {
+        "pricing": {
+            "input": "0.000005",
+            "input_cache_read": "0.0000005",
+            "output": "0.00003"
+        }
+    },
+    "openai/gpt-5.4-2026-03-05": {
+        "pricing": {
+            "input": "0.000005",
+            "input_cache_read": "0.0000005",
+            "output": "0.00003"
+        }
+    },
+    "openai/gpt-5.4-mini": {
+        "pricing": {
+            "input": "0.0000015",
+            "input_cache_read": "0.00000015",
+            "output": "0.000009"
+        }
+    },
+    "openai/gpt-5.4-mini-2026-03-17": {
+        "pricing": {
+            "input": "0.0000015",
+            "input_cache_read": "0.00000015",
+            "output": "0.000009"
+        }
+    },
+    "openai/gpt-5.2": {
+        "pricing": {
+            "input": "0.0000035",
+            "input_cache_read": "0.00000035",
+            "output": "0.000028"
+        }
+    },
+    "openai/gpt-5.2-2025-12-11": {
+        "pricing": {
+            "input": "0.0000035",
+            "input_cache_read": "0.00000035",
+            "output": "0.000028"
+        }
+    },
+    "openai/gpt-5.1": {
+        "pricing": {
+            "input": "0.0000025",
+            "input_cache_read": "0.00000025",
+            "output": "0.00002"
+        }
+    },
+    "openai/gpt-5": {
+        "pricing": {
+            "input": "0.0000025",
+            "input_cache_read": "0.00000025",
+            "output": "0.00002"
+        }
+    },
+    "openai/gpt-5-mini": {
+        "pricing": {
+            "input": "0.00000045",
+            "input_cache_read": "0.000000045",
+            "output": "0.0000036"
+        }
+    },
+    "openai/gpt-4.1": {
+        "pricing": {
+            "input": "0.0000035",
+            "input_cache_read": "0.000000875",
+            "output": "0.000014"
+        }
+    },
+    "openai/gpt-4.1-mini": {
+        "pricing": {
+            "input": "0.0000007",
+            "input_cache_read": "0.000000175",
+            "output": "0.0000028"
+        }
+    },
+    "openai/gpt-4.1-nano": {
+        "pricing": {
+            "input": "0.0000002",
+            "input_cache_read": "0.00000005",
+            "output": "0.0000008"
+        }
+    },
+    "openai/gpt-4o": {
+        "pricing": {
+            "input": "0.00000425",
+            "input_cache_read": "0.000002125",
+            "output": "0.000017"
+        }
+    },
+    "openai/gpt-4o-mini": {
+        "pricing": {
+            "input": "0.00000025",
+            "input_cache_read": "0.000000125",
+            "output": "0.000001"
+        }
+    },
+    "openai/o4-mini": {
+        "pricing": {
+            "input": "0.000002",
+            "input_cache_read": "0.0000005",
+            "output": "0.000008"
+        }
+    },
+    "openai/o3": {
+        "pricing": {
+            "input": "0.0000035",
+            "input_cache_read": "0.000000875",
+            "output": "0.000014"
+        }
+    },
+    "openai/gpt-4o-2024-05-13": {
+        "pricing": {
+            "input": "0.00000875",
+            "output": "0.00002625"
+        }
+    }
+}

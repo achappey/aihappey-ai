@@ -497,6 +497,7 @@ using AIHappey.Core.Providers.MoleAPI;
 using AIHappey.Core.Providers.AiApiWorld;
 using AIHappey.Core.Providers.TensorBlock;
 using AIHappey.Core.Providers.Blink;
+using AIHappey.Core.Providers.ShannonAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1013,6 +1014,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AiApiWorldProvider>();
         services.AddSingleton<IModelProvider, TensorBlockProvider>();
         services.AddSingleton<IModelProvider, BlinkProvider>();
+        services.AddSingleton<IModelProvider, ShannonAIProvider>();
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

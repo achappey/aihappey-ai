@@ -17,7 +17,8 @@ public static class StreamingUpdateExtensions
     public static async IAsyncEnumerable<UIMessagePart> ToStreamingResponseUpdate(this StreamingResponseUpdate update,
         ContainerClient openAIFileClient,
         object? StructuredOutputs = null,
-        ModelPricing? pricing = null)
+        string? requestedModelId = null,
+        string? requestedServiceTier = null)
     {
 
         if (update is StreamingResponseErrorUpdate streamingResponseErrorUpdate)
@@ -382,6 +383,17 @@ public static class StreamingUpdateExtensions
 
         if (update is StreamingResponseCompletedUpdate completedUpdate)
         {
+            var effectiveModelId = string.IsNullOrWhiteSpace(completedUpdate.Response.Model)
+                ? requestedModelId
+                : completedUpdate.Response.Model;
+            var effectiveServiceTier = string.IsNullOrWhiteSpace(completedUpdate.Response.ServiceTier?.ToString())
+                ? requestedServiceTier
+                : completedUpdate.Response.ServiceTier.ToString();
+            var pricing = OpenAITieredPricingResolver.Resolve(
+                effectiveModelId,
+                effectiveServiceTier,
+                completedUpdate.Response.Usage.TotalTokenCount);
+
             var finish = "stop".ToFinishUIPart(
                 completedUpdate.Response.Model,
                 completedUpdate.Response.Usage.OutputTokenCount,

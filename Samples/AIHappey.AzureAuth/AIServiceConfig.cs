@@ -495,7 +495,8 @@ public class AIServiceConfig
     public ProviderConfig? AiApiWorld { get; set; }
     public ProviderConfig? TensorBlock { get; set; }
     public ProviderConfig? Blink { get; set; }
-    
+    public ProviderConfig? ShannonAI { get; set; }
+
 }
 
 public class ProviderConfig

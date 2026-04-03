@@ -94,6 +94,20 @@ public static class ModelCostMetadataEnricher
         return metadata;
     }
 
+    public static int? GetTotalTokens(object? usage)
+    {
+        if (usage == null)
+            return null;
+
+        if (TryGetUsageInt(usage, "total_tokens", out var totalTokens) && totalTokens > 0)
+            return totalTokens;
+
+        if (TryGetUsageInt(usage, "totalTokens", out totalTokens) && totalTokens > 0)
+            return totalTokens;
+
+        return null;
+    }
+
     private static decimal ComputeCost(
         ModelPricing pricing,
         int inputTokens,

@@ -1,0 +1,48 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "shannonai/shannon-1.6-lite",
+      "object": "model",
+      "owned_by": "ShannonAI",
+      "name": "Shannon 1.6 Lite",
+      "type": "language",
+      "description": "Fast, efficient responses for everyday tasks.",
+      "context_window": 128000
+    },
+    {
+      "id": "shannonai/shannon-1.6-pro",
+      "object": "model",
+      "owned_by": "ShannonAI",
+      "name": "Shannon 1.6 Pro",
+      "type": "language",
+      "description": "Advanced reasoning for complex problems.",
+      "context_window": 128000
+    },
+    {
+      "id": "shannonai/shannon-2-lite",
+      "object": "model",
+      "owned_by": "ShannonAI",
+      "name": "Shannon 2 Lite",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "shannonai/shannon-2-pro",
+      "object": "model",
+      "owned_by": "ShannonAI",
+      "name": "Shannon 2 Pro",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "shannonai/shannon-coder-1",
+      "object": "model",
+      "owned_by": "ShannonAI",
+      "name": "Shannon Coder",
+      "type": "language",
+      "description": "Optimized for Claude Code CLI with call-based quota.",
+      "context_window": 128000
+    }
+  ]
+}

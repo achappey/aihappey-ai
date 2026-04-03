@@ -497,7 +497,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["aiapiworld"] = "X-AiApiWorld-Key",
             ["tensorblock"] = "X-TensorBlock-Key",
             ["blink"] = "X-Blink-Key",
-            
+            ["shannonai"] = "X-ShannonAI-Key",
+
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

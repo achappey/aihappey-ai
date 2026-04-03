@@ -42,6 +42,27 @@
       "max_tokens": 4096
     },
     {
+      "id": "perplexity/fast-search",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "fast-search",
+      "type": "language"
+    },
+    {
+      "id": "perplexity/pro-search",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "pro-search",
+      "type": "language"
+    },
+    {
+      "id": "perplexity/deep-research",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "deep-research",
+      "type": "language"
+    },
+    {
       "id": "perplexity/perplexity/sonar",
       "object": "model",
       "owned_by": "Perplexity",

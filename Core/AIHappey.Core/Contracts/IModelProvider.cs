@@ -4,6 +4,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Contracts;
 
@@ -21,10 +22,6 @@ public interface IModelProvider
 
     Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default);
 
-    //  Task<IEnumerable<Skill>> ListSkills(CancellationToken cancellationToken = default);
-
-    //  Task<Stream> RetrieveSkillContent(string skillId, CancellationToken cancellationToken = default);
-
     Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default);
@@ -40,5 +37,13 @@ public interface IModelProvider
     Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default);
 
     Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default);
+
+    /* Task<JsonElement> MessagesAsync(
+         JsonElement request,
+         CancellationToken cancellationToken = default);
+
+     IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+         JsonElement request,
+         CancellationToken cancellationToken = default);*/
 
 }

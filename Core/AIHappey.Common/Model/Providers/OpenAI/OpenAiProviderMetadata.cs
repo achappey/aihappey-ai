@@ -33,6 +33,9 @@ public sealed class OpenAiProviderMetadata
     [JsonPropertyName("instructions")]
     public string? Instructions { get; set; }
 
+    [JsonPropertyName("service_tier")]
+    public string? ServiceTier { get; set; }
+
     [JsonPropertyName("include")]
     public IEnumerable<string>? Include { get; set; }
 }

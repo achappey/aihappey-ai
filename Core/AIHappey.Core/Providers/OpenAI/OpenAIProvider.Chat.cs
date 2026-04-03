@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
@@ -127,7 +126,6 @@ public partial class OpenAIProvider
             options.InputItems.Add(i);
         }
 
-        var pricing = await this.ResolveCatalogPricingForModelAsync(model, cancellationToken);
         var stream = responseClient.CreateResponseStreamingAsync(options, cancellationToken);
 
         await foreach (var update in stream.WithCancellation(cancellationToken))
@@ -135,7 +133,8 @@ public partial class OpenAIProvider
             await foreach (var responseUpdate in update.ToStreamingResponseUpdate(
                 containerClient,
                 chatRequest.ResponseFormat,
-                pricing))
+                model,
+                metadata?.ServiceTier))
             {
                 if (responseUpdate is ToolCallStreamingStartPart toolCallStreamingStartPart)
                     toolCallStreamingStartPart.Title = chatRequest.Tools?.FirstOrDefault(a => a.Name == toolCallStreamingStartPart.ToolName)?.Title;

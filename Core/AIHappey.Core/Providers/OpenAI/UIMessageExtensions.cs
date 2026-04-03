@@ -40,14 +40,13 @@ public static class UIMessageExtensions
         IEnumerable<string>? codeInterpreterFiles = null, string? currentUserId = null)
     {
         var metadata = chatRequest.GetProviderMetadata<OpenAiProviderMetadata>(Constants.OpenAI);
-
-
         var options = new CreateResponseOptions
         {
             TruncationMode = ResponseTruncationMode.Auto,
             Temperature = chatRequest.Temperature,
             StoredOutputEnabled = false,
             StreamingEnabled = true,
+            ServiceTier = metadata?.ServiceTier?.ToResponseServiceTier(),
             MaxOutputTokenCount = chatRequest.MaxOutputTokens,
             MaxToolCallCount = chatRequest.MaxToolCalls,
             TextOptions = chatRequest.ToTextOptions(),

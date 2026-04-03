@@ -92,7 +92,7 @@ public class PerplexityProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        if (!chatRequest.Model.StartsWith($"{GetIdentifier()}/sonar"))
+        if (!chatRequest.Model.StartsWith($"sonar"))
         {
             var tools = new List<dynamic>();
 
@@ -108,7 +108,18 @@ public class PerplexityProvider : IModelProvider
             }
 
             dynamic payload = new ExpandoObject();
-            payload.model = chatRequest.Model;
+
+            if (chatRequest.Model.Equals("fast-search", StringComparison.OrdinalIgnoreCase)
+                || chatRequest.Model.Equals("pro-search", StringComparison.OrdinalIgnoreCase)
+                || chatRequest.Model.Equals("deep-research", StringComparison.OrdinalIgnoreCase))
+            {
+                payload.preset = chatRequest.Model;
+            }
+            else
+            {
+                payload.model = chatRequest.Model;
+            }
+
             payload.stream = true;
             payload.temperature = chatRequest.Temperature;
             payload.store = false;
