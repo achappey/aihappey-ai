@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -18,6 +19,7 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
         if (requestDto == null || requestDto.Messages == null || string.IsNullOrWhiteSpace(requestDto.Model))
             return BadRequest(new { error = "'messages' array and 'model' are required fields" });
 
+        HeaderAuthModelContext.SetActiveProvider(HttpContext, requestDto.Model);
         var provider = await _resolver.Resolve(requestDto.Model);
         if (provider == null)
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });

@@ -8,28 +8,38 @@ namespace AIHappey.HeaderAuth;
 public sealed class HeaderApiKeySnapshot(IHttpContextAccessor http)
 {
     private readonly ConditionalWeakTable<HttpContext, SnapshotEntry> _cache = new();
-    private static readonly IReadOnlyDictionary<string, string> Empty = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    private static readonly IReadOnlyDictionary<string, string> EmptyProviderKeys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-    public IReadOnlyDictionary<string, string> ProviderKeys
-    {
-        get
-        {
-            var ctx = http.HttpContext;
-            if (ctx == null)
-                return Empty;
-
-            return _cache.GetValue(ctx, static currentCtx =>
-                new SnapshotEntry(BuildSnapshot(currentCtx.Request.Headers))).ProviderKeys;
-        }
-    }
+    public IReadOnlyDictionary<string, string> ProviderKeys => GetSnapshot().ProviderKeys;
 
     public string? Resolve(string provider)
-        => ProviderKeys.TryGetValue(provider, out var key) ? key : null;
-
-    private static IReadOnlyDictionary<string, string> BuildSnapshot(IHeaderDictionary? headers)
     {
+        var snapshot = GetSnapshot();
+
+        if (!string.IsNullOrWhiteSpace(snapshot.BearerToken)
+            && string.Equals(snapshot.ActiveProvider, provider, StringComparison.OrdinalIgnoreCase))
+        {
+            return snapshot.BearerToken;
+        }
+
+        return snapshot.ProviderKeys.TryGetValue(provider, out var key) ? key : null;
+    }
+
+    private SnapshotEntry GetSnapshot()
+    {
+        var ctx = http.HttpContext;
+        if (ctx == null)
+            return SnapshotEntry.Empty;
+
+        return _cache.GetValue(ctx, static currentCtx => BuildSnapshot(currentCtx));
+    }
+
+    private static SnapshotEntry BuildSnapshot(HttpContext context)
+    {
+        var headers = context.Request.Headers;
+
         if (headers == null)
-            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            return SnapshotEntry.Empty;
 
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -42,8 +52,25 @@ public sealed class HeaderApiKeySnapshot(IHttpContextAccessor http)
                 map[provider] = value.Trim();
         }
 
-        return map;
+        return new SnapshotEntry(map, ResolveBearerToken(headers), HeaderAuthModelContext.TryGetActiveProvider(context));
     }
 
-    private sealed record SnapshotEntry(IReadOnlyDictionary<string, string> ProviderKeys);
+    private static string? ResolveBearerToken(IHeaderDictionary headers)
+    {
+        var authorization = headers.Authorization.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(authorization))
+            return null;
+
+        const string bearerPrefix = "Bearer ";
+        if (!authorization.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var token = authorization[bearerPrefix.Length..].Trim();
+        return string.IsNullOrWhiteSpace(token) ? null : token;
+    }
+
+    private sealed record SnapshotEntry(IReadOnlyDictionary<string, string> ProviderKeys, string? BearerToken, string? ActiveProvider)
+    {
+        public static SnapshotEntry Empty { get; } = new(EmptyProviderKeys, null, null);
+    }
 }

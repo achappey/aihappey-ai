@@ -3,6 +3,7 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Contracts;
+using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -13,6 +14,7 @@ public class UIController(IAIModelProviderResolver resolver) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] UIRequest requestDto, CancellationToken cancellationToken)
     {
+        HeaderAuthModelContext.SetActiveProvider(HttpContext, requestDto.Model);
         var provider = await resolver.Resolve(requestDto.Model, cancellationToken);
         if (provider == null)
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });

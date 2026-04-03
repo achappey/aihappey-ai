@@ -1,6 +1,7 @@
 using AIHappey.Core.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using ModelContextProtocol.Protocol;
+using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -23,6 +24,7 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
         {
             try
             {
+                HeaderAuthModelContext.SetActiveProvider(HttpContext, model);
                 provider = await _resolver.Resolve(model, cancellationToken);
 
                 if (provider != null)
@@ -32,6 +34,9 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
             {
             }
         }
+
+        if (provider == null)
+            HeaderAuthModelContext.ClearActiveProvider(HttpContext);
 
         provider ??= _resolver.GetProvider();
         var result = await provider.SamplingAsync(requestDto, cancellationToken);

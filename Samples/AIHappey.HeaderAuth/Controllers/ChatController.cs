@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
+using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -17,6 +18,7 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
+        HeaderAuthModelContext.SetActiveProvider(HttpContext, chatRequest.Model);
         var provider = await _resolver.Resolve(chatRequest.Model);
 
         Response.ContentType = "text/event-stream";

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using AIHappey.Core.Contracts;
+using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -12,6 +13,7 @@ public class RealtimeController(IAIModelProviderResolver resolver) : ControllerB
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] RealtimeRequest requestDto, CancellationToken cancellationToken)
     {
+        HeaderAuthModelContext.SetActiveProvider(HttpContext, requestDto.Model);
         var provider = await resolver.Resolve(requestDto.Model, cancellationToken);
         if (provider == null)
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });

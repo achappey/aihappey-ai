@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Core.Contracts;
+using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -19,6 +20,7 @@ public class ResponsesController(IAIModelProviderResolver resolver) : Controller
         if (requestDto == null || requestDto.Input == null || string.IsNullOrWhiteSpace(requestDto.Model))
             return BadRequest(new { error = "'input' array and 'model' are required fields" });
 
+        HeaderAuthModelContext.SetActiveProvider(HttpContext, requestDto.Model);
         var provider = await _resolver.Resolve(requestDto.Model, cancellationToken);
         if (provider == null)
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
