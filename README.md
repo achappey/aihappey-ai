@@ -6,7 +6,7 @@ No smart routing fairy. No shiny admin portal. No hidden logic maze.
 Just providers flattened to capabilities, normalized hard, exposed through open contracts.
 Stateless. Boring on purpose.
 
-Access 160k+ models from your favorite client.
+Access 170k+ models from your favorite client.
 
 ## Provider Support Matrix
 

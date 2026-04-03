@@ -115,7 +115,7 @@ public enum ResponseRole
 
 #endregion
 
-#region Content Parts (input_text, input_image, input_file)
+#region Content Parts (input_text, output_text, input_image, input_audio, input_file)
 
 [JsonConverter(typeof(ResponseContentPartJsonConverter))]
 public abstract class ResponseContentPart
@@ -138,6 +138,25 @@ public sealed class InputTextPart : ResponseContentPart
 
     [JsonPropertyName("text")]
     public string Text { get; set; } = "";
+}
+
+public sealed class OutputTextPart : ResponseContentPart
+{
+    public OutputTextPart()
+    {
+        Type = "output_text";
+    }
+
+    public OutputTextPart(string text) : this()
+    {
+        Text = text;
+    }
+
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = "";
+
+    [JsonPropertyName("annotations")]
+    public object[] Annotations { get; set; } = [];
 }
 
 public sealed class InputImagePart : ResponseContentPart

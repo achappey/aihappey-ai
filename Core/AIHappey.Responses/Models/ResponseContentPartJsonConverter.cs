@@ -21,6 +21,8 @@ public sealed class ResponseContentPartJsonConverter : JsonConverter<ResponseCon
         {
             "input_text" => root.Deserialize<InputTextPart>(options)
                           ?? throw new JsonException("Failed to deserialize input_text."),
+            "output_text" => root.Deserialize<OutputTextPart>(options)
+                          ?? throw new JsonException("Failed to deserialize output_text."),
             "input_image" => root.Deserialize<InputImagePart>(options)
                           ?? throw new JsonException("Failed to deserialize input_image."),
             "input_file" => root.Deserialize<InputFilePart>(options)
@@ -34,6 +36,9 @@ public sealed class ResponseContentPartJsonConverter : JsonConverter<ResponseCon
         switch (value)
         {
             case InputTextPart t:
+                JsonSerializer.Serialize(writer, t, options);
+                return;
+            case OutputTextPart t:
                 JsonSerializer.Serialize(writer, t, options);
                 return;
             case InputImagePart i:

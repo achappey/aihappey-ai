@@ -14,7 +14,6 @@ public class ResponsesController(IAIModelProviderResolver resolver) : Controller
     private readonly IAIModelProviderResolver _resolver = resolver;
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Post([FromBody] ResponseRequest requestDto, CancellationToken cancellationToken)
     {
         if (requestDto == null || requestDto.Input == null || string.IsNullOrWhiteSpace(requestDto.Model))
