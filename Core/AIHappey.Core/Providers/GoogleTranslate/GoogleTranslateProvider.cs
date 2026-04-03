@@ -6,6 +6,7 @@ using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.GoogleTranslate;
 
@@ -102,6 +103,16 @@ public sealed partial class GoogleTranslateProvider : IModelProvider
         => throw new NotImplementedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -38,12 +38,12 @@ public interface IModelProvider
 
     Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default);
 
-    /* Task<JsonElement> MessagesAsync(
-         JsonElement request,
-         CancellationToken cancellationToken = default);
+    Task<JsonElement> MessagesAsync(
+        JsonElement request,
+        CancellationToken cancellationToken = default);
 
-     IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
-         JsonElement request,
-         CancellationToken cancellationToken = default);*/
+    IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        CancellationToken cancellationToken = default);
 
 }

@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.KlingAI;
 
@@ -107,6 +108,16 @@ public partial class KlingAIProvider : IModelProvider
         token.Header["alg"] = "HS256";
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     // ImageRequest implementation lives in KlingAIProvider.Images.cs

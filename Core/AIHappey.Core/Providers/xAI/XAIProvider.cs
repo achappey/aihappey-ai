@@ -4,6 +4,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.AI;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -56,4 +57,14 @@ public partial class XAIProvider : IModelProvider
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

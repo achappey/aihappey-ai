@@ -7,6 +7,7 @@ using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
@@ -94,6 +95,16 @@ public partial class SambaNovaProvider : IModelProvider
     }
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

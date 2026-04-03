@@ -7,6 +7,7 @@ using AIHappey.Vercel.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Reve;
 
@@ -87,5 +88,15 @@ public partial class ReveProvider : IModelProvider
             yield return update;
 
         yield break;
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

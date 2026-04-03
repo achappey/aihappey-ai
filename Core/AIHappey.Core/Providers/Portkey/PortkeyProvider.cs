@@ -6,6 +6,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Portkey;
 
@@ -83,5 +84,15 @@ public partial class PortkeyProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

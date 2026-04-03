@@ -92,6 +92,16 @@ public partial class GladiaProvider : IModelProvider
         throw new NotSupportedException();
     }
 
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerOptions.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull

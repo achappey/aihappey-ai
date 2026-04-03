@@ -6,7 +6,6 @@ using ModelContextProtocol.Protocol;
 using System.Net.Mime;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

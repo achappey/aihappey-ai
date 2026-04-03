@@ -6,6 +6,7 @@ using OpenAI.Containers;
 using OpenAI.Files;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -96,4 +97,13 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider
         throw new NotSupportedException();
     }
 
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

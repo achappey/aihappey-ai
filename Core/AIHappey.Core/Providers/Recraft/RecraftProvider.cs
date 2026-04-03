@@ -6,6 +6,7 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Recraft;
 
@@ -77,4 +78,14 @@ public partial class RecraftProvider : IModelProvider
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
         => this.StreamImageAsync(chatRequest, cancellationToken);
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

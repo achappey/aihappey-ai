@@ -5,6 +5,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Baseten;
 
@@ -70,6 +71,16 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

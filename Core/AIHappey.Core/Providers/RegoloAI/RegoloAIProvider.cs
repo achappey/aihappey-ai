@@ -6,6 +6,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.RegoloAI;
 
@@ -97,5 +98,15 @@ public partial class RegoloAIProvider : IModelProvider
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         return TranscriptionRequestRegolo(request, cancellationToken);
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

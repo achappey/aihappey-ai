@@ -4,6 +4,7 @@ using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.AI;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -80,4 +81,13 @@ public partial class GoogleAIProvider
         throw new NotImplementedException();
     }
 
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

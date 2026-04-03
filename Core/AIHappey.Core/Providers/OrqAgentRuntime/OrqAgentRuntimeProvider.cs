@@ -4,6 +4,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OrqAgentRuntime;
 
@@ -64,4 +65,14 @@ public partial class OrqAgentRuntimeProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

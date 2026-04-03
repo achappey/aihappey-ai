@@ -263,4 +263,14 @@ public partial class TextSynthProvider : IModelProvider
         var normalizedVoice = TextSynthSpeechVoices.First(v => string.Equals(v, voice, StringComparison.OrdinalIgnoreCase));
         return (SpeechBaseModel, normalizedVoice);
     }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

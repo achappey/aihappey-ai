@@ -6,6 +6,7 @@ using ModelContextProtocol.Protocol;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Nvidia;
 
@@ -92,6 +93,16 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
     }
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.Contracts;
@@ -71,5 +72,13 @@ public partial class JinaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

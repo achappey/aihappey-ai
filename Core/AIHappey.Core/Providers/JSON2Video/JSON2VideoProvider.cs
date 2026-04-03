@@ -6,6 +6,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.JSON2Video;
 
@@ -84,5 +85,15 @@ public partial class JSON2VideoProvider : IModelProvider
         await foreach (var update in this.StreamVideoAsync(chatRequest,
                         cancellationToken: cancellationToken))
             yield return update;
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

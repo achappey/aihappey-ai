@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Core.Contracts;
 using AIHappey.Vercel.Models;
@@ -24,6 +25,16 @@ public partial class GTranslateProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -8,6 +8,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Nouswise;
 
@@ -99,5 +100,15 @@ public partial class NouswiseProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

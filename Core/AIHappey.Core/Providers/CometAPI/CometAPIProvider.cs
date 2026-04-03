@@ -7,6 +7,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.Contracts;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.CometAPI;
 
@@ -96,5 +97,15 @@ public partial class CometAPIProvider : IModelProvider
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         return this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

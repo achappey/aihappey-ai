@@ -8,6 +8,7 @@ using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -76,6 +77,16 @@ public sealed partial class FreepikProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("x-freepik-api-key", GetKey());
         _client.DefaultRequestHeaders.Accept.Clear();
         _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }
 

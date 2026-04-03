@@ -3,7 +3,6 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Contracts;
-using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

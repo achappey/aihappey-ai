@@ -7,6 +7,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.PixCode;
 
@@ -94,4 +95,14 @@ public partial class PixCodeProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
         => VideoRequestPixCode(request, cancellationToken);
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

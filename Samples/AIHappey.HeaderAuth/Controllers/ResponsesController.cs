@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Core.Contracts;
-using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

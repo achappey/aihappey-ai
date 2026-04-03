@@ -5,6 +5,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.AI;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.CloudRift;
 
@@ -69,6 +70,16 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -6,6 +6,7 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Monica;
 
@@ -85,4 +86,13 @@ public partial class MonicaProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

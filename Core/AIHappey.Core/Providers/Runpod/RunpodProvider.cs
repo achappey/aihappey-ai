@@ -7,6 +7,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Runpod;
 
@@ -190,4 +191,13 @@ public partial class RunpodProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

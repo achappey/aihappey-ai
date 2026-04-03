@@ -3,7 +3,6 @@ using System.Text.Json;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.HeaderAuth;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

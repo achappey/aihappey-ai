@@ -8,6 +8,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.QuiverAI;
 
@@ -82,5 +83,15 @@ public partial class QuiverAIProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

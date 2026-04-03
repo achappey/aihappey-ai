@@ -6,6 +6,7 @@ using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Decart;
 
@@ -125,5 +126,15 @@ public partial class DecartProvider : IModelProvider
             default:
                 throw new NotImplementedException();
         }
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

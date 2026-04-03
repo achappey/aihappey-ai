@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using AIHappey.Core.Models;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Databricks;
 
@@ -108,6 +109,16 @@ public partial class DatabricksProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
+    }
+
+    public Task<JsonElement> MessagesAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }
 
