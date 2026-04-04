@@ -36,16 +36,35 @@ public partial class VIABLELabProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async Task<ChatCompletion> CompleteChatAsync(
+    ChatCompletionOptions options,
+    CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
+        var model = options.Model;
+        string? url = "v1/chat/completions";
+
+        if (model.EndsWith("/vetting", StringComparison.OrdinalIgnoreCase))
+        {
+            options.Model = model.Replace("/vetting", "", StringComparison.OrdinalIgnoreCase);
+            url = "v1/chat/vetting";
+        }
+
         return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+            options,
+            relativeUrl: url,
+            ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+
+        if (options.Model.EndsWith("/vetting", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new NotSupportedException("VIABLELab vetting endpoint does not support streaming.");
+        }
+
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(

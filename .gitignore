@@ -38,6 +38,7 @@ dist/
 **/dist/
 **/public/bundle*.*
 **/fakton/
+**/Docs/
 scripts/
 
 # Build results

@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "llmwise/auto",
+      "object": "model",
+      "owned_by": "LLMWise",
+      "name": "LLMWise Auto Routing",
+      "type": "language",
+      "description": "LLMWise Auto Routing and Optimization turns LLMWise into a load balancer for LLMs: it picks the best primary model for each request and (optionally) applies an implicit fallback chain so transient failures do not break your flow."
+    }
+  ]
+}

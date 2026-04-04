@@ -42,9 +42,11 @@ public static class UIMessageExtensions
         var metadata = chatRequest.GetProviderMetadata<OpenAiProviderMetadata>(Constants.OpenAI);
         var options = new CreateResponseOptions
         {
-            TruncationMode = ResponseTruncationMode.Auto,
+            TruncationMode = string.IsNullOrEmpty(metadata?.Truncation) ?
+                ResponseTruncationMode.Auto : metadata?.Truncation.Equals("auto") == true ? ResponseTruncationMode.Auto : ResponseTruncationMode.Disabled,
             Temperature = chatRequest.Temperature,
             StoredOutputEnabled = false,
+            Model = chatRequest.Model,
             StreamingEnabled = true,
             ServiceTier = metadata?.ServiceTier?.ToResponseServiceTier(),
             MaxOutputTokenCount = chatRequest.MaxOutputTokens,

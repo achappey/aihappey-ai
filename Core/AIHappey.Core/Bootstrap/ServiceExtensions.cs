@@ -331,7 +331,6 @@ using AIHappey.Core.Providers.ArkRoute;
 using AIHappey.Core.Providers.AINative;
 using AIHappey.Core.Providers.AIBadgr;
 using AIHappey.Core.Providers.Unbound;
-using AIHappey.Core.Providers.Corriente;
 using AIHappey.Core.Providers.Shakespeare;
 using AIHappey.Core.Providers.Cline;
 using AIHappey.Core.Providers.BazaarLink;
@@ -850,7 +849,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AINativeProvider>();
         services.AddSingleton<IModelProvider, AIBadgrProvider>();
         services.AddSingleton<IModelProvider, UnboundProvider>();
-        services.AddSingleton<IModelProvider, CorrienteProvider>();
         services.AddSingleton<IModelProvider, ShakespeareProvider>();
         services.AddSingleton<IModelProvider, ClineProvider>();
         services.AddSingleton<IModelProvider, BazaarLinkProvider>();

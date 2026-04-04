@@ -44,6 +44,7 @@ public sealed class ResponseRequest
     public bool? Store { get; set; }
 
     [JsonPropertyName("service_tier")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ServiceTier { get; set; }
 
     [JsonPropertyName("text")]

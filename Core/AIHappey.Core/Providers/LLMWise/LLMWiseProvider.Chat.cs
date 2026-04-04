@@ -13,6 +13,7 @@ public partial class LLMWiseProvider
         ApplyAuthHeader();
 
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
+            url: "v1/chat",
             cancellationToken: cancellationToken))
             yield return update;
     }

@@ -36,6 +36,9 @@ public sealed class OpenAiProviderMetadata
     [JsonPropertyName("service_tier")]
     public string? ServiceTier { get; set; }
 
+    [JsonPropertyName("truncation")]
+    public string? Truncation { get; set; }
+
     [JsonPropertyName("include")]
     public IEnumerable<string>? Include { get; set; }
 }

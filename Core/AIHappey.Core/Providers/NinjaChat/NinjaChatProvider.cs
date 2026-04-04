@@ -36,22 +36,6 @@ public partial class NinjaChatProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
-    }
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
-    }
-
     public string GetIdentifier() => nameof(NinjaChat).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
@@ -66,17 +50,7 @@ public partial class NinjaChatProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();   
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
@@ -91,11 +65,27 @@ public partial class NinjaChatProvider : IModelProvider
 
     public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        if (IsNativeSearchModel(ExtractModelFromMessagesRequest(request)))
+            return ExecuteNativeSearchMessagesAsync(request, cancellationToken);
+
+        return _client.PostMessages(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 
     public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        if (IsNativeSearchModel(ExtractModelFromMessagesRequest(request)))
+            return ExecuteNativeSearchMessagesStreamingAsync(request, cancellationToken);
+
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 }

@@ -11,7 +11,7 @@ public partial class NatarisProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
+            return await Task.FromResult<IEnumerable<Model>>(GetIdentifier().GetModels());
 
         var cacheKey = this.GetCacheKey(key);
 
@@ -68,6 +68,9 @@ public partial class NatarisProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
+
+
+                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },

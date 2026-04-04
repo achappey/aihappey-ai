@@ -39,8 +39,10 @@ public partial class VIABLELabProvider
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        var rawId = idEl.GetString() ?? "";
+
+                        model.Id = rawId.ToModelId(GetIdentifier());
+                        model.Name = rawId;
                     }
 
                     model.ContextWindow = el.TryGetProperty("context_window", out var v) &&
@@ -58,7 +60,20 @@ public partial class VIABLELabProvider
                         model.OwnedBy = orgEl.GetString() ?? "";
 
                     if (!string.IsNullOrEmpty(model.Id))
+                    {
                         models.Add(model);
+
+                        // add vetting variant
+                        models.Add(new Model
+                        {
+                            Id = $"{model.Id}/vetting",
+                            Name = $"{model.Name} VETTING",
+                            ContextWindow = model.ContextWindow,
+                            MaxTokens = model.MaxTokens,
+                            Description = model.Description,
+                            OwnedBy = model.OwnedBy
+                        });
+                    }
                 }
 
                 return models;

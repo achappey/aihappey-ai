@@ -105,13 +105,32 @@ public partial class LMRouterProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+
+    public async Task<JsonElement> MessagesAsync(
+      JsonElement request,
+      Dictionary<string, string> headers,
+      CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.PostMessages(
+            request,
+            headers,
+            relativeUrl: "anthropic/v1/messages",
+            ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            relativeUrl: "anthropic/v1/messages",
+            ct: cancellationToken);
     }
 }

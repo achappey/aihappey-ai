@@ -42,6 +42,7 @@ public partial class AnthropicProvider : IModelProvider
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+        _client.BaseAddress = new Uri("https://api.anthropic.com/");
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

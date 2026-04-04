@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "evolinkai/evolink/auto",
+      "object": "model",
+      "owned_by": "EvoLinkAI",
+      "name": "EvoLink Auto",
+      "description": "Smart Model Routing. EvoLink Auto intelligent model routing.",
+      "type": "language"
+    }
+  ]
+}

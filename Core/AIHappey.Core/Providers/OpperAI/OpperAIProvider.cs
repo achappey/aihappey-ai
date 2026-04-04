@@ -6,6 +6,8 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Text.Json;
+using AIHappey.Responses.Extensions;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.OpperAI;
 
@@ -42,7 +44,7 @@ public partial class OpperAIProvider : IModelProvider
 
         return await _client.GetChatCompletion(
              options,
-             relativeUrl: "v2/openai/chat/completions",
+             relativeUrl: "v3/compat/chat/completions",
              ct: cancellationToken);
     }
 
@@ -52,7 +54,7 @@ public partial class OpperAIProvider : IModelProvider
 
         return _client.GetChatCompletionUpdates(
                     options,
-                    relativeUrl: "v2/openai/chat/completions",
+                    relativeUrl: "v3/compat/chat/completions",
                     ct: cancellationToken);
     }
 
@@ -69,15 +71,26 @@ public partial class OpperAIProvider : IModelProvider
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.GetResponses(
+                   options,
+                   relativeUrl: "v3/compat/responses",
+                   ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.GetResponsesUpdates(
+           options,
+           relativeUrl: "v3/compat/responses",
+           ct: cancellationToken);
     }
+
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
@@ -90,13 +103,32 @@ public partial class OpperAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+
+    public async Task<JsonElement> MessagesAsync(
+      JsonElement request,
+      Dictionary<string, string> headers,
+      CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await _client.PostMessages(
+            request,
+            headers,
+            relativeUrl: "v3/compat/v1/messages",
+            ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            relativeUrl: "v3/compat/v1/messages",
+            ct: cancellationToken);
     }
 }

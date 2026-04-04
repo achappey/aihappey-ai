@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "nataris/nataris-fast",
+      "object": "model",
+      "owned_by": "Nataris",
+      "name": "Nataris Fast",
+      "type": "language",
+      "description": "Route to the best available device for lowest latency."
+    },
+    {
+      "id": "nataris/nataris-balanced",
+      "object": "model",
+      "owned_by": "Nataris",
+      "name": "Nataris Balanced",
+      "type": "language",
+      "description": "Route to the best available device for speed + quality."
+    },
+    {
+      "id": "nataris/nataris-quality",
+      "object": "model",
+      "owned_by": "Nataris",
+      "name": "Nataris Quality",
+      "type": "language",
+      "description": "Route to the best available device for best quality."
+    }
+  ]
+}

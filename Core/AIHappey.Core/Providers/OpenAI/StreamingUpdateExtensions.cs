@@ -394,7 +394,7 @@ public static class StreamingUpdateExtensions
                 completedUpdate.Response.Usage.TotalTokenCount);
 
             var finish = "stop".ToFinishUIPart(
-                completedUpdate.Response.Model,
+                completedUpdate.Response.Model.ToModelId("openai"),
                 completedUpdate.Response.Usage.OutputTokenCount,
                 completedUpdate.Response.Usage.InputTokenCount,
                 completedUpdate.Response.Usage.TotalTokenCount,

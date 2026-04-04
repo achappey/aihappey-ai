@@ -29,39 +29,55 @@ public partial class RoutePlexProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                // possible locations where the models array might live
-                var arr =
-                    root.ValueKind == JsonValueKind.Array
-                        ? root.EnumerateArray()
-                        : root.TryGetProperty("data", out var dataEl)
-                            ? dataEl.TryGetProperty("models", out var modelsEl) && modelsEl.ValueKind == JsonValueKind.Array
-                                ? modelsEl.EnumerateArray()
-                                : dataEl.ValueKind == JsonValueKind.Array
-                                    ? dataEl.EnumerateArray()
-                                    : Enumerable.Empty<JsonElement>()
-                            : [];
+                if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
+                    return models;
 
-
-                foreach (var el in arr)
+                foreach (var el in dataEl.EnumerateArray())
                 {
                     Model model = new();
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        var id = idEl.GetString();
+                        model.Id = id?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = id ?? "";
                     }
 
-                    model.ContextWindow = el.TryGetProperty("context_window", out var v) &&
-                        v.ValueKind == JsonValueKind.Number
-                            ? v.GetInt32()
-                            : null;
+                    if (el.TryGetProperty("display_name", out var display))
+                        model.Name = display.GetString() ?? model.Name;
 
-                    if (el.TryGetProperty("max_output_tokens", out var mxOutput))
-                        model.MaxTokens = mxOutput.GetInt32();
+                    if (el.TryGetProperty("context_window", out var ctx) &&
+                        ctx.ValueKind == JsonValueKind.Number &&
+                        ctx.TryGetInt32(out var ctxVal))
+                    {
+                        model.ContextWindow = ctxVal;
+                    }
 
-                    if (el.TryGetProperty("display_name", out var orgEl))
-                        model.Name = orgEl.GetString() ?? model.Name;
+                    if (el.TryGetProperty("max_output_tokens", out var max) &&
+                        max.ValueKind == JsonValueKind.Number &&
+                        max.TryGetInt32(out var maxVal))
+                    {
+                        model.MaxTokens = maxVal;
+                    }
+
+                    // pricing
+                    if (el.TryGetProperty("pricing", out var pricing))
+                    {
+                        if (pricing.TryGetProperty("input_per_1k", out var input) &&
+                            input.ValueKind == JsonValueKind.Number)
+                        {
+                            model.Pricing ??= new ModelPricing();
+                            model.Pricing.Input = input.GetDecimal() / 1000m;
+                        }
+
+                        if (pricing.TryGetProperty("output_per_1k", out var output) &&
+                            output.ValueKind == JsonValueKind.Number)
+                        {
+                            model.Pricing ??= new ModelPricing();
+                            model.Pricing.Output = output.GetDecimal() / 1000m;
+                        }
+                    }
+
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);

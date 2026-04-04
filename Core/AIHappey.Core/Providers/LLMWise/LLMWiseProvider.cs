@@ -41,7 +41,9 @@ public partial class LLMWiseProvider : IModelProvider
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+             options,
+             relativeUrl: "v1/chat",
+             ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -49,7 +51,9 @@ public partial class LLMWiseProvider : IModelProvider
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+                    options,
+                    relativeUrl: "v1/chat",
+                    ct: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(LLMWise).ToLowerInvariant();

@@ -13,7 +13,7 @@ public partial class OpperAIProvider
         ApplyAuthHeader();
 
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            url: "v2/openai/chat/completions",
+            url: "v3/compat/chat/completions",
             cancellationToken: cancellationToken))
             yield return update;
     }

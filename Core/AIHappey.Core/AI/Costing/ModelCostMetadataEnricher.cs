@@ -32,10 +32,15 @@ public static class ModelCostMetadataEnricher
 
         var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, cachedInputWriteTokens);
 
-        var metadata = new Dictionary<string, object>(finish.MessageMetadata)
+        var metadata = new Dictionary<string, object>(finish.MessageMetadata);
+
+        if (!metadata.TryGetValue("gateway", out var gatewayObj) || gatewayObj is not Dictionary<string, object> gateway)
         {
-            ["cost"] = cost
-        };
+            gateway = new Dictionary<string, object>();
+            metadata["gateway"] = gateway;
+        }
+
+        gateway["cost"] = cost;
 
         return new FinishUIPart
         {
@@ -51,7 +56,7 @@ public static class ModelCostMetadataEnricher
     {
         var metadata = existingMetadata != null
             ? new Dictionary<string, object?>(existingMetadata)
-            : new Dictionary<string, object?>();
+            : [];
 
         if (pricing == null || usage == null)
             return metadata;
@@ -70,8 +75,7 @@ public static class ModelCostMetadataEnricher
         if (totalTokens == 0)
             TryGetUsageInt(usage, "totalTokens", out totalTokens);
 
-        int cachedInputReadTokens = 0;
-        if (!TryGetUsageInt(usage, "cached_input_tokens", out cachedInputReadTokens)
+        if (!TryGetUsageInt(usage, "cached_input_tokens", out int cachedInputReadTokens)
             && !TryGetUsageInt(usage, "cachedInputTokens", out cachedInputReadTokens))
         {
             TryGetNestedUsageInt(usage, "input_tokens_details", "cached_tokens", out cachedInputReadTokens);
@@ -82,15 +86,13 @@ public static class ModelCostMetadataEnricher
 
         var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, 0);
 
-        metadata["inputTokens"] = inputTokens;
-        metadata["outputTokens"] = outputTokens;
-        if (totalTokens > 0)
-            metadata["totalTokens"] = totalTokens;
+        if (!metadata.TryGetValue("gateway", out var gatewayObj) || gatewayObj is not Dictionary<string, object?> gateway)
+        {
+            gateway = new Dictionary<string, object?>();
+            metadata["gateway"] = gateway;
+        }
 
-        if (cachedInputReadTokens > 0)
-            metadata["cachedInputTokens"] = cachedInputReadTokens;
-
-        metadata["cost"] = cost;
+        gateway["cost"] = cost;
         return metadata;
     }
 

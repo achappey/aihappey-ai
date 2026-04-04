@@ -20,7 +20,6 @@ public static class SamplingMessageExtensions
         {
             return ResponseContentPart.CreateInputImagePart(
                             BinaryData.FromBytes(imageContentBlock.Data),
-                            imageContentBlock.MimeType,
                             ResponseImageDetailLevel.High
                         );
         }
@@ -92,10 +91,10 @@ public static class SamplingMessageExtensions
         if (webSearch is null)
             return null;
 
-     
+
         return ResponseTool.CreateWebSearchTool();
     }
-    
+
     public static ResponseTool? ToFileSearchTool(this JsonObject? obj)
     {
         var fileSearch = GetOpenAITool(obj, "file_search");

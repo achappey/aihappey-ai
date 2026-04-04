@@ -23,7 +23,6 @@ public static class UIMessagePartConversionExtensions
                     {
                         yield return ResponseContentPart.CreateInputImagePart(
                             img,
-                            filePart.MediaType,
                             ResponseImageDetailLevel.High
                         );
                     }

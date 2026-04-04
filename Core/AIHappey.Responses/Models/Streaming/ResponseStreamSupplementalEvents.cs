@@ -1,0 +1,296 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace AIHappey.Responses.Streaming;
+
+public class ResponseStreamItem
+{
+    [JsonPropertyName("id")]
+    public string? Id { get; init; }
+
+    [JsonPropertyName("type")]
+    public string Type { get; init; } = default!;
+
+    [JsonPropertyName("status")]
+    public string? Status { get; init; }
+
+    [JsonPropertyName("role")]
+    public string? Role { get; init; }
+
+    [JsonPropertyName("phase")]
+    public string? Phase { get; init; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; init; }
+
+    [JsonPropertyName("arguments")]
+    public string? Arguments { get; init; }
+
+    [JsonPropertyName("content")]
+    public IReadOnlyList<ResponseStreamContentPart>? Content { get; init; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
+}
+
+public class ResponseStreamContentPart
+{
+    [JsonPropertyName("type")]
+    public string Type { get; init; } = default!;
+
+    [JsonPropertyName("text")]
+    public string? Text { get; init; }
+
+    [JsonPropertyName("annotations")]
+    public IReadOnlyList<ResponseStreamAnnotation>? Annotations { get; init; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
+}
+
+public class ResponseStreamAnnotation
+{
+    [JsonPropertyName("type")]
+    public string? Type { get; init; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
+}
+
+public abstract class ResponseStreamIndexedPart : ResponseStreamPart
+{
+    [JsonPropertyName("output_index")]
+    public int OutputIndex { get; init; }
+
+    [JsonPropertyName("sequence_number")]
+    public int SequenceNumber { get; init; }
+}
+
+public abstract class ResponseStreamItemEvent : ResponseStreamIndexedPart
+{
+    [JsonPropertyName("item")]
+    public ResponseStreamItem Item { get; init; } = default!;
+}
+
+public sealed class ResponseOutputItemAdded : ResponseStreamItemEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.output_item.added";
+}
+
+public sealed class ResponseOutputItemDone : ResponseStreamItemEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.output_item.done";
+}
+
+public abstract class ResponseStreamItemContentEvent : ResponseStreamIndexedPart
+{
+    [JsonPropertyName("item_id")]
+    public string ItemId { get; init; } = default!;
+
+    [JsonPropertyName("content_index")]
+    public int ContentIndex { get; init; }
+}
+
+public sealed class ResponseContentPartAdded : ResponseStreamItemContentEvent
+{
+    [JsonPropertyName("part")]
+    public ResponseStreamContentPart Part { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.content_part.added";
+}
+
+public sealed class ResponseContentPartDone : ResponseStreamItemContentEvent
+{
+    [JsonPropertyName("part")]
+    public ResponseStreamContentPart Part { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.content_part.done";
+}
+
+public sealed class ResponseOutputTextAnnotationAdded : ResponseStreamItemContentEvent
+{
+    [JsonPropertyName("annotation_index")]
+    public int AnnotationIndex { get; init; }
+
+    [JsonPropertyName("annotation")]
+    public ResponseStreamAnnotation Annotation { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.output_text.annotation.added";
+}
+
+public abstract class ResponseStreamTextEvent : ResponseStreamItemContentEvent
+{
+}
+
+public sealed class ResponseReasoningSummaryTextDelta : ResponseStreamTextEvent
+{
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_summary_text.delta";
+}
+
+public sealed class ResponseReasoningSummaryTextDone : ResponseStreamTextEvent
+{
+    [JsonPropertyName("text")]
+    public string Text { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_summary_text.done";
+}
+
+public sealed class ResponseReasoningTextDelta : ResponseStreamTextEvent
+{
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_text.delta";
+}
+
+public sealed class ResponseReasoningTextDone : ResponseStreamTextEvent
+{
+    [JsonPropertyName("text")]
+    public string Text { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_text.done";
+}
+
+public sealed class ResponseRefusalDelta : ResponseStreamTextEvent
+{
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.refusal.delta";
+}
+
+public sealed class ResponseRefusalDone : ResponseStreamTextEvent
+{
+    [JsonPropertyName("refusal")]
+    public string Refusal { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.refusal.done";
+}
+
+public sealed class ResponseReasoningSummaryPartAdded : ResponseStreamItemContentEvent
+{
+    [JsonPropertyName("part")]
+    public ResponseStreamContentPart Part { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_summary_part.added";
+}
+
+public sealed class ResponseReasoningSummaryPartDone : ResponseStreamItemContentEvent
+{
+    [JsonPropertyName("part")]
+    public ResponseStreamContentPart Part { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_summary_part.done";
+}
+
+public abstract class ResponseToolCallArgumentsEvent : ResponseStreamIndexedPart
+{
+    [JsonPropertyName("item_id")]
+    public string ItemId { get; init; } = default!;
+}
+
+public sealed class ResponseFunctionCallArgumentsDelta : ResponseToolCallArgumentsEvent
+{
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.function_call_arguments.delta";
+}
+
+public sealed class ResponseFunctionCallArgumentsDone : ResponseToolCallArgumentsEvent
+{
+    [JsonPropertyName("arguments")]
+    public string Arguments { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.function_call_arguments.done";
+}
+
+public sealed class ResponseMcpCallArgumentsDelta : ResponseToolCallArgumentsEvent
+{
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_call_arguments.delta";
+}
+
+public sealed class ResponseMcpCallArgumentsDone : ResponseToolCallArgumentsEvent
+{
+    [JsonPropertyName("arguments")]
+    public string Arguments { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.mcp_call_arguments.done";
+}
+
+public abstract class ResponseToolCallStatusEvent : ResponseStreamIndexedPart
+{
+    [JsonPropertyName("item_id")]
+    public string ItemId { get; init; } = default!;
+}
+
+public sealed class ResponseFileSearchCallCompleted : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.file_search_call.completed";
+}
+
+public sealed class ResponseFileSearchCallInProgress : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.file_search_call.in_progress";
+}
+
+public sealed class ResponseFileSearchCallSearching : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.file_search_call.searching";
+}
+
+public sealed class ResponseWebSearchCallCompleted : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.web_search_call.completed";
+}
+
+public sealed class ResponseWebSearchCallInProgress : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.web_search_call.in_progress";
+}
+
+public sealed class ResponseWebSearchCallSearching : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.web_search_call.searching";
+}
+
+public sealed class ResponseUnknownEvent : ResponseStreamPart
+{
+    [JsonPropertyName("sequence_number")]
+    public int? SequenceNumber { get; init; }
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = default!;
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Data { get; init; }
+}

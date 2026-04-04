@@ -11,7 +11,7 @@ public partial class OpperAIProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
+            return [];
 
         var cacheKey = this.GetCacheKey(key);
 
@@ -21,110 +21,82 @@ public partial class OpperAIProvider
             {
                 ApplyAuthHeader();
 
-                var languageTask = ListLanguageModels(cancellationToken);
-                var rerankTask = ListRerankModels(cancellationToken);
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v3/models");
+                using var resp = await _client.SendAsync(req, ct);
 
-                await Task.WhenAll(languageTask, rerankTask);
+                if (!resp.IsSuccessStatusCode)
+                    throw new Exception($"OpperAI API error: {await resp.Content.ReadAsStringAsync(ct)}");
 
-                return [.. languageTask.Result, .. rerankTask.Result];
+                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+
+                return [..ParseModels(doc.RootElement)];
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
 
-
-    private async Task<IEnumerable<Model>> ListLanguageModels(CancellationToken cancellationToken)
+    private IEnumerable<Model> ParseModels(JsonElement root)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v2/models");
-        using var resp = await _client.SendAsync(req, cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new Exception($"OpperAI API error: {await resp.Content.ReadAsStringAsync(cancellationToken)}");
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        return ParseLanguageModels(doc.RootElement);
-    }
-
-    private async Task<IEnumerable<Model>> ListRerankModels(CancellationToken cancellationToken)
-    {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v2/rerank/models");
-        using var resp = await _client.SendAsync(req, cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new Exception($"OpperAI API error (rerank): {await resp.Content.ReadAsStringAsync(cancellationToken)}");
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
         var models = new List<Model>();
 
-        var root = doc.RootElement;
-        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-            ? dataEl.EnumerateArray()
-            : Enumerable.Empty<JsonElement>();
+        if (!root.TryGetProperty("models", out var arr) || arr.ValueKind != JsonValueKind.Array)
+            return models;
 
-        foreach (var el in arr)
+        foreach (var el in arr.EnumerateArray())
         {
             Model model = new();
+
+            if (el.TryGetProperty("id", out var idEl))
+            {
+                var id = idEl.GetString();
+                model.Id = id?.ToModelId(GetIdentifier()) ?? "";
+            }
 
             if (el.TryGetProperty("name", out var nameEl))
-            {
-                var name = nameEl.GetString();
-                model.Id = name?.ToModelId(GetIdentifier()) ?? "";
-                model.Name = name ?? "";
-            }
+                model.Name = nameEl.GetString() ?? "";
 
-            if (el.TryGetProperty("hosting_provider", out var orgEl))
+            if (el.TryGetProperty("provider_display_name", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
 
-            // rerank pricing is per request → ignore for now
-            // keeps pricing model consistent across providers
-
-            if (!string.IsNullOrEmpty(model.Id))
-                models.Add(model);
-        }
-
-        return models;
-    }
-
-    private IEnumerable<Model> ParseLanguageModels(JsonElement root)
-    {
-        var models = new List<Model>();
-
-        var arr = root.ValueKind == JsonValueKind.Array
-            ? root.EnumerateArray()
-            : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                ? dataEl.EnumerateArray()
-                : Enumerable.Empty<JsonElement>();
-
-        foreach (var el in arr)
-        {
-            Model model = new();
-
-            if (el.TryGetProperty("name", out var idEl))
+            // type: rerank
+            if (el.TryGetProperty("type", out var typeEl))
             {
-                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                model.Name = idEl.GetString() ?? "";
+                var type = typeEl.GetString();
+
+                if (string.Equals(type, "rerank", StringComparison.OrdinalIgnoreCase))
+                    model.Type = "reranking";
             }
 
-            if (el.TryGetProperty("hosting_provider", out var orgEl))
-                model.OwnedBy = orgEl.GetString() ?? "";
-
-            if (el.TryGetProperty("input_cost_per_token", out var inEl) &&
-                el.TryGetProperty("output_cost_per_token", out var outEl))
+            // pricing
+            if (el.TryGetProperty("pricing", out var pricingEl))
             {
-                decimal? input = inEl.ValueKind == JsonValueKind.Number ? inEl.GetDecimal() : null;
-                decimal? output = outEl.ValueKind == JsonValueKind.Number ? outEl.GetDecimal() : null;
+                decimal? input = null;
+                decimal? output = null;
 
-                if (input > 0 && output > 0)
+                if (pricingEl.TryGetProperty("input", out var inEl) &&
+                    inEl.ValueKind == JsonValueKind.Array &&
+                    inEl.GetArrayLength() > 0 &&
+                    inEl[0].ValueKind == JsonValueKind.Number)
+                {
+                    input = inEl[0].GetDecimal();
+                }
+
+                if (pricingEl.TryGetProperty("output", out var outEl) &&
+                    outEl.ValueKind == JsonValueKind.Array &&
+                    outEl.GetArrayLength() > 0 &&
+                    outEl[0].ValueKind == JsonValueKind.Number)
+                {
+                    output = outEl[0].GetDecimal();
+                }
+
+                if (input > 0 || output > 0)
                 {
                     model.Pricing = new ModelPricing
                     {
-                        Input = input.Value * 1_000_000m,
-                        Output = output.Value * 1_000_000m
+                        Input = input ?? 0,
+                        Output = output ?? 0
                     };
                 }
             }
@@ -135,5 +107,4 @@ public partial class OpperAIProvider
 
         return models;
     }
-
 }

@@ -36,9 +36,7 @@ public partial class OpenAIProvider
     public async Task<CreateMessageResult> ChatCompletionsSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         var model = chatRequest.GetModel();
-        var client = new OAI.OpenAIClient(
-            GetKey()
-        ).GetChatClient(model);
+        var client = new OAI.OpenAIClient(GetKey()).GetChatClient(model);
 
         IEnumerable<OAI.Chat.ChatMessage> inputItems = chatRequest.Messages.ToChatMessages();
         var clientResult = await client.CompleteChatAsync(inputItems, ToChatCompletionOptions(model!), cancellationToken);
@@ -55,13 +53,11 @@ public partial class OpenAIProvider
     private async Task<CreateMessageResult> ResponseSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         var model = chatRequest.GetModel();
-        var responseClient = new ResponsesClient(
-            model,
-            GetKey()
-        );
+        var responseClient = new ResponsesClient(GetKey());
 
         IEnumerable<ResponseItem> inputItems = chatRequest.Messages.ToResponseItems();
         var options = chatRequest.ToResponseCreationOptions();
+        options.Model = model;
         var searchTool = chatRequest.Metadata.ToWebSearchTool();
 
         if (searchTool != null)
@@ -159,6 +155,7 @@ public partial class OpenAIProvider
         var meta = new JsonObject
         {
             ["inputTokens"] = clientResult.Value.Usage.InputTokenCount,
+            ["outputTokens"] = clientResult.Value.Usage.OutputTokenCount,
             ["totalTokens"] = clientResult.Value.Usage.TotalTokenCount
         };
 
@@ -172,7 +169,7 @@ public partial class OpenAIProvider
 
         return new CreateMessageResult()
         {
-            Model = clientResult.Value.Model,
+            Model = clientResult.Value.Model.ToModelId(GetIdentifier()),
             StopReason = "unknown",
             Content = [resultBlock],
             Role = Role.Assistant,

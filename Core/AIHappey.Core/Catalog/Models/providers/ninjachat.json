@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "ninjachat/search",
+      "object": "model",
+      "owned_by": "NinjaChat",
+      "name": "NinjaChat Search",
+      "type": "language",
+      "description": "Search the web, academic papers, or news with an optional AI-generated answer that synthesizes the results."
+    }
+  ]
+}
