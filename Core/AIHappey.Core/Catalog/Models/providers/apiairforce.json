@@ -1,0 +1,93 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "apiairforce/flux-2-klein-4b",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "flux-2-klein-4b",
+      "type": "image",
+      "description": "Flux image generation model supporting aspect ratio and image-to-image references."
+    },
+    {
+      "id": "apiairforce/flux-2-klein-9b",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "flux-2-klein-9b",
+      "type": "image",
+      "description": "Higher quality Flux image model with aspect ratio and reference image support."
+    },
+    {
+      "id": "apiairforce/flux-2-dev",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "flux-2-dev",
+      "type": "image",
+      "description": "Flux developer model for advanced image generation and image-to-image workflows."
+    },
+    {
+      "id": "apiairforce/nano-banana-2",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "nano-banana-2",
+      "type": "image",
+      "description": "Nano Banana image model supporting resolution control and multi-reference image generation."
+    },
+    {
+      "id": "apiairforce/nano-banana-2-search",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "nano-banana-2-search",
+      "type": "image",
+      "description": "Nano Banana search-optimized model for reference-based image generation workflows."
+    },
+    {
+      "id": "apiairforce/nano-banana-pro",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "nano-banana-pro",
+      "type": "image",
+      "description": "Nano Banana Pro model for high resolution multi-image guided generation."
+    },
+    {
+      "id": "apiairforce/grok-imagine-video",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "grok-imagine-video",
+      "type": "video",
+      "description": "Video generation model supporting mode, resolution, aspect ratio and reference images."
+    },
+    {
+      "id": "apiairforce/suno-v4.5",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "suno-v4.5",
+      "type": "speech",
+      "description": "Music generation model supporting style, instrumental mode and custom personalization."
+    },
+    {
+      "id": "apiairforce/suno-v5",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "suno-v5",
+      "type": "audio",
+      "description": "Latest Suno music generation model with enhanced style and custom generation controls."
+    },
+    {
+      "id": "apiairforce/dirtberry-.1",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "dirtberry-.1",
+      "type": "image",
+      "description": "Dirtberry image model with thinking modes, brush direction and style-based generation."
+    },
+    {
+      "id": "apiairforce/wan-2.6",
+      "object": "model",
+      "owned_by": "APIAirforce",
+      "name": "wan-2.6",
+      "type": "video",
+      "description": "Wan video generation model."
+    }
+  ]
+}

@@ -54,6 +54,8 @@ public partial class ApiAirforceProvider
                         models.Add(model);
                 }
 
+                models.AddRange(GetIdentifier().GetModels());
+                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

@@ -37,23 +37,33 @@ public partial class PreAPIProvider
 
                 foreach (var el in arr)
                 {
-                    Model model = new();
+                    var slug = el.TryGetProperty("slug", out var slugEl) && slugEl.ValueKind == JsonValueKind.String
+                        ? slugEl.GetString()
+                        : null;
 
-                    if (el.TryGetProperty("id", out var idEl))
+                    if (string.IsNullOrWhiteSpace(slug))
+                        continue;
+
+                    var name = el.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String
+                        ? nameEl.GetString()
+                        : null;
+
+                    var description = el.TryGetProperty("description", out var descEl) && descEl.ValueKind == JsonValueKind.String
+                        ? descEl.GetString()
+                        : null;
+
+                    var outputType = el.TryGetProperty("output_type", out var outputTypeEl) && outputTypeEl.ValueKind == JsonValueKind.String
+                        ? outputTypeEl.GetString()
+                        : null;
+
+                    models.Add(new Model
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
-                    }
-
-                    if (el.TryGetProperty("description", out var orgEl))
-                        model.Description = orgEl.GetString() ?? "";
-
-                    if (el.TryGetProperty("name", out var nameEl))
-                        model.Name = nameEl.GetString() ?? model.Name;
-
-
-                    if (!string.IsNullOrEmpty(model.Id))
-                        models.Add(model);
+                        Id = slug.ToModelId(GetIdentifier()),
+                        Name = string.IsNullOrWhiteSpace(name) ? slug : name,
+                        Description = description ?? string.Empty,
+                        Type = ResolveModelType(outputType),
+                        OwnedBy = "preapi.net"
+                    });
                 }
 
                 return models;
@@ -62,4 +72,13 @@ public partial class PreAPIProvider
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
+
+    private static string ResolveModelType(string? outputType)
+        => outputType?.Trim().ToLowerInvariant() switch
+        {
+            "image" => "image",
+            "video" => "video",
+            "audio" => "speech",
+            _ => "language"
+        };
 }

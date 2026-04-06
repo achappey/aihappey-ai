@@ -66,7 +66,7 @@ public partial class ApiAirforceProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => SpeechRequestApiAirforce(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -85,20 +85,34 @@ public partial class ApiAirforceProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => ImageRequestApiAirforce(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+        => VideoRequestApiAirforce(request, cancellationToken);
+
+    public async Task<JsonElement> MessagesAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
+        ApplyAuthHeader();
+
+        return await _client.PostMessages(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+        JsonElement request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        ApplyAuthHeader();
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        return _client.PostMessagesStreaming(
+            request,
+            headers,
+            ct: cancellationToken);
     }
 }
