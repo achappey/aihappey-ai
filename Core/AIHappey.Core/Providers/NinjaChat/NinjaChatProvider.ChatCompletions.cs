@@ -1,17 +1,6 @@
-using System.Net.Mime;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
-using AIHappey.Responses;
-using AIHappey.Responses.Streaming;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.NinjaChat;
 

@@ -1,9 +1,3 @@
-using System.Net.Mime;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.PreAPI;

@@ -41,7 +41,9 @@ public partial class AINativeProvider : IModelProvider
         ApplyAuthHeader();
 
         return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+             options,
+             relativeUrl: "api/v1/public/chat/completions",
+             ct: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -49,7 +51,9 @@ public partial class AINativeProvider : IModelProvider
         ApplyAuthHeader();
 
         return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+                    options,
+                    relativeUrl: "api/v1/public/chat/completions",
+                    ct: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(AINative).ToLowerInvariant();

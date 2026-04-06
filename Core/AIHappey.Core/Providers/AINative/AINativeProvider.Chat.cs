@@ -13,6 +13,7 @@ public partial class AINativeProvider
         ApplyAuthHeader();
 
         await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
+            url: "api/v1/public/chat/completions",
             cancellationToken: cancellationToken))
             yield return update;
     }

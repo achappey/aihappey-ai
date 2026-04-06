@@ -1,11 +1,5 @@
 using OpenAI.Responses;
-using AIHappey.Common.Model;
 using System.ClientModel.Primitives;
-using AIHappey.Core.AI;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.OpenAI;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

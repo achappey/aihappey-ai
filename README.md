@@ -27,14 +27,14 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AICC           | ✅        | ✅                | ✅            | ✅            | ❌        | ✅                     | ➖                       | ❌               | ➖          | ✅          | ➖          |
 | Aichixia       | ✅        | ✅                | ❌            | ✅            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | AICredits      | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| AIDuet         | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| AIDuet         | ✅        | ✅                | ❌            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIForHire      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIHorde        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| AIHubMix       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| AIHubMix       | ✅        | ✅                | ❌            | ✅            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
 | AIMagicx       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AINative       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIRouter       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| AISieuRe       | ✅        | ✅                | ❌            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| AISieuRe       | ✅        | ✅                | ✅            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIML           | ✅        | ❌                | 🟡            | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | AIsa           | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AiMo           | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -45,7 +45,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AlphaNeural    | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AmazonBedrock  | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Ambient        | ✅        | ✅                | ❌            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Anannas        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Anannas        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Answira        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Anthropic      | ✅        | ❌                | ❌            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Apertis        | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ➖                       | ❌               | ❌          | ❌          | ➖          |
