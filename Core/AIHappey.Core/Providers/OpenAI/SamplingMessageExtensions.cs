@@ -2,8 +2,10 @@ using OpenAI.Responses;
 using OAIC = OpenAI.Chat;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
+using System.ClientModel.Primitives;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -18,10 +20,30 @@ public static class SamplingMessageExtensions
 
         if (contentBlock is ImageContentBlock imageContentBlock)
         {
+            var bytes = Convert.FromBase64String(
+                Encoding.UTF8.GetString(imageContentBlock.Data.Span));
+
             return ResponseContentPart.CreateInputImagePart(
-                            BinaryData.FromBytes(imageContentBlock.Data),
-                            ResponseImageDetailLevel.High
-                        );
+                new BinaryData(bytes, imageContentBlock.MimeType),
+                ResponseImageDetailLevel.High
+            );
+        }
+
+        if (contentBlock is EmbeddedResourceBlock embeddedResourceBlock)
+        {
+            if (embeddedResourceBlock.Resource is TextResourceContents textResourceContents)
+            {
+                return ResponseContentPart.CreateInputTextPart($"{textResourceContents.Uri}:\n\n{textResourceContents.Text}");
+            }
+            else if (embeddedResourceBlock.Resource is BlobResourceContents blobResourceContents)
+            {
+                var bytes = Convert.FromBase64String(
+                              Encoding.UTF8.GetString(blobResourceContents.Blob.Span));
+
+                return ResponseContentPart.CreateInputFilePart(
+                    new BinaryData(bytes, blobResourceContents.MimeType), blobResourceContents.MimeType, blobResourceContents.Uri
+                );
+            }
         }
 
         return null;
@@ -254,5 +276,49 @@ public static class SamplingMessageExtensions
 
         return Constants.CodeInterpreter.CreateCustomTool(
             new Dictionary<string, object?> { { "container", container } });
+    }
+
+    public static bool TryGetExplicitResponseTools(this JsonObject? obj, out List<ResponseTool> tools)
+    {
+        tools = [];
+
+        if (obj?[Constants.OpenAI] is not JsonObject openai || openai["tools"] is not JsonArray toolsArray)
+            return false;
+
+        foreach (var node in toolsArray)
+        {
+            if (TryCreatePassthroughResponseTool(node) is { } tool)
+                tools.Add(tool);
+        }
+
+        return true;
+    }
+
+    private static ResponseTool? TryCreatePassthroughResponseTool(JsonNode? node)
+    {
+        if (node is not JsonObject toolObject)
+            return null;
+
+        if (toolObject["type"] is not JsonValue typeValue
+            || !typeValue.TryGetValue<string>(out var type)
+            || string.IsNullOrWhiteSpace(type))
+        {
+            return null;
+        }
+
+        try
+        {
+            return ModelReaderWriter.Read<ResponseTool>(
+                BinaryData.FromString(toolObject.ToJsonString()),
+                new ModelReaderWriterOptions("J"));
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 }

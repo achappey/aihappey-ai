@@ -5,7 +5,7 @@
       "id": "perplexity/sonar",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "sonar",
+      "name": "Sonar",
       "type": "language",
       "description": "Fast Perplexity model optimized for real-time web search and grounded responses.",
       "context_window": 200000,
@@ -15,7 +15,7 @@
       "id": "perplexity/sonar-pro",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "sonar-pro",
+      "name": "Sonar Pro",
       "type": "language",
       "description": "Higher quality Sonar model with improved reasoning and deeper web retrieval.",
       "context_window": 200000,
@@ -25,7 +25,7 @@
       "id": "perplexity/sonar-reasoning-pro",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "sonar-reasoning-pro",
+      "name": "Sonar Reasoning Pro",
       "type": "language",
       "description": "Advanced reasoning model combining Sonar search with multi-step analytical capabilities.",
       "context_window": 200000,
@@ -35,7 +35,7 @@
       "id": "perplexity/sonar-deep-research",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "sonar-deep-research",
+      "name": "Sonar Deep Research",
       "type": "language",
       "description": "Research-oriented Sonar model designed for long, multi-source investigative queries.",
       "context_window": 200000,
@@ -45,28 +45,28 @@
       "id": "perplexity/fast-search",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "fast-search",
+      "name": "Fast Search",
       "type": "language"
     },
     {
       "id": "perplexity/pro-search",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "pro-search",
+      "name": "Pro Search",
       "type": "language"
     },
     {
       "id": "perplexity/deep-research",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "deep-research",
+      "name": "Deep Research",
       "type": "language"
     },
     {
       "id": "perplexity/perplexity/sonar",
       "object": "model",
       "owned_by": "Perplexity",
-      "name": "perplexity/sonar",
+      "name": "Sonar Agent",
       "type": "language"
     },
     {
@@ -133,13 +133,6 @@
       "type": "language"
     },
     {
-      "id": "perplexity/google/gemini-2.5-pro",
-      "object": "model",
-      "owned_by": "Google",
-      "name": "Gemini 2.5 Pro",
-      "type": "language"
-    },
-    {
       "id": "perplexity/xai/grok-4-1-fast-non-reasoning",
       "object": "model",
       "owned_by": "xAI",
@@ -164,7 +157,7 @@
       "id": "perplexity/nvidia/nemotron-3-super-120b-a12b",
       "object": "model",
       "owned_by": "NVIDIA",
-      "name": "nemotron-3-super-120b-a12b",
+      "name": "Nemotron 3 Super 120B",
       "type": "language"
     }
   ]

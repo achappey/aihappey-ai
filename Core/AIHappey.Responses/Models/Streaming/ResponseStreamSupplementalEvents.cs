@@ -247,6 +247,65 @@ public abstract class ResponseToolCallStatusEvent : ResponseStreamIndexedPart
     public string ItemId { get; init; } = default!;
 }
 
+public sealed class ResponseCodeInterpreterCallInProgress : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.code_interpreter_call.in_progress";
+}
+
+
+public sealed class ResponseCodeInterpreterCallDone : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.code_interpreter_call_code.done";
+
+    [JsonPropertyName("code")]
+    public string Code { get; init; } = default!;
+}
+
+public sealed class ResponseCodeInterpreterCallCodeDelta : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.code_interpreter_call_code.delta";
+
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+}
+
+
+public abstract class ResponseShellCallCommandEvent : ResponseStreamIndexedPart
+{
+    [JsonPropertyName("command_index")]
+    public int CommandIndex { get; init; }
+}
+
+public sealed class ResponseShellCallCommandAdded : ResponseShellCallCommandEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.shell_call_command.added";
+
+    [JsonPropertyName("command")]
+    public string Command { get; init; } = default!;
+}
+
+public sealed class ResponseShellCallCommandDelta : ResponseShellCallCommandEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.shell_call_command.delta";
+
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+}
+
+public sealed class ResponseShellCallCommandDone : ResponseShellCallCommandEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.shell_call_command.done";
+
+    [JsonPropertyName("command")]
+    public string Command { get; init; } = default!;
+}
+
 public sealed class ResponseFileSearchCallCompleted : ResponseToolCallStatusEvent
 {
     [JsonPropertyName("type")]

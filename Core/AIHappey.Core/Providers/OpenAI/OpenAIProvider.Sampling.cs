@@ -58,30 +58,41 @@ public partial class OpenAIProvider
         IEnumerable<ResponseItem> inputItems = chatRequest.Messages.ToResponseItems();
         var options = chatRequest.ToResponseCreationOptions();
         options.Model = model;
-        var searchTool = chatRequest.Metadata.ToWebSearchTool();
 
-        if (searchTool != null)
+        if (chatRequest.Metadata.TryGetExplicitResponseTools(out var passthroughTools))
         {
-            options.Tools.Add(searchTool);
+            foreach (var tool in passthroughTools)
+            {
+                options.Tools.Add(tool);
+            }
         }
-
-        var fileTool = chatRequest.Metadata.ToFileSearchTool();
-        if (fileTool != null)
+        else
         {
-            options.Tools.Add(fileTool);
-        }
+            var searchTool = chatRequest.Metadata.ToWebSearchTool();
 
-        var codeInterpreterTool = chatRequest.Metadata.ToCodeInterpreterTool();
-        if (codeInterpreterTool != null)
-        {
-            options.Tools.Add(codeInterpreterTool);
-        }
+            if (searchTool != null)
+            {
+                options.Tools.Add(searchTool);
+            }
 
-        var mcpTools = chatRequest.Metadata.ToMcpTools();
+            var fileTool = chatRequest.Metadata.ToFileSearchTool();
+            if (fileTool != null)
+            {
+                options.Tools.Add(fileTool);
+            }
 
-        foreach (var tool in mcpTools ?? [])
-        {
-            options.Tools.Add(tool);
+            var codeInterpreterTool = chatRequest.Metadata.ToCodeInterpreterTool();
+            if (codeInterpreterTool != null)
+            {
+                options.Tools.Add(codeInterpreterTool);
+            }
+
+            var mcpTools = chatRequest.Metadata.ToMcpTools();
+
+            foreach (var tool in mcpTools ?? [])
+            {
+                options.Tools.Add(tool);
+            }
         }
 
         foreach (var i in inputItems)

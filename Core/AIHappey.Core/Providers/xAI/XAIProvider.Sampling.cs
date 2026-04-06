@@ -65,14 +65,35 @@ public partial class XAIProvider
         }
 
         // -------- Extract usage --------
-        int? inputTokens = null, totalTokens = null;
+        int? inputTokens = null, outputTokens = null, totalTokens = null;
+        Dictionary<string, object>? extraMetadata = null;
         if (root.TryGetProperty("usage", out var usage))
         {
-            if (usage.TryGetProperty("prompt_tokens", out var promptTokens))
+            if (usage.TryGetProperty("input_tokens", out var promptTokens)
+                || usage.TryGetProperty("prompt_tokens", out promptTokens))
                 inputTokens = promptTokens.GetInt32();
+
+            if (usage.TryGetProperty("output_tokens", out var completionTokens)
+                || usage.TryGetProperty("completion_tokens", out completionTokens))
+                outputTokens = completionTokens.GetInt32();
 
             if (usage.TryGetProperty("total_tokens", out var completion))
                 totalTokens = completion.GetInt32();
+
+            extraMetadata = CreateGatewayCostMetadata(usage);
+        }
+
+        var meta = new System.Text.Json.Nodes.JsonObject
+        {
+            ["inputTokens"] = inputTokens,
+            ["outputTokens"] = outputTokens,
+            ["totalTokens"] = totalTokens
+        };
+
+        if (extraMetadata != null)
+        {
+            foreach (var kv in extraMetadata)
+                meta[kv.Key] = JsonSerializer.SerializeToNode(kv.Value);
         }
 
         // -------- Return result --------
@@ -81,11 +102,7 @@ public partial class XAIProvider
             Model = payload.model,
             Role = Role.Assistant,
             Content = [sb.ToString().Trim().ToTextContentBlock()],
-            Meta = new System.Text.Json.Nodes.JsonObject
-            {
-                ["inputTokens"] = inputTokens,
-                ["totalTokens"] = totalTokens
-            }
+            Meta = meta
         };
     }
 

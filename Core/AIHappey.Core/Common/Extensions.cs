@@ -102,7 +102,30 @@ public static class UIMessagePartExtensions
         try
         {
             var binaryData = Convert.FromBase64String(base64);
-            return BinaryData.FromBytes(binaryData);
+            return BinaryData.FromBytes(binaryData, filePart.MediaType);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public static BinaryData? ToBinaryData(this FileUIPart filePart)
+    {
+        if (filePart?.MediaType is null
+            || filePart.Url is null
+            || !filePart.Url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        const string base64Marker = ";base64,";
+        int idx = filePart.Url.IndexOf(base64Marker, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return null;
+
+        var base64 = filePart.Url[(idx + base64Marker.Length)..];
+        try
+        {
+            var binaryData = Convert.FromBase64String(base64);
+            return BinaryData.FromBytes(binaryData, filePart.MediaType);
         }
         catch
         {

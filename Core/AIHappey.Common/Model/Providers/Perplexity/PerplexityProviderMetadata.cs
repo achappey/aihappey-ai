@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.Providers.Perplexity;
@@ -39,5 +40,24 @@ public sealed class PerplexityProviderMetadata
 
     [JsonPropertyName("media_response")]
     public PerplexityMediaResponse? MediaResponse { get; set; }
+
+    [JsonPropertyName("fetch_url")]
+    public JsonElement? FetchUrl { get; set; }
+
+    [JsonPropertyName("web_search")]
+    public JsonElement? WebSearch { get; set; }
+
+    [JsonPropertyName("language_preference")]
+    public string? LanguagePreference { get; set; }
+
+    [JsonPropertyName("instructions")]
+    public string? Instructions { get; set; }
+
+    [JsonPropertyName("max_steps")]
+    public int? MaxSteps { get; set; }
+
+    [JsonPropertyName("models")]
+    public IEnumerable<string>? Models { get; set; }
+
 }
 

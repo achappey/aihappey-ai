@@ -83,6 +83,7 @@ public static class PerplexityHttpClientExtensions
                 continue;
 
             var content = line?.StartsWith("data: ") == true ? line["data: ".Length..] : line;
+
             // Return the raw chunk. The caller can parse partial JSON or text deltas as needed.
             yield return JsonSerializer.Deserialize<PerplexityChatResponse>(content!)!;
         }

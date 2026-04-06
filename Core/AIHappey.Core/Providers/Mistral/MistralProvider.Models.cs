@@ -71,7 +71,8 @@ public partial class MistralProvider
                     })
                     .Concat(imageModels)
                     .Concat(agentModels)
-                    .OrderByDescending(a => a.Created ?? 0);
+                    .OrderByDescending(a => a.Created ?? 0)
+                    .WithPricing(GetIdentifier());
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,

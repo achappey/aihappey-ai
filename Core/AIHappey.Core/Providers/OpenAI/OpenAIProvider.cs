@@ -7,6 +7,7 @@ using OpenAI.Files;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Text.Json;
+using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -39,6 +40,19 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider
 
         return key;
     }
+
+
+    private void ApplyAuthHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException($"No {nameof(OpenAI)} API key.");
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+
 
     private OpenAIFileClient GetFileClient() => new(GetKey());
 

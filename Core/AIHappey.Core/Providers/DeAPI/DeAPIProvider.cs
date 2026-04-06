@@ -258,16 +258,6 @@ public partial class DeAPIProvider : IModelProvider
         return null;
     }
 
-    private static string? TryGetString(JsonElement element, string propertyName)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return element.TryGetProperty(propertyName, out var valueEl) && valueEl.ValueKind == JsonValueKind.String
-            ? valueEl.GetString()
-            : null;
-    }
-
     public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

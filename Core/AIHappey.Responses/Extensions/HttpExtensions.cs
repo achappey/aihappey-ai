@@ -12,10 +12,10 @@ public static class HttpExtensions
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");
     private static readonly MediaTypeWithQualityHeaderValue AcceptSse = new("text/event-stream");
 
-    private static JsonSerializerOptions jsonOpts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    /*private static JsonSerializerOptions jsonOpts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-    };
+    };*/
 
     /// <summary>
     /// POST JSON and deserialize JSON response into T (non-stream).
@@ -24,7 +24,8 @@ public static class HttpExtensions
         this HttpClient client,
         ResponseRequest options,
         string relativeUrl = "v1/responses",
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        JsonElement? extraRootProperties = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
@@ -32,9 +33,9 @@ public static class HttpExtensions
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
-        var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
+        var payload = BuildPayload(options, extraRootProperties);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
-
+       
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct);
 
@@ -55,7 +56,8 @@ public static class HttpExtensions
         this HttpClient client,
         ResponseRequest options,
         string relativeUrl = "v1/responses",
-        [EnumeratorCancellation] CancellationToken ct = default)
+        [EnumeratorCancellation] CancellationToken ct = default,
+        JsonElement? extraRootProperties = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
@@ -65,9 +67,10 @@ public static class HttpExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
-        req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
+        var payload = BuildPayload(options, extraRootProperties);
 
+        req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
+ 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct);
 
@@ -111,6 +114,32 @@ public static class HttpExtensions
 
         var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct);
         throw new HttpRequestException($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
+    }
+
+    private static JsonElement BuildPayload(ResponseRequest options, JsonElement? extraRootProperties)
+    {
+        var payload = JsonSerializer.SerializeToElement(options, ResponseJson.Default);
+
+        if (extraRootProperties is not JsonElement extra)
+            return payload;
+
+        if (extra.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return payload;
+
+        if (extra.ValueKind != JsonValueKind.Object)
+            throw new InvalidOperationException("Extra responses root properties must be a JSON object.");
+
+        var merged = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+
+        foreach (var property in payload.EnumerateObject())
+            merged[property.Name] = property.Value.Clone();
+
+        foreach (var property in extra.EnumerateObject())
+        {
+            merged[property.Name] = property.Value.Clone();
+        }
+
+        return JsonSerializer.SerializeToElement(merged, ResponseJson.Default);
     }
 }
 

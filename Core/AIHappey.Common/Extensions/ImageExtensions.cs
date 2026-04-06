@@ -43,7 +43,7 @@ public static class ImageExtensions
     }
 
     public static string ToDataUrl(
-        this string data, string mimeType) => $"data:{mimeType};base64,{data}";
+        this string data, string mimeType) => data.StartsWith("data:") ? data : $"data:{mimeType};base64,{data}";
 
     public static string ToDataUrl(
         this ReadOnlyMemory<byte> data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data.ToArray())}";

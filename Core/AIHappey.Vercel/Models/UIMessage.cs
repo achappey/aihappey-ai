@@ -52,6 +52,9 @@ public class TextStartUIMessageStreamPart : UIMessagePart
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "text-start";
 
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object>? ProviderMetadata { get; init; }
 }
 
 public class TextEndUIMessageStreamPart : UIMessagePart
@@ -61,6 +64,10 @@ public class TextEndUIMessageStreamPart : UIMessagePart
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "text-end";
+
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object>? ProviderMetadata { get; init; }
 
 }
 
@@ -74,6 +81,10 @@ public class TextDeltaUIMessageStreamPart : UIMessagePart
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "text-delta";
+
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object>? ProviderMetadata { get; init; }
 
 }
 
@@ -367,8 +378,13 @@ public class FileUIPart : UIMessagePart
     [JsonPropertyName("url")]
     public string Url { get; init; } = default!;
 
+    [JsonPropertyName("filename")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Filename { get; init; }
+
     [JsonPropertyName("providerMetadata")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+
     public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
 }
 

@@ -21,5 +21,8 @@ public sealed class XAIProviderMetadata
 
     [JsonPropertyName("instructions")]
     public string? Instructions { get; set; }
+
+    [JsonPropertyName("include")]
+    public IEnumerable<string>? Include { get; set; }
 }
 

@@ -34,8 +34,8 @@ public partial class DeAPIProvider
         var guidance = TryGetNumber(metadata, "guidance") ?? 3.5;
         var steps = (int)(TryGetNumber(metadata, "steps") ?? 4);
         var seed = request.Seed ?? (int)(TryGetNumber(metadata, "seed") ?? -1);
-        var negativePrompt = TryGetString(metadata, "negative_prompt") ?? TryGetString(metadata, "negativePrompt");
-        var webhookUrl = TryGetString(metadata, "webhook_url") ?? TryGetString(metadata, "webhookUrl");
+        var negativePrompt = metadata.TryGetString("negative_prompt") ?? metadata.TryGetString("negativePrompt");
+        var webhookUrl = metadata.TryGetString("webhook_url") ?? metadata.TryGetString("webhookUrl");
 
         string requestId;
         if (request.Files?.Any() == true)

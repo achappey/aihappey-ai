@@ -61,7 +61,7 @@ public partial class BlackForestLabsProvider
         using var submitDoc = JsonDocument.Parse(submitRaw);
         var submitRoot = submitDoc.RootElement.Clone();
 
-        var taskId = TryGetString(submitRoot, "id") ?? throw new InvalidOperationException("BlackForestLabs response missing id.");
+        var taskId = submitRoot.TryGetString("id") ?? throw new InvalidOperationException("BlackForestLabs response missing id.");
 
         var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
             poll: ct => PollResultAsync(taskId, ct),
@@ -268,7 +268,7 @@ public partial class BlackForestLabsProvider
 
         using var pollDoc = JsonDocument.Parse(pollRaw);
         var root = pollDoc.RootElement.Clone();
-        var status = TryGetString(root, "status") ?? "unknown";
+        var status = root.TryGetString("status") ?? "unknown";
 
         return new BflResult(status, root, pollRaw);
     }
@@ -390,11 +390,6 @@ public partial class BlackForestLabsProvider
 
     private static bool IsFlux2Model(string model)
         => model is "flux-2-max" or "flux-2-klein-9b" or "flux-2-klein-4b" or "flux-2-pro" or "flux-2-flex";
-
-    private static string? TryGetString(JsonElement element, string propertyName)
-        => element.TryGetProperty(propertyName, out var prop) && prop.ValueKind == JsonValueKind.String
-            ? prop.GetString()
-            : null;
 
     private static string MapOutputFormatToMimeType(string? format)
         => format?.Trim().ToLowerInvariant() switch

@@ -33,4 +33,7 @@ public sealed class ResponseInputMessage : ResponseInputItem
     /// </summary>
     [JsonPropertyName("id")]
     public string? Id { get; set; }
+
+    [JsonPropertyName("phase")]
+    public string? Phase { get; set; }
 }

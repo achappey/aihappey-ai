@@ -51,6 +51,8 @@ public class ChatRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? ResponseFormat { get; set; }
 
+
+
 }
 
 public class ResponseFormat
@@ -75,5 +77,7 @@ public class JSONSchema
 
     [JsonPropertyName("strict")]
     public bool? Strict { get; set; }
+
+
 }
 

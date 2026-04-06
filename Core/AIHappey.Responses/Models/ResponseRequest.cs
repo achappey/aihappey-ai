@@ -69,7 +69,27 @@ public sealed class ResponseRequest
 
     [JsonPropertyName("tool_choice")]
     public object? ToolChoice { get; set; } // string or object (keep flexible in headstart)
+
+    [JsonPropertyName("reasoning")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Reasoning? Reasoning { get; set; }
+
+    [JsonPropertyName("context_management")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public JsonElement[]? ContextManagement { get; set; }
 }
+
+public sealed class Reasoning
+{
+    [JsonPropertyName("effort")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Effort { get; set; } = null;
+
+    [JsonPropertyName("summary")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Summary { get; set; } = null;
+}
+
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TruncationStrategy

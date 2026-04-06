@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
@@ -31,7 +32,7 @@ public partial class FishAudioProvider
         var warnings = new List<object>();
 
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var language = TryGetString(metadata, "language");
+        var language = metadata.TryGetString("language");
         var ignoreTimestamps = TryGetBoolean(metadata, "ignore_timestamps");
 
         var audioString = request.Audio switch
@@ -137,17 +138,6 @@ public partial class FishAudioProvider
                 Body = json,
             }
         };
-    }
-
-    private static string? TryGetString(JsonElement metadata, string key)
-    {
-        if (metadata.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!metadata.TryGetProperty(key, out var prop) || prop.ValueKind != JsonValueKind.String)
-            return null;
-
-        return prop.GetString();
     }
 
     private static bool? TryGetBoolean(JsonElement metadata, string key)

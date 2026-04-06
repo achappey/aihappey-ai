@@ -1,6 +1,4 @@
-using System.Net.Http.Headers;
 using System.Net.Mime;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
@@ -13,208 +11,146 @@ public partial class MistralProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         var conversationTarget = ResolveConversationTarget(chatRequest.GetModel());
-
-        // Build inputs from your UI message model (text + image_url only)
-        var inputs = chatRequest.Messages
-            // .Where(m => m.Role != Role.system)
-            .Select(m => new
-            {
-                type = "message.input",
-                role = m.Role, // your API expects "user"/"assistant" — your model already uses those literals
-                content = m.Content.Select(a => a is TextContentBlock tcb
-                    ? (object)new { type = "text", text = tcb.Text }
-                    : a is ImageContentBlock icb
-                        ? (object)new { type = "image_url", image_url = icb.ToDataUrl() }
-                        : (object?)null).Where(a => a != null)
-            });
-
-        var tools = new List<object>();
-
-        var codeInterpreter = chatRequest.Metadata.ToCodeInterpreter();
-        if (codeInterpreter != null)
+        try
         {
-            tools.Add(codeInterpreter);
+            var response = await StartConversationAsync(
+                BuildSamplingConversationRequest(chatRequest, conversationTarget),
+                cancellationToken);
+
+            return await MapSamplingResponseAsync(response, conversationTarget, cancellationToken);
         }
-
-        var imageGeneration = chatRequest.Metadata.ToImageGeneration();
-        if (imageGeneration != null)
+        catch (MistralConversationException ex)
         {
-            tools.Add(imageGeneration);
-        }
-        var webSearchPremium = chatRequest.Metadata.ToWebSearchPremiumTool();
-        if (webSearchPremium != null)
-        {
-            tools.Add(webSearchPremium);
-        }
-        else
-        {
-            var webSearch = chatRequest.Metadata.ToWebSearchTool();
-            if (webSearch != null)
-            {
-                tools.Add(webSearch);
-            }
-        }
-
-        var payload = new JsonObject
-        {
-            ["stream"] = false,
-            ["store"] = false,
-            ["instructions"] = chatRequest.SystemPrompt,
-            ["inputs"] = JsonSerializer.SerializeToNode(inputs.ToArray()),
-            ["completion_args"] = new JsonObject
-            {
-                ["temperature"] = chatRequest.Temperature,
-                ["max_tokens"] = chatRequest.MaxTokens
-            }
-        };
-
-        ApplyConversationTarget(payload, conversationTarget);
-
-        if (tools.Count > 0)
-        {
-            payload["tools"] = JsonSerializer.SerializeToNode(tools);
-        }
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, "/v1/conversations")
-        {
-            Content = new StringContent(payload.ToJsonString(), Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-        req.Headers.Accept.Clear();
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
-
-        using var resp = await _client.SendAsync(req, cancellationToken);
-        var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-        {
-            // Return a clean error result (consistent with your style)
             return new CreateMessageResult
             {
                 Role = Role.Assistant,
                 Model = conversationTarget.ExposedModelId,
                 StopReason = "error",
-                Content = [$"Mistral conversations error: {(string.IsNullOrWhiteSpace(body) ? resp.ReasonPhrase : body)}"
-                    .ToTextContentBlock()]
+                Content = [$"Mistral conversations error: {ex.Message}".ToTextContentBlock()]
             };
         }
+    }
 
-        var json = JsonNode.Parse(body);
-        var conversationId = json?["conversation_id"]?.GetValue<string>();
-        var usage = json?["usage"];
-        var outputs = json?["outputs"]?.AsArray();
-
-        // Defaults
-        string resolvedModel = conversationTarget.ExposedModelId;
-        string accumulatedText = string.Empty;
-        List<ContentBlock> contentBlocks = [];
-
-        if (outputs is not null)
-        {
-            // Prefer the first assistant message.output entry
-            var firstOut = outputs
-                .FirstOrDefault(o => o?["type"]?.GetValue<string>() == "message.output");
-
-            if (firstOut is not null)
+    private MistralConversationRequest BuildSamplingConversationRequest(
+        CreateMessageRequestParams chatRequest,
+        ConversationTarget conversationTarget)
+    {
+        var inputs = chatRequest.Messages
+            .Select(message => new
             {
-                resolvedModel = NormalizeReportedModel(firstOut?["model"]?.GetValue<string>(), conversationTarget);
+                type = "message.input",
+                role = ToMistralSamplingRole(message.Role),
+                content = message.Content
+                    .Select(ToMistralSamplingContentPart)
+                    .OfType<object>()
+                    .ToArray()
+            })
+            .ToArray();
 
-                var contentNode = firstOut?["content"];
-                if (contentNode is null)
-                {
-                    accumulatedText = string.Empty;
-                }
-                else if (contentNode.GetValueKind() == JsonValueKind.String)
-                {
-                    // Simple string content
-                    accumulatedText = contentNode!.GetValue<string>() ?? string.Empty;
-                }
-                else if (contentNode.GetValueKind() == JsonValueKind.Array)
-                {
-                    // Iterate chunks: text + possible tool_file
-                    foreach (var chunk in contentNode!.AsArray())
-                    {
-                        var ctype = chunk?["type"]?.GetValue<string>();
+        var tools = new List<JsonNode>();
 
-                        // Text chunks (Mistral may use "output_text" or "text")
-                        if (ctype == "output_text" || ctype == "text")
-                        {
-                            var txt = chunk?["text"]?.GetValue<string>() ?? chunk?["content"]?.GetValue<string>() ?? string.Empty;
-                            if (!string.IsNullOrEmpty(txt))
-                                contentBlocks.Add(txt.ToTextContentBlock());
-                        }
+        if (chatRequest.Metadata.TryGetExplicitToolNodes(out var passthroughTools))
+        {
+            tools.AddRange(passthroughTools);
+        }
+        else
+        {
+            var codeInterpreter = chatRequest.Metadata.ToCodeInterpreter();
+            AddSerializedToolNode(tools, codeInterpreter);
 
-                        // Tool file chunks: download and convert to EmbeddedResourceBlock
-                        if (ctype == "tool_file")
-                        {
-                            var fileId = chunk?["file_id"]?.GetValue<string>();
-                            if (!string.IsNullOrEmpty(fileId))
-                            {
-                                // GET /v1/files/{file_id}
-                                using var metaReq = new HttpRequestMessage(HttpMethod.Get, $"/v1/files/{fileId}");
-                                using var metaResp = await _client.SendAsync(metaReq, cancellationToken);
-                                if (!metaResp.IsSuccessStatusCode)
-                                {
-                                    // If metadata fails, continue with text result only
-                                    continue;
-                                }
-                                var metaStr = await metaResp.Content.ReadAsStringAsync(cancellationToken);
-                                var metaJson = JsonNode.Parse(metaStr);
-                                var deleted = metaJson?["deleted"]?.GetValue<bool?>() ?? false;
-                                if (deleted) continue;
+            var imageGeneration = chatRequest.Metadata.ToImageGeneration();
+            AddSerializedToolNode(tools, imageGeneration);
 
-                                var mime = metaJson?["mimetype"]?.GetValue<string?>()
-                                           ?? chunk?["file_type"]?.GetValue<string?>()
-                                           ?? MediaTypeNames.Application.Octet;
-
-                                // GET /v1/files/{file_id}/content
-                                using var fileReq = new HttpRequestMessage(HttpMethod.Get, $"/v1/files/{fileId}/content");
-                                using var fileResp = await _client.SendAsync(fileReq, cancellationToken);
-                                if (!fileResp.IsSuccessStatusCode) continue;
-
-                                var bytes = await fileResp.Content.ReadAsByteArrayAsync(cancellationToken);
-
-                                contentBlocks.Add(new EmbeddedResourceBlock
-                                {
-                                    Resource = new BlobResourceContents
-                                    {
-                                        Uri = $"https://api.mistral.ai/v1/files/{fileId}",
-                                        MimeType = mime,
-                                        Blob = bytes
-                                    }
-                                });
-                                // If we got a file, prefer returning it (you can still keep text in meta if you want)
-                            }
-                        }
-
-                        // Optional: surface tool/document references in accumulatedText (skip for now)
-                        // if (ctype == "tool_reference" || ctype == "document_url") { ... }
-                    }
-                }
+            var webSearchPremium = chatRequest.Metadata.ToWebSearchPremiumTool();
+            if (webSearchPremium != null)
+            {
+                AddSerializedToolNode(tools, webSearchPremium);
+            }
+            else
+            {
+                var webSearch = chatRequest.Metadata.ToWebSearchTool();
+                AddSerializedToolNode(tools, webSearch);
             }
         }
 
-        // Usage → meta
-        var promptTokens = usage?["prompt_tokens"]?.GetValue<int?>() ?? 0;
-        var completionTokens = usage?["completion_tokens"]?.GetValue<int?>() ?? 0;
-        var totalTokens = usage?["total_tokens"]?.GetValue<int?>() ?? (promptTokens + completionTokens);
+        return CreateConversationRequest(
+            conversationTarget,
+            JsonSerializer.SerializeToNode(inputs, MistralJsonSerializerOptions) ?? new JsonArray(),
+            chatRequest.SystemPrompt,
+            new MistralConversationCompletionArgs
+            {
+                Temperature = chatRequest.Temperature,
+                MaxTokens = chatRequest.MaxTokens
+            },
+            ToToolArrayNode(tools),
+            stream: false);
+    }
 
-        var meta = new JsonObject
+    private static string ToMistralSamplingRole(Role role)
+        => role == Role.User ? "user" : "assistant";
+
+    private static object? ToMistralSamplingContentPart(ContentBlock content)
+        => content switch
         {
-            ["inputTokens"] = promptTokens,
-            ["totalTokens"] = totalTokens
+            TextContentBlock text => new { type = "text", text = text.Text },
+            ImageContentBlock image => new { type = "image_url", image_url = image.ToDataUrl() },
+            _ => null
         };
 
-        if (!string.IsNullOrWhiteSpace(conversationId))
-            meta["conversationId"] = conversationId;
+    private async Task<CreateMessageResult> MapSamplingResponseAsync(
+        MistralConversationResponse response,
+        ConversationTarget conversationTarget,
+        CancellationToken cancellationToken)
+    {
+        var primaryOutput = GetPrimaryMessageOutput(response);
+        var resolvedModel = NormalizeReportedModel(GetString(primaryOutput, "model"), conversationTarget);
+        List<ContentBlock> contentBlocks = [];
 
-        ContentBlock resultBlock = contentBlocks.OfType<EmbeddedResourceBlock>().Any() ?
-            contentBlocks.OfType<EmbeddedResourceBlock>().First()
-            : string.Join(Environment.NewLine, contentBlocks.OfType<TextContentBlock>().Select(a => a.Text)).ToTextContentBlock()
-            ?? throw new Exception("No content");
+        foreach (var part in EnumerateContentParts(primaryOutput?["content"]))
+        {
+            if (part.Type is "output_text" or "text")
+            {
+                if (!string.IsNullOrEmpty(part.Text))
+                    contentBlocks.Add(part.Text.ToTextContentBlock());
 
-        return new()
+                continue;
+            }
+
+            if (part.Type != "tool_file")
+                continue;
+
+            var download = await TryDownloadConversationFileAsync(part.FileId, part.FileType, cancellationToken);
+            if (download.File is null)
+                continue;
+
+            contentBlocks.Add(new EmbeddedResourceBlock
+            {
+                Resource = new BlobResourceContents
+                {
+                    Uri = $"https://api.mistral.ai/v1/files/{download.File.FileId}",
+                    MimeType = download.File.MimeType ?? MediaTypeNames.Application.Octet,
+                    Blob = download.File.Bytes
+                }
+            });
+        }
+
+        var usage = ExtractUsage(response.Usage);
+        var meta = new JsonObject
+        {
+            ["inputTokens"] = usage.PromptTokens,
+            ["totalTokens"] = usage.TotalTokens
+        };
+
+        if (!string.IsNullOrWhiteSpace(response.ConversationId))
+            meta["conversationId"] = response.ConversationId;
+
+        ContentBlock resultBlock = contentBlocks.OfType<EmbeddedResourceBlock>().Any()
+            ? contentBlocks.OfType<EmbeddedResourceBlock>().First()
+            : string.Join(Environment.NewLine, contentBlocks.OfType<TextContentBlock>().Select(block => block.Text))
+                .ToTextContentBlock();
+
+        return new CreateMessageResult
         {
             Role = Role.Assistant,
             Model = resolvedModel,

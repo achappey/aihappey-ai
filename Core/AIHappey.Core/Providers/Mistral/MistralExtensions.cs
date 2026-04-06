@@ -1,9 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.Mistral;
-using AIHappey.Core.AI;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -25,100 +22,45 @@ public static partial class MistralExtensions
     public static MistralCodeInterpreter? ToCodeInterpreter(this JsonObject? obj)
         => HasMistralTool(obj, "code_interpreter") ? new MistralCodeInterpreter() : null;
 
+    public static bool TryGetExplicitToolNodes(this JsonObject? obj, out List<JsonNode> tools)
+    {
+        tools = [];
+
+        if (obj?["mistral"] is not JsonObject mistral || mistral["tools"] is not JsonArray toolsArray)
+            return false;
+
+        foreach (var tool in toolsArray)
+        {
+            if (TryCloneToolNode(tool) is { } node)
+                tools.Add(node);
+        }
+
+        return true;
+    }
+
     public static Dictionary<string, object> ToProviderMetadata(this Dictionary<string, object> metadata)
         => new()
         { { "mistral", metadata } };
 
-    public static object? ToMistralPart(this UIMessagePart part)
+    private static JsonNode? TryCloneToolNode(JsonNode? tool)
     {
-        if (part is TextUIPart t) return t.ToTextPart();
+        if (tool is not JsonObject toolObject)
+            return null;
 
-        if (part is FileUIPart f && f.IsImage())
-            return f.ToImagePart();
-
-        return null;
-    }
-
-    public static object? ToTextPart(this TextUIPart part) =>
-        new { type = "text", text = part.Text };
-
-    public static object? ToImagePart(this FileUIPart part) =>
-        new { type = "image_url", image_url = part.Url };
-
-    public static IEnumerable<object> ToMistralMessages(this UIMessage msg)
-    {
-        //──────────────────────────────────────────────
-        // USER / SYSTEM
-        //──────────────────────────────────────────────
-        if (msg.Role == Role.user || msg.Role == Role.system)
+        if (toolObject["type"] is not JsonValue typeValue
+            || !typeValue.TryGetValue<string>(out var type)
+            || string.IsNullOrWhiteSpace(type))
         {
-            yield return new Dictionary<string, object?>
-            {
-                ["type"] = "message.input",
-                ["role"] = msg.Role.ToString(),
-                ["content"] = msg.Parts
-                    .Select(p => p.ToMistralPart())
-                    .OfType<object>()
-                    .ToList()
-            };
-            yield break;
+            return null;
         }
 
-        //──────────────────────────────────────────────
-        // ASSISTANT (ordered per-part)
-        //──────────────────────────────────────────────
-        if (msg.Role == Role.assistant)
+        try
         {
-            foreach (var part in msg.Parts)
-            {
-                switch (part)
-                {
-                    // 🧩 Plain text or image parts
-                    case TextUIPart or FileUIPart:
-                        yield return new Dictionary<string, object?>
-                        {
-                            ["type"] = "message.input",
-                            ["role"] = "assistant",
-                            ["content"] = new[] { part.ToMistralPart()! }
-                        };
-                        break;
-
-                    // 🧩 Tool invocation part
-                    case ToolInvocationPart tool:
-                        var toolName = tool.GetToolName();
-
-                        if (tool.ProviderExecuted != true)
-                        {
-                            // Assistant calls the tool
-                            yield return new Dictionary<string, object?>
-                            {
-                                ["type"] = "function.call",
-                                ["tool_call_id"] = tool.ToolCallId,
-                                ["name"] = toolName,
-                                ["arguments"] = JsonSerializer.Serialize(tool.Input)
-                            };
-
-                            // Optional tool output
-                            if (tool.Output is not null)
-                            {
-                                yield return new Dictionary<string, object?>
-                                {
-                                    ["type"] = "function.result",
-                                    ["tool_call_id"] = tool.ToolCallId,
-                                    ["result"] = tool.Output is string s
-                                        ? s
-                                        : JsonSerializer.Serialize(tool.Output)
-                                };
-                            }
-                        }
-
-                        break;
-                }
-            }
-
-            yield break;
+            return JsonNode.Parse(toolObject.ToJsonString());
         }
-
-        throw new InvalidOperationException($"Unexpected role: {msg.Role}");
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

@@ -4,6 +4,13 @@ namespace AIHappey.Vercel.Extensions;
 
 public static class UIPartExtensions
 {
+    public static ToolCallDeltaPart ToToolCallDeltaPart(this string delta,
+        string toolCallId) => new()
+        {
+            ToolCallId = toolCallId,
+            InputTextDelta = delta,
+        };
+
     public static bool IsImage(this UIMessagePart? part)
         => part is FileUIPart fileUIPart && fileUIPart.MediaType.StartsWith("image/");
 
@@ -13,8 +20,9 @@ public static class UIPartExtensions
     public static FileUIPart ToFileUIPart(this byte[] bytes, string mimeType, Dictionary<string, Dictionary<string, object>?>? metadata = null)
         => new()
         {
-            MediaType = mimeType,
-            Url = $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}",
+            MediaType = mimeType == "image/jpeg" ? "image/jpg" : mimeType,
+            // Url = $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}",
+            Url = Convert.ToBase64String(bytes),
             ProviderMetadata = metadata
         };
 
@@ -72,10 +80,11 @@ public static class UIPartExtensions
         };
     }
 
-    public static TextStartUIMessageStreamPart ToTextStartUIMessageStreamPart(this string id)
+    public static TextStartUIMessageStreamPart ToTextStartUIMessageStreamPart(this string id, Dictionary<string, object>? metadata = null)
         => new()
         {
-            Id = id
+            Id = id,
+            ProviderMetadata = metadata
         };
 
     public static TextEndUIMessageStreamPart ToTextEndUIMessageStreamPart(this string id)

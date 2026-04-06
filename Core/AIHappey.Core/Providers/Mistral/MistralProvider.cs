@@ -1,8 +1,6 @@
-using OAIC = OpenAI.Chat;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.Common.Model;
-using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.AI;
@@ -40,38 +38,13 @@ public partial class MistralProvider : IModelProvider
     public string GetIdentifier() => nameof(Mistral).ToLowerInvariant();
 
     private string GetName() => nameof(Mistral);
-
-    public Task<OAIC.ChatCompletion> CompleteChatAsync(OAIC.ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
+ 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
+        => throw new NotSupportedException();  
+  
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 

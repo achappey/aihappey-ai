@@ -30,6 +30,24 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize item_reference.");
         }
 
+        if (string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseFunctionCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize function_call.");
+        }
+
+        if (string.Equals(type, "function_call_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseFunctionCallOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize function_call_output.");
+        }
+
+        if (string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseReasoningItem>(options)
+                   ?? throw new JsonException("Could not deserialize reasoning.");
+        }
+
         throw new JsonException($"Unknown input item type: '{type ?? "(missing)"}'");
     }
 
@@ -43,6 +61,18 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseItemReference itemRef:
                 JsonSerializer.Serialize(writer, itemRef, options);
+                return;
+
+            case ResponseFunctionCallItem functionCall:
+                JsonSerializer.Serialize(writer, functionCall, options);
+                return;
+
+            case ResponseFunctionCallOutputItem functionCallOutput:
+                JsonSerializer.Serialize(writer, functionCallOutput, options);
+                return;
+
+            case ResponseReasoningItem reasoning:
+                JsonSerializer.Serialize(writer, reasoning, options);
                 return;
 
             default:

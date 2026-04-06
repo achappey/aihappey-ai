@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -19,11 +20,11 @@ public partial class DeAPIProvider
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var includeTs = TryGetBoolean(metadata, "include_ts") ?? true;
         var returnInResponse = TryGetBoolean(metadata, "return_result_in_response") ?? true;
-        var webhookUrl = TryGetString(metadata, "webhook_url") ?? TryGetString(metadata, "webhookUrl");
-        var language = TryGetString(metadata, "language");
-        var format = TryGetString(metadata, "format");
-        var videoUrl = TryGetString(metadata, "video_url") ?? TryGetString(metadata, "videoUrl");
-        var audioUrl = TryGetString(metadata, "audio_url") ?? TryGetString(metadata, "audioUrl");
+        var webhookUrl = metadata.TryGetString("webhook_url") ?? metadata.TryGetString("webhookUrl");
+        var language = metadata.TryGetString("language");
+        var format = metadata.TryGetString("format");
+        var videoUrl = metadata.TryGetString("video_url") ?? metadata.TryGetString("videoUrl");
+        var audioUrl = metadata.TryGetString("audio_url") ?? metadata.TryGetString("audioUrl");
 
         var endpoint = ResolveTranscriptionEndpoint(request.MediaType, videoUrl, audioUrl, request.Model);
         string requestId;

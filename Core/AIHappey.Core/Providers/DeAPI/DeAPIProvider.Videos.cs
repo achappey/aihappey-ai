@@ -31,7 +31,7 @@ public partial class DeAPIProvider
         var frames = request.Duration is > 0 ? request.Duration.Value : (int)(TryGetNumber(metadata, "frames") ?? 49);
         var seed = request.Seed ?? (int)(TryGetNumber(metadata, "seed") ?? -1);
         var fps = request.Fps ?? (int)(TryGetNumber(metadata, "fps") ?? 30);
-        var webhookUrl = TryGetString(metadata, "webhook_url") ?? TryGetString(metadata, "webhookUrl");
+        var webhookUrl = metadata.TryGetString("webhook_url") ?? metadata.TryGetString("webhookUrl");
 
         string endpoint;
         string requestId;

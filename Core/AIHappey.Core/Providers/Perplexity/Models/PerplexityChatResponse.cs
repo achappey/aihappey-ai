@@ -61,6 +61,10 @@ public class PerplexitySearchResult
 
     [JsonPropertyName("date")]
     public string? Date { get; set; }
+
+    [JsonPropertyName("snippet")]
+    public string? Snippet { get; set; }
+
 }
 
 public class PerplexityUsage

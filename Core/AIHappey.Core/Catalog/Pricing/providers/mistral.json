@@ -1,0 +1,80 @@
+{
+  "mistral/mistral-large-latest": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  },
+  "mistral/mistral-large-2512": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  },
+  "mistral/mistral-small-latest": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006"
+    }
+  },
+  "mistral/mistral-small-2603": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006"
+    }
+  },
+  "mistral/mistral-medium-latest": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.000002"
+    }
+  },
+  "mistral/mistral-medium-2508": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.000002"
+    }
+  },
+  "mistral/mistral-medium-2505": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.000002"
+    }
+  },
+  "mistral/magistral-medium-latest": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000005"
+    }
+  },
+  "mistral/magistral-medium-2509": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000005"
+    }
+  },
+  "mistral/magistral-small-latest": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  },
+  "mistral/magistral-small-2509": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  },
+  "mistral/codestral-latest": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000009"
+    }
+  },
+  "mistral/codestral-2508": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000009"
+    }
+  }
+}

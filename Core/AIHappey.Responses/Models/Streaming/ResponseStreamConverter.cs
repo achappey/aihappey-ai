@@ -36,6 +36,9 @@ public class ResponseStreamConverter : JsonConverter<ResponseStreamPart>
         ["response.web_search_call.completed"] = typeof(ResponseWebSearchCallCompleted),
         ["response.web_search_call.in_progress"] = typeof(ResponseWebSearchCallInProgress),
         ["response.web_search_call.searching"] = typeof(ResponseWebSearchCallSearching),
+        ["response.shell_call_command.added"] = typeof(ResponseShellCallCommandAdded),
+        ["response.shell_call_command.delta"] = typeof(ResponseShellCallCommandDelta),
+        ["response.shell_call_command.done"] = typeof(ResponseShellCallCommandDone),
         ["error"] = typeof(ResponseError),
     };
 

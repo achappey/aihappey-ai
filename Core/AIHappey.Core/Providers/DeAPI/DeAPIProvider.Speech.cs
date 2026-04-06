@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -20,12 +21,12 @@ public partial class DeAPIProvider
         var now = DateTime.UtcNow;
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
-        var voice = request.Voice ?? TryGetString(metadata, "voice") ?? "af_sky";
-        var lang = request.Language ?? TryGetString(metadata, "lang") ?? "en-us";
+        var voice = request.Voice ?? metadata.TryGetString("voice") ?? "af_sky";
+        var lang = request.Language ?? metadata.TryGetString("lang") ?? "en-us";
         var speed = request.Speed ?? (float?)(TryGetNumber(metadata, "speed") ?? 1.0);
-        var format = request.OutputFormat ?? TryGetString(metadata, "format") ?? "flac";
+        var format = request.OutputFormat ?? metadata.TryGetString("format") ?? "flac";
         var sampleRate = (int)(TryGetNumber(metadata, "sample_rate") ?? 24000);
-        var webhookUrl = TryGetString(metadata, "webhook_url") ?? TryGetString(metadata, "webhookUrl");
+        var webhookUrl = metadata.TryGetString("webhook_url") ?? metadata.TryGetString("webhookUrl");
 
         var payload = new Dictionary<string, object?>
         {
