@@ -2,20 +2,24 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.AWstore;
+namespace AIHappey.Core.Providers.ZyloAPI;
 
-public partial class AWstoreProvider
+public partial class ZyloAPIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
+        var key = _keyResolver.Resolve(GetIdentifier());
 
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        var cacheKey = this.GetCacheKey();
+        var cacheKey = this.GetCacheKey(key);
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
@@ -23,7 +27,7 @@ public partial class AWstoreProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"AWstore API error: {err}");
+                    throw new Exception($"ZyloAPI API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -31,6 +35,7 @@ public partial class AWstoreProvider
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
+
 
                 var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
@@ -49,8 +54,8 @@ public partial class AWstoreProvider
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-                    if (el.TryGetProperty("description", out var descriptionEl))
-                        model.Description = descriptionEl.GetString() ?? "";
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);

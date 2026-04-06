@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "igpt/cef-1-normal",
+      "object": "model",
+      "owned_by": "iGPT",
+      "name": "jamba-large",
+      "type": "language"
+    },
+    {
+      "id": "igpt/cef-1-high",
+      "object": "model",
+      "owned_by": "iGPT",
+      "name": "cef-1-high",
+      "type": "language"
+    }
+  ]
+}

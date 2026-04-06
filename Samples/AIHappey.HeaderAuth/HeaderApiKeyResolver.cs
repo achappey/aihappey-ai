@@ -498,7 +498,17 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tensorblock"] = "X-TensorBlock-Key",
             ["blink"] = "X-Blink-Key",
             ["shannonai"] = "X-ShannonAI-Key",
-
+            ["trinixai"] = "X-TrinixAI-Key",
+            ["holysheepai"] = "X-HolySheepAI-Key",
+            ["zyloapi"] = "X-ZyloAPI-Key",
+            ["augure"] = "X-Augure-Key",
+            ["sapiom"] = "X-Sapiom-Key",
+            ["forgebylana"] = "X-ForgeByLANA-Key",
+            ["theoldapi"] = "X-TheOldAPI-Key",
+            ["radiance"] = "X-Radiance-Key",
+            ["oneinfer"] = "X-OneInfer-Key",
+            ["tapas"] = "X-Tapas-Key",
+            ["igpt"] = "X-IGPT-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -496,6 +496,17 @@ public class AIServiceConfig
     public ProviderConfig? TensorBlock { get; set; }
     public ProviderConfig? Blink { get; set; }
     public ProviderConfig? ShannonAI { get; set; }
+    public ProviderConfig? TrinixAI { get; set; }
+    public ProviderConfig? HolySheepAI { get; set; }
+    public ProviderConfig? ZyloAPI { get; set; }
+    public ProviderConfig? Augure { get; set; }
+    public ProviderConfig? Sapiom { get; set; }
+    public ProviderConfig? ForgeByLANA { get; set; }
+    public ProviderConfig? TheOldAPI { get; set; }
+    public ProviderConfig? Radiance { get; set; }
+    public ProviderConfig? OneInfer { get; set; }
+    public ProviderConfig? Tapas { get; set; }
+    public ProviderConfig? IGPT { get; set; }
 
 }
 

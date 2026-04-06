@@ -24,7 +24,6 @@ public static class ResponsesStreamMappingExtensions
 
         context ??= new ResponsesStreamMappingContext();
         var options = context.Options;
-        Console.WriteLine(JsonSerializer.Serialize(update, JsonSerializerOptions.Web));
 
         switch (update)
         {

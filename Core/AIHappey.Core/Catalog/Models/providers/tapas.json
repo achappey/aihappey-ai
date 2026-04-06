@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tapas/tapas-lem",
+      "object": "model",
+      "owned_by": "tapas",
+      "name": "tapas-lem",
+      "type": "language",
+      "description": "Returns bullet-point answers from semantic cache. ~40 ms latency and ~0.001 Wh energy usage. Around 3000× cheaper than full inference."
+    },
+    {
+      "id": "tapas/tapas-llm",
+      "object": "model",
+      "owned_by": "tapas",
+      "name": "tapas-llm",
+      "type": "language",
+      "description": "Full GPU inference for detailed responses. ~2000 ms latency and ~3.0 Wh energy usage. Use when cache misses or richer prose is required."
+    },
+    {
+      "id": "tapas/tapas-hybrid",
+      "object": "model",
+      "owned_by": "tapas",
+      "name": "tapas-hybrid",
+      "type": "language",
+      "description": "Smart router that automatically selects cache (>0.85 confidence) or full LLM. ~40–2000 ms latency and ~0.001–3.0 Wh energy usage."
+    }
+  ]
+}

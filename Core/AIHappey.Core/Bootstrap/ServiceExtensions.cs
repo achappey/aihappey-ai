@@ -484,7 +484,6 @@ using AIHappey.Core.Providers.NinjaChat;
 using AIHappey.Core.Providers.MIMICXAI;
 using AIHappey.Core.Providers.SawtIA;
 using AIHappey.Core.Providers.Runtimo;
-using AIHappey.Core.Providers.AWstore;
 using AIHappey.Core.Providers.HubotEng;
 using AIHappey.Core.Providers.Codzen;
 using AIHappey.Core.Providers.OpusCode;
@@ -497,6 +496,18 @@ using AIHappey.Core.Providers.AiApiWorld;
 using AIHappey.Core.Providers.TensorBlock;
 using AIHappey.Core.Providers.Blink;
 using AIHappey.Core.Providers.ShannonAI;
+using AIHappey.Core.Providers.TrinixAI;
+using AIHappey.Core.Providers.HolySheepAI;
+using AIHappey.Core.Providers.ZyloAPI;
+using AIHappey.Core.Providers.Augure;
+using AIHappey.Core.Providers.Sapiom;
+using AIHappey.Core.Providers.ForgeByLANA;
+using AIHappey.Core.Providers.TheOldAPI;
+using AIHappey.Core.Providers.UncloseAI;
+using AIHappey.Core.Providers.Radiance;
+using AIHappey.Core.Providers.OneInfer;
+using AIHappey.Core.Providers.Tapas;
+using AIHappey.Core.Providers.IGPT;
 
 namespace AIHappey.Core.AI;
 
@@ -1000,7 +1011,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MIMICXAIProvider>();
         services.AddSingleton<IModelProvider, SawtIAProvider>();
         services.AddSingleton<IModelProvider, RuntimoProvider>();
-        services.AddSingleton<IModelProvider, AWstoreProvider>();
         services.AddSingleton<IModelProvider, HubotEngProvider>();
         services.AddSingleton<IModelProvider, CodzenProvider>();
         services.AddSingleton<IModelProvider, OpusCodeProvider>();
@@ -1013,6 +1023,19 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TensorBlockProvider>();
         services.AddSingleton<IModelProvider, BlinkProvider>();
         services.AddSingleton<IModelProvider, ShannonAIProvider>();
+        services.AddSingleton<IModelProvider, TrinixAIProvider>();
+        services.AddSingleton<IModelProvider, HolySheepAIProvider>();
+        services.AddSingleton<IModelProvider, ZyloAPIProvider>();
+        services.AddSingleton<IModelProvider, AugureProvider>();
+        services.AddSingleton<IModelProvider, SapiomProvider>();
+        services.AddSingleton<IModelProvider, ForgeByLANAProvider>();
+        services.AddSingleton<IModelProvider, TheOldAPIProvider>();
+        services.AddSingleton<IModelProvider, UncloseAIProvider>();
+        services.AddSingleton<IModelProvider, RadianceProvider>();
+        services.AddSingleton<IModelProvider, OneInferProvider>();
+        services.AddSingleton<IModelProvider, TapasProvider>();
+        services.AddSingleton<IModelProvider, IGPTProvider>();
+        
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

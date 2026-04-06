@@ -159,8 +159,6 @@ public partial class MistralProvider
             if (line is null)
                 break;
                 
-            Console.WriteLine(line);
-
             if (line.Length == 0)
             {
                 if (dataBuilder.Length > 0)

@@ -3,9 +3,9 @@ using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.AWstore;
+namespace AIHappey.Core.Providers.TheOldAPI;
 
-public partial class AWstoreProvider
+public partial class TheOldAPIProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
