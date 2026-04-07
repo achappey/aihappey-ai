@@ -1,27 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.Common.Model.Providers.Mistral;
 
 namespace AIHappey.Core.Providers.Mistral;
 
 public static partial class MistralExtensions
 {
-
-    private static bool HasMistralTool(JsonObject? root, string tool)
-        => root?["mistral"] is JsonObject m && m[tool] is JsonObject;
-
-    public static MistralWebSearch? ToWebSearchTool(this JsonObject? obj)
-        => HasMistralTool(obj, "web_search") ? new MistralWebSearch() : null;
-
-    public static MistralImageGeneration? ToImageGeneration(this JsonObject? obj)
-        => HasMistralTool(obj, "image_generation") ? new MistralImageGeneration() : null;
-
-    public static MistralWebSearchPremium? ToWebSearchPremiumTool(this JsonObject? obj)
-        => HasMistralTool(obj, "web_search_premium") ? new MistralWebSearchPremium() : null;
-
-    public static MistralCodeInterpreter? ToCodeInterpreter(this JsonObject? obj)
-        => HasMistralTool(obj, "code_interpreter") ? new MistralCodeInterpreter() : null;
-
     public static bool TryGetExplicitToolNodes(this JsonObject? obj, out List<JsonNode> tools)
     {
         tools = [];
@@ -37,10 +20,6 @@ public static partial class MistralExtensions
 
         return true;
     }
-
-    public static Dictionary<string, object> ToProviderMetadata(this Dictionary<string, object> metadata)
-        => new()
-        { { "mistral", metadata } };
 
     private static JsonNode? TryCloneToolNode(JsonNode? tool)
     {

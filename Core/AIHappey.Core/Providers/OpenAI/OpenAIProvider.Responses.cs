@@ -14,6 +14,8 @@ public partial class OpenAIProvider
 
         options.ParallelToolCalls ??= true;
 
+        this.SetDefaultResponseProperties(options);
+
         var response = await _client.GetResponses(
                    options, ct: cancellationToken);
 
@@ -42,7 +44,8 @@ public partial class OpenAIProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         options.ParallelToolCalls ??= true;
-
+        this.SetDefaultResponseProperties(options);
+        
         await foreach (var update in _client.GetResponsesUpdates(options, ct: cancellationToken))
         {
             if (update is ResponseCompleted completed)

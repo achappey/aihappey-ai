@@ -4,6 +4,9 @@ using System.Text.Json;
 using System.Text;
 using System.Dynamic;
 using System.Net.Mime;
+using AIHappey.Core.Providers.OpenAI;
+using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers.XAI;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -11,6 +14,11 @@ public partial class XAIProvider
 {
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
+        ApplyAuthHeader();
+
+        return await this.ResponsesSamplingAsync(chatRequest, cancellationToken);
+
+        /*
         ApplyAuthHeader();
         
         var tools = chatRequest.GetTools();
@@ -103,7 +111,7 @@ public partial class XAIProvider
             Role = Role.Assistant,
             Content = [sb.ToString().Trim().ToTextContentBlock()],
             Meta = meta
-        };
+        };*/
     }
 
 }

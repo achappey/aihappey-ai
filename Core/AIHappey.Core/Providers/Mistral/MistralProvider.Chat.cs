@@ -611,18 +611,7 @@ public partial class MistralProvider
             return passthroughTools;
         }
 
-        var tools = new List<JsonNode>();
-
-        AddSerializedToolNode(tools, metadata?.CodeInterpreter);
-        AddSerializedToolNode(tools, metadata?.ImageGeneration);
-        AddSerializedToolNode(tools, metadata?.DocumentLibrary);
-
-        if (metadata?.WebSearchPremium != null)
-            AddSerializedToolNode(tools, metadata.WebSearchPremium);
-        else
-            AddSerializedToolNode(tools, metadata?.WebSearch);
-
-        return tools;
+        return [];
     }
 
     private static JsonNode? ToToolArrayNode(IEnumerable<JsonNode> tools)

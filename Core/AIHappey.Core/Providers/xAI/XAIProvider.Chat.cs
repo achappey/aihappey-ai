@@ -53,12 +53,11 @@ public partial class XAIProvider
         CancellationToken cancellationToken = default)
     {
         var metadata = chatRequest.GetProviderMetadata<XAIProviderMetadata>(GetIdentifier());
-        var providerTools = BuildProviderToolDefinitions(metadata).ToList();
-
         var request = chatRequest.ToResponsesRequest(GetIdentifier(), new ResponsesRequestMappingOptions
         {
             Instructions = metadata?.Instructions,
             Include = metadata?.Include,
+            Metadata = chatRequest.ProviderMetadata.ToObjectDictionary(),
             Reasoning = metadata?.Reasoning != null ? new Reasoning()
             {
                 //    Effort = metadata?.Reasoning.Effort,
@@ -66,8 +65,8 @@ public partial class XAIProvider
             } : null,
             Store = false,
             ParallelToolCalls = metadata?.ParallelToolCalls,
-            Tools = [.. providerTools, .. chatRequest.Tools?.Select(a => a.ToResponseToolDefinition()) ?? []],
-            ToolChoice = providerTools.Count > 0 || chatRequest.Tools?.Count > 0 ? "auto" : chatRequest.ToolChoice
+            Tools = chatRequest.Tools?.Select(a => a.ToResponseToolDefinition()),
+            ToolChoice = chatRequest.ToolChoice
         });
 
         return ValueTask.FromResult(request);
@@ -123,14 +122,13 @@ public partial class XAIProvider
     private ResponsesStreamMappingOptions CreateResponsesStreamMappingOptions(ChatRequest chatRequest)
     {
         var metadata = chatRequest.GetProviderMetadata<XAIProviderMetadata>(GetIdentifier());
-        var providerTools = BuildProviderToolDefinitions(metadata).ToList();
 
         return new ResponsesStreamMappingOptions
         {
-            ProviderExecutedTools = [.. providerTools
-                .Select(a => a.Extra?.TryGetValue("name", out var n) == true ? n.GetString() : null)
-                .Where(a => !string.IsNullOrWhiteSpace(a))
-                .OfType<string>()],
+            ProviderExecutedTools = metadata?.Tools?
+                .Select(x => x.GetProperty("type").GetString())
+                .OfType<string>()
+                .ToArray(),
             OutputItemDoneMapper = (outputItemDone, context, ct) => MapXAIOutputItemDoneAsync(outputItemDone, ct),
             ResolveToolTitle = toolName => chatRequest.Tools?.FirstOrDefault(a => a.Name == toolName)?.Title,
             FinishFactory = response =>
@@ -187,38 +185,4 @@ public partial class XAIProvider
 
         return null;
     }
-    
-    private static IEnumerable<Responses.ResponseToolDefinition> BuildProviderToolDefinitions(XAIProviderMetadata? metadata)
-    {
-        if (metadata?.XSearch != null)
-            yield return ToProviderToolDefinition(metadata.XSearch, "x_search");
-
-        if (metadata?.WebSearch != null)
-            yield return ToProviderToolDefinition(metadata.WebSearch, "web_search");
-
-        if (metadata?.CodeExecution != null)
-            yield return ToProviderToolDefinition(metadata.CodeExecution, "code_execution");
-    }
-
-    private static AIHappey.Responses.ResponseToolDefinition ToProviderToolDefinition(object metadata, string fallbackType)
-    {
-        var json = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web);
-        var extra = new Dictionary<string, JsonElement>();
-
-        foreach (var property in json.EnumerateObject())
-            extra[property.Name] = property.Value.Clone();
-
-        var type = extra.TryGetValue("type", out var typeJson) && typeJson.ValueKind == JsonValueKind.String
-            ? typeJson.GetString() ?? fallbackType
-            : fallbackType;
-
-        extra.Remove("type");
-
-        return new AIHappey.Responses.ResponseToolDefinition
-        {
-            Type = type,
-            Extra = extra.Count == 0 ? null : extra
-        };
-    }
-
 }

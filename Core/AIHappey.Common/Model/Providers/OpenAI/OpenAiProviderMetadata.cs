@@ -10,21 +10,6 @@ public sealed class OpenAiProviderMetadata
 
     public OpenAiReasoning? Reasoning { get; set; }
 
-    [JsonPropertyName("web_search")]
-    public OpenAiWebSearch? WebSearch { get; set; }
-
-    [JsonPropertyName("file_search")]
-    public OpenAiFileSearch? FileSearch { get; set; }
-
-    [JsonPropertyName("shell")]
-    public ShellTool? Shell { get; set; }
-
-    [JsonPropertyName("code_interpreter")]
-    public CodeInterpreter? CodeInterpreter { get; set; }
-
-    [JsonPropertyName("image_generation")]
-    public ImageGeneration? ImageGeneration { get; set; }
-
     [JsonPropertyName("parallel_tool_calls")]
     public bool? ParallelToolCalls { get; set; }
 

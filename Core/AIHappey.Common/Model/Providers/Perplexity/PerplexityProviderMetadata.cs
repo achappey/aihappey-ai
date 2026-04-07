@@ -41,11 +41,8 @@ public sealed class PerplexityProviderMetadata
     [JsonPropertyName("media_response")]
     public PerplexityMediaResponse? MediaResponse { get; set; }
 
-    [JsonPropertyName("fetch_url")]
-    public JsonElement? FetchUrl { get; set; }
-
-    [JsonPropertyName("web_search")]
-    public JsonElement? WebSearch { get; set; }
+    [JsonPropertyName("tools")]
+    public JsonElement[]? Tools { get; set; }
 
     [JsonPropertyName("language_preference")]
     public string? LanguagePreference { get; set; }

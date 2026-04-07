@@ -17,21 +17,14 @@ public partial class PerplexityProvider
         var usePreset = UsesResponsesPreset(chatRequest.Model);
         var metadata = chatRequest.GetProviderMetadata<PerplexityProviderMetadata>(GetIdentifier());
 
-        List<ResponseToolDefinition> providerTools = [];
-
-        if (metadata?.FetchUrl is JsonElement fetchUrl)
-            providerTools.Add(fetchUrl.ToTool());
-
-        if (metadata?.WebSearch is JsonElement webSearch)
-            providerTools.Add(webSearch.ToTool());
-
         return chatRequest.ToResponsesRequest(GetIdentifier(), new ResponsesRequestMappingOptions
         {
             Model = usePreset ? null : chatRequest.Model,
             Store = false,
             Instructions = metadata?.Instructions,
-            Tools = [.. providerTools, .. chatRequest.Tools?.Select(a => a.ToResponseToolDefinition()) ?? []],
-            ToolChoice = chatRequest.Tools?.Count > 0 ? "auto" : chatRequest.ToolChoice,
+            Metadata = chatRequest.ProviderMetadata.ToObjectDictionary(),
+            Tools = [.. chatRequest.Tools?.Select(a => a.ToResponseToolDefinition()) ?? []],
+            ToolChoice = chatRequest.ToolChoice,
         });
     }
 
@@ -73,7 +66,6 @@ public partial class PerplexityProvider
 
     private JsonElement? BuildResponsesExtraRootProperties(string model, PerplexityProviderMetadata? metadata)
     {
-        //    var metadata = chatRequest.GetProviderMetadata<PerplexityProviderMetadata>(GetIdentifier());
         var dic = new Dictionary<string, object?>
         {
         };
@@ -102,6 +94,8 @@ public partial class PerplexityProvider
     {
         var usePreset = UsesResponsesPreset(options.Model);
         var request = CloneResponsesRequest(options);
+
+        this.SetDefaultResponseProperties(request);
 
         if (usePreset)
             request.Model = null;

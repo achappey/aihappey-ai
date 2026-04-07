@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Responses;
 using System.Text.Json;
 using OpenAI.Containers;
+using System.Text.Json.Nodes;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -57,8 +58,14 @@ public partial class OpenAIProvider
     {
         var metadata = chatRequest.GetProviderMetadata<OpenAiProviderMetadata>(GetIdentifier());
         var codeInterpreterFiles = await UploadCodeInterpreterFilesAsync(chatRequest, metadata, cancellationToken);
-        var providerTools = ResolveProviderResponseToolDefinitions(metadata, codeInterpreterFiles);
         var endUserId = _endUserIdResolver.Resolve(chatRequest);
+
+        if (metadata?.Tools is { Length: > 0 })
+        {
+            metadata.Tools = ApplyCodeInterpreterFileIds(
+                metadata.Tools,
+                codeInterpreterFiles);
+        }
 
         var request = chatRequest.ToResponsesRequest(GetIdentifier(), new ResponsesRequestMappingOptions
         {
@@ -74,8 +81,12 @@ public partial class OpenAIProvider
             ParallelToolCalls = metadata?.ParallelToolCalls,
             ServiceTier = metadata?.ServiceTier,
             Include = metadata?.Include?.ToList(),
-            Tools = [.. providerTools, .. (chatRequest.Tools?.Select(a => a.ToResponseToolDefinition()) ?? [])],
-            ToolChoice = providerTools.Count != 0 || chatRequest.Tools?.Count > 0 ? "auto" : chatRequest.ToolChoice,
+            Metadata = new Dictionary<string, object?>
+            {
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
+            },
+            Tools = [.. chatRequest.Tools?.Select(a => a.ToResponseToolDefinition()) ?? []],
+            ToolChoice = chatRequest.ToolChoice,
         });
 
         ApplyOpenAIRequestEnhancements(request, chatRequest, metadata, codeInterpreterFiles);
@@ -243,117 +254,6 @@ public partial class OpenAIProvider
             request.Truncation = TruncationStrategy.Auto;
     }
 
-    private static List<ResponseToolDefinition> ResolveProviderResponseToolDefinitions(
-        OpenAiProviderMetadata? metadata,
-        IReadOnlyCollection<string> codeInterpreterFiles)
-    {
-        if (metadata?.Tools is not null)
-        {
-            var passthroughTools = new List<ResponseToolDefinition>(metadata.Tools.Length);
-
-            foreach (var tool in metadata.Tools)
-            {
-                if (TryCreateResponseToolDefinition(tool) is { } definition)
-                    passthroughTools.Add(definition);
-            }
-
-            return passthroughTools;
-        }
-
-        var tools = new List<ResponseToolDefinition>();
-
-        if (metadata?.WebSearch != null)
-        {
-            tools.Add(new ResponseToolDefinition
-            {
-                Type = "web_search"
-            });
-        }
-
-        if (metadata?.FileSearch?.VectorStoreIds?.Count > 0)
-        {
-            tools.Add(new ResponseToolDefinition
-            {
-                Type = "file_search",
-                Extra = new Dictionary<string, JsonElement>
-                {
-                    ["vector_store_ids"] = JsonSerializer.SerializeToElement(metadata.FileSearch.VectorStoreIds, JsonSerializerOptions.Web),
-                    ["max_num_results"] = JsonSerializer.SerializeToElement(metadata.FileSearch.MaxNumResults, JsonSerializerOptions.Web)
-                }
-            });
-        }
-
-        if (metadata?.CodeInterpreter != null)
-        {
-            tools.Add(new ResponseToolDefinition
-            {
-                Type = Constants.CodeInterpreter,
-                Extra = new Dictionary<string, JsonElement>
-                {
-                    ["container"] = JsonSerializer.SerializeToElement(
-                        (object?)(metadata.CodeInterpreter.Container.HasValue && metadata.CodeInterpreter.Container.Value.IsString
-                            ? metadata.CodeInterpreter.Container.Value.String
-                            : new { type = "auto", file_ids = codeInterpreterFiles }),
-                        JsonSerializerOptions.Web)
-                }
-            });
-        }
-
-        if (metadata?.ImageGeneration != null)
-        {
-            tools.Add(new ResponseToolDefinition
-            {
-                Type = "image_generation",
-                Extra = new Dictionary<string, JsonElement>
-                {
-                    ["model"] = JsonSerializer.SerializeToElement(metadata.ImageGeneration.Model, JsonSerializerOptions.Web),
-                    ["partial_images"] = JsonSerializer.SerializeToElement(metadata.ImageGeneration.PartialImages ?? 0, JsonSerializerOptions.Web),
-                    ["quality"] = JsonSerializer.SerializeToElement(metadata.ImageGeneration.Quality ?? "auto", JsonSerializerOptions.Web),
-                    ["background"] = JsonSerializer.SerializeToElement(metadata.ImageGeneration.Background ?? "auto", JsonSerializerOptions.Web),
-                    ["input_fidelity"] = JsonSerializer.SerializeToElement(metadata.ImageGeneration.InputFidelity ?? "low", JsonSerializerOptions.Web),
-                    ["size"] = JsonSerializer.SerializeToElement(metadata.ImageGeneration.Size ?? "auto", JsonSerializerOptions.Web)
-                }
-            });
-        }
-
-        if (metadata?.Shell != null)
-        {
-            tools.Add(new ResponseToolDefinition
-            {
-                Type = "shell",
-                Extra = new Dictionary<string, JsonElement>
-                {
-                    ["environment"] = JsonSerializer.SerializeToElement(metadata.Shell.Environment, JsonSerializerOptions.Web)
-                }
-            });
-        }
-
-        return tools;
-    }
-
-    private static ResponseToolDefinition? TryCreateResponseToolDefinition(JsonElement tool)
-    {
-        if (tool.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!tool.TryGetProperty("type", out var typeElement)
-            || typeElement.ValueKind != JsonValueKind.String
-            || string.IsNullOrWhiteSpace(typeElement.GetString()))
-        {
-            return null;
-        }
-
-        try
-        {
-            var definition = JsonSerializer.Deserialize<ResponseToolDefinition>(tool.GetRawText(), JsonSerializerOptions.Web);
-            return definition is { Type.Length: > 0 } ? definition : null;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
     private async Task<IReadOnlyCollection<string>> UploadCodeInterpreterFilesAsync(
         ChatRequest chatRequest,
         OpenAiProviderMetadata? metadata,
@@ -366,10 +266,15 @@ public partial class OpenAIProvider
             .Where(f => mimeSet.Contains(f.MediaType))
             .ToList();
 
-        if (allFileParts.Count == 0
-            || metadata?.CodeInterpreter == null
-            || metadata.CodeInterpreter.Container == null
-            || metadata.CodeInterpreter.Container.Value.IsString)
+        var hasCodeInterpreter = metadata?.Tools?
+        .Any(tool =>
+            tool.TryGetProperty("type", out var type) &&
+            type.GetString() == "code_interpreter" &&
+            tool.TryGetProperty("container", out var container) &&
+            container.ValueKind != JsonValueKind.String
+        ) ?? false;
+
+        if (allFileParts.Count == 0 || !hasCodeInterpreter)
         {
             return [];
         }
@@ -404,6 +309,38 @@ public partial class OpenAIProvider
         }
 
         return codeInterpreterFiles;
+    }
+    private static JsonElement[] ApplyCodeInterpreterFileIds(
+        JsonElement[] tools,
+        IReadOnlyCollection<string> fileIds)
+    {
+        if (tools.Length == 0 || fileIds.Count == 0)
+            return tools;
+
+        var result = new JsonElement[tools.Length];
+
+        for (int i = 0; i < tools.Length; i++)
+        {
+            var tool = tools[i];
+
+            if (!tool.TryGetProperty("type", out var typeProp) ||
+                typeProp.GetString() != "code_interpreter" ||
+                !tool.TryGetProperty("container", out var container) ||
+                container.ValueKind != JsonValueKind.Object)
+            {
+                result[i] = tool;
+                continue;
+            }
+
+            var obj = JsonNode.Parse(tool.GetRawText())!.AsObject();
+
+            obj["container"] ??= new JsonObject();
+            obj["container"]!["file_ids"] = JsonSerializer.SerializeToNode(fileIds);
+
+            result[i] = JsonSerializer.SerializeToElement(obj);
+        }
+
+        return result;
     }
 
     private async IAsyncEnumerable<UIMessagePart> MapOpenAIAnnotationAsync(

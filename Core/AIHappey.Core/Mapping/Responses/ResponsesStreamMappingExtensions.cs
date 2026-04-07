@@ -10,7 +10,7 @@ using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.AI;
 
-public static class ResponsesStreamMappingExtensions
+public static partial class ResponsesStreamMappingExtensions
 {
     private const string CodeInterpreterToolName = "code_interpreter";
 
@@ -140,39 +140,26 @@ public static class ResponsesStreamMappingExtensions
                     yield return part;
                 yield break;
 
-            case ResponseMcpCallArgumentsDelta mcpDelta:
+        /*    case ResponseMcpCallArgumentsDelta mcpDelta:
                 foreach (var part in AppendToolCallDelta(mcpDelta.ItemId, mcpDelta.Delta, context))
                     yield return part;
-                yield break;
+                yield break;*/
 
             case ResponseFunctionCallArgumentsDone functionDone:
                 foreach (var part in CompleteToolCall(functionDone.ItemId, functionDone.Arguments, context))
                     yield return part;
                 yield break;
 
-            case ResponseMcpCallArgumentsDone mcpDone:
+         /*   case ResponseMcpCallArgumentsDone mcpDone:
                 foreach (var part in CompleteToolCall(mcpDone.ItemId, mcpDone.Arguments, context))
                     yield return part;
-                yield break;
+                yield break;*/
 
             case ResponseOutputTextAnnotationAdded annotationAdded:
                 await foreach (var part in MapAnnotationAsync(annotationAdded.Annotation, context, cancellationToken))
                     yield return part;
                 yield break;
-
-            case ResponseWebSearchCallInProgress webSearchInProgress:
-                yield return ToolCallPart.CreateProviderExecuted(webSearchInProgress.ItemId, "web_search", new { });
-                yield break;
-
-            case ResponseWebSearchCallCompleted webSearchCompleted:
-                yield return new ToolOutputAvailablePart
-                {
-                    ToolCallId = webSearchCompleted.ItemId,
-                    ProviderExecuted = true,
-                    Output = new { }
-                };
-                yield break;
-
+      
             case ResponseCompleted completed:
 
                 if (context.Options.BeforeFinishMapper != null)
@@ -213,188 +200,6 @@ public static class ResponsesStreamMappingExtensions
         }
     }
 
-    private static async IAsyncEnumerable<UIMessagePart> MapOutputItemAddedAsync(
-        string providerId,
-        ResponseOutputItemAdded outputItemAdded,
-        ResponsesStreamMappingContext context,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var item = outputItemAdded.Item;
-
-        if (string.Equals(item.Type, "shell_call_output", StringComparison.OrdinalIgnoreCase))
-        {
-            var shellState = RegisterShellOutputItem(outputItemAdded.OutputIndex, item, context);
-            var outputText = BuildShellOutputText(item.AdditionalProperties);
-
-            if (!string.IsNullOrWhiteSpace(outputText))
-            {
-                shellState.LastOutputPreview = outputText;
-                yield return CreateShellOutputPart(shellState.ToolCallId, outputText, preliminary: true);
-            }
-
-            yield break;
-        }
-
-        if (string.Equals(item.Type, "shell_call", StringComparison.OrdinalIgnoreCase))
-        {
-            var shellState = RegisterShellCallItem(outputItemAdded.OutputIndex, item, context);
-            foreach (var part in EnsureShellStreamStarted(shellState, context))
-                yield return part;
-            yield break;
-        }
-
-        if (string.Equals(item.Type, "code_interpreter_call", StringComparison.OrdinalIgnoreCase)
-                 && !string.IsNullOrWhiteSpace(item.Id)
-                 && context.StartedTextItemIds.Add(item.Id))
-        {
-            yield return ToolCallStreamingStartPart.CreateProviderExecuted(item.Id, CodeInterpreterToolName);
-            yield return $"{{ \"code\": \""
-                    .ToToolCallDeltaPart(item.Id);
-            yield break;
-        }
-
-        if (string.Equals(item.Type, "file_search_call", StringComparison.OrdinalIgnoreCase)
-               && !string.IsNullOrWhiteSpace(item.Id)
-               && context.StartedTextItemIds.Add(item.Id))
-        {
-            yield return new ToolCallPart()
-            {
-                ToolCallId = item.Id,
-                ProviderExecuted = true,
-                ToolName = "file_search",
-                Input = new { }
-            };
-
-            yield break;
-        }
-
-        if (string.Equals(item.Type, "message", StringComparison.OrdinalIgnoreCase)
-            && !string.IsNullOrWhiteSpace(item.Id)
-            && context.StartedTextItemIds.Add(item.Id))
-        {
-            var textStart = item.Id.ToTextStartUIMessageStreamPart(new Dictionary<string, object>()
-            {
-                [providerId] = new
-                {
-                    phase = item.Phase
-                }
-            });
-
-            yield return textStart;
-
-            foreach (var annotation in item.Content
-                ?.Where(part => string.Equals(part.Type, "output_text", StringComparison.OrdinalIgnoreCase))
-                .SelectMany(part => part.Annotations ?? []) ?? [])
-            {
-                await foreach (var mapped in MapAnnotationAsync(annotation, context, cancellationToken))
-                    yield return mapped;
-            }
-        }
-
-        if (IsToolCallItemType(item.Type))
-        {
-            var pending = CreatePendingToolCall(item, context);
-            context.PendingToolCalls[pending.ItemId] = pending;
-
-            yield return new ToolCallStreamingStartPart
-            {
-                ToolCallId = pending.ToolCallId,
-                ToolName = pending.ToolName,
-                ProviderExecuted = pending.ProviderExecuted ? true : null,
-                Title = context.Options.ResolveToolTitle?.Invoke(pending.ToolName)
-            };
-        }
-    }
-
-    private static async IAsyncEnumerable<UIMessagePart> MapOutputItemDoneAsync(
-        ResponseOutputItemDone outputItemDone,
-        ResponsesStreamMappingContext context,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var item = outputItemDone.Item;
-
-        if (IsToolCallItemType(item.Type) && !context.PendingToolCalls.ContainsKey(item.Id ?? string.Empty))
-        {
-            var pending = CreatePendingToolCall(item, context);
-            context.PendingToolCalls[pending.ItemId] = pending;
-        }
-
-        if (string.Equals(item.Type, "function_call", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(item.Type, "mcp_call", StringComparison.OrdinalIgnoreCase))
-        {
-            foreach (var part in CompleteToolCall(item.Id ?? string.Empty, item.Arguments ?? "{}", context))
-                yield return part;
-        }
-
-        if (string.Equals(item.Type, "file_search_call", StringComparison.OrdinalIgnoreCase))
-        {
-            //var queries = item.AdditionalProperties.TryGetString("queries");
-
-            yield return new ToolOutputAvailablePart
-            {
-                ToolCallId = item.Id ?? $"file_search_{outputItemDone.OutputIndex}",
-                ProviderExecuted = true,
-                Output = new CallToolResult
-                {
-                    StructuredContent = JsonSerializer.SerializeToElement(item.AdditionalProperties)
-                    //  Content = ["Results not available".ToTextContentBlock()]
-                }
-            };
-        }
-
-        if (string.Equals(item.Type, "image_generation_call", StringComparison.OrdinalIgnoreCase))
-        {
-            var toolCallId = item.Id ?? $"image_generation_{outputItemDone.OutputIndex}";
-            var partial = item.AdditionalProperties.TryGetString("result");
-            var partialOutput = item.AdditionalProperties.TryGetString("output_format");
-
-            if (!string.IsNullOrEmpty(partial) && !string.IsNullOrEmpty(partialOutput))
-            {
-                yield return new ToolOutputAvailablePart
-                {
-                    ToolCallId = toolCallId,
-                    ProviderExecuted = true,
-                    Output = new CallToolResult
-                    {
-                        Content = [ImageContentBlock.FromBytes(
-                                Convert.FromBase64String(partial),
-                                $"image/{partialOutput}"
-                            )]
-                    }
-                };
-            }
-        }
-
-        if (string.Equals(item.Type, "code_interpreter_call", StringComparison.OrdinalIgnoreCase))
-        {
-            var toolCallId = item.Id ?? $"code_interpreter_{outputItemDone.OutputIndex}";
-            yield return BuildCodeInterpreterToolOutput(toolCallId, item.AdditionalProperties);
-        }
-
-        if (string.Equals(item.Type, "shell_call", StringComparison.OrdinalIgnoreCase))
-        {
-            foreach (var part in CompleteShellCall(outputItemDone.OutputIndex, item, context))
-                yield return part;
-        }
-
-        if (string.Equals(item.Type, "shell_call_output", StringComparison.OrdinalIgnoreCase))
-        {
-            foreach (var part in CompleteShellCallOutput(outputItemDone.OutputIndex, item, context))
-                yield return part;
-        }
-
-        if (context.Options.OutputItemDoneMapper != null)
-        {
-            await foreach (var part in context.Options.OutputItemDoneMapper(outputItemDone, context, cancellationToken))
-                yield return part;
-        }
-
-        if (context.Options.OutputItemMapper != null)
-        {
-            await foreach (var part in context.Options.OutputItemMapper(item, cancellationToken))
-                yield return part;
-        }
-    }
 
     private static IEnumerable<UIMessagePart> AppendToolCallDelta(string itemId, string delta, ResponsesStreamMappingContext context)
     {
@@ -663,21 +468,6 @@ public static class ResponsesStreamMappingExtensions
                     };
                     yield break;
                 }
-
-                /*  case "response.shell_call_command.done":
-                      {
-                          var toolCallId = GetUnknownItemId(unknown);
-                          var command = TryGetString(unknown.Data, "command") ?? string.Empty;
-                          yield return "\"}".ToToolCallDeltaPart(toolCallId);
-                          yield return new ToolCallPart
-                          {
-                              ToolCallId = toolCallId,
-                              ToolName = "shell",
-                              ProviderExecuted = true,
-                              Input = new { command }
-                          };
-                          yield break;
-                      }*/
         }
 
         if (context.Options.UnknownEventMapper != null)

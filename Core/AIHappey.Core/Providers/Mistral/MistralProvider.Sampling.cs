@@ -54,25 +54,6 @@ public partial class MistralProvider
         {
             tools.AddRange(passthroughTools);
         }
-        else
-        {
-            var codeInterpreter = chatRequest.Metadata.ToCodeInterpreter();
-            AddSerializedToolNode(tools, codeInterpreter);
-
-            var imageGeneration = chatRequest.Metadata.ToImageGeneration();
-            AddSerializedToolNode(tools, imageGeneration);
-
-            var webSearchPremium = chatRequest.Metadata.ToWebSearchPremiumTool();
-            if (webSearchPremium != null)
-            {
-                AddSerializedToolNode(tools, webSearchPremium);
-            }
-            else
-            {
-                var webSearch = chatRequest.Metadata.ToWebSearchTool();
-                AddSerializedToolNode(tools, webSearch);
-            }
-        }
 
         return CreateConversationRequest(
             conversationTarget,

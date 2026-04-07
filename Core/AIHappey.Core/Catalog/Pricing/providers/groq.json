@@ -1,0 +1,51 @@
+{
+  "groq/meta-llama/llama-4-scout-17b-16e-instruct": {
+    "pricing": {
+      "input": "0.00000011",
+      "output": "0.00000034"
+    }
+  },
+  "groq/openai/gpt-oss-20b": {
+    "pricing": {
+      "input": "0.000000075",
+      "output": "0.0000003"
+    }
+  },
+  "groq/openai/gpt-oss-safeguard-20b": {
+    "pricing": {
+      "input": "0.000000075",
+      "output": "0.0000003"
+    }
+  },
+  "groq/openai/gpt-oss-120b": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006"
+    }
+  },
+  "groq/qwen/qwen3-32b": {
+    "pricing": {
+      "input": "0.00000029",
+      "output": "0.00000059"
+    }
+  },
+  "groq/llama-3.3-70b-versatile": {
+    "pricing": {
+      "input": "0.00000059",
+      "output": "0.00000079"
+    }
+  },
+  "groq/llama-3.1-8b-instant": {
+    "pricing": {
+      "input": "0.00000005",
+      "output": "0.00000008"
+    }
+  },
+  "groq/moonshotai/kimi-k2-instruct-0905": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000003",
+      "input_cache_read": "0.0000005"
+    }
+  }
+}

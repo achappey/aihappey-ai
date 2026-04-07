@@ -40,9 +40,14 @@ public partial class PerplexityProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
+        var model = chatRequest.GetModel();
+        if (model?.StartsWith($"{GetIdentifier()}/sonar") != true)
+        {
+            return await this.ResponsesSamplingAsync(chatRequest, cancellationToken);
+        }
+
         ApplyAuthHeader();
 
-        var model = chatRequest.GetModel();
         IEnumerable<Models.PerplexityMessage> inputItems = chatRequest.Messages.ToPerplexityMessages();
         var req = chatRequest.ToChatRequest(inputItems, chatRequest.SystemPrompt);
 
@@ -64,7 +69,7 @@ public partial class PerplexityProvider : IModelProvider
         {
             Model = result?.Model!,
             StopReason = finished,
-            Content = [contentBlock, ..resourceLinks],
+            Content = [contentBlock, .. resourceLinks],
             Role = ModelContextProtocol.Protocol.Role.Assistant,
             Meta = new System.Text.Json.Nodes.JsonObject()
             {

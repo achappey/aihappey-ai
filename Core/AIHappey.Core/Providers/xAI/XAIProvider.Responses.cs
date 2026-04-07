@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 
@@ -9,6 +10,8 @@ public partial class XAIProvider
     {
         ApplyAuthHeader();
 
+        this.SetDefaultResponseProperties(options);
+
         return await _client.GetResponses(
                    options, ct: cancellationToken);
     }
@@ -16,6 +19,8 @@ public partial class XAIProvider
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        this.SetDefaultResponseProperties(options);
 
         return _client.GetResponsesUpdates(
            options,

@@ -37,7 +37,10 @@ public partial class MistralProvider
         // Build inputs from your UI message model (text + image_url only)
         var tools = new List<object>
         {
-            new MistralImageGeneration()
+           new
+           {
+               type = "image_generation"
+           }
         };
 
         var payload = new JsonObject
@@ -170,7 +173,7 @@ public partial class MistralProvider
         return new()
         {
             Images = images,
-            Response = new ()
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = resolvedModel

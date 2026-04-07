@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
@@ -6,7 +7,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.Core.AI;
 using AIHappey.Responses;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.BrowserUse;
@@ -17,18 +20,25 @@ public partial class BrowserUseProvider
 
     private sealed class BrowserUseNativeTerminalResult
     {
-        public BrowserUseTaskCreatedResponse Created { get; init; } = default!;
-        public BrowserUseTaskView Task { get; init; } = default!;
-        public BrowserUseTaskStatusView Status { get; init; } = default!;
+        public BrowserUseSessionResponse Created { get; init; } = default!;
+        public BrowserUseSessionResponse Session { get; init; } = default!;
         public string OutputText { get; init; } = string.Empty;
         public string? DoneText { get; init; }
     }
 
     private abstract class BrowserUseNativeStreamEvent;
 
+    private sealed class BrowserUseNativeArtifact
+    {
+        public string Kind { get; init; } = default!;
+        public string Url { get; init; } = default!;
+        public UIMessagePart Part { get; init; } = default!;
+    }
+
     private sealed class BrowserUseNativeCreatedStreamEvent : BrowserUseNativeStreamEvent
     {
-        public BrowserUseTaskCreatedResponse Created { get; init; } = default!;
+        public BrowserUseSessionResponse Created { get; init; } = default!;
+        public SourceUIPart? LiveSource { get; init; }
     }
 
     private sealed class BrowserUseNativeActionStreamEvent : BrowserUseNativeStreamEvent
@@ -39,11 +49,17 @@ public partial class BrowserUseProvider
     private sealed class BrowserUseNativeTerminalStreamEvent : BrowserUseNativeStreamEvent
     {
         public BrowserUseNativeTerminalResult Terminal { get; init; } = default!;
+        public IReadOnlyList<BrowserUseNativeArtifact> Artifacts { get; init; } = [];
+    }
+
+    private sealed class BrowserUseNativeArtifactStreamEvent : BrowserUseNativeStreamEvent
+    {
+        public BrowserUseNativeArtifact Artifact { get; init; } = default!;
     }
 
     private sealed class BrowserUseNativeActionEvent
     {
-        public string TaskId { get; init; } = default!;
+        public string SessionId { get; init; } = default!;
         public int StepNumber { get; init; }
         public int ActionIndex { get; init; }
         public string ToolCallId { get; init; } = default!;
@@ -54,72 +70,86 @@ public partial class BrowserUseProvider
         public string? DoneText { get; init; }
     }
 
-    private sealed class BrowserUseParsedAction
+    private async Task<BrowserUseNativeTerminalResult> ExecuteNativeTaskAsync(BrowserUseCreateSessionRequest request, CancellationToken cancellationToken)
     {
-        public string ToolName { get; init; } = "action";
-        public object Input { get; init; } = new { };
-        public bool IsDone { get; init; }
-        public string? DoneText { get; init; }
-        public bool? DoneSuccess { get; init; }
-    }
-
-    private async Task<BrowserUseNativeTerminalResult> ExecuteNativeTaskAsync(BrowserUseCreateTaskRequest request, CancellationToken cancellationToken)
-    {
-        BrowserUseTaskCreatedResponse? created = null;
+        BrowserUseSessionResponse? created = null;
 
         try
         {
-            created = await CreateTaskAsync(request, cancellationToken);
-            var status = await WaitForTaskTerminalAsync(created.Id, cancellationToken);
-            var task = await GetTaskAsync(created.Id, cancellationToken);
-
-            var doneText = TryExtractLatestDoneText(task);
-            var outputText = ResolveFinalOutput(task, fallbackBuilder: null, doneText);
+            created = await CreateSessionAsync(request, cancellationToken);
+            var session = await WaitForSessionTerminalAsync(created.Id, cancellationToken);
+            var doneText = TryExtractLatestDoneText(session);
+            var outputText = ResolveFinalOutput(session, fallbackBuilder: null, doneText);
 
             return new BrowserUseNativeTerminalResult
             {
                 Created = created,
-                Task = task,
-                Status = status,
+                Session = session,
                 DoneText = doneText,
                 OutputText = outputText
             };
         }
         finally
         {
-            if (!string.IsNullOrWhiteSpace(created?.SessionId))
-                await DeleteSessionSafeAsync(created!.SessionId!, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(created?.Id))
+                await CleanupSessionAsync(created.Id, cancellationToken);
         }
     }
 
     private async IAsyncEnumerable<BrowserUseNativeStreamEvent> StreamNativeTaskAsync(
-        BrowserUseCreateTaskRequest request,
+        BrowserUseCreateSessionRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        BrowserUseTaskCreatedResponse? created = null;
-        BrowserUseTaskView? lastTask = null;
+        BrowserUseSessionResponse? created = null;
         string? latestDoneText = null;
+        string? latestScreenshotUrl = null;
         var emittedStepNumber = 0;
 
         try
         {
-            created = await CreateTaskAsync(request, cancellationToken);
+            created = await CreateSessionAsync(request, cancellationToken);
 
             yield return new BrowserUseNativeCreatedStreamEvent
             {
-                Created = created
+                Created = created,
+                LiveSource = CreateLiveSourcePart(created)
             };
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                var status = await GetTaskStatusAsync(created.Id, cancellationToken);
-                lastTask = await GetTaskAsync(created.Id, cancellationToken);
+                var session = await GetSessionAsync(created.Id, cancellationToken);
 
-                foreach (var actionEvent in ExtractActionEvents(lastTask, emittedStepNumber))
+                if (!string.IsNullOrWhiteSpace(session.ScreenshotUrl)
+                    && !string.Equals(session.ScreenshotUrl, latestScreenshotUrl, StringComparison.Ordinal))
+                {
+                    latestScreenshotUrl = session.ScreenshotUrl;
+
+                    var screenshotPart = await DownloadSessionArtifactFilePartAsync(
+                        session.ScreenshotUrl!,
+                        session.Id,
+                        "screenshot",
+                        MediaTypeNames.Image.Jpeg,
+                        cancellationToken);
+
+                    if (screenshotPart is not null)
+                    {
+                        yield return new BrowserUseNativeArtifactStreamEvent
+                        {
+                            Artifact = new BrowserUseNativeArtifact
+                            {
+                                Kind = "screenshot",
+                                Url = session.ScreenshotUrl!,
+                                Part = screenshotPart
+                            }
+                        };
+                    }
+                }
+
+                foreach (var actionEvent in ExtractActionEvents(session, emittedStepNumber))
                 {
                     emittedStepNumber = Math.Max(emittedStepNumber, actionEvent.StepNumber);
 
-                    if (actionEvent.IsDone && !string.IsNullOrWhiteSpace(actionEvent.DoneText))
+                    if (!string.IsNullOrWhiteSpace(actionEvent.DoneText))
                         latestDoneText = actionEvent.DoneText;
 
                     yield return new BrowserUseNativeActionStreamEvent
@@ -128,20 +158,43 @@ public partial class BrowserUseProvider
                     };
                 }
 
-                if (IsTerminal(status.Status))
+                if (IsTerminal(session.Status))
                 {
-                    var outputText = ResolveFinalOutput(lastTask, fallbackBuilder: null, latestDoneText);
+                    var outputText = ResolveFinalOutput(session, fallbackBuilder: null, latestDoneText);
+                    var artifacts = new List<BrowserUseNativeArtifact>();
+
+                    foreach (var recordingUrl in session.RecordingUrls
+                                 .Where(url => !string.IsNullOrWhiteSpace(url))
+                                 .Distinct(StringComparer.Ordinal))
+                    {
+                        var recordingPart = await DownloadSessionArtifactFilePartAsync(
+                            recordingUrl,
+                            session.Id,
+                            "recording",
+                            "video/mp4",
+                            cancellationToken);
+
+                        if (recordingPart is null)
+                            continue;
+
+                        artifacts.Add(new BrowserUseNativeArtifact
+                        {
+                            Kind = "recording",
+                            Url = recordingUrl,
+                            Part = recordingPart
+                        });
+                    }
 
                     yield return new BrowserUseNativeTerminalStreamEvent
                     {
                         Terminal = new BrowserUseNativeTerminalResult
                         {
                             Created = created,
-                            Task = lastTask,
-                            Status = status,
+                            Session = session,
                             DoneText = latestDoneText,
                             OutputText = outputText
-                        }
+                        },
+                        Artifacts = artifacts
                     };
 
                     yield break;
@@ -154,120 +207,125 @@ public partial class BrowserUseProvider
         }
         finally
         {
-            if (!string.IsNullOrWhiteSpace(created?.SessionId))
-                await DeleteSessionSafeAsync(created!.SessionId!, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(created?.Id))
+                await CleanupSessionAsync(created.Id, cancellationToken);
         }
     }
 
-    private static IEnumerable<BrowserUseNativeActionEvent> ExtractActionEvents(
-        BrowserUseTaskView task,
-        int emittedStepNumber)
+    private static IEnumerable<BrowserUseNativeActionEvent> ExtractActionEvents(BrowserUseSessionResponse session, int emittedStepNumber)
     {
-        foreach (var step in task.Steps
-            .Where(s => s.Number > emittedStepNumber)
-            .OrderBy(s => s.Number))
+        if (session.StepCount <= emittedStepNumber)
+            yield break;
+
+        for (var stepNumber = emittedStepNumber + 1; stepNumber <= session.StepCount; stepNumber++)
         {
-            for (var i = 0; i < step.Actions.Count; i++)
-            {
-                var parsed = ParseStepAction(step.Actions[i]);
-                var callId = $"bu_{task.Id}_s{step.Number}_a{i + 1}";
+            var summary = stepNumber == session.StepCount
+                ? session.LastStepSummary
+                : $"Browser step {stepNumber} completed.";
 
-                var output = new
+            yield return new BrowserUseNativeActionEvent
+            {
+                SessionId = session.Id,
+                StepNumber = stepNumber,
+                ActionIndex = 0,
+                ToolCallId = $"bu_{session.Id}_s{stepNumber}_a1",
+                ToolName = "browser_step",
+                Input = new
                 {
-                    success = parsed.IsDone ? parsed.DoneSuccess : (bool?)true,
-                    text = parsed.IsDone ? parsed.DoneText : null,
-                    step = step.Number,
-                    url = step.Url,
-                    action = parsed.IsDone ? null : parsed.ToolName
-                };
-
-                yield return new BrowserUseNativeActionEvent
+                    step = stepNumber,
+                    summary,
+                    liveUrl = session.LiveUrl,
+                    status = session.Status
+                },
+                Output = new
                 {
-                    TaskId = task.Id,
-                    StepNumber = step.Number,
-                    ActionIndex = i,
-                    ToolCallId = callId,
-                    ToolName = parsed.ToolName,
-                    Input = parsed.Input,
-                    Output = output,
-                    IsDone = parsed.IsDone,
-                    DoneText = parsed.DoneText
-                };
-            }
-        }
-    }
-
-    private static BrowserUseParsedAction ParseStepAction(string rawAction)
-    {
-        if (string.IsNullOrWhiteSpace(rawAction))
-        {
-            return new BrowserUseParsedAction
-            {
-                ToolName = "action",
-                Input = new { }
-            };
-        }
-
-        try
-        {
-            using var doc = JsonDocument.Parse(rawAction);
-            var root = doc.RootElement;
-
-            if (root.ValueKind != JsonValueKind.Object)
-            {
-                return new BrowserUseParsedAction
-                {
-                    ToolName = "action",
-                    Input = DeserializeUntyped(root)
-                };
-            }
-
-            var first = root.EnumerateObject().FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(first.Name))
-            {
-                return new BrowserUseParsedAction
-                {
-                    ToolName = "action",
-                    Input = DeserializeUntyped(root)
-                };
-            }
-
-            var isDone = string.Equals(first.Name, "done", StringComparison.OrdinalIgnoreCase);
-            var doneText = isDone ? ExtractDoneText(first.Value) : null;
-            var doneSuccess = isDone ? ExtractDoneSuccess(first.Value) : null;
-
-            return new BrowserUseParsedAction
-            {
-                ToolName = first.Name,
-                Input = DeserializeUntyped(first.Value),
-                IsDone = isDone,
-                DoneText = doneText,
-                DoneSuccess = doneSuccess
-            };
-        }
-        catch
-        {
-            return new BrowserUseParsedAction
-            {
-                ToolName = "action",
-                Input = new { raw = rawAction }
+                    success = session.IsTaskSuccessful,
+                    text = summary,
+                    step = stepNumber,
+                    liveUrl = session.LiveUrl,
+                    status = session.Status,
+                    action = "browser_step"
+                },
+                IsDone = false,
+                DoneText = summary
             };
         }
     }
 
-    private static object DeserializeUntyped(JsonElement element)
-        => JsonSerializer.Deserialize<object>(element.GetRawText(), BrowserUseJson) ?? new { };
-
-    private static bool? ExtractDoneSuccess(JsonElement value)
+    private static string? TryExtractLatestDoneText(BrowserUseSessionResponse session)
     {
-        if (value.ValueKind == JsonValueKind.Object
-            && value.TryGetProperty("success", out var success)
-            && (success.ValueKind == JsonValueKind.True || success.ValueKind == JsonValueKind.False))
+        if (session.Output.HasValue)
+            return NormalizeTaskOutput(session.Output.Value);
+
+        return string.IsNullOrWhiteSpace(session.LastStepSummary)
+            ? null
+            : session.LastStepSummary;
+    }
+
+    private static string ResolveFinalOutput(BrowserUseSessionResponse session, StringBuilder? fallbackBuilder, string? doneText)
+    {
+        if (session.Output.HasValue)
         {
-            return success.GetBoolean();
+            var normalized = NormalizeTaskOutput(session.Output.Value);
+            if (!string.IsNullOrWhiteSpace(normalized))
+                return normalized;
         }
 
-        return null;
+        if (!string.IsNullOrWhiteSpace(doneText))
+            return doneText!;
+
+        if (fallbackBuilder is not null && fallbackBuilder.Length > 0)
+            return fallbackBuilder.ToString().Trim();
+
+        return session.LastStepSummary ?? string.Empty;
+    }
+
+    private static string? NormalizeTaskOutput(JsonElement output)
+    {
+        if (output.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+
+        if (output.ValueKind == JsonValueKind.String)
+        {
+            var text = output.GetString();
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            var trimmed = text.Trim();
+            if (!trimmed.StartsWith('{') && !trimmed.StartsWith('['))
+                return text;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(trimmed);
+                return NormalizeTaskOutput(doc.RootElement) ?? text;
+            }
+            catch
+            {
+                return text;
+            }
+        }
+
+        if (output.ValueKind == JsonValueKind.Object)
+        {
+            if (output.TryGetProperty("done", out var done))
+            {
+                var doneText = ExtractDoneText(done);
+                if (!string.IsNullOrWhiteSpace(doneText))
+                    return doneText;
+            }
+
+            var fallbackText = ExtractDoneText(output);
+            if (!string.IsNullOrWhiteSpace(fallbackText))
+                return fallbackText;
+
+            return output.GetRawText();
+        }
+
+        if (output.ValueKind == JsonValueKind.Array)
+            return output.GetRawText();
+
+        return output.ToString();
     }
 
     private static string? ExtractDoneText(JsonElement value)
@@ -293,151 +351,205 @@ public partial class BrowserUseProvider
         return null;
     }
 
-    private static string? TryExtractLatestDoneText(BrowserUseTaskView task)
+    private SourceUIPart? CreateLiveSourcePart(BrowserUseSessionResponse session)
     {
-        foreach (var step in task.Steps.OrderByDescending(s => s.Number))
-        {
-            for (var i = step.Actions.Count - 1; i >= 0; i--)
-            {
-                var parsed = ParseStepAction(step.Actions[i]);
-                if (parsed.IsDone && !string.IsNullOrWhiteSpace(parsed.DoneText))
-                    return parsed.DoneText;
-            }
-        }
-
-        return null;
-    }
-
-    private static string ResolveFinalOutput(BrowserUseTaskView task, StringBuilder? fallbackBuilder, string? doneText)
-    {
-        if (!string.IsNullOrWhiteSpace(task.Output))
-        {
-            var normalized = NormalizeTaskOutput(task.Output!);
-            return normalized ?? task.Output!;
-        }
-
-        if (!string.IsNullOrWhiteSpace(doneText))
-            return doneText!;
-
-        if (fallbackBuilder is not null && fallbackBuilder.Length > 0)
-            return fallbackBuilder.ToString().Trim();
-
-        var fromSteps = string.Join('\n', task.Steps
-            .OrderBy(s => s.Number)
-            .Select(FormatStepSummary)
-            .Where(s => !string.IsNullOrWhiteSpace(s)));
-
-        return fromSteps;
-    }
-
-    private static string? NormalizeTaskOutput(string output)
-    {
-        if (string.IsNullOrWhiteSpace(output))
+        if (string.IsNullOrWhiteSpace(session.LiveUrl))
             return null;
 
-        var trimmed = output.Trim();
+        return new SourceUIPart
+        {
+            SourceId = $"browseruse-live-{session.Id}",
+            Url = session.LiveUrl,
+            Title = "Live browser session"
+        };
+    }
 
-        if (!trimmed.StartsWith('{') && !trimmed.StartsWith('['))
-            return output;
-
+    private async Task<FileUIPart?> DownloadSessionArtifactFilePartAsync(
+        string url,
+        string sessionId,
+        string artifactType,
+        string? fallbackMime,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            using var doc = JsonDocument.Parse(trimmed);
-            var root = doc.RootElement;
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!resp.IsSuccessStatusCode)
+                return null;
 
-            if (root.ValueKind == JsonValueKind.Object)
+            var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (bytes.Length == 0)
+                return null;
+
+            var fileName = GetDownloadFileName(resp, url, artifactType, fallbackMime);
+            var mediaType = resp.Content.Headers.ContentType?.MediaType
+                            ?? GuessMimeTypeFromFileName(fileName)
+                            ?? fallbackMime
+                            ?? GuessMimeTypeFromUrl(url);
+
+            return new FileUIPart
             {
-                if (root.TryGetProperty("done", out var done))
-                {
-                    var doneText = ExtractDoneText(done);
-                    if (!string.IsNullOrWhiteSpace(doneText))
-                        return doneText;
-                }
-
-                var fallbackText = ExtractDoneText(root);
-                if (!string.IsNullOrWhiteSpace(fallbackText))
-                    return fallbackText;
-            }
+                MediaType = string.Equals(mediaType, MediaTypeNames.Image.Jpeg, StringComparison.OrdinalIgnoreCase)
+                    ? "image/jpg"
+                    : mediaType,
+                Url = Convert.ToBase64String(bytes)
+            };
         }
         catch
         {
-            // keep raw output if JSON parsing fails
+            return null;
         }
-
-        return output;
     }
 
-    private static string FormatStepSummary(BrowserUseTaskStepView step)
+    private static Dictionary<string, Dictionary<string, object>?> CreateArtifactProviderMetadata(
+        string sessionId,
+        string artifactType,
+        string url,
+        string? fileName,
+        string? mediaType)
+        => new()
+        {
+            [nameof(BrowserUse).ToLowerInvariant()] = new Dictionary<string, object?>
+            {
+                ["sessionId"] = sessionId,
+                ["artifactType"] = artifactType,
+                ["url"] = url,
+                ["filename"] = fileName,
+                ["mediaType"] = mediaType
+            }
+            .Where(kvp => kvp.Value is not null)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!)
+        };
+
+    private static string GetDownloadFileName(HttpResponseMessage response, string url, string artifactType, string? fallbackMime)
     {
-        var actionNames = step.Actions
-            .Select(ParseStepAction)
-            .Select(a => a.ToolName)
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .ToArray();
+        var contentDisposition = response.Content.Headers.ContentDisposition;
+        var fileName = contentDisposition?.FileNameStar ?? contentDisposition?.FileName;
+        if (!string.IsNullOrWhiteSpace(fileName))
+            return fileName.Trim('"');
 
-        var actions = actionNames.Length == 0
-            ? string.Empty
-            : $" Actions: {string.Join(", ", actionNames)}.";
+        var parsedUrl = Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.AbsolutePath : url.Split('?')[0];
+        fileName = Path.GetFileName(parsedUrl);
+        if (!string.IsNullOrWhiteSpace(fileName))
+            return fileName;
 
-        var goal = string.IsNullOrWhiteSpace(step.NextGoal)
-            ? step.EvaluationPreviousGoal ?? step.Memory ?? string.Empty
-            : step.NextGoal!;
+        var extension = GuessFileExtension(fallbackMime)
+                        ?? GuessFileExtension(GuessMimeTypeFromUrl(url))
+                        ?? ".bin";
 
-        var url = string.IsNullOrWhiteSpace(step.Url)
-            ? string.Empty
-            : $" URL: {step.Url}.";
-
-        return $"Step {step.Number}: {goal}.{url}{actions}".Trim();
+        return $"browseruse-{artifactType}-{Guid.NewGuid():n}{extension}";
     }
 
-    private async Task<BrowserUseTaskCreatedResponse> CreateTaskAsync(BrowserUseCreateTaskRequest request, CancellationToken cancellationToken)
+    private static string? GuessMimeTypeFromFileName(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+            return null;
+
+        return Path.GetExtension(fileName).ToLowerInvariant() switch
+        {
+            ".png" => MediaTypeNames.Image.Png,
+            ".jpg" or ".jpeg" => MediaTypeNames.Image.Jpeg,
+            ".gif" => MediaTypeNames.Image.Gif,
+            ".webp" => "image/webp",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mov" => "video/quicktime",
+            _ => null
+        };
+    }
+
+    private static string? GuessFileExtension(string? mimeType)
+        => mimeType?.ToLowerInvariant() switch
+        {
+            "image/png" => ".png",
+            "image/jpeg" or "image/jpg" => ".jpg",
+            "image/gif" => ".gif",
+            "image/webp" => ".webp",
+            "video/mp4" => ".mp4",
+            "video/webm" => ".webm",
+            "video/quicktime" => ".mov",
+            _ => null
+        };
+
+    private static string GuessMimeTypeFromUrl(string url)
+    {
+        var ext = Path.GetExtension(url.Split('?')[0]).ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf" => MediaTypeNames.Application.Pdf,
+            ".png" => MediaTypeNames.Image.Png,
+            ".jpg" or ".jpeg" => MediaTypeNames.Image.Jpeg,
+            ".gif" => MediaTypeNames.Image.Gif,
+            ".webp" => "image/webp",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mov" => "video/quicktime",
+            ".csv" => "text/csv",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            _ => MediaTypeNames.Application.Octet
+        };
+    }
+
+    private async Task<BrowserUseSessionResponse> CreateSessionAsync(BrowserUseCreateSessionRequest request, CancellationToken cancellationToken)
     {
         var json = JsonSerializer.Serialize(request, BrowserUseJson);
-        using var req = new HttpRequestMessage(HttpMethod.Post, "api/v2/tasks")
+        using var req = new HttpRequestMessage(HttpMethod.Post, "api/v3/sessions")
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
 
         using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
-        if (resp.StatusCode != HttpStatusCode.Accepted)
-            throw new HttpRequestException($"BrowserUse create task failed ({(int)resp.StatusCode}): {raw}");
+        if (!resp.IsSuccessStatusCode)
+            throw new HttpRequestException($"BrowserUse create session failed ({(int)resp.StatusCode}): {raw}");
 
-        return JsonSerializer.Deserialize<BrowserUseTaskCreatedResponse>(raw, BrowserUseJson)
-               ?? throw new InvalidOperationException("BrowserUse create task returned empty payload.");
+        return JsonSerializer.Deserialize<BrowserUseSessionResponse>(raw, BrowserUseJson)
+               ?? throw new InvalidOperationException("BrowserUse create session returned empty payload.");
     }
 
-    private async Task<BrowserUseTaskStatusView> GetTaskStatusAsync(string taskId, CancellationToken cancellationToken)
+    private async Task<BrowserUseSessionResponse> GetSessionAsync(string sessionId, CancellationToken cancellationToken)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v2/tasks/{Uri.EscapeDataString(taskId)}/status");
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v3/sessions/{Uri.EscapeDataString(sessionId)}");
         using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
         if (!resp.IsSuccessStatusCode)
-            throw new HttpRequestException($"BrowserUse task status failed ({(int)resp.StatusCode}): {raw}");
+            throw new HttpRequestException($"BrowserUse get session failed ({(int)resp.StatusCode}): {raw}");
 
-        return JsonSerializer.Deserialize<BrowserUseTaskStatusView>(raw, BrowserUseJson)
-               ?? throw new InvalidOperationException("BrowserUse task status payload was empty.");
+        return JsonSerializer.Deserialize<BrowserUseSessionResponse>(raw, BrowserUseJson)
+               ?? throw new InvalidOperationException("BrowserUse get session payload was empty.");
     }
 
-    private async Task<BrowserUseTaskView> GetTaskAsync(string taskId, CancellationToken cancellationToken)
+    private async Task<BrowserUseSessionResponse> StopSessionAsync(string sessionId, string strategy, CancellationToken cancellationToken)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, $"api/v2/tasks/{Uri.EscapeDataString(taskId)}");
+        var json = JsonSerializer.Serialize(new BrowserUseStopSessionRequest
+        {
+            Strategy = strategy
+        }, BrowserUseJson);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"api/v3/sessions/{Uri.EscapeDataString(sessionId)}/stop")
+        {
+            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
+        };
+
         using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
         if (!resp.IsSuccessStatusCode)
-            throw new HttpRequestException($"BrowserUse get task failed ({(int)resp.StatusCode}): {raw}");
+            throw new HttpRequestException($"BrowserUse stop session failed ({(int)resp.StatusCode}): {raw}");
 
-        return JsonSerializer.Deserialize<BrowserUseTaskView>(raw, BrowserUseJson)
-               ?? throw new InvalidOperationException("BrowserUse get task payload was empty.");
+        return JsonSerializer.Deserialize<BrowserUseSessionResponse>(raw, BrowserUseJson)
+               ?? throw new InvalidOperationException("BrowserUse stop session payload was empty.");
     }
 
-    private async Task<BrowserUseTaskStatusView> WaitForTaskTerminalAsync(string taskId, CancellationToken cancellationToken)
+    private async Task<BrowserUseSessionResponse> WaitForSessionTerminalAsync(string sessionId, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var status = await GetTaskStatusAsync(taskId, cancellationToken);
-            if (IsTerminal(status.Status))
-                return status;
+            var session = await GetSessionAsync(sessionId, cancellationToken);
+            if (IsTerminal(session.Status))
+                return session;
 
             await Task.Delay(800, cancellationToken);
         }
@@ -445,11 +557,33 @@ public partial class BrowserUseProvider
         throw new OperationCanceledException(cancellationToken);
     }
 
+    private async Task CleanupSessionAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        var cleanupToken = cancellationToken.IsCancellationRequested ? CancellationToken.None : cancellationToken;
+
+        if (cancellationToken.IsCancellationRequested)
+            await StopSessionSafeAsync(sessionId, "task", cleanupToken);
+
+        await DeleteSessionSafeAsync(sessionId, cleanupToken);
+    }
+
+    private async Task StopSessionSafeAsync(string sessionId, string strategy, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await StopSessionAsync(sessionId, strategy, cancellationToken);
+        }
+        catch
+        {
+            // best effort cleanup
+        }
+    }
+
     private async Task DeleteSessionSafeAsync(string sessionId, CancellationToken cancellationToken)
     {
         try
         {
-            using var req = new HttpRequestMessage(HttpMethod.Delete, $"api/v2/sessions/{Uri.EscapeDataString(sessionId)}");
+            using var req = new HttpRequestMessage(HttpMethod.Delete, $"api/v3/sessions/{Uri.EscapeDataString(sessionId)}");
             using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
             if (resp.StatusCode == HttpStatusCode.NotFound)
@@ -468,11 +602,12 @@ public partial class BrowserUseProvider
     }
 
     private static bool IsTerminal(string status)
-        => string.Equals(status, "finished", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase);
+        => string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, "timed_out", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, "error", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsFinished(string status)
-        => string.Equals(status, "finished", StringComparison.OrdinalIgnoreCase);
+        => string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase);
 
     private static long ToUnixTime(string? dateTimeUtc)
         => DateTimeOffset.TryParse(dateTimeUtc, out var parsed)
@@ -547,7 +682,7 @@ public partial class BrowserUseProvider
         return string.Join("\n\n", lines);
     }
 
-    private static string? TryExtractStructuredOutputSchemaString(object? format)
+    private static JsonElement? TryExtractStructuredOutputSchema(object? format)
     {
         if (format is null)
             return null;
@@ -556,7 +691,7 @@ public partial class BrowserUseProvider
         if (schema?.JsonSchema?.Schema is JsonElement element
             && element.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
         {
-            return element.GetRawText();
+            return element;
         }
 
         return null;
@@ -584,97 +719,186 @@ public partial class BrowserUseProvider
         return string.Empty;
     }
 
-    private sealed class BrowserUseCreateTaskRequest
+    private static Dictionary<string, object> CreateGatewayCostMetadata(BrowserUseSessionResponse session)
+    {
+        var gateway = new Dictionary<string, object>();
+
+        if (TryParseDecimal(session.TotalCostUsd, out var totalCost))
+            gateway["cost"] = totalCost;
+
+        if (TryParseDecimal(session.LlmCostUsd, out var llmCost))
+            gateway["llmCost"] = llmCost;
+
+        if (TryParseDecimal(session.ProxyCostUsd, out var proxyCost))
+            gateway["proxyCost"] = proxyCost;
+
+        if (TryParseDecimal(session.BrowserCostUsd, out var browserCost))
+            gateway["browserCost"] = browserCost;
+
+        if (TryParseDecimal(session.ProxyUsedMb, out var proxyUsedMb))
+            gateway["proxyUsedMb"] = proxyUsedMb;
+
+        return gateway;
+    }
+
+    private static bool TryParseDecimal(string? raw, out decimal value)
+        => decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out value);
+
+    private sealed class BrowserUseCreateSessionRequest
     {
         [JsonPropertyName("task")]
-        public string Task { get; init; } = default!;
-
-        [JsonPropertyName("llm")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? Llm { get; init; }
+        public string? Task { get; init; }
 
-        [JsonPropertyName("maxSteps")]
+        [JsonPropertyName("model")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public int? MaxSteps { get; init; }
-
-        [JsonPropertyName("structuredOutput")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? StructuredOutput { get; init; }
-    }
-
-    private sealed class BrowserUseTaskCreatedResponse
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; init; } = default!;
+        public string? Model { get; init; }
 
         [JsonPropertyName("sessionId")]
-        public string SessionId { get; init; } = default!;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SessionId { get; init; }
+
+        [JsonPropertyName("keepAlive")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool KeepAlive { get; init; }
+
+        [JsonPropertyName("maxCostUsd")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? MaxCostUsd { get; init; }
+
+        [JsonPropertyName("profileId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ProfileId { get; init; }
+
+        [JsonPropertyName("workspaceId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? WorkspaceId { get; init; }
+
+        [JsonPropertyName("proxyCountryCode")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ProxyCountryCode { get; init; }
+
+        [JsonPropertyName("outputSchema")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public JsonElement? OutputSchema { get; init; }
+
+        [JsonPropertyName("enableScheduledTasks")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool EnableScheduledTasks { get; init; }
+
+        [JsonPropertyName("enableRecording")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool EnableRecording { get; init; }
+
+        [JsonPropertyName("skills")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? Skills { get; init; }
+
+        [JsonPropertyName("agentmail")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? Agentmail { get; init; }
+
+        [JsonPropertyName("cacheScript")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? CacheScript { get; init; }
     }
 
-    private sealed class BrowserUseTaskStatusView
+    private sealed class BrowserUseStopSessionRequest
+    {
+        [JsonPropertyName("strategy")]
+        public string Strategy { get; init; } = "session";
+    }
+
+    private sealed class BrowserUseSessionResponse
     {
         [JsonPropertyName("id")]
         public string Id { get; init; } = default!;
 
         [JsonPropertyName("status")]
         public string Status { get; init; } = default!;
+
+        [JsonPropertyName("model")]
+        public string Model { get; init; } = default!;
+
+        [JsonPropertyName("title")]
+        public string? Title { get; init; }
 
         [JsonPropertyName("output")]
-        public string? Output { get; init; }
+        public JsonElement? Output { get; init; }
 
-        [JsonPropertyName("finishedAt")]
-        public string? FinishedAt { get; init; }
+        [JsonPropertyName("outputSchema")]
+        public JsonElement? OutputSchema { get; init; }
 
-        [JsonPropertyName("isSuccess")]
-        public bool? IsSuccess { get; init; }
+        [JsonPropertyName("stepCount")]
+        public int StepCount { get; init; }
 
-        [JsonPropertyName("cost")]
-        public string? Cost { get; init; }
-    }
+        [JsonPropertyName("lastStepSummary")]
+        public string? LastStepSummary { get; init; }
 
-    private sealed class BrowserUseTaskView
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; init; } = default!;
+        [JsonPropertyName("isTaskSuccessful")]
+        public bool? IsTaskSuccessful { get; init; }
 
-        [JsonPropertyName("sessionId")]
-        public string SessionId { get; init; } = default!;
+        [JsonPropertyName("liveUrl")]
+        public string? LiveUrl { get; init; }
 
-        [JsonPropertyName("llm")]
-        public string Llm { get; init; } = default!;
+        [JsonPropertyName("recordingUrls")]
+        public List<string> RecordingUrls { get; init; } = [];
 
-        [JsonPropertyName("status")]
-        public string Status { get; init; } = default!;
+        [JsonPropertyName("profileId")]
+        public string? ProfileId { get; init; }
+
+        [JsonPropertyName("workspaceId")]
+        public string? WorkspaceId { get; init; }
+
+        [JsonPropertyName("proxyCountryCode")]
+        public string? ProxyCountryCode { get; init; }
+
+        [JsonPropertyName("maxCostUsd")]
+        public string? MaxCostUsd { get; init; }
+
+        [JsonPropertyName("totalInputTokens")]
+        public int TotalInputTokens { get; init; }
+
+        [JsonPropertyName("totalOutputTokens")]
+        public int TotalOutputTokens { get; init; }
+
+        [JsonPropertyName("proxyUsedMb")]
+        public string? ProxyUsedMb { get; init; }
+
+        [JsonPropertyName("llmCostUsd")]
+        public string? LlmCostUsd { get; init; }
+
+        [JsonPropertyName("proxyCostUsd")]
+        public string? ProxyCostUsd { get; init; }
+
+        [JsonPropertyName("browserCostUsd")]
+        public string? BrowserCostUsd { get; init; }
+
+        [JsonPropertyName("totalCostUsd")]
+        public string? TotalCostUsd { get; init; }
+
+        [JsonPropertyName("screenshotUrl")]
+        public string? ScreenshotUrl { get; init; }
+
+        [JsonPropertyName("agentmailEmail")]
+        public string? AgentmailEmail { get; init; }
 
         [JsonPropertyName("createdAt")]
         public string? CreatedAt { get; init; }
 
-        [JsonPropertyName("output")]
-        public string? Output { get; init; }
-
-        [JsonPropertyName("steps")]
-        public List<BrowserUseTaskStepView> Steps { get; init; } = [];
+        [JsonPropertyName("updatedAt")]
+        public string? UpdatedAt { get; init; }
     }
 
-    private sealed class BrowserUseTaskStepView
+    private sealed class BrowserUseRequestMetadata
     {
-        [JsonPropertyName("number")]
-        public int Number { get; init; }
-
-        [JsonPropertyName("memory")]
-        public string? Memory { get; init; }
-
-        [JsonPropertyName("evaluationPreviousGoal")]
-        public string? EvaluationPreviousGoal { get; init; }
-
-        [JsonPropertyName("nextGoal")]
-        public string? NextGoal { get; init; }
-
-        [JsonPropertyName("url")]
-        public string? Url { get; init; }
-
-        [JsonPropertyName("actions")]
-        public List<string> Actions { get; init; } = [];
+        public string? MaxCostUsd { get; init; }
+        public string? ProfileId { get; init; }
+        public string? WorkspaceId { get; init; }
+        public string? ProxyCountryCode { get; init; }
+        public bool? EnableRecording { get; init; }
+        public bool? Skills { get; init; }
+        public bool? Agentmail { get; init; }
+        public bool? CacheScript { get; init; }
     }
 }
-

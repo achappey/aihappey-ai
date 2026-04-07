@@ -66,7 +66,7 @@ public partial class GroqProvider
         }
 
         using var resp = await _client.PostAsync(
-            "https://api.groq.com/openai/v1/audio/transcriptions",
+            "v1/audio/transcriptions",
             form,
             cancellationToken
         );

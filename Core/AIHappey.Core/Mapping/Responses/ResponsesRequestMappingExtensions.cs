@@ -47,7 +47,7 @@ public static class ResponsesRequestMappingExtensions
             Store = options.Store,
             ServiceTier = options.ServiceTier,
             Include = options.Include?.ToList(),
-            Metadata = options.Metadata is null ? null : new Dictionary<string, object?>(options.Metadata),
+            Metadata = options.Metadata ?? chatRequest.ProviderMetadata?.ToObjectDictionary(),
             ToolChoice = options.ToolChoice ?? chatRequest.ToolChoice,
             Text = text,
             Tools = tools?.Count > 0 ? tools : null,

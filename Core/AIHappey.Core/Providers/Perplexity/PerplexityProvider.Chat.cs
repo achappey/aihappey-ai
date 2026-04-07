@@ -5,7 +5,6 @@ using AIHappey.Vercel.Extensions;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Perplexity;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 
@@ -20,22 +19,16 @@ public partial class PerplexityProvider
 
         if (!chatRequest.Model.StartsWith($"sonar"))
         {
-            await foreach (var part in _client.ResponsesStreamAsync(
+            await foreach (var part in this.StreamResponsesAsync(
                 chatRequest,
-                GetIdentifier(),
-                new ResponsesChatStreamOptions
+                requestFactory: (request, ct) => ValueTask.FromResult(CreateResponsesRequest(request)),
+                mappingOptionsFactory: _ => new ResponsesStreamMappingOptions()
                 {
-                    RequestFactory = CreateResponsesRequest,
-                    StreamMappingOptions = new ResponsesStreamMappingOptions()
-                    {
-                        BeforeFinishMapper = (outputItemDone, ct) => MapPerplexityBeforeFinishAsync(outputItemDone, GetIdentifier(), ct),
-                        OutputItemDoneMapper = (outputItemDone, context, ct) => MapPerplexityOutputItemDoneAsync(outputItemDone, GetIdentifier(), ct),
-                        FinishFactory = response => CreatePerplexityFinishPart(response)
-                    },
-                    Url = "v1/agent",
-                    ExtraRootPropertiesFactory = request => BuildResponsesExtraRootProperties(request.Model, chatRequest.GetProviderMetadata<PerplexityProviderMetadata>(GetIdentifier())),
+                    BeforeFinishMapper = (outputItemDone, ct) => MapPerplexityBeforeFinishAsync(outputItemDone, GetIdentifier(), ct),
+                    OutputItemDoneMapper = (outputItemDone, context, ct) => MapPerplexityOutputItemDoneAsync(outputItemDone, GetIdentifier(), ct),
+                    FinishFactory = response => CreatePerplexityFinishPart(response)
                 },
-                cancellationToken))
+                cancellationToken: cancellationToken))
             {
                 yield return part;
             }

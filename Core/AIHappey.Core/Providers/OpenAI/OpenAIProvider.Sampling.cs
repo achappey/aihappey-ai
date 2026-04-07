@@ -1,9 +1,5 @@
-using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
-using Microsoft.AspNetCore.StaticFiles;
 using ModelContextProtocol.Protocol;
-using OpenAI.Responses;
-using OAI = OpenAI;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -27,164 +23,164 @@ public partial class OpenAIProvider
 
         if (model?.Contains("search-preview") == true)
         {
-            return await ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+            return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
         }
 
-        return await ResponseSamplingAsync(chatRequest, cancellationToken);
+        return await this.ResponsesSamplingAsync(chatRequest, cancellationToken);
     }
 
-    public async Task<CreateMessageResult> ChatCompletionsSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var model = chatRequest.GetModel();
-        var client = new OAI.OpenAIClient(GetKey()).GetChatClient(model);
+    /*  public async Task<CreateMessageResult> ChatCompletionsSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+      {
+          var model = chatRequest.GetModel();
+          var client = new OAI.OpenAIClient(GetKey()).GetChatClient(model);
 
-        IEnumerable<OAI.Chat.ChatMessage> inputItems = chatRequest.Messages.ToChatMessages();
-        var clientResult = await client.CompleteChatAsync(inputItems, ToChatCompletionOptions(model!), cancellationToken);
+          IEnumerable<OAI.Chat.ChatMessage> inputItems = chatRequest.Messages.ToChatMessages();
+          var clientResult = await client.CompleteChatAsync(inputItems, ToChatCompletionOptions(model!), cancellationToken);
 
-        return new CreateMessageResult()
-        {
-            Model = clientResult.Value.Model,
-            StopReason = clientResult.Value.FinishReason.ToStopReason(),
-            Content = [clientResult.Value.Content.FirstOrDefault()?.Text?.ToTextContentBlock()!],
-            Role = Role.Assistant
-        };
-    }
+          return new CreateMessageResult()
+          {
+              Model = clientResult.Value.Model,
+              StopReason = clientResult.Value.FinishReason.ToStopReason(),
+              Content = [clientResult.Value.Content.FirstOrDefault()?.Text?.ToTextContentBlock()!],
+              Role = Role.Assistant
+          };
+      }*/
 
-    private async Task<CreateMessageResult> ResponseSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var model = chatRequest.GetModel();
-        var responseClient = new ResponsesClient(GetKey());
+    /* private async Task<CreateMessageResult> ResponseSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+     {
+         var model = chatRequest.GetModel();
+         var responseClient = new ResponsesClient(GetKey());
 
-        IEnumerable<ResponseItem> inputItems = chatRequest.Messages.ToResponseItems();
-        var options = chatRequest.ToResponseCreationOptions();
-        options.Model = model;
+         IEnumerable<ResponseItem> inputItems = chatRequest.Messages.ToResponseItems();
+         var options = chatRequest.ToResponseCreationOptions();
+         options.Model = model;
 
-        if (chatRequest.Metadata.TryGetExplicitResponseTools(out var passthroughTools))
-        {
-            foreach (var tool in passthroughTools)
-            {
-                options.Tools.Add(tool);
-            }
-        }
-        else
-        {
-            var searchTool = chatRequest.Metadata.ToWebSearchTool();
+         if (chatRequest.Metadata.TryGetExplicitResponseTools(out var passthroughTools))
+         {
+             foreach (var tool in passthroughTools)
+             {
+                 options.Tools.Add(tool);
+             }
+         }
+         else
+         {
+             var searchTool = chatRequest.Metadata.ToWebSearchTool();
 
-            if (searchTool != null)
-            {
-                options.Tools.Add(searchTool);
-            }
+             if (searchTool != null)
+             {
+                 options.Tools.Add(searchTool);
+             }
 
-            var fileTool = chatRequest.Metadata.ToFileSearchTool();
-            if (fileTool != null)
-            {
-                options.Tools.Add(fileTool);
-            }
+             var fileTool = chatRequest.Metadata.ToFileSearchTool();
+             if (fileTool != null)
+             {
+                 options.Tools.Add(fileTool);
+             }
 
-            var codeInterpreterTool = chatRequest.Metadata.ToCodeInterpreterTool();
-            if (codeInterpreterTool != null)
-            {
-                options.Tools.Add(codeInterpreterTool);
-            }
+             var codeInterpreterTool = chatRequest.Metadata.ToCodeInterpreterTool();
+             if (codeInterpreterTool != null)
+             {
+                 options.Tools.Add(codeInterpreterTool);
+             }
 
-            var mcpTools = chatRequest.Metadata.ToMcpTools();
+             var mcpTools = chatRequest.Metadata.ToMcpTools();
 
-            foreach (var tool in mcpTools ?? [])
-            {
-                options.Tools.Add(tool);
-            }
-        }
+             foreach (var tool in mcpTools ?? [])
+             {
+                 options.Tools.Add(tool);
+             }
+         }
 
-        foreach (var i in inputItems)
-        {
-            options.InputItems.Add(i);
-        }
+         foreach (var i in inputItems)
+         {
+             options.InputItems.Add(i);
+         }
 
-        var clientResult = await responseClient
-            .CreateResponseAsync(options, cancellationToken);
+         var clientResult = await responseClient
+             .CreateResponseAsync(options, cancellationToken);
 
-        var response = clientResult.Value;
+         var response = clientResult.Value;
 
-        string? containerId = null;
-        var fileIds = new List<string>();
+         string? containerId = null;
+         var fileIds = new List<string>();
 
-        foreach (var item in response.OutputItems)
-        {
-            if (item is CodeInterpreterCallResponseItem codeInterpreterCallResponseItem)
-            {
-                containerId = codeInterpreterCallResponseItem.ContainerId;
-            }
+         foreach (var item in response.OutputItems)
+         {
+             if (item is CodeInterpreterCallResponseItem codeInterpreterCallResponseItem)
+             {
+                 containerId = codeInterpreterCallResponseItem.ContainerId;
+             }
 
-            if (item is MessageResponseItem msg && msg.Content is not null)
-            {
-                foreach (var part in msg.Content)
-                {
-                    var text = ((dynamic)part).Text as string ?? ((dynamic)part).InternalText as string;
+             if (item is MessageResponseItem msg && msg.Content is not null)
+             {
+                 foreach (var part in msg.Content)
+                 {
+                     var text = ((dynamic)part).Text as string ?? ((dynamic)part).InternalText as string;
 
-                    // elk content-part kan annotations hebben
-                    foreach (var ann in part.OutputTextAnnotations)
-                    {
-                        //TODO GET fileids
+                     // elk content-part kan annotations hebben
+                     foreach (var ann in part.OutputTextAnnotations)
+                     {
+                         //TODO GET fileids
 
-                    }
-                }
-            }
-        }
+                     }
+                 }
+             }
+         }
 
-        // distinct/cleanup
-        fileIds = [.. fileIds.Distinct()];
-        List<ContentBlock> contentBlocks = [response.GetOutputText().ToTextContentBlock()];
+         // distinct/cleanup
+         fileIds = [.. fileIds.Distinct()];
+         List<ContentBlock> contentBlocks = [response.GetOutputText().ToTextContentBlock()];
 
-        if (fileIds.Count != 0 && !string.IsNullOrEmpty(containerId))
-        {
-            var containerClient = GetContainerClient();
-            var provider = new FileExtensionContentTypeProvider();
+         if (fileIds.Count != 0 && !string.IsNullOrEmpty(containerId))
+         {
+             var containerClient = GetContainerClient();
+             var provider = new FileExtensionContentTypeProvider();
 
-            foreach (var fileId in fileIds)
-            {
-                var file = await containerClient.GetContainerFileAsync(containerId, fileId, cancellationToken);
-                var fileContant = await containerClient.DownloadContainerFileAsync(containerId, fileId, cancellationToken);
+             foreach (var fileId in fileIds)
+             {
+                 var file = await containerClient.GetContainerFileAsync(containerId, fileId, cancellationToken);
+                 var fileContant = await containerClient.DownloadContainerFileAsync(containerId, fileId, cancellationToken);
 
-                if (!provider.TryGetContentType(Path.GetFileName(file.Value.Path), out var contentType))
-                {
-                    // default/fallback
-                    contentType = "application/octet-stream";
-                }
+                 if (!provider.TryGetContentType(Path.GetFileName(file.Value.Path), out var contentType))
+                 {
+                     // default/fallback
+                     contentType = "application/octet-stream";
+                 }
 
-                contentBlocks.Add(new EmbeddedResourceBlock()
-                {
-                    Resource = new BlobResourceContents()
-                    {
-                        Uri = $"https://api.openai.com/v1/containers/{containerId}/files/{fileId}",
-                        MimeType = contentType,
-                        Blob = fileContant.Value.ToArray()
-                    }
-                });
-            }
-        }
+                 contentBlocks.Add(new EmbeddedResourceBlock()
+                 {
+                     Resource = new BlobResourceContents()
+                     {
+                         Uri = $"https://api.openai.com/v1/containers/{containerId}/files/{fileId}",
+                         MimeType = contentType,
+                         Blob = fileContant.Value.ToArray()
+                     }
+                 });
+             }
+         }
 
-        var meta = new JsonObject
-        {
-            ["inputTokens"] = clientResult.Value.Usage.InputTokenCount,
-            ["outputTokens"] = clientResult.Value.Usage.OutputTokenCount,
-            ["totalTokens"] = clientResult.Value.Usage.TotalTokenCount
-        };
+         var meta = new JsonObject
+         {
+             ["inputTokens"] = clientResult.Value.Usage.InputTokenCount,
+             ["outputTokens"] = clientResult.Value.Usage.OutputTokenCount,
+             ["totalTokens"] = clientResult.Value.Usage.TotalTokenCount
+         };
 
-        if (!string.IsNullOrEmpty(containerId))
-            meta["containerId"] = containerId;
+         if (!string.IsNullOrEmpty(containerId))
+             meta["containerId"] = containerId;
 
-        ContentBlock resultBlock = contentBlocks.OfType<EmbeddedResourceBlock>().Any() ?
-                 contentBlocks.OfType<EmbeddedResourceBlock>().First()
-                 : string.Join(Environment.NewLine, contentBlocks.OfType<TextContentBlock>().Select(a => a.Text)).ToTextContentBlock()
-                 ?? throw new Exception("No content");
+         ContentBlock resultBlock = contentBlocks.OfType<EmbeddedResourceBlock>().Any() ?
+                  contentBlocks.OfType<EmbeddedResourceBlock>().First()
+                  : string.Join(Environment.NewLine, contentBlocks.OfType<TextContentBlock>().Select(a => a.Text)).ToTextContentBlock()
+                  ?? throw new Exception("No content");
 
-        return new CreateMessageResult()
-        {
-            Model = clientResult.Value.Model.ToModelId(GetIdentifier()),
-            StopReason = "unknown",
-            Content = [resultBlock],
-            Role = Role.Assistant,
-            Meta = meta
-        };
-    }
+         return new CreateMessageResult()
+         {
+             Model = clientResult.Value.Model.ToModelId(GetIdentifier()),
+             StopReason = "unknown",
+             Content = [resultBlock],
+             Role = Role.Assistant,
+             Meta = meta
+         };
+     }*/
 }

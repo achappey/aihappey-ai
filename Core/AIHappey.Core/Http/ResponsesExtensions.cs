@@ -10,7 +10,7 @@ namespace AIHappey.Core.AI;
 
 public static class ResponsesExtensions
 {
-    public static async IAsyncEnumerable<UIMessagePart> ResponsesStreamAsync(
+    /*public static async IAsyncEnumerable<UIMessagePart> ResponsesStreamAsync(
         this HttpClient client,
         ChatRequest chatRequest,
         string providerId,
@@ -72,5 +72,5 @@ public static class ResponsesExtensions
                 }
             }
         }
-    }
+    }*/
 }

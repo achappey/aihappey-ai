@@ -58,6 +58,7 @@ public sealed class ResponseRequest
     /// Keep as object? for max flexibility.
     /// </summary>
     [JsonPropertyName("metadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object?>? Metadata { get; set; }
 
     /// <summary>
@@ -136,7 +137,7 @@ public enum ResponseRole
 
 #endregion
 
-#region Content Parts (input_text, output_text, input_image, input_audio, input_file)
+#region Content Parts (input_text, output_text, input_image, input_file)
 
 [JsonConverter(typeof(ResponseContentPartJsonConverter))]
 public abstract class ResponseContentPart

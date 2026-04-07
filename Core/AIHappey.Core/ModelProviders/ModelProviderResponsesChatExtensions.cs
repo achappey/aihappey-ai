@@ -9,6 +9,15 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderResponsesChatExtensions
 {
+    public static void SetDefaultResponseProperties(
+        this IModelProvider modelProvider, ResponseRequest responseRequest)
+    {
+        responseRequest.Tools = [.. responseRequest.Tools ?? [],
+            .. responseRequest.Metadata.GetResponseToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+
+        responseRequest.Metadata = null;
+    }
+
     public static async IAsyncEnumerable<UIMessagePart> StreamResponsesAsync(
         this IModelProvider modelProvider,
         ChatRequest chatRequest,
