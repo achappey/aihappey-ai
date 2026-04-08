@@ -1,11 +1,12 @@
 using AIHappey.Common.Model;
 using System.Net.Http.Headers;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.AI;
 using System.Text.Json;
 using System.Globalization;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -139,4 +140,10 @@ public partial class XAIProvider : IModelProvider
 
         return false;
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+     => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 }

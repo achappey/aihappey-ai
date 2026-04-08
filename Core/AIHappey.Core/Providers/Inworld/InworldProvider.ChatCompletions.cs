@@ -2,8 +2,7 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 

@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 
 namespace AIHappey.Core.AI;
 

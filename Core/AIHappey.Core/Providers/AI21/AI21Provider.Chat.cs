@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;

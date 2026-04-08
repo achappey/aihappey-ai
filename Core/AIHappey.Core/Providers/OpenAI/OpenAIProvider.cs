@@ -11,7 +11,7 @@ using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider : IModelProvider, ISkillProvider
+public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedModelProvider
 {
     private readonly HttpClient _client;
     private readonly AsyncCacheHelper _memoryCache;
@@ -120,4 +120,6 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider
     {
         throw new NotImplementedException();
     }
+
+  
 }

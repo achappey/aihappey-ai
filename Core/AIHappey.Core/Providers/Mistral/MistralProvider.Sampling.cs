@@ -123,9 +123,6 @@ public partial class MistralProvider
             ["totalTokens"] = usage.TotalTokens
         };
 
-        if (!string.IsNullOrWhiteSpace(response.ConversationId))
-            meta["conversationId"] = response.ConversationId;
-
         ContentBlock resultBlock = contentBlocks.OfType<EmbeddedResourceBlock>().Any()
             ? contentBlocks.OfType<EmbeddedResourceBlock>().First()
             : string.Join(Environment.NewLine, contentBlocks.OfType<TextContentBlock>().Select(block => block.Text))
@@ -134,7 +131,7 @@ public partial class MistralProvider
         return new CreateMessageResult
         {
             Role = Role.Assistant,
-            Model = resolvedModel,
+            Model = resolvedModel.ToModelId(GetIdentifier()),
             StopReason = "stop",
             Content = [resultBlock],
             Meta = meta

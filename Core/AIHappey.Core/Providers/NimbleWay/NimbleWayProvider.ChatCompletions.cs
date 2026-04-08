@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 
 namespace AIHappey.Core.Providers.NimbleWay;
 

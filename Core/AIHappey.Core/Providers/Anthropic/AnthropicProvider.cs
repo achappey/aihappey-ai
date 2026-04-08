@@ -4,7 +4,7 @@ using ANT = Anthropic.SDK;
 using AIHappey.Common.Model;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Text.Json;

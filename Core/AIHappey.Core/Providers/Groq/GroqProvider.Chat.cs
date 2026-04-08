@@ -1,9 +1,8 @@
-using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using AIHappey.Responses;
+using AIHappey.Vercel.Mapping;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -33,72 +32,20 @@ public partial class GroqProvider
                 }
             default:
                 {
-                    await foreach (var part in this.StreamResponsesAsync(
-                            chatRequest,
-                            mappingOptionsFactory: CreateResponsesStreamMappingOptions,
-                            cancellationToken: cancellationToken))
+                    var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+                    await foreach (var part in this.StreamUnifiedAsync(
+                        unifiedRequest,
+                        cancellationToken))
                     {
-                        yield return part;
+                        foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                        {
+                            yield return uiPart;
+                        }
                     }
 
                     yield break;
                 }
-
-
         }
-    }
-
-    private ResponsesStreamMappingOptions CreateResponsesStreamMappingOptions(ChatRequest chatRequest)
-        => new()
-        {
-            FinishFactory = CreateResponsesFinishPart
-        };
-
-    private FinishUIPart CreateResponsesFinishPart(ResponseResult response)
-    {
-        var resolvedModelId = response.Model.ToModelId(GetIdentifier());
-        var pricing = ResolveCatalogPricing(string.IsNullOrWhiteSpace(response.Model)
-            ? null
-            : response.Model);
-
-        var finish = "stop".ToFinishUIPart(
-            resolvedModelId,
-            GetUsageValue(response.Usage, "output_tokens", "outputTokens") ?? 0,
-            GetUsageValue(response.Usage, "input_tokens", "inputTokens", "prompt_tokens", "promptTokens") ?? 0,
-            ModelCostMetadataEnricher.GetTotalTokens(response.Usage) ?? 0,
-            response.Temperature,
-            reasoningTokens: GetUsageValue(response.Usage, "reasoning_tokens", "reasoningTokens"));
-
-        return ModelCostMetadataEnricher.AddCost(finish, pricing);
-    }
-
-    private static int? GetUsageValue(object? usage, params string[] propertyNames)
-    {
-        if (usage == null)
-            return null;
-
-        try
-        {
-            var json = System.Text.Json.JsonSerializer.SerializeToElement(usage, System.Text.Json.JsonSerializerOptions.Web);
-            foreach (var name in propertyNames)
-            {
-                if (json.TryGetProperty(name, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.Number && value.TryGetInt32(out var number))
-                    return number;
-            }
-
-            if (json.TryGetProperty("output_tokens_details", out var outputDetails))
-            {
-                foreach (var name in propertyNames)
-                {
-                    if (outputDetails.TryGetProperty(name, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.Number && value.TryGetInt32(out var number))
-                        return number;
-                }
-            }
-        }
-        catch
-        {
-        }
-
-        return null;
     }
 }

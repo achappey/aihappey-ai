@@ -11,13 +11,13 @@ public static partial class AnthropicExtensions
     public static bool ContainsLocation(this UserLocation userLocation)
         => !string.IsNullOrEmpty(userLocation.City);
 
-    public static ANT.Common.Tool ToTool(this Common.Model.Tool tool)
+    public static ANT.Common.Tool ToTool(this Vercel.Models.Tool tool)
         => new(new Function(
                        tool?.Name,
                        tool?.Description,
                        JsonSerializer.Serialize(tool?.InputSchema, JsonSerializerOptions.Web)));
 
-    public static List<ANT.Common.Tool> ToTools(this IEnumerable<Common.Model.Tool>? tools)
+    public static List<ANT.Common.Tool> ToTools(this IEnumerable<Vercel.Models.Tool>? tools)
         => tools?.Select(a => a.ToTool()).ToList() ?? [];
 
     public static ANT.Common.Tool ToWebSearchTool(this WebSearch webSearch)

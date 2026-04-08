@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 
 namespace AIHappey.Core.Providers.BrowserUse;
 

@@ -1,6 +1,5 @@
 using ModelContextProtocol.Protocol;
-using AIHappey.Common.Model.ChatCompletions;
-using AIHappey.Common.Model;
+using AIHappey.ChatCompletions.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Responses;

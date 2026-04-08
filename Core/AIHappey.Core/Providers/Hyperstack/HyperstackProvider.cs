@@ -1,6 +1,6 @@
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;

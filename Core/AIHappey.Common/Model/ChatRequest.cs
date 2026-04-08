@@ -15,7 +15,7 @@ namespace AIHappey.Common.Model;
 /// Use <see cref="ProviderMetadata"/> for provider-specific options without changing the contract.
 /// </para>
 /// </summary>
-public class ChatRequest
+public class ChatRequest2
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = default!;
@@ -55,16 +55,16 @@ public class ChatRequest
 
 }
 
-public class ResponseFormat
+public class ResponseFormat2
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = "json_schema";
 
     [JsonPropertyName("json_schema")]
-    public JSONSchema JsonSchema { get; set; } = null!;
+    public JSONSchema2 JsonSchema { get; set; } = null!;
 }
 
-public class JSONSchema
+public class JSONSchema2
 {
     [JsonPropertyName("name")]
     public string Name { get; set; } = null!;

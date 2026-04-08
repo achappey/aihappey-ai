@@ -1,4 +1,3 @@
-using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;

@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Nodes;
-using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using System.Net.Http.Headers;
 using AIHappey.Common.Extensions;

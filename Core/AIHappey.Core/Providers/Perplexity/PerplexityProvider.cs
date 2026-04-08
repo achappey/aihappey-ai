@@ -3,7 +3,7 @@ using AIHappey.Core.Models;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
@@ -41,7 +41,7 @@ public partial class PerplexityProvider : IModelProvider
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         var model = chatRequest.GetModel();
-        if (model?.StartsWith($"{GetIdentifier()}/sonar") != true)
+        if (model?.StartsWith($"sonar") != true)
         {
             return await this.ResponsesSamplingAsync(chatRequest, cancellationToken);
         }
@@ -74,6 +74,7 @@ public partial class PerplexityProvider : IModelProvider
             Meta = new System.Text.Json.Nodes.JsonObject()
             {
                 ["inputTokens"] = result?.Usage?.PromptTokens,
+                ["outputTokens"] = result?.Usage?.CompletionTokens,
                 ["totalTokens"] = result?.Usage?.TotalTokens
             }
         };

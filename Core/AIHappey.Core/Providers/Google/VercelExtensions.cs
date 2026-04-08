@@ -1,4 +1,3 @@
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Google;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
@@ -17,7 +16,7 @@ public static class VercelExtensions
                  };
 
     public static FunctionDeclaration ToFunctionDeclaration(
-               this Common.Model.Tool a) => new()
+               this Vercel.Models.Tool a) => new()
                {
                    Name = a.Name,
                    Description = a.Description,
@@ -25,7 +24,7 @@ public static class VercelExtensions
                };
 
     public static IEnumerable<FunctionDeclaration> ToFunctionDeclarations(
-               this IEnumerable<Common.Model.Tool> data) =>
+               this IEnumerable<Vercel.Models.Tool> data) =>
                data.Select(a => a.ToFunctionDeclaration());
 
     public static GenerationConfig ToGenerationConfig(this ChatRequest chatRequest, GoogleProviderMetadata? metadata) => new()

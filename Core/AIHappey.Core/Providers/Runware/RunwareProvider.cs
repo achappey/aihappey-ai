@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Runtime.CompilerServices;

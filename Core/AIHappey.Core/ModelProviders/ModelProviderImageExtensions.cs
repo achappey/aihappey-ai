@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;

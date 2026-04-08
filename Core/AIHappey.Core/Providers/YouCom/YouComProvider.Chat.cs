@@ -1,5 +1,4 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using System.Text;

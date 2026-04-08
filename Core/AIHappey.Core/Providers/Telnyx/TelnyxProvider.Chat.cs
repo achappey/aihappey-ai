@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Telnyx;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;

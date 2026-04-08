@@ -38,7 +38,7 @@ public static partial class AnthropicExtensions
         };
     }
 
-    public static ANT.Messaging.MessageParameters ToMessageParameters(this Common.Model.ChatRequest chatRequest,
+    public static ANT.Messaging.MessageParameters ToMessageParameters(this Vercel.Models.ChatRequest chatRequest,
        IEnumerable<ANT.Messaging.Message> messages,
        string model,
        IEnumerable<ANT.Messaging.SystemMessage>? systemInstructions = null)

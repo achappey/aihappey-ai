@@ -3,10 +3,10 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Perplexity;
 using AIHappey.Core.AI;
 using AIHappey.Core.Providers.Perplexity.Models;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Perplexity;

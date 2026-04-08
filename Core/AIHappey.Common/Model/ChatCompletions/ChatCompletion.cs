@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.ChatCompletions;
 
-public class ChatCompletion
+public class ChatCompletion2
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = default!;
@@ -24,7 +24,7 @@ public class ChatCompletion
 }
 
 
-public class ChatCompletionUpdate
+public class ChatCompletionUpdate2
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = default!;

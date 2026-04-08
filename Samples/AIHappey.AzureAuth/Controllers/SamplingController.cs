@@ -5,6 +5,7 @@ using AIHappey.Telemetry;
 using System.Text.Json.Nodes;
 using AIHappey.AzureAuth.Extensions;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.AI;
 
 namespace AIHappey.AzureAuth.Controllers;
 
@@ -41,6 +42,11 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
         provider ??= _resolver.GetProvider();
 
         var startedAt = DateTime.UtcNow;
+        var modelHint = requestDto.ModelPreferences?.Hints?.FirstOrDefault(a => a.Name?.StartsWith(provider.GetIdentifier()) == true);
+        requestDto.ModelPreferences?.Hints = [ new ModelHint()
+            {
+                Name = modelHint?.Name?.SplitModelId().Model
+            }];
 
         var result = await provider.SamplingAsync(requestDto, cancellationToken);
 
@@ -54,7 +60,7 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
             totalTokens = meta["totalTokens"]?.GetValue<int>() ?? 0;
         }
 
-        await chatTelemetryService.TrackChatRequestAsync(new Common.Model.ChatRequest()
+        await chatTelemetryService.TrackChatRequestAsync(new Vercel.Models.ChatRequest()
         {
             Model = result?.Model!,
             Temperature = requestDto.Temperature ?? 1,

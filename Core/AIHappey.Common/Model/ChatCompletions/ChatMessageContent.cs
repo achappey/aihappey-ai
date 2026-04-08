@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace AIHappey.Common.Model.ChatCompletions;
 
-public static class ChatMessageContentExtensions
+public static class ChatMessageContentExtensions2
 {
     public static string? ToText(JsonElement content)
     {

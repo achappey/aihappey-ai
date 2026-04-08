@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>OPENAI001;CS1998;NU1608</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AIHappey.Abstractions\AIHappey.Abstractions.csproj" />
+    <ProjectReference Include="..\AIHappey.Common\AIHappey.Common.csproj" />
+    <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
+    <ProjectReference Include="..\AIHappey.Responses\AIHappey.Responses.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

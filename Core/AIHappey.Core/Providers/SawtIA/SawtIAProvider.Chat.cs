@@ -1,4 +1,3 @@
-using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.SawtIA;

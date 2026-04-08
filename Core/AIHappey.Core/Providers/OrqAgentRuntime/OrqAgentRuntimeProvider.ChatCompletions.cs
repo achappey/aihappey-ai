@@ -1,4 +1,4 @@
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.OrqAgentRuntime;

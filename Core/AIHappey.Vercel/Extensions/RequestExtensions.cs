@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Vercel.Extensions;
@@ -43,6 +44,45 @@ public static class RequestExtensions
 
         return element.Deserialize<T>(JsonSerializerOptions.Web);
     }
+
+    public static AIRequest ToUnifiedRequest(this ChatRequest request, string providerId)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+
+        var inputItems = request.Messages?.Select(a => a.ToUnifiedInputItem()).ToList() ?? [];
+
+        return new AIRequest
+        {
+            ProviderId = providerId,
+            Model = request.Model,
+            Id = request.Id,
+            ResponseFormat = request.ResponseFormat,
+            Input = new AIInput
+            {
+                Items = inputItems
+            },
+            Temperature = request.Temperature,
+            TopP = request.TopP,
+            MaxOutputTokens = request.MaxOutputTokens,
+            MaxToolCalls = request.MaxToolCalls,
+            ToolChoice = request.ToolChoice,
+            Tools = request.Tools?.Select(ToUnifiedTool).ToList(),
+            Metadata = request.ProviderMetadata?
+                .ToDictionary(p => p.Key, p => (object?)p.Value)
+        };
+    }
+
+
+    private static AIToolDefinition ToUnifiedTool(this Tool tool)
+        => new()
+        {
+            Name = tool.Name,
+            Description = tool.Description,
+            InputSchema = tool.InputSchema,
+            Title = tool.Title
+        };
+
 
 }
 

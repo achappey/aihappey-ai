@@ -1,4 +1,4 @@
-using AIHappey.Core.AI;
+using AIHappey.Sampling.Mapping;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Groq;
@@ -9,6 +9,9 @@ public partial class GroqProvider
     {
         ApplyAuthHeader();
 
-        return await this.ResponsesSamplingAsync(chatRequest, cancellationToken);
+        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToSamplingResult();
     }
 }

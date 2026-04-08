@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 
 namespace AIHappey.Core.Providers.YouCom;
 

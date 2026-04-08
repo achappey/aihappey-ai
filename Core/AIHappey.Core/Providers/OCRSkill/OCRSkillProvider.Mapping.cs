@@ -1,5 +1,5 @@
 using System.Text.Json;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.OCRSkill;

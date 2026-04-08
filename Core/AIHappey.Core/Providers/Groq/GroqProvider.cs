@@ -1,4 +1,4 @@
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using System.Net.Http.Headers;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
@@ -8,10 +8,11 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using AIHappey.Responses.Extensions;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Groq;
 
-public partial class GroqProvider : IModelProvider
+public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly HttpClient _client;
 
@@ -168,4 +169,10 @@ public partial class GroqProvider : IModelProvider
 
         return null;
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }

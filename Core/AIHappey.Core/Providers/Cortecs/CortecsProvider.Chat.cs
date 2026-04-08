@@ -1,5 +1,4 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.Cortecs;
 using System.Runtime.CompilerServices;
 using System.Text;

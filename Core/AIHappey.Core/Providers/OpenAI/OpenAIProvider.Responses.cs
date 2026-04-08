@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses.Streaming;
@@ -13,6 +14,8 @@ public partial class OpenAIProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         options.ParallelToolCalls ??= true;
+        options.ContextManagement ??= options.Metadata
+            .GetProviderOption<System.Text.Json.JsonElement[]>(GetIdentifier(), "context_management");
 
         this.SetDefaultResponseProperties(options);
 
@@ -25,6 +28,7 @@ public partial class OpenAIProvider
         var effectiveServiceTier = string.IsNullOrWhiteSpace(response.ServiceTier)
             ? options.ServiceTier
             : response.ServiceTier;
+
         var pricing = OpenAITieredPricingResolver.Resolve(
             effectiveModelId,
             effectiveServiceTier,
@@ -44,8 +48,9 @@ public partial class OpenAIProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         options.ParallelToolCalls ??= true;
+
         this.SetDefaultResponseProperties(options);
-        
+
         await foreach (var update in _client.GetResponsesUpdates(options, ct: cancellationToken))
         {
             if (update is ResponseCompleted completed)

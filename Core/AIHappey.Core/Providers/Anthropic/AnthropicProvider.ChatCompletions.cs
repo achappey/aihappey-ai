@@ -1,5 +1,5 @@
 using ANT = Anthropic.SDK;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Anthropic;

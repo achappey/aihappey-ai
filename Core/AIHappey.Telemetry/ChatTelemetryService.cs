@@ -1,5 +1,6 @@
 using AIHappey.Telemetry.Context;
 using AIHappey.Telemetry.Models;
+using AIHappey.Vercel.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIHappey.Telemetry;
@@ -9,7 +10,7 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
     //private readonly AIHappeyTelemetryDatabaseContext _db = db;
 
     public async Task TrackChatRequestAsync(
-     AIHappey.Common.Model.ChatRequest chatRequest,
+     ChatRequest chatRequest,
      string userId,
      string username,
      int inputTokens,
@@ -109,7 +110,7 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
 
         var newTools = toolNames
             .Where(n => !existingNames.Contains(n))
-            .Select(n => new Tool { ToolName = n })
+            .Select(n => new Models.Tool { ToolName = n })
             .ToList();
 
         if (newTools.Count > 0)

@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;

@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.NinjaChat;

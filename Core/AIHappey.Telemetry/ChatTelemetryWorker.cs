@@ -5,6 +5,7 @@ using AIHappey.Telemetry.Models;
 using Microsoft.EntityFrameworkCore;
 using AIHappey.Common.Model;
 using System.Threading.Channels;
+using AIHappey.Vercel.Models;
 
 public record ChatTelemetryRecord(
     ChatRequest ChatRequest,

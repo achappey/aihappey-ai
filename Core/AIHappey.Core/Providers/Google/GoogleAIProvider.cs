@@ -1,6 +1,6 @@
 using AIHappey.Common.Model;
 using Microsoft.Extensions.Logging;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.AI;

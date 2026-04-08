@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Responses.Extensions;
 using System.Text.Json;
@@ -7,6 +6,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Perplexity;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Perplexity;
 

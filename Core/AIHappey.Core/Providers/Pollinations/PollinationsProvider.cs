@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using AIHappey.Core.Models;
 using System.Text.Json;
 using System.Text;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using Microsoft.AspNetCore.Http;
 using AIHappey.Vercel.Models;
 using AIHappey.Common.Model;

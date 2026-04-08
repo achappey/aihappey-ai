@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OrqAgentRuntime;

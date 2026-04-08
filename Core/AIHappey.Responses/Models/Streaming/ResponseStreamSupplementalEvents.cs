@@ -127,6 +127,32 @@ public abstract class ResponseStreamTextEvent : ResponseStreamItemContentEvent
 {
 }
 
+
+public sealed class ResponseImageGenerationCallPartialImage : ResponseStreamTextEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.image_generation_call.partial_image";
+
+    [JsonPropertyName("partial_image_b64")]
+    public string PartialImageB64 { get; init; } = default!;
+
+    [JsonPropertyName("output_format")]
+    public string OutputFormat { get; init; } = default!;
+}
+
+
+public sealed class ResponseImageGenerationCallGenerating : ResponseStreamTextEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.image_generation_call.generating";
+}
+
+public sealed class ResponseImageGenerationCallInProgress : ResponseStreamTextEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.image_generation_call.in_progress";
+}
+
 public sealed class ResponseReasoningSummaryTextDelta : ResponseStreamTextEvent
 {
     [JsonPropertyName("delta")]
@@ -270,6 +296,26 @@ public sealed class ResponseCodeInterpreterCallCodeDelta : ResponseToolCallStatu
 
     [JsonPropertyName("delta")]
     public string Delta { get; init; } = default!;
+}
+
+
+public sealed class ResponseCustomToolCallInputDelta : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.custom_tool_call_input.delta";
+
+    [JsonPropertyName("delta")]
+    public string Delta { get; init; } = default!;
+}
+
+
+public sealed class ResponseCustomToolCallInputDone : ResponseToolCallStatusEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.custom_tool_call_input.done";
+
+    [JsonPropertyName("input")]
+    public string Input { get; init; } = default!;
 }
 
 

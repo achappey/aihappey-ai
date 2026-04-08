@@ -1,6 +1,5 @@
 using System.Text.Json;
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 

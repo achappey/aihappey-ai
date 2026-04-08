@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.Responses;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
 
@@ -30,9 +31,9 @@ public sealed class ResponsesRequestMappingOptions
 
     public IEnumerable<ResponseToolDefinition>? Tools { get; init; }
 
-    public Func<Common.Model.Tool, ResponseToolDefinition>? ToolDefinitionFactory { get; init; }
+    public Func<Tool, ResponseToolDefinition>? ToolDefinitionFactory { get; init; }
 
-    public Func<Common.Model.ChatRequest, object?>? TextFactory { get; init; }
+    public Func<ChatRequest, object?>? TextFactory { get; init; }
 
     public string? ReasoningSignatureProviderId { get; init; }
 

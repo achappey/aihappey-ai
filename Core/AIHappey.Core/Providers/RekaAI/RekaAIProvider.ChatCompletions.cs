@@ -1,4 +1,4 @@
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.ChatCompletions;
 
-public class ChatCompletionOptions
+public class ChatCompletionOptions2
 {
 
     [JsonPropertyName("model")]
@@ -20,7 +20,7 @@ public class ChatCompletionOptions
     public bool? Stream { get; set; }
 
     [JsonPropertyName("messages")]
-    public IEnumerable<ChatMessage> Messages { get; set; } = [];
+    public IEnumerable<ChatMessage2> Messages { get; set; } = [];
 
     [JsonPropertyName("tools")]
     public IEnumerable<object> Tools { get; set; } = [];
@@ -37,7 +37,7 @@ public class ChatCompletionOptions
     public bool? Store { get; set; }
 }
 
-public class ChatMessage
+public class ChatMessage2
 {
     [JsonPropertyName("role")]
     public string Role { get; set; } = default!;

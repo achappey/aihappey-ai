@@ -1,4 +1,4 @@
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.Providers.Mistral;

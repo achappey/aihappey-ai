@@ -1,5 +1,5 @@
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Core.Models;

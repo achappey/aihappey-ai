@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model;
 
-public class Tool
+public class Tool2
 {
     [JsonPropertyName("name")]
     public string Name { get; set; } = default!;
@@ -15,10 +15,10 @@ public class Tool
     public string? Title { get; set; }
 
     [JsonPropertyName("inputSchema")]
-    public ToolInputSchema? InputSchema { get; set; }
+    public ToolInputSchema2? InputSchema { get; set; }
 }
 
-public class ToolInputSchema
+public class ToolInputSchema2
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = default!;

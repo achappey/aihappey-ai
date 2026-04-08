@@ -1,6 +1,5 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model.Providers.Infomaniak;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;

@@ -4,6 +4,38 @@ namespace AIHappey.Common.Extensions;
 
 public static class JsonExtensions
 {
+    public static T? GetProviderOption<T>(
+    this Dictionary<string, object?>? metadata,
+    string providerId,
+    string key)
+    {
+        if (metadata is null)
+            return default;
+
+        if (!metadata.TryGetValue(providerId, out var provider))
+            return default;
+
+        if (provider is null)
+            return default;
+
+        var element = provider switch
+        {
+            JsonElement je => je,
+            _ => JsonSerializer.SerializeToElement(provider, JsonSerializerOptions.Web)
+        };
+
+        if (element.ValueKind != JsonValueKind.Object)
+            return default;
+
+        if (!element.TryGetProperty(key, out var value))
+            return default;
+
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return default;
+
+        return value.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
     public static object DeserializeToObject(this string? json)
     {
         if (string.IsNullOrWhiteSpace(json))

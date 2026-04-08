@@ -1,5 +1,5 @@
 using System.Net.Http.Headers;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;

@@ -1,6 +1,6 @@
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using AIHappey.Common.Model.ChatCompletions;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;

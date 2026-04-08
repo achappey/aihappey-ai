@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using ModelContextProtocol.Protocol;
@@ -18,7 +19,7 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
 
         if (!models.Any())
             return BadRequest("Sampling requires at least one model hint.");
-            
+
         foreach (var model in models)
         {
             try
@@ -38,6 +39,14 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
             HeaderAuthModelContext.ClearActiveProvider(HttpContext);
 
         provider ??= _resolver.GetProvider();
+
+        var modelHint = requestDto.ModelPreferences?.Hints?.FirstOrDefault(a => a.Name?.StartsWith(provider.GetIdentifier()) == true);
+        requestDto.ModelPreferences?.Hints = [ new ModelHint()
+            {
+                Name = modelHint?.Name?.SplitModelId().Model
+            }];
+
+
         var result = await provider.SamplingAsync(requestDto, cancellationToken);
 
         return Ok(result);

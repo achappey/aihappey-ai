@@ -1,10 +1,8 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 

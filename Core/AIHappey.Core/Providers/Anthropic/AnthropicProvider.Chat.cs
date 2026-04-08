@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using ANT = Anthropic.SDK;
 using Anthropic.SDK.Messaging;
-using AIHappey.Common.Model;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using System.Net.Mime;

@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Sampling.Mapping;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.OpenAI;
@@ -26,7 +27,11 @@ public partial class OpenAIProvider
             return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
         }
 
-        return await this.ResponsesSamplingAsync(chatRequest, cancellationToken);
+        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToSamplingResult();
+        //        return await this.ResponsesSamplingAsync(chatRequest, cancellationToken);
     }
 
     /*  public async Task<CreateMessageResult> ChatCompletionsSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)

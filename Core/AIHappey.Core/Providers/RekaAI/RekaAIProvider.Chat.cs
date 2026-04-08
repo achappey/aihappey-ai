@@ -1,6 +1,5 @@
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model;
 using AIHappey.Vercel.Extensions;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
