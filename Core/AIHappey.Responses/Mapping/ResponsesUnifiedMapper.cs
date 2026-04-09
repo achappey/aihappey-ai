@@ -31,7 +31,7 @@ public static class ResponsesUnifiedMapper
         };
     }
 
-    public static ResponseRequest ToResponseRequest(this AIRequest request)
+    public static ResponseRequest ToResponseRequest(this AIRequest request, string providerId)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -41,7 +41,7 @@ public static class ResponsesUnifiedMapper
         {
             Model = request.Model,
             Instructions = request.Instructions,
-            Input = request.Input is null ? null : ToResponsesInput(request.Input),
+            Input = request.Input is null ? null : ToResponsesInput(request.Input, providerId),
             Temperature = request.Temperature,
             TopP = request.TopP,
             MaxOutputTokens = request.MaxOutputTokens,
@@ -52,7 +52,6 @@ public static class ResponsesUnifiedMapper
             Metadata = request.Metadata,
             Store = ExtractValue<bool?>(metadata, "responses.store"),
             ServiceTier = ExtractValue<string>(metadata, "responses.service_tier"),
-            //Include = ExtractObject<List<string>>(metadata, "responses.include"),
             Text = metadata.TryGetValue("responses.text", out var text) ? text : null,
             TopLogprobs = ExtractValue<int?>(metadata, "responses.top_logprobs"),
             Truncation = ParseTruncation(metadata, "responses.truncation"),
@@ -408,12 +407,12 @@ public static class ResponsesUnifiedMapper
         return new AIInput { Items = items };
     }
 
-    private static ResponseInput ToResponsesInput(AIInput input)
+    private static ResponseInput ToResponsesInput(AIInput input, string providerId)
     {
         if (!string.IsNullOrWhiteSpace(input.Text))
             return new ResponseInput(input.Text);
 
-        var items = input.Items?.Select(ToResponsesInputItem).ToList() ?? [];
+        var items = input.Items?.Select(a => ToResponsesInputItem(a, providerId)).ToList() ?? [];
         return new ResponseInput(items);
     }
 
@@ -500,7 +499,7 @@ public static class ResponsesUnifiedMapper
         }
     }
 
-    private static ResponseInputItem ToResponsesInputItem(AIInputItem item)
+    private static ResponseInputItem ToResponsesInputItem(AIInputItem item, string providerId)
     {
         var kind = item.Type?.Trim().ToLowerInvariant();
         var metadata = item.Metadata ?? new Dictionary<string, object?>();
@@ -532,12 +531,13 @@ public static class ResponsesUnifiedMapper
             },
             "reasoning" => new ResponseReasoningItem
             {
-                Id = ExtractValue<string>(metadata, "id"),
-                EncryptedContent = ExtractValue<string>(metadata, "encrypted_content"),
-                Summary = (item.Content ?? [])
-                    .OfType<AITextContentPart>()
-                    .Select(a => new ResponseReasoningSummaryTextPart { Text = a.Text })
-                    .ToList()
+                Id = item.Id,
+                EncryptedContent = ExtractNestedValue<string>(metadata, providerId, "encrypted_content"),
+                //     EncryptedContent = ExtractValue<string>(metadata, "encrypted_content"),
+                /* Summary = (item.Content ?? [])
+                     .OfType<AITextContentPart>()
+                     .Select(a => new ResponseReasoningSummaryTextPart { Text = a.Text })
+                     .ToList()*/
             },
             "image_generation_call" => new ResponseImageGenerationCallItem
             {
@@ -555,6 +555,22 @@ public static class ResponsesUnifiedMapper
                 Content = new ResponseMessageContent(ToResponsesContentParts(item.Content, item.Role).ToList())
             }
         };
+    }
+
+    private static T? ExtractNestedValue<T>(
+        Dictionary<string, object?> metadata,
+        string providerId,
+        string key)
+    {
+        if (metadata.TryGetValue(providerId, out var providerObj)
+            && providerObj is JsonElement providerJson
+            && providerJson.ValueKind == JsonValueKind.Object
+            && providerJson.TryGetProperty(key, out var value))
+        {
+            return value.Deserialize<T>();
+        }
+
+        return default;
     }
 
     private static IEnumerable<AIContentPart> ToUnifiedContentParts(ResponseMessageContent content)
@@ -638,25 +654,27 @@ public static class ResponsesUnifiedMapper
 
                 case AIFileContentPart file:
                     {
-                        if (file.MediaType?.StartsWith("image/") == true)
+                        if (role == "user")
                         {
-                            yield return new InputImagePart
+                            if (file.MediaType?.StartsWith("image/") == true)
                             {
-                                ImageUrl = file.Data?.ToString(),
-                            };
-                        }
-                        else
-                        {
-                            var dataText = file.Data?.ToString();
-                            yield return new InputFilePart
+                                yield return new InputImagePart
+                                {
+                                    ImageUrl = file.Data?.ToString(),
+                                };
+                            }
+                            else
                             {
-                                Filename = file.Filename,
-                                FileId = ExtractValue<string>(file.Metadata, "responses.file_id"),
-                                FileData = dataText is not null && dataText.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? dataText : null,
-                                FileUrl = dataText is not null && dataText.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? dataText : ExtractValue<string>(file.Metadata, "responses.file_url")
-                            };
+                                var dataText = file.Data?.ToString();
+                                yield return new InputFilePart
+                                {
+                                    Filename = file.Filename,
+                                    FileId = ExtractValue<string>(file.Metadata, "responses.file_id"),
+                                    FileData = dataText is not null && dataText.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? dataText : null,
+                                    FileUrl = dataText is not null && dataText.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? dataText : ExtractValue<string>(file.Metadata, "responses.file_url")
+                                };
+                            }
                         }
-
                         break;
                     }
             }

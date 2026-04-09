@@ -814,11 +814,11 @@ public static class ChatCompletionsUnifiedMapper
 
         foreach (var part in list)
         {
-            if (part.Metadata is not null && part.Metadata.TryGetValue("chatcompletions.part.raw", out var rawPart) && rawPart is not null)
+            /*if (part.Metadata is not null && part.Metadata.TryGetValue("chatcompletions.part.raw", out var rawPart) && rawPart is not null)
             {
                 mapped.Add(rawPart);
                 continue;
-            }
+            }*/
 
             if (part is AITextContentPart text)
             {
@@ -828,15 +828,50 @@ public static class ChatCompletionsUnifiedMapper
 
             if (part is AIFileContentPart file)
             {
-                mapped.Add(new
+                if (role == "user")
                 {
-                    type = "file",
-                    file = new
+                    if (file.MediaType?.StartsWith("image/") == true)
                     {
-                        filename = file.Filename,
-                        file_data = file.Data
+                        mapped.Add(new
+                        {
+                            type = "image_url",
+                            image_url = new
+                            {
+                                url = file.Data
+                            }
+                        });
                     }
-                });
+                    else if (file.MediaType?.StartsWith("audio/") == true)
+                    {
+                        var format = !string.IsNullOrEmpty(file.Filename)
+                                    ? Path.GetExtension(file.Filename).TrimStart('.')
+                                    : file.MediaType.Split("/").Last() == "mpeg"
+                                    ? "mp3" : file.MediaType.Split("/").Last();
+
+                        mapped.Add(new
+                        {
+                            type = "input_audio",
+                            input_audio = new
+                            {
+                                format = format,
+                                data = file.Data
+                            }
+                        });
+                    }
+                    else
+                    {
+                        mapped.Add(new
+                        {
+                            type = "file",
+                            file = new
+                            {
+                                filename = file.Filename,
+                                file_data = file.Data
+                            }
+                        });
+                    }
+
+                }
             }
         }
 

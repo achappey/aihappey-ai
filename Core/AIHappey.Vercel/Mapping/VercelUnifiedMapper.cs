@@ -141,7 +141,14 @@ public static class VercelUnifiedMapper
             "reasoning-start" => new ReasoningStartUIPart
             {
                 Id = envelope.Id ?? string.Empty,
-                ProviderMetadata = GetProviderMetadata(data)
+                ProviderMetadata = new Dictionary<string, object>()
+                {
+                  {providerId, new Dictionary<string, object>()
+                    {
+                        {"encrypted_content", GetValue<string>(data, "encrypted_content") ?? string.Empty}
+                    }
+                    }
+                }
             },
             "reasoning-delta" => new ReasoningDeltaUIPart
             {
@@ -151,7 +158,14 @@ public static class VercelUnifiedMapper
             "reasoning-end" => new ReasoningEndUIPart
             {
                 Id = envelope.Id ?? string.Empty,
-                ProviderMetadata = GetNestedProviderMetadata(data)
+                ProviderMetadata = new Dictionary<string, Dictionary<string, object>>()
+                {
+                  {providerId, new Dictionary<string, object>()
+                    {
+                        {"encrypted_content", GetValue<string>(data, "encrypted_content") ?? string.Empty}
+                    }
+                    }
+                }
             },
             "tool-approval-request" => new ToolApprovalRequestUIPart
             {
@@ -342,20 +356,22 @@ public static class VercelUnifiedMapper
                 };
 
             case ReasoningUIPart reasoning:
-                return new AITextContentPart
+                return new AIReasoningContentPart
                 {
-                    Type = "text",
+                    Type = "reasoning",
                     Text = reasoning.Text,
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["vercel.type"] = reasoning.Type,
-                        ["vercel.id"] = reasoning.Id,
-                        ["vercel.providerMetadata"] = reasoning.ProviderMetadata
-                    }
+                    Metadata = reasoning.ProviderMetadata?.ToDictionary(a => a.Key, a => (object?)a.Value)
+                    /*   Metadata = new Dictionary<string, object?>
+                       {
+                           ["vercel.type"] = reasoning.Type,
+                           ["vercel.id"] = reasoning.Id,
+                           ["vercel.providerMetadata"] = reasoning.ProviderMetadata
+                       }*/
                 };
         }
 
-        return new AITextContentPart
+        return null;
+        /*return new AITextContentPart
         {
             Type = "text",
             Text = JsonSerializer.Serialize(part, part.GetType(), Json),
@@ -364,7 +380,7 @@ public static class VercelUnifiedMapper
                 ["vercel.type"] = part.Type,
                 ["vercel.unmapped"] = true
             }
-        };
+        };*/
     }
 
     private static Dictionary<string, object?> ToDataDictionary(UIMessagePart part)

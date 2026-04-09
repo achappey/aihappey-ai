@@ -57,6 +57,17 @@ public sealed class AITextContentPart : AIContentPart
     public required string Text { get; init; }
 }
 
+
+public sealed class AIReasoningContentPart : AIContentPart
+{
+    public AIReasoningContentPart()
+    {
+        Type = "reasoning";
+    }
+
+    public required string? Text { get; init; }
+}
+
 public sealed class AIFileContentPart : AIContentPart
 {
     public AIFileContentPart()
@@ -77,7 +88,7 @@ public sealed class AIToolDefinition
     public string Name { get; init; } = default!;
 
     public string? Title { get; init; }
-    
+
     public string? Description { get; init; }
 
     public object? InputSchema { get; init; }
