@@ -48,8 +48,9 @@ public static class ChatCompletionsExtensions
         this HttpClient client,
         ChatCompletionOptions options,
         string relativeUrl = "v1/chat/completions",
-        CancellationToken ct = default)
-        => await client.GetChatCompletion(JsonSerializer.SerializeToElement(options), relativeUrl, ct);
+        CancellationToken ct = default,
+        JsonElement? extraRootProperties = null)
+        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), relativeUrl, ct);
 
     /// <summary>
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
@@ -59,6 +60,7 @@ public static class ChatCompletionsExtensions
         this HttpClient client,
         ChatCompletionOptions options,
         string relativeUrl = "v1/chat/completions",
+        JsonElement? extraRootProperties = null,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(client);
@@ -69,7 +71,7 @@ public static class ChatCompletionsExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = JsonSerializer.SerializeToElement(options);
+        var payload = BuildPayload(options, extraRootProperties);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -115,6 +117,33 @@ public static class ChatCompletionsExtensions
 
         var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct);
         throw new HttpRequestException($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
+    }
+
+    private static JsonElement BuildPayload(ChatCompletionOptions options, JsonElement? extraRootProperties)
+    {
+        var payload = JsonSerializer.SerializeToElement(options, JsonSerializerOptions.Web);
+
+        if (extraRootProperties is not JsonElement extra)
+            return payload;
+
+        if (extra.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return payload;
+
+        if (extra.ValueKind != JsonValueKind.Object)
+            throw new InvalidOperationException("Extra chat-completions root properties must be a JSON object.");
+
+        var merged = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+
+        foreach (var property in payload.EnumerateObject())
+            merged[property.Name] = property.Value.Clone();
+
+        foreach (var property in extra.EnumerateObject())
+        {
+            if (!merged.ContainsKey(property.Name))
+                merged[property.Name] = property.Value.Clone();
+        }
+
+        return JsonSerializer.SerializeToElement(merged, JsonSerializerOptions.Web);
     }
 }
 

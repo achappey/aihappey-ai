@@ -30,6 +30,8 @@ public class ResponseStreamConverter : JsonConverter<ResponseStreamPart>
         ["response.reasoning_summary_text.done"] = typeof(ResponseReasoningSummaryTextDone),
         ["response.custom_tool_call_input.done"] = typeof(ResponseCustomToolCallInputDone),
         ["response.custom_tool_call_input.delta"] = typeof(ResponseCustomToolCallInputDelta),
+        ["response.code_interpreter_call_code.done"] = typeof(ResponseCodeInterpreterCallDone),
+        ["response.code_interpreter_call_code.delta"] = typeof(ResponseCodeInterpreterCallCodeDelta),       
         ["response.reasoning_text.delta"] = typeof(ResponseReasoningTextDelta),
         ["response.reasoning_text.done"] = typeof(ResponseReasoningTextDone),
         ["response.refusal.delta"] = typeof(ResponseRefusalDelta),

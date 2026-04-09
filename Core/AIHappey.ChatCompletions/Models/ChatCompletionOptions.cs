@@ -35,6 +35,13 @@ public class ChatCompletionOptions
     [JsonPropertyName("store")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Store { get; set; }
+
+    [JsonPropertyName("metadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object?>? Metadata { get; set; }
+
+    //   [JsonIgnore]
+    //  public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 public class ChatMessage

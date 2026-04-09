@@ -1,6 +1,6 @@
-using AIHappey.Common.Model;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Orchestration;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.HeaderAuth;
 

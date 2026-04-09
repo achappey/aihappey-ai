@@ -1,4 +1,3 @@
-using AIHappey.Common.Model;
 using AIHappey.Telemetry.Models;
 using AIHappey.Vercel.Models;
 

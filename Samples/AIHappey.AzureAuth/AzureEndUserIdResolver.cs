@@ -1,4 +1,3 @@
-using AIHappey.Common.Model;
 using AIHappey.AzureAuth.Extensions;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Orchestration;

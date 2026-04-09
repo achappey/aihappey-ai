@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using AIHappey.Common.Model;
 using Microsoft.AspNetCore.Authorization;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;

@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

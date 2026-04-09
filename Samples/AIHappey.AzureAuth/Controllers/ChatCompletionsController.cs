@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.AI;
-using AIHappey.Common.Model.ChatCompletions;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Contracts;
 

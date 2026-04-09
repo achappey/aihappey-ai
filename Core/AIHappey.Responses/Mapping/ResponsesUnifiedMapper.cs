@@ -973,6 +973,10 @@ public static class ResponsesUnifiedMapper
                                                   );
                 yield break;
             case ResponseCodeInterpreterCallDone responseCodeInterpreterCallDone:
+                yield return CreateToolInputDeltaEnvelope(
+                                     responseCodeInterpreterCallDone.ItemId ?? string.Empty,
+                                     "\"}");
+
                 yield return CreateToolInputEndEnvelope(
                                                       responseCodeInterpreterCallDone.ItemId ?? string.Empty,
                                                       "code_interpreter",
@@ -1132,7 +1136,6 @@ public static class ResponsesUnifiedMapper
                     yield break;
                 }
 
-
                 yield return CreateDataEnvelope(
                        part.Type,
                        JsonSerializer.SerializeToElement(part, part.GetType(), Json));
@@ -1176,6 +1179,50 @@ public static class ResponsesUnifiedMapper
                              done.Item.Name,
                              false
                         );
+                }
+                else if (done.Item.Type == "search_results")
+                {
+                    var id = Guid.NewGuid().ToString();
+                    JsonElement? searchQueries = done.Item.AdditionalProperties?.TryGetValue("queries", out var queries) == true ? queries.Clone() : null;
+
+                    yield return CreateToolInputStartEnvelope(
+                                id,
+                                "web_search",
+                                 providerExecuted: true
+                            );
+
+                    yield return CreateToolInputDeltaEnvelope(
+                                id,
+                                JsonSerializer.Serialize(new
+                                {
+                                    queries = searchQueries
+                                })
+                            );
+
+                    yield return CreateToolInputEndEnvelope(
+                                 id,
+                                 "web_search",
+                                  new
+                                  {
+                                      queries = searchQueries
+                                  },
+                                  providerExecuted: true
+                             );
+
+                    JsonElement? searchResults = done.Item.AdditionalProperties?.TryGetValue("results", out var results) == true ? results.Clone() : null;
+
+                    yield return CreateToolOutputEnvelope(
+                            id,
+                            new CallToolResult()
+                            {
+                                StructuredContent = JsonSerializer.SerializeToElement(new
+                                {
+                                    results = searchResults
+                                })
+                            },
+                            providerExecuted: true
+                        );
+
                 }
                 else if (done.Item.Type == "code_interpreter_call")
                 {

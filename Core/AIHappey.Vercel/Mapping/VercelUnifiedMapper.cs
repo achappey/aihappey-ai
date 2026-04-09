@@ -1,6 +1,5 @@
 using System.Text.Json;
 using AIHappey.Unified.Models;
-using AIHappey.Vercel.Mapping.Abstractions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Vercel.Mapping;
@@ -297,7 +296,8 @@ public static class VercelUnifiedMapper
             }
         };
 
-        yield return part;
+        if (part.Type != "data-unmapped")
+            yield return part;
     }
 
     private static AIContentPart? ToUnifiedContentPart(UIMessagePart part)

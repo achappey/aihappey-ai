@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace AIHappey.ChatCompletions.Models;
 
@@ -21,6 +22,9 @@ public class ChatCompletion
 
     [JsonPropertyName("usage")]
     public object? Usage { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 
@@ -46,4 +50,7 @@ public class ChatCompletionUpdate
 
     [JsonPropertyName("usage")]
     public object? Usage { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }

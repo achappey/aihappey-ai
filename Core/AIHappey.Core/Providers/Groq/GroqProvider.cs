@@ -174,5 +174,5 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
         => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 }

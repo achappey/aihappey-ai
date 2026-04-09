@@ -96,6 +96,7 @@ public static class ChatCompletionsUnifiedMapper
             Tools = ToChatTools(request.Tools).ToList(),
             ToolChoice = normalizedToolChoice,
             ResponseFormat = request.ResponseFormat,
+            Metadata = request.Metadata,
             Store = ExtractMetadataValue<bool?>(request.Metadata, "chatcompletions.request.store")
         };
 
@@ -169,6 +170,8 @@ public static class ChatCompletionsUnifiedMapper
 
         var model = ExtractValue<string>(response, "model");
         var outputItems = ParseResponseOutputItems(response).ToList();
+        AppendProviderSourceOutputItems(response, outputItems);
+        var outputMetadata = BuildUnifiedOutputMetadata(response);
 
         return new AIResponse
         {
@@ -176,7 +179,13 @@ public static class ChatCompletionsUnifiedMapper
             Model = model,
             Status = InferStatus(response),
             Usage = response.TryGetProperty("usage", out var usage) ? usage.Clone() : null,
-            Output = outputItems.Count > 0 ? new AIOutput { Items = outputItems } : null,
+            Output = outputItems.Count > 0 || outputMetadata.Count > 0
+                ? new AIOutput
+                {
+                    Items = outputItems.Count > 0 ? outputItems : null,
+                    Metadata = outputMetadata.Count > 0 ? outputMetadata : null
+                }
+                : null,
             Metadata = BuildUnifiedResponseMetadata(response)
         };
     }
@@ -207,7 +216,8 @@ public static class ChatCompletionsUnifiedMapper
             Created = created,
             Model = model,
             Choices = choices,
-            Usage = response.Usage
+            Usage = response.Usage,
+            AdditionalProperties = BuildChatCompletionAdditionalProperties(metadata)
         };
     }
 
@@ -256,13 +266,16 @@ public static class ChatCompletionsUnifiedMapper
         if (mappedEnvelope is null && !HasToolCallDelta(chunk))
             yield return chunk.ToUnifiedStreamEvent(providerId);
 
+        foreach (var sourceEvent in MapSourceUrlEvents(chunk, providerId, timestamp, metadata, state))
+            yield return sourceEvent;
+
         // Always keep raw visibility for debugging and non-lossy pass-through.
         yield return new AIStreamEvent
         {
             ProviderId = providerId,
             Event = new AIEventEnvelope
             {
-                Type = "data-unmapped",
+                Type = "chat.completion.chunk",
                 Id = ExtractValue<string>(chunk, "id"),
                 Timestamp = timestamp,
                 Data = chunk.Clone()
@@ -327,7 +340,8 @@ public static class ChatCompletionsUnifiedMapper
                 Model = ExtractValue<string>(chunkEl, "model") ?? "unknown",
                 ServiceTier = ExtractValue<string>(chunkEl, "service_tier"),
                 Choices = ExtractEnumerable(chunkEl, "choices"),
-                Usage = chunkEl.TryGetProperty("usage", out var usageEl) ? usageEl.Clone() : null
+                Usage = chunkEl.TryGetProperty("usage", out var usageEl) ? usageEl.Clone() : null,
+                AdditionalProperties = ExtractAdditionalProperties(chunkEl, KnownChatCompletionStreamFields)
             };
         }
 
@@ -340,7 +354,8 @@ public static class ChatCompletionsUnifiedMapper
             Model = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.model") ?? "unknown",
             ServiceTier = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.service_tier"),
             Choices = new List<object>(),
-            Usage = null
+            Usage = null,
+            AdditionalProperties = BuildChatCompletionUpdateAdditionalProperties(metadata)
         };
     }
 
@@ -375,6 +390,18 @@ public static class ChatCompletionsUnifiedMapper
         foreach (var prop in response.EnumerateObject())
             metadata[$"chatcompletions.response.{prop.Name}"] = prop.Value.Clone();
 
+        if (response.TryGetProperty("search_results", out var searchResults))
+            metadata["chatcompletions.response.provider.search_results"] = searchResults.Clone();
+
+        if (response.TryGetProperty("citations", out var citations))
+            metadata["chatcompletions.response.provider.citations"] = citations.Clone();
+
+        if (response.TryGetProperty("images", out var images))
+            metadata["chatcompletions.response.provider.images"] = images.Clone();
+
+        if (response.TryGetProperty("related_questions", out var relatedQuestions))
+            metadata["chatcompletions.response.provider.related_questions"] = relatedQuestions.Clone();
+
         return metadata;
     }
 
@@ -388,7 +415,201 @@ public static class ChatCompletionsUnifiedMapper
         foreach (var prop in chunk.EnumerateObject())
             metadata[$"chatcompletions.stream.{prop.Name}"] = prop.Value.Clone();
 
+        if (chunk.TryGetProperty("search_results", out var searchResults))
+            metadata["chatcompletions.stream.provider.search_results"] = searchResults.Clone();
+
+        if (chunk.TryGetProperty("citations", out var citations))
+            metadata["chatcompletions.stream.provider.citations"] = citations.Clone();
+
+        if (chunk.TryGetProperty("images", out var images))
+            metadata["chatcompletions.stream.provider.images"] = images.Clone();
+
+        if (chunk.TryGetProperty("related_questions", out var relatedQuestions))
+            metadata["chatcompletions.stream.provider.related_questions"] = relatedQuestions.Clone();
+
         return metadata;
+    }
+
+    private static Dictionary<string, object?> BuildUnifiedOutputMetadata(JsonElement response)
+    {
+        var metadata = new Dictionary<string, object?>();
+
+        if (response.TryGetProperty("search_results", out var searchResults))
+            metadata["chatcompletions.output.provider.search_results"] = searchResults.Clone();
+
+        if (response.TryGetProperty("citations", out var citations))
+            metadata["chatcompletions.output.provider.citations"] = citations.Clone();
+
+        if (response.TryGetProperty("images", out var images))
+            metadata["chatcompletions.output.provider.images"] = images.Clone();
+
+        if (response.TryGetProperty("related_questions", out var relatedQuestions))
+            metadata["chatcompletions.output.provider.related_questions"] = relatedQuestions.Clone();
+
+        return metadata;
+    }
+
+    private static void AppendProviderSourceOutputItems(JsonElement response, List<AIOutputItem> outputItems)
+    {
+        var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in outputItems)
+        {
+            if (item.Metadata is null)
+                continue;
+
+            if (ExtractMetadataValue<string>(item.Metadata, "chatcompletions.source.url") is { Length: > 0 } url)
+                seenUrls.Add(url);
+        }
+
+        if (response.TryGetProperty("search_results", out var searchResults)
+            && searchResults.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var result in searchResults.EnumerateArray())
+            {
+                if (!TryBuildSourceOutputItem(result, "search_results", seenUrls, out var outputItem))
+                    continue;
+
+                outputItems.Add(outputItem!);
+            }
+        }
+
+        if (response.TryGetProperty("citations", out var citations)
+            && citations.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var citation in citations.EnumerateArray())
+            {
+                if (!TryBuildSourceOutputItem(citation, "citations", seenUrls, out var outputItem))
+                    continue;
+
+                outputItems.Add(outputItem!);
+            }
+        }
+    }
+
+    private static bool TryBuildSourceOutputItem(
+        JsonElement source,
+        string sourceType,
+        HashSet<string> seenUrls,
+        out AIOutputItem? item)
+    {
+        item = null;
+
+        string? url;
+        string? title = null;
+        string? date = null;
+        string? lastUpdated = null;
+        string? snippet = null;
+        string? origin = null;
+
+        if (source.ValueKind == JsonValueKind.Object)
+        {
+            url = ExtractValue<string>(source, "url")
+                  ?? ExtractValue<string>(source, "origin_url")
+                  ?? ExtractValue<string>(source, "image_url");
+            title = ExtractValue<string>(source, "title");
+            date = ExtractValue<string>(source, "date");
+            lastUpdated = ExtractValue<string>(source, "last_updated");
+            snippet = ExtractValue<string>(source, "snippet");
+            origin = ExtractValue<string>(source, "source");
+        }
+        else if (source.ValueKind == JsonValueKind.String)
+        {
+            url = source.GetString();
+        }
+        else
+        {
+            url = null;
+        }
+
+        if (string.IsNullOrWhiteSpace(url) || !seenUrls.Add(url))
+            return false;
+
+        item = new AIOutputItem
+        {
+            Type = "source-url",
+            Content = [
+                new AITextContentPart
+                {
+                    Type = "text",
+                    Text = title ?? url,
+                    Metadata = new Dictionary<string, object?>
+                    {
+                        ["chatcompletions.source.url"] = url,
+                        ["chatcompletions.source.title"] = title,
+                        ["chatcompletions.source.type"] = sourceType,
+                        ["chatcompletions.source.raw"] = source.Clone()
+                    }
+                }
+            ],
+            Metadata = new Dictionary<string, object?>
+            {
+                ["chatcompletions.source.url"] = url,
+                ["chatcompletions.source.title"] = title,
+                ["chatcompletions.source.source_type"] = sourceType,
+                ["chatcompletions.source.date"] = date,
+                ["chatcompletions.source.last_updated"] = lastUpdated,
+                ["chatcompletions.source.snippet"] = snippet,
+                ["chatcompletions.source.origin"] = origin,
+                ["chatcompletions.source.raw"] = source.Clone()
+            }
+        };
+
+        return true;
+    }
+
+    private static IEnumerable<AIStreamEvent> MapSourceUrlEvents(
+        JsonElement chunk,
+        string providerId,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?> metadata,
+        ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState? state)
+    {
+        if (!chunk.TryGetProperty("search_results", out var searchResults)
+            || searchResults.ValueKind != JsonValueKind.Array)
+            yield break;
+
+        foreach (var source in searchResults.EnumerateArray())
+        {
+            var url = ExtractValue<string>(source, "url");
+            if (string.IsNullOrWhiteSpace(url))
+                continue;
+
+            if (state is not null && !state.SeenSourceUrls.Add(url))
+                continue;
+
+            var title = ExtractValue<string>(source, "title") ?? url;
+            var data = new Dictionary<string, object?>
+            {
+                ["sourceId"] = url,
+                ["url"] = url,
+                ["title"] = title,
+                ["type"] = "url_citation",
+                ["providerMetadata"] = new Dictionary<string, object?>
+                {
+                    [providerId] = new Dictionary<string, object?>
+                    {
+                        ["date"] = ExtractValue<string>(source, "date"),
+                        ["lastUpdated"] = ExtractValue<string>(source, "last_updated"),
+                        ["snippet"] = ExtractValue<string>(source, "snippet"),
+                        ["source"] = ExtractValue<string>(source, "source")
+                    }
+                }
+            };
+
+            yield return new AIStreamEvent
+            {
+                ProviderId = providerId,
+                Event = new AIEventEnvelope
+                {
+                    Type = "source-url",
+                    Id = ExtractValue<string>(chunk, "id"),
+                    Timestamp = timestamp,
+                    Data = data
+                },
+                Metadata = metadata
+            };
+        }
     }
 
     private static IEnumerable<AIInputItem> ParseRequestMessages(JsonElement messages)
@@ -852,7 +1073,7 @@ public static class ChatCompletionsUnifiedMapper
 
                 var data = new Dictionary<string, object?>
                 {
-                    ["finishReason"] = finishReason == "tool_calls" 
+                    ["finishReason"] = finishReason == "tool_calls"
                         || finishReason == "function_call" ? "tool-calls" :
                         finishReason == "content_filter" ? "content-filter" : finishReason,
                     ["model"] = ExtractValue<string>(chunk, "model"),
@@ -885,8 +1106,8 @@ public static class ChatCompletionsUnifiedMapper
             Output = ParseChunkOutput(chunk),
             Metadata = new Dictionary<string, object?>
             {
-              //  ["chatcompletions.stream.raw"] = chunk.Clone(),
-               // ["chatcompletions.stream.object"] = ExtractValue<string>(chunk, "object")
+                //  ["chatcompletions.stream.raw"] = chunk.Clone(),
+                // ["chatcompletions.stream.object"] = ExtractValue<string>(chunk, "object")
             }
         };
     }
@@ -1224,6 +1445,80 @@ public static class ChatCompletionsUnifiedMapper
         return JsonSerializer.SerializeToNode(value, Json);
     }
 
+    private static Dictionary<string, JsonElement>? BuildChatCompletionAdditionalProperties(
+        Dictionary<string, object?>? metadata)
+    {
+        var additional = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+        var known = KnownChatCompletionResponseFields;
+
+        var raw = ExtractMetadataElement(metadata, "chatcompletions.response.raw");
+        if (raw is { ValueKind: JsonValueKind.Object })
+        {
+            foreach (var prop in raw.Value.EnumerateObject())
+            {
+                if (!known.Contains(prop.Name))
+                    additional[prop.Name] = prop.Value.Clone();
+            }
+        }
+
+        return additional.Count > 0 ? additional : null;
+    }
+
+    private static Dictionary<string, JsonElement>? BuildChatCompletionUpdateAdditionalProperties(
+        Dictionary<string, object?>? metadata)
+    {
+        var additional = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+        var known = KnownChatCompletionStreamFields;
+
+        var raw = ExtractMetadataElement(metadata, "chatcompletions.stream.raw");
+        if (raw is { ValueKind: JsonValueKind.Object })
+        {
+            foreach (var prop in raw.Value.EnumerateObject())
+            {
+                if (!known.Contains(prop.Name))
+                    additional[prop.Name] = prop.Value.Clone();
+            }
+        }
+
+        return additional.Count > 0 ? additional : null;
+    }
+
+    private static Dictionary<string, JsonElement>? ExtractAdditionalProperties(JsonElement obj, HashSet<string> knownFields)
+    {
+        if (obj.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var additional = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+        foreach (var prop in obj.EnumerateObject())
+        {
+            if (!knownFields.Contains(prop.Name))
+                additional[prop.Name] = prop.Value.Clone();
+        }
+
+        return additional.Count > 0 ? additional : null;
+    }
+
+    private static readonly HashSet<string> KnownChatCompletionResponseFields =
+    [
+        "id",
+        "object",
+        "created",
+        "model",
+        "choices",
+        "usage"
+    ];
+
+    private static readonly HashSet<string> KnownChatCompletionStreamFields =
+    [
+        "id",
+        "object",
+        "created",
+        "model",
+        "service_tier",
+        "choices",
+        "usage"
+    ];
+
     internal sealed class ToolCallAccumulator
     {
         public string? Id { get; set; }
@@ -1236,5 +1531,7 @@ public static class ChatCompletionsUnifiedMapper
     public sealed class ChatCompletionsStreamMappingState
     {
         internal Dictionary<int, ToolCallAccumulator> PendingToolCalls { get; } = new();
+
+        internal HashSet<string> SeenSourceUrls { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }

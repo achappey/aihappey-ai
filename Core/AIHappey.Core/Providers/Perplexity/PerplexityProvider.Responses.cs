@@ -6,35 +6,13 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Perplexity;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Perplexity;
 
 public partial class PerplexityProvider
 {
-    private ResponseRequest CreateResponsesRequest(ChatRequest chatRequest)
-    {
-        var usePreset = UsesResponsesPreset(chatRequest.Model);
-        var metadata = chatRequest.GetProviderMetadata<PerplexityProviderMetadata>(GetIdentifier());
-
-        return chatRequest.ToResponsesRequest(GetIdentifier(), new ResponsesRequestMappingOptions
-        {
-            Model = usePreset ? null : chatRequest.Model,
-            Store = false,
-            Instructions = metadata?.Instructions,
-            Metadata = chatRequest.ProviderMetadata.ToObjectDictionary(),
-            Tools = [.. chatRequest.Tools?.Select(a => a.ToResponseToolDefinition()) ?? []],
-            ToolChoice = chatRequest.ToolChoice,
-        });
-    }
-
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (options.Model?.StartsWith($"{GetIdentifier()}/sonar") == true)
-        {
-            throw new NotImplementedException();
-        }
-
         ApplyAuthHeader();
 
         var (request, extraRootProperties) = PrepareResponsesRequest(options);
@@ -48,11 +26,6 @@ public partial class PerplexityProvider
 
     public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (options.Model?.StartsWith($"{GetIdentifier()}/sonar") == true)
-        {
-            throw new NotImplementedException();
-        }
-
         ApplyAuthHeader();
 
         var (request, extraRootProperties) = PrepareResponsesRequest(options);

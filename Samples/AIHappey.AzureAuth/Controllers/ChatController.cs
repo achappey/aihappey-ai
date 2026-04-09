@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
-using AIHappey.Common.Model;
 using AIHappey.Telemetry;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
