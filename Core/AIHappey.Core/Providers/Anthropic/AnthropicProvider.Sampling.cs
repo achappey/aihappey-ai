@@ -1,9 +1,5 @@
-using AIHappey.Core.AI;
-using ANT = Anthropic.SDK;
-using Anthropic.SDK.Messaging;
 using ModelContextProtocol.Protocol;
-using System.Text.Json.Nodes;
-using AIHappey.Core.Providers.Anthropic.Extensions;
+using AIHappey.Sampling.Mapping;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -11,7 +7,12 @@ public partial class AnthropicProvider
 {
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var betaHeaders = chatRequest.Metadata.ToAnthropicBetaFeatures();
+        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+          cancellationToken);
+
+        return result.ToSamplingResult();
+
+       /* var betaHeaders = chatRequest.Metadata.ToAnthropicBetaFeatures();
         AddBetaHeaders(betaHeaders);
 
         var responseClient = new ANT.AnthropicClient(GetKey());
@@ -94,6 +95,6 @@ public partial class AnthropicProvider
             Content = [resultBlock],
             Role = Role.Assistant,
             Meta = meta
-        };
+        };*/
     }
 }

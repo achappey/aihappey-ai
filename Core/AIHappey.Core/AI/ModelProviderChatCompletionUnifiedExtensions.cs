@@ -12,7 +12,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
     public static async Task<AIResponse> ExecuteUnifiedViaChatCompletionsAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        Func<AIRequest, CancellationToken, Task<AIResponse>>? fallback = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
@@ -22,15 +21,10 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         responseRequest.Stream = false;
         responseRequest.Store ??= false;
 
-        try
-        {
-            var response = await modelProvider.CompleteChatAsync(responseRequest, cancellationToken);
-            return response.ToUnifiedResponse(modelProvider.GetIdentifier());
-        }
-        catch (NotSupportedException) when (fallback is not null)
-        {
-            return await fallback(request, cancellationToken);
-        }
+
+        var response = await modelProvider.CompleteChatAsync(responseRequest, cancellationToken);
+        return response.ToUnifiedResponse(modelProvider.GetIdentifier());
+
     }
 
     public static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedViaChatCompletionsAsync(

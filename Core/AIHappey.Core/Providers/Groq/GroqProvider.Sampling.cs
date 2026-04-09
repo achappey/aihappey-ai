@@ -7,8 +7,6 @@ public partial class GroqProvider
 {
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 

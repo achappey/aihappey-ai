@@ -1,29 +1,38 @@
 using ANT = Anthropic.SDK;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
+using AIHappey.ChatCompletions.Mapping;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
 public partial class AnthropicProvider
 {
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public IAsyncEnumerable<global::OpenAI.Chat.StreamingChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<UIMessagePart> CompleteAsync(ChatCompletionOptions chatRequest,
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions chatRequest,
      CancellationToken cancellationToken = default)
     {
-        var client = new ANT.AnthropicClient(
-            GetKey(),
-            client: _client
-        );
-        
-        throw new NotImplementedException();
+        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToChatCompletion();
     }
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+     [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+
+            yield return part.ToChatCompletionUpdate();
+
+        }
+
+        yield break;
+    }
+
 }

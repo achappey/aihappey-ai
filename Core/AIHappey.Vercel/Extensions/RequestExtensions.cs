@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Vercel.Extensions;

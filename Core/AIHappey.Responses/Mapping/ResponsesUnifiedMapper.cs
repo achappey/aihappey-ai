@@ -79,7 +79,7 @@ public static class ResponsesUnifiedMapper
         };
     }
 
-    public static ResponseResult ToResponseResult(AIResponse response)
+    public static ResponseResult ToResponseResult(this AIResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 
@@ -130,7 +130,7 @@ public static class ResponsesUnifiedMapper
         }
     }
 
-    public static ResponseStreamPart ToResponseStreamPart(AIStreamEvent streamEvent)
+    public static ResponseStreamPart ToResponseStreamPart(this AIStreamEvent streamEvent)
     {
         ArgumentNullException.ThrowIfNull(streamEvent);
 

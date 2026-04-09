@@ -11,7 +11,6 @@ public static class ModelProviderResponsesUnifiedExtensions
     public static async Task<AIResponse> ExecuteUnifiedViaResponsesAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        Func<AIRequest, CancellationToken, Task<AIResponse>>? fallback = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
@@ -21,25 +20,17 @@ public static class ModelProviderResponsesUnifiedExtensions
         responseRequest.Stream = false;
         responseRequest.Store ??= false;
 
-        try
-        {
-            var response = await modelProvider.ResponsesAsync(responseRequest, cancellationToken);
-            Console.WriteLine(JsonSerializer.Serialize(response, JsonSerializerOptions.Web));
-            var unified = response.ToUnifiedResponse(modelProvider.GetIdentifier());
-            Console.WriteLine(JsonSerializer.Serialize(unified, JsonSerializerOptions.Web));
+        var response = await modelProvider.ResponsesAsync(responseRequest, cancellationToken);
+        Console.WriteLine(JsonSerializer.Serialize(response, JsonSerializerOptions.Web));
+        var unified = response.ToUnifiedResponse(modelProvider.GetIdentifier());
+        Console.WriteLine(JsonSerializer.Serialize(unified, JsonSerializerOptions.Web));
 
-            return unified;
-        }
-        catch (NotSupportedException) when (fallback is not null)
-        {
-            return await fallback(request, cancellationToken);
-        }
+        return unified;
     }
 
     public static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedViaResponsesAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        Func<AIRequest, CancellationToken, IAsyncEnumerable<AIStreamEvent>>? fallback = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);

@@ -24,11 +24,12 @@
       <PackageReference Include="Microsoft.KernelMemory.MemoryDb.SQLServer" Version="0.98.250508.3" />
       <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
   </ItemGroup>
- <ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\AIHappey.Abstractions\AIHappey.Abstractions.csproj" />
     <ProjectReference Include="..\AIhappey.Common\AIhappey.Common.csproj" />
     <ProjectReference Include="..\AIhappey.Sampling\AIhappey.Sampling.csproj" />
     <ProjectReference Include="..\AIhappey.ChatCompletions\AIhappey.ChatCompletions.csproj" />
+    <ProjectReference Include="..\AIHappey.Messages\AIHappey.Messages.csproj" />
   </ItemGroup>
   
   <ItemGroup>

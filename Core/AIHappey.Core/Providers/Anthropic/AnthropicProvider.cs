@@ -4,10 +4,15 @@ using ANT = Anthropic.SDK;
 using AIHappey.Common.Model;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
-using AIHappey.ChatCompletions.Models;
+using AIHappey.Responses.Mapping;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Text.Json;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Extensions;
+using System.Runtime.CompilerServices;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -120,22 +125,33 @@ public partial class AnthropicProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await this.ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToResponseResult();
     }
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+
+            yield return part.ToResponseStreamPart();
+
+        }
+
+        yield break;
     }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -152,8 +168,12 @@ public partial class AnthropicProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        var options = request.Deserialize<MessagesRequest>()!;
+
+        this.SetDefaultResponseProperties(options);
+
         return await _client.PostMessages(
-            request,
+            JsonSerializer.SerializeToElement(options),
             headers,
             ct: cancellationToken);
     }
@@ -164,9 +184,15 @@ public partial class AnthropicProvider : IModelProvider
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        var options = request.Deserialize<MessagesRequest>()!;
+
+        this.SetDefaultResponseProperties(options);
 
         return _client.PostMessagesStreaming(
-            request,
+            JsonSerializer.SerializeToElement(options, new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            {
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            }),
             headers,
             ct: cancellationToken);
     }
@@ -181,5 +207,11 @@ public partial class AnthropicProvider : IModelProvider
         _client.DefaultRequestHeaders.Remove("X-API-Key");
         _client.DefaultRequestHeaders.Add("X-API-Key", key);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+       => this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
 
 }

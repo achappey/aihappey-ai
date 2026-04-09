@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.AI;
 
@@ -57,7 +58,7 @@ public static class MessagesExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-
+        Console.WriteLine(payload.GetRawText());
         if (headers != null)
         {
             foreach (var h in headers)

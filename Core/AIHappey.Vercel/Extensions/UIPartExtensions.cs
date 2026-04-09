@@ -1,18 +1,9 @@
-using System.Text.Json;
-using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Vercel.Extensions;
 
 public static class UIPartExtensions
 {
-    public static ToolCallDeltaPart ToToolCallDeltaPart(this string delta,
-        string toolCallId) => new()
-        {
-            ToolCallId = toolCallId,
-            InputTextDelta = delta,
-        };
-
     public static bool IsImage(this UIMessagePart? part)
         => part is FileUIPart fileUIPart && fileUIPart.MediaType.StartsWith("image/");
 
@@ -23,7 +14,6 @@ public static class UIPartExtensions
         => new()
         {
             MediaType = mimeType,
-            // Url = $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}",
             Url = Convert.ToBase64String(bytes),
             ProviderMetadata = metadata
         };
@@ -107,87 +97,6 @@ public static class UIPartExtensions
        Reason = reason
    };
 
-    public static AIInputItem ToUnifiedInputItem(this UIMessage message)
-    {
-        ArgumentNullException.ThrowIfNull(message);
-
-        return new AIInputItem
-        {
-            Type = "message",
-            Role = message.Role.ToString(),
-            Id = message.Id,
-            Content = message.Parts.Select(ToUnifiedContentPart).Where(a => a is not null).Select(a => a!).ToList(),
-            Metadata = message.Metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value)
-        };
-    }
-
-
-    private static AIContentPart? ToUnifiedContentPart(this UIMessagePart part)
-    {
-        switch (part)
-        {
-            case TextUIPart text:
-                return new AITextContentPart
-                {
-                    Type = "text",
-                    Text = text.Text,
-                    Metadata = new Dictionary<string, object?> { ["vercel.type"] = text.Type }
-                };
-
-            case FileUIPart file:
-                return new AIFileContentPart
-                {
-                    Type = "file",
-                    MediaType = file.MediaType,
-                    Filename = file.Filename,
-                    Data = file.Url,
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["vercel.type"] = file.Type,
-                        ["vercel.providerMetadata"] = file.ProviderMetadata
-                    }
-                };
-
-            case SourceDocumentPart sourceDocument:
-                return new AIFileContentPart
-                {
-                    Type = "file",
-                    MediaType = sourceDocument.MediaType,
-                    Filename = sourceDocument.Filename,
-                    Data = sourceDocument.Title,
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["vercel.type"] = sourceDocument.Type,
-                        ["vercel.sourceId"] = sourceDocument.SourceId,
-                        ["vercel.providerMetadata"] = sourceDocument.ProviderMetadata
-                    }
-                };
-
-            case ReasoningUIPart reasoning:
-                return new AITextContentPart
-                {
-                    Type = "text",
-                    Text = reasoning.Text,
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["vercel.type"] = reasoning.Type,
-                        ["vercel.id"] = reasoning.Id,
-                        ["vercel.providerMetadata"] = reasoning.ProviderMetadata
-                    }
-                };
-        }
-
-        return new AITextContentPart
-        {
-            Type = "text",
-            Text = JsonSerializer.Serialize(part, part.GetType(), JsonSerializerOptions.Web),
-            Metadata = new Dictionary<string, object?>
-            {
-                ["vercel.type"] = part.Type,
-                ["vercel.unmapped"] = true
-            }
-        };
-    }
 
 }
 

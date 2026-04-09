@@ -310,8 +310,8 @@ public static class VercelUnifiedMapper
             }
         };
 
-        if (part.Type != "data-unmapped")
-            yield return part;
+        //if (part.Type != "data-unmapped")
+        yield return part;
     }
 
     private static AIContentPart? ToUnifiedContentPart(UIMessagePart part)
