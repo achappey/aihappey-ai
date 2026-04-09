@@ -77,7 +77,7 @@ public static class MessagesUnifiedMapper
         {
             Model = request.Model,
             MaxTokens = request.MaxOutputTokens,
-            Messages = (request.Input?.Items ?? []).Select(ToMessageParam).ToList(),
+            Messages = ToMessageParams(request.Input?.Items ?? []).ToList(),
             CacheControl = ExtractObject<CacheControlEphemeral>(metadata, "messages.request.cache_control"),
             Container = ExtractValue<string>(metadata, "messages.request.container"),
             InferenceGeo = ExtractValue<string>(metadata, "messages.request.inference_geo"),
@@ -99,7 +99,6 @@ public static class MessagesUnifiedMapper
                 Type = request.ToolChoice?.ToString()!,
                 DisableParallelToolUse = false
             },
-            //ToolChoice = ExtractObject<MessageToolChoice>(metadata, "messages.request.tool_choice") ?? ToMessageToolChoice(request.ToolChoice, request.ParallelToolCalls),
             Tools = request.Tools?.Select(ToMessageTool).ToList(),
             TopK = ExtractValue<int?>(metadata, "messages.request.top_k"),
             TopP = request.TopP,
@@ -270,12 +269,86 @@ public static class MessagesUnifiedMapper
             }
         };
 
-    private static MessageParam ToMessageParam(AIInputItem item)
-        => new()
+    private static IEnumerable<MessageParam> ToMessageParams(IEnumerable<AIInputItem> items)
+    {
+        var yielded = new List<MessageParam>();
+        var pendingAssistantBlocks = new List<MessageContentBlock>();
+        string pendingAssistantRole = "assistant";
+
+        void FlushAssistant()
         {
-            Role = NormalizeRole(item.Role),
-            Content = ToMessagesContent(item.Content)
-        };
+            if (pendingAssistantBlocks.Count == 0)
+                return;
+
+            yielded.Add(new MessageParam
+            {
+                Role = pendingAssistantRole,
+                Content = CreateMessagesContentFromBlocks([.. pendingAssistantBlocks])
+            });
+
+            pendingAssistantBlocks.Clear();
+        }
+
+        foreach (var item in items)
+        {
+            pendingAssistantRole = NormalizeRole(item.Role);
+
+            foreach (var part in item.Content ?? [])
+            {
+                if (part is AIToolCallContentPart toolPart)
+                {
+                    foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart))
+                    {
+                        if (assistantBlock is not null)
+                        {
+                            FlushAssistant();
+                            yielded.Add(new MessageParam
+                            {
+                                Role = "assistant",
+                                Content = CreateMessagesContentFromBlocks([assistantBlock])
+                            });
+                        }
+
+                        if (userBlock is not null)
+                        {
+                            yielded.Add(new MessageParam
+                            {
+                                Role = "user",
+                                Content = CreateMessagesContentFromBlocks([userBlock])
+                            });
+                        }
+                    }
+
+                    continue;
+                }
+
+                var raw = ExtractRawBlock(part.Metadata);
+                if (raw is not null)
+                {
+                    pendingAssistantBlocks.Add(raw);
+                    continue;
+                }
+
+                switch (part)
+                {
+                    case AITextContentPart text:
+                        pendingAssistantBlocks.Add(new MessageContentBlock { Type = "text", Text = text.Text });
+                        break;
+                    case AIReasoningContentPart reasoning:
+                        pendingAssistantBlocks.Add(new MessageContentBlock { Type = "thinking", Thinking = reasoning.Text });
+                        break;
+                    case AIFileContentPart file:
+                        pendingAssistantBlocks.Add(ToMessageFileBlock(file));
+                        break;
+                }
+            }
+        }
+
+        FlushAssistant();
+
+        foreach (var message in yielded)
+            yield return message;
+    }
 
     private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(MessagesResponse response)
     {
@@ -283,6 +356,22 @@ public static class MessagesUnifiedMapper
 
         foreach (var block in response.Content ?? [])
         {
+            if (TryCreateUnifiedToolCallPart(block, out var toolPart))
+            {
+                yield return new AIOutputItem
+                {
+                    Type = "message",
+                    Role = response.Role ?? "assistant",
+                    Content = [toolPart],
+                    Metadata = CreateBlockMetadata(block)
+                };
+
+                foreach (var sourceItem in ToSourceOutputItems(block))
+                    yield return sourceItem;
+
+                continue;
+            }
+
             switch (block.Type)
             {
                 case "text":
@@ -357,6 +446,20 @@ public static class MessagesUnifiedMapper
 
             foreach (var part in item.Content ?? [])
             {
+                if (part is AIToolCallContentPart toolPart)
+                {
+                    foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart))
+                    {
+                        if (assistantBlock is not null)
+                            yield return assistantBlock;
+
+                        if (userBlock is not null)
+                            yield return userBlock;
+                    }
+
+                    continue;
+                }
+
                 var rawBlock = ExtractRawBlock(part.Metadata);
                 if (rawBlock is not null)
                 {
@@ -398,6 +501,12 @@ public static class MessagesUnifiedMapper
 
         foreach (var block in content.Blocks ?? [])
         {
+            if (TryCreateUnifiedToolCallPart(block, out var toolPart))
+            {
+                yield return toolPart;
+                continue;
+            }
+
             switch (block.Type)
             {
                 case "text":
@@ -441,6 +550,19 @@ public static class MessagesUnifiedMapper
         var blocks = new List<MessageContentBlock>();
         foreach (var part in parts ?? [])
         {
+            if (part is AIToolCallContentPart toolPart)
+            {
+                foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart))
+                {
+                    if (assistantBlock is not null)
+                        blocks.Add(assistantBlock);
+
+                    if (userBlock is not null)
+                        blocks.Add(userBlock);
+                }
+                continue;
+            }
+
             var raw = ExtractRawBlock(part.Metadata);
             if (raw is not null)
             {
@@ -584,10 +706,7 @@ public static class MessagesUnifiedMapper
                         if (!string.IsNullOrEmpty(part.Delta.PartialJson))
                         {
                             deltaState.InputJson.Append(part.Delta.PartialJson);
-                            yield return CreateEnvelope("tool-input-delta", deltaState.EventId, new Dictionary<string, object?>
-                            {
-                                ["inputTextDelta"] = part.Delta.PartialJson
-                            });
+                            yield return CreateEnvelope("tool-input-delta", deltaState.EventId, part.Delta.PartialJson);
                         }
                         break;
                 }
@@ -616,7 +735,7 @@ public static class MessagesUnifiedMapper
                         ["toolName"] = stopState.Block.Name ?? stopState.BlockType,
                         ["title"] = stopState.Block.Name,
                         ["providerExecuted"] = IsProviderExecutedTool(stopState.BlockType),
-                        ["input"] = ParseToolInput(stopState)
+                        ["input"] = JsonDocument.Parse(stopState.InputJson.ToString()).RootElement
                     });
                 }
 
@@ -917,6 +1036,99 @@ public static class MessagesUnifiedMapper
 
         return JsonSerializer.SerializeToElement(block, Json);
     }
+
+    private static bool TryCreateUnifiedToolCallPart(
+        MessageContentBlock block,
+        out AIToolCallContentPart toolPart)
+    {
+        if (IsToolInputBlock(block.Type))
+        {
+            toolPart = new AIToolCallContentPart
+            {
+                Type = block.Type,
+                ToolCallId = block.Id ?? block.ToolUseId ?? Guid.NewGuid().ToString("N"),
+                ToolName = block.Name ?? block.ToolName,
+                Title = block.Title ?? block.Name,
+                Input = block.Input?.Clone(),
+                State = "input-available",
+                ProviderExecuted = IsProviderExecutedTool(block.Type),
+                Metadata = CreateBlockMetadata(block)
+            };
+
+            return true;
+        }
+
+        if (IsToolOutputBlock(block.Type))
+        {
+            toolPart = new AIToolCallContentPart
+            {
+                Type = block.Type,
+                ToolCallId = block.ToolUseId ?? block.Id ?? Guid.NewGuid().ToString("N"),
+                ToolName = block.Name ?? block.ToolName,
+                Title = block.Title ?? block.Name,
+                Output = block.IsError == true
+                    ? JsonSerializer.SerializeToElement(new { error = FlattenContentText(block.Content) }, Json)
+                    : SerializeBlockOutput(block),
+                State = block.IsError == true ? "output-error" : "output-available",
+                ProviderExecuted = block.Type != "tool_result",
+                Metadata = CreateBlockMetadata(block)
+            };
+
+            return true;
+        }
+
+        toolPart = null!;
+        return false;
+    }
+
+    private static IEnumerable<(MessageContentBlock? AssistantBlock, MessageContentBlock? UserBlock)> ToMessageToolBlocks(AIToolCallContentPart toolPart)
+    {
+        if (toolPart.IsProviderToolCall)
+            yield break;
+
+        yield return (
+            new MessageContentBlock
+            {
+                Type = "tool_use",
+                Id = toolPart.ToolCallId,
+                Name = toolPart.ToolName ?? toolPart.Title ?? "tool",
+                Input = SerializeToNullableElement(toolPart.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
+            },
+            null);
+
+        if (!HasToolOutput(toolPart))
+            yield break;
+
+        yield return (
+            null,
+            new MessageContentBlock
+            {
+                Type = "tool_result",
+                ToolUseId = toolPart.ToolCallId,
+                Content = ToMessageToolOutputContent(toolPart),
+                IsError = string.Equals(toolPart.State, "output-error", StringComparison.OrdinalIgnoreCase)
+            });
+    }
+
+    private static MessagesContent CreateMessagesContentFromBlocks(List<MessageContentBlock> blocks)
+        => blocks.Count == 1 && blocks[0].Type == "text"
+            ? new MessagesContent(blocks[0].Text ?? string.Empty)
+            : new MessagesContent(blocks);
+
+    private static MessagesContent ToMessageToolOutputContent(AIToolCallContentPart toolPart)
+    {
+        return toolPart.Output switch
+        {
+            null => new MessagesContent(string.Empty),
+            JsonElement json when json.ValueKind == JsonValueKind.String => new MessagesContent(json.GetString() ?? string.Empty),
+            JsonElement json => new MessagesContent(json.GetRawText()),
+            string text => new MessagesContent(text),
+            _ => new MessagesContent(JsonSerializer.SerializeToElement(toolPart.Output, Json).GetRawText())
+        };
+    }
+
+    private static bool HasToolOutput(AIToolCallContentPart toolPart)
+        => toolPart.Output is not null;
 
     private static MessagesUsage? MergeUsage(MessagesUsage? current, MessagesUsage? update)
     {

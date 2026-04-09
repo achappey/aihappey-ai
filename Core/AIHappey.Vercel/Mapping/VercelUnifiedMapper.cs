@@ -50,6 +50,12 @@ public static class VercelUnifiedMapper
                         Url = file.Data?.ToString() ?? string.Empty
                     });
                     break;
+
+                case AIToolCallContentPart toolCall:
+                    var uiPart = ToUIMessagePart(toolCall);
+                    if (uiPart is not null)
+                        parts.Add(uiPart);
+                    break;
             }
         }
 
@@ -368,6 +374,18 @@ public static class VercelUnifiedMapper
                            ["vercel.providerMetadata"] = reasoning.ProviderMetadata
                        }*/
                 };
+
+            case ToolInvocationPart invocation:
+                return CreateUnifiedToolCallPart(
+                    type: invocation.Type,
+                    toolCallId: invocation.ToolCallId,
+                    title: invocation.Title,
+                    input: invocation.Input,
+                    state: invocation.State,
+                    output: invocation.Output,
+                    providerExecuted: invocation.ProviderExecuted,
+                    approval: ToUnifiedApproval(invocation.Approval),
+                    rawPart: invocation);
         }
 
         return null;
@@ -423,6 +441,94 @@ public static class VercelUnifiedMapper
 
     private static Dictionary<string, Dictionary<string, object>?>? GetDoubleNestedProviderMetadata(Dictionary<string, object?> data)
         => GetValue<Dictionary<string, Dictionary<string, object>?>>(data, "providerMetadata");
+
+    private static AIToolCallContentPart CreateUnifiedToolCallPart(
+        string type,
+        string toolCallId,
+        string? title = null,
+        object? input = null,
+        string? state = null,
+        object? output = null,
+        bool? providerExecuted = null,
+        AIToolCallApproval? approval = null,
+        UIMessagePart? rawPart = null)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["vercel.type"] = type
+        };
+
+        if (rawPart is not null)
+            metadata["vercel.part.raw"] = JsonSerializer.SerializeToElement(rawPart, rawPart.GetType(), Json);
+
+        return new AIToolCallContentPart
+        {
+            Type = type,
+            ToolCallId = toolCallId,
+            ToolName = GetToolName(type, title),
+            Title = title,
+            Input = input,
+            State = state,
+            Output = output,
+            ProviderExecuted = providerExecuted,
+            Approval = approval,
+            Metadata = metadata
+        };
+    }
+
+    private static UIMessagePart? ToUIMessagePart(AIToolCallContentPart part)
+    {
+        return part.Type.StartsWith("tool-", StringComparison.OrdinalIgnoreCase)
+            ? new ToolInvocationPart
+            {
+                Type = part.Type,
+                ToolCallId = part.ToolCallId,
+                Title = part.Title,
+                Input = part.Input ?? new { },
+                State = part.State ?? string.Empty,
+                Output = part.Output ?? new { },
+                ProviderExecuted = part.ProviderExecuted,
+                Approval = ToVercelApproval(part.Approval)
+            }
+            : null;
+    }
+
+    private static string GetToolName(string? type, string? title)
+    {
+        if (!string.IsNullOrWhiteSpace(title))
+            return title;
+
+        if (!string.IsNullOrWhiteSpace(type) && type.StartsWith("tool-", StringComparison.OrdinalIgnoreCase))
+            return type["tool-".Length..];
+
+        return "unknown";
+    }
+
+    private static AIToolCallApproval? ToUnifiedApproval(ToolApproval? approval)
+    {
+        if (approval is null)
+            return null;
+
+        return new AIToolCallApproval
+        {
+            Approved = approval.Approved,
+            Id = approval.Id,
+            Reason = approval.Reason
+        };
+    }
+
+    private static ToolApproval? ToVercelApproval(AIToolCallApproval? approval)
+    {
+        if (approval is null)
+            return null;
+
+        return new ToolApproval
+        {
+            Approved = approval.Approved,
+            Id = approval.Id ?? string.Empty,
+            Reason = approval.Reason
+        };
+    }
 
     private static ToolApproval? GetToolApproval(Dictionary<string, object?> data)
     {

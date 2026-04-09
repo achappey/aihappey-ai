@@ -412,7 +412,7 @@ public static class ResponsesUnifiedMapper
         if (!string.IsNullOrWhiteSpace(input.Text))
             return new ResponseInput(input.Text);
 
-        var items = input.Items?.Select(a => ToResponsesInputItem(a, providerId)).ToList() ?? [];
+        var items = input.Items?.SelectMany(a => ToResponsesInputItems(a, providerId)).ToList() ?? [];
         return new ResponseInput(items);
     }
 
@@ -438,6 +438,24 @@ public static class ResponsesUnifiedMapper
                 return new AIInputItem
                 {
                     Type = "function_call",
+                    Role = "assistant",
+                    Content =
+                    [
+                        new AIToolCallContentPart
+                        {
+                            Type = "function_call",
+                            ToolCallId = call.CallId,
+                            ToolName = call.Name,
+                            Title = call.Name,
+                            Input = ParseJsonString(call.Arguments),
+                            State = call.Status,
+                            ProviderExecuted = false,
+                            Metadata = new Dictionary<string, object?>
+                            {
+                                ["responses.type"] = call.Type
+                            }
+                        }
+                    ],
                     Metadata = new Dictionary<string, object?>
                     {
                         ["id"] = call.Id,
@@ -452,6 +470,22 @@ public static class ResponsesUnifiedMapper
                 return new AIInputItem
                 {
                     Type = "function_call_output",
+                    Role = "tool",
+                    Content =
+                    [
+                        new AIToolCallContentPart
+                        {
+                            Type = "function_call_output",
+                            ToolCallId = output.CallId,
+                            Output = ParseJsonString(output.Output),
+                            State = output.Status,
+                            ProviderExecuted = false,
+                            Metadata = new Dictionary<string, object?>
+                            {
+                                ["responses.type"] = output.Type
+                            }
+                        }
+                    ],
                     Metadata = new Dictionary<string, object?>
                     {
                         ["id"] = output.Id,
@@ -499,62 +533,89 @@ public static class ResponsesUnifiedMapper
         }
     }
 
-    private static ResponseInputItem ToResponsesInputItem(AIInputItem item, string providerId)
+    private static IEnumerable<ResponseInputItem> ToResponsesInputItems(AIInputItem item, string providerId)
     {
         var kind = item.Type?.Trim().ToLowerInvariant();
         var metadata = item.Metadata ?? new Dictionary<string, object?>();
+        var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
+        var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
 
-        return kind switch
+        if (kind == "message")
         {
-            "message" => new ResponseInputMessage
+            if (nonToolParts.Count > 0 || toolParts.Count == 0)
             {
-                Role = ParseRole(item.Role),
-                Content = new ResponseMessageContent(ToResponsesContentParts(item.Content, item.Role).ToList()),
-                Id = ExtractValue<string>(metadata, "id"),
-                Status = ExtractValue<string>(metadata, "status"),
-                Phase = ExtractValue<string>(metadata, "phase")
-            },
-            "function_call" => new ResponseFunctionCallItem
-            {
-                Id = ExtractValue<string>(metadata, "id"),
-                CallId = ExtractValue<string>(metadata, "call_id") ?? string.Empty,
-                Name = ExtractValue<string>(metadata, "name") ?? "unknown",
-                Arguments = ExtractValue<string>(metadata, "arguments") ?? "{}",
-                Status = ExtractValue<string>(metadata, "status")
-            },
-            "function_call_output" => new ResponseFunctionCallOutputItem
-            {
-                Id = ExtractValue<string>(metadata, "id"),
-                CallId = ExtractValue<string>(metadata, "call_id") ?? string.Empty,
-                Output = ExtractValue<string>(metadata, "output") ?? "{}",
-                Status = ExtractValue<string>(metadata, "status")
-            },
-            "reasoning" => new ResponseReasoningItem
-            {
-                Id = item.Id,
-                EncryptedContent = ExtractNestedValue<string>(metadata, providerId, "encrypted_content"),
-                //     EncryptedContent = ExtractValue<string>(metadata, "encrypted_content"),
-                /* Summary = (item.Content ?? [])
-                     .OfType<AITextContentPart>()
-                     .Select(a => new ResponseReasoningSummaryTextPart { Text = a.Text })
-                     .ToList()*/
-            },
-            "image_generation_call" => new ResponseImageGenerationCallItem
-            {
-                Id = ExtractValue<string>(metadata, "id"),
-                Result = ExtractValue<string>(metadata, "result") ?? string.Empty,
-                Status = ExtractValue<string>(metadata, "status")
-            },
-            "item_reference" => new ResponseItemReference
-            {
-                Id = ExtractValue<string>(metadata, "id") ?? string.Empty
-            },
-            _ => new ResponseInputMessage
-            {
-                Role = ParseRole(item.Role),
-                Content = new ResponseMessageContent(ToResponsesContentParts(item.Content, item.Role).ToList())
+                yield return new ResponseInputMessage
+                {
+                    Role = ParseRole(item.Role),
+                    Content = new ResponseMessageContent(ToResponsesContentParts(nonToolParts, item.Role).ToList()),
+                    Id = ExtractValue<string>(metadata, "id"),
+                    Status = ExtractValue<string>(metadata, "status"),
+                    Phase = ExtractValue<string>(metadata, "phase")
+                };
             }
-        };
+
+            foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall))
+            {
+                yield return CreateResponseFunctionCallItem(toolPart, metadata);
+
+                if (HasToolOutput(toolPart))
+                    yield return CreateResponseFunctionCallOutputItem(toolPart, metadata);
+            }
+
+            yield break;
+        }
+
+        switch (kind)
+        {
+            case "function_call":
+            {
+                var toolPart = toolParts.FirstOrDefault();
+                if (toolPart is not null && toolPart.IsClientToolCall)
+                    yield return CreateResponseFunctionCallItem(toolPart, metadata);
+                yield break;
+            }
+            case "function_call_output":
+            {
+                var toolPart = toolParts.FirstOrDefault();
+                if (toolPart is not null && toolPart.IsClientToolCall && HasToolOutput(toolPart))
+                    yield return CreateResponseFunctionCallOutputItem(toolPart, metadata);
+                yield break;
+            }
+            case "reasoning":
+            {
+                yield return new ResponseReasoningItem
+                {
+                    Id = item.Id,
+                    EncryptedContent = ExtractNestedValue<string>(metadata, providerId, "encrypted_content")
+                };
+                yield break;
+            }
+            case "image_generation_call":
+            {
+                yield return new ResponseImageGenerationCallItem
+                {
+                    Id = ExtractValue<string>(metadata, "id"),
+                    Result = ExtractValue<string>(metadata, "result") ?? string.Empty,
+                    Status = ExtractValue<string>(metadata, "status")
+                };
+                yield break;
+            }
+            case "item_reference":
+            {
+                yield return new ResponseItemReference
+                {
+                    Id = ExtractValue<string>(metadata, "id") ?? string.Empty
+                };
+                yield break;
+            }
+            default:
+                yield return new ResponseInputMessage
+                {
+                    Role = ParseRole(item.Role),
+                    Content = new ResponseMessageContent(ToResponsesContentParts(nonToolParts, item.Role).ToList())
+                };
+                yield break;
+        }
     }
 
     private static T? ExtractNestedValue<T>(
@@ -725,6 +786,12 @@ public static class ResponsesUnifiedMapper
             var role = GetValue<string>(map, "role") ?? "assistant";
             var type = GetValue<string>(map, "type") ?? "message";
 
+            if (TryCreateToolOutputItem(item, map, role, type, out var toolItem))
+            {
+                yield return toolItem;
+                continue;
+            }
+
             var content = new List<AIContentPart>();
 
             if (map.TryGetValue("content", out var contentObj))
@@ -790,8 +857,10 @@ public static class ResponsesUnifiedMapper
     {
         foreach (var item in output?.Items ?? [])
         {
+            var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
+            var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
             var content = new List<object>();
-            foreach (var part in item.Content ?? [])
+            foreach (var part in nonToolParts)
             {
                 switch (part)
                 {
@@ -808,13 +877,205 @@ public static class ResponsesUnifiedMapper
                 }
             }
 
-            yield return new
+            if (content.Count > 0 || toolParts.Count == 0)
             {
-                type = item.Type,
-                role = item.Role,
-                content
-            };
+                yield return new
+                {
+                    type = item.Type,
+                    role = item.Role,
+                    content
+                };
+            }
+
+            foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall))
+            {
+                yield return new
+                {
+                    type = "function_call",
+                    id = ExtractValue<string>(toolPart.Metadata, "id"),
+                    call_id = toolPart.ToolCallId,
+                    name = toolPart.ToolName ?? toolPart.Title ?? "tool",
+                    arguments = SerializePayload(toolPart.Input, "{}"),
+                    status = toolPart.State
+                };
+
+                if (HasToolOutput(toolPart))
+                {
+                    yield return new
+                    {
+                        type = "function_call_output",
+                        id = ExtractValue<string>(toolPart.Metadata, "id"),
+                        call_id = toolPart.ToolCallId,
+                        output = SerializePayload(CreateToolOutputValue(toolPart), "{}"),
+                        status = toolPart.State
+                    };
+                }
+            }
         }
+    }
+
+    private static ResponseFunctionCallItem CreateResponseFunctionCallItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> metadata)
+        => new()
+        {
+            Id = ExtractValue<string>(toolPart.Metadata, "id") ?? ExtractValue<string>(metadata, "id"),
+            CallId = toolPart.ToolCallId,
+            Name = toolPart.ToolName ?? toolPart.Title ?? ExtractValue<string>(metadata, "name") ?? "unknown",
+            Arguments = SerializePayload(toolPart.Input, "{}"),
+            Status = NormalizeResponsesToolStatus(toolPart.State ?? ExtractValue<string>(metadata, "status"), hasOutput: HasToolOutput(toolPart))
+        };
+
+    private static ResponseFunctionCallOutputItem CreateResponseFunctionCallOutputItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> metadata)
+        => new()
+        {
+            Id = ExtractValue<string>(toolPart.Metadata, "id") ?? ExtractValue<string>(metadata, "id"),
+            CallId = toolPart.ToolCallId,
+            Output = SerializePayload(CreateToolOutputValue(toolPart), "{}"),
+            Status = NormalizeResponsesToolStatus(toolPart.State ?? ExtractValue<string>(metadata, "status"), hasOutput: true)
+        };
+
+    private static bool TryCreateToolOutputItem(
+        object rawItem,
+        Dictionary<string, object?> map,
+        string role,
+        string type,
+        out AIOutputItem item)
+    {
+        var toolPart = type switch
+        {
+            "function_call" => new AIToolCallContentPart
+            {
+                Type = type,
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = GetValue<string>(map, "name"),
+                Title = GetValue<string>(map, "name"),
+                Input = ParseJsonString(GetValue<string>(map, "arguments")),
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = false,
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["responses.type"] = type,
+                    ["responses.raw_output"] = rawItem
+                }
+            },
+            "custom_tool_call" => new AIToolCallContentPart
+            {
+                Type = type,
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = GetValue<string>(map, "name") ?? type,
+                Title = GetValue<string>(map, "name"),
+                Input = GetValue<object>(map, "input") ?? ParseJsonString(GetValue<string>(map, "arguments")),
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = true,
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["responses.type"] = type,
+                    ["responses.raw_output"] = rawItem
+                }
+            },
+            "mcp_call" => new AIToolCallContentPart
+            {
+                Type = type,
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = GetValue<string>(map, "name") ?? type,
+                Title = GetValue<string>(map, "name"),
+                Input = GetValue<object>(map, "arguments") ?? GetValue<object>(map, "input"),
+                Output = GetValue<object>(map, "output"),
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = true,
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["responses.type"] = type,
+                    ["responses.raw_output"] = rawItem
+                }
+            },
+            "code_interpreter_call" => new AIToolCallContentPart
+            {
+                Type = type,
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = "code_interpreter",
+                Title = "code_interpreter",
+                Input = GetValue<object>(map, "code"),
+                Output = GetValue<object>(map, "outputs"),
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = true,
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["responses.type"] = type,
+                    ["responses.raw_output"] = rawItem
+                }
+            },
+            _ => null
+        };
+
+        if (toolPart is null)
+        {
+            item = null!;
+            return false;
+        }
+
+        item = new AIOutputItem
+        {
+            Type = "message",
+            Role = role,
+            Content = [toolPart],
+            Metadata = new Dictionary<string, object?>
+            {
+                ["responses.raw_output"] = rawItem
+            }
+        };
+
+        return true;
+    }
+
+    private static bool HasToolOutput(AIToolCallContentPart toolPart)
+        => toolPart.Output is not null;
+
+    private static object? CreateToolOutputValue(AIToolCallContentPart toolPart)
+        => toolPart.Output;
+
+    private static object? ParseJsonString(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
+        try
+        {
+            return JsonDocument.Parse(json).RootElement.Clone();
+        }
+        catch
+        {
+            return json;
+        }
+    }
+
+    private static string SerializePayload(object? value, string fallback)
+    {
+        return value switch
+        {
+            null => fallback,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString() ?? fallback,
+            JsonElement json => json.GetRawText(),
+            string text => text,
+            _ => JsonSerializer.Serialize(value, Json)
+        };
+    }
+
+    private static string? NormalizeResponsesToolStatus(string? state, bool hasOutput)
+    {
+        var normalized = state?.Trim().ToLowerInvariant();
+
+        return normalized switch
+        {
+            null or "" => hasOutput ? "completed" : null,
+            "completed" or "in_progress" or "incomplete" => normalized,
+            "approval-responded" or "output-available" or "output-error" => "completed",
+            "input-available" or "approval-requested" => "in_progress",
+            _ => hasOutput ? "completed" : "in_progress"
+        };
     }
 
     private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelope(ResponseStreamPart part)

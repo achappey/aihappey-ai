@@ -621,7 +621,7 @@ public static class ChatCompletionsUnifiedMapper
 
             var role = ExtractValue<string>(message, "role");
             var content = message.TryGetProperty("content", out var contentEl)
-                ? ParseContentParts(contentEl)
+                ? ParseContentParts(contentEl).ToList()
                 : [];
 
             var itemMetadata = new Dictionary<string, object?>
@@ -637,11 +637,35 @@ public static class ChatCompletionsUnifiedMapper
                 itemMetadata[$"chatcompletions.message.{prop.Name}"] = prop.Value.Clone();
             }
 
+            if (string.Equals(role, "tool", StringComparison.OrdinalIgnoreCase)
+                && message.TryGetProperty("tool_call_id", out var toolCallIdEl)
+                && toolCallIdEl.ValueKind == JsonValueKind.String)
+            {
+                yield return new AIInputItem
+                {
+                    Type = "function_call_output",
+                    Role = role,
+                    Content =
+                    [
+                        CreateToolOutputPart(
+                            toolCallIdEl.GetString() ?? string.Empty,
+                            message.TryGetProperty("content", out var toolContent) ? toolContent : default,
+                            itemMetadata)
+                    ],
+                    Metadata = itemMetadata
+                };
+
+                continue;
+            }
+
+            if (message.TryGetProperty("tool_calls", out var toolCallsEl) && toolCallsEl.ValueKind == JsonValueKind.Array)
+                content.AddRange(ParseToolCallParts(toolCallsEl));
+
             yield return new AIInputItem
             {
                 Type = "message",
                 Role = role,
-                Content = [.. content],
+                Content = content,
                 Metadata = itemMetadata
             };
         }
@@ -775,19 +799,37 @@ public static class ChatCompletionsUnifiedMapper
 
         foreach (var item in input.Items)
         {
+            var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
+
+            if (string.Equals(item.Type, "function_call_output", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall))
+                {
+                    list.Add(new ChatMessage
+                    {
+                        Role = "tool",
+                        ToolCallId = toolPart.ToolCallId,
+                        Content = SerializeJsonElement(ToolOutputToChatContent(toolPart) ?? string.Empty),
+                    });
+                }
+
+                continue;
+            }
+
             if (!string.Equals(item.Type, "message", StringComparison.OrdinalIgnoreCase)
                 && string.IsNullOrWhiteSpace(item.Role))
                 continue;
 
             var role = item.Role ?? "user";
-            var content = ToChatMessageContent(item.Content, role);
+            var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
+            var toolCalls = BuildOutboundToolCalls(toolParts, item.Metadata);
+            var content = string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase)
+                          && toolCalls is { Count: > 0 }
+                          && nonToolParts.Count == 0
+                ? SerializeJsonElement((object?)null)
+                : ToChatMessageContent(nonToolParts, role);
 
             var toolCallId = ExtractMetadataValue<string>(item.Metadata, "chatcompletions.message.tool_call_id");
-
-            var rawToolCalls = ExtractMetadataElement(item.Metadata, "chatcompletions.message.tool_calls");
-            var toolCalls = rawToolCalls is { ValueKind: JsonValueKind.Array }
-                ? rawToolCalls.Value.EnumerateArray().Select(e => (object)e.Clone()).ToList()
-                : null;
 
             list.Add(new ChatMessage
             {
@@ -925,6 +967,9 @@ public static class ChatCompletionsUnifiedMapper
                 ? ParseContentParts(contentEl).ToList()
                 : [];
 
+            if (message.TryGetProperty("tool_calls", out var toolCallsEl) && toolCallsEl.ValueKind == JsonValueKind.Array)
+                content.AddRange(ParseToolCallParts(toolCallsEl));
+
             var metadata = new Dictionary<string, object?>
             {
                 ["chatcompletions.choice.raw"] = choice.Clone(),
@@ -967,10 +1012,19 @@ public static class ChatCompletionsUnifiedMapper
             if (!string.Equals(item.Type, "message", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var content = ToChatMessageContent(item.Content, item.Role ?? "assistant");
+            var role = item.Role ?? "assistant";
+            var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
+            var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
+            var toolCalls = BuildOutboundToolCalls(toolParts, item.Metadata);
+            var content = string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase)
+                          && toolCalls is { Count: > 0 }
+                          && nonToolParts.Count == 0
+                ? SerializeJsonElement((object?)null)
+                : ToChatMessageContent(nonToolParts, role);
+
             var message = new Dictionary<string, object?>
             {
-                ["role"] = item.Role ?? "assistant",
+                ["role"] = role,
                 ["content"] = content
             };
 
@@ -982,12 +1036,15 @@ public static class ChatCompletionsUnifiedMapper
                         continue;
 
                     var name = key["chatcompletions.message.".Length..];
-                    if (name.Length == 0)
+                    if (name.Length == 0 || string.Equals(name, "tool_calls", StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     message[name] = value;
                 }
             }
+
+            if (toolCalls is { Count: > 0 })
+                message["tool_calls"] = toolCalls;
 
             var choice = new Dictionary<string, object?>
             {
@@ -1023,6 +1080,9 @@ public static class ChatCompletionsUnifiedMapper
                 contentParts.AddRange(ParseContentParts(contentEl));
             }
 
+            if (delta.TryGetProperty("tool_calls", out var toolCallsEl) && toolCallsEl.ValueKind == JsonValueKind.Array)
+                contentParts.AddRange(ParseToolCallParts(toolCallsEl));
+
             var role = ExtractValue<string>(delta, "role") ?? "assistant";
             var metadata = new Dictionary<string, object?>
             {
@@ -1043,6 +1103,140 @@ public static class ChatCompletionsUnifiedMapper
 
         return items.Count > 0 ? new AIOutput { Items = items } : null;
     }
+
+    private static IEnumerable<AIToolCallContentPart> ParseToolCallParts(JsonElement toolCalls)
+    {
+        foreach (var toolCall in toolCalls.EnumerateArray())
+        {
+            if (toolCall.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var function = toolCall.TryGetProperty("function", out var functionEl)
+                && functionEl.ValueKind == JsonValueKind.Object
+                ? functionEl
+                : default;
+
+            yield return new AIToolCallContentPart
+            {
+                Type = "tool-call",
+                ToolCallId = ExtractValue<string>(toolCall, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = ExtractValue<string>(function, "name"),
+                Title = ExtractValue<string>(function, "name"),
+                Input = ParseToolArguments(ExtractValue<string>(function, "arguments")),
+                State = "input-available",
+                ProviderExecuted = false,
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["chatcompletions.tool_call.raw"] = toolCall.Clone()
+                }
+            };
+        }
+    }
+
+    private static AIToolCallContentPart CreateToolOutputPart(
+        string toolCallId,
+        JsonElement content,
+        Dictionary<string, object?> itemMetadata)
+    {
+        return new AIToolCallContentPart
+        {
+            Type = "tool-output-available",
+            ToolCallId = toolCallId,
+            Output = ParseToolOutputContent(content),
+            State = "output-available",
+            ProviderExecuted = false,
+            Metadata = new Dictionary<string, object?>
+            {
+                ["chatcompletions.tool_output.raw"] = itemMetadata.TryGetValue("chatcompletions.message.raw", out var raw) ? raw : null
+            }
+        };
+    }
+
+    private static List<object>? BuildOutboundToolCalls(
+        List<AIToolCallContentPart> toolParts,
+        Dictionary<string, object?>? metadata)
+    {
+        var clientToolCalls = toolParts
+            .Where(a => a.IsClientToolCall)
+            .Where(a => !string.IsNullOrWhiteSpace(a.ToolCallId))
+            .Select(ToOutboundToolCall)
+            .ToList();
+
+        if (clientToolCalls.Count > 0)
+            return clientToolCalls;
+
+        var rawToolCalls = ExtractMetadataElement(metadata, "chatcompletions.message.tool_calls");
+        return rawToolCalls is { ValueKind: JsonValueKind.Array }
+            ? rawToolCalls.Value.EnumerateArray().Select(e => (object)e.Clone()).ToList()
+            : null;
+    }
+
+    private static object ToOutboundToolCall(AIToolCallContentPart toolCall)
+    {
+        return new
+        {
+            id = string.IsNullOrWhiteSpace(toolCall.ToolCallId) ? Guid.NewGuid().ToString("N") : toolCall.ToolCallId,
+            type = "function",
+            function = new
+            {
+                name = toolCall.ToolName ?? toolCall.Title ?? "tool",
+                arguments = SerializeToolPayload(toolCall.Input, "{}")
+            }
+        };
+    }
+
+    private static object? ParseToolArguments(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return JsonSerializer.SerializeToElement(new { }, Json);
+
+        try
+        {
+            return JsonDocument.Parse(raw).RootElement.Clone();
+        }
+        catch
+        {
+            return raw;
+        }
+    }
+
+    private static object? ParseToolOutputContent(JsonElement content)
+    {
+        var text = ChatMessageContentExtensions.ToText(content);
+        if (!string.IsNullOrWhiteSpace(text))
+            return text;
+
+        return content.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+            ? null
+            : content.Clone();
+    }
+
+    private static object? ToolOutputToChatContent(AIToolCallContentPart toolCall)
+    {
+        return toolCall.Output switch
+        {
+            null => string.Empty,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString() ?? string.Empty,
+            JsonElement json => json.GetRawText(),
+            string text => text,
+            _ => JsonSerializer.Serialize(toolCall.Output, Json)
+        };
+    }
+
+    private static string SerializeToolPayload(object? value, string fallback)
+    {
+        return value switch
+        {
+            null => fallback,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString() ?? fallback,
+            JsonElement json => json.GetRawText(),
+            string text => text,
+            _ => JsonSerializer.Serialize(value, Json)
+        };
+    }
+
+    private static JsonElement SerializeJsonElement(object? value)
+        => JsonSerializer.SerializeToElement(value, Json);
 
     private static string? InferStatus(JsonElement response)
     {

@@ -82,6 +82,43 @@ public sealed class AIFileContentPart : AIContentPart
     public object? Data { get; init; }
 }
 
+public sealed class AIToolCallApproval
+{
+    public bool? Approved { get; init; }
+
+    public string? Id { get; init; }
+
+    public string? Reason { get; init; }
+}
+
+public sealed class AIToolCallContentPart : AIContentPart
+{
+    public AIToolCallContentPart()
+    {
+        Type = "tool-call";
+    }
+
+    public string ToolCallId { get; init; } = default!;
+
+    public string? ToolName { get; init; }
+
+    public string? Title { get; init; }
+
+    public object? Input { get; init; }
+
+    public string? State { get; init; }
+
+    public object? Output { get; init; }
+
+    public bool? ProviderExecuted { get; init; }
+
+    public AIToolCallApproval? Approval { get; init; }
+
+    public bool IsProviderToolCall => ProviderExecuted == true;
+
+    public bool IsClientToolCall => ProviderExecuted != true;
+}
+
 
 public sealed class AIToolDefinition
 {
