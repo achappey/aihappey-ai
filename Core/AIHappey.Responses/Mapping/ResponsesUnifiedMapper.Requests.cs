@@ -15,7 +15,7 @@ public static partial class ResponsesUnifiedMapper
             ProviderId = providerId,
             Model = request.Model,
             Instructions = request.Instructions,
-            Input = request.Input is null ? null : ToUnifiedInput(request.Input),
+            Input = request.Input is null ? null : ToUnifiedInput(request.Input, providerId),
             Temperature = request.Temperature,
             TopP = request.TopP,
             MaxOutputTokens = request.MaxOutputTokens,
@@ -56,12 +56,12 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static AIInput ToUnifiedInput(ResponseInput input)
+    private static AIInput ToUnifiedInput(ResponseInput input, string providerId)
     {
         if (input.IsText)
             return new AIInput { Text = input.Text };
 
-        var items = input.Items?.Select(ToUnifiedInputItem).ToList();
+        var items = input.Items?.Select(item => ToUnifiedInputItem(item, providerId)).ToList();
         return new AIInput { Items = items };
     }
 
@@ -70,11 +70,11 @@ public static partial class ResponsesUnifiedMapper
         if (!string.IsNullOrWhiteSpace(input.Text))
             return new ResponseInput(input.Text);
 
-        var items = input.Items?.SelectMany(a => ToResponsesInputItems(a, providerId)).ToList() ?? [];
+        var items = BuildResponsesInputItems(input.Items, providerId);
         return new ResponseInput(items);
     }
 
-    private static AIInputItem ToUnifiedInputItem(ResponseInputItem item)
+    private static AIInputItem ToUnifiedInputItem(ResponseInputItem item, string providerId)
     {
         switch (item)
         {
@@ -167,6 +167,24 @@ public static partial class ResponsesUnifiedMapper
                     }
                 };
 
+            case ResponseCompactionItem compaction:
+                return new AIInputItem
+                {
+                    Type = "message",
+                    Role = "assistant",
+                    Content =
+                    [
+                        CreateUnifiedCompactionToolPart(
+                            providerId,
+                            compaction.Id,
+                            compaction.EncryptedContent)
+                    ],
+                    Metadata = CreateCompactionMessageMetadata(
+                        providerId,
+                        compaction.Id,
+                        compaction.EncryptedContent)
+                };
+
             case ResponseImageGenerationCallItem imageGen:
                 return new AIInputItem
                 {
@@ -189,6 +207,69 @@ public static partial class ResponsesUnifiedMapper
             default:
                 return new AIInputItem { Type = item.Type ?? "item", Metadata = new Dictionary<string, object?> { ["raw"] = item } };
         }
+    }
+
+    private static List<ResponseInputItem> BuildResponsesInputItems(IReadOnlyList<AIInputItem>? items, string providerId)
+    {
+        if (items is null || items.Count == 0)
+            return [];
+
+        var result = new List<ResponseInputItem>();
+        var latestCompaction = FindLatestCompactionToolInvocation(items, providerId);
+        var startIndex = 0;
+
+        if (latestCompaction is not null)
+        {
+            result.Add(new ResponseCompactionItem
+            {
+                Id = latestCompaction.ItemId,
+                EncryptedContent = latestCompaction.EncryptedContent
+            });
+
+            startIndex = latestCompaction.ItemIndex + 1;
+        }
+
+        for (var i = startIndex; i < items.Count; i++)
+            result.AddRange(ToResponsesInputItems(items[i], providerId));
+
+        return result;
+    }
+
+    private static CompactionInvocationState? FindLatestCompactionToolInvocation(
+        IReadOnlyList<AIInputItem> items,
+        string providerId)
+    {
+        for (var itemIndex = items.Count - 1; itemIndex >= 0; itemIndex--)
+        {
+            var item = items[itemIndex];
+            var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().Reverse();
+
+            foreach (var toolPart in toolParts)
+            {
+                if (!IsCompactionToolCall(toolPart))
+                    continue;
+
+                var encryptedContent = toolPart.Metadata is not null
+                    ? ExtractNestedValue<string>(toolPart.Metadata, providerId, "encrypted_content")
+                    : null;
+
+                encryptedContent ??= item.Metadata is not null
+                    ? ExtractNestedValue<string>(item.Metadata, providerId, "encrypted_content")
+                    : null;
+
+                if (string.IsNullOrWhiteSpace(encryptedContent))
+                    continue;
+
+                return new CompactionInvocationState(
+                    itemIndex,
+                    ExtractValue<string>(item.Metadata, "id")
+                    ?? ExtractValue<string>(toolPart.Metadata, "id")
+                    ?? toolPart.ToolCallId,
+                    encryptedContent);
+            }
+        }
+
+        return null;
     }
 
     private static IEnumerable<ResponseInputItem> ToResponsesInputItems(AIInputItem item, string providerId)
@@ -248,6 +329,20 @@ public static partial class ResponsesUnifiedMapper
                 };
                 yield break;
             }
+            case "compaction":
+            {
+                var encryptedContent = ExtractNestedValue<string>(metadata, providerId, "encrypted_content");
+                if (!string.IsNullOrWhiteSpace(encryptedContent))
+                {
+                    yield return new ResponseCompactionItem
+                    {
+                        Id = item.Id ?? ExtractValue<string>(metadata, "id"),
+                        EncryptedContent = encryptedContent
+                    };
+                }
+
+                yield break;
+            }
             case "image_generation_call":
             {
                 yield return new ResponseImageGenerationCallItem
@@ -282,14 +377,43 @@ public static partial class ResponsesUnifiedMapper
         string key)
     {
         if (metadata.TryGetValue(providerId, out var providerObj)
-            && providerObj is JsonElement providerJson
-            && providerJson.ValueKind == JsonValueKind.Object
+            && TryGetJsonObject(providerObj, out var providerJson)
             && providerJson.TryGetProperty(key, out var value))
         {
             return value.Deserialize<T>();
         }
 
         return default;
+    }
+
+    private static bool TryGetJsonObject(object? value, out JsonElement json)
+    {
+        switch (value)
+        {
+            case JsonElement element when element.ValueKind == JsonValueKind.Object:
+                json = element;
+                return true;
+            case Dictionary<string, object> dict:
+                json = JsonSerializer.SerializeToElement(dict, JsonSerializerOptions.Web);
+                return true;
+          //  case Dictionary<string, object?> nullableDict:
+           //     json = JsonSerializer.SerializeToElement(nullableDict, JsonSerializerOptions.Web);
+            //    return true;
+            case null:
+                json = default;
+                return false;
+            default:
+                try
+                {
+                    json = JsonSerializer.SerializeToElement(value, JsonSerializerOptions.Web);
+                    return json.ValueKind == JsonValueKind.Object;
+                }
+                catch
+                {
+                    json = default;
+                    return false;
+                }
+        }
     }
 
     private static Dictionary<string, object?> BuildUnifiedRequestMetadata(ResponseRequest request)
@@ -314,4 +438,6 @@ public static partial class ResponsesUnifiedMapper
             "developer" => ResponseRole.Developer,
             _ => ResponseRole.User
         };
+
+    private sealed record CompactionInvocationState(int ItemIndex, string? ItemId, string EncryptedContent);
 }

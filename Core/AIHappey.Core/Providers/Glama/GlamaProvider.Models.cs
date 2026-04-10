@@ -29,8 +29,11 @@ public partial class GlamaProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                // ✅ root is already an array
-                var arr = root.EnumerateArray();
+                var arr = root.ValueKind == JsonValueKind.Array
+                     ? root.EnumerateArray()
+                     : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                         ? dataEl.EnumerateArray()
+                         : Enumerable.Empty<JsonElement>();
 
                 foreach (var el in arr)
                 {

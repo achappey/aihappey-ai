@@ -10,7 +10,7 @@ public static partial class ResponsesUnifiedMapper
         ArgumentNullException.ThrowIfNull(response);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
 
-        var outputItems = ToUnifiedOutputItems(response).ToList();
+        var outputItems = ToUnifiedOutputItems(response, providerId).ToList();
 
         return new AIResponse
         {
@@ -41,7 +41,7 @@ public static partial class ResponsesUnifiedMapper
             Model = response.Model ?? "unknown",
             Temperature = ExtractValue<float?>(metadata, "responses.temperature"),
             Usage = response.Usage,
-            Output = ToResponseOutputObjects(response.Output).ToList(),
+            Output = ToResponseOutputObjects(response.Output, response.ProviderId).ToList(),
             Text = ExtractObject<object>(metadata, "responses.text"),
             ToolChoice = ExtractObject<object>(metadata, "responses.tool_choice"),
             Tools = ExtractObject<List<object>>(metadata, "responses.tools") ?? [],
@@ -54,7 +54,7 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(ResponseResult response)
+    private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(ResponseResult response, string providerId)
     {
         foreach (var item in response.Output ?? [])
         {
@@ -65,7 +65,7 @@ public static partial class ResponsesUnifiedMapper
             var role = GetValue<string>(map, "role") ?? "assistant";
             var type = GetValue<string>(map, "type") ?? "message";
 
-            if (TryCreateToolOutputItem(item, map, role, type, out var toolItem))
+            if (TryCreateToolOutputItem(item, map, role, type, providerId, out var toolItem))
             {
                 yield return toolItem;
                 continue;
@@ -132,12 +132,37 @@ public static partial class ResponsesUnifiedMapper
         }
     }
 
-    private static IEnumerable<object> ToResponseOutputObjects(AIOutput? output)
+    private static IEnumerable<object> ToResponseOutputObjects(AIOutput? output, string providerId)
     {
         foreach (var item in output?.Items ?? [])
         {
             var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
             var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
+
+            var compactionToolPart = toolParts.FirstOrDefault(IsCompactionToolCall);
+            if (compactionToolPart is not null)
+            {
+                var encryptedContent = compactionToolPart.Metadata is not null
+                    ? ExtractNestedValue<string>(compactionToolPart.Metadata, providerId, "encrypted_content")
+                    : null;
+
+                encryptedContent ??= item.Metadata is not null
+                    ? ExtractNestedValue<string>(item.Metadata, providerId, "encrypted_content")
+                    : null;
+
+                if (!string.IsNullOrWhiteSpace(encryptedContent))
+                {
+                    yield return new ResponseCompactionItem
+                    {
+                        Id = ExtractValue<string>(item.Metadata, "id")
+                             ?? ExtractValue<string>(compactionToolPart.Metadata, "id")
+                             ?? compactionToolPart.ToolCallId,
+                        EncryptedContent = encryptedContent
+                    };
+                    continue;
+                }
+            }
+
             var content = new List<object>();
             foreach (var part in nonToolParts)
             {
@@ -221,10 +246,16 @@ public static partial class ResponsesUnifiedMapper
         Dictionary<string, object?> map,
         string role,
         string type,
+        string providerId,
         out AIOutputItem item)
     {
         var toolPart = type switch
         {
+            "compaction" => CreateUnifiedCompactionToolPart(
+                providerId,
+                GetValue<string>(map, "id"),
+                GetValue<object>(map, "encrypted_content"),
+                rawItem),
             "function_call" => new AIToolCallContentPart
             {
                 Type = type,
@@ -301,10 +332,16 @@ public static partial class ResponsesUnifiedMapper
             Type = "message",
             Role = role,
             Content = [toolPart],
-            Metadata = new Dictionary<string, object?>
-            {
-                ["responses.raw_output"] = rawItem
-            }
+            Metadata = string.Equals(type, "compaction", StringComparison.OrdinalIgnoreCase)
+                ? CreateCompactionMessageMetadata(
+                    providerId,
+                    GetValue<string>(map, "id"),
+                    GetValue<object>(map, "encrypted_content"),
+                    rawItem)
+                : new Dictionary<string, object?>
+                {
+                    ["responses.raw_output"] = rawItem
+                }
         };
 
         return true;

@@ -211,7 +211,6 @@ using AIHappey.Core.Providers.EvoLinkAI;
 using AIHappey.Core.Providers.Zenlayer;
 using AIHappey.Core.Providers.AIHubMix;
 using AIHappey.Core.Providers.UniAPI;
-using AIHappey.Core.Providers.OpenAIHK;
 using AIHappey.Core.Providers.AIForHire;
 using AIHappey.Core.Providers.Apekey;
 using AIHappey.Core.Providers.Apertis;
@@ -277,7 +276,6 @@ using AIHappey.Core.Providers.FullAI;
 using AIHappey.Core.Providers.APIPod;
 using AIHappey.Core.Providers.TokenFlux;
 using AIHappey.Core.Providers.LemonData;
-using AIHappey.Core.Providers.AiMo;
 using AIHappey.Core.Providers.Assisters;
 using AIHappey.Core.Providers.LLMWise;
 using AIHappey.Core.Providers.CaseDev;
@@ -287,7 +285,6 @@ using AIHappey.Core.Providers.Lava;
 using AIHappey.Core.Providers.ApiAirforce;
 using AIHappey.Core.Providers.SmartAIPI;
 using AIHappey.Core.Providers.MaximoAI;
-using AIHappey.Core.Providers.LLMPath;
 using AIHappey.Core.Providers.Noiz;
 using AIHappey.Core.Providers.Rime;
 using AIHappey.Core.Providers.IonRouter;
@@ -737,7 +734,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ZenlayerProvider>();
         services.AddSingleton<IModelProvider, AIHubMixProvider>();
         services.AddSingleton<IModelProvider, UniAPIProvider>();
-        services.AddSingleton<IModelProvider, OpenAIHKProvider>();
         services.AddSingleton<IModelProvider, AIForHireProvider>();
         services.AddSingleton<IModelProvider, ApekeyProvider>();
         services.AddSingleton<IModelProvider, ApertisProvider>();
@@ -801,7 +797,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, APIPodProvider>();
         services.AddSingleton<IModelProvider, TokenFluxProvider>();
         services.AddSingleton<IModelProvider, LemonDataProvider>();
-        services.AddSingleton<IModelProvider, AiMoProvider>();
         services.AddSingleton<IModelProvider, AssistersProvider>();
         services.AddSingleton<IModelProvider, LLMWiseProvider>();
         services.AddSingleton<CaseDevProvider>();
@@ -813,7 +808,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ApiAirforceProvider>();
         services.AddSingleton<IModelProvider, SmartAIPIProvider>();
         services.AddSingleton<IModelProvider, MaximoAIProvider>();
-        services.AddSingleton<IModelProvider, LLMPathProvider>();
         services.AddSingleton<IModelProvider, NoizProvider>();
         services.AddSingleton<IModelProvider, GradiumProvider>();
         services.AddSingleton<IModelProvider, VoiceAIProvider>();
@@ -1035,7 +1029,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OneInferProvider>();
         services.AddSingleton<IModelProvider, TapasProvider>();
         services.AddSingleton<IModelProvider, IGPTProvider>();
-        
+
     }
 
     public static IServiceCollection AddKernelMemoryWithOptions(

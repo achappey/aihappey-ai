@@ -3,23 +3,65 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Messages.Mapping;
+using AIHappey.ChatCompletions.Models;
+using System.Text.Json;
 
 namespace AIHappey.Core.AI;
 
 public static class ModelProviderResponsesChatExtensions
 {
+
+    public static void ApplyProviderOptions(
+    this IModelProvider provider,
+    Dictionary<string, object?>? metadata,
+    IDictionary<string, JsonElement>? additional, HashSet<string>? exclude = null)
+    {
+        if (metadata is null || additional is null)
+            return;
+
+        if (!metadata.TryGetValue(provider.GetIdentifier(), out var obj))
+            return;
+
+        if (obj is not JsonElement json)
+            return;
+
+        foreach (var prop in json.EnumerateObject())
+        {
+            if (exclude?.Contains(prop.Name) == true)
+                continue;
+
+            additional[prop.Name] = prop.Value;
+        }
+    }
+
     public static void SetDefaultResponseProperties(
-        this IModelProvider modelProvider, ResponseRequest responseRequest)
+        this IModelProvider modelProvider, ResponseRequest responseRequest, HashSet<string>? exclude = null)
     {
         responseRequest.Tools = [.. responseRequest.Tools ?? [],
             .. responseRequest.Metadata.GetResponseToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
-        responseRequest.Reasoning ??= responseRequest.Metadata
-            .GetProviderOption<Responses.Reasoning>(modelProvider.GetIdentifier(), "reasoning");
-        responseRequest.Include ??= responseRequest.Metadata
-            .GetProviderOption<List<string>>(modelProvider.GetIdentifier(), "include");
+        /*       responseRequest.Reasoning ??= responseRequest.Metadata
+                   .GetProviderOption<Responses.Reasoning>(modelProvider.GetIdentifier(), "reasoning");
+               responseRequest.Include ??= responseRequest.Metadata
+                   .GetProviderOption<List<string>>(modelProvider.GetIdentifier(), "include");*/
+
+        modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
+                [], [.. exclude ?? [], "tools"]);
+
 
         responseRequest.Metadata = null;
+    }
+
+    public static void SetDefaultChatCompletionProperties(
+        this IModelProvider modelProvider, ChatCompletionOptions chatCompletionOptions, HashSet<string>? exclude = null)
+    {
+        chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
+            .. chatCompletionOptions.Metadata.GetResponseToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+
+        modelProvider.ApplyProviderOptions(chatCompletionOptions.Metadata, chatCompletionOptions.AdditionalProperties ??=
+                [], [.. exclude ?? [], "tools"]);
+
+        chatCompletionOptions.Metadata = null;
     }
 
     public static void SetDefaultResponseProperties(

@@ -84,7 +84,7 @@ public static partial class ChatCompletionsUnifiedMapper
 
         return options;
     }
-
+/*
     public static JsonElement ToChatCompletionRequestJson(this AIRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -132,7 +132,7 @@ public static partial class ChatCompletionsUnifiedMapper
             root["store"] = store.Value;
 
         return JsonSerializer.SerializeToElement(root, Json);
-    }
+    }*/
 
     private static Dictionary<string, object?> BuildUnifiedRequestMetadata(JsonElement request)
     {

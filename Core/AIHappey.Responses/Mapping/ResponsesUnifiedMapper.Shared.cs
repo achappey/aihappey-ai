@@ -1,9 +1,13 @@
 using System.Text.Json;
+using AIHappey.Unified.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Responses.Mapping;
 
 public static partial class ResponsesUnifiedMapper
 {
+    private const string CompactionToolName = "compaction";
+
     private static object? ParseJsonString(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -142,4 +146,139 @@ public static partial class ResponsesUnifiedMapper
             _ => null
         };
     }
+
+    private static bool HasMeaningfulValue(object? value)
+        => value switch
+        {
+            null => false,
+            string text => !string.IsNullOrWhiteSpace(text),
+            JsonElement json => json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined,
+            _ => true
+        };
+
+    private static object? CloneIfJsonElement(object? value)
+        => value is JsonElement json ? json.Clone() : value;
+
+    private static string GetValueAsString(object? value, string fallback = "")
+        => value switch
+        {
+            null => fallback,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString() ?? fallback,
+            JsonElement json when json.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined => fallback,
+            JsonElement json => json.GetRawText(),
+            string text => text,
+            _ => value.ToString() ?? fallback
+        };
+
+    private static Dictionary<string, Dictionary<string, object>>? CreateProviderScopedEncryptedContentMetadata(
+        string providerId,
+        object? encryptedContent)
+    {
+        if (!HasMeaningfulValue(encryptedContent))
+            return null;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = new Dictionary<string, object>
+            {
+                ["encrypted_content"] = CloneIfJsonElement(encryptedContent)!
+            }
+        };
+    }
+
+    private static void MergeProviderScopedEncryptedContentMetadata(
+        Dictionary<string, object?> metadata,
+        string providerId,
+        object? encryptedContent)
+    {
+        var providerMetadata = CreateProviderScopedEncryptedContentMetadata(providerId, encryptedContent);
+        if (providerMetadata is null)
+            return;
+
+        metadata[providerId] = providerMetadata[providerId];
+    }
+
+    private static object CreateCompactionToolInput(object? encryptedContent)
+        => JsonSerializer.SerializeToElement(
+            new Dictionary<string, object?>
+            {
+                ["encrypted_content"] = GetValueAsString(encryptedContent)
+            },
+            Json);
+
+    private static CallToolResult CreateCompactionToolOutput(object? encryptedContent)
+        => new()
+        {
+            Content =
+            [
+                new TextContentBlock
+                {
+                    Text = GetValueAsString(encryptedContent)
+                }
+            ]
+        };
+
+    private static bool IsCompactionToolCall(AIToolCallContentPart toolPart)
+        => toolPart.ProviderExecuted == true
+           && (
+               string.Equals(toolPart.ToolName, CompactionToolName, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.Title, CompactionToolName, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.Type, "compaction", StringComparison.OrdinalIgnoreCase)
+           );
+
+    private static Dictionary<string, object?> CreateCompactionMessageMetadata(
+        string providerId,
+        string? id,
+        object? encryptedContent,
+        object? rawOutput = null)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["responses.type"] = "compaction"
+        };
+
+        if (!string.IsNullOrWhiteSpace(id))
+            metadata["id"] = id;
+
+        if (rawOutput is not null)
+            metadata["responses.raw_output"] = rawOutput;
+
+        MergeProviderScopedEncryptedContentMetadata(metadata, providerId, encryptedContent);
+        return metadata;
+    }
+
+    private static Dictionary<string, object?> CreateCompactionToolMetadata(
+        string providerId,
+        object? encryptedContent,
+        object? rawOutput = null)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["responses.type"] = "compaction"
+        };
+
+        if (rawOutput is not null)
+            metadata["responses.raw_output"] = rawOutput;
+
+        MergeProviderScopedEncryptedContentMetadata(metadata, providerId, encryptedContent);
+        return metadata;
+    }
+
+    private static AIToolCallContentPart CreateUnifiedCompactionToolPart(
+        string providerId,
+        string? id,
+        object? encryptedContent,
+        object? rawOutput = null)
+        => new()
+        {
+            Type = "compaction",
+            ToolCallId = id ?? Guid.NewGuid().ToString("N"),
+            ToolName = CompactionToolName,
+            Title = CompactionToolName,
+            Input = CreateCompactionToolInput(encryptedContent),
+            Output = CreateCompactionToolOutput(encryptedContent),
+            State = "output-available",
+            ProviderExecuted = true,
+            Metadata = CreateCompactionToolMetadata(providerId, encryptedContent, rawOutput)
+        };
 }

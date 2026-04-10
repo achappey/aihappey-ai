@@ -25,14 +25,8 @@ public sealed class AITextEndEventData
 
 public sealed class AIReasoningStartEventData
 {
-    [JsonPropertyName("signature")]
-    public string? Signature { get; init; }
-
-    [JsonPropertyName("encrypted_content")]
-    public object? EncryptedContent { get; init; }
-
     [JsonPropertyName("providerMetadata")]
-    public Dictionary<string, object>? ProviderMetadata { get; init; }
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 public sealed class AIReasoningDeltaEventData
@@ -41,20 +35,11 @@ public sealed class AIReasoningDeltaEventData
     public required string Delta { get; init; }
 
     [JsonPropertyName("providerMetadata")]
-    public Dictionary<string, object>? ProviderMetadata { get; init; }
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 public sealed class AIReasoningEndEventData
 {
-    [JsonPropertyName("signature")]
-    public string? Signature { get; init; }
-
-    [JsonPropertyName("summary")]
-    public object? Summary { get; init; }
-
-    [JsonPropertyName("encrypted_content")]
-    public object? EncryptedContent { get; init; }
-
     [JsonPropertyName("providerMetadata")]
     public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
@@ -99,6 +84,9 @@ public sealed class AIToolInputAvailableEventData
 
     [JsonPropertyName("title")]
     public string? Title { get; init; }
+
+    [JsonPropertyName("providerMetadata")]
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 public sealed class AIToolOutputAvailableEventData
@@ -114,6 +102,9 @@ public sealed class AIToolOutputAvailableEventData
 
     [JsonPropertyName("preliminary")]
     public bool? Preliminary { get; init; }
+
+    [JsonPropertyName("providerMetadata")]
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 public sealed class AIToolOutputErrorEventData

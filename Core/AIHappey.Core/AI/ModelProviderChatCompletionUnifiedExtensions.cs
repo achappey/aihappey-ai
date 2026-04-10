@@ -49,7 +49,15 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         {
             var textStarted = false;
             var reasoningStarted = false;
+            var finishEmitted = false;
             string? activeId = null;
+            string? activeModel = null;
+            DateTimeOffset? lastTimestamp = null;
+            Dictionary<string, object?>? lastMetadata = null;
+            string? lastFinishReason = null;
+            int? inputTokens = null;
+            int? outputTokens = null;
+            int? totalTokens = null;
             var mappingState = new ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState();
 
             yield return CreateDataStreamEvent(
@@ -60,6 +68,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
             await foreach (var update in modelProvider.CompleteChatStreamingAsync(responseRequest, cancellationToken))
             {
+                CaptureStreamTail(update, ref activeId, ref activeModel, ref lastTimestamp, ref lastFinishReason, ref inputTokens, ref outputTokens, ref totalTokens);
+
                 foreach (var mapped in update.ToUnifiedStreamEvents(modelProvider.GetIdentifier(), mappingState))
                 {
                     var normalizedType = NormalizeEventType(mapped.Event.Type);
@@ -67,6 +77,12 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                     if (!string.IsNullOrWhiteSpace(eventId))
                         activeId = eventId;
+
+                    if (!string.IsNullOrWhiteSpace(update.Model))
+                        activeModel = update.Model;
+
+                    lastTimestamp = mapped.Event.Timestamp ?? lastTimestamp;
+                    lastMetadata = mapped.Metadata ?? lastMetadata;
 
                     if (normalizedType == "reasoning-start")
                         reasoningStarted = true;
@@ -82,6 +98,17 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                     if (normalizedType == "reasoning-delta" && !reasoningStarted)
                     {
+                        if (textStarted)
+                        {
+                            textStarted = false;
+                            yield return CreateSyntheticStreamEvent(
+                                providerId: modelProvider.GetIdentifier(),
+                                type: "text-end",
+                                id: activeId,
+                                timestamp: mapped.Event.Timestamp,
+                                metadata: mapped.Metadata);
+                        }
+
                         reasoningStarted = true;
                         yield return CreateSyntheticStreamEvent(
                             providerId: modelProvider.GetIdentifier(),
@@ -93,6 +120,17 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                     if (normalizedType == "text-delta" && !textStarted)
                     {
+                        if (reasoningStarted)
+                        {
+                            reasoningStarted = false;
+                            yield return CreateSyntheticStreamEvent(
+                                providerId: modelProvider.GetIdentifier(),
+                                type: "reasoning-end",
+                                id: activeId,
+                                timestamp: mapped.Event.Timestamp,
+                                metadata: mapped.Metadata);
+                        }
+
                         textStarted = true;
                         yield return CreateSyntheticStreamEvent(
                             providerId: modelProvider.GetIdentifier(),
@@ -104,6 +142,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                     if (normalizedType == "finish")
                     {
+                        finishEmitted = true;
+
                         if (reasoningStarted)
                         {
                             reasoningStarted = false;
@@ -137,6 +177,44 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                          DateTimeOffset.UtcNow))
             {
                 yield return tail;
+            }
+
+            if (!finishEmitted && (activeId is not null || activeModel is not null || lastTimestamp is not null))
+            {
+                var finishTimestamp = lastTimestamp ?? DateTimeOffset.UtcNow;
+
+                if (reasoningStarted)
+                {
+                    reasoningStarted = false;
+                    yield return CreateSyntheticStreamEvent(
+                        providerId: modelProvider.GetIdentifier(),
+                        type: "reasoning-end",
+                        id: activeId,
+                        timestamp: finishTimestamp,
+                        metadata: lastMetadata);
+                }
+
+                if (textStarted)
+                {
+                    textStarted = false;
+                    yield return CreateSyntheticStreamEvent(
+                        providerId: modelProvider.GetIdentifier(),
+                        type: "text-end",
+                        id: activeId,
+                        timestamp: finishTimestamp,
+                        metadata: lastMetadata);
+                }
+
+                yield return CreateSyntheticFinishStreamEvent(
+                    providerId: modelProvider.GetIdentifier(),
+                    id: activeId,
+                    timestamp: finishTimestamp,
+                    metadata: lastMetadata,
+                    finishReason: lastFinishReason ?? "stop",
+                    model: activeModel ?? responseRequest.Model,
+                    inputTokens: inputTokens,
+                    outputTokens: outputTokens,
+                    totalTokens: totalTokens);
             }
         }
     }
@@ -176,6 +254,94 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             },
             Metadata = metadata
         };
+
+    private static AIStreamEvent CreateSyntheticFinishStreamEvent(
+        string providerId,
+        string? id,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?>? metadata,
+        string finishReason,
+        string? model,
+        int? inputTokens,
+        int? outputTokens,
+        int? totalTokens)
+        => new()
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = "finish",
+                Id = id,
+                Timestamp = timestamp,
+                Data = new AIFinishEventData
+                {
+                    FinishReason = finishReason,
+                    Model = model,
+                    CompletedAt = timestamp.ToUnixTimeSeconds(),
+                    InputTokens = inputTokens,
+                    OutputTokens = outputTokens,
+                    TotalTokens = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0))
+                }
+            },
+            Metadata = metadata
+        };
+
+    private static void CaptureStreamTail(
+        AIHappey.ChatCompletions.Models.ChatCompletionUpdate update,
+        ref string? activeId,
+        ref string? activeModel,
+        ref DateTimeOffset? lastTimestamp,
+        ref string? lastFinishReason,
+        ref int? inputTokens,
+        ref int? outputTokens,
+        ref int? totalTokens)
+    {
+        if (!string.IsNullOrWhiteSpace(update.Id))
+            activeId = update.Id;
+
+        if (!string.IsNullOrWhiteSpace(update.Model))
+            activeModel = update.Model;
+
+        if (update.Created > 0)
+            lastTimestamp = DateTimeOffset.FromUnixTimeSeconds(update.Created);
+
+        var chunk = JsonSerializer.SerializeToElement(update, JsonSerializerOptions.Web);
+
+        if (chunk.TryGetProperty("usage", out var usage) && usage.ValueKind == JsonValueKind.Object)
+        {
+            if (usage.TryGetProperty("prompt_tokens", out var promptTokens) && promptTokens.TryGetInt32(out var parsedPromptTokens))
+                inputTokens = parsedPromptTokens;
+
+            if (usage.TryGetProperty("completion_tokens", out var completionTokens) && completionTokens.TryGetInt32(out var parsedCompletionTokens))
+                outputTokens = parsedCompletionTokens;
+
+            if (usage.TryGetProperty("total_tokens", out var totalTokensEl) && totalTokensEl.TryGetInt32(out var parsedTotalTokens))
+                totalTokens = parsedTotalTokens;
+        }
+
+        if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            return;
+
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.ValueKind != JsonValueKind.Object)
+                continue;
+
+            if (!choice.TryGetProperty("finish_reason", out var finishReasonEl) || finishReasonEl.ValueKind != JsonValueKind.String)
+                continue;
+
+            var finishReason = finishReasonEl.GetString();
+            if (string.IsNullOrWhiteSpace(finishReason))
+                continue;
+
+            lastFinishReason = finishReason switch
+            {
+                "tool_calls" or "function_call" => "tool-calls",
+                "content_filter" => "content-filter",
+                _ => finishReason
+            };
+        }
+    }
 
     private static AIStreamEvent CreateDataStreamEvent(
         string providerId,

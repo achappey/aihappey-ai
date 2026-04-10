@@ -5,6 +5,7 @@ public sealed class AIRequest
     public required string ProviderId { get; init; }
 
     public string? Model { get; init; }
+    
     public string? Id { get; init; }
 
     public string? Instructions { get; init; }
@@ -16,6 +17,7 @@ public sealed class AIRequest
     public double? TopP { get; init; }
 
     public int? MaxOutputTokens { get; init; }
+
     public int? MaxToolCalls { get; init; }
 
     public bool? Stream { get; init; }

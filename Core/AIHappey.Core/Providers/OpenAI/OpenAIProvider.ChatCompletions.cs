@@ -14,6 +14,8 @@ public partial class OpenAIProvider
 
         options.ParallelToolCalls ??= true;
 
+        this.SetDefaultChatCompletionProperties(options, ["native_mcp"]);
+
         return _client.GetChatCompletionUpdates(
                    options, ct: cancellationToken);
     }
@@ -24,6 +26,8 @@ public partial class OpenAIProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         chatRequest.ParallelToolCalls ??= true;
+
+        this.SetDefaultChatCompletionProperties(chatRequest, ["native_mcp"]);
 
         return await _client.GetChatCompletion(
            chatRequest, ct: cancellationToken);

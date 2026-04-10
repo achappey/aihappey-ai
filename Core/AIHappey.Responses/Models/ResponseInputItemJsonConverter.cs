@@ -48,6 +48,12 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize reasoning.");
         }
 
+        if (string.Equals(type, "compaction", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseCompactionItem>(options)
+                   ?? throw new JsonException("Could not deserialize compaction.");
+        }
+
         throw new JsonException($"Unknown input item type: '{type ?? "(missing)"}'");
     }
 
@@ -73,6 +79,10 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseReasoningItem reasoning:
                 JsonSerializer.Serialize(writer, reasoning, options);
+                return;
+
+            case ResponseCompactionItem compaction:
+                JsonSerializer.Serialize(writer, compaction, options);
                 return;
 
             default:

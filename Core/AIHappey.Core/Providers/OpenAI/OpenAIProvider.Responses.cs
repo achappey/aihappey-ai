@@ -17,7 +17,7 @@ public partial class OpenAIProvider
         options.ContextManagement ??= options.Metadata
             .GetProviderOption<System.Text.Json.JsonElement[]>(GetIdentifier(), "context_management");
 
-        this.SetDefaultResponseProperties(options);
+        this.SetDefaultResponseProperties(options, ["native_mcp"]);
 
         var response = await _client.GetResponses(
                    options, ct: cancellationToken);
@@ -49,7 +49,7 @@ public partial class OpenAIProvider
 
         options.ParallelToolCalls ??= true;
 
-        this.SetDefaultResponseProperties(options);
+        this.SetDefaultResponseProperties(options, ["native_mcp"]);
 
         await foreach (var update in _client.GetResponsesUpdates(options, ct: cancellationToken))
         {

@@ -14,7 +14,7 @@ public static partial class ResponsesUnifiedMapper
         ArgumentNullException.ThrowIfNull(part);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
 
-        foreach (var envelope in ToUnifiedEnvelope(part))
+        foreach (var envelope in ToUnifiedEnvelope(part, providerId))
         {
             yield return new AIStreamEvent
             {
@@ -296,36 +296,38 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelope(ResponseStreamPart part)
+    private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelope(ResponseStreamPart part, string providerId)
     {
         switch (part)
         {
             case ResponseCreated created:
-                yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response);
+                yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response, providerId);
                 yield break;
 
             case ResponseInProgress inProgress:
-                yield return CreateLifecycleEnvelope(inProgress.Type, inProgress.SequenceNumber, inProgress.Response);
+                yield return CreateLifecycleEnvelope(inProgress.Type, inProgress.SequenceNumber, inProgress.Response, providerId);
                 yield break;
 
             case ResponseCompleted completed:
-                yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response);
+                yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
                 yield return CreateFinishEnvelope(completed.Type,
                     completed.SequenceNumber, completed.Response);
                 yield break;
 
             case ResponseFailed failed:
-                yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response);
+                yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response, providerId);
                 yield break;
 
             case ResponseReasoningSummaryPartAdded added:
                 yield return CreateReasoningStartEnvelope(
+                    providerId,
                     added.ItemId ?? string.Empty,
                     added.Part);
                 yield break;
 
             case ResponseReasoningSummaryPartDone done:
                 yield return CreateReasoningEndEnvelope(
+                    providerId,
                     done.ItemId ?? string.Empty,
                     done.Part);
                 yield break;
@@ -370,6 +372,7 @@ public static partial class ResponsesUnifiedMapper
                 if (responseContentPartAdded.Part.Type == "reasoning_text")
                 {
                     yield return CreateReasoningStartEnvelope(
+                                       providerId,
                                        responseContentPartAdded.ItemId ?? string.Empty,
                                        responseContentPartAdded.Part);
                     yield break;
@@ -385,6 +388,7 @@ public static partial class ResponsesUnifiedMapper
                 if (responseContentPartDone.Part.Type == "reasoning_text")
                 {
                     yield return CreateReasoningEndEnvelope(
+                                       providerId,
                                        responseContentPartDone.ItemId ?? string.Empty,
                                        responseContentPartDone.Part);
                     yield break;
@@ -606,6 +610,20 @@ public static partial class ResponsesUnifiedMapper
 
                     yield break;
                 }
+                else if (added.Item.Type == "compaction")
+                {
+                    var encryptedContent = GetAdditionalPropertyValue(added.Item.AdditionalProperties, "encrypted_content");
+
+                    yield return CreateToolInputEndEnvelope(
+                        added.Item.Id ?? string.Empty,
+                        CompactionToolName,
+                        CreateCompactionToolInput(encryptedContent),
+                        CompactionToolName,
+                        providerExecuted: true,
+                        providerMetadata: CreateProviderScopedEncryptedContentMetadata(providerId, encryptedContent));
+
+                    yield break;
+                }
                 else if (added.Item.Type == "code_interpreter_call")
                 {
                     yield return CreateToolInputStartEnvelope(
@@ -646,8 +664,18 @@ public static partial class ResponsesUnifiedMapper
                 }
                 else if (done.Item.Type == "reasoning")
                 {
-                    foreach (var env in CreateReasoningEnvelope(done.Item.Id ?? string.Empty, done.Item))
+                    foreach (var env in CreateReasoningEnvelope(providerId, done.Item.Id ?? string.Empty, done.Item))
                         yield return env;
+                }
+                else if (done.Item.Type == "compaction")
+                {
+                    var encryptedContent = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "encrypted_content");
+
+                    yield return CreateToolOutputEnvelope(
+                        done.Item.Id ?? string.Empty,
+                        CreateCompactionToolOutput(encryptedContent),
+                        providerExecuted: true,
+                        providerMetadata: CreateProviderScopedEncryptedContentMetadata(providerId, encryptedContent));
                 }
                 else if (done.Item.Type == "mcp_call")
                 {
@@ -897,11 +925,11 @@ public static partial class ResponsesUnifiedMapper
         }
     }
 
-    private static AIEventEnvelope CreateLifecycleEnvelope(string type, int sequenceNumber, ResponseResult response)
+    private static AIEventEnvelope CreateLifecycleEnvelope(string type, int sequenceNumber, ResponseResult response, string providerId)
         => new()
         {
             Type = type,
-            Output = new AIOutput { Items = ToUnifiedOutputItems(response).ToList() },
+            Output = new AIOutput { Items = ToUnifiedOutputItems(response, providerId).ToList() },
             Data = new Dictionary<string, object?>
             {
                 ["sequence_number"] = sequenceNumber,
@@ -914,29 +942,30 @@ public static partial class ResponsesUnifiedMapper
             }
         };
 
-    private static AIEventEnvelope CreateReasoningStartEnvelope(string id, ResponseStreamContentPart responseStreamItem)
+    private static AIEventEnvelope CreateReasoningStartEnvelope(string providerId, string id, ResponseStreamContentPart responseStreamItem)
             => new()
             {
                 Type = "reasoning-start",
                 Id = id,
                 Data = new AIReasoningStartEventData
                 {
-                    EncryptedContent = responseStreamItem.AdditionalProperties?.TryGetValue("encrypted_content", out var encrypted_content) == true
-                        ? encrypted_content.ToString()
-                        : string.Empty
+                    ProviderMetadata = CreateReasoningProviderMetadata(
+                        providerId,
+                        encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"))
                 },
             };
 
-    private static AIEventEnvelope CreateReasoningEndEnvelope(string id, ResponseStreamContentPart responseStreamItem)
+    private static AIEventEnvelope CreateReasoningEndEnvelope(string providerId, string id, ResponseStreamContentPart responseStreamItem)
         => new()
         {
             Type = "reasoning-end",
             Id = id,
             Data = new AIReasoningEndEventData
             {
-                EncryptedContent = responseStreamItem.AdditionalProperties?.TryGetValue("encrypted_content", out var encrypted_content) == true
-                    ? encrypted_content.ToString()
-                    : string.Empty
+                ProviderMetadata = CreateReasoningProviderMetadata(
+                    providerId,
+                    encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"),
+                    summary: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary"))
             },
         };
 
@@ -960,6 +989,7 @@ public static partial class ResponsesUnifiedMapper
     };
 
     private static IEnumerable<AIEventEnvelope> CreateReasoningEnvelope(
+    string providerId,
     string id,
     ResponseStreamItem responseStreamItem)
     {
@@ -984,16 +1014,18 @@ public static partial class ResponsesUnifiedMapper
             };
         }
 
-        JsonElement? summaryVal =
-      responseStreamItem.AdditionalProperties?.TryGetValue("summary", out var s) == true ? s : null;
-
-        JsonElement? encrypted =
-            responseStreamItem.AdditionalProperties?.TryGetValue("encrypted_content", out var e) == true ? e : null;
+        var summaryVal = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary");
+        var encrypted = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content");
         yield return new AIEventEnvelope
         {
             Type = "reasoning-start",
             Id = id,
-            Data = new AIReasoningStartEventData()
+            Data = new AIReasoningStartEventData
+            {
+                ProviderMetadata = CreateReasoningProviderMetadata(
+                    providerId,
+                    encryptedContent: encrypted)
+            }
         };
 
         if (!string.IsNullOrWhiteSpace(reasoning))
@@ -1015,11 +1047,57 @@ public static partial class ResponsesUnifiedMapper
             Id = id,
             Data = new AIReasoningEndEventData
             {
-                Summary = summaryVal,
-                EncryptedContent = encrypted
+                ProviderMetadata = CreateReasoningProviderMetadata(
+                    providerId,
+                    encryptedContent: encrypted,
+                    summary: summaryVal)
             }
         };
     }
+
+    private static object? GetAdditionalPropertyValue(Dictionary<string, JsonElement>? properties, string key)
+    {
+        if (properties?.TryGetValue(key, out var value) != true)
+            return null;
+
+        return value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+            ? null
+            : value.Clone();
+    }
+
+    private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
+        string providerId,
+        string? signature = null,
+        object? encryptedContent = null,
+        object? summary = null)
+    {
+        var providerMetadata = new Dictionary<string, object>();
+
+        if (!string.IsNullOrWhiteSpace(signature))
+            providerMetadata["signature"] = signature;
+
+        if (HasMeaningfulReasoningValue(encryptedContent))
+            providerMetadata["encrypted_content"] = encryptedContent!;
+
+        if (HasMeaningfulReasoningValue(summary))
+            providerMetadata["summary"] = summary!;
+
+        return providerMetadata.Count == 0
+            ? null
+            : new Dictionary<string, Dictionary<string, object>>
+            {
+                [providerId] = providerMetadata
+            };
+    }
+
+    private static bool HasMeaningfulReasoningValue(object? value)
+        => value switch
+        {
+            null => false,
+            string text => !string.IsNullOrWhiteSpace(text),
+            JsonElement json => json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined,
+            _ => true
+        };
 
     private static AIEventEnvelope CreateReasoningDeltaEnvelope(string id, string delta)
             => new()
@@ -1064,7 +1142,8 @@ public static partial class ResponsesUnifiedMapper
         string toolname,
         object input,
         string? title = null,
-        bool? providerExecuted = false)
+        bool? providerExecuted = false,
+        Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
     => new()
     {
         Type = "tool-input-available",
@@ -1074,7 +1153,8 @@ public static partial class ResponsesUnifiedMapper
             ProviderExecuted = providerExecuted,
             ToolName = toolname,
             Input = input,
-            Title = title
+            Title = title,
+            ProviderMetadata = providerMetadata
         },
     };
 
@@ -1082,7 +1162,8 @@ public static partial class ResponsesUnifiedMapper
            object output,
            bool? preliminary = null,
            bool? dynamic = null,
-           bool? providerExecuted = false)
+           bool? providerExecuted = false,
+           Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
        => new()
        {
            Type = "tool-output-available",
@@ -1093,8 +1174,9 @@ public static partial class ResponsesUnifiedMapper
                Preliminary = preliminary,
                Dynamic = dynamic,
                Output = output,
-           },
-       };
+               ProviderMetadata = providerMetadata,
+            },
+        };
 
     private static AIEventEnvelope CreateTextStartEnvelope(string id)
         => new()

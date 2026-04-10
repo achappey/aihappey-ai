@@ -15,7 +15,7 @@ public static partial class MessagesUnifiedMapper
 
         state ??= new MessagesStreamMappingState();
 
-        foreach (var envelope in ToUnifiedEnvelopes(part, state))
+        foreach (var envelope in ToUnifiedEnvelopes(part, providerId, state))
         {
             yield return new AIStreamEvent
             {
@@ -43,7 +43,7 @@ public static partial class MessagesUnifiedMapper
         };
     }
 
-    private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelopes(MessageStreamPart part, MessagesStreamMappingState state)
+    private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelopes(MessageStreamPart part, string providerId, MessagesStreamMappingState state)
     {
         switch (part.Type)
         {
@@ -67,8 +67,10 @@ public static partial class MessagesUnifiedMapper
                 {
                     yield return CreateEnvelope("reasoning-start", eventId, new AIReasoningStartEventData
                     {
-                        Signature = part.ContentBlock.Signature,
-                        EncryptedContent = part.ContentBlock.Data
+                        ProviderMetadata = CreateReasoningProviderMetadata(
+                            providerId,
+                            signature: part.ContentBlock.Signature,
+                            encryptedContent: part.ContentBlock.Data)
                     });
                 }
                 else if (IsToolInputBlock(part.ContentBlock.Type))
@@ -139,8 +141,10 @@ public static partial class MessagesUnifiedMapper
                 {
                     yield return CreateEnvelope("reasoning-end", stopState.EventId, new AIReasoningEndEventData
                     {
-                        Signature = stopState.Signature,
-                        EncryptedContent = stopState.Block.Data
+                        ProviderMetadata = CreateReasoningProviderMetadata(
+                            providerId,
+                            signature: stopState.Signature,
+                            encryptedContent: stopState.Block.Data)
                     });
                 }
                 else if (IsToolInputBlock(stopState.BlockType))
@@ -209,6 +213,40 @@ public static partial class MessagesUnifiedMapper
                 Data = data ?? new { }
             },
             Timestamp = DateTimeOffset.UtcNow
+        };
+
+    private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
+        string providerId,
+        string? signature = null,
+        object? encryptedContent = null,
+        object? summary = null)
+    {
+        var providerMetadata = new Dictionary<string, object>();
+
+        if (!string.IsNullOrWhiteSpace(signature))
+            providerMetadata["signature"] = signature;
+
+        if (HasMeaningfulReasoningValue(encryptedContent))
+            providerMetadata["encrypted_content"] = encryptedContent!;
+
+        if (HasMeaningfulReasoningValue(summary))
+            providerMetadata["summary"] = summary!;
+
+        return providerMetadata.Count == 0
+            ? null
+            : new Dictionary<string, Dictionary<string, object>>
+            {
+                [providerId] = providerMetadata
+            };
+    }
+
+    private static bool HasMeaningfulReasoningValue(object? value)
+        => value switch
+        {
+            null => false,
+            string text => !string.IsNullOrWhiteSpace(text),
+            JsonElement json => json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined,
+            _ => true
         };
 
     private static object? ParseToolInput(StreamBlockState state)

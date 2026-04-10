@@ -78,6 +78,9 @@ public sealed class ResponseRequest
     [JsonPropertyName("context_management")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public JsonElement[]? ContextManagement { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 public sealed class Reasoning

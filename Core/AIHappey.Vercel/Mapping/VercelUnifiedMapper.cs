@@ -155,14 +155,12 @@ public static class VercelUnifiedMapper
             "reasoning-start" => new ReasoningStartUIPart
             {
                 Id = envelope.Id ?? string.Empty,
-                ProviderMetadata = new Dictionary<string, object>()
-                {
-                  {providerId, new Dictionary<string, object>()
-                    {
-                        {"encrypted_content", GetTypedData<AIReasoningStartEventData>(envelope)?.EncryptedContent?.ToString() ?? GetValue<string>(data, "encrypted_content") ?? string.Empty}
-                    }
-                    }
-                }
+                ProviderMetadata = ToLooseProviderMetadata(GetTypedData<AIReasoningStartEventData>(envelope)?.ProviderMetadata)
+                    ?? GetReasoningProviderMetadata(data)
+                    ?? CreateLegacyReasoningProviderMetadata(
+                        providerId,
+                        signature: GetValue<string>(data, "signature"),
+                        encryptedContent: GetValue<object>(data, "encrypted_content"))
             },
             "reasoning-delta" => new ReasoningDeltaUIPart
             {
@@ -170,18 +168,20 @@ public static class VercelUnifiedMapper
                 Delta = GetTypedData<AIReasoningDeltaEventData>(envelope)?.Delta
                     ?? GetValue<string>(data, "delta")
                     ?? envelope.Data?.ToString() ?? string.Empty,
+                ProviderMetadata = ToLooseProviderMetadata(GetTypedData<AIReasoningDeltaEventData>(envelope)?.ProviderMetadata)
+                    ?? GetReasoningProviderMetadata(data)
             },
             "reasoning-end" => new ReasoningEndUIPart
             {
                 Id = envelope.Id ?? string.Empty,
-                ProviderMetadata = new Dictionary<string, Dictionary<string, object>>()
-                {
-                  {providerId, new Dictionary<string, object>()
-                    {
-                        {"encrypted_content", GetTypedData<AIReasoningEndEventData>(envelope)?.EncryptedContent?.ToString() ?? GetValue<string>(data, "encrypted_content") ?? string.Empty}
-                    }
-                    }
-                }
+                ProviderMetadata = GetTypedData<AIReasoningEndEventData>(envelope)?.ProviderMetadata
+                    ?? GetNestedProviderMetadata(data)
+                    ?? ToNestedProviderMetadata(GetValue<Dictionary<string, object>>(data, "providerMetadata"))
+                    ?? CreateLegacyNestedReasoningProviderMetadata(
+                        providerId,
+                        signature: GetValue<string>(data, "signature"),
+                        summary: GetValue<object>(data, "summary"),
+                        encryptedContent: GetValue<object>(data, "encrypted_content"))
             },
             "tool-approval-request" => new ToolApprovalRequestUIPart
             {
@@ -239,7 +239,8 @@ public static class VercelUnifiedMapper
             },
             "message-metadata" => new MessageMetadataUIPart
             {
-                MessageMetadata = GetValue<Dictionary<string, object>>(data, "messageMetadata")
+                MessageMetadata = data?.Where(a => a.Value is not null)
+                    .ToDictionary(z => z.Key, a => (object)a.Value!) ?? []
             },
             "finish" => new FinishUIPart
             {
@@ -248,7 +249,7 @@ public static class VercelUnifiedMapper
            envelope?.Metadata?
                .Where(a => a.Value is not null)
                .ToDictionary(a => a.Key, a => (object)a.Value!)
-           ?? new Dictionary<string, object>()
+           ?? []
        ) is var meta
            ? meta.Concat(
                new[]
@@ -466,6 +467,90 @@ public static class VercelUnifiedMapper
 
     private static Dictionary<string, object>? GetProviderMetadata(Dictionary<string, object?> data)
         => GetValue<Dictionary<string, object>>(data, "providerMetadata");
+
+    private static Dictionary<string, object>? GetReasoningProviderMetadata(Dictionary<string, object?> data)
+        => GetValue<Dictionary<string, object>>(data, "providerMetadata")
+            ?? ToLooseProviderMetadata(GetNestedProviderMetadata(data));
+
+    private static Dictionary<string, object>? ToLooseProviderMetadata(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata)
+        => providerMetadata?.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value);
+
+    private static Dictionary<string, Dictionary<string, object>>? ToNestedProviderMetadata(
+        Dictionary<string, object>? providerMetadata)
+    {
+        if (providerMetadata is null || providerMetadata.Count == 0)
+            return null;
+
+        var nested = new Dictionary<string, Dictionary<string, object>>();
+
+        foreach (var (providerId, metadata) in providerMetadata)
+        {
+            switch (metadata)
+            {
+                case Dictionary<string, object> dict when dict.Count > 0:
+                    nested[providerId] = dict;
+                    break;
+                case Dictionary<string, object?> nullableDict when nullableDict.Count > 0:
+                    nested[providerId] = nullableDict
+                        .Where(kvp => kvp.Value is not null)
+                        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
+                    break;
+                case JsonElement json when json.ValueKind == JsonValueKind.Object:
+                    var deserialized = JsonSerializer.Deserialize<Dictionary<string, object>>(json.GetRawText(), Json);
+                    if (deserialized is { Count: > 0 })
+                        nested[providerId] = deserialized;
+                    break;
+            }
+        }
+
+        return nested.Count == 0 ? null : nested;
+    }
+
+    private static Dictionary<string, object>? CreateLegacyReasoningProviderMetadata(
+        string providerId,
+        string? signature = null,
+        object? summary = null,
+        object? encryptedContent = null)
+        => ToLooseProviderMetadata(
+            CreateLegacyNestedReasoningProviderMetadata(providerId, signature, summary, encryptedContent));
+
+    private static Dictionary<string, Dictionary<string, object>>? CreateLegacyNestedReasoningProviderMetadata(
+        string providerId,
+        string? signature = null,
+        object? summary = null,
+        object? encryptedContent = null)
+    {
+        var providerMetadata = new Dictionary<string, object>();
+
+        if (!string.IsNullOrWhiteSpace(signature))
+            providerMetadata["signature"] = signature;
+
+        if (HasMeaningfulReasoningValue(summary))
+            providerMetadata["summary"] = summary!;
+
+        if (HasMeaningfulReasoningValue(encryptedContent))
+            providerMetadata["encrypted_content"] = encryptedContent!;
+
+        return providerMetadata.Count == 0
+            ? null
+            : new Dictionary<string, Dictionary<string, object>>
+            {
+                [providerId] = providerMetadata
+            };
+    }
+
+    private static bool HasMeaningfulReasoningValue(object? value)
+        => value switch
+        {
+            null => false,
+            string text => !string.IsNullOrWhiteSpace(text),
+            JsonElement json => json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined,
+            _ => true
+        };
+
+    // private static string GetSafeProviderId(string? providerId)
+    //    => string.IsNullOrWhiteSpace(providerId) ? "unknown" : providerId;
 
     private static Dictionary<string, Dictionary<string, object>>? GetNestedProviderMetadata(Dictionary<string, object?> data)
         => GetValue<Dictionary<string, Dictionary<string, object>>>(data, "providerMetadata");

@@ -8,12 +8,19 @@ public partial class HanzoProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var cacheKey = this.GetCacheKey();
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+        var cacheKey = this.GetCacheKey(key);
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
+
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 

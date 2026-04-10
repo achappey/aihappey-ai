@@ -41,9 +41,10 @@ public static partial class ChatCompletionsUnifiedMapper
                 yield return toolEvent;
         }
 
-        var mappedEnvelope = TryMapUiEnvelope(chunk);
-        if (mappedEnvelope is not null)
+        var emittedUiEnvelope = false;
+        foreach (var mappedEnvelope in MapUiEnvelopes(chunk))
         {
+            emittedUiEnvelope = true;
             yield return new AIStreamEvent
             {
                 ProviderId = providerId,
@@ -52,7 +53,7 @@ public static partial class ChatCompletionsUnifiedMapper
             };
         }
 
-        if (mappedEnvelope is null && !HasToolCallDelta(chunk))
+        if (!emittedUiEnvelope && !HasToolCallDelta(chunk))
             yield return chunk.ToUnifiedStreamEvent(providerId);
 
         foreach (var sourceEvent in MapSourceUrlEvents(chunk, providerId, timestamp, metadata, state))
@@ -193,6 +194,12 @@ public static partial class ChatCompletionsUnifiedMapper
         if (chunk.TryGetProperty("related_questions", out var relatedQuestions))
             metadata["chatcompletions.stream.provider.related_questions"] = relatedQuestions.Clone();
 
+        if (chunk.TryGetProperty("readURLs", out var readUrls))
+            metadata["chatcompletions.stream.provider.readURLs"] = readUrls.Clone();
+
+        if (chunk.TryGetProperty("visitedURLs", out var visitedUrls))
+            metadata["chatcompletions.stream.provider.visitedURLs"] = visitedUrls.Clone();
+
         return metadata;
     }
 
@@ -203,6 +210,43 @@ public static partial class ChatCompletionsUnifiedMapper
         Dictionary<string, object?> metadata,
         ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState? state)
     {
+        if (string.Equals(providerId, "jina", StringComparison.OrdinalIgnoreCase)
+            && chunk.TryGetProperty("readURLs", out var readUrls)
+            && readUrls.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var readUrl in readUrls.EnumerateArray())
+            {
+                if (readUrl.ValueKind != JsonValueKind.String)
+                    continue;
+
+                var url = readUrl.GetString();
+                if (string.IsNullOrWhiteSpace(url))
+                    continue;
+
+                if (state is not null && !state.SeenSourceUrls.Add(url))
+                    continue;
+
+                yield return new AIStreamEvent
+                {
+                    ProviderId = providerId,
+                    Event = new AIEventEnvelope
+                    {
+                        Type = "source-url",
+                        Id = ExtractValue<string>(chunk, "id"),
+                        Timestamp = timestamp,
+                        Data = new AISourceUrlEventData
+                        {
+                            SourceId = url,
+                            Url = url,
+                            Title = url,
+                            Type = "readURLs"
+                        }
+                    },
+                    Metadata = metadata
+                };
+            }
+        }
+
         if (!chunk.TryGetProperty("search_results", out var searchResults)
             || searchResults.ValueKind != JsonValueKind.Array)
             yield break;
@@ -250,10 +294,10 @@ public static partial class ChatCompletionsUnifiedMapper
         }
     }
 
-    private static AIEventEnvelope? TryMapUiEnvelope(JsonElement chunk)
+    private static IEnumerable<AIEventEnvelope> MapUiEnvelopes(JsonElement chunk)
     {
         if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
-            return null;
+            yield break;
 
         foreach (var choice in choices.EnumerateArray())
         {
@@ -268,10 +312,40 @@ public static partial class ChatCompletionsUnifiedMapper
                     && !delta.TryGetProperty("content", out _)
                     && !delta.TryGetProperty("reasoning", out _))
                 {
-                    return CreateUiEnvelope(chunk, "text-start", new AITextStartEventData());
+                    yield return CreateUiEnvelope(chunk, "text-start", new AITextStartEventData());
                 }
 
-                if (delta.TryGetProperty("content", out var contentEl))
+                var deltaType = ExtractValue<string>(delta, "type");
+                var isReasoningDelta = string.Equals(deltaType, "think", StringComparison.OrdinalIgnoreCase);
+
+                if (!isReasoningDelta
+                    && delta.TryGetProperty("reasoning", out var reasoningEl)
+                    && reasoningEl.ValueKind == JsonValueKind.String)
+                {
+                    isReasoningDelta = true;
+                }
+
+                if (isReasoningDelta)
+                {
+                    var reasoningDelta = ExtractValue<string>(delta, "reasoning");
+
+                    if (string.IsNullOrEmpty(reasoningDelta)
+                        && delta.TryGetProperty("content", out var reasoningContentEl))
+                    {
+                        reasoningDelta = reasoningContentEl.ValueKind == JsonValueKind.String
+                            ? reasoningContentEl.GetString()
+                            : ChatMessageContentExtensions.ToText(reasoningContentEl);
+                    }
+
+                    if (!string.IsNullOrEmpty(reasoningDelta))
+                    {
+                        yield return CreateUiEnvelope(chunk, "reasoning-delta", new AIReasoningDeltaEventData
+                        {
+                            Delta = reasoningDelta
+                        });
+                    }
+                }
+                else if (delta.TryGetProperty("content", out var contentEl))
                 {
                     var textDelta = contentEl.ValueKind == JsonValueKind.String
                         ? contentEl.GetString()
@@ -279,28 +353,23 @@ public static partial class ChatCompletionsUnifiedMapper
 
                     if (!string.IsNullOrEmpty(textDelta))
                     {
-                        return CreateUiEnvelope(chunk, "text-delta", new AITextDeltaEventData
+                        yield return CreateUiEnvelope(chunk, "text-delta", new AITextDeltaEventData
                         {
                             Delta = textDelta
                         });
                     }
                 }
 
-                if (delta.TryGetProperty("reasoning", out var reasoningEl) && reasoningEl.ValueKind == JsonValueKind.String)
-                {
-                    return CreateUiEnvelope(chunk, "reasoning-delta", new AIReasoningDeltaEventData
-                    {
-                        Delta = reasoningEl.GetString() ?? string.Empty
-                    });
-                }
-
                 if (delta.TryGetProperty("tool_calls", out _))
-                    return null;
+                    continue;
             }
 
             var finishReason = ExtractValue<string>(choice, "finish_reason");
             if (!string.IsNullOrWhiteSpace(finishReason))
             {
+                if (string.Equals(finishReason, "thinking_end", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 var usage = chunk.TryGetProperty("usage", out var usageEl) && usageEl.ValueKind == JsonValueKind.Object
                     ? usageEl
                     : default;
@@ -320,7 +389,7 @@ public static partial class ChatCompletionsUnifiedMapper
                         || finishReason == "function_call" ? "tool-calls" :
                         finishReason == "content_filter" ? "content-filter" : finishReason;
 
-                return CreateUiEnvelope(chunk, "finish", new AIFinishEventData
+                yield return CreateUiEnvelope(chunk, "finish", new AIFinishEventData
                 {
                     FinishReason = finishReasonValue,
                     Model = ExtractValue<string>(chunk, "model"),
@@ -331,9 +400,10 @@ public static partial class ChatCompletionsUnifiedMapper
                 });
             }
         }
-
-        return null;
     }
+
+    private static AIEventEnvelope? TryMapUiEnvelope(JsonElement chunk)
+        => MapUiEnvelopes(chunk).FirstOrDefault();
 
     private static AIEventEnvelope CreateUiEnvelope(JsonElement chunk, string type, object data)
     {
@@ -441,6 +511,7 @@ public static partial class ChatCompletionsUnifiedMapper
                 }
 
                 var providerMetadata = BuildPerplexityReasoningMetadata(step);
+                var reasoningProviderMetadata = CreateReasoningProviderMetadata(providerId, providerMetadata);
                 var thought = ExtractValue<string>(step, "thought");
 
                 if (!acc.ReasoningStarted)
@@ -456,7 +527,7 @@ public static partial class ChatCompletionsUnifiedMapper
                             Timestamp = timestamp,
                             Data = new AIReasoningStartEventData
                             {
-                                ProviderMetadata = providerMetadata
+                                ProviderMetadata = reasoningProviderMetadata
                             }
                         },
                         Metadata = metadata
@@ -477,7 +548,7 @@ public static partial class ChatCompletionsUnifiedMapper
                             Data = new AIReasoningDeltaEventData
                             {
                                 Delta = thought,
-                                ProviderMetadata = providerMetadata
+                                ProviderMetadata = reasoningProviderMetadata
                             }
                         },
                         Metadata = metadata
@@ -575,10 +646,7 @@ public static partial class ChatCompletionsUnifiedMapper
                             Timestamp = timestamp,
                             Data = new AIReasoningEndEventData
                             {
-                                ProviderMetadata = new Dictionary<string, Dictionary<string, object>>
-                                {
-                                    [providerId] = providerMetadata
-                                }
+                                ProviderMetadata = reasoningProviderMetadata
                             }
                         },
                         Metadata = metadata
@@ -812,6 +880,16 @@ public static partial class ChatCompletionsUnifiedMapper
         metadata["step"] = step.Clone();
         return metadata;
     }
+
+    private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
+        string providerId,
+        Dictionary<string, object>? providerMetadata)
+        => providerMetadata is null || providerMetadata.Count == 0
+            ? null
+            : new Dictionary<string, Dictionary<string, object>>
+            {
+                [providerId] = providerMetadata
+            };
 
     private static JsonElement CreatePerplexityToolInput(JsonElement searchKeywords)
         => JsonSerializer.SerializeToElement(

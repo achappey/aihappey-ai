@@ -19,6 +19,9 @@ public class ChatCompletionOptions
     [JsonPropertyName("stream")]
     public bool? Stream { get; set; }
 
+    [JsonPropertyName("reasoning_effort")]
+    public string? ReasoningEffort { get; set; }
+
     [JsonPropertyName("messages")]
     public IEnumerable<ChatMessage> Messages { get; set; } = [];
 
@@ -42,6 +45,10 @@ public class ChatCompletionOptions
 
     //   [JsonIgnore]
     //  public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
 }
 
 public class ChatMessage
