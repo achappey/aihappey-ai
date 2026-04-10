@@ -4,8 +4,6 @@ using AIHappey.Responses.Extensions;
 using System.Text.Json;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Perplexity;
 
 namespace AIHappey.Core.Providers.Perplexity;
 
@@ -15,89 +13,65 @@ public partial class PerplexityProvider
     {
         ApplyAuthHeader();
 
-        var (request, extraRootProperties) = PrepareResponsesRequest(options);
+        var request = PrepareResponsesRequest(options);
 
-        return await _client.GetResponses(
+        var response = await _client.GetResponses(
                    request,
                    relativeUrl: "v1/agent",
-                   ct: cancellationToken,
-                   extraRootProperties: extraRootProperties);
+                   ct: cancellationToken);
+
+        if (response.Usage is JsonElement usage)
+        {
+            response.Metadata = ModelCostMetadataEnricher.AddCost(
+                response.Metadata,
+                TryGetPerplexityTotalCost(usage));
+        }
+
+        return response;
     }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        var (request, extraRootProperties) = PrepareResponsesRequest(options);
+        var request = PrepareResponsesRequest(options);
 
-        return _client.GetResponsesUpdates(
-           request,
-           relativeUrl: "v1/agent",
-           ct: cancellationToken,
-           extraRootProperties: extraRootProperties);
-    }
-
-    private JsonElement? BuildResponsesExtraRootProperties(string model, PerplexityProviderMetadata? metadata)
-    {
-        var dic = new Dictionary<string, object?>
+        await foreach (var update in _client.GetResponsesUpdates(
+                           request,
+                           relativeUrl: "v1/agent",
+                           ct: cancellationToken).WithCancellation(cancellationToken))
         {
-        };
+            if (update is ResponseCompleted completed
+                && completed.Response.Usage is JsonElement usage)
+            {
+                completed.Response.Metadata = ModelCostMetadataEnricher.AddCost(
+                    completed.Response.Metadata,
+                    TryGetPerplexityTotalCost(usage));
+            }
 
-        if (UsesResponsesPreset(model))
-        {
-            dic.Add("preset", model);
-            dic.Add("model", null);
+            yield return update;
         }
-
-        if (metadata?.Models?.Any() == true)
-        {
-            dic.Add("models", metadata.Models);
-        }
-        if (metadata?.MaxSteps.HasValue == true)
-        {
-            dic.Add("max_steps", metadata?.MaxSteps);
-        }
-
-        return JsonSerializer.SerializeToElement(dic, JsonSerializerOptions.Web);
     }
 
 
 
-    private (ResponseRequest Request, JsonElement? ExtraRootProperties) PrepareResponsesRequest(ResponseRequest options)
+    private ResponseRequest PrepareResponsesRequest(ResponseRequest options)
     {
+        var model = options.Model;
         var usePreset = UsesResponsesPreset(options.Model);
-        var request = CloneResponsesRequest(options);
 
-        this.SetDefaultResponseProperties(request);
+        this.SetDefaultResponseProperties(options);
 
         if (usePreset)
-            request.Model = null;
-
-        return (request, BuildResponsesExtraRootProperties(options.Model!,
-            options?.Metadata?.GetProviderMetadata<PerplexityProviderMetadata>(GetIdentifier())));
-    }
-
-    private static ResponseRequest CloneResponsesRequest(ResponseRequest options)
-        => new()
         {
-            Model = options.Model,
-            Instructions = options.Instructions,
-            Input = options.Input,
-            Temperature = options.Temperature,
-            TopP = options.TopP,
-            Truncation = options.Truncation,
-            MaxOutputTokens = options.MaxOutputTokens,
-            TopLogprobs = options.TopLogprobs,
-            ParallelToolCalls = options.ParallelToolCalls,
-            Stream = options.Stream,
-            Store = options.Store,
-            ServiceTier = options.ServiceTier,
-            Text = options.Text,
-            Include = options.Include is null ? null : [.. options.Include],
-            Metadata = options.Metadata is null ? null : new Dictionary<string, object?>(options.Metadata),
-            Tools = options.Tools is null ? null : [.. options.Tools],
-            ToolChoice = options.ToolChoice,
-            Reasoning = options.Reasoning,
-        };
+            options.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+            options.AdditionalProperties["preset"] = JsonSerializer.SerializeToElement(model, JsonSerializerOptions.Web);
+            options.Model = null;
+        }
+
+        return options;
+    }
 }
 

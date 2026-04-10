@@ -53,6 +53,17 @@ public static partial class ResponsesUnifiedMapper
         }
     }
 
+    private static T? ExtractValue<T>(JsonElement? metadata, string key)
+    {
+        if (metadata is null || metadata.Value.ValueKind != JsonValueKind.Object)
+            return default;
+
+        if (!metadata.Value.TryGetProperty(key, out var json))
+            return default;
+
+        return JsonSerializer.Deserialize<T>(json.GetRawText(), Json);
+    }
+
     private static T? ExtractValue<T>(Dictionary<string, object?>? metadata, string key)
     {
         if (metadata is null || !metadata.TryGetValue(key, out var value) || value is null)

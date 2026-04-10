@@ -45,6 +45,8 @@ public static class ModelProviderResponsesUnifiedExtensions
 
         async IAsyncEnumerable<AIStreamEvent> StreamCore()
         {
+            var seenPerplexitySearchSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             yield return new AIStreamEvent
             {
                 ProviderId = modelProvider.GetIdentifier(),
@@ -69,11 +71,31 @@ public static class ModelProviderResponsesUnifiedExtensions
             {
                 foreach (var evt in update.ToUnifiedStreamEvent(modelProvider.GetIdentifier()))
                 {
+                    if (ShouldSkipDuplicatePerplexitySearchSourceUrl(modelProvider.GetIdentifier(), evt, seenPerplexitySearchSourceUrls))
+                        continue;
+
                     yield return evt;
                 }
 
             }
         }
+    }
+
+    private static bool ShouldSkipDuplicatePerplexitySearchSourceUrl(
+        string providerId,
+        AIStreamEvent streamEvent,
+        HashSet<string> seenSourceUrls)
+    {
+        if (!string.Equals(providerId, "perplexity", StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(streamEvent.Event.Type, "source-url", StringComparison.OrdinalIgnoreCase)
+            || streamEvent.Event.Data is not AISourceUrlEventData sourceEvent
+            || !string.Equals(sourceEvent.Type, "search_results", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(sourceEvent.Url))
+        {
+            return false;
+        }
+
+        return !seenSourceUrls.Add(sourceEvent.Url);
     }
 }
 
