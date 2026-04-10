@@ -5,7 +5,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using System.Text.Json;
+using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 
@@ -98,12 +98,12 @@ public partial class MaritacaAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

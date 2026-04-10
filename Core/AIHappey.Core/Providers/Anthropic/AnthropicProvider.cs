@@ -1,5 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
+using AIHappey.Messages;
 using ANT = Anthropic.SDK;
 using AIHappey.Common.Model;
 using AIHappey.Responses;
@@ -12,8 +13,6 @@ using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Mapping;
-using AIHappey.Messages;
-using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -161,53 +160,42 @@ public partial class AnthropicProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public async Task<JsonElement> MessagesAsync(
-      JsonElement request,
+    public async Task<MessagesResponse> MessagesAsync(
+      MessagesRequest request,
       Dictionary<string, string> headers,
       CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        var options = request.Deserialize<MessagesRequest>()!;
-
-        this.SetDefaultResponseProperties(options);
+        this.SetDefaultResponseProperties(request);
 
         var response = await _client.PostMessages(
-            JsonSerializer.SerializeToElement(options),
+            request,
             headers,
             ct: cancellationToken);
 
-        var typed = response.Deserialize<MessagesResponse>(MessagesJson.Default);
-        var pricing = ResolveModelPricing(typed?.Model, options.Model);
+        var pricing = ResolveModelPricing(response?.Model, request.Model);
 
-        return EnrichMessagesResponseJson(response, typed?.Usage, pricing);
+        return EnrichMessagesResponseJson(response!, response?.Usage, pricing);
     }
 
-    public async IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
-        JsonElement request,
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest options,
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        var options = request.Deserialize<MessagesRequest>()!;
 
         this.SetDefaultResponseProperties(options);
-
-        var payload = JsonSerializer.SerializeToElement(options, new JsonSerializerOptions(JsonSerializerDefaults.Web)
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        });
-
+     
         MessagesUsage? usage = null;
         string? responseModel = null;
 
-        await foreach (var partJson in _client.PostMessagesStreaming(
-            payload,
+        await foreach (var part in _client.PostMessagesStreaming(
+            options,
             headers,
             ct: cancellationToken).WithCancellation(cancellationToken))
         {
-            var part = partJson.Deserialize<MessageStreamPart>(MessagesJson.Default);
-
             if (!string.IsNullOrWhiteSpace(part?.Message?.Model))
                 responseModel = part.Message.Model;
 
@@ -220,11 +208,11 @@ public partial class AnthropicProvider : IModelProvider
             if (string.Equals(part?.Type, "message_stop", StringComparison.OrdinalIgnoreCase))
             {
                 var pricing = ResolveModelPricing(responseModel, options.Model);
-                yield return EnrichMessageStreamPartJson(partJson, usage, pricing);
+                yield return EnrichMessageStreamPartJson(part!, usage, pricing);
                 continue;
             }
 
-            yield return partJson;
+            yield return part!;
         }
     }
 
@@ -250,36 +238,28 @@ public partial class AnthropicProvider : IModelProvider
             : null;
     }
 
-    private static JsonElement EnrichMessagesResponseJson(
-        JsonElement response,
+    private static MessagesResponse EnrichMessagesResponseJson(
+        MessagesResponse response,
         MessagesUsage? usage,
         ModelPricing? pricing)
     {
         if (pricing is null || usage is null)
             return response;
 
-        var typed = response.Deserialize<MessagesResponse>(MessagesJson.Default);
-        if (typed is null)
-            return response;
-
-        typed.Metadata = ModelCostMetadataEnricher.AddCost(typed.Metadata, ComputeMessagesCost(usage, pricing));
-        return JsonSerializer.SerializeToElement(typed, MessagesJson.Default);
+        response.Metadata = ModelCostMetadataEnricher.AddCost(response.Metadata, ComputeMessagesCost(usage, pricing));
+        return response;
     }
 
-    private static JsonElement EnrichMessageStreamPartJson(
-        JsonElement part,
+    private static MessageStreamPart EnrichMessageStreamPartJson(
+        MessageStreamPart part,
         MessagesUsage? usage,
         ModelPricing? pricing)
     {
         if (pricing is null || usage is null)
             return part;
 
-        var typed = part.Deserialize<MessageStreamPart>(MessagesJson.Default);
-        if (typed is null)
-            return part;
-
-        typed.Metadata = ModelCostMetadataEnricher.AddCost(typed.Metadata, ComputeMessagesCost(usage, pricing));
-        return JsonSerializer.SerializeToElement(typed, MessagesJson.Default);
+        part.Metadata = ModelCostMetadataEnricher.AddCost(part.Metadata, ComputeMessagesCost(usage, pricing));
+        return part;
     }
 
     private static decimal? ComputeMessagesCost(

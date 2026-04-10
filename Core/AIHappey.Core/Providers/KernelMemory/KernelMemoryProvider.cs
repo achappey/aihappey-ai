@@ -1,5 +1,6 @@
 using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
+using AIHappey.Messages;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using Microsoft.KernelMemory;
@@ -8,7 +9,6 @@ using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.KernelMemory;
 
@@ -184,12 +184,12 @@ public partial class KernelMemoryProvider(IApiKeyResolver keyResolver,
         throw new NotImplementedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

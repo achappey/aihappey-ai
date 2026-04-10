@@ -6,8 +6,8 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using Microsoft.AspNetCore.Http;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Core.Models;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.SunoAPI;
 
@@ -86,12 +86,12 @@ public partial class SunoAPIProvider : IModelProvider
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
         => this.StreamSpeechAsync(chatRequest, cancellationToken);
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

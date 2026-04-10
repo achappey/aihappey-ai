@@ -183,14 +183,14 @@ public partial class NinjaChatProvider
         }, NinjaChatJson);
     }
 
-    private async IAsyncEnumerable<JsonElement> ExecuteNativeSearchMessagesStreamingAsync(
+    private async IAsyncEnumerable<UIMessagePart> ExecuteNativeSearchMessagesStreamingAsync(
         JsonElement request,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var chatRequest = BuildNativeSearchChatRequest(request);
 
         await foreach (var part in ExecuteNativeSearchUiStreamAsync(chatRequest, cancellationToken))
-            yield return JsonSerializer.SerializeToElement(part, NinjaChatJson);
+            yield return part;
     }
 
     private NinjaChatSearchRequest BuildNativeSearchRequest(JsonElement request)

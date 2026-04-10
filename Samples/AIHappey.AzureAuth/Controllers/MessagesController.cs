@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using Microsoft.AspNetCore.Authorization;
+using AIHappey.Messages;
 
 namespace AIHappey.AzureAuth.Controllers;
 
@@ -15,17 +16,10 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> Post(
-        [FromBody] JsonElement body,
+        [FromBody] MessagesRequest body,
         CancellationToken cancellationToken)
     {
-        if (!body.TryGetProperty("model", out var modelProp) ||
-            !body.TryGetProperty("messages", out _) ||
-            !body.TryGetProperty("max_tokens", out _))
-        {
-            return BadRequest(new { error = "'messages' and 'model' and 'max_tokens' are required" });
-        }
-
-        var model = modelProp.GetString();
+        var model = body.Model;
 
         if (string.IsNullOrWhiteSpace(model))
             return BadRequest(new { error = "'model' is required" });
@@ -35,33 +29,20 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
             return BadRequest(new { error = $"Model '{model}' is not available." });
 
         // strip provider prefix
-        var cleanModel = model.SplitModelId().Model;
-
-        // mutate JSON without static typing
-        using var doc = JsonDocument.Parse(body.GetRawText());
-        var root = doc.RootElement;
-
-        var dict = JsonSerializer.Deserialize<Dictionary<string, object?>>(
-            root.GetRawText()
-        )!;
-
-        dict["model"] = cleanModel;
-
-        var forwarded = JsonSerializer.SerializeToElement(dict);
+        body.Model = model.SplitModelId().Model;
 
         var headers = Request.Headers
                     .Where(a => a.Key.StartsWith("anthropic-"))
                     .ToDictionary(h => h.Key, h => h.Value.ToString(), StringComparer.OrdinalIgnoreCase);
 
         // streaming?
-        if (body.TryGetProperty("stream", out var streamProp) &&
-            streamProp.ValueKind == JsonValueKind.True)
+        if (body.Stream == true)
         {
             Response.ContentType = "text/event-stream";
 
             await using var writer = new StreamWriter(Response.Body);
 
-            await foreach (var chunk in provider.MessagesStreamingAsync(forwarded, headers, cancellationToken))
+            await foreach (var chunk in provider.MessagesStreamingAsync(body, headers, cancellationToken))
             {
                 await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
                 await writer.FlushAsync(cancellationToken);
@@ -75,7 +56,7 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
 
         try
         {
-            var result = await provider.MessagesAsync(forwarded, headers, cancellationToken);
+            var result = await provider.MessagesAsync(body, headers, cancellationToken);
             return Ok(result);
         }
         catch (Exception e)

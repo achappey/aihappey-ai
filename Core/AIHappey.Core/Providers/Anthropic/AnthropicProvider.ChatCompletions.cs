@@ -1,6 +1,4 @@
-using ANT = Anthropic.SDK;
 using AIHappey.ChatCompletions.Models;
-using AIHappey.Vercel.Models;
 using AIHappey.ChatCompletions.Mapping;
 using System.Runtime.CompilerServices;
 

@@ -3,8 +3,8 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Core.Models;
+using AIHappey.Messages;
 using AIHappey.Vercel.Models;
-using System.Text.Json;
 
 namespace AIHappey.Core.Contracts;
 
@@ -38,13 +38,13 @@ public interface IModelProvider
 
     Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default);
 
-    Task<JsonElement> MessagesAsync(
-        JsonElement request,
+    Task<MessagesResponse> MessagesAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
-        JsonElement request,
+    IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default);
 

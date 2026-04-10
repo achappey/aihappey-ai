@@ -5,8 +5,8 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Core.Models;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -98,12 +98,12 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         throw new NotImplementedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

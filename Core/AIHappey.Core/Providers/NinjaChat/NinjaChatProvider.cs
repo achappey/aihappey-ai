@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using System.Text.Json;
 
 namespace AIHappey.Core.Providers.NinjaChat;
@@ -49,7 +50,7 @@ public partial class NinjaChatProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();   
+        => throw new NotSupportedException();
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
@@ -62,12 +63,13 @@ public partial class NinjaChatProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        if (IsNativeSearchModel(ExtractModelFromMessagesRequest(request)))
-            return ExecuteNativeSearchMessagesAsync(request, cancellationToken);
+        if (request.Model == "search")
+            throw new NotImplementedException();
+        // return ExecuteNativeSearchMessagesAsync(request, cancellationToken);
 
         return _client.PostMessages(
             request,
@@ -75,12 +77,13 @@ public partial class NinjaChatProvider : IModelProvider
             ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        if (IsNativeSearchModel(ExtractModelFromMessagesRequest(request)))
-            return ExecuteNativeSearchMessagesStreamingAsync(request, cancellationToken);
+        if (request.Model == "search")
+            throw new NotImplementedException();
+        //return ExecuteNativeSearchMessagesStreamingAsync(JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web), cancellationToken);
 
         return _client.PostMessagesStreaming(
             request,

@@ -9,6 +9,7 @@ using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Responses.Extensions;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 
 namespace AIHappey.Core.Providers.Alibaba;
 
@@ -129,12 +130,12 @@ public partial class AlibabaProvider : IModelProvider
         return WanVideoRequest(request, providerMetadata, request.Model, warnings, now, cancellationToken);
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

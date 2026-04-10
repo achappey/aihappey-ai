@@ -5,6 +5,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using System.Text.Json;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
@@ -98,8 +99,8 @@ public partial class NagaAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async Task<JsonElement> MessagesAsync(
-      JsonElement request,
+    public async Task<MessagesResponse> MessagesAsync(
+      MessagesRequest request,
       Dictionary<string, string> headers,
       CancellationToken cancellationToken = default)
     {
@@ -111,8 +112,8 @@ public partial class NagaAIProvider : IModelProvider
             ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
-        JsonElement request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {

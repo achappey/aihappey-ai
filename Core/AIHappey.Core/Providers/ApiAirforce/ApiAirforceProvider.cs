@@ -5,7 +5,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using System.Text.Json;
+using AIHappey.Messages;
 
 namespace AIHappey.Core.Providers.ApiAirforce;
 
@@ -90,8 +90,8 @@ public partial class ApiAirforceProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
         => VideoRequestApiAirforce(request, cancellationToken);
 
-    public async Task<JsonElement> MessagesAsync(
-        JsonElement request,
+    public async Task<MessagesResponse> MessagesAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {
@@ -103,8 +103,8 @@ public partial class ApiAirforceProvider : IModelProvider
             ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
-        JsonElement request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {

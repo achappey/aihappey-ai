@@ -3,9 +3,9 @@ using AIHappey.Common.Model;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Core.AI;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.CloudRift;
 
@@ -74,12 +74,12 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
         throw new NotImplementedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

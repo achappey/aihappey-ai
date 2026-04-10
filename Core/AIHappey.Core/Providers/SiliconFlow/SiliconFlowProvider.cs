@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using System.Text.Json;
+using AIHappey.Messages;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
@@ -71,12 +71,12 @@ public partial class SiliconFlowProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

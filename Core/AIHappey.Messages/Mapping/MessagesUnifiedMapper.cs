@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Unified.Models;
 
 namespace AIHappey.Messages.Mapping;
 

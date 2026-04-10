@@ -4,7 +4,7 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using System.Text.Json;
+using AIHappey.Messages;
 
 namespace AIHappey.Core.Providers.Deepgram;
 
@@ -91,12 +91,12 @@ public sealed partial class DeepgramProvider
         throw new NotImplementedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

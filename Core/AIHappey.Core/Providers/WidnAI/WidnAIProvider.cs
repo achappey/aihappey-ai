@@ -4,7 +4,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using System.Text.Json;
+using AIHappey.Messages;
 
 namespace AIHappey.Core.Providers.WidnAI;
 
@@ -118,12 +118,12 @@ public partial class WidnAIProvider : IModelProvider
     private static bool IsTranslationModelId(string modelId)
         => TryParseTranslationModel(modelId, out _, out _, out _);
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

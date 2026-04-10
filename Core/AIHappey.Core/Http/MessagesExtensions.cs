@@ -2,7 +2,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
-using System.Text.Json.Serialization;
+using AIHappey.Messages;
+using System.Net.Http.Json;
 
 namespace AIHappey.Core.AI;
 
@@ -10,10 +11,14 @@ public static class MessagesExtensions
 {
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");
     private static readonly MediaTypeWithQualityHeaderValue AcceptSse = new("text/event-stream");
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
 
-    public static async Task<JsonElement> PostMessages(
+    public static async Task<MessagesResponse> PostMessages(
         this HttpClient client,
-        JsonElement payload,
+        MessagesRequest payload,
         Dictionary<string, string>? headers = null,
         string relativeUrl = "v1/messages",
         CancellationToken ct = default)
@@ -30,25 +35,19 @@ public static class MessagesExtensions
         }
 
         req.Content = new StringContent(
-            payload.GetRawText(),
+            JsonSerializer.Serialize(payload, Json),
             Encoding.UTF8,
             "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct);
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-
-        var result = await JsonSerializer.DeserializeAsync<JsonElement>(
-            stream,
-            cancellationToken: ct);
-
-        return result;
+        return await resp.Content.ReadFromJsonAsync<MessagesResponse>(ct) ?? throw new Exception("Something went wrong");
     }
 
-    public static async IAsyncEnumerable<JsonElement> PostMessagesStreaming(
+    public static async IAsyncEnumerable<MessageStreamPart> PostMessagesStreaming(
         this HttpClient client,
-        JsonElement payload,
+        MessagesRequest payload,
         Dictionary<string, string>? headers = null,
         string relativeUrl = "v1/messages",
         [EnumeratorCancellation] CancellationToken ct = default)
@@ -58,7 +57,6 @@ public static class MessagesExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        Console.WriteLine(payload.GetRawText());
         if (headers != null)
         {
             foreach (var h in headers)
@@ -66,7 +64,7 @@ public static class MessagesExtensions
         }
 
         req.Content = new StringContent(
-            payload.GetRawText(),
+            JsonSerializer.Serialize(payload, Json),
             Encoding.UTF8,
             "application/json");
 
@@ -90,10 +88,10 @@ public static class MessagesExtensions
             if (data.Length == 0) continue;
             if (data == "[DONE]") yield break;
 
-            JsonElement evt;
+            MessageStreamPart? evt;
             try
             {
-                evt = JsonSerializer.Deserialize<JsonElement>(data);
+                evt = JsonSerializer.Deserialize<MessageStreamPart>(data);
             }
             catch (Exception ex)
             {
@@ -101,7 +99,8 @@ public static class MessagesExtensions
                     $"Failed to parse SSE json event: {data}", ex);
             }
 
-            yield return evt;
+            if (evt != null)
+                yield return evt;
         }
     }
 

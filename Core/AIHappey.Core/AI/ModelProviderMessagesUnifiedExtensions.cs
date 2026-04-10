@@ -1,7 +1,5 @@
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using AIHappey.Core.Contracts;
-using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Unified.Models;
 
@@ -20,12 +18,9 @@ public static class ModelProviderMessagesUnifiedExtensions
         var messageRequest = request.ToMessagesRequest(modelProvider.GetIdentifier());
         messageRequest.Stream = false;
 
-        var payload = JsonSerializer.SerializeToElement(messageRequest, MessagesJson.Default);
-        var response = await modelProvider.MessagesAsync(payload, request.Headers ?? new Dictionary<string, string>(), cancellationToken);
-        var typed = JsonSerializer.Deserialize<MessagesResponse>(response.GetRawText(), MessagesJson.Default)
-                    ?? throw new InvalidOperationException("Failed to deserialize messages response.");
+        var response = await modelProvider.MessagesAsync(messageRequest, request.Headers ?? new Dictionary<string, string>(), cancellationToken);
 
-        return typed.ToUnifiedResponse(modelProvider.GetIdentifier());
+        return response.ToUnifiedResponse(modelProvider.GetIdentifier());
 
     }
 
@@ -41,7 +36,6 @@ public static class ModelProviderMessagesUnifiedExtensions
         messageRequest.Stream = true;
 
         var state = new MessagesUnifiedMapper.MessagesStreamMappingState();
-        var payload = JsonSerializer.SerializeToElement(messageRequest, MessagesJson.Default);
 
         yield return new AIStreamEvent
         {
@@ -52,7 +46,7 @@ public static class ModelProviderMessagesUnifiedExtensions
                 Timestamp = DateTimeOffset.UtcNow,
                 Data = new AIDataEventData
                 {
-                    Data = payload
+                    Data = messageRequest
                 }
             },
             Metadata = request.Headers is null || request.Headers.Count == 0
@@ -63,9 +57,8 @@ public static class ModelProviderMessagesUnifiedExtensions
                 }
         };
 
-        await foreach (var chunk in modelProvider.MessagesStreamingAsync(payload, request.Headers ?? new Dictionary<string, string>(), cancellationToken))
+        await foreach (var part in modelProvider.MessagesStreamingAsync(messageRequest, request.Headers ?? new Dictionary<string, string>(), cancellationToken))
         {
-            var part = JsonSerializer.Deserialize<MessageStreamPart>(chunk.GetRawText(), MessagesJson.Default);
             if (part is null)
                 continue;
 

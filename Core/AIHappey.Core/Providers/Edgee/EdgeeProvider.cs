@@ -5,7 +5,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using System.Text.Json;
+using AIHappey.Messages;
 
 namespace AIHappey.Core.Providers.Edgee;
 
@@ -89,8 +89,8 @@ public partial class EdgeeProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async Task<JsonElement> MessagesAsync(
-     JsonElement request,
+    public async Task<MessagesResponse> MessagesAsync(
+     MessagesRequest request,
      Dictionary<string, string> headers,
      CancellationToken cancellationToken = default)
     {
@@ -102,8 +102,8 @@ public partial class EdgeeProvider : IModelProvider
             ct: cancellationToken);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
-        JsonElement request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
     {

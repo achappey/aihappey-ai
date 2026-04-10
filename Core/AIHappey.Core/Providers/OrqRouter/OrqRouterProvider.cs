@@ -2,13 +2,13 @@ using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OrqRouter;
 
@@ -102,12 +102,12 @@ public partial class OrqRouterProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Unified.Models;
@@ -99,12 +99,12 @@ public partial class JinaProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -1,6 +1,6 @@
-using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.GTranslate;
@@ -29,12 +29,12 @@ public partial class GTranslateProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

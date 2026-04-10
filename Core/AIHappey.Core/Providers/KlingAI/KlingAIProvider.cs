@@ -9,8 +9,8 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Core.Models;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.KlingAI;
 
@@ -110,12 +110,12 @@ public partial class KlingAIProvider : IModelProvider
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public Task<JsonElement> MessagesAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(JsonElement request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
