@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
 using OpenAI.Models;
 using OAI = OpenAI;
 using OpenAI.Containers;
@@ -8,6 +9,7 @@ using OpenAI.Files;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -111,15 +113,28 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedMo
         throw new NotSupportedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+   public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
 
-  
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
+
+        yield break;
+    }
 }

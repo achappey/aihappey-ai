@@ -100,7 +100,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | CanopyWave     | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Cartesia       | ✅        | ❌                | ❌            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | CaseDev        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ✅          |
-| Cerebras       | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Cerebras       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ChainGPT       | ✅        | ✅                | ❌            | ❌            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ChainHub       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | CheapestInf... | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -197,7 +197,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | GPTProto       | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Gradium        | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | GreenPT        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Groq           | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
+| Groq           | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | GTranslate     | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Haimaker       | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ✅                       | ➖               | ➖          | ✅          | ➖          |
 | Hanzo          | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -339,7 +339,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | OneKey         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | OODAAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | OPEAI          | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| OpenAI         | ✅        | ✅                | ✅            | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ✅          |
+| OpenAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ✅          |
 | OpenCode       | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | OpenGateway    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | OpenLimits     | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -362,7 +362,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | PayPerQ        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Pellet         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Perceptron     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Perplexity     | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Perplexity     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | PiAPI          | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | Picsart        | ✅        | ❌                | ❌            | ❌            | ✅        | 🟡                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Pinecone       | ❌        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
@@ -501,7 +501,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | WiseRouter     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | World3         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Writer         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| xAI            | ✅        | ❌                | ✅            | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
+| xAI            | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | XiaomiMIMO     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Yollomi        | ✅        | ❌                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | YouCom         | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

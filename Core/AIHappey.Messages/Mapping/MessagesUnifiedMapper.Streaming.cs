@@ -51,6 +51,51 @@ public static partial class MessagesUnifiedMapper
         };
     }
 
+    public static MessageStreamPart? ToMessageStreamPart(
+        this AIStreamEvent streamEvent,
+        MessagesReverseStreamMappingState? state = null)
+    {
+        ArgumentNullException.ThrowIfNull(streamEvent);
+
+        MessageStreamPart? single = null;
+        var count = 0;
+
+        foreach (var part in streamEvent.ToMessageStreamParts(state))
+        {
+            count++;
+            if (count == 1)
+                single = part;
+        }
+
+        return count switch
+        {
+            0 => null,
+            1 => single,
+            _ => throw new InvalidOperationException(
+                $"Unified event '{streamEvent.Event.Type}' expands to multiple message stream parts. Use ToMessageStreamParts instead.")
+        };
+    }
+
+    public static IEnumerable<MessageStreamPart> ToMessageStreamParts(
+        this AIStreamEvent streamEvent,
+        MessagesReverseStreamMappingState? state = null)
+    {
+        ArgumentNullException.ThrowIfNull(streamEvent);
+
+        state ??= new MessagesReverseStreamMappingState();
+
+        if (TryGetRawMessageStreamPart(streamEvent, state, out var rawPart))
+        {
+            if (rawPart is not null)
+                yield return rawPart;
+
+            yield break;
+        }
+
+        foreach (var part in ToSyntheticMessageStreamParts(streamEvent, state))
+            yield return part;
+    }
+
     private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelopes(MessageStreamPart part, string providerId, MessagesStreamMappingState state)
     {
         switch (part.Type)
@@ -252,6 +297,760 @@ public static partial class MessagesUnifiedMapper
             },
             Timestamp = DateTimeOffset.UtcNow
         };
+
+    private static bool TryGetRawMessageStreamPart(
+        AIStreamEvent streamEvent,
+        MessagesReverseStreamMappingState state,
+        out MessageStreamPart? rawPart)
+    {
+        rawPart = null;
+
+        if (!TryDeserializeRawMessageStreamPart(streamEvent, out var part, out var rawSignature))
+            return false;
+
+        if (!state.TryMarkRawPart(rawSignature))
+            return true;
+
+        rawPart = part;
+
+        if (part is not null)
+            UpdateReverseStateFromRawPart(part, state);
+
+        return true;
+    }
+
+    private static bool TryDeserializeRawMessageStreamPart(
+        AIStreamEvent streamEvent,
+        out MessageStreamPart? part,
+        out string rawSignature)
+    {
+        part = null;
+        rawSignature = string.Empty;
+
+        if (TryDeserializeRawMessageStreamPartFromData(streamEvent, out part, out rawSignature))
+            return true;
+
+        return TryDeserializeRawMessageStreamPartFromMetadata(streamEvent, out part, out rawSignature);
+    }
+
+    private static bool TryDeserializeRawMessageStreamPartFromData(
+        AIStreamEvent streamEvent,
+        out MessageStreamPart? part,
+        out string rawSignature)
+    {
+        part = null;
+        rawSignature = string.Empty;
+
+        if (!streamEvent.Event.Type.StartsWith("data-messages.", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var dataEvent = DeserializeFromObject<AIDataEventData>(streamEvent.Event.Data);
+        if (dataEvent?.Data is null)
+            return false;
+
+        part = DeserializeFromObject<MessageStreamPart>(dataEvent.Data);
+        if (part is null)
+            return false;
+
+        rawSignature = TrySerializeRawSignature(dataEvent.Data)
+            ?? JsonSerializer.Serialize(part, Json);
+
+        return true;
+    }
+
+    private static bool TryDeserializeRawMessageStreamPartFromMetadata(
+        AIStreamEvent streamEvent,
+        out MessageStreamPart? part,
+        out string rawSignature)
+    {
+        part = null;
+        rawSignature = string.Empty;
+
+        if (streamEvent.Metadata is null
+            || !streamEvent.Metadata.TryGetValue("messages.stream.raw", out var raw)
+            || raw is null)
+        {
+            return false;
+        }
+
+        part = DeserializeFromObject<MessageStreamPart>(raw);
+        if (part is null)
+            return false;
+
+        rawSignature = TrySerializeRawSignature(raw)
+            ?? JsonSerializer.Serialize(part, Json);
+
+        return true;
+    }
+
+    private static string? TrySerializeRawSignature(object? raw)
+    {
+        try
+        {
+            return raw switch
+            {
+                JsonElement json => json.GetRawText(),
+                _ => raw is null ? null : JsonSerializer.Serialize(raw, Json)
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void UpdateReverseStateFromRawPart(MessageStreamPart part, MessagesReverseStreamMappingState state)
+    {
+        if (string.Equals(part.Type, "message_start", StringComparison.OrdinalIgnoreCase))
+        {
+            state.SetMessageContext(part.Message?.Id, part.Message?.Model, part.Message?.Role);
+            state.MarkMessageStarted();
+            return;
+        }
+
+        if (string.Equals(part.Type, "message_stop", StringComparison.OrdinalIgnoreCase))
+            state.Reset();
+    }
+
+    private static IEnumerable<MessageStreamPart> ToSyntheticMessageStreamParts(
+        AIStreamEvent streamEvent,
+        MessagesReverseStreamMappingState state)
+    {
+        var envelope = streamEvent.Event;
+
+        switch (envelope.Type)
+        {
+            case "text-start":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var block = state.GetOrCreateBlock(envelope.Id, "text");
+                foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
+                    yield return part;
+                yield break;
+            }
+            case "text-delta":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var block = state.GetOrCreateBlock(envelope.Id, "text");
+                foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AITextDeltaEventData>(envelope.Data);
+                yield return new MessageStreamPart
+                {
+                    Type = "content_block_delta",
+                    Index = block.Index,
+                    Delta = new MessageStreamDelta
+                    {
+                        Type = "text_delta",
+                        Text = data?.Delta ?? string.Empty
+                    }
+                };
+                yield break;
+            }
+            case "text-end":
+            {
+                if (!state.TryGetBlock(envelope.Id, out var block) || block.StopEmitted)
+                    yield break;
+
+                block.StopEmitted = true;
+                yield return new MessageStreamPart
+                {
+                    Type = "content_block_stop",
+                    Index = block.Index
+                };
+                yield break;
+            }
+            case "reasoning-start":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIReasoningStartEventData>(envelope.Data);
+                var block = state.GetOrCreateBlock(envelope.Id, ResolveReasoningBlockType(data?.ProviderMetadata, streamEvent.ProviderId));
+                block.Signature = ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "signature");
+                block.EncryptedContent = ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "encrypted_content");
+
+                foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
+                    yield return part;
+                yield break;
+            }
+            case "reasoning-delta":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var block = state.GetOrCreateBlock(envelope.Id, "thinking");
+                foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIReasoningDeltaEventData>(envelope.Data);
+                yield return new MessageStreamPart
+                {
+                    Type = "content_block_delta",
+                    Index = block.Index,
+                    Delta = new MessageStreamDelta
+                    {
+                        Type = "thinking_delta",
+                        Thinking = data?.Delta ?? string.Empty
+                    }
+                };
+                yield break;
+            }
+            case "reasoning-end":
+            {
+                if (!state.TryGetBlock(envelope.Id, out var block) || block.StopEmitted)
+                    yield break;
+
+                var data = DeserializeFromObject<AIReasoningEndEventData>(envelope.Data);
+                block.Signature ??= ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "signature");
+                block.EncryptedContent ??= ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "encrypted_content");
+                block.StopEmitted = true;
+
+                yield return new MessageStreamPart
+                {
+                    Type = "content_block_stop",
+                    Index = block.Index
+                };
+                yield break;
+            }
+            case "tool-input-start":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIToolInputStartEventData>(envelope.Data);
+                var block = state.GetOrCreateBlock(envelope.Id, ResolveToolInputBlockType(data?.ProviderExecuted));
+                block.ToolName = data?.ToolName ?? block.ToolName;
+                block.Title = data?.Title ?? block.Title;
+                block.ProviderExecuted = data?.ProviderExecuted ?? block.ProviderExecuted;
+
+                foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
+                    yield return part;
+                yield break;
+            }
+            case "tool-input-delta":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var block = state.GetOrCreateBlock(envelope.Id, "tool_use");
+                foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIToolInputDeltaEventData>(envelope.Data);
+                block.InputDeltaSeen = true;
+                yield return new MessageStreamPart
+                {
+                    Type = "content_block_delta",
+                    Index = block.Index,
+                    Delta = new MessageStreamDelta
+                    {
+                        Type = "input_json_delta",
+                        PartialJson = data?.InputTextDelta ?? string.Empty
+                    }
+                };
+                yield break;
+            }
+            case "tool-input-available":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIToolInputAvailableEventData>(envelope.Data);
+                var block = state.GetOrCreateBlock(envelope.Id, ResolveToolInputBlockType(data?.ProviderExecuted));
+                block.ToolName = data?.ToolName ?? block.ToolName;
+                block.Title = data?.Title ?? block.Title;
+                block.ProviderExecuted = data?.ProviderExecuted ?? block.ProviderExecuted;
+                block.Input = data?.Input;
+
+                foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
+                    yield return part;
+
+                if (!block.InputDeltaSeen && TrySerializeObjectAsJson(data?.Input, out var inputJson))
+                {
+                    block.InputDeltaSeen = true;
+                    yield return new MessageStreamPart
+                    {
+                        Type = "content_block_delta",
+                        Index = block.Index,
+                        Delta = new MessageStreamDelta
+                        {
+                            Type = "input_json_delta",
+                            PartialJson = inputJson
+                        }
+                    };
+                }
+
+                if (!block.StopEmitted)
+                {
+                    block.StopEmitted = true;
+                    yield return new MessageStreamPart
+                    {
+                        Type = "content_block_stop",
+                        Index = block.Index
+                    };
+                }
+                yield break;
+            }
+            case "tool-output-available":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIToolOutputAvailableEventData>(envelope.Data);
+                var block = state.GetOrCreateBlock(
+                    ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "tool_use_id") ?? envelope.Id,
+                    ResolveToolOutputBlockType(data?.ProviderMetadata, streamEvent.ProviderId));
+
+                if (!block.StartEmitted)
+                {
+                    block.StartEmitted = true;
+                    block.StopEmitted = true;
+                    yield return new MessageStreamPart
+                    {
+                        Type = "content_block_start",
+                        Index = block.Index,
+                        ContentBlock = CreateToolOutputBlock(streamEvent, data, block)
+                    };
+
+                    yield return new MessageStreamPart
+                    {
+                        Type = "content_block_stop",
+                        Index = block.Index
+                    };
+                }
+                yield break;
+            }
+            case "tool-output-error":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EnsureMessageStart(streamEvent, state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIToolOutputErrorEventData>(envelope.Data);
+                var block = state.GetOrCreateBlock(data?.ToolCallId ?? envelope.Id, "tool_result");
+                if (!block.StartEmitted)
+                {
+                    block.StartEmitted = true;
+                    block.StopEmitted = true;
+                    yield return new MessageStreamPart
+                    {
+                        Type = "content_block_start",
+                        Index = block.Index,
+                        ContentBlock = new MessageContentBlock
+                        {
+                            Type = "tool_result",
+                            ToolUseId = data?.ToolCallId ?? envelope.Id,
+                            Content = new MessagesContent(data?.ErrorText ?? "Tool output error"),
+                            IsError = true
+                        }
+                    };
+
+                    yield return new MessageStreamPart
+                    {
+                        Type = "content_block_stop",
+                        Index = block.Index
+                    };
+                }
+                yield break;
+            }
+            case "source-url":
+            {
+                var data = DeserializeFromObject<AISourceUrlEventData>(envelope.Data);
+                if (data is null || !TryResolveCitationBlockIndex(state, envelope.Id, out var index))
+                    yield break;
+
+                yield return new MessageStreamPart
+                {
+                    Type = "content_block_delta",
+                    Index = index,
+                    Delta = new MessageStreamDelta
+                    {
+                        Type = "citations_delta",
+                        Citation = new MessageCitation
+                        {
+                            Type = data.Type ?? "web_search_result_location",
+                            Url = data.Url,
+                            Title = data.Title,
+                            EncryptedIndex = data.SourceId,
+                            FileId = data.FileId,
+                            Source = data.Type
+                        }
+                    }
+                };
+                yield break;
+            }
+            case "finish":
+            {
+                state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+
+                foreach (var part in EmitOpenBlockStops(state))
+                    yield return part;
+
+                var data = DeserializeFromObject<AIFinishEventData>(envelope.Data);
+                yield return new MessageStreamPart
+                {
+                    Type = "message_delta",
+                    Usage = CreateMessagesUsage(data),
+                    Delta = new MessageStreamDelta
+                    {
+                        Type = "message_delta",
+                        StopReason = ToMessagesStreamStopReason(data?.FinishReason),
+                        StopSequence = data?.StopSequence
+                    }
+                };
+
+                yield return new MessageStreamPart
+                {
+                    Type = "message_stop",
+                    Metadata = ToJsonElementDictionary(data?.MessageMetadata)
+                };
+
+                state.Reset();
+                yield break;
+            }
+            case "error":
+            {
+                var data = DeserializeFromObject<AIErrorEventData>(envelope.Data);
+                yield return new MessageStreamPart
+                {
+                    Type = "error",
+                    Error = new MessageStreamError
+                    {
+                        Type = "error",
+                        Message = data?.ErrorText ?? "Messages stream error"
+                    }
+                };
+                yield break;
+            }
+        }
+    }
+
+    private static IEnumerable<MessageStreamPart> EnsureMessageStart(
+        AIStreamEvent streamEvent,
+        MessagesReverseStreamMappingState state)
+    {
+        if (state.MessageStarted)
+            yield break;
+
+        state.SetMessageContext(ResolveMessageId(streamEvent), ResolveModel(streamEvent), ResolveRoleForReverseStream(streamEvent));
+        state.MarkMessageStarted();
+
+        yield return new MessageStreamPart
+        {
+            Type = "message_start",
+            Message = new MessagesResponse
+            {
+                Id = state.MessageId,
+                Model = state.Model,
+                Role = state.Role,
+                Type = "message",
+                Content = []
+            }
+        };
+    }
+
+    private static IEnumerable<MessageStreamPart> EnsureContentBlockStart(
+        ReverseStreamBlockState block,
+        AIStreamEvent streamEvent,
+        MessagesReverseStreamMappingState state)
+    {
+        if (block.StartEmitted)
+            yield break;
+
+        block.StartEmitted = true;
+        if (block.BlockType is "text" or "thinking" or "redacted_thinking")
+            state.LastCitationBlockIndex = block.Index;
+
+        yield return new MessageStreamPart
+        {
+            Type = "content_block_start",
+            Index = block.Index,
+            ContentBlock = CreateSyntheticContentBlock(streamEvent, block)
+        };
+    }
+
+    private static MessageContentBlock CreateSyntheticContentBlock(
+        AIStreamEvent streamEvent,
+        ReverseStreamBlockState block)
+    {
+        if (block.BlockType == "text")
+            return new MessageContentBlock { Type = "text", Text = string.Empty };
+
+        if (block.BlockType is "thinking" or "redacted_thinking")
+        {
+            return new MessageContentBlock
+            {
+                Type = block.BlockType,
+                Signature = block.Signature,
+                Data = block.EncryptedContent
+            };
+        }
+
+        if (IsToolInputBlock(block.BlockType))
+        {
+            return new MessageContentBlock
+            {
+                Type = block.BlockType,
+                Id = block.Key,
+                Name = block.ToolName ?? "tool",
+                Title = block.Title,
+                ToolName = block.ToolName,
+                Input = SerializeToNullableElement(block.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
+            };
+        }
+
+        return CreateToolOutputBlock(streamEvent, null, block);
+    }
+
+    private static MessageContentBlock CreateToolOutputBlock(
+        AIStreamEvent streamEvent,
+        AIToolOutputAvailableEventData? data,
+        ReverseStreamBlockState block)
+    {
+        var providerMetadata = data?.ProviderMetadata;
+        var blockType = ResolveToolOutputBlockType(providerMetadata, streamEvent.ProviderId);
+        var toolCallId = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "tool_use_id") ?? block.Key;
+        var toolName = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "name")
+            ?? ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "tool_name")
+            ?? block.ToolName;
+        var title = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "title") ?? block.Title;
+        var caller = DeserializeFromObject<MessageCaller>(ResolveProviderMetadataObject(providerMetadata, streamEvent.ProviderId, "caller"));
+
+        var tempMetadata = new Dictionary<string, object?>
+        {
+            ["messages.provider.id"] = streamEvent.ProviderId,
+            ["messages.provider.metadata"] = providerMetadata,
+            ["messages.block.type"] = blockType
+        };
+
+        var toolPart = new AIToolCallContentPart
+        {
+            Type = blockType,
+            ToolCallId = toolCallId,
+            ToolName = toolName,
+            Title = title,
+            Output = data?.Output,
+            ProviderExecuted = data?.ProviderExecuted,
+            State = "output-available",
+            Metadata = tempMetadata
+        };
+
+        if (data?.ProviderExecuted == true
+            && TryCreateProviderExecutedToolResultBlock(toolPart, out var providerBlock)
+            && providerBlock is not null)
+        {
+            providerBlock.Type = blockType;
+            providerBlock.ToolUseId ??= toolCallId;
+            providerBlock.Name ??= toolName;
+            providerBlock.ToolName ??= ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "tool_name");
+            providerBlock.Title ??= title;
+            providerBlock.Caller ??= caller;
+            return providerBlock;
+        }
+
+        return new MessageContentBlock
+        {
+            Type = blockType,
+            ToolUseId = toolCallId,
+            Name = toolName,
+            ToolName = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "tool_name"),
+            Title = title,
+            Caller = caller,
+            Content = ToMessageToolOutputContent(toolPart)
+        };
+    }
+
+    private static bool TryResolveCitationBlockIndex(
+        MessagesReverseStreamMappingState state,
+        string? eventId,
+        out int index)
+    {
+        if (state.TryGetBlock(eventId, out var block))
+        {
+            index = block.Index;
+            return true;
+        }
+
+        if (state.LastCitationBlockIndex is int lastIndex)
+        {
+            index = lastIndex;
+            return true;
+        }
+
+        index = default;
+        return false;
+    }
+
+    private static IEnumerable<MessageStreamPart> EmitOpenBlockStops(MessagesReverseStreamMappingState state)
+    {
+        var blocks = state.Blocks.Values
+            .Where(a => a.StartEmitted && !a.StopEmitted)
+            .OrderBy(a => a.Index)
+            .ToList();
+
+        foreach (var block in blocks)
+        {
+            block.StopEmitted = true;
+            yield return new MessageStreamPart
+            {
+                Type = "content_block_stop",
+                Index = block.Index
+            };
+        }
+    }
+
+    private static string ResolveMessageId(AIStreamEvent streamEvent)
+        => ExtractValue<string>(streamEvent.Metadata, "messages.response.id")
+            ?? ExtractValue<string>(streamEvent.Metadata, "chatcompletions.stream.id")
+            ?? ExtractValue<string>(streamEvent.Metadata, "responses.response.id")
+            ?? $"msg_{Guid.NewGuid():N}";
+
+    private static string? ResolveModel(AIStreamEvent streamEvent)
+        => ExtractValue<string>(streamEvent.Metadata, "messages.response.model")
+            ?? ExtractValue<string>(streamEvent.Metadata, "chatcompletions.stream.model")
+            ?? ExtractValue<string>(streamEvent.Metadata, "responses.response.model")
+            ?? DeserializeFromObject<AIFinishEventData>(streamEvent.Event.Data)?.Model;
+
+    private static string ResolveRoleForReverseStream(AIStreamEvent streamEvent)
+        => ExtractValue<string>(streamEvent.Metadata, "messages.response.role")
+            ?? "assistant";
+
+    private static string ResolveReasoningBlockType(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        string providerId)
+        => ResolveProviderMetadataObject(providerMetadata, providerId, "encrypted_content") is null
+            ? "thinking"
+            : "redacted_thinking";
+
+    private static string ResolveToolInputBlockType(bool? providerExecuted)
+        => providerExecuted == true ? "server_tool_use" : "tool_use";
+
+    private static string ResolveToolOutputBlockType(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        string providerId)
+        => ResolveProviderMetadataString(providerMetadata, providerId, "type") is { } type && IsToolOutputBlock(type)
+            ? type
+            : "tool_result";
+
+    private static string? ResolveProviderMetadataString(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        string providerId,
+        string key)
+    {
+        var value = ResolveProviderMetadataObject(providerMetadata, providerId, key);
+        return value switch
+        {
+            null => null,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
+            JsonElement json => json.ToString(),
+            _ => value.ToString()
+        };
+    }
+
+    private static object? ResolveProviderMetadataObject(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        string providerId,
+        string key)
+    {
+        if (providerMetadata is null
+            || string.IsNullOrWhiteSpace(providerId)
+            || !providerMetadata.TryGetValue(providerId, out var nested)
+            || !nested.TryGetValue(key, out var value))
+        {
+            return null;
+        }
+
+        return value;
+    }
+
+    private static bool TrySerializeObjectAsJson(object? value, out string json)
+    {
+        json = string.Empty;
+
+        if (value is null)
+            return false;
+
+        try
+        {
+            json = value switch
+            {
+                JsonElement element => element.GetRawText(),
+                _ => JsonSerializer.Serialize(value, Json)
+            };
+
+            return !string.IsNullOrWhiteSpace(json);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static MessagesUsage? CreateMessagesUsage(AIFinishEventData? finishData)
+    {
+        if (finishData?.InputTokens is null && finishData?.OutputTokens is null)
+            return null;
+
+        return new MessagesUsage
+        {
+            InputTokens = finishData.InputTokens,
+            OutputTokens = finishData.OutputTokens
+        };
+    }
+
+    private static string? ToMessagesStreamStopReason(string? finishReason)
+        => finishReason?.Trim().ToLowerInvariant() switch
+        {
+            "tool-calls" => "tool_use",
+            "length" => "max_tokens",
+            "stop" => "stop_sequence",
+            "other" => "pause_turn",
+            "content-filter" => "refusal",
+            null => null,
+            _ => "end_turn"
+        };
+
+    private static Dictionary<string, JsonElement>? ToJsonElementDictionary(Dictionary<string, object>? metadata)
+    {
+        if (metadata is null || metadata.Count == 0)
+            return null;
+
+        var result = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+        foreach (var item in metadata)
+        {
+            result[item.Key] = item.Value switch
+            {
+                JsonElement json => json.Clone(),
+                null => JsonSerializer.SerializeToElement<string?>(null, Json),
+                _ => JsonSerializer.SerializeToElement(item.Value, Json)
+            };
+        }
+
+        return result;
+    }
 
     private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
         string providerId,
