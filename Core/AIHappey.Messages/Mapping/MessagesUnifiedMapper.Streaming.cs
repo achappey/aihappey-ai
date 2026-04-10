@@ -63,7 +63,7 @@ public static partial class MessagesUnifiedMapper
                 {
                     var activeTextEventId = state.EnsureActiveTextEventId(eventId);
 
-                    foreach (var sourceEvent in CreateSourceEnvelopes(part.ContentBlock, activeTextEventId))
+                    foreach (var sourceEvent in CreateSourceEnvelopes(part.ContentBlock, activeTextEventId, state))
                         yield return sourceEvent;
 
                     yield break;
@@ -98,11 +98,12 @@ public static partial class MessagesUnifiedMapper
                     yield return CreateEnvelope("tool-output-available", eventId, new AIToolOutputAvailableEventData
                     {
                         ProviderExecuted = true,
-                        Output = SerializeBlockOutput(part.ContentBlock) ?? new { }
+                        Output = SerializeBlockOutput(part.ContentBlock) ?? new { },
+                        ProviderMetadata = CreateToolOutputProviderMetadata(providerId, part.ContentBlock)
                     });
                 }
 
-                foreach (var sourceEvent in CreateSourceEnvelopes(part.ContentBlock, eventId))
+                foreach (var sourceEvent in CreateSourceEnvelopes(part.ContentBlock, eventId, state))
                     yield return sourceEvent;
                 yield break;
 
@@ -143,6 +144,10 @@ public static partial class MessagesUnifiedMapper
                                 InputTextDelta = part.Delta.PartialJson
                             });
                         }
+                        break;
+                    case "citations_delta":
+                        if (TryCreateSourceEnvelope(part.Delta.Citation, deltaState.EventId, state, out var sourceEnvelope))
+                            yield return sourceEnvelope;
                         break;
                 }
                 yield break;
@@ -264,6 +269,35 @@ public static partial class MessagesUnifiedMapper
             };
     }
 
+    private static Dictionary<string, Dictionary<string, object>>? CreateToolOutputProviderMetadata(
+        string providerId,
+        MessageContentBlock block)
+    {
+        var providerMetadata = new Dictionary<string, object>();
+
+        providerMetadata["type"] = block.Type;
+
+        if (!string.IsNullOrWhiteSpace(block.ToolName))
+            providerMetadata["tool_name"] = block.ToolName;
+
+        if (!string.IsNullOrWhiteSpace(block.Name))
+            providerMetadata["name"] = block.Name;
+
+        if (!string.IsNullOrWhiteSpace(block.Title))
+            providerMetadata["title"] = block.Title;
+
+        if (!string.IsNullOrWhiteSpace(block.ToolUseId))
+            providerMetadata["tool_use_id"] = block.ToolUseId;
+
+        if (HasMeaningfulReasoningValue(block.Caller))
+            providerMetadata["caller"] = JsonSerializer.SerializeToElement(block.Caller, Json);
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = providerMetadata
+        };
+    }
+
     private static bool HasMeaningfulReasoningValue(object? value)
         => value switch
         {
@@ -275,20 +309,60 @@ public static partial class MessagesUnifiedMapper
 
     private static object? ParseToolInput(StreamBlockState state)
     {
+        if (state.InputJson.Length > 0)
+        {
+            try
+            {
+                return JsonDocument.Parse(state.InputJson.ToString()).RootElement.Clone();
+            }
+            catch
+            {
+                return JsonSerializer.SerializeToElement(new { raw = state.InputJson.ToString() }, Json);
+            }
+        }
+
         if (state.Block.Input is JsonElement input && input.ValueKind != JsonValueKind.Undefined)
             return input;
 
-        if (state.InputJson.Length == 0)
-            return JsonSerializer.SerializeToElement(new { }, Json);
+        return JsonSerializer.SerializeToElement(new { }, Json);
+    }
 
-        try
+    private static IEnumerable<AIEventEnvelope> CreateSourceEnvelopes(
+        MessageContentBlock block,
+        string? id,
+        MessagesStreamMappingState state)
+    {
+        foreach (var citation in block.Citations ?? [])
         {
-            return JsonDocument.Parse(state.InputJson.ToString()).RootElement.Clone();
+            if (TryCreateSourceEnvelope(citation, id, state, out var envelope))
+                yield return envelope;
         }
-        catch
+    }
+
+    private static bool TryCreateSourceEnvelope(
+        MessageCitation? citation,
+        string? id,
+        MessagesStreamMappingState state,
+        out AIEventEnvelope envelope)
+    {
+        envelope = default!;
+
+        if (citation?.Type != "web_search_result_location" || string.IsNullOrWhiteSpace(citation.Url))
+            return false;
+
+        var sourceId = citation.EncryptedIndex ?? citation.Url;
+        if (!state.SeenSourceIds.Add(sourceId))
+            return false;
+
+        envelope = CreateEnvelope("source-url", id, new AISourceUrlEventData
         {
-            return JsonSerializer.SerializeToElement(new { raw = state.InputJson.ToString() }, Json);
-        }
+            SourceId = sourceId,
+            Url = citation.Url,
+            Title = citation.Title ?? citation.Url,
+            Type = citation.Type
+        });
+
+        return true;
     }
 
     private static string ResolveStreamEventId(MessageContentBlock block, string fallbackId)

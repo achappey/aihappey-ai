@@ -219,23 +219,6 @@ public static partial class MessagesUnifiedMapper
         }
     }
 
-    private static IEnumerable<AIEventEnvelope> CreateSourceEnvelopes(MessageContentBlock block, string? id)
-    {
-        foreach (var citation in block.Citations ?? [])
-        {
-            if (citation.Type == "web_search_result_location" && !string.IsNullOrWhiteSpace(citation.Url))
-            {
-                yield return CreateEnvelope("source-url", id, new AISourceUrlEventData
-                {
-                    SourceId = citation.EncryptedIndex ?? citation.Url,
-                    Url = citation.Url,
-                    Title = citation.Title ?? citation.Url,
-                    Type = citation.Type
-                });
-            }
-        }
-    }
-
     private static AIFileContentPart ToUnifiedFilePart(MessageContentBlock block)
     {
         var source = block.Source;

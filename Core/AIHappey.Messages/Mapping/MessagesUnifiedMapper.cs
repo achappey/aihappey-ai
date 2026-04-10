@@ -34,6 +34,8 @@ public static partial class MessagesUnifiedMapper
     {
         internal readonly Dictionary<int, StreamBlockState> Blocks = new();
 
+        internal readonly HashSet<string> SeenSourceIds = new(StringComparer.OrdinalIgnoreCase);
+
         internal MessagesResponse? CurrentMessage { get; set; }
 
         internal MessagesUsage? Usage { get; set; }
@@ -87,6 +89,7 @@ public static partial class MessagesUnifiedMapper
         internal void Reset()
         {
             Blocks.Clear();
+            SeenSourceIds.Clear();
             CurrentMessage = null;
             Usage = null;
             StopReason = null;

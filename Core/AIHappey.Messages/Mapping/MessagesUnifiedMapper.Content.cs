@@ -5,7 +5,7 @@ namespace AIHappey.Messages.Mapping;
 
 public static partial class MessagesUnifiedMapper
 {
-    private static IEnumerable<AIContentPart> ToUnifiedContentParts(MessagesContent content)
+    private static IEnumerable<AIContentPart> ToUnifiedContentParts(MessagesContent content, string? providerId = null)
     {
         if (content.IsText && !string.IsNullOrWhiteSpace(content.Text))
         {
@@ -36,7 +36,7 @@ public static partial class MessagesUnifiedMapper
                     {
                         Type = "text",
                         Text = block.Text ?? string.Empty,
-                        Metadata = CreateBlockMetadata(block)
+                        Metadata = CreateBlockMetadata(block, providerId)
                     };
                     break;
                 case "thinking":
@@ -45,7 +45,7 @@ public static partial class MessagesUnifiedMapper
                     {
                         Type = "reasoning",
                         Text = block.Thinking ?? block.Data,
-                        Metadata = CreateBlockMetadata(block)
+                        Metadata = CreateBlockMetadata(block, providerId)
                     };
                     break;
                 case "image":
@@ -60,7 +60,7 @@ public static partial class MessagesUnifiedMapper
                         MediaType = "application/json",
                         Filename = block.Title ?? block.Name ?? block.Id,
                         Data = JsonSerializer.SerializeToElement(block, Json),
-                        Metadata = CreateBlockMetadata(block)
+                        Metadata = CreateBlockMetadata(block, providerId)
                     };
                     break;
             }
@@ -99,12 +99,22 @@ public static partial class MessagesUnifiedMapper
         };
     }
 
-    private static Dictionary<string, object?> CreateBlockMetadata(MessageContentBlock block)
-        => new()
+    private static Dictionary<string, object?> CreateBlockMetadata(MessageContentBlock block, string? providerId = null)
+    {
+        var metadata = new Dictionary<string, object?>
         {
             ["messages.block.type"] = block.Type,
             ["messages.block.raw"] = JsonSerializer.SerializeToElement(block, Json)
         };
+
+        if (IsToolOutputBlock(block.Type) && block.Type != "tool_result" && !string.IsNullOrWhiteSpace(providerId))
+        {
+            metadata["messages.provider.id"] = providerId;
+            metadata["messages.provider.metadata"] = CreateToolOutputProviderMetadata(providerId, block);
+        }
+
+        return metadata;
+    }
 
     private static MessageContentBlock? ExtractRawBlock(Dictionary<string, object?>? metadata)
     {
@@ -159,13 +169,13 @@ public static partial class MessagesUnifiedMapper
                 ? block.Content.Blocks
                 : null;
 
-            return new ModelContextProtocol.Protocol.CallToolResult
+            return JsonSerializer.SerializeToElement(new
             {
-                StructuredContent = JsonSerializer.SerializeToElement(new
+                structuredContent = new
                 {
-                    results = results
-                }, Json)
-            };
+                    content = results
+                }
+            }, Json);
         }
 
         if (block.Content is { IsText: true })
@@ -227,7 +237,12 @@ public static partial class MessagesUnifiedMapper
     private static IEnumerable<(MessageContentBlock? AssistantBlock, MessageContentBlock? UserBlock)> ToMessageToolBlocks(AIToolCallContentPart toolPart)
     {
         if (toolPart.IsProviderToolCall)
+        {
+            if (TryCreateProviderExecutedToolResultBlock(toolPart, out var providerResultBlock))
+                yield return (null, providerResultBlock);
+
             yield break;
+        }
 
         yield return (
             new MessageContentBlock
@@ -272,4 +287,99 @@ public static partial class MessagesUnifiedMapper
 
     private static bool HasToolOutput(AIToolCallContentPart toolPart)
         => toolPart.Output is not null;
+
+    private static bool TryCreateProviderExecutedToolResultBlock(
+        AIToolCallContentPart toolPart,
+        out MessageContentBlock? block)
+    {
+        block = null;
+
+        if (!TryExtractProviderExecutedMessagesContent(toolPart, out var content))
+            return false;
+
+        var raw = ExtractRawBlock(toolPart.Metadata);
+        block = raw ?? new MessageContentBlock();
+        block.Type = ExtractValue<string>(toolPart.Metadata, "messages.block.type") ?? "tool_result";
+        block.ToolUseId = toolPart.ToolCallId;
+        block.Content = content;
+        block.IsError = string.Equals(toolPart.State, "output-error", StringComparison.OrdinalIgnoreCase);
+
+        return true;
+    }
+
+    private static bool TryExtractProviderExecutedMessagesContent(
+        AIToolCallContentPart toolPart,
+        out MessagesContent? content)
+    {
+        content = null;
+
+        if (!TryGetMatchingProviderMetadata(toolPart.Metadata, out _))
+            return false;
+
+        if (!TryGetProviderExecutedStructuredContent(toolPart.Output, out var structuredContent))
+            return false;
+
+        if (!structuredContent.TryGetProperty("content", out var contentElement))
+            return false;
+
+        content = contentElement.ValueKind switch
+        {
+            JsonValueKind.Array => new MessagesContent(
+                JsonSerializer.Deserialize<List<MessageContentBlock>>(contentElement.GetRawText(), Json) ?? []),
+            JsonValueKind.String => new MessagesContent(contentElement.GetString() ?? string.Empty),
+            JsonValueKind.Null or JsonValueKind.Undefined => new MessagesContent(string.Empty),
+            _ => new MessagesContent(contentElement.Clone())
+        };
+
+        return true;
+    }
+
+    private static bool TryGetProviderExecutedStructuredContent(object? output, out JsonElement structuredContent)
+    {
+        structuredContent = default;
+
+        if (output is null)
+            return false;
+
+        if (output is ModelContextProtocol.Protocol.CallToolResult callToolResult)
+        {
+            var candidate = callToolResult.StructuredContent;
+            if (candidate is JsonElement json && json.ValueKind == JsonValueKind.Object)
+            {
+                structuredContent = json;
+                return true;
+            }
+
+            return false;
+        }
+
+        if (output is JsonElement outputJson)
+        {
+            if (outputJson.ValueKind == JsonValueKind.Object &&
+                outputJson.TryGetProperty("structuredContent", out var inlineStructuredContent) &&
+                inlineStructuredContent.ValueKind == JsonValueKind.Object)
+            {
+                structuredContent = inlineStructuredContent;
+                return true;
+            }
+
+            var deserialized = DeserializeFromObject<ModelContextProtocol.Protocol.CallToolResult>(outputJson);
+            if (deserialized?.StructuredContent is JsonElement deserializedStructuredContent &&
+                deserializedStructuredContent.ValueKind == JsonValueKind.Object)
+            {
+                structuredContent = deserializedStructuredContent;
+                return true;
+            }
+        }
+
+        var hydrated = DeserializeFromObject<ModelContextProtocol.Protocol.CallToolResult>(output);
+        if (hydrated?.StructuredContent is JsonElement hydratedStructuredContent &&
+            hydratedStructuredContent.ValueKind == JsonValueKind.Object)
+        {
+            structuredContent = hydratedStructuredContent;
+            return true;
+        }
+
+        return false;
+    }
 }

@@ -676,6 +676,9 @@ public sealed class MessageStreamDelta
     [JsonPropertyName("partial_json")]
     public string? PartialJson { get; set; }
 
+    [JsonPropertyName("citation")]
+    public MessageCitation? Citation { get; set; }
+
     [JsonPropertyName("stop_reason")]
     public string? StopReason { get; set; }
 

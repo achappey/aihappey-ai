@@ -101,6 +101,24 @@ public static partial class MessagesUnifiedMapper
         return DeserializeFromObject<T>(value);
     }
 
+    private static bool TryGetMatchingProviderMetadata(
+        Dictionary<string, object?>? metadata,
+        out Dictionary<string, object>? providerMetadata)
+    {
+        providerMetadata = null;
+
+        var providerId = ExtractValue<string>(metadata, "messages.provider.id");
+        if (string.IsNullOrWhiteSpace(providerId))
+            return false;
+
+        var nested = ExtractObject<Dictionary<string, Dictionary<string, object>>>(metadata, "messages.provider.metadata");
+        if (nested is null || !nested.TryGetValue(providerId, out var matchedProviderMetadata) || matchedProviderMetadata.Count == 0)
+            return false;
+
+        providerMetadata = matchedProviderMetadata;
+        return true;
+    }
+
     private static T? DeserializeFromObject<T>(object? value)
     {
         if (value is null)
