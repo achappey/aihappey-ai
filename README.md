@@ -46,7 +46,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Ambient        | ✅        | ✅                | ❌            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Anannas        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Answira        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Anthropic      | ✅        | ❌                | ❌            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Anthropic      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Apertis        | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ➖                       | ❌               | ❌          | ❌          | ➖          |
 | AndyAPI        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | API1SBS        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -100,7 +100,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | CanopyWave     | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Cartesia       | ✅        | ❌                | ❌            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | CaseDev        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ✅          |
-| Cerebras       | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Cerebras       | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ChainGPT       | ✅        | ✅                | ❌            | ❌            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ChainHub       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | CheapestInf... | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -362,7 +362,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | PayPerQ        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Pellet         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Perceptron     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Perplexity     | ✅        | 🟡                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ❌               | ➖          | ➖          | ➖          |
+| Perplexity     | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | PiAPI          | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | Picsart        | ✅        | ❌                | ❌            | ❌            | ✅        | 🟡                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Pinecone       | ❌        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |

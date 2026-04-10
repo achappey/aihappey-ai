@@ -13,6 +13,7 @@ using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -54,7 +55,6 @@ public partial class AnthropicProvider : IModelProvider
     {
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
-
 
         var client = new ANT.AnthropicClient(GetKey());
 
@@ -172,29 +172,195 @@ public partial class AnthropicProvider : IModelProvider
 
         this.SetDefaultResponseProperties(options);
 
-        return await _client.PostMessages(
+        var response = await _client.PostMessages(
             JsonSerializer.SerializeToElement(options),
             headers,
             ct: cancellationToken);
+
+        var typed = response.Deserialize<MessagesResponse>(MessagesJson.Default);
+        var pricing = ResolveModelPricing(typed?.Model, options.Model);
+
+        return EnrichMessagesResponseJson(response, typed?.Usage, pricing);
     }
 
-    public IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
+    public async IAsyncEnumerable<JsonElement> MessagesStreamingAsync(
         JsonElement request,
         Dictionary<string, string> headers,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
         var options = request.Deserialize<MessagesRequest>()!;
 
         this.SetDefaultResponseProperties(options);
 
-        return _client.PostMessagesStreaming(
-            JsonSerializer.SerializeToElement(options, new JsonSerializerOptions(JsonSerializerDefaults.Web)
-            {
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            }),
+        var payload = JsonSerializer.SerializeToElement(options, new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
+
+        MessagesUsage? usage = null;
+        string? responseModel = null;
+
+        await foreach (var partJson in _client.PostMessagesStreaming(
+            payload,
             headers,
-            ct: cancellationToken);
+            ct: cancellationToken).WithCancellation(cancellationToken))
+        {
+            var part = partJson.Deserialize<MessageStreamPart>(MessagesJson.Default);
+
+            if (!string.IsNullOrWhiteSpace(part?.Message?.Model))
+                responseModel = part.Message.Model;
+
+            if (part?.Message?.Usage is not null)
+                usage = MergeUsage(usage, part.Message.Usage);
+
+            if (part?.Usage is not null)
+                usage = MergeUsage(usage, part.Usage);
+
+            if (string.Equals(part?.Type, "message_stop", StringComparison.OrdinalIgnoreCase))
+            {
+                var pricing = ResolveModelPricing(responseModel, options.Model);
+                yield return EnrichMessageStreamPartJson(partJson, usage, pricing);
+                continue;
+            }
+
+            yield return partJson;
+        }
+    }
+
+    private ModelPricing? ResolveModelPricing(string? responseModelId, string? fallbackModelId)
+    {
+        var pricing = GetIdentifier().GetPricing();
+        if (pricing is null || pricing.Count == 0)
+            return null;
+
+        var modelId = !string.IsNullOrWhiteSpace(responseModelId)
+            ? responseModelId
+            : fallbackModelId;
+
+        if (string.IsNullOrWhiteSpace(modelId))
+            return null;
+
+        var normalizedModelId = modelId.Contains('/', StringComparison.Ordinal)
+            ? modelId
+            : modelId.ToModelId(GetIdentifier());
+
+        return pricing.TryGetValue(normalizedModelId, out var modelPricing)
+            ? modelPricing
+            : null;
+    }
+
+    private static JsonElement EnrichMessagesResponseJson(
+        JsonElement response,
+        MessagesUsage? usage,
+        ModelPricing? pricing)
+    {
+        if (pricing is null || usage is null)
+            return response;
+
+        var typed = response.Deserialize<MessagesResponse>(MessagesJson.Default);
+        if (typed is null)
+            return response;
+
+        typed.Metadata = ModelCostMetadataEnricher.AddCost(typed.Metadata, ComputeMessagesCost(usage, pricing));
+        return JsonSerializer.SerializeToElement(typed, MessagesJson.Default);
+    }
+
+    private static JsonElement EnrichMessageStreamPartJson(
+        JsonElement part,
+        MessagesUsage? usage,
+        ModelPricing? pricing)
+    {
+        if (pricing is null || usage is null)
+            return part;
+
+        var typed = part.Deserialize<MessageStreamPart>(MessagesJson.Default);
+        if (typed is null)
+            return part;
+
+        typed.Metadata = ModelCostMetadataEnricher.AddCost(typed.Metadata, ComputeMessagesCost(usage, pricing));
+        return JsonSerializer.SerializeToElement(typed, MessagesJson.Default);
+    }
+
+    private static decimal? ComputeMessagesCost(
+        MessagesUsage? usage,
+        ModelPricing? pricing)
+    {
+        if (usage is null || pricing is null)
+            return null;
+
+        var inputTokens = usage.InputTokens ?? 0;
+        var outputTokens = usage.OutputTokens ?? 0;
+        var cachedInputReadTokens = usage.CacheReadInputTokens ?? 0;
+        var cachedInputWriteTokens = GetCacheCreationInputTokens(usage.CacheCreation);
+
+        if (inputTokens <= 0 && outputTokens <= 0 && cachedInputReadTokens <= 0 && cachedInputWriteTokens <= 0)
+            return null;
+
+        return ModelCostMetadataEnricher.ComputeCost(
+            pricing,
+            inputTokens,
+            outputTokens,
+            cachedInputReadTokens,
+            cachedInputWriteTokens);
+    }
+
+    private static int GetCacheCreationInputTokens(MessagesCacheCreation? cacheCreation)
+        => (cacheCreation?.Ephemeral1hInputTokens ?? 0)
+            + (cacheCreation?.Ephemeral5mInputTokens ?? 0);
+
+    private static MessagesUsage? MergeUsage(MessagesUsage? current, MessagesUsage? update)
+    {
+        if (update is null)
+            return current;
+
+        if (current is null)
+            return update;
+
+        return new MessagesUsage
+        {
+            CacheCreation = MergeCacheCreation(current.CacheCreation, update.CacheCreation),
+            CacheCreationInputTokens = update.CacheCreationInputTokens ?? current.CacheCreationInputTokens,
+            CacheReadInputTokens = update.CacheReadInputTokens ?? current.CacheReadInputTokens,
+            InferenceGeo = update.InferenceGeo ?? current.InferenceGeo,
+            InputTokens = update.InputTokens ?? current.InputTokens,
+            OutputTokens = update.OutputTokens ?? current.OutputTokens,
+            ServerToolUse = update.ServerToolUse ?? current.ServerToolUse,
+            ServiceTier = update.ServiceTier ?? current.ServiceTier,
+            AdditionalProperties = MergeAdditionalProperties(current.AdditionalProperties, update.AdditionalProperties)
+        };
+    }
+
+    private static MessagesCacheCreation? MergeCacheCreation(MessagesCacheCreation? current, MessagesCacheCreation? update)
+    {
+        if (update is null)
+            return current;
+
+        if (current is null)
+            return update;
+
+        return new MessagesCacheCreation
+        {
+            Ephemeral1hInputTokens = update.Ephemeral1hInputTokens ?? current.Ephemeral1hInputTokens,
+            Ephemeral5mInputTokens = update.Ephemeral5mInputTokens ?? current.Ephemeral5mInputTokens
+        };
+    }
+
+    private static Dictionary<string, JsonElement>? MergeAdditionalProperties(
+        Dictionary<string, JsonElement>? current,
+        Dictionary<string, JsonElement>? update)
+    {
+        if (current is null || current.Count == 0)
+            return update;
+
+        if (update is null || update.Count == 0)
+            return current;
+
+        var merged = new Dictionary<string, JsonElement>(current, StringComparer.OrdinalIgnoreCase);
+        foreach (var item in update)
+            merged[item.Key] = item.Value;
+
+        return merged;
     }
 
     private void ApplyAuthHeader()
@@ -215,3 +381,4 @@ public partial class AnthropicProvider : IModelProvider
         => this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
 
 }
+

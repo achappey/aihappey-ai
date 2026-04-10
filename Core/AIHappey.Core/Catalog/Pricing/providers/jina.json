@@ -1,0 +1,8 @@
+{
+  "jina/jina-deepsearch-v1": {
+    "pricing": {
+      "input": "0.00000005",
+      "output": "0.00000005"
+    }
+  }
+}

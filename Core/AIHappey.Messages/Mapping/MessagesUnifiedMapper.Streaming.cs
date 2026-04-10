@@ -17,15 +17,23 @@ public static partial class MessagesUnifiedMapper
 
         foreach (var envelope in ToUnifiedEnvelopes(part, providerId, state))
         {
+            var metadata = new Dictionary<string, object?>
+            {
+                ["messages.stream.type"] = part.Type,
+                ["messages.stream.raw"] = JsonSerializer.SerializeToElement(part, Json)
+            };
+
+            if (envelope.Data is AIFinishEventData finishData && finishData.MessageMetadata is not null)
+            {
+                foreach (var item in finishData.MessageMetadata)
+                    metadata[item.Key] = item.Value;
+            }
+
             yield return new AIStreamEvent
             {
                 ProviderId = providerId,
                 Event = envelope,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["messages.stream.type"] = part.Type,
-                    ["messages.stream.raw"] = JsonSerializer.SerializeToElement(part, Json)
-                }
+                Metadata = metadata
             };
         }
 
@@ -206,6 +214,7 @@ public static partial class MessagesUnifiedMapper
                         + (state.Usage?.OutputTokens ?? 0)
                         + (state.Usage?.CacheCreationInputTokens ?? 0)
                         + (state.Usage?.CacheReadInputTokens ?? 0),
+                    MessageMetadata = part.Metadata?.ToDictionary(a => a.Key, a => (object)a.Value),
                     FinishReason = ToUiFinishReason(state.StopReason),
                     StopSequence = state.StopSequence
                 });

@@ -16,7 +16,9 @@ public partial class XAIProvider
         var response = await _client.GetResponses(
                    options, ct: cancellationToken);
 
-        response.Metadata = MergeGatewayCostMetadata(response.Metadata, response.Usage);
+        response.Metadata = ModelCostMetadataEnricher.AddCost(
+            response.Metadata,
+            GetGatewayCost(response.Usage));
 
         return response;
     }
@@ -33,30 +35,12 @@ public partial class XAIProvider
         {
             if (update is ResponseCompleted completed)
             {
-                completed.Response.Metadata = MergeGatewayCostMetadata(
+                completed.Response.Metadata = ModelCostMetadataEnricher.AddCost(
                     completed.Response.Metadata,
-                    completed.Response.Usage);
+                    GetGatewayCost(completed.Response.Usage));
             }
 
             yield return update;
         }
-    }
-
-    private static Dictionary<string, object?>? MergeGatewayCostMetadata(
-        Dictionary<string, object?>? existingMetadata,
-        object? usage)
-    {
-        var gatewayMetadata = CreateGatewayCostMetadata(usage);
-        if (gatewayMetadata == null)
-            return existingMetadata;
-
-        var merged = existingMetadata != null
-            ? new Dictionary<string, object?>(existingMetadata)
-            : new Dictionary<string, object?>();
-
-        foreach (var entry in gatewayMetadata)
-            merged[entry.Key] = entry.Value;
-
-        return merged;
     }
 }

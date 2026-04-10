@@ -73,18 +73,12 @@ public partial class XAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    internal static Dictionary<string, object>? CreateGatewayCostMetadata(object? usage)
+    internal static decimal? GetGatewayCost(object? usage)
     {
         if (!TryGetUsageCost(usage, out var cost))
             return null;
 
-        return new Dictionary<string, object>
-        {
-            ["gateway"] = new Dictionary<string, object>
-            {
-                ["cost"] = cost
-            }
-        };
+        return cost;
     }
 
     private static bool TryGetUsageCost(object? usage, out decimal cost)

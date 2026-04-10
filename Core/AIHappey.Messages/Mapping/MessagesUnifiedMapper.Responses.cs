@@ -11,6 +11,10 @@ public static partial class MessagesUnifiedMapper
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
 
         var outputItems = ToUnifiedOutputItems(response).ToList();
+        var metadata = response.Metadata?.ToDictionary(
+           kvp => kvp.Key,
+           kvp => (object?)kvp.Value
+       );
 
         return new AIResponse
         {
@@ -19,7 +23,8 @@ public static partial class MessagesUnifiedMapper
             Status = ToUnifiedStatus(response.StopReason),
             Usage = response.Usage,
             Output = outputItems.Count == 0 ? null : new AIOutput { Items = outputItems },
-            Metadata = BuildUnifiedResponseMetadata(response)
+            //  Metadata = BuildUnifiedResponseMetadata(response)
+            Metadata = metadata
         };
     }
 
@@ -274,4 +279,6 @@ public static partial class MessagesUnifiedMapper
             };
         }
     }
+
+
 }

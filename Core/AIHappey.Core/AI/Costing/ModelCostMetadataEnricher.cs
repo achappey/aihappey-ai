@@ -31,22 +31,46 @@ public static class ModelCostMetadataEnricher
         }
 
         var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, cachedInputWriteTokens);
-
-        var metadata = new Dictionary<string, object>(finish.MessageMetadata);
-
-        if (!metadata.TryGetValue("gateway", out var gatewayObj) || gatewayObj is not Dictionary<string, object> gateway)
-        {
-            gateway = new Dictionary<string, object>();
-            metadata["gateway"] = gateway;
-        }
-
-        gateway["cost"] = cost;
+        var metadata = AddCost(
+            finish.MessageMetadata.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
+            cost);
 
         return new FinishUIPart
         {
             FinishReason = finish.FinishReason,
-            MessageMetadata = metadata
+            MessageMetadata = metadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value!)
         };
+    }
+
+    public static Dictionary<string, object?> AddCost(
+        Dictionary<string, object?>? existingMetadata,
+        decimal? cost)
+    {
+        var metadata = existingMetadata != null
+            ? new Dictionary<string, object?>(existingMetadata)
+            : [];
+
+        if (!cost.HasValue)
+            return metadata;
+
+        if (!metadata.TryGetValue("gateway", out var gatewayObj) || gatewayObj is not Dictionary<string, object?> gateway)
+        {
+            gateway = new Dictionary<string, object?>();
+            metadata["gateway"] = gateway;
+        }
+
+        gateway["cost"] = cost.Value;
+        return metadata;
+    }
+
+    public static Dictionary<string, JsonElement>? AddCost(
+        Dictionary<string, JsonElement>? existingMetadata,
+        decimal? cost)
+    {
+        var enriched = AddCost(ToObjectMetadata(existingMetadata), cost);
+
+        return JsonSerializer.SerializeToElement(enriched, JsonSerializerOptions.Web)
+            .Deserialize<Dictionary<string, JsonElement>>(JsonSerializerOptions.Web);
     }
 
     public static Dictionary<string, object?> AddCostFromUsage(
@@ -54,17 +78,17 @@ public static class ModelCostMetadataEnricher
         Dictionary<string, object?>? existingMetadata,
         ModelPricing? pricing)
     {
-        var metadata = existingMetadata != null
-            ? new Dictionary<string, object?>(existingMetadata)
-            : [];
-
         if (pricing == null || usage == null)
-            return metadata;
+            return existingMetadata != null
+                ? new Dictionary<string, object?>(existingMetadata)
+                : [];
 
         if (!TryGetUsageInt(usage, "input_tokens", out var inputTokens)
             && !TryGetUsageInt(usage, "inputTokens", out inputTokens))
         {
-            return metadata;
+            return existingMetadata != null
+                ? new Dictionary<string, object?>(existingMetadata)
+                : [];
         }
 
         TryGetUsageInt(usage, "output_tokens", out var outputTokens);
@@ -85,15 +109,7 @@ public static class ModelCostMetadataEnricher
             outputTokens = Math.Max(0, totalTokens - inputTokens - cachedInputReadTokens);
 
         var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, 0);
-
-        if (!metadata.TryGetValue("gateway", out var gatewayObj) || gatewayObj is not Dictionary<string, object?> gateway)
-        {
-            gateway = new Dictionary<string, object?>();
-            metadata["gateway"] = gateway;
-        }
-
-        gateway["cost"] = cost;
-        return metadata;
+        return AddCost(existingMetadata, cost);
     }
 
     public static int? GetTotalTokens(object? usage)
@@ -110,7 +126,7 @@ public static class ModelCostMetadataEnricher
         return null;
     }
 
-    private static decimal ComputeCost(
+    public static decimal ComputeCost(
         ModelPricing pricing,
         int inputTokens,
         int outputTokens,
@@ -126,6 +142,15 @@ public static class ModelCostMetadataEnricher
             cost += cachedInputWriteTokens * pricing.InputCacheWrite.Value;
 
         return cost;
+    }
+
+    private static Dictionary<string, object?>? ToObjectMetadata(Dictionary<string, JsonElement>? metadata)
+    {
+        if (metadata is null || metadata.Count == 0)
+            return null;
+
+        return JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
+            .Deserialize<Dictionary<string, object?>>(JsonSerializerOptions.Web);
     }
 
     private static bool TryGetUsageInt(object usage, string key, out int value)

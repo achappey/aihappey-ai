@@ -97,6 +97,9 @@ public sealed class MessagesResponse
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+    [JsonPropertyName("metadata")]
+    public Dictionary<string, JsonElement>? Metadata { get; set; }
 }
 
 public sealed class MessageParam
@@ -657,6 +660,10 @@ public sealed class MessageStreamPart
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+    [JsonPropertyName("metadata")]
+    public Dictionary<string, JsonElement>? Metadata { get; set; }
+
 }
 
 public sealed class MessageStreamDelta
