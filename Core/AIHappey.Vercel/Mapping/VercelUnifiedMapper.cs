@@ -134,15 +134,23 @@ public static class VercelUnifiedMapper
             "text-start" => new TextStartUIMessageStreamPart
             {
                 Id = envelope.Id ?? string.Empty,
+                ProviderMetadata = GetTypedData<AITextStartEventData>(envelope)?.ProviderMetadata
+                    ?? GetValue<Dictionary<string, object>>(data, "providerMetadata")
             },
             "text-delta" => new TextDeltaUIMessageStreamPart
             {
                 Id = envelope.Id ?? string.Empty,
-                Delta = envelope.Data?.ToString() ?? string.Empty,
+                Delta = GetTypedData<AITextDeltaEventData>(envelope)?.Delta
+                    ?? GetValue<string>(data, "delta")
+                    ?? envelope.Data?.ToString() ?? string.Empty,
+                ProviderMetadata = GetTypedData<AITextDeltaEventData>(envelope)?.ProviderMetadata
+                    ?? GetValue<Dictionary<string, object>>(data, "providerMetadata")
             },
             "text-end" => new TextEndUIMessageStreamPart
             {
                 Id = envelope.Id ?? string.Empty,
+                ProviderMetadata = GetTypedData<AITextEndEventData>(envelope)?.ProviderMetadata
+                    ?? GetValue<Dictionary<string, object>>(data, "providerMetadata")
             },
             "reasoning-start" => new ReasoningStartUIPart
             {
@@ -151,7 +159,7 @@ public static class VercelUnifiedMapper
                 {
                   {providerId, new Dictionary<string, object>()
                     {
-                        {"encrypted_content", GetValue<string>(data, "encrypted_content") ?? string.Empty}
+                        {"encrypted_content", GetTypedData<AIReasoningStartEventData>(envelope)?.EncryptedContent?.ToString() ?? GetValue<string>(data, "encrypted_content") ?? string.Empty}
                     }
                     }
                 }
@@ -159,7 +167,9 @@ public static class VercelUnifiedMapper
             "reasoning-delta" => new ReasoningDeltaUIPart
             {
                 Id = envelope.Id ?? string.Empty,
-                Delta = envelope.Data?.ToString() ?? string.Empty,
+                Delta = GetTypedData<AIReasoningDeltaEventData>(envelope)?.Delta
+                    ?? GetValue<string>(data, "delta")
+                    ?? envelope.Data?.ToString() ?? string.Empty,
             },
             "reasoning-end" => new ReasoningEndUIPart
             {
@@ -168,7 +178,7 @@ public static class VercelUnifiedMapper
                 {
                   {providerId, new Dictionary<string, object>()
                     {
-                        {"encrypted_content", GetValue<string>(data, "encrypted_content") ?? string.Empty}
+                        {"encrypted_content", GetTypedData<AIReasoningEndEventData>(envelope)?.EncryptedContent?.ToString() ?? GetValue<string>(data, "encrypted_content") ?? string.Empty}
                     }
                     }
                 }
@@ -207,10 +217,10 @@ public static class VercelUnifiedMapper
             },
             "source-url" => new SourceUIPart
             {
-                SourceId = GetValue<string>(data, "sourceId") ?? string.Empty,
-                Url = GetValue<string>(data, "url") ?? string.Empty,
-                Title = GetValue<string>(data, "title"),
-                ProviderMetadata = GetNestedProviderMetadata(data)
+                SourceId = GetTypedData<AISourceUrlEventData>(envelope)?.SourceId ?? GetValue<string>(data, "sourceId") ?? string.Empty,
+                Url = GetTypedData<AISourceUrlEventData>(envelope)?.Url ?? GetValue<string>(data, "url") ?? string.Empty,
+                Title = GetTypedData<AISourceUrlEventData>(envelope)?.Title ?? GetValue<string>(data, "title"),
+                ProviderMetadata = GetTypedData<AISourceUrlEventData>(envelope)?.ProviderMetadata ?? GetNestedProviderMetadata(data)
             },
             "source-document" => new SourceDocumentPart
             {
@@ -291,9 +301,9 @@ public static class VercelUnifiedMapper
             _ when type.StartsWith("data-", StringComparison.OrdinalIgnoreCase) => new DataUIPart
             {
                 Type = type,
-                Id = GetValue<string>(data, "id"),
-                Data = GetValue<object>(data, "data") ?? new { },
-                Transient = GetValue<bool?>(data, "transient")
+                Id = GetTypedData<AIDataEventData>(envelope)?.Id ?? GetValue<string>(data, "id"),
+                Data = GetTypedData<AIDataEventData>(envelope)?.Data ?? GetValue<object>(data, "data") ?? new { },
+                Transient = GetTypedData<AIDataEventData>(envelope)?.Transient ?? GetValue<bool?>(data, "transient")
             },
             _ when type.StartsWith("tool-", StringComparison.OrdinalIgnoreCase)
                   && type != "tool-call"
@@ -430,6 +440,27 @@ public static class VercelUnifiedMapper
         catch
         {
             return new Dictionary<string, object?>();
+        }
+    }
+
+    private static T? GetTypedData<T>(AIEventEnvelope envelope)
+    {
+        if (envelope.Data is T typed)
+            return typed;
+
+        if (envelope.Data is null)
+            return default;
+
+        try
+        {
+            if (envelope.Data is JsonElement json)
+                return JsonSerializer.Deserialize<T>(json.GetRawText(), Json);
+
+            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(envelope.Data, Json), Json);
+        }
+        catch
+        {
+            return default;
         }
     }
 

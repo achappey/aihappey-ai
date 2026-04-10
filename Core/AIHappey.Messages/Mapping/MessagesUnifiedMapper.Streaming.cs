@@ -1,0 +1,265 @@
+using System.Text.Json;
+using AIHappey.Unified.Models;
+
+namespace AIHappey.Messages.Mapping;
+
+public static partial class MessagesUnifiedMapper
+{
+    public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvents(
+        this MessageStreamPart part,
+        string providerId,
+        MessagesStreamMappingState? state = null)
+    {
+        ArgumentNullException.ThrowIfNull(part);
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+
+        state ??= new MessagesStreamMappingState();
+
+        foreach (var envelope in ToUnifiedEnvelopes(part, state))
+        {
+            yield return new AIStreamEvent
+            {
+                ProviderId = providerId,
+                Event = envelope,
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["messages.stream.type"] = part.Type,
+                    ["messages.stream.raw"] = JsonSerializer.SerializeToElement(part, Json)
+                }
+            };
+        }
+
+        yield return new AIStreamEvent
+        {
+            ProviderId = providerId,
+            Event = CreateDataEnvelope(
+                part.Type,
+                JsonSerializer.SerializeToElement(part, part.GetType(), Json)),
+            Metadata = new Dictionary<string, object?>
+            {
+                ["messages.stream.type"] = part.Type,
+                ["messages.stream.raw"] = JsonSerializer.SerializeToElement(part, Json)
+            }
+        };
+    }
+
+    private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelopes(MessageStreamPart part, MessagesStreamMappingState state)
+    {
+        switch (part.Type)
+        {
+            case "message_start":
+                state.CurrentMessage = part.Message;
+                state.Usage = part.Message?.Usage;
+                yield break;
+
+            case "content_block_start":
+                if (part.Index is null || part.ContentBlock is null)
+                    yield break;
+
+                var blockState = state.GetOrCreate(part.Index.Value, part.ContentBlock, part.Message?.Id ?? state.CurrentMessage?.Id);
+                var eventId = ResolveStreamEventId(part.ContentBlock, blockState.EventId);
+
+                if (part.ContentBlock.Type == "text")
+                {
+                    yield return CreateEnvelope("text-start", eventId, new AITextStartEventData());
+                }
+                else if (part.ContentBlock.Type is "thinking" or "redacted_thinking")
+                {
+                    yield return CreateEnvelope("reasoning-start", eventId, new AIReasoningStartEventData
+                    {
+                        Signature = part.ContentBlock.Signature,
+                        EncryptedContent = part.ContentBlock.Data
+                    });
+                }
+                else if (IsToolInputBlock(part.ContentBlock.Type))
+                {
+                    yield return CreateEnvelope("tool-input-start", eventId, new AIToolInputStartEventData
+                    {
+                        ToolName = part.ContentBlock.Name ?? part.ContentBlock.Type,
+                        Title = part.ContentBlock.Name,
+                        ProviderExecuted = IsProviderExecutedTool(part.ContentBlock.Type)
+                    });
+                }
+                else if (IsToolOutputBlock(part.ContentBlock.Type))
+                {
+                    yield return CreateEnvelope("tool-output-available", eventId, new AIToolOutputAvailableEventData
+                    {
+                        ProviderExecuted = true,
+                        Output = SerializeBlockOutput(part.ContentBlock) ?? new { }
+                    });
+                }
+
+                foreach (var sourceEvent in CreateSourceEnvelopes(part.ContentBlock, eventId))
+                    yield return sourceEvent;
+                yield break;
+
+            case "content_block_delta":
+                if (part.Index is null || part.Delta is null || !state.Blocks.TryGetValue(part.Index.Value, out var deltaState))
+                    yield break;
+
+                switch (part.Delta.Type)
+                {
+                    case "text_delta":
+                        yield return CreateEnvelope("text-delta", deltaState.EventId, new AITextDeltaEventData
+                        {
+                            Delta = part.Delta.Text ?? string.Empty
+                        });
+                        break;
+                    case "thinking_delta":
+                        yield return CreateEnvelope("reasoning-delta", deltaState.EventId, new AIReasoningDeltaEventData
+                        {
+                            Delta = part.Delta.Thinking ?? string.Empty
+                        });
+                        break;
+                    case "signature_delta":
+                        deltaState.Signature = part.Delta.Signature;
+                        break;
+                    case "input_json_delta":
+                        if (!string.IsNullOrEmpty(part.Delta.PartialJson))
+                        {
+                            deltaState.InputJson.Append(part.Delta.PartialJson);
+                            yield return CreateEnvelope("tool-input-delta", deltaState.EventId, new AIToolInputDeltaEventData
+                            {
+                                InputTextDelta = part.Delta.PartialJson
+                            });
+                        }
+                        break;
+                }
+                yield break;
+
+            case "content_block_stop":
+                if (part.Index is null || !state.Blocks.TryGetValue(part.Index.Value, out var stopState))
+                    yield break;
+
+                if (stopState.BlockType == "text")
+                {
+                    yield return CreateEnvelope("text-end", stopState.EventId, new AITextEndEventData());
+                }
+                else if (stopState.BlockType is "thinking" or "redacted_thinking")
+                {
+                    yield return CreateEnvelope("reasoning-end", stopState.EventId, new AIReasoningEndEventData
+                    {
+                        Signature = stopState.Signature,
+                        EncryptedContent = stopState.Block.Data
+                    });
+                }
+                else if (IsToolInputBlock(stopState.BlockType))
+                {
+                    yield return CreateEnvelope("tool-input-available", stopState.EventId, new AIToolInputAvailableEventData
+                    {
+                        ToolName = stopState.Block.Name ?? stopState.BlockType,
+                        Title = stopState.Block.Name,
+                        ProviderExecuted = IsProviderExecutedTool(stopState.BlockType),
+                        Input = JsonDocument.Parse(stopState.InputJson.ToString()).RootElement
+                    });
+                }
+
+                yield break;
+
+            case "message_delta":
+                state.Usage = MergeUsage(state.Usage, part.Usage);
+                state.StopReason = part.Delta?.StopReason ?? state.StopReason;
+                state.StopSequence = part.Delta?.StopSequence ?? state.StopSequence;
+                yield break;
+
+            case "message_stop":
+                yield return CreateEnvelope("finish", state.CurrentMessage?.Id, new AIFinishEventData
+                {
+                    Model = state.CurrentMessage?.Model,
+                    CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    InputTokens = state.Usage?.InputTokens,
+                    OutputTokens = state.Usage?.OutputTokens,
+                    TotalTokens = (state.Usage?.InputTokens ?? 0)
+                        + (state.Usage?.OutputTokens ?? 0)
+                        + (state.Usage?.CacheCreationInputTokens ?? 0)
+                        + (state.Usage?.CacheReadInputTokens ?? 0),
+                    FinishReason = ToUiFinishReason(state.StopReason),
+                    StopSequence = state.StopSequence
+                });
+                state.Reset();
+                yield break;
+
+            case "error":
+                yield return CreateEnvelope("error", state.CurrentMessage?.Id, new AIErrorEventData
+                {
+                    ErrorText = part.Error?.Message ?? part.AdditionalProperties?.GetValueOrDefault("error").ToString() ?? "Messages stream error"
+                });
+                yield break;
+
+            case "ping":
+                yield break;
+        }
+    }
+
+    private static AIEventEnvelope CreateEnvelope(string type, string? id, object? data = null)
+        => new()
+        {
+            Type = type,
+            Id = id,
+            Data = data,
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
+    private static AIEventEnvelope CreateDataEnvelope(string type, object? data)
+        => new()
+        {
+            Type = $"data-messages.{type}",
+            Data = new AIDataEventData
+            {
+                Data = data ?? new { }
+            },
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
+    private static object? ParseToolInput(StreamBlockState state)
+    {
+        if (state.Block.Input is JsonElement input && input.ValueKind != JsonValueKind.Undefined)
+            return input;
+
+        if (state.InputJson.Length == 0)
+            return JsonSerializer.SerializeToElement(new { }, Json);
+
+        try
+        {
+            return JsonDocument.Parse(state.InputJson.ToString()).RootElement.Clone();
+        }
+        catch
+        {
+            return JsonSerializer.SerializeToElement(new { raw = state.InputJson.ToString() }, Json);
+        }
+    }
+
+    private static string ResolveStreamEventId(MessageContentBlock block, string fallbackId)
+    {
+        if (IsToolOutputBlock(block.Type) && !string.IsNullOrWhiteSpace(block.ToolUseId))
+            return block.ToolUseId!;
+
+        if (IsToolInputBlock(block.Type) && !string.IsNullOrWhiteSpace(block.Id))
+            return block.Id!;
+
+        if (!string.IsNullOrWhiteSpace(block.ToolUseId))
+            return block.ToolUseId!;
+
+        if (!string.IsNullOrWhiteSpace(block.Id))
+            return block.Id!;
+
+        return fallbackId;
+    }
+
+    private static MessagesUsage? MergeUsage(MessagesUsage? current, MessagesUsage? update)
+    {
+        if (update is null)
+            return current;
+
+        current ??= new MessagesUsage();
+        current.InputTokens ??= update.InputTokens;
+        current.OutputTokens = update.OutputTokens ?? current.OutputTokens;
+        current.CacheCreationInputTokens = update.CacheCreationInputTokens ?? current.CacheCreationInputTokens;
+        current.CacheReadInputTokens = update.CacheReadInputTokens ?? current.CacheReadInputTokens;
+        current.ServiceTier ??= update.ServiceTier;
+        current.InferenceGeo ??= update.InferenceGeo;
+        current.CacheCreation ??= update.CacheCreation;
+        current.ServerToolUse ??= update.ServerToolUse;
+        return current;
+    }
+}

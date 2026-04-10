@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using AIHappey.Core.Contracts;
 using AIHappey.Unified.Models;
 using AIHappey.Responses.Mapping;
@@ -20,7 +21,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         var responseRequest = request.ToChatCompletionOptions();
         responseRequest.Stream = false;
         responseRequest.Store ??= false;
-
 
         var response = await modelProvider.CompleteChatAsync(responseRequest, cancellationToken);
         return response.ToUnifiedResponse(modelProvider.GetIdentifier());
@@ -52,6 +52,12 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             string? activeId = null;
             var mappingState = new ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState();
 
+            yield return CreateDataStreamEvent(
+                modelProvider.GetIdentifier(),
+                "data-chatcompletions.request",
+                JsonSerializer.SerializeToElement(responseRequest, JsonSerializerOptions.Web),
+                request.Headers);
+
             await foreach (var update in modelProvider.CompleteChatStreamingAsync(responseRequest, cancellationToken))
             {
                 foreach (var mapped in update.ToUnifiedStreamEvents(modelProvider.GetIdentifier(), mappingState))
@@ -61,6 +67,18 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                     if (!string.IsNullOrWhiteSpace(eventId))
                         activeId = eventId;
+
+                    if (normalizedType == "reasoning-start")
+                        reasoningStarted = true;
+
+                    if (normalizedType == "reasoning-end")
+                        reasoningStarted = false;
+
+                    if (normalizedType == "text-start")
+                        textStarted = true;
+
+                    if (normalizedType == "text-end")
+                        textStarted = false;
 
                     if (normalizedType == "reasoning-delta" && !reasoningStarted)
                     {
@@ -147,9 +165,41 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                 Type = type,
                 Id = id,
                 Timestamp = timestamp,
-                Data = string.Empty
+                Data = type switch
+                {
+                    "text-start" => new AITextStartEventData(),
+                    "text-end" => new AITextEndEventData(),
+                    "reasoning-start" => new AIReasoningStartEventData(),
+                    "reasoning-end" => new AIReasoningEndEventData(),
+                    _ => new AIDataEventData { Data = string.Empty }
+                }
             },
             Metadata = metadata
+        };
+
+    private static AIStreamEvent CreateDataStreamEvent(
+        string providerId,
+        string type,
+        object payload,
+        Dictionary<string, string>? headers = null)
+        => new()
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = type,
+                Timestamp = DateTimeOffset.UtcNow,
+                Data = new AIDataEventData
+                {
+                    Data = payload
+                }
+            },
+            Metadata = headers is null || headers.Count == 0
+                ? null
+                : new Dictionary<string, object?>
+                {
+                    ["unified.request.headers"] = headers.ToDictionary(a => a.Key, a => (object?)a.Value)
+                }
         };
 
 }

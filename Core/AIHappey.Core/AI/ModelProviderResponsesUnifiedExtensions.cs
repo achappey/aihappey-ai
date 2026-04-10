@@ -21,9 +21,7 @@ public static class ModelProviderResponsesUnifiedExtensions
         responseRequest.Store ??= false;
 
         var response = await modelProvider.ResponsesAsync(responseRequest, cancellationToken);
-        Console.WriteLine(JsonSerializer.Serialize(response, JsonSerializerOptions.Web));
         var unified = response.ToUnifiedResponse(modelProvider.GetIdentifier());
-        Console.WriteLine(JsonSerializer.Serialize(unified, JsonSerializerOptions.Web));
 
         return unified;
     }
@@ -47,13 +45,30 @@ public static class ModelProviderResponsesUnifiedExtensions
 
         async IAsyncEnumerable<AIStreamEvent> StreamCore()
         {
+            yield return new AIStreamEvent
+            {
+                ProviderId = modelProvider.GetIdentifier(),
+                Event = new AIEventEnvelope
+                {
+                    Type = "data-responses.request",
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Data = new AIDataEventData
+                    {
+                        Data = JsonSerializer.SerializeToElement(responseRequest, JsonSerializerOptions.Web)
+                    }
+                },
+                Metadata = request.Headers is null || request.Headers.Count == 0
+                    ? null
+                    : new Dictionary<string, object?>
+                    {
+                        ["unified.request.headers"] = request.Headers.ToDictionary(a => a.Key, a => (object?)a.Value)
+                    }
+            };
+
             await foreach (var update in modelProvider.ResponsesStreamingAsync(responseRequest, cancellationToken))
             {
-                Console.WriteLine(JsonSerializer.Serialize(update, JsonSerializerOptions.Web));
-
                 foreach (var evt in update.ToUnifiedStreamEvent(modelProvider.GetIdentifier()))
                 {
-                    Console.WriteLine(JsonSerializer.Serialize(evt, JsonSerializerOptions.Web));
                     yield return evt;
                 }
 
