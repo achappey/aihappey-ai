@@ -42,6 +42,10 @@ public static partial class MessagesUnifiedMapper
 
         internal string? StopSequence { get; set; }
 
+        internal string? ActiveTextEventId { get; private set; }
+
+        internal bool ActiveTextStarted { get; private set; }
+
         internal StreamBlockState GetOrCreate(int index, MessageContentBlock block, string? messageId)
         {
             if (Blocks.TryGetValue(index, out var existing))
@@ -53,6 +57,33 @@ public static partial class MessagesUnifiedMapper
             return created;
         }
 
+        internal string EnsureActiveTextEventId(string eventId)
+        {
+            if (string.IsNullOrWhiteSpace(ActiveTextEventId))
+                ActiveTextEventId = eventId;
+
+            return ActiveTextEventId;
+        }
+
+        internal bool MarkActiveTextStarted()
+        {
+            if (string.IsNullOrWhiteSpace(ActiveTextEventId) || ActiveTextStarted)
+                return false;
+
+            ActiveTextStarted = true;
+            return true;
+        }
+
+        internal string? CloseActiveTextSpan()
+        {
+            var eventId = ActiveTextStarted ? ActiveTextEventId : null;
+
+            ActiveTextEventId = null;
+            ActiveTextStarted = false;
+
+            return eventId;
+        }
+
         internal void Reset()
         {
             Blocks.Clear();
@@ -60,6 +91,8 @@ public static partial class MessagesUnifiedMapper
             Usage = null;
             StopReason = null;
             StopSequence = null;
+            ActiveTextEventId = null;
+            ActiveTextStarted = false;
         }
     }
 

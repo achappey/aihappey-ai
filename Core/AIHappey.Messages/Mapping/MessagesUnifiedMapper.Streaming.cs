@@ -61,9 +61,20 @@ public static partial class MessagesUnifiedMapper
 
                 if (part.ContentBlock.Type == "text")
                 {
-                    yield return CreateEnvelope("text-start", eventId, new AITextStartEventData());
+                    var activeTextEventId = state.EnsureActiveTextEventId(eventId);
+
+                    foreach (var sourceEvent in CreateSourceEnvelopes(part.ContentBlock, activeTextEventId))
+                        yield return sourceEvent;
+
+                    yield break;
                 }
-                else if (part.ContentBlock.Type is "thinking" or "redacted_thinking")
+
+                if (state.CloseActiveTextSpan() is { } activeTextToEnd)
+                {
+                    yield return CreateEnvelope("text-end", activeTextToEnd, new AITextEndEventData());
+                }
+
+                if (part.ContentBlock.Type is "thinking" or "redacted_thinking")
                 {
                     yield return CreateEnvelope("reasoning-start", eventId, new AIReasoningStartEventData
                     {
@@ -102,7 +113,14 @@ public static partial class MessagesUnifiedMapper
                 switch (part.Delta.Type)
                 {
                     case "text_delta":
-                        yield return CreateEnvelope("text-delta", deltaState.EventId, new AITextDeltaEventData
+                        var textEventId = state.EnsureActiveTextEventId(deltaState.EventId);
+
+                        if (state.MarkActiveTextStarted())
+                        {
+                            yield return CreateEnvelope("text-start", textEventId, new AITextStartEventData());
+                        }
+
+                        yield return CreateEnvelope("text-delta", textEventId, new AITextDeltaEventData
                         {
                             Delta = part.Delta.Text ?? string.Empty
                         });
@@ -135,9 +153,10 @@ public static partial class MessagesUnifiedMapper
 
                 if (stopState.BlockType == "text")
                 {
-                    yield return CreateEnvelope("text-end", stopState.EventId, new AITextEndEventData());
+                    yield break;
                 }
-                else if (stopState.BlockType is "thinking" or "redacted_thinking")
+
+                if (stopState.BlockType is "thinking" or "redacted_thinking")
                 {
                     yield return CreateEnvelope("reasoning-end", stopState.EventId, new AIReasoningEndEventData
                     {
@@ -154,7 +173,7 @@ public static partial class MessagesUnifiedMapper
                         ToolName = stopState.Block.Name ?? stopState.BlockType,
                         Title = stopState.Block.Name,
                         ProviderExecuted = IsProviderExecutedTool(stopState.BlockType),
-                        Input = JsonDocument.Parse(stopState.InputJson.ToString()).RootElement
+                        Input = ParseToolInput(stopState) ?? JsonSerializer.SerializeToElement(new { }, Json)
                     });
                 }
 
@@ -167,6 +186,11 @@ public static partial class MessagesUnifiedMapper
                 yield break;
 
             case "message_stop":
+                if (state.CloseActiveTextSpan() is { } finalTextEventId)
+                {
+                    yield return CreateEnvelope("text-end", finalTextEventId, new AITextEndEventData());
+                }
+
                 yield return CreateEnvelope("finish", state.CurrentMessage?.Id, new AIFinishEventData
                 {
                     Model = state.CurrentMessage?.Model,
