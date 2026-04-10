@@ -418,6 +418,26 @@ public static partial class ResponsesUnifiedMapper
                                 );
                             }
                         }
+                        else if (env.Type == "file_citation")
+                        {
+                            var filename = TryGetAnnotationString(env, "filename");
+                            var fileId = TryGetAnnotationString(env, "file_id");
+                            var sourceLabel = filename ?? fileId ?? "file";
+                            var index = TryGetAnnotationInt(env, "index");
+
+                            yield return CreateSourceUrlEnvelope(
+                                responseContentPartDone.ItemId ?? string.Empty,
+                                $"file://{sourceLabel}",
+                                sourceLabel,
+                                env.Type,
+                                fileId: fileId,
+                                filename: filename,
+                                providerMetadata: CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                                {
+                                    ["index"] = index
+                                })
+                            );
+                        }
                     }
                 }
 
@@ -585,6 +605,16 @@ public static partial class ResponsesUnifiedMapper
                 {
                     yield return CreateTextStartEnvelope(added.Item.Id ?? string.Empty);
                 }
+                else if (added.Item.Type == "file_search_call")
+                {
+                    yield return CreateToolInputStartEnvelope(
+                        added.Item.Id ?? string.Empty,
+                        "file_search",
+                        providerExecuted: true
+                    );
+
+                    yield break;
+                }
                 else if (added.Item.Type == "mcp_call")
                 {
                     var label = added.Item.AdditionalProperties?.TryGetValue("server_label", out var server_label) == true ? server_label.ToString() : string.Empty;
@@ -702,8 +732,50 @@ public static partial class ResponsesUnifiedMapper
                             done.Item.Name ?? done.Item.Type,
                              argumentInput,
                              done.Item.Name,
-                             false
-                        );
+                              false
+                         );
+                }
+                else if (done.Item.Type == "file_search_call")
+                {
+                    var fileSearchInput = JsonSerializer.SerializeToElement(
+                        new Dictionary<string, object?>
+                        {
+                            ["queries"] = done.Item.AdditionalProperties?.TryGetValue("queries", out var queries) == true
+                                ? queries.Clone()
+                                : JsonSerializer.SerializeToElement(Array.Empty<object>(), JsonSerializerOptions.Web)
+                        },
+                        JsonSerializerOptions.Web);
+
+                    yield return CreateToolInputDeltaEnvelope(
+                        done.Item.Id ?? string.Empty,
+                        fileSearchInput.GetRawText());
+
+                    yield return CreateToolInputEndEnvelope(
+                        done.Item.Id ?? string.Empty,
+                        "file_search",
+                        fileSearchInput,
+                        providerExecuted: true
+                    );
+
+                    var fileSearchOutput = JsonSerializer.SerializeToElement(
+                        new CallToolResult
+                        {
+                            StructuredContent = JsonSerializer.SerializeToElement(
+                                new Dictionary<string, object?>
+                                {
+                                    ["result"] = done.Item.AdditionalProperties?.TryGetValue("results", out var results) == true
+                                        ? results.Clone()
+                                        : JsonSerializer.SerializeToElement(Array.Empty<object>(), JsonSerializerOptions.Web)
+                                },
+                                JsonSerializerOptions.Web)
+                        },
+                        JsonSerializerOptions.Web);
+
+                    yield return CreateToolOutputEnvelope(
+                        done.Item.Id ?? string.Empty,
+                        fileSearchOutput,
+                        providerExecuted: true
+                    );
                 }
                 else if (done.Item.Type == "search_results")
                 {
@@ -972,7 +1044,9 @@ public static partial class ResponsesUnifiedMapper
     private static AIEventEnvelope CreateSourceUrlEnvelope(string id, string url,
         string title, string type,
         string? containerId = null,
-        string? fileId = null)
+        string? fileId = null,
+        string? filename = null,
+        Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
     => new()
     {
         Type = "source-url",
@@ -983,8 +1057,10 @@ public static partial class ResponsesUnifiedMapper
             Url = url,
             Title = title,
             Type = type,
+            Filename = filename,
             ContainerId = containerId,
-            FileId = fileId
+            FileId = fileId,
+            ProviderMetadata = providerMetadata
         },
     };
 
@@ -1063,6 +1139,46 @@ public static partial class ResponsesUnifiedMapper
         return value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
             ? null
             : value.Clone();
+    }
+
+    private static string? TryGetAnnotationString(ResponseStreamAnnotation annotation, string key)
+    {
+        if (annotation.AdditionalProperties?.TryGetValue(key, out var value) != true)
+            return null;
+
+        return value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : value.ToString();
+    }
+
+    private static int? TryGetAnnotationInt(ResponseStreamAnnotation annotation, string key)
+    {
+        if (annotation.AdditionalProperties?.TryGetValue(key, out var value) != true)
+            return null;
+
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number))
+            return number;
+
+        if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out number))
+            return number;
+
+        return null;
+    }
+
+    private static Dictionary<string, Dictionary<string, object>>? CreateProviderMetadata(
+        string providerId,
+        Dictionary<string, object?> providerMetadata)
+    {
+        var values = providerMetadata
+            .Where(static entry => entry.Value is not null)
+            .ToDictionary(entry => entry.Key, entry => entry.Value!);
+
+        return values.Count == 0
+            ? null
+            : new Dictionary<string, Dictionary<string, object>>
+            {
+                [providerId] = values
+            };
     }
 
     private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
