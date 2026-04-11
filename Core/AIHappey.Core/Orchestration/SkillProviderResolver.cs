@@ -9,6 +9,7 @@ public class SkillProviderResolver(
     IEnumerable<ISkillProvider> providers) : IAISkillProviderResolver
 {
     private readonly ISkillProvider[] _providers = providers as ISkillProvider[] ?? [.. providers];
+    private readonly string[] _freeProviders = ["groovedev"];
 
     public async Task<ISkillProvider> Resolve(string model, CancellationToken ct = default)
     {
@@ -123,7 +124,8 @@ public class SkillProviderResolver(
            ?? _providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), providerId, StringComparison.OrdinalIgnoreCase));
 
     private IEnumerable<ISkillProvider> GetConfiguredProviders()
-        => _providers.Where(HasConfiguredApiKey);
+        => _providers.Where(a => HasConfiguredApiKey(a)
+            || _freeProviders.Contains(a.GetIdentifier()));
 
     private IEnumerable<ISkillProvider> GetAggregateProviders()
     {

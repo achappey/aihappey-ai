@@ -505,6 +505,7 @@ using AIHappey.Core.Providers.Radiance;
 using AIHappey.Core.Providers.OneInfer;
 using AIHappey.Core.Providers.Tapas;
 using AIHappey.Core.Providers.IGPT;
+using AIHappey.Core.Providers.GrooveDev;
 
 namespace AIHappey.Core.AI;
 
@@ -523,6 +524,8 @@ public static class ServiceExtensions
         services.AddSingleton<OpenAIProvider>();
         services.AddSingleton<ISkillProvider>(sp => sp.GetRequiredService<OpenAIProvider>());
         services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<OpenAIProvider>());
+
+        services.AddSingleton<ISkillProvider, GrooveDevProvider>();
 
         services.AddSingleton<IModelProvider, EchoProvider>();
         services.AddSingleton<IModelProvider, CloudRiftProvider>();
