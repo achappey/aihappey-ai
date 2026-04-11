@@ -4,6 +4,10 @@ namespace AIHappey.Messages.Mapping;
 
 public static partial class MessagesUnifiedMapper
 {
+    public static string? StripBase64Prefix(this string? value) =>
+    value is null ? null :
+    (value.Contains(',') ? value[(value.IndexOf(',') + 1)..] : value);
+
     private static bool IsToolInputBlock(string? type)
         => type is "tool_use" or "server_tool_use" or "mcp_tool_use";
 

@@ -14,14 +14,30 @@ public partial class GoogleAIProvider
     private readonly AsyncCacheHelper _memoryCache;
     private readonly ILogger<GoogleAIProvider> _logger;
     private readonly IApiKeyResolver _keyResolver;
+    private readonly HttpClient _client;
 
     public GoogleAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        ILogger<GoogleAIProvider> logger)
+        ILogger<GoogleAIProvider> logger, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _logger = logger;
         _memoryCache = asyncCacheHelper;
+        _client = httpClientFactory.CreateClient();
+        _client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
     }
+
+
+    private void ApplyAuthHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException($"No {nameof(Google)} API key.");
+
+        _client.DefaultRequestHeaders.Remove("x-goog-api-key");
+        _client.DefaultRequestHeaders.Add("x-goog-api-key", key);
+    }
+
 
     private readonly string FILES_API = "https://generativelanguage.googleapis.com/v1beta/files";
 

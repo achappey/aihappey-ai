@@ -124,7 +124,7 @@ public static partial class MessagesUnifiedMapper
         return DeserializeFromObject<MessageContentBlock>(raw);
     }
 
-    private static MessageContentBlock ToMessageFileBlock(AIFileContentPart file)
+    private static MessageContentBlock? ToMessageFileBlock(AIFileContentPart file)
     {
         var raw = ExtractRawBlock(file.Metadata);
         if (raw is not null)
@@ -137,9 +137,22 @@ public static partial class MessagesUnifiedMapper
                 Type = "image",
                 Source = new MessageSource
                 {
-                    Type = file.Data?.ToString()?.StartsWith("http", StringComparison.OrdinalIgnoreCase) == true ? "url" : "base64",
-                    Url = file.Data?.ToString()?.StartsWith("http", StringComparison.OrdinalIgnoreCase) == true ? file.Data?.ToString() : null,
-                    Data = file.Data?.ToString()?.StartsWith("http", StringComparison.OrdinalIgnoreCase) == true ? null : file.Data?.ToString(),
+                    Type = "base64",
+                    Data = file.Data?.ToString().StripBase64Prefix(),
+                    MediaType = file.MediaType
+                }
+            };
+        }
+
+        if (file.MediaType?.StartsWith("application/pdf", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return new MessageContentBlock
+            {
+                Type = "document",
+                Source = new MessageSource
+                {
+                    Type = "base64",
+                    Data = file.Data?.ToString().StripBase64Prefix(),
                     MediaType = file.MediaType
                 },
                 Title = file.Filename

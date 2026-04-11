@@ -194,7 +194,9 @@ public static partial class MessagesUnifiedMapper
                         pendingAssistantBlocks.Add(new MessageContentBlock { Type = "thinking", Thinking = reasoning.Text });
                         break;
                     case AIFileContentPart file:
-                        pendingAssistantBlocks.Add(ToMessageFileBlock(file));
+                        var fileBlock = ToMessageFileBlock(file);
+                        if (fileBlock != null)
+                            pendingAssistantBlocks.Add(fileBlock);
                         break;
                 }
             }
@@ -206,65 +208,6 @@ public static partial class MessagesUnifiedMapper
             yield return message;
     }
 
-    private static MessagesContent ToMessagesContent(IEnumerable<AIContentPart>? parts)
-    {
-        var blocks = new List<MessageContentBlock>();
-        foreach (var part in parts ?? [])
-        {
-            if (part is AIToolCallContentPart toolPart)
-            {
-                foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart))
-                {
-                    if (assistantBlock is not null)
-                        blocks.Add(assistantBlock);
-
-                    if (userBlock is not null)
-                        blocks.Add(userBlock);
-                }
-                continue;
-            }
-
-            var raw = ExtractRawBlock(part.Metadata);
-            if (raw is not null)
-            {
-                blocks.Add(raw);
-                continue;
-            }
-
-            switch (part)
-            {
-                case AITextContentPart text:
-                    blocks.Add(new MessageContentBlock { Type = "text", Text = text.Text });
-                    break;
-                case AIReasoningContentPart reasoning:
-                    blocks.Add(new MessageContentBlock { Type = "thinking", Thinking = reasoning.Text });
-                    break;
-                case AIFileContentPart file:
-                    blocks.Add(ToMessageFileBlock(file));
-                    break;
-            }
-        }
-
-        if (blocks.Count == 1 && blocks[0].Type == "text")
-            return new MessagesContent(blocks[0].Text ?? string.Empty);
-
-        return new MessagesContent(blocks);
-    }
-
-    private static MessageToolChoice? ToMessageToolChoice(object? toolChoice, bool? parallelToolCalls)
-    {
-        var choice = DeserializeFromObject<MessageToolChoice>(toolChoice);
-        if (choice is not null)
-            return choice;
-
-        return toolChoice is null && parallelToolCalls is null
-            ? null
-            : new MessageToolChoice
-            {
-                Type = "auto",
-                DisableParallelToolUse = parallelToolCalls.HasValue ? !parallelToolCalls.Value : null
-            };
-    }
 
     public static T? GetProviderOption<T>(
          this MessagesRequestMetadata metadata,
