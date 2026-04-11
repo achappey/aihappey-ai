@@ -509,6 +509,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["oneinfer"] = "X-OneInfer-Key",
             ["tapas"] = "X-Tapas-Key",
             ["igpt"] = "X-IGPT-Key",
+            ["botverse"] = "X-BotVerse-Key",
+            ["vibekit"] = "X-VibeKit-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

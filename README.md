@@ -89,6 +89,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Bleep          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Blink          | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | BlockRun       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| BotVerse       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Bria           | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | BrowserUse     | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Brainiall      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -378,7 +379,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Prakasa        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | PrimeIntellect | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Privatemode    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
-| PublicAI       | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ❌          | ➖          | ➖          |
+| PublicAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ❌          | ➖          | ➖          |
 | Qiniu          | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | QuiverAI       | ✅        | ✅                | ✅            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Radiance       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -487,6 +488,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | VIABLELab      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | VLMRun         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | VibeCodeCheap  | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| VibeKit        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Vidu           | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | Vivgrid        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | VoiceAI        | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |

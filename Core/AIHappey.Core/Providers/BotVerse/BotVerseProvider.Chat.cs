@@ -3,9 +3,9 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
 
-namespace AIHappey.Core.Providers.PublicAI;
+namespace AIHappey.Core.Providers.BotVerse;
 
-public partial class PublicAIProvider
+public partial class BotVerseProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

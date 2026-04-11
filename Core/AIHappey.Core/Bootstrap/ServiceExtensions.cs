@@ -506,6 +506,8 @@ using AIHappey.Core.Providers.OneInfer;
 using AIHappey.Core.Providers.Tapas;
 using AIHappey.Core.Providers.IGPT;
 using AIHappey.Core.Providers.GrooveDev;
+using AIHappey.Core.Providers.BotVerse;
+using AIHappey.Core.Providers.VibeKit;
 
 namespace AIHappey.Core.AI;
 
@@ -1032,6 +1034,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OneInferProvider>();
         services.AddSingleton<IModelProvider, TapasProvider>();
         services.AddSingleton<IModelProvider, IGPTProvider>();
+        services.AddSingleton<IModelProvider, BotVerseProvider>();
+        services.AddSingleton<IModelProvider, VibeKitProvider>();
 
     }
 

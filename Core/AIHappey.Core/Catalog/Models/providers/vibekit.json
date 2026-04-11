@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "vibekit/Agent",
+      "object": "model",
+      "owned_by": "VibeKit",
+      "name": "VibeKit Agent",
+      "type": "language"
+    }
+  ]
+}

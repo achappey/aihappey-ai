@@ -7,15 +7,16 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Responses.Mapping;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Sampling.Mapping;
+using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.PublicAI;
+namespace AIHappey.Core.Providers.BotVerse;
 
-public partial class PublicAIProvider : IModelProvider
+public partial class BotVerseProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -23,13 +24,13 @@ public partial class PublicAIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public PublicAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public BotVerseProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.publicai.co/");
+        _client.BaseAddress = new Uri("https://botverse.duckdns.org/");
     }
 
     private void ApplyAuthHeader()
@@ -37,32 +38,37 @@ public partial class PublicAIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(PublicAI)} API key.");
+            throw new InvalidOperationException($"No {nameof(BotVerse)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+       => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+          cancellationToken);
 
-        this.SetDefaultChatCompletionProperties(options);
-
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return result.ToChatCompletion();
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        this.SetDefaultChatCompletionProperties(options);
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            yield return part.ToChatCompletionUpdate();
+        }
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        yield break;
     }
 
-    public string GetIdentifier() => nameof(PublicAI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(BotVerse).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
@@ -140,9 +146,5 @@ public partial class PublicAIProvider : IModelProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }

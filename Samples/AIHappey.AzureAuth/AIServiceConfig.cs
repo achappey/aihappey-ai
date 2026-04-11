@@ -507,6 +507,8 @@ public class AIServiceConfig
     public ProviderConfig? OneInfer { get; set; }
     public ProviderConfig? Tapas { get; set; }
     public ProviderConfig? IGPT { get; set; }
+    public ProviderConfig? BotVerse { get; set; }
+    public ProviderConfig? VibeKit { get; set; }
 
 }
 

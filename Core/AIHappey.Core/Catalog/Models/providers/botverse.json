@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "botverse/Agent",
+      "object": "model",
+      "owned_by": "BotVerse",
+      "name": "BotVerse Agent",
+      "type": "language"
+    }
+  ]
+}
