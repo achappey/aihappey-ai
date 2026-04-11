@@ -553,12 +553,11 @@ public partial class MistralProvider : IModelProvider
         {
             if (toolPart.ProviderExecuted == true)
             {
-                throw new NotSupportedException(
-                    "Mistral unified conversations cannot replay provider-executed tool calls unless a raw Mistral representation is supplied in metadata.");
+                continue;
             }
 
             if (string.IsNullOrWhiteSpace(toolPart.ToolCallId))
-                throw new NotSupportedException("Mistral unified conversations requires a tool call id for tool replay.");
+                continue;
 
             yield return new Dictionary<string, object?>
             {
@@ -599,7 +598,7 @@ public partial class MistralProvider : IModelProvider
             },
             AIFileContentPart filePart => ToMistralUnifiedFileContentPart(filePart),
             null => null,
-            _ => throw new NotSupportedException($"Mistral unified conversations does not support content part type '{part.Type}'.")
+            _ => null
         };
     }
 
@@ -1390,7 +1389,7 @@ public partial class MistralProvider : IModelProvider
         public bool ProviderExecuted { get; set; }
     }
 
-     private static List<JsonNode> ResolveProviderConversationTools(MistralProviderMetadata? metadata)
+    private static List<JsonNode> ResolveProviderConversationTools(MistralProviderMetadata? metadata)
     {
         if (metadata?.Tools is not null)
         {

@@ -49,7 +49,7 @@ public partial class VibeKitProvider
             new AIToolInputStartEventData
             {
                 ToolName = "vibekit_task",
-                Title = "VibeKit task",
+                Title = "VibeKit",
                 ProviderExecuted = true
             },
             timestamp,
@@ -73,7 +73,7 @@ public partial class VibeKitProvider
             new AIToolInputAvailableEventData
             {
                 ToolName = "vibekit_task",
-                Title = "VibeKit task",
+                Title = "VibeKit",
                 ProviderExecuted = true,
                 Input = submitInput
             },
@@ -82,6 +82,8 @@ public partial class VibeKitProvider
 
         var createResult = await SubmitTaskAsync(submitPayload, cancellationToken);
         var latestStatus = createResult.InitialStatus;
+        var latestStatusText = default(string);
+        var textStarted = false;
 
         yield return CreateStreamEvent(
             providerId,
@@ -90,6 +92,32 @@ public partial class VibeKitProvider
             CreateToolOutputEventData(providerId, toolCallId, latestStatus, preliminary: !IsCompletedStatus(latestStatus.Status)),
             timestamp,
             null);
+
+        var initialStatusText = GetStreamingStatusText(latestStatus);
+        if (!string.IsNullOrWhiteSpace(initialStatusText))
+        {
+            yield return CreateStreamEvent(
+                providerId,
+                eventId,
+                "text-start",
+                new AITextStartEventData(),
+                timestamp,
+                null);
+
+            textStarted = true;
+            latestStatusText = initialStatusText;
+
+            yield return CreateStreamEvent(
+                providerId,
+                eventId,
+                "text-delta",
+                new AITextDeltaEventData
+                {
+                    Delta = initialStatusText
+                },
+                timestamp,
+                null);
+        }
 
         if (!IsTerminalStatus(latestStatus.Status))
         {
@@ -117,6 +145,37 @@ public partial class VibeKitProvider
                     DateTimeOffset.UtcNow,
                     null);
 
+                var statusText = GetStreamingStatusText(latestStatus);
+                if (!string.IsNullOrWhiteSpace(statusText)
+                    && !string.Equals(statusText, latestStatusText, StringComparison.Ordinal))
+                {
+                    if (!textStarted)
+                    {
+                        yield return CreateStreamEvent(
+                            providerId,
+                            eventId,
+                            "text-start",
+                            new AITextStartEventData(),
+                            timestamp,
+                            null);
+
+                        textStarted = true;
+                    }
+
+                    latestStatusText = statusText;
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        eventId,
+                        "text-delta",
+                        new AITextDeltaEventData
+                        {
+                            Delta = "\n\n" + statusText
+                        },
+                        DateTimeOffset.UtcNow,
+                        null);
+                }
+
                 if (IsTerminalStatus(latestStatus.Status))
                     break;
             }
@@ -133,37 +192,61 @@ public partial class VibeKitProvider
             DateTimeOffset.UtcNow,
             null);
 
-        var text = FormatAssistantJsonBlock(latestStatus.RawJson);
         var response = CreateUnifiedResponse(request, new VibeKitExecutionResult(createResult.TaskId, prompt, submitPayloadJson, latestStatus));
         var responseMetadata = response.Metadata;
+        var completionText = BuildCompletionText(latestStatus);
+        var repoUrl = ResolveRepoUrl(latestStatus);
+        var deployUrl = ResolveDeployUrl(latestStatus);
+
+        if (!string.IsNullOrWhiteSpace(repoUrl))
+        {
+            yield return CreateSourceUrlEvent(
+                providerId,
+                $"{eventId}_source_repo",
+                repoUrl!,
+                "Source commit",
+                "repository",
+                DateTimeOffset.UtcNow,
+                responseMetadata);
+        }
+
+        if (!string.IsNullOrWhiteSpace(deployUrl))
+        {
+            yield return CreateSourceUrlEvent(
+                providerId,
+                $"{eventId}_source_deploy",
+                deployUrl!,
+                "Deployment",
+                "deployment",
+                DateTimeOffset.UtcNow,
+                responseMetadata);
+        }
+
+        if (!textStarted)
+        {
+            yield return CreateStreamEvent(
+                providerId,
+                eventId,
+                "text-start",
+                new AITextStartEventData
+                {
+                },
+                timestamp,
+                responseMetadata);
+
+            textStarted = true;
+        }
 
         yield return CreateStreamEvent(
             providerId,
             eventId,
-            "text-start",
-            new AITextStartEventData
+            "text-delta",
+            new AITextDeltaEventData
             {
-                ProviderMetadata = ToProviderMetadata(responseMetadata)
+                Delta = "\n\n" + completionText,
             },
-            timestamp,
+            DateTimeOffset.UtcNow,
             responseMetadata);
-
-        foreach (var delta in ChunkText(text))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            yield return CreateStreamEvent(
-                providerId,
-                eventId,
-                "text-delta",
-                new AITextDeltaEventData
-                {
-                    Delta = delta,
-                    ProviderMetadata = ToProviderMetadata(responseMetadata)
-                },
-                timestamp,
-                responseMetadata);
-        }
 
         yield return CreateStreamEvent(
             providerId,
@@ -171,7 +254,6 @@ public partial class VibeKitProvider
             "text-end",
             new AITextEndEventData
             {
-                ProviderMetadata = ToProviderMetadata(responseMetadata)
             },
             timestamp,
             responseMetadata);
@@ -190,7 +272,7 @@ public partial class VibeKitProvider
                     FinishReason = "stop",
                     Model = response.Model,
                     CompletedAt = timestamp.ToUnixTimeSeconds(),
-                    MessageMetadata = ToMessageMetadata(responseMetadata)
+                    //MessageMetadata = ToMessageMetadata(responseMetadata)
                 }
             },
             Metadata = responseMetadata
@@ -265,14 +347,19 @@ public partial class VibeKitProvider
     private AIResponse CreateUnifiedResponse(AIRequest request, VibeKitExecutionResult execution)
     {
         var status = execution.FinalStatus;
-        var text = FormatAssistantJsonBlock(status.RawJson);
+        var text = BuildCompletionText(status);
+        var deployUrl = ResolveDeployUrl(status);
+        var repoUrl = ResolveRepoUrl(status);
         var metadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
             ["vibekit.task_id"] = execution.TaskId,
             ["vibekit.status"] = status.Status,
-            ["vibekit.deploy_url"] = status.DeployUrl,
-            ["vibekit.repo_url"] = status.RepoUrl,
+            ["vibekit.deploy_url"] = deployUrl,
+            ["vibekit.repo_url"] = repoUrl,
             ["vibekit.project_id"] = status.ProjectId,
+            ["vibekit.stage"] = status.Stage,
+            ["vibekit.progress"] = status.Progress,
+            ["vibekit.summary"] = status.Result?.Summary,
             ["vibekit.prompt"] = execution.Prompt,
             ["vibekit.submit.raw"] = TryParseJsonElement(execution.SubmitPayloadJson),
             ["vibekit.response.raw"] = TryParseJsonElement(status.RawJson)
@@ -336,47 +423,27 @@ public partial class VibeKitProvider
 
     private static string BuildPrompt(AIRequest request)
     {
-        var instructionSections = new List<string>();
-        var conversationSections = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
-            instructionSections.Add(request.Instructions.Trim());
-
-        if (!string.IsNullOrWhiteSpace(request.Input?.Text))
-            conversationSections.Add(FormatConversationBlock("user", request.Input.Text!));
-
         if (request.Input?.Items is not null)
         {
-            foreach (var item in request.Input.Items)
+            for (var i = request.Input.Items.Count - 1; i >= 0; i--)
             {
+                var item = request.Input.Items[i];
+                var role = (item.Role ?? "user").Trim();
+                if (!role.Equals("user", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 ValidateInputItem(item);
 
                 var text = ExtractSupportedText(item.Content);
-                if (string.IsNullOrWhiteSpace(text))
-                    continue;
-
-                var role = (item.Role ?? "user").Trim().ToLowerInvariant();
-                switch (role)
-                {
-                    case "system":
-                        instructionSections.Add(text);
-                        break;
-                    case "user":
-                    case "assistant":
-                        conversationSections.Add(FormatConversationBlock(role, text));
-                        break;
-                    default:
-                        throw new NotSupportedException($"VibeKit unified mode only supports system, user, and assistant message roles. Role '{item.Role}' is not supported.");
-                }
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text;
             }
         }
 
-        var sections = new List<string>();
-        if (instructionSections.Count > 0)
-            sections.Add("instructions:\n" + string.Join("\n\n", instructionSections));
+        if (!string.IsNullOrWhiteSpace(request.Input?.Text))
+            return request.Input.Text.Trim();
 
-        sections.AddRange(conversationSections);
-        return string.Join("\n\n", sections.Where(section => !string.IsNullOrWhiteSpace(section)));
+        throw new InvalidOperationException("VibeKit unified mode requires text from the latest user message.");
     }
 
     private static void ValidateInputItem(AIInputItem item)
@@ -387,9 +454,6 @@ public partial class VibeKitProvider
             throw new NotSupportedException($"VibeKit unified mode only supports message input items. Item type '{item.Type}' is not supported.");
         }
     }
-
-    private static string FormatConversationBlock(string role, string text)
-        => $"{role}: {text.Trim()}";
 
     private static string ExtractSupportedText(List<AIContentPart>? content)
     {
@@ -427,6 +491,8 @@ public partial class VibeKitProvider
         VibeKitTaskStatusResponse status,
         bool preliminary)
     {
+        var deployUrl = ResolveDeployUrl(status);
+        var repoUrl = ResolveRepoUrl(status);
         var statusJson = TryParseJsonElement(status.RawJson);
         var structuredContent = JsonSerializer.SerializeToElement(new
         {
@@ -448,17 +514,48 @@ public partial class VibeKitProvider
                 {
                     ["type"] = "tool_result",
                     ["tool_name"] = "vibekit_task",
-                    ["title"] = "VibeKit task",
+                    ["title"] = "VibeKit",
                     ["tool_use_id"] = toolCallId,
                     ["status"] = status.Status ?? string.Empty,
                     ["task_id"] = status.TaskId ?? string.Empty,
                     ["project_id"] = status.ProjectId ?? string.Empty,
-                    ["deploy_url"] = status.DeployUrl ?? string.Empty,
-                    ["repo_url"] = status.RepoUrl ?? string.Empty
+                    ["deploy_url"] = deployUrl ?? string.Empty,
+                    ["repo_url"] = repoUrl ?? string.Empty
                 }
             }
         };
     }
+
+    private static AIStreamEvent CreateSourceUrlEvent(
+        string providerId,
+        string eventId,
+        string url,
+        string title,
+        string type,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?>? metadata)
+        => CreateStreamEvent(
+            providerId,
+            eventId,
+            "source-url",
+            new AISourceUrlEventData
+            {
+                SourceId = url,
+                Url = url,
+                Title = title,
+                Type = type,
+                ProviderMetadata = new Dictionary<string, Dictionary<string, object>>
+                {
+                    [providerId] = new Dictionary<string, object>
+                    {
+                        ["type"] = type,
+                        ["title"] = title,
+                        ["url"] = url
+                    }
+                }
+            },
+            timestamp,
+            metadata);
 
     private static AIStreamEvent CreateStreamEvent(
         string providerId,
@@ -495,6 +592,43 @@ public partial class VibeKitProvider
 
     private static string FormatAssistantJsonBlock(string rawJson)
         => "```json\n" + PrettyPrintJson(rawJson) + "\n```";
+
+    private static string? GetStreamingStatusText(VibeKitTaskStatusResponse status)
+    {
+        if (IsTerminalStatus(status.Status))
+            return null;
+
+        if (!string.IsNullOrWhiteSpace(status.StageMessage))
+            return status.StageMessage.Trim();
+
+        if (!string.IsNullOrWhiteSpace(status.Stage))
+            return status.Stage.Trim();
+
+        if (!string.IsNullOrWhiteSpace(status.Status))
+            return status.Status.Trim();
+
+        return null;
+    }
+
+    private static string BuildCompletionText(VibeKitTaskStatusResponse status)
+    {
+        if (!string.IsNullOrWhiteSpace(status.Result?.Summary))
+            return status.Result.Summary.Trim();
+
+        if (!string.IsNullOrWhiteSpace(status.StageMessage))
+            return status.StageMessage.Trim();
+
+        return "Task completed.";
+    }
+
+    private static string? ResolveDeployUrl(VibeKitTaskStatusResponse status)
+        => FirstNonEmpty(status.DeployUrl, status.Result?.DeployUrl);
+
+    private static string? ResolveRepoUrl(VibeKitTaskStatusResponse status)
+        => FirstNonEmpty(status.RepoUrl, status.Result?.CommitUrl);
+
+    private static string? FirstNonEmpty(params string?[] values)
+        => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
 
     private static string PrettyPrintJson(string rawJson)
     {
@@ -646,12 +780,21 @@ public partial class VibeKitProvider
         public string? CallbackUrl { get; init; }
     }
 
+    private sealed record VibeKitTaskResult(
+        [property: JsonPropertyName("summary")] string? Summary,
+        [property: JsonPropertyName("commitUrl")] string? CommitUrl,
+        [property: JsonPropertyName("deployUrl")] string? DeployUrl);
+
     private sealed record VibeKitTaskStatusResponse(
         [property: JsonPropertyName("taskId")] string? TaskId,
         [property: JsonPropertyName("status")] string? Status,
         [property: JsonPropertyName("deployUrl")] string? DeployUrl,
         [property: JsonPropertyName("repoUrl")] string? RepoUrl,
-        [property: JsonPropertyName("projectId")] string? ProjectId)
+        [property: JsonPropertyName("projectId")] string? ProjectId,
+        [property: JsonPropertyName("stage")] string? Stage,
+        [property: JsonPropertyName("progress")] int? Progress,
+        [property: JsonPropertyName("stageMessage")] string? StageMessage,
+        [property: JsonPropertyName("result")] VibeKitTaskResult? Result)
     {
         [JsonIgnore]
         public string RawJson { get; init; } = "{}";

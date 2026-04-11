@@ -289,7 +289,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Mia21          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MIMICXAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MiniMax        | ✅        | ✅                | 🟡            | ❌            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
-| Mistral        | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
+| Mistral        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ❌               | ➖          | ➖          | ➖          |
 | Modal          | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ModelMax       | ✅        | ✅                | ❌            | ✅            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | ModelSync      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
