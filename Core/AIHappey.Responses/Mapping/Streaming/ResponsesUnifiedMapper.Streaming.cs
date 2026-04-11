@@ -301,6 +301,7 @@ public static partial class ResponsesUnifiedMapper
         switch (part)
         {
             case ResponseCreated created:
+                ClearShellStreamState();
                 yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response, providerId);
                 yield break;
 
@@ -309,13 +310,19 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseCompleted completed:
+                foreach (var env in CreatePendingShellCompletionEnvelopes(providerId, completed.Response))
+                    yield return env;
+
                 yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
+
                 yield return CreateFinishEnvelope(completed.Type,
                     completed.SequenceNumber, completed.Response);
+                ClearShellStreamState();
                 yield break;
 
             case ResponseFailed failed:
                 yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response, providerId);
+                ClearShellStreamState();
                 yield break;
 
             case ResponseReasoningSummaryPartAdded added:
@@ -600,10 +607,39 @@ public static partial class ResponsesUnifiedMapper
                                          responseMcpCallArgumentsDelta.Delta
                                      );
                 yield break;
+            case ResponseShellCallCommandAdded responseShellCallCommandAdded:
+                foreach (var envelope in CreateShellToolInputDeltaEnvelopes(responseShellCallCommandAdded))
+                    yield return envelope;
+                yield break;
+            case ResponseShellCallCommandDelta responseShellCallCommandDelta:
+                foreach (var envelope in CreateShellToolInputDeltaEnvelopes(responseShellCallCommandDelta))
+                    yield return envelope;
+                yield break;
+            case ResponseShellCallCommandDone responseShellCallCommandDone:
+                foreach (var envelope in CreateShellToolInputDeltaEnvelopes(responseShellCallCommandDone))
+                    yield return envelope;
+                yield break;
             case ResponseOutputItemAdded added:
                 if (added.Item.Type == "message")
                 {
                     yield return CreateTextStartEnvelope(added.Item.Id ?? string.Empty);
+                }
+                else if (added.Item.Type == "shell_call")
+                {
+                    RegisterShellCall(added.Item, added.OutputIndex);
+
+                    yield return CreateToolInputStartEnvelope(
+                        added.Item.Id ?? string.Empty,
+                        "shell_call",
+                        "shell_call",
+                        true);
+
+                    yield break;
+                }
+                else if (added.Item.Type == "shell_call_output")
+                {
+                    RegisterShellCallOutput(added.Item, added.OutputIndex);
+                    yield break;
                 }
                 else if (added.Item.Type == "file_search_call")
                 {
@@ -695,6 +731,16 @@ public static partial class ResponsesUnifiedMapper
                 else if (done.Item.Type == "reasoning")
                 {
                     foreach (var env in CreateReasoningEnvelope(providerId, done.Item.Id ?? string.Empty, done.Item))
+                        yield return env;
+                }
+                else if (done.Item.Type == "shell_call")
+                {
+                    foreach (var env in CreateShellToolInputAvailableEnvelopes(done.Item, done.OutputIndex))
+                        yield return env;
+                }
+                else if (done.Item.Type == "shell_call_output")
+                {
+                    foreach (var env in CreateShellToolOutputFinalEnvelopes(providerId, done.Item, done.OutputIndex))
                         yield return env;
                 }
                 else if (done.Item.Type == "compaction")
@@ -1015,612 +1061,23 @@ public static partial class ResponsesUnifiedMapper
 
                 yield break;
 
+            case ResponseUnknownEvent unknown
+                when string.Equals(unknown.Type, "response.shell_call_output_content.delta", StringComparison.OrdinalIgnoreCase):
+                foreach (var env in CreateShellToolOutputPreliminaryEnvelopes(providerId, unknown, isCompletedChunk: false))
+                    yield return env;
+                yield break;
+
+            case ResponseUnknownEvent unknown
+                when string.Equals(unknown.Type, "response.shell_call_output_content.done", StringComparison.OrdinalIgnoreCase):
+                foreach (var env in CreateShellToolOutputPreliminaryEnvelopes(providerId, unknown, isCompletedChunk: true))
+                    yield return env;
+                yield break;
+
             default:
                 yield return CreateDataEnvelope(
                     part.Type,
                     JsonSerializer.SerializeToElement(part, part.GetType(), Json));
                 yield break;
-        }
-    }
-
-    private static AIEventEnvelope CreateLifecycleEnvelope(string type, int sequenceNumber, ResponseResult response, string providerId)
-        => new()
-        {
-            Type = type,
-            Output = new AIOutput { Items = ToUnifiedOutputItems(response, providerId).ToList() },
-            Data = new Dictionary<string, object?>
-            {
-                ["sequence_number"] = sequenceNumber,
-                ["response"] = response
-            },
-            Metadata = new Dictionary<string, object?>
-            {
-                ["status"] = response.Status,
-                ["id"] = response.Id
-            }
-        };
-
-    private static AIEventEnvelope CreateReasoningStartEnvelope(string providerId, string id, ResponseStreamContentPart responseStreamItem)
-            => new()
-            {
-                Type = "reasoning-start",
-                Id = id,
-                Data = new AIReasoningStartEventData
-                {
-                    ProviderMetadata = CreateReasoningProviderMetadata(
-                        providerId,
-                        encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"))
-                },
-            };
-
-    private static AIEventEnvelope CreateReasoningEndEnvelope(string providerId, string id, ResponseStreamContentPart responseStreamItem)
-        => new()
-        {
-            Type = "reasoning-end",
-            Id = id,
-            Data = new AIReasoningEndEventData
-            {
-                ProviderMetadata = CreateReasoningProviderMetadata(
-                    providerId,
-                    encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"),
-                    summary: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary"))
-            },
-        };
-
-    private static AIEventEnvelope CreateSourceUrlEnvelope(string id, string url,
-        string title, string type,
-        string? containerId = null,
-        string? fileId = null,
-        string? filename = null,
-        Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
-    => new()
-    {
-        Type = "source-url",
-        Id = id,
-        Data = new AISourceUrlEventData
-        {
-            SourceId = url,
-            Url = url,
-            Title = title,
-            Type = type,
-            Filename = filename,
-            ContainerId = containerId,
-            FileId = fileId,
-            ProviderMetadata = providerMetadata
-        },
-    };
-
-    private static IEnumerable<AIEventEnvelope> CreateSourceUrlEnvelopesFromSearchResults(
-        string providerId,
-        JsonElement? searchResults,
-        string sourceType,
-        string idPrefix)
-    {
-        if (searchResults is not JsonElement results || results.ValueKind != JsonValueKind.Array)
-            yield break;
-
-        var index = 0;
-
-        foreach (var result in results.EnumerateArray())
-        {
-            index++;
-
-            if (!TryBuildSearchResultSourceEnvelope(
-                    providerId,
-                    result,
-                    sourceType,
-                    out var url,
-                    out var title,
-                    out var providerMetadata))
-            {
-                continue;
-            }
-
-            yield return CreateSourceUrlEnvelope(
-                $"{idPrefix}:{index}",
-                url!,
-                title ?? url!,
-                sourceType,
-                providerMetadata: providerMetadata);
-        }
-    }
-
-    private static bool TryBuildSearchResultSourceEnvelope(
-        string providerId,
-        JsonElement source,
-        string sourceType,
-        out string? url,
-        out string? title,
-        out Dictionary<string, Dictionary<string, object>>? providerMetadata)
-    {
-        url = null;
-        title = null;
-        providerMetadata = null;
-
-        string? date = null;
-        string? lastUpdated = null;
-        string? snippet = null;
-        string? origin = null;
-
-        if (source.ValueKind == JsonValueKind.Object)
-        {
-            url = ExtractValue<string>(source, "url")
-                ?? ExtractValue<string>(source, "origin_url")
-                ?? ExtractValue<string>(source, "image_url");
-            title = ExtractValue<string>(source, "title");
-            date = ExtractValue<string>(source, "date");
-            lastUpdated = ExtractValue<string>(source, "last_updated");
-            snippet = ExtractValue<string>(source, "snippet");
-            origin = ExtractValue<string>(source, "source");
-        }
-        else if (source.ValueKind == JsonValueKind.String)
-        {
-            url = source.GetString();
-        }
-
-        if (string.IsNullOrWhiteSpace(url))
-            return false;
-
-        providerMetadata = new Dictionary<string, Dictionary<string, object>>
-        {
-            [providerId] = new Dictionary<string, object>
-            {
-                ["source_type"] = sourceType,
-                ["raw"] = source.Clone()
-            }
-        };
-
-        if (!string.IsNullOrWhiteSpace(origin))
-            providerMetadata[providerId]["origin"] = origin;
-
-        if (!string.IsNullOrWhiteSpace(snippet))
-            providerMetadata[providerId]["snippet"] = snippet;
-
-        if (!string.IsNullOrWhiteSpace(date))
-            providerMetadata[providerId]["date"] = date;
-
-        if (!string.IsNullOrWhiteSpace(lastUpdated))
-            providerMetadata[providerId]["last_updated"] = lastUpdated;
-
-        return true;
-    }
-
-    private static bool TryGetUnknownEventProperty(ResponseUnknownEvent unknown, string key, out JsonElement value)
-    {
-        if (unknown.Data is not null)
-        {
-            foreach (var property in unknown.Data)
-            {
-                if (string.Equals(property.Key, key, StringComparison.OrdinalIgnoreCase))
-                {
-                    value = property.Value;
-                    return true;
-                }
-            }
-        }
-
-        value = default;
-        return false;
-    }
-
-    private static IEnumerable<AIEventEnvelope> CreateReasoningEnvelope(
-    string providerId,
-    string id,
-    ResponseStreamItem responseStreamItem)
-    {
-        string? reasoning = null;
-
-        if (responseStreamItem.AdditionalProperties?.TryGetValue("summary", out var summaryObj) == true
-            && summaryObj is JsonElement summary)
-        {
-            reasoning = summary.ValueKind switch
-            {
-                JsonValueKind.Array =>
-                    string.Join(
-                        "\n\n",
-                        summary.EnumerateArray()
-                            .Select(x => x.TryGetProperty("text", out var t) ? t.GetString() : x.ToString())
-                            .Where(x => !string.IsNullOrWhiteSpace(x))
-                    ),
-
-                JsonValueKind.String => summary.GetString(),
-
-                _ => summary.ToString()
-            };
-        }
-
-        var summaryVal = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary");
-        var encrypted = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content");
-        yield return new AIEventEnvelope
-        {
-            Type = "reasoning-start",
-            Id = id,
-            Data = new AIReasoningStartEventData
-            {
-                ProviderMetadata = CreateReasoningProviderMetadata(
-                    providerId,
-                    encryptedContent: encrypted)
-            }
-        };
-
-        if (!string.IsNullOrWhiteSpace(reasoning))
-        {
-            yield return new AIEventEnvelope
-            {
-                Type = "reasoning-delta",
-                Id = id,
-                Data = new AIReasoningDeltaEventData
-                {
-                    Delta = reasoning
-                }
-            };
-        }
-
-        yield return new AIEventEnvelope
-        {
-            Type = "reasoning-end",
-            Id = id,
-            Data = new AIReasoningEndEventData
-            {
-                ProviderMetadata = CreateReasoningProviderMetadata(
-                    providerId,
-                    encryptedContent: encrypted,
-                    summary: summaryVal)
-            }
-        };
-    }
-
-    private static object? GetAdditionalPropertyValue(Dictionary<string, JsonElement>? properties, string key)
-    {
-        if (properties?.TryGetValue(key, out var value) != true)
-            return null;
-
-        return value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
-            ? null
-            : value.Clone();
-    }
-
-    private static string? TryGetAnnotationString(ResponseStreamAnnotation annotation, string key)
-    {
-        if (annotation.AdditionalProperties?.TryGetValue(key, out var value) != true)
-            return null;
-
-        return value.ValueKind == JsonValueKind.String
-            ? value.GetString()
-            : value.ToString();
-    }
-
-    private static int? TryGetAnnotationInt(ResponseStreamAnnotation annotation, string key)
-    {
-        if (annotation.AdditionalProperties?.TryGetValue(key, out var value) != true)
-            return null;
-
-        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number))
-            return number;
-
-        if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out number))
-            return number;
-
-        return null;
-    }
-
-    private static Dictionary<string, Dictionary<string, object>>? CreateProviderMetadata(
-        string providerId,
-        Dictionary<string, object?> providerMetadata)
-    {
-        var values = providerMetadata
-            .Where(static entry => entry.Value is not null)
-            .ToDictionary(entry => entry.Key, entry => entry.Value!);
-
-        return values.Count == 0
-            ? null
-            : new Dictionary<string, Dictionary<string, object>>
-            {
-                [providerId] = values
-            };
-    }
-
-    private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
-        string providerId,
-        string? signature = null,
-        object? encryptedContent = null,
-        object? summary = null)
-    {
-        var providerMetadata = new Dictionary<string, object>();
-
-        if (!string.IsNullOrWhiteSpace(signature))
-            providerMetadata["signature"] = signature;
-
-        if (HasMeaningfulReasoningValue(encryptedContent))
-            providerMetadata["encrypted_content"] = encryptedContent!;
-
-        if (HasMeaningfulReasoningValue(summary))
-            providerMetadata["summary"] = summary!;
-
-        return providerMetadata.Count == 0
-            ? null
-            : new Dictionary<string, Dictionary<string, object>>
-            {
-                [providerId] = providerMetadata
-            };
-    }
-
-    private static bool HasMeaningfulReasoningValue(object? value)
-        => value switch
-        {
-            null => false,
-            string text => !string.IsNullOrWhiteSpace(text),
-            JsonElement json => json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined,
-            _ => true
-        };
-
-    private static AIEventEnvelope CreateReasoningDeltaEnvelope(string id, string delta)
-            => new()
-            {
-                Type = "reasoning-delta",
-                Id = id,
-                Data = new AIReasoningDeltaEventData
-                {
-                    Delta = delta
-                }
-            };
-
-    private static AIEventEnvelope CreateToolInputStartEnvelope(string id,
-        string toolname,
-        string? title = null,
-        bool? providerExecuted = false)
-           => new()
-           {
-               Type = "tool-input-start",
-               Id = id,
-               Data = new AIToolInputStartEventData
-               {
-                   ProviderExecuted = providerExecuted,
-                   ToolName = toolname,
-                   Title = title
-               },
-           };
-
-    private static AIEventEnvelope CreateToolInputDeltaEnvelope(string id,
-            string delta)
-               => new()
-               {
-                   Type = "tool-input-delta",
-                   Id = id,
-                   Data = new AIToolInputDeltaEventData
-                   {
-                       InputTextDelta = delta
-                   }
-               };
-
-    private static AIEventEnvelope CreateToolInputEndEnvelope(string id,
-        string toolname,
-        object input,
-        string? title = null,
-        bool? providerExecuted = false,
-        Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
-    => new()
-    {
-        Type = "tool-input-available",
-        Id = id,
-        Data = new AIToolInputAvailableEventData
-        {
-            ProviderExecuted = providerExecuted,
-            ToolName = toolname,
-            Input = input,
-            Title = title,
-            ProviderMetadata = providerMetadata
-        },
-    };
-
-    private static AIEventEnvelope CreateToolOutputEnvelope(string id,
-           object output,
-           bool? preliminary = null,
-           bool? dynamic = null,
-           bool? providerExecuted = false,
-           Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
-       => new()
-       {
-           Type = "tool-output-available",
-           Id = id,
-           Data = new AIToolOutputAvailableEventData
-           {
-               ProviderExecuted = providerExecuted,
-               Preliminary = preliminary,
-               Dynamic = dynamic,
-               Output = output,
-               ProviderMetadata = providerMetadata,
-            },
-        };
-
-    private static AIEventEnvelope CreateTextStartEnvelope(string id)
-        => new()
-        {
-            Type = "text-start",
-            Id = id,
-            Data = new AITextStartEventData()
-        };
-
-    private static AIEventEnvelope CreateTextEndEnvelope(string id)
-        => new()
-        {
-            Type = "text-end",
-            Id = id,
-            Data = new AITextEndEventData()
-        };
-
-    private static AIEventEnvelope CreateTextDeltaEnvelope(string id, string delta)
-            => new()
-            {
-                Type = "text-delta",
-                Id = id,
-                Data = new AITextDeltaEventData
-                {
-                    Delta = delta
-                }
-            };
-
-    private static AIEventEnvelope CreateFinishEnvelope(string id, int sequenceNumber, ResponseResult response)
-    {
-        var usage = response.Usage is JsonElement je ? je : default;
-
-        int? inputTokens = null;
-        int? outputTokens = null;
-        int? totalTokens = null;
-
-        if (usage.ValueKind == JsonValueKind.Object)
-        {
-            if (usage.TryGetProperty("input_tokens", out var i))
-                inputTokens = i.GetInt32();
-
-            if (usage.TryGetProperty("output_tokens", out var o))
-                outputTokens = o.GetInt32();
-
-            if (usage.TryGetProperty("total_tokens", out var t))
-                totalTokens = t.GetInt32();
-        }
-
-        return new()
-        {
-            Type = "finish",
-            Id = id,
-            Data = new AIFinishEventData
-            {
-                SequenceNumber = sequenceNumber,
-                Response = response,
-                Model = response.Model,
-                CompletedAt = response.CompletedAt,
-                InputTokens = inputTokens,
-                OutputTokens = outputTokens,
-                TotalTokens = totalTokens,
-                FinishReason = response.Status == "failed" ? "error"
-                    : response.Output.Any(a => a is ResponseFunctionCallItem) ? "tool-calls"
-                    : response.Status == "completed" ? "stop"
-                    : "other"
-            },
-            Metadata = response.Metadata
-        };
-    }
-
-    private static AIEventEnvelope CreateDataEnvelope(string type, object? data)
-        => new()
-        {
-            Type = $"data-responses.{type}",
-            Data = new AIDataEventData
-            {
-                Data = data ?? new { }
-            }
-        };
-
-    private static ResponseResult GetResponseResult(Dictionary<string, object?> data, AIEventEnvelope envelope)
-    {
-        if (data.TryGetValue("response", out var responseObj) && responseObj is not null)
-        {
-            try
-            {
-                return responseObj is ResponseResult existing
-                    ? existing
-                    : JsonSerializer.Deserialize<ResponseResult>(JsonSerializer.Serialize(responseObj, Json), Json)
-                      ?? new ResponseResult { Id = Guid.NewGuid().ToString("N"), Model = "unknown" };
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        return new ResponseResult
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            Object = "response",
-            CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Status = ExtractValue<string>(envelope.Metadata, "status"),
-            Model = ExtractValue<string>(envelope.Metadata, "model") ?? "unknown",
-            Output = []
-        };
-    }
-
-    private static ResponseStreamItem GetResponseStreamItem(Dictionary<string, object?> data)
-    {
-        if (data.TryGetValue("item", out var itemObj) && itemObj is not null)
-        {
-            try
-            {
-                return itemObj is ResponseStreamItem item
-                    ? item
-                    : JsonSerializer.Deserialize<ResponseStreamItem>(JsonSerializer.Serialize(itemObj, Json), Json)
-                      ?? new ResponseStreamItem { Type = "message" };
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        return new ResponseStreamItem { Type = "message" };
-    }
-
-    private static ResponseStreamContentPart GetResponseStreamContentPart(Dictionary<string, object?> data, string key)
-    {
-        if (data.TryGetValue(key, out var partObj) && partObj is not null)
-        {
-            try
-            {
-                return partObj is ResponseStreamContentPart part
-                    ? part
-                    : JsonSerializer.Deserialize<ResponseStreamContentPart>(JsonSerializer.Serialize(partObj, Json), Json)
-                      ?? new ResponseStreamContentPart { Type = "output_text" };
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        return new ResponseStreamContentPart { Type = "output_text" };
-    }
-
-    private static ResponseStreamAnnotation GetResponseStreamAnnotation(Dictionary<string, object?> data)
-    {
-        if (data.TryGetValue("annotation", out var annotationObj) && annotationObj is not null)
-        {
-            try
-            {
-                return annotationObj is ResponseStreamAnnotation annotation
-                    ? annotation
-                    : JsonSerializer.Deserialize<ResponseStreamAnnotation>(JsonSerializer.Serialize(annotationObj, Json), Json)
-                      ?? new ResponseStreamAnnotation();
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        return new ResponseStreamAnnotation();
-    }
-
-    private static Dictionary<string, JsonElement>? ToJsonElementMap(object? value)
-    {
-        if (value is null)
-            return null;
-
-        try
-        {
-            if (value is Dictionary<string, JsonElement> already)
-                return already;
-
-            if (value is JsonElement json && json.ValueKind == JsonValueKind.Object)
-            {
-                return json.EnumerateObject()
-                    .ToDictionary(p => p.Name, p => p.Value);
-            }
-
-            return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(value, Json), Json);
-        }
-        catch
-        {
-            return null;
         }
     }
 }
