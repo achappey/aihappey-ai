@@ -48,6 +48,7 @@ public static partial class InteractionsUnifiedMapper
                 ? request.Model ?? storedModel
                 : storedModel,
             Agent = storedAgent,
+            Metadata = request.Metadata,
             Input = request.Input is null ? null : ToInteractionInput(request.Input, providerId),
             SystemInstruction = request.Instructions,
             Tools = request.Tools?.Select(ToInteractionTool).ToList(),

@@ -1,10 +1,15 @@
 using AIHappey.Common.Model;
 using Microsoft.Extensions.Logging;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using AIHappey.Interactions.Mapping;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.AI;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -26,7 +31,6 @@ public partial class GoogleAIProvider
         _client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
     }
 
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -37,7 +41,6 @@ public partial class GoogleAIProvider
         _client.DefaultRequestHeaders.Remove("x-goog-api-key");
         _client.DefaultRequestHeaders.Add("x-goog-api-key", key);
     }
-
 
     private readonly string FILES_API = "https://generativelanguage.googleapis.com/v1beta/files";
 
@@ -53,16 +56,12 @@ public partial class GoogleAIProvider
 
     private static readonly string Google = "Google";
 
-
-
-    public Task<UIMessagePart> CompleteAsync(ChatCompletionOptions request, CancellationToken cancellationToken = default)
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        var result = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
+            cancellationToken);
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        return result.ToUnifiedResponse(GetIdentifier()).ToChatCompletion();
     }
 
     public string GetIdentifier() => GoogleExtensions.Identifier();
@@ -74,36 +73,93 @@ public partial class GoogleAIProvider
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var interactionRequest = options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
+        interactionRequest.Stream = true;
+        interactionRequest.Store = false;
+        this.SetDefaultInteractionProperties(interactionRequest);
+
+        yield return interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier()).ToChatCompletionUpdate();
+
+        await foreach (var update in GetInteractions(
+                                 interactionRequest,
+                                  cancellationToken: cancellationToken))
+        {
+            foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
+            {
+                yield return item.ToChatCompletionUpdate();
+            }
+        }
+    }
+
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    {
+        var result = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToUnifiedResponse(GetIdentifier()).ToResponseResult();
+    }
+
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var interactionRequest = options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
+        interactionRequest.Stream = true;
+        interactionRequest.Store = false;
+        this.SetDefaultInteractionProperties(interactionRequest);
+
+        yield return interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier()).ToResponseStreamPart();
+
+        await foreach (var update in GetInteractions(
+                                 interactionRequest,
+                                  cancellationToken: cancellationToken))
+        {
+            foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
+            {
+                yield return item.ToResponseStreamPart();
+            }
+        }
+    }
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await this.GetInteraction(request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToUnifiedResponse(GetIdentifier()).ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        var interactionRequest = request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
+        interactionRequest.Stream = true;
+        interactionRequest.Store = false;
+        this.SetDefaultInteractionProperties(interactionRequest);
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
+        foreach (var part in interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier(), headers).ToMessageStreamParts())
+            yield return part;
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        await foreach (var update in GetInteractions(
+                                  interactionRequest,
+                                  cancellationToken: cancellationToken))
+        {
+            foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
+            {
+                foreach (var part in item.ToMessageStreamParts())
+                    yield return part;
+            }
+        }
     }
 }

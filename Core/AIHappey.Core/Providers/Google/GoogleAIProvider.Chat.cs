@@ -1,11 +1,6 @@
-using ModelContextProtocol.Protocol;
-using System.Text.Json;
 using AIHappey.Core.AI;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Google;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
-using AIHappey.Interactions.Extensions;
 using AIHappey.Interactions.Mapping;
 using AIHappey.Vercel.Mapping;
 
@@ -46,18 +41,25 @@ public partial class GoogleAIProvider
                 break;
         }
 
-       
+
+
+        var interactionRequest = request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
+        interactionRequest.Stream = true;
+        interactionRequest.Store = false;
+        this.SetDefaultInteractionProperties(interactionRequest);
+
+        foreach (var part in interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier()).Event.ToUIMessagePart(GetIdentifier()))
+            yield return part;
 
         await foreach (var update in GetInteractions(
-                                 request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
-                                 cancellationToken: cancellationToken))
+                                 interactionRequest,
+                                  cancellationToken: cancellationToken))
         {
             foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
             {
                 foreach (var result in item.Event.ToUIMessagePart(GetIdentifier()))
                     yield return result;
             }
-            // yield return update.ToUnifiedStreamEvent(GetIdentifier()).ToMessu;
         }
 
 

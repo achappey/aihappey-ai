@@ -52,6 +52,10 @@ public sealed class InteractionRequest
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+    [JsonPropertyName("metadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object?>? Metadata { get; set; }
 }
 
 public sealed class Interaction
@@ -758,6 +762,48 @@ public abstract class InteractionTool
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+
+
+public static class ProviderMetadataExtensions
+{
+    public static List<InteractionTool>? GetInteractionToolDefinitions(
+        this Dictionary<string, object?>? metadata,
+        string providerId)
+    {
+        if (metadata is null)
+            return null;
+
+        if (!metadata.TryGetValue(providerId, out var providerObj))
+            return null;
+
+        if (providerObj is not JsonElement providerJson ||
+            providerJson.ValueKind != JsonValueKind.Object)
+            return null;
+
+        if (!providerJson.TryGetProperty("tools", out var toolsEl) ||
+            toolsEl.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var result = new List<InteractionTool>();
+
+        foreach (var toolEl in toolsEl.EnumerateArray())
+        {
+            try
+            {
+                var def = toolEl.Deserialize<InteractionTool>(JsonSerializerOptions.Web);
+                if (def != null)
+                    result.Add(def);
+            }
+            catch
+            {
+                // ignore invalid tool entries (passthrough safety)
+            }
+        }
+
+        return result.Count > 0 ? result : null;
+    }
 }
 
 public sealed class InteractionFunctionTool : InteractionTool

@@ -1,14 +1,6 @@
-using ModelContextProtocol.Protocol;
-using System.Text.Json;
 using AIHappey.Core.AI;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Google;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Interactions.Extensions;
 using AIHappey.Interactions;
-using AIHappey.Unified.Models;
-using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -19,8 +11,12 @@ public partial class GoogleAIProvider
     {
 
         ApplyAuthHeader();
+
         request.Stream = true;
         request.Store = false;
+
+        this.SetDefaultInteractionProperties(request);
+
         await foreach (var update in _client.GetInteractions(
                            request,
                            ct: cancellationToken))
@@ -32,24 +28,21 @@ public partial class GoogleAIProvider
 
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-          => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
-
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
-             CancellationToken cancellationToken = default)
+    public async Task<Interaction> GetInteraction(InteractionRequest request,
+           CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-        /*  var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
 
-          await foreach (var part in this.StreamUnifiedAsync(
-              unifiedRequest,
-              cancellationToken))
-          {
-              foreach (var item in part.ToMessageStreamParts())
-                  yield return item;
-          }
+        ApplyAuthHeader();
 
-          yield break;*/
+        request.Stream = false;
+        request.Store = false;
+
+        this.SetDefaultInteractionProperties(request);
+
+        return await _client.GetInteraction(
+                            request,
+                            ct: cancellationToken);
+
     }
 
 }

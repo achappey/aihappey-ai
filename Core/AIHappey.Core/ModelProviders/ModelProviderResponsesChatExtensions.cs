@@ -5,6 +5,7 @@ using AIHappey.Responses;
 using AIHappey.Messages.Mapping;
 using AIHappey.ChatCompletions.Models;
 using System.Text.Json;
+using AIHappey.Interactions;
 
 namespace AIHappey.Core.AI;
 
@@ -51,6 +52,19 @@ public static class ModelProviderResponsesChatExtensions
 
         responseRequest.Metadata = null;
     }
+
+    public static void SetDefaultInteractionProperties(
+       this IModelProvider modelProvider, InteractionRequest responseRequest, HashSet<string>? exclude = null)
+    {
+        responseRequest.Tools = [.. responseRequest.Tools ?? [],
+            .. responseRequest.Metadata.GetInteractionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+
+       // modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
+      //          [], [.. exclude ?? [], "tools"]);
+
+        responseRequest.Metadata = null;
+    }
+
 
     public static void SetDefaultChatCompletionProperties(
         this IModelProvider modelProvider, ChatCompletionOptions chatCompletionOptions, HashSet<string>? exclude = null)

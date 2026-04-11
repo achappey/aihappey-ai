@@ -1,10 +1,40 @@
 using System.Text.Json;
 using AIHappey.Unified.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Interactions.Mapping;
 
 public static partial class InteractionsUnifiedMapper
 {
+    public static AIStreamEvent ToUnifiedRequestStreamEvent(
+        this InteractionRequest request,
+        string providerId,
+        Dictionary<string, string>? headers = null)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+
+        return new AIStreamEvent
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = "data-interactions.request",
+                Timestamp = DateTimeOffset.UtcNow,
+                Data = new AIDataEventData
+                {
+                    Data = JsonSerializer.SerializeToElement(request, Json)
+                }
+            },
+            Metadata = headers is null || headers.Count == 0
+                ? null
+                : new Dictionary<string, object?>
+                {
+                    ["unified.request.headers"] = headers.ToDictionary(a => a.Key, a => (object?)a.Value)
+                }
+        };
+    }
+
     public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvent(this InteractionStreamEventPart part, string providerId)
     {
         ArgumentNullException.ThrowIfNull(part);
@@ -49,8 +79,11 @@ public static partial class InteractionsUnifiedMapper
                 var unifiedContent = ToUnifiedContentParts([start.Content!], providerId).OfType<AIToolCallContentPart>().FirstOrDefault();
                 if (unifiedContent is not null)
                 {
+                    var emittedToolEvent = false;
+
                     if (HasMeaningfulValue(unifiedContent.Input))
                     {
+                        emittedToolEvent = true;
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -68,9 +101,10 @@ public static partial class InteractionsUnifiedMapper
                             part,
                             start.Index);
                     }
-
+                    
                     if (HasMeaningfulValue(unifiedContent.Output))
                     {
+                        emittedToolEvent = true;
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -87,7 +121,8 @@ public static partial class InteractionsUnifiedMapper
                             start.Index);
                     }
 
-                    yield break;
+                    if (emittedToolEvent)
+                        yield break;
                 }
 
                 yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, start.Index), part, start.Index);
@@ -150,6 +185,153 @@ public static partial class InteractionsUnifiedMapper
                     delta.Index);
                 yield break;
 
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_call", StringComparison.OrdinalIgnoreCase):
+            {
+                var toolCallId = GetDeltaAdditionalString(delta, "id")
+                                 ?? GetDeltaAdditionalString(delta, "call_id")
+                                 ?? BuildContentEventId(delta.Index);
+                var toolName = "google_search";
+                var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
+                var providerMetadata = CreateGoogleSearchToolProviderMetadata(
+                    providerId,
+                    toolCallId,
+                    "google_search_call",
+                    searchType: GetDeltaAdditionalString(delta, "search_type"));
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-input-start",
+                        Id = toolCallId,
+                        Data = new AIToolInputStartEventData
+                        {
+                            ToolName = toolName,
+                            ProviderExecuted = true,
+                            Title = toolName
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                var inputJson = SerializePayload(input, "{}");
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-input-delta",
+                        Id = toolCallId,
+                        Data = new AIToolInputDeltaEventData
+                        {
+                            InputTextDelta = inputJson
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-input-available",
+                        Id = toolCallId,
+                        Data = new AIToolInputAvailableEventData
+                        {
+                            ToolName = toolName,
+                            Input = CloneIfJsonElement(input) ?? new { },
+                            ProviderExecuted = true,
+                            Title = toolName,
+                            ProviderMetadata = providerMetadata
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
+                yield break;
+            }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_result", StringComparison.OrdinalIgnoreCase):
+            {
+                var toolCallId = GetDeltaAdditionalString(delta, "call_id")
+                                 ?? GetDeltaAdditionalString(delta, "id")
+                                 ?? BuildContentEventId(delta.Index);
+                var resultPayload = GetDeltaAdditionalObject(delta, "result")
+                                    ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleSearchResult>(), Json);
+                var structuredContent = JsonSerializer.SerializeToElement(new
+                {
+                    content = CloneIfJsonElement(resultPayload) ?? resultPayload,
+                    result = CloneIfJsonElement(resultPayload) ?? resultPayload
+                }, Json);
+                var providerMetadata = CreateGoogleSearchToolProviderMetadata(
+                    providerId,
+                    toolCallId,
+                    "google_search_result",
+                    isError: GetDeltaAdditionalBool(delta, "is_error"));
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-output-available",
+                        Id = toolCallId,
+                        Data = new AIToolOutputAvailableEventData
+                        {
+                            Output = new CallToolResult
+                            {
+                                Content = [new TextContentBlock { Text = SerializePayload(resultPayload, "[]") }],
+                                StructuredContent = structuredContent.Clone()
+                            },
+                            ProviderExecuted = true,
+                            ProviderMetadata = providerMetadata
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
+                yield break;
+            }
+
+            case InteractionContentDeltaEvent delta when HasUrlCitationAnnotations(delta):
+            {
+                var annotations = GetUrlCitationAnnotations(delta);
+                for (var i = 0; i < annotations.Count; i++)
+                {
+                    var annotation = annotations[i];
+                    if (string.IsNullOrWhiteSpace(annotation.Url))
+                        continue;
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "source-url",
+                            Id = BuildContentEventId(delta.Index),
+                            Data = new AISourceUrlEventData
+                            {
+                                SourceId = BuildCitationSourceId(delta, i, annotation),
+                                Url = annotation.Url,
+                                Title = annotation.Title,
+                                Type = annotation.Type,
+                                ProviderMetadata = CreateProviderScopedMetadata(providerId, new Dictionary<string, object>
+                                {
+                                    ["type"] = annotation.Type ?? "url_citation",
+                                    ["start_index"] = annotation.StartIndex ?? -1,
+                                    ["end_index"] = annotation.EndIndex ?? -1,
+                                    ["interactions.content.index"] = delta.Index,
+                                    ["interactions.event_id"] = delta.EventId ?? string.Empty
+                                })
+                            }
+                        },
+                        part,
+                        delta.Index);
+                }
+
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
+                yield break;
+            }
+
             case InteractionContentDeltaEvent delta:
                 yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
@@ -202,6 +384,15 @@ public static partial class InteractionsUnifiedMapper
             }
 
             case InteractionCompleteEvent complete:
+                if (complete.Interaction is not null)
+                {
+                    yield return CreateStreamEvent(
+                        providerId,
+                        CreateResponseDataEnvelope(complete.Interaction),
+                        part,
+                        0);
+                }
+
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -382,10 +573,34 @@ public static partial class InteractionsUnifiedMapper
             }
         };
 
+    private static AIEventEnvelope CreateResponseDataEnvelope(Interaction response)
+        => new()
+        {
+            Type = "data-interactions.response",
+            Id = response.Id,
+            Data = new AIDataEventData
+            {
+                Id = response.Id,
+                Data = JsonSerializer.SerializeToElement(response, Json)
+            },
+            Timestamp = DateTimeOffset.UtcNow
+        };
+
     private static InteractionContent CreateInteractionToolContentFromInput(object? data)
     {
         var payload = DeserializeFromObject<AIToolInputAvailableEventData>(data);
         var input = CloneIfJsonElement(payload?.Input);
+
+        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionGoogleSearchCallContent
+            {
+                Id = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
+                SearchType = TryGetProviderMetadataString(payload?.ProviderMetadata, "search_type"),
+                Arguments = DeserializeFromObject<InteractionGoogleSearchCallArguments>(input)
+            };
+        }
+
         return new InteractionFunctionCallContent
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -397,6 +612,17 @@ public static partial class InteractionsUnifiedMapper
     private static InteractionContent CreateInteractionToolContentFromOutput(object? data)
     {
         var payload = DeserializeFromObject<AIToolOutputAvailableEventData>(data);
+
+        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_search_result", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionGoogleSearchResultContent
+            {
+                CallId = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
+                IsError = ExtractProviderMetadataBool(payload?.ProviderMetadata, "interactions.is_error"),
+                Result = DeserializeFromObject<List<InteractionGoogleSearchResult>>(TryGetStructuredContentResult(payload?.Output))
+            };
+        }
+
         return new InteractionFunctionResultContent
         {
             CallId = Guid.NewGuid().ToString("N"),
@@ -423,5 +649,179 @@ public static partial class InteractionsUnifiedMapper
             Type = "thought",
             Text = data?.Delta
         };
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateGoogleSearchToolProviderMetadata(
+        string providerId,
+        string toolCallId,
+        string type,
+        string? searchType = null,
+        bool? isError = null)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = type,
+            ["tool_use_id"] = toolCallId,
+            ["tool_name"] = "google_search",
+            ["name"] = "google_search",
+            ["title"] = "google_search"
+        };
+
+        if (!string.IsNullOrWhiteSpace(searchType))
+            metadata["search_type"] = searchType;
+
+        if (isError is not null)
+            metadata["interactions.is_error"] = isError.Value;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = metadata
+        };
+    }
+
+    private static bool HasUrlCitationAnnotations(InteractionContentDeltaEvent delta)
+        => GetUrlCitationAnnotations(delta).Count != 0;
+
+    private static List<InteractionAnnotation> GetUrlCitationAnnotations(InteractionContentDeltaEvent delta)
+    {
+        if (delta.Delta?.AdditionalProperties is null
+            || !delta.Delta.AdditionalProperties.TryGetValue("annotations", out var annotations)
+            || annotations.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        try
+        {
+            return (JsonSerializer.Deserialize<List<InteractionAnnotation>>(annotations.GetRawText(), Json) ?? [])
+                .Where(annotation => string.Equals(annotation.Type, "url_citation", StringComparison.OrdinalIgnoreCase)
+                                     && !string.IsNullOrWhiteSpace(annotation.Url))
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string BuildCitationSourceId(InteractionContentDeltaEvent delta, int ordinal, InteractionAnnotation annotation)
+        => $"{delta.EventId ?? BuildContentEventId(delta.Index)}:{delta.Index}:{ordinal}:{annotation.StartIndex ?? -1}:{annotation.EndIndex ?? -1}";
+
+    private static string? TryGetProviderMetadataString(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        string key)
+    {
+        if (providerMetadata is null)
+            return null;
+
+        foreach (var scopedMetadata in providerMetadata.Values)
+        {
+            if (!scopedMetadata.TryGetValue(key, out var value) || value is null)
+                continue;
+
+            return value switch
+            {
+                JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
+                JsonElement json => json.ToString(),
+                _ => value.ToString()
+            };
+        }
+
+        return null;
+    }
+
+    private static bool? ExtractProviderMetadataBool(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        string key)
+    {
+        if (providerMetadata is null)
+            return null;
+
+        foreach (var scopedMetadata in providerMetadata.Values)
+        {
+            if (!scopedMetadata.TryGetValue(key, out var value) || value is null)
+                continue;
+
+            if (value is bool boolValue)
+                return boolValue;
+
+            if (value is JsonElement json && json.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                return json.GetBoolean();
+
+            if (bool.TryParse(value.ToString(), out var parsed))
+                return parsed;
+        }
+
+        return null;
+    }
+
+    private static string? GetDeltaAdditionalString(InteractionContentDeltaEvent delta, string key)
+    {
+        if (delta.Delta?.AdditionalProperties is null
+            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : value.ToString();
+    }
+
+    private static object? GetDeltaAdditionalObject(InteractionContentDeltaEvent delta, string key)
+    {
+        if (delta.Delta?.AdditionalProperties is null
+            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
+        {
+            return null;
+        }
+
+        return value.Clone();
+    }
+
+    private static bool? GetDeltaAdditionalBool(InteractionContentDeltaEvent delta, string key)
+    {
+        if (delta.Delta?.AdditionalProperties is null
+            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.String when bool.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static object? TryGetStructuredContent(object? output)
+    {
+        switch (output)
+        {
+            case CallToolResult callToolResult when callToolResult.StructuredContent is JsonElement structuredContent:
+                return structuredContent.Clone();
+            case JsonElement json when json.ValueKind == JsonValueKind.Object
+                                   && json.TryGetProperty("structuredContent", out var inlineStructuredContent):
+                return inlineStructuredContent.Clone();
+            default:
+                return CloneIfJsonElement(output);
+        }
+    }
+
+    private static object? TryGetStructuredContentResult(object? output)
+    {
+        var structuredContent = TryGetStructuredContent(output);
+        if (structuredContent is JsonElement json && json.ValueKind == JsonValueKind.Object)
+        {
+            if (json.TryGetProperty("result", out var result))
+                return result.Clone();
+
+            if (json.TryGetProperty("content", out var content))
+                return content.Clone();
+        }
+
+        return structuredContent;
     }
 }
