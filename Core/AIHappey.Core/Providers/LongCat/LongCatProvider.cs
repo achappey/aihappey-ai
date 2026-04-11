@@ -7,7 +7,6 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.LongCat;
 

@@ -8,7 +8,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Infron;
 

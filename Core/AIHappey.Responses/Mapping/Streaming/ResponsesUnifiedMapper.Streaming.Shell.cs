@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;

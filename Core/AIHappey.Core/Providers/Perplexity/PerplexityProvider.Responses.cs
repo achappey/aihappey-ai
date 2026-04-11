@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Responses.Extensions;
 using System.Text.Json;
 using AIHappey.Responses;

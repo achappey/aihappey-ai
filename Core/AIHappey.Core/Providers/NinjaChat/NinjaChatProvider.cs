@@ -5,7 +5,6 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.NinjaChat;
 

@@ -12,7 +12,6 @@ namespace AIHappey.Core.Providers.Mistral;
 
 public partial class MistralProvider
 {
-    private const string AgentModelPrefix = "agent/";
     private const string ConversationsEndpoint = "/v1/conversations";
 
     private static readonly JsonSerializerOptions MistralJsonSerializerOptions = JsonSerializerOptions.Web;
@@ -33,17 +32,6 @@ public partial class MistralProvider
         return new ConversationTarget(normalized, null);
     }
 
-    private static void ApplyConversationTarget(JsonObject payload, ConversationTarget target)
-    {
-        if (!string.IsNullOrWhiteSpace(target.AgentId))
-        {
-            payload["agent_id"] = target.AgentId;
-            return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(target.Model))
-            payload["model"] = target.Model;
-    }
 
     private MistralConversationRequest CreateConversationRequest(
         ConversationTarget target,
@@ -158,7 +146,7 @@ public partial class MistralProvider
             var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null)
                 break;
-                
+
             if (line.Length == 0)
             {
                 if (dataBuilder.Length > 0)
@@ -384,18 +372,7 @@ public partial class MistralProvider
             string.IsNullOrWhiteSpace(responseBody) ? response.ReasonPhrase ?? "Mistral conversations request failed." : responseBody,
             responseBody);
 
-    private async Task<IReadOnlyList<MistralAgentDefinition>> ListAgentsAsync(CancellationToken cancellationToken)
-    {
-        ApplyAuthHeader();
 
-        using var req = new HttpRequestMessage(HttpMethod.Get, "/v1/agents");
-        using var resp = await _client.SendAsync(req, cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-            return [];
-
-        var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-        return JsonSerializer.Deserialize<List<MistralAgentDefinition>>(body, JsonSerializerOptions.Web) ?? [];
-    }
 
     private sealed record ConversationTarget(string? Model, string? AgentId)
     {
@@ -506,21 +483,4 @@ public partial class MistralProvider
         public string? ResponseBody { get; } = responseBody;
     }
 
-    private sealed class MistralAgentDefinition
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        [JsonPropertyName("description")]
-        public string? Description { get; set; }
-
-        [JsonPropertyName("model")]
-        public string? Model { get; set; }
-
-        [JsonPropertyName("created_at")]
-        public DateTimeOffset? CreatedAt { get; set; }
-    }
 }

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using MIS = Mistral.SDK;
@@ -6,6 +8,9 @@ namespace AIHappey.Core.Providers.Mistral;
 
 public partial class MistralProvider
 {
+    private const string AgentModelPrefix = "agent/";
+
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -79,5 +84,35 @@ public partial class MistralProvider
             cancellationToken: cancellationToken);
     }
 
+    private async Task<IReadOnlyList<MistralAgentDefinition>> ListAgentsAsync(CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/v1/agents");
+        using var resp = await _client.SendAsync(req, cancellationToken);
+        if (!resp.IsSuccessStatusCode)
+            return [];
+
+        var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+        return JsonSerializer.Deserialize<List<MistralAgentDefinition>>(body, JsonSerializerOptions.Web) ?? [];
+    }
+
+    private sealed class MistralAgentDefinition
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("model")]
+        public string? Model { get; set; }
+
+        [JsonPropertyName("created_at")]
+        public DateTimeOffset? CreatedAt { get; set; }
+    }
 
 }
