@@ -9,6 +9,15 @@ public static partial class InteractionsUnifiedMapper
     private static readonly ConcurrentDictionary<string, string> StreamContentTypes = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, string> StreamThoughtSignatures = new(StringComparer.Ordinal);
 
+
+    public static Dictionary<string, object?>? ToDictionary(this object? obj)
+    {
+        if (obj is null) return null;
+
+        var json = JsonSerializer.Serialize(obj);
+        return JsonSerializer.Deserialize<Dictionary<string, object?>>(json);
+    }
+
     private static T? ExtractObject<T>(Dictionary<string, object?>? metadata, string key)
     {
         if (metadata is null || !metadata.TryGetValue(key, out var value) || value is null)

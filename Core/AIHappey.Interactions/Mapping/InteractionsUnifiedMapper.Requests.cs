@@ -34,9 +34,11 @@ public static partial class InteractionsUnifiedMapper
         var metadata = request.Metadata ?? new Dictionary<string, object?>();
         var storedModel = ExtractValue<string>(metadata, "interactions.request.model");
         var storedAgent = ExtractValue<string>(metadata, "interactions.request.agent");
-        var generationConfig = ExtractObject<InteractionGenerationConfig>(metadata, "interactions.request.generation_config")
-                               ?? new InteractionGenerationConfig();
-
+        var providerConfig = metadata.TryGetValue(providerId, out object? config) ? config.ToDictionary() : null;
+        var generationConfig = providerConfig != null ? ExtractObject<InteractionGenerationConfig>(providerConfig,
+            "generation_config") : new InteractionGenerationConfig();
+        generationConfig ??= new InteractionGenerationConfig();
+        
         generationConfig.Temperature = request.Temperature ?? generationConfig.Temperature;
         generationConfig.TopP = request.TopP ?? generationConfig.TopP;
         generationConfig.MaxOutputTokens = request.MaxOutputTokens ?? generationConfig.MaxOutputTokens;

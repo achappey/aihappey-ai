@@ -168,7 +168,9 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
             }
 
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought", StringComparison.OrdinalIgnoreCase):
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_summary", StringComparison.OrdinalIgnoreCase):
+            {
+                var summaryText = GetThoughtSummaryText(delta);
                 RememberStreamContentType(providerId, delta.Index, "thought");
                 yield return CreateStreamEvent(
                     providerId,
@@ -178,11 +180,17 @@ public static partial class InteractionsUnifiedMapper
                         Id = BuildContentEventId(delta.Index),
                         Data = new AIReasoningDeltaEventData
                         {
-                            Delta = delta.Delta?.Text ?? string.Empty
+                            Delta = summaryText ?? string.Empty
                         }
                     },
                     part,
                     delta.Index);
+                yield break;
+            }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought", StringComparison.OrdinalIgnoreCase):
+                RememberStreamContentType(providerId, delta.Index, "thought");
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
 
             case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_call", StringComparison.OrdinalIgnoreCase):
@@ -293,9 +301,113 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
             }
 
-            case InteractionContentDeltaEvent delta when HasUrlCitationAnnotations(delta):
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_maps_call", StringComparison.OrdinalIgnoreCase):
             {
-                var annotations = GetUrlCitationAnnotations(delta);
+                var toolCallId = GetDeltaAdditionalString(delta, "id")
+                                 ?? GetDeltaAdditionalString(delta, "call_id")
+                                 ?? BuildContentEventId(delta.Index);
+                var toolName = "google_maps";
+                var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
+                var providerMetadata = CreateGoogleMapsToolProviderMetadata(
+                    providerId,
+                    toolCallId,
+                    "google_maps_call");
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-input-start",
+                        Id = toolCallId,
+                        Data = new AIToolInputStartEventData
+                        {
+                            ToolName = toolName,
+                            ProviderExecuted = true,
+                            Title = toolName
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                var inputJson = SerializePayload(input, "{}");
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-input-delta",
+                        Id = toolCallId,
+                        Data = new AIToolInputDeltaEventData
+                        {
+                            InputTextDelta = inputJson
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-input-available",
+                        Id = toolCallId,
+                        Data = new AIToolInputAvailableEventData
+                        {
+                            ToolName = toolName,
+                            Input = CloneIfJsonElement(input) ?? new { },
+                            ProviderExecuted = true,
+                            Title = toolName,
+                            ProviderMetadata = providerMetadata
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
+                yield break;
+            }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_maps_result", StringComparison.OrdinalIgnoreCase):
+            {
+                var toolCallId = GetDeltaAdditionalString(delta, "call_id")
+                                 ?? GetDeltaAdditionalString(delta, "id")
+                                 ?? BuildContentEventId(delta.Index);
+                var resultPayload = GetDeltaAdditionalObject(delta, "result")
+                                    ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
+                var structuredContent = CloneIfJsonElement(resultPayload) ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
+                var providerMetadata = CreateGoogleMapsToolProviderMetadata(
+                    providerId,
+                    toolCallId,
+                    "google_maps_result");
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-output-available",
+                        Id = toolCallId,
+                        Data = new AIToolOutputAvailableEventData
+                        {
+                            Output = new CallToolResult
+                            {
+                                StructuredContent = (JsonElement)structuredContent
+                            },
+                            ProviderExecuted = true,
+                            ProviderMetadata = providerMetadata
+                        }
+                    },
+                    part,
+                    delta.Index);
+
+                foreach (var sourceEvent in CreateGoogleMapsSourceUrlEvents(providerId, delta, toolCallId, resultPayload))
+                    yield return sourceEvent;
+
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
+                yield break;
+            }
+
+            case InteractionContentDeltaEvent delta when HasSourceUrlAnnotations(delta):
+            {
+                var annotations = GetSourceUrlAnnotations(delta);
                 for (var i = 0; i < annotations.Count; i++)
                 {
                     var annotation = annotations[i];
@@ -312,16 +424,9 @@ public static partial class InteractionsUnifiedMapper
                             {
                                 SourceId = BuildCitationSourceId(delta, i, annotation),
                                 Url = annotation.Url,
-                                Title = annotation.Title,
+                                Title = GetAnnotationTitle(annotation),
                                 Type = annotation.Type,
-                                ProviderMetadata = CreateProviderScopedMetadata(providerId, new Dictionary<string, object>
-                                {
-                                    ["type"] = annotation.Type ?? "url_citation",
-                                    ["start_index"] = annotation.StartIndex ?? -1,
-                                    ["end_index"] = annotation.EndIndex ?? -1,
-                                    ["interactions.content.index"] = delta.Index,
-                                    ["interactions.event_id"] = delta.EventId ?? string.Empty
-                                })
+                                ProviderMetadata = CreateAnnotationProviderMetadata(providerId, delta, annotation)
                             }
                         },
                         part,
@@ -601,6 +706,15 @@ public static partial class InteractionsUnifiedMapper
             };
         }
 
+        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_maps_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionGoogleMapsCallContent
+            {
+                Id = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
+                Arguments = DeserializeFromObject<InteractionGoogleMapsCallArguments>(input)
+            };
+        }
+
         return new InteractionFunctionCallContent
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -620,6 +734,15 @@ public static partial class InteractionsUnifiedMapper
                 CallId = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
                 IsError = ExtractProviderMetadataBool(payload?.ProviderMetadata, "interactions.is_error"),
                 Result = DeserializeFromObject<List<InteractionGoogleSearchResult>>(TryGetStructuredContentResult(payload?.Output))
+            };
+        }
+
+        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_maps_result", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionGoogleMapsResultContent
+            {
+                CallId = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
+                Result = DeserializeFromObject<List<InteractionGoogleMapsResult>>(TryGetStructuredContentResult(payload?.Output))
             };
         }
 
@@ -646,9 +769,35 @@ public static partial class InteractionsUnifiedMapper
 
         return new InteractionContentDeltaData
         {
-            Type = "thought",
-            Text = data?.Delta
+            Type = "thought_summary",
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent
+                {
+                    Text = data?.Delta
+                }, Json)
+            }
         };
+    }
+
+    private static string? GetThoughtSummaryText(InteractionContentDeltaEvent delta)
+    {
+        if (delta.Delta?.AdditionalProperties is not null
+            && delta.Delta.AdditionalProperties.TryGetValue("content", out var contentValue))
+        {
+            if (contentValue.ValueKind == JsonValueKind.String)
+                return contentValue.GetString();
+
+            if (contentValue.ValueKind == JsonValueKind.Object
+                && contentValue.TryGetProperty("text", out var textValue))
+            {
+                return textValue.ValueKind == JsonValueKind.String
+                    ? textValue.GetString()
+                    : textValue.ToString();
+            }
+        }
+
+        return delta.Delta?.Text;
     }
 
     private static Dictionary<string, Dictionary<string, object>> CreateGoogleSearchToolProviderMetadata(
@@ -679,10 +828,111 @@ public static partial class InteractionsUnifiedMapper
         };
     }
 
-    private static bool HasUrlCitationAnnotations(InteractionContentDeltaEvent delta)
-        => GetUrlCitationAnnotations(delta).Count != 0;
+    private static Dictionary<string, Dictionary<string, object>> CreateGoogleMapsToolProviderMetadata(
+        string providerId,
+        string toolCallId,
+        string type)
+        => new()
+        {
+            [providerId] = new Dictionary<string, object>
+            {
+                ["type"] = type,
+                ["tool_use_id"] = toolCallId,
+                ["tool_name"] = "google_maps",
+                ["name"] = "google_maps",
+                ["title"] = "google_maps"
+            }
+        };
 
-    private static List<InteractionAnnotation> GetUrlCitationAnnotations(InteractionContentDeltaEvent delta)
+    private static IEnumerable<AIStreamEvent> CreateGoogleMapsSourceUrlEvents(
+        string providerId,
+        InteractionContentDeltaEvent delta,
+        string toolCallId,
+        object? resultPayload)
+    {
+        var results = DeserializeFromObject<List<InteractionGoogleMapsResult>>(resultPayload);
+        if (results is null || results.Count == 0)
+            yield break;
+
+        for (var resultIndex = 0; resultIndex < results.Count; resultIndex++)
+        {
+            var result = results[resultIndex];
+            var places = result.Places;
+            if (places is null || places.Count == 0)
+                continue;
+
+            for (var placeIndex = 0; placeIndex < places.Count; placeIndex++)
+            {
+                var place = places[placeIndex];
+                if (string.IsNullOrWhiteSpace(place.Url))
+                    continue;
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "source-url",
+                        Id = toolCallId,
+                        Data = new AISourceUrlEventData
+                        {
+                            SourceId = BuildGoogleMapsSourceId(toolCallId, resultIndex, placeIndex, place),
+                            Url = place.Url,
+                            Title = place.Name,
+                            Type = "google_maps_result",
+                            ProviderMetadata = CreateGoogleMapsPlaceSourceMetadata(providerId, toolCallId, resultIndex, placeIndex, result, place)
+                        }
+                    },
+                    delta,
+                    delta.Index);
+            }
+        }
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateGoogleMapsPlaceSourceMetadata(
+        string providerId,
+        string toolCallId,
+        int resultIndex,
+        int placeIndex,
+        InteractionGoogleMapsResult result,
+        InteractionPlace place)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "google_maps_result",
+            ["tool_use_id"] = toolCallId,
+            ["tool_name"] = "google_maps",
+            ["interactions.content.index"] = resultIndex,
+            ["google_maps.result_index"] = resultIndex,
+            ["google_maps.place_index"] = placeIndex,
+            ["google_maps.place_id"] = place.PlaceId ?? string.Empty,
+            ["google_maps.place_name"] = place.Name ?? string.Empty
+        };
+
+        if (!string.IsNullOrWhiteSpace(result.WidgetContextToken))
+            metadata["google_maps.widget_context_token"] = result.WidgetContextToken;
+
+        if (result.AdditionalProperties is not null)
+        {
+            foreach (var property in result.AdditionalProperties)
+                metadata[$"google_maps.result.{property.Key}"] = property.Value.Clone();
+        }
+
+        if (place.AdditionalProperties is not null)
+        {
+            foreach (var property in place.AdditionalProperties)
+                metadata[$"google_maps.place.{property.Key}"] = property.Value.Clone();
+        }
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = metadata
+        };
+    }
+
+    private static bool HasSourceUrlAnnotations(InteractionContentDeltaEvent delta)
+        => GetSourceUrlAnnotations(delta).Count != 0;
+
+    private static List<InteractionAnnotation> GetSourceUrlAnnotations(InteractionContentDeltaEvent delta)
     {
         if (delta.Delta?.AdditionalProperties is null
             || !delta.Delta.AdditionalProperties.TryGetValue("annotations", out var annotations)
@@ -694,8 +944,7 @@ public static partial class InteractionsUnifiedMapper
         try
         {
             return (JsonSerializer.Deserialize<List<InteractionAnnotation>>(annotations.GetRawText(), Json) ?? [])
-                .Where(annotation => string.Equals(annotation.Type, "url_citation", StringComparison.OrdinalIgnoreCase)
-                                     && !string.IsNullOrWhiteSpace(annotation.Url))
+                .Where(annotation => !string.IsNullOrWhiteSpace(annotation.Url))
                 .ToList();
         }
         catch
@@ -704,8 +953,52 @@ public static partial class InteractionsUnifiedMapper
         }
     }
 
+    private static Dictionary<string, Dictionary<string, object>>? CreateAnnotationProviderMetadata(
+        string providerId,
+        InteractionContentDeltaEvent delta,
+        InteractionAnnotation annotation)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = annotation.Type ?? "url_citation",
+            ["start_index"] = annotation.StartIndex ?? -1,
+            ["end_index"] = annotation.EndIndex ?? -1,
+            ["interactions.content.index"] = delta.Index,
+            ["interactions.event_id"] = delta.EventId ?? string.Empty
+        };
+
+        if (annotation.AdditionalProperties is not null)
+        {
+            foreach (var property in annotation.AdditionalProperties)
+            {
+                metadata[property.Key] = property.Value.Clone();
+            }
+        }
+
+        return CreateProviderScopedMetadata(providerId, metadata);
+    }
+
+    private static string? GetAnnotationTitle(InteractionAnnotation annotation)
+    {
+        if (!string.IsNullOrWhiteSpace(annotation.Title))
+            return annotation.Title;
+
+        if (annotation.AdditionalProperties is null
+            || !annotation.AdditionalProperties.TryGetValue("name", out var nameValue))
+        {
+            return null;
+        }
+
+        return nameValue.ValueKind == JsonValueKind.String
+            ? nameValue.GetString()
+            : nameValue.ToString();
+    }
+
     private static string BuildCitationSourceId(InteractionContentDeltaEvent delta, int ordinal, InteractionAnnotation annotation)
         => $"{delta.EventId ?? BuildContentEventId(delta.Index)}:{delta.Index}:{ordinal}:{annotation.StartIndex ?? -1}:{annotation.EndIndex ?? -1}";
+
+    private static string BuildGoogleMapsSourceId(string toolCallId, int resultIndex, int placeIndex, InteractionPlace place)
+        => $"{toolCallId}:{resultIndex}:{placeIndex}:{place.PlaceId ?? "place"}";
 
     private static string? TryGetProviderMetadataString(
         Dictionary<string, Dictionary<string, object>>? providerMetadata,
