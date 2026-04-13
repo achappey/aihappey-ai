@@ -199,6 +199,9 @@ public static partial class InteractionsUnifiedMapper
                 return ToInteractionFileContent(file);
 
             case AIToolCallContentPart tool:
+                if (IsSyntheticInteractionImageTool(tool))
+                    return null;
+
                 return ToInteractionToolContent(tool);
 
             default:
@@ -219,7 +222,7 @@ public static partial class InteractionsUnifiedMapper
                 return new InteractionImageContent
                 {
                     MimeType = mimeType,
-                    Data = IsHttpUrl(data) ? null : data,
+                    Data = IsHttpUrl(data) ? null : data?.StripBase64Prefix(),
                     Uri = uri ?? (IsHttpUrl(data) ? data : null),
                     Resolution = ExtractValue<string>(file.Metadata, "interactions.resolution")
                 };
@@ -228,7 +231,7 @@ public static partial class InteractionsUnifiedMapper
                 return new InteractionAudioContent
                 {
                     MimeType = mimeType,
-                    Data = IsHttpUrl(data) ? null : data,
+                    Data = IsHttpUrl(data) ? null : data?.StripBase64Prefix(),
                     Uri = uri ?? (IsHttpUrl(data) ? data : null),
                     Rate = ExtractValue<int?>(file.Metadata, "interactions.rate"),
                     Channels = ExtractValue<int?>(file.Metadata, "interactions.channels")
@@ -238,18 +241,10 @@ public static partial class InteractionsUnifiedMapper
                 return new InteractionVideoContent
                 {
                     MimeType = mimeType,
-                    Data = IsHttpUrl(data) ? null : data,
+                    Data = IsHttpUrl(data) ? null : data?.StripBase64Prefix(),
                     Uri = uri ?? (IsHttpUrl(data) ? data : null),
                     Resolution = ExtractValue<string>(file.Metadata, "interactions.resolution")
                 };
-
-                /*     case "document":
-                         return new InteractionDocumentContent
-                         {
-                             MimeType = mimeType ?? "application/pdf",
-                             Data = IsHttpUrl(data) ? null : data,
-                             Uri = uri ?? (IsHttpUrl(data) ? data : null)
-                         };*/
         }
 
         if (mimeType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true)
@@ -257,7 +252,7 @@ public static partial class InteractionsUnifiedMapper
             return new InteractionImageContent
             {
                 MimeType = mimeType,
-                Data = IsHttpUrl(data) ? null : data,
+                Data = IsHttpUrl(data) ? null : data?.StripBase64Prefix(),
                 Uri = uri ?? (IsHttpUrl(data) ? data : null)
             };
         }
@@ -395,6 +390,12 @@ public static partial class InteractionsUnifiedMapper
             }
         };
     }
+
+    private static bool IsSyntheticInteractionImageTool(AIToolCallContentPart tool)
+        => tool.ProviderExecuted == true
+           && string.Equals(tool.ToolName, "image", StringComparison.OrdinalIgnoreCase)
+           && (ExtractProviderScopedValue<string>(tool.Metadata, "type")?.Equals("interaction_image_stream", StringComparison.OrdinalIgnoreCase) == true
+               || ExtractValue<bool?>(tool.Metadata, "interactions.synthetic_image_tool") == true);
 
     private static AIToolCallContentPart CreateToolPart(
         string providerId,

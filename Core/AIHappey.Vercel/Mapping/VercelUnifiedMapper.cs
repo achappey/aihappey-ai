@@ -232,10 +232,16 @@ public static class VercelUnifiedMapper
             },
             "file" => new FileUIPart
             {
-                MediaType = GetValue<string>(data, "mediaType") ?? "application/octet-stream",
-                Url = GetValue<string>(data, "url") ?? string.Empty,
-                Filename = GetValue<string>(data, "filename"),
-                ProviderMetadata = GetDoubleNestedProviderMetadata(data)
+                MediaType = GetTypedData<AIFileEventData>(envelope)?.MediaType
+                    ?? GetValue<string>(data, "mediaType")
+                    ?? "application/octet-stream",
+                Url = GetTypedData<AIFileEventData>(envelope)?.Url
+                    ?? GetValue<string>(data, "url")
+                    ?? string.Empty,
+              //  Filename = GetTypedData<AIFileEventData>(envelope)?.Filename
+               //     ?? GetValue<string>(data, "filename"),
+                ProviderMetadata = GetTypedData<AIFileEventData>(envelope)?.ProviderMetadata
+                    ?? GetDoubleNestedProviderMetadata(data)
             },
             "message-metadata" => new MessageMetadataUIPart
             {

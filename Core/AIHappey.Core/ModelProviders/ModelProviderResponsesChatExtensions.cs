@@ -59,8 +59,8 @@ public static class ModelProviderResponsesChatExtensions
         responseRequest.Tools = [.. responseRequest.Tools ?? [],
             .. responseRequest.Metadata.GetInteractionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
-       // modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
-      //          [], [.. exclude ?? [], "tools"]);
+        modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
+                [], [.. exclude ?? [], "tools"]);
 
         responseRequest.Metadata = null;
     }
@@ -78,7 +78,7 @@ public static class ModelProviderResponsesChatExtensions
         chatCompletionOptions.Metadata = null;
     }
 
-    public static void SetDefaultResponseProperties(
+    public static void SetDefaultMessagesProperties(
        this IModelProvider modelProvider, MessagesRequest messagesRequest)
     {
         messagesRequest.Tools = [.. messagesRequest.Tools ?? [],

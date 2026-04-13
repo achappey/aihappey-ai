@@ -11,6 +11,7 @@ public static partial class InteractionsUnifiedMapper
     private static readonly ConcurrentDictionary<string, string> StreamThoughtSignatures = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, bool> StreamThoughtHasText = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
 
 
     public static Dictionary<string, object?>? ToDictionary(this object? obj)
@@ -484,6 +485,56 @@ public static partial class InteractionsUnifiedMapper
     private static string BuildStreamContentKey(string providerId, int index)
         => $"{providerId}:{index}";
 
+    private static string BuildImageToolCallId(int index)
+        => $"interactions-image-{index}";
+
+    private static void RememberStreamImageStart(string providerId, int index, string? mimeType)
+    {
+        var key = BuildStreamContentKey(providerId, index);
+        StreamImages.AddOrUpdate(
+            key,
+            _ => new InteractionStreamImageState
+            {
+                ToolCallId = BuildImageToolCallId(index),
+                MimeType = mimeType
+            },
+            (_, existing) => existing with
+            {
+                ToolCallId = string.IsNullOrWhiteSpace(existing.ToolCallId) ? BuildImageToolCallId(index) : existing.ToolCallId,
+                MimeType = mimeType ?? existing.MimeType
+            });
+    }
+
+    private static InteractionStreamImageState RememberStreamImageDelta(string providerId, int index, string? mimeType, string? data)
+    {
+        var key = BuildStreamContentKey(providerId, index);
+        return StreamImages.AddOrUpdate(
+            key,
+            _ => new InteractionStreamImageState
+            {
+                ToolCallId = BuildImageToolCallId(index),
+                MimeType = mimeType,
+                Data = data
+            },
+            (_, existing) => existing with
+            {
+                ToolCallId = string.IsNullOrWhiteSpace(existing.ToolCallId) ? BuildImageToolCallId(index) : existing.ToolCallId,
+                MimeType = mimeType ?? existing.MimeType,
+                Data = data ?? existing.Data
+            });
+    }
+
+    private static InteractionStreamImageState? GetStreamImage(string providerId, int index)
+        => StreamImages.TryGetValue(BuildStreamContentKey(providerId, index), out var image)
+            ? image
+            : null;
+
+    private static InteractionStreamImageState? ForgetStreamImage(string providerId, int index)
+    {
+        StreamImages.TryRemove(BuildStreamContentKey(providerId, index), out var image);
+        return image;
+    }
+
     private static void RememberStreamThoughtHasText(string providerId, int index, bool hasText)
         => StreamThoughtHasText[BuildStreamContentKey(providerId, index)] = hasText;
 
@@ -679,5 +730,14 @@ public static partial class InteractionsUnifiedMapper
             return input[(commaIndex + 1)..];
 
         return input;
+    }
+
+    private sealed record InteractionStreamImageState
+    {
+        public string ToolCallId { get; init; } = string.Empty;
+
+        public string? MimeType { get; init; }
+
+        public string? Data { get; init; }
     }
 }

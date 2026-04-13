@@ -56,6 +56,35 @@ public static partial class InteractionsUnifiedMapper
                     start.Index);
                 yield break;
 
+            case InteractionContentStartEvent { Content: InteractionImageContent image } start:
+            {
+                RememberStreamContentType(providerId, start.Index, "image");
+                RememberStreamImageStart(providerId, start.Index, image.MimeType);
+
+                yield return CreateStreamEvent(
+                    providerId,
+                    new AIEventEnvelope
+                    {
+                        Type = "tool-input-available",
+                        Id = BuildImageToolCallId(start.Index),
+                        Data = new AIToolInputAvailableEventData
+                        {
+                            ToolName = "image",
+                            Input = new
+                            {
+                            },
+                            ProviderExecuted = true,
+                            Title = "image",
+                            ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, start.Index, image.MimeType)
+                        }
+                    },
+                    part,
+                    start.Index);
+
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, start.Index), part, start.Index);
+                yield break;
+            }
+
             case InteractionContentStartEvent { Content: InteractionThoughtContent thought } start:
             {
                 var hasSummaryText = !string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary));
@@ -163,6 +192,41 @@ public static partial class InteractionsUnifiedMapper
                     delta.Index);
                 yield break;
 
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "image", StringComparison.OrdinalIgnoreCase):
+            {
+                RememberStreamContentType(providerId, delta.Index, "image");
+
+                var mimeType = GetDeltaAdditionalString(delta, "mime_type")
+                               ?? GetStreamImage(providerId, delta.Index)?.MimeType
+                               ?? "image/png";
+                var imageData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
+                var imageState = RememberStreamImageDelta(providerId, delta.Index, mimeType, imageData);
+
+                if (TryCreateInteractionImageToolResult(imageState, out var preliminaryImageOutput))
+                {
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-output-available",
+                            Id = imageState.ToolCallId,
+                            Data = new AIToolOutputAvailableEventData
+                            {
+                                ToolName = "image",
+                                Output = preliminaryImageOutput,
+                                ProviderExecuted = true,
+                                Preliminary = true,
+                                ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, delta.Index, mimeType)
+                            }
+                        },
+                        part,
+                        delta.Index);
+                }
+
+                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
+                yield break;
+            }
+
             case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_signature", StringComparison.OrdinalIgnoreCase)
                                                        || !string.IsNullOrWhiteSpace(GetThoughtSignature(delta)):
             {
@@ -219,7 +283,7 @@ public static partial class InteractionsUnifiedMapper
                     providerId,
                     searchType: GetDeltaAdditionalString(delta, "search_type"));
 
-                yield return CreateStreamEvent(
+             /*   yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
                     {
@@ -248,7 +312,7 @@ public static partial class InteractionsUnifiedMapper
                         }
                     },
                     part,
-                    delta.Index);
+                    delta.Index);*/
 
                 yield return CreateStreamEvent(
                     providerId,
@@ -323,7 +387,7 @@ public static partial class InteractionsUnifiedMapper
                 var providerMetadata = CreateGoogleMapsToolProviderMetadata(
                     providerId);
 
-                yield return CreateStreamEvent(
+            /*    yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
                     {
@@ -353,7 +417,7 @@ public static partial class InteractionsUnifiedMapper
                     },
                     part,
                     delta.Index);
-
+*/
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -454,6 +518,7 @@ public static partial class InteractionsUnifiedMapper
                 var rememberedType = ForgetStreamContentType(providerId, stop.Index);
                 var rememberedSignature = GetStreamThoughtSignature(providerId, stop.Index);
                 var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
+                var rememberedImage = ForgetStreamImage(providerId, stop.Index);
 
                 if (string.Equals(rememberedType, "text", StringComparison.OrdinalIgnoreCase))
                 {
@@ -502,6 +567,49 @@ public static partial class InteractionsUnifiedMapper
                         part,
                         stop.Index);
 
+                    yield break;
+                }
+
+                if (string.Equals(rememberedType, "image", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (TryCreateInteractionImageToolResult(rememberedImage, out var finalImageOutput))
+                    {
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "tool-output-available",
+                                Id = rememberedImage?.ToolCallId ?? BuildImageToolCallId(stop.Index),
+                                Data = new AIToolOutputAvailableEventData
+                                {
+                                    ToolName = "image",
+                                    Output = finalImageOutput,
+                                    ProviderExecuted = true,
+                                    Preliminary = false,
+                                    ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, stop.Index, rememberedImage?.MimeType)
+                                }
+                            },
+                            part,
+                            stop.Index);
+
+                     /*   yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "file",
+                                Id = BuildContentEventId(stop.Index),
+                                Data = new AIFileEventData
+                                {
+                                    MediaType = rememberedImage?.MimeType ?? "image/png",
+                                    Url = ToInteractionImageDataUrl(rememberedImage?.MimeType, rememberedImage?.Data),
+                                    ProviderMetadata = CreateInteractionImageFileProviderMetadata(providerId, stop.Index, rememberedImage?.MimeType)
+                                }
+                            },
+                            part,
+                            stop.Index);*/
+                    }
+
+                    yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, stop.Index), part, stop.Index);
                     yield break;
                 }
 
@@ -1039,6 +1147,37 @@ public static partial class InteractionsUnifiedMapper
         };
     }
 
+    private static Dictionary<string, Dictionary<string, object>> CreateInteractionImageToolProviderMetadata(
+        string providerId,
+        int index,
+        string? mimeType)
+        => new()
+        {
+            [providerId] = new Dictionary<string, object>
+            {
+                ["type"] = "interaction_image_stream",
+                ["interactions.synthetic_image_tool"] = true,
+                ["interactions.content.type"] = "image",
+                ["interactions.content.index"] = index,
+                ["mime_type"] = mimeType ?? "image/png"
+            }
+        };
+
+    private static Dictionary<string, Dictionary<string, object>> CreateInteractionImageFileProviderMetadata(
+        string providerId,
+        int index,
+        string? mimeType)
+        => new()
+        {
+            [providerId] = new Dictionary<string, object>
+            {
+                ["type"] = "interaction_image_file",
+                ["interactions.content.type"] = "image",
+                ["interactions.content.index"] = index,
+                ["mime_type"] = mimeType ?? "image/png"
+            }
+        };
+
     private static bool HasSourceUrlAnnotations(InteractionContentDeltaEvent delta)
         => GetSourceUrlAnnotations(delta).Count != 0;
 
@@ -1157,6 +1296,51 @@ public static partial class InteractionsUnifiedMapper
 
         return null;
     }
+
+    private static bool TryCreateInteractionImageToolResult(
+        InteractionStreamImageState? image,
+        out CallToolResult result)
+    {
+        result = default!;
+
+        if (image is null
+            || string.IsNullOrWhiteSpace(image.Data)
+            || string.IsNullOrWhiteSpace(image.MimeType)
+            || !TryDecodeInteractionImageBytes(image.Data, out var bytes))
+        {
+            return false;
+        }
+
+        result = new CallToolResult
+        {
+            Content =
+            [
+                ImageContentBlock.FromBytes(bytes, image.MimeType)
+            ]
+        };
+        return true;
+    }
+
+    private static bool TryDecodeInteractionImageBytes(string? data, out byte[] bytes)
+    {
+        bytes = [];
+
+        if (string.IsNullOrWhiteSpace(data))
+            return false;
+
+        try
+        {
+            bytes = Convert.FromBase64String(data.StripBase64Prefix());
+            return bytes.Length > 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string ToInteractionImageDataUrl(string? mimeType, string? data)
+        => $"data:{(string.IsNullOrWhiteSpace(mimeType) ? "image/png" : mimeType)};base64,{(data ?? string.Empty).StripBase64Prefix()}";
 
     private static string? GetDeltaAdditionalString(InteractionContentDeltaEvent delta, string key)
     {

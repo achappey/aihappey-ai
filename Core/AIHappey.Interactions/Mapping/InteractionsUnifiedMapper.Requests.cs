@@ -38,7 +38,7 @@ public static partial class InteractionsUnifiedMapper
         var generationConfig = providerConfig != null ? ExtractObject<InteractionGenerationConfig>(providerConfig,
             "generation_config") : new InteractionGenerationConfig();
         generationConfig ??= new InteractionGenerationConfig();
-        
+
         generationConfig.Temperature = request.Temperature ?? generationConfig.Temperature;
         generationConfig.TopP = request.TopP ?? generationConfig.TopP;
         generationConfig.MaxOutputTokens = request.MaxOutputTokens ?? generationConfig.MaxOutputTokens;
@@ -140,7 +140,13 @@ public static partial class InteractionsUnifiedMapper
         if (items.Count == 0)
             return new InteractionsInput();
 
-        var turns = items.Select(item => ToInteractionTurn(item)).ToList();
+        var turns = items
+            .Select(ToInteractionTurn)
+            .Where(a =>
+                a.Content?.IsParts != true || (a.Content?.Parts?.Count ?? 0) > 0
+            )
+            .ToList();
+            
         return new InteractionsInput(turns, true);
     }
 

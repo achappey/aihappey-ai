@@ -13,6 +13,8 @@ using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -160,6 +162,8 @@ public partial class AnthropicProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    private readonly string betaKey = "anthropic-beta";
+
     public async Task<MessagesResponse> MessagesAsync(
       MessagesRequest request,
       Dictionary<string, string> headers,
@@ -167,7 +171,10 @@ public partial class AnthropicProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        this.SetDefaultResponseProperties(request);
+        var anthropicbeta = request.Metadata?.GetProviderOption<string?>(GetIdentifier(), betaKey);
+        headers.AppendOrAddHeader(betaKey, anthropicbeta);
+
+        this.SetDefaultMessagesProperties(request);
 
         var response = await _client.PostMessages(
             request,
@@ -186,8 +193,11 @@ public partial class AnthropicProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        this.SetDefaultResponseProperties(options);
-     
+        var anthropicbeta = options.Metadata?.GetProviderOption<string?>(GetIdentifier(), betaKey);
+        headers.AppendOrAddHeader(betaKey, anthropicbeta);
+
+        this.SetDefaultMessagesProperties(options);
+
         MessagesUsage? usage = null;
         string? responseModel = null;
 

@@ -7,6 +7,24 @@ namespace AIHappey.Core.Extensions;
 
 public static class RequestExtensions
 {
+    public static void AppendOrAddHeader(
+    this Dictionary<string, string> headers,
+    string key,
+    string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        if (headers.TryGetValue(key, out var existing) && !string.IsNullOrWhiteSpace(existing))
+        {
+            headers[key] = $"{existing},{value}";
+        }
+        else
+        {
+            headers[key] = value;
+        }
+    }
+
     public static Dictionary<string, Dictionary<string, object>> ToProviderMetadata(
            this Dictionary<string, object> metadata, string id)
         => new()
@@ -53,8 +71,8 @@ public static class RequestExtensions
             ]
     };
 
-  //  public static string ToDataUrl(
-   //     this string data, string mimeType) => $"data:{mimeType};base64,{data}";
+    //  public static string ToDataUrl(
+    //     this string data, string mimeType) => $"data:{mimeType};base64,{data}";
 
     public static string ToDataUrl(
         this BinaryData data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data)}";
@@ -68,19 +86,19 @@ public static class RequestExtensions
 
     public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
 
- /*   public static string RemoveDataUrlPrefix(this string input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-            return input;
+    /*   public static string RemoveDataUrlPrefix(this string input)
+       {
+           if (string.IsNullOrWhiteSpace(input))
+               return input;
 
-        var commaIndex = input.IndexOf(',');
+           var commaIndex = input.IndexOf(',');
 
-        // not a data URL → return as-is
-        if (!input.StartsWith("data:", StringComparison.OrdinalIgnoreCase) || commaIndex < 0)
-            return input;
+           // not a data URL → return as-is
+           if (!input.StartsWith("data:", StringComparison.OrdinalIgnoreCase) || commaIndex < 0)
+               return input;
 
-        return input[(commaIndex + 1)..];
-    }*/
+           return input[(commaIndex + 1)..];
+       }*/
 
 
 }

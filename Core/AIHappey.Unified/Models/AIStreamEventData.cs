@@ -152,6 +152,21 @@ public sealed class AISourceUrlEventData
     public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
+public sealed class AIFileEventData
+{
+    [JsonPropertyName("mediaType")]
+    public required string MediaType { get; init; }
+
+    [JsonPropertyName("url")]
+    public required string Url { get; init; }
+
+    [JsonPropertyName("filename")]
+    public string? Filename { get; init; }
+
+    [JsonPropertyName("providerMetadata")]
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
+}
+
 public sealed class AIFinishEventData
 {
     [JsonPropertyName("finishReason")]
