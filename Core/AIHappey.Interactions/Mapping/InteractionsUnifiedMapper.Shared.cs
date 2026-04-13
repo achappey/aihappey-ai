@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using AIHappey.Unified.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Interactions.Mapping;
 
@@ -8,6 +9,8 @@ public static partial class InteractionsUnifiedMapper
 {
     private static readonly ConcurrentDictionary<string, string> StreamContentTypes = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, string> StreamThoughtSignatures = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, bool> StreamThoughtHasText = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
 
 
     public static Dictionary<string, object?>? ToDictionary(this object? obj)
@@ -60,6 +63,122 @@ public static partial class InteractionsUnifiedMapper
         }
     }
 
+    private static Dictionary<string, object?>? GetProviderScopedMetadata(
+        Dictionary<string, object?>? metadata,
+        string providerId)
+    {
+        if (metadata is null
+            || string.IsNullOrWhiteSpace(providerId)
+            || !metadata.TryGetValue(providerId, out var scopedValue)
+            || scopedValue is null)
+        {
+            return null;
+        }
+
+        return scopedValue switch
+        {
+            Dictionary<string, object?> scoped => scoped,
+            JsonElement json when json.ValueKind == JsonValueKind.Object => json.EnumerateObject()
+                .ToDictionary(a => a.Name, a => (object?)a.Value.Clone()),
+            _ => null
+        };
+    }
+
+    private static Dictionary<string, Dictionary<string, object>>? GetProviderScopedMetadataEnvelope(
+        Dictionary<string, object?>? metadata,
+        string providerId)
+    {
+        var scoped = GetProviderScopedMetadata(metadata, providerId);
+        if (scoped is null || scoped.Count == 0)
+            return null;
+
+        var normalized = scoped
+            .Where(a => a.Value is not null)
+            .ToDictionary(a => a.Key, a => ConvertProviderMetadataValue(a.Value)!);
+
+        return normalized.Count == 0
+            ? null
+            : new Dictionary<string, Dictionary<string, object>>
+            {
+                [providerId] = normalized
+            };
+    }
+
+    private static T? ExtractProviderScopedValue<T>(Dictionary<string, object?>? metadata, string key)
+    {
+        if (metadata is null || metadata.Count == 0)
+            return default;
+
+        foreach (var value in metadata.Values)
+        {
+            var nested = value switch
+            {
+                Dictionary<string, object?> dict => dict,
+                JsonElement json when json.ValueKind == JsonValueKind.Object => json.EnumerateObject()
+                    .ToDictionary(a => a.Name, a => (object?)a.Value.Clone()),
+                _ => null
+            };
+
+            if (nested is null || !nested.TryGetValue(key, out var nestedValue) || nestedValue is null)
+                continue;
+
+            if (nestedValue is T cast)
+                return cast;
+
+            try
+            {
+                if (nestedValue is JsonElement json)
+                    return JsonSerializer.Deserialize<T>(json.GetRawText(), Json);
+
+                return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(nestedValue, Json), Json);
+            }
+            catch
+            {
+                return default;
+            }
+        }
+
+        return default;
+    }
+
+    private static object? ConvertProviderMetadataValue(object? value)
+        => value switch
+        {
+            null => null,
+            JsonElement json => json.Clone(),
+            _ => value
+        };
+
+    private static Dictionary<string, object?> CreateToolProviderMetadata(
+        string? signature = null,
+        bool? isError = null,
+        string? serverName = null,
+        string? searchType = null,
+        Dictionary<string, JsonElement>? additionalProperties = null)
+    {
+        var metadata = new Dictionary<string, object?>();
+
+        if (!string.IsNullOrWhiteSpace(signature))
+            metadata["signature"] = signature;
+
+        if (isError is not null)
+            metadata["is_error"] = isError.Value;
+
+        if (!string.IsNullOrWhiteSpace(serverName))
+            metadata["server_name"] = serverName;
+
+        if (!string.IsNullOrWhiteSpace(searchType))
+            metadata["search_type"] = searchType;
+
+        if (additionalProperties is not null)
+        {
+            foreach (var property in additionalProperties)
+                metadata[property.Key] = property.Value.Clone();
+        }
+
+        return metadata;
+    }
+
     private static Dictionary<string, object?> ToJsonMap(object? value)
     {
         if (value is null)
@@ -79,6 +198,57 @@ public static partial class InteractionsUnifiedMapper
         catch
         {
             return new Dictionary<string, object?>();
+        }
+    }
+    private static T? DeserializeFromCallToolResult<T>(object? value)
+    {
+        if (value is null)
+            return default;
+
+        if (value is T cast)
+            return cast;
+
+        try
+        {
+            // STEP 1: try parse as CallToolResult
+            CallToolResult? toolResult = null;
+
+            if (value is JsonElement json)
+            {
+                toolResult = JsonSerializer.Deserialize<CallToolResult>(json.GetRawText(), Json);
+            }
+            else
+            {
+                var serialized = JsonSerializer.Serialize(value, Json);
+                toolResult = JsonSerializer.Deserialize<CallToolResult>(serialized, Json);
+            }
+
+            // STEP 2: if structuredContent exists → use that
+            if (toolResult?.StructuredContent is not null)
+            {
+                var structured = toolResult.StructuredContent;
+
+                if (structured is JsonElement structuredJson)
+                    return JsonSerializer.Deserialize<T>(structuredJson.GetRawText(), Json);
+
+                return JsonSerializer.Deserialize<T>(
+                    JsonSerializer.Serialize(structured, Json),
+                    Json
+                );
+            }
+
+            // FALLBACK: original behavior
+            if (value is JsonElement fallbackJson)
+                return JsonSerializer.Deserialize<T>(fallbackJson.GetRawText(), Json);
+
+            return JsonSerializer.Deserialize<T>(
+                JsonSerializer.Serialize(value, Json),
+                Json
+            );
+        }
+        catch
+        {
+            return default;
         }
     }
 
@@ -155,6 +325,70 @@ public static partial class InteractionsUnifiedMapper
 
     private static bool HasToolOutput(AIToolCallContentPart toolPart)
         => HasMeaningfulValue(toolPart.Output);
+
+    private static bool IsKnownInteractionToolContentType(string? type)
+        => type is "function_call"
+            or "code_execution_call"
+            or "url_context_call"
+            or "mcp_server_tool_call"
+            or "google_search_call"
+            or "file_search_call"
+            or "google_maps_call"
+            or "function_result"
+            or "code_execution_result"
+            or "url_context_result"
+            or "google_search_result"
+            or "mcp_server_tool_result"
+            or "file_search_result"
+            or "google_maps_result";
+
+    private static string? InferInteractionToolContentType(AIToolCallContentPart tool)
+    {
+        if (IsKnownInteractionToolContentType(tool.Type))
+            return tool.Type;
+
+        var metadataType = ExtractValue<string>(tool.Metadata, "interactions.content.type")
+                           ?? ExtractProviderScopedValue<string>(tool.Metadata, "type");
+        if (IsKnownInteractionToolContentType(metadataType))
+            return metadataType;
+
+        return InferInteractionToolContentType(tool.ToolName, tool.ProviderExecuted, HasToolOutput(tool));
+    }
+
+    private static string InferInteractionToolContentType(
+        string? toolName,
+        bool? providerExecuted,
+        bool hasOutput)
+    {
+        if (hasOutput)
+        {
+            if (providerExecuted != true)
+                return "function_result";
+
+            return toolName switch
+            {
+                "code_execution" => "code_execution_result",
+                "url_context" => "url_context_result",
+                "google_search" => "google_search_result",
+                "file_search" => "file_search_result",
+                "google_maps" => "google_maps_result",
+                _ => "mcp_server_tool_result"
+            };
+        }
+
+        if (providerExecuted != true)
+            return "function_call";
+
+        return toolName switch
+        {
+            "code_execution" => "code_execution_call",
+            "url_context" => "url_context_call",
+            "google_search" => "google_search_call",
+            "file_search" => "file_search_call",
+            "google_maps" => "google_maps_call",
+            _ => "mcp_server_tool_call"
+        };
+    }
 
     private static string FlattenContentText(IEnumerable<InteractionContent>? content)
         => string.Join("\n", (content ?? []).OfType<InteractionTextContent>().Select(a => a.Text).Where(a => !string.IsNullOrWhiteSpace(a))!);
@@ -250,6 +484,37 @@ public static partial class InteractionsUnifiedMapper
     private static string BuildStreamContentKey(string providerId, int index)
         => $"{providerId}:{index}";
 
+    private static void RememberStreamThoughtHasText(string providerId, int index, bool hasText)
+        => StreamThoughtHasText[BuildStreamContentKey(providerId, index)] = hasText;
+
+    private static bool GetStreamThoughtHasText(string providerId, int index)
+        => StreamThoughtHasText.TryGetValue(BuildStreamContentKey(providerId, index), out var hasText) && hasText;
+
+    private static bool ForgetStreamThoughtHasText(string providerId, int index)
+    {
+        StreamThoughtHasText.TryRemove(BuildStreamContentKey(providerId, index), out var hasText);
+        return hasText;
+    }
+
+    private static void RememberOpenThoughtAnchor(string providerId, int index)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+            return;
+
+        StreamOpenThoughtAnchors[providerId] = index;
+    }
+
+    private static int? GetOpenThoughtAnchor(string providerId)
+        => StreamOpenThoughtAnchors.TryGetValue(providerId, out var index)
+            ? index
+            : null;
+
+    private static int? ForgetOpenThoughtAnchor(string providerId)
+    {
+        StreamOpenThoughtAnchors.TryRemove(providerId, out var index);
+        return index;
+    }
+
     private static void RememberStreamContentType(string providerId, int index, string? type)
     {
         if (string.IsNullOrWhiteSpace(type))
@@ -257,6 +522,11 @@ public static partial class InteractionsUnifiedMapper
 
         StreamContentTypes[BuildStreamContentKey(providerId, index)] = type;
     }
+
+    private static string? GetStreamContentType(string providerId, int index)
+        => StreamContentTypes.TryGetValue(BuildStreamContentKey(providerId, index), out var type)
+            ? type
+            : null;
 
     private static string? ForgetStreamContentType(string providerId, int index)
     {
@@ -308,9 +578,37 @@ public static partial class InteractionsUnifiedMapper
             [providerId] = new Dictionary<string, object>
             {
                 ["type"] = "thought_signature",
-                ["signature"] = signature
+                ["signature"] = signature,
+                ["encrypted_content"] = signature
             }
         };
+    }
+
+    private static string? ExtractThoughtSignatureFromProviderMetadata(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        string providerId)
+    {
+        if (providerMetadata is null
+            || string.IsNullOrWhiteSpace(providerId)
+            || !providerMetadata.TryGetValue(providerId, out var scoped)
+            || scoped is null)
+        {
+            return null;
+        }
+
+        if (scoped.TryGetValue("signature", out var rawSignature)
+            && !string.IsNullOrWhiteSpace(rawSignature?.ToString()))
+        {
+            return rawSignature?.ToString();
+        }
+
+        if (scoped.TryGetValue("encrypted_content", out var rawEncryptedContent)
+            && !string.IsNullOrWhiteSpace(rawEncryptedContent?.ToString()))
+        {
+            return rawEncryptedContent?.ToString();
+        }
+
+        return null;
     }
 
     private static bool TryGetThoughtSignatureProviderMetadata(
@@ -329,10 +627,7 @@ public static partial class InteractionsUnifiedMapper
             || !string.Equals(type?.ToString(), "thought_signature", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        if (!providerMetadata.TryGetValue("signature", out var rawSignature))
-            return false;
-
-        signature = rawSignature?.ToString();
+        signature = ExtractThoughtSignatureFromProviderMetadata(data.ProviderMetadata, providerId);
         return !string.IsNullOrWhiteSpace(signature);
     }
 
@@ -355,7 +650,11 @@ public static partial class InteractionsUnifiedMapper
                 continue;
 
             var type = nested.TryGetValue("type", out var typeValue) ? typeValue?.ToString() : null;
-            var signature = nested.TryGetValue("signature", out var signatureValue) ? signatureValue?.ToString() : null;
+            var signature = nested.TryGetValue("signature", out var signatureValue)
+                ? signatureValue?.ToString()
+                : nested.TryGetValue("encrypted_content", out var encryptedContentValue)
+                    ? encryptedContentValue?.ToString()
+                    : null;
 
             if (!string.IsNullOrWhiteSpace(signature)
                 && (string.IsNullOrWhiteSpace(type)
@@ -366,5 +665,19 @@ public static partial class InteractionsUnifiedMapper
         }
 
         return null;
+    }
+
+    public static string StripBase64Prefix(this string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return input;
+
+        var commaIndex = input.IndexOf(',');
+
+        // "data:image/png;base64,XXXXX"
+        if (commaIndex >= 0 && input[..commaIndex].Contains("base64"))
+            return input[(commaIndex + 1)..];
+
+        return input;
     }
 }

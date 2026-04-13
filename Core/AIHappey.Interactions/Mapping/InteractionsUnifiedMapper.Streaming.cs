@@ -57,8 +57,22 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             case InteractionContentStartEvent { Content: InteractionThoughtContent thought } start:
-                RememberStreamContentType(providerId, start.Index, "thought");
+            {
+                var hasSummaryText = !string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary));
+                RememberStreamContentType(providerId, start.Index, hasSummaryText ? "thought" : "thought_signature_only");
+                RememberStreamThoughtHasText(providerId, start.Index, hasSummaryText);
                 RememberStreamThoughtSignature(providerId, start.Index, thought.Signature);
+
+                if (hasSummaryText)
+                {
+                    RememberOpenThoughtAnchor(providerId, start.Index);
+                }
+                else if (GetOpenThoughtAnchor(providerId) is { } anchorIndex && anchorIndex != start.Index)
+                {
+                    RememberStreamThoughtSignature(providerId, anchorIndex, thought.Signature);
+                    yield break;
+                }
+
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -73,6 +87,7 @@ public static partial class InteractionsUnifiedMapper
                     part,
                     start.Index);
                 yield break;
+            }
 
             case InteractionContentStartEvent start:
             {
@@ -95,7 +110,8 @@ public static partial class InteractionsUnifiedMapper
                                     ToolName = unifiedContent.ToolName ?? "tool",
                                     Input = CloneIfJsonElement(unifiedContent.Input) ?? new { },
                                     ProviderExecuted = unifiedContent.ProviderExecuted,
-                                    Title = unifiedContent.Title
+                                    Title = unifiedContent.Title,
+                                    ProviderMetadata = GetProviderScopedMetadataEnvelope(unifiedContent.Metadata, providerId)
                                 }
                             },
                             part,
@@ -113,8 +129,10 @@ public static partial class InteractionsUnifiedMapper
                                 Id = unifiedContent.ToolCallId,
                                 Data = new AIToolOutputAvailableEventData
                                 {
+                                    ToolName = unifiedContent.ToolName,
                                     Output = CloneIfJsonElement(unifiedContent.Output) ?? new { },
-                                    ProviderExecuted = unifiedContent.ProviderExecuted
+                                    ProviderExecuted = unifiedContent.ProviderExecuted,
+                                    ProviderMetadata = GetProviderScopedMetadataEnvelope(unifiedContent.Metadata, providerId)
                                 }
                             },
                             part,
@@ -149,22 +167,13 @@ public static partial class InteractionsUnifiedMapper
                                                        || !string.IsNullOrWhiteSpace(GetThoughtSignature(delta)):
             {
                 var signature = GetThoughtSignature(delta);
-                RememberStreamContentType(providerId, delta.Index, "thought");
+                var targetIndex = GetStreamThoughtHasText(providerId, delta.Index) || GetOpenThoughtAnchor(providerId) is not { } anchorIndex || anchorIndex == delta.Index
+                    ? delta.Index
+                    : anchorIndex;
+
+                RememberStreamContentType(providerId, delta.Index, GetStreamThoughtHasText(providerId, delta.Index) ? "thought" : "thought_signature_only");
                 RememberStreamThoughtSignature(providerId, delta.Index, signature);
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "reasoning-delta",
-                        Id = BuildContentEventId(delta.Index),
-                        Data = new AIReasoningDeltaEventData
-                        {
-                            Delta = string.Empty,
-                            ProviderMetadata = CreateThoughtSignatureProviderMetadata(providerId, signature)
-                        }
-                    },
-                    part,
-                    delta.Index);
+                RememberStreamThoughtSignature(providerId, targetIndex, signature);
                 yield break;
             }
 
@@ -172,6 +181,9 @@ public static partial class InteractionsUnifiedMapper
             {
                 var summaryText = GetThoughtSummaryText(delta);
                 RememberStreamContentType(providerId, delta.Index, "thought");
+                RememberStreamThoughtHasText(providerId, delta.Index, !string.IsNullOrWhiteSpace(summaryText));
+                if (!string.IsNullOrWhiteSpace(summaryText))
+                    RememberOpenThoughtAnchor(providerId, delta.Index);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -180,7 +192,10 @@ public static partial class InteractionsUnifiedMapper
                         Id = BuildContentEventId(delta.Index),
                         Data = new AIReasoningDeltaEventData
                         {
-                            Delta = summaryText ?? string.Empty
+                            Delta = summaryText ?? string.Empty,
+                            ProviderMetadata = CreateThoughtSignatureProviderMetadata(
+                                providerId,
+                                GetStreamThoughtSignature(providerId, delta.Index))
                         }
                     },
                     part,
@@ -202,8 +217,6 @@ public static partial class InteractionsUnifiedMapper
                 var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
                 var providerMetadata = CreateGoogleSearchToolProviderMetadata(
                     providerId,
-                    toolCallId,
-                    "google_search_call",
                     searchType: GetDeltaAdditionalString(delta, "search_type"));
 
                 yield return CreateStreamEvent(
@@ -287,7 +300,6 @@ public static partial class InteractionsUnifiedMapper
                         {
                             Output = new CallToolResult
                             {
-                                Content = [new TextContentBlock { Text = SerializePayload(resultPayload, "[]") }],
                                 StructuredContent = structuredContent.Clone()
                             },
                             ProviderExecuted = true,
@@ -309,9 +321,7 @@ public static partial class InteractionsUnifiedMapper
                 var toolName = "google_maps";
                 var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
                 var providerMetadata = CreateGoogleMapsToolProviderMetadata(
-                    providerId,
-                    toolCallId,
-                    "google_maps_call");
+                    providerId);
 
                 yield return CreateStreamEvent(
                     providerId,
@@ -375,9 +385,7 @@ public static partial class InteractionsUnifiedMapper
                                     ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
                 var structuredContent = CloneIfJsonElement(resultPayload) ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
                 var providerMetadata = CreateGoogleMapsToolProviderMetadata(
-                    providerId,
-                    toolCallId,
-                    "google_maps_result");
+                    providerId);
 
                 yield return CreateStreamEvent(
                     providerId,
@@ -445,6 +453,7 @@ public static partial class InteractionsUnifiedMapper
             {
                 var rememberedType = ForgetStreamContentType(providerId, stop.Index);
                 var rememberedSignature = GetStreamThoughtSignature(providerId, stop.Index);
+                var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
 
                 if (string.Equals(rememberedType, "text", StringComparison.OrdinalIgnoreCase))
                 {
@@ -463,8 +472,20 @@ public static partial class InteractionsUnifiedMapper
                 }
 
                 if (string.Equals(rememberedType, "thought", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(rememberedType, "thought_signature_only", StringComparison.OrdinalIgnoreCase)
                     || !string.IsNullOrWhiteSpace(rememberedSignature))
                 {
+                    if (!rememberedHasText
+                        && GetOpenThoughtAnchor(providerId) is { } anchorIndex
+                        && anchorIndex != stop.Index)
+                    {
+                        ForgetStreamThoughtSignature(providerId, stop.Index);
+                        yield break;
+                    }
+
+                    if (GetOpenThoughtAnchor(providerId) == stop.Index)
+                        ForgetOpenThoughtAnchor(providerId);
+
                     yield return CreateStreamEvent(
                         providerId,
                         new AIEventEnvelope
@@ -489,6 +510,7 @@ public static partial class InteractionsUnifiedMapper
             }
 
             case InteractionCompleteEvent complete:
+                ForgetOpenThoughtAnchor(providerId);
                 if (complete.Interaction is not null)
                 {
                     yield return CreateStreamEvent(
@@ -525,6 +547,7 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             case InteractionErrorEvent error:
+                ForgetOpenThoughtAnchor(providerId);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -601,13 +624,13 @@ public static partial class InteractionsUnifiedMapper
             {
                 Index = index,
                 EventId = ExtractValue<string>(streamEvent.Metadata, "interactions.event_id"),
-                Content = CreateInteractionToolContentFromInput(envelope.Data)
+                Content = CreateInteractionToolContentFromInput(envelope.Id, envelope.Data)
             },
             "tool-output-available" => new InteractionContentStartEvent
             {
                 Index = index,
                 EventId = ExtractValue<string>(streamEvent.Metadata, "interactions.event_id"),
-                Content = CreateInteractionToolContentFromOutput(envelope.Data)
+                Content = CreateInteractionToolContentFromOutput(envelope.Id, envelope.Data)
             },
             "finish" => new InteractionCompleteEvent
             {
@@ -691,71 +714,177 @@ public static partial class InteractionsUnifiedMapper
             Timestamp = DateTimeOffset.UtcNow
         };
 
-    private static InteractionContent CreateInteractionToolContentFromInput(object? data)
+    private static InteractionContent CreateInteractionToolContentFromInput(string? toolCallId, object? data)
     {
         var payload = DeserializeFromObject<AIToolInputAvailableEventData>(data);
         var input = CloneIfJsonElement(payload?.Input);
+        var toolName = payload?.ToolName;
+        var contentType = InferInteractionToolContentType(toolName, payload?.ProviderExecuted, hasOutput: false);
+        var signature = TryGetProviderMetadataString(payload?.ProviderMetadata, "signature");
+        var serverName = TryGetProviderMetadataString(payload?.ProviderMetadata, "server_name");
+        var searchType = TryGetProviderMetadataString(payload?.ProviderMetadata, "search_type");
+        var id = toolCallId ?? Guid.NewGuid().ToString("N");
 
-        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_search_call", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(contentType, "google_search_call", StringComparison.OrdinalIgnoreCase))
         {
             return new InteractionGoogleSearchCallContent
             {
-                Id = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
-                SearchType = TryGetProviderMetadataString(payload?.ProviderMetadata, "search_type"),
+                Id = id,
+                Signature = signature,
+                SearchType = searchType,
                 Arguments = DeserializeFromObject<InteractionGoogleSearchCallArguments>(input)
             };
         }
 
-        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_maps_call", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(contentType, "google_maps_call", StringComparison.OrdinalIgnoreCase))
         {
             return new InteractionGoogleMapsCallContent
             {
-                Id = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
+                Id = id,
+                Signature = signature,
                 Arguments = DeserializeFromObject<InteractionGoogleMapsCallArguments>(input)
+            };
+        }
+
+        if (string.Equals(contentType, "code_execution_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionCodeExecutionCallContent
+            {
+                Id = id,
+                Signature = signature,
+                Arguments = DeserializeFromObject<InteractionCodeExecutionCallArguments>(input)
+            };
+        }
+
+        if (string.Equals(contentType, "url_context_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionUrlContextCallContent
+            {
+                Id = id,
+                Signature = signature,
+                Arguments = DeserializeFromObject<InteractionUrlContextCallArguments>(input)
+            };
+        }
+
+        if (string.Equals(contentType, "file_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionFileSearchCallContent
+            {
+                Id = id,
+                Signature = signature
+            };
+        }
+
+        if (string.Equals(contentType, "mcp_server_tool_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionMcpServerToolCallContent
+            {
+                Id = id,
+                Signature = signature,
+                Name = toolName,
+                ServerName = serverName,
+                Arguments = input
             };
         }
 
         return new InteractionFunctionCallContent
         {
-            Id = Guid.NewGuid().ToString("N"),
-            Name = payload?.ToolName,
+            Id = id,
+            Name = toolName,
+            Signature = signature,
             Arguments = input
         };
     }
 
-    private static InteractionContent CreateInteractionToolContentFromOutput(object? data)
+    private static InteractionContent CreateInteractionToolContentFromOutput(string? toolCallId, object? data)
     {
         var payload = DeserializeFromObject<AIToolOutputAvailableEventData>(data);
+        var toolName = payload?.ToolName;
+        var contentType = InferInteractionToolContentType(toolName, payload?.ProviderExecuted, hasOutput: true);
+        var signature = TryGetProviderMetadataString(payload?.ProviderMetadata, "signature");
+        var isError = ExtractProviderMetadataBool(payload?.ProviderMetadata, "is_error");
+        var serverName = TryGetProviderMetadataString(payload?.ProviderMetadata, "server_name");
+        var callId = toolCallId ?? Guid.NewGuid().ToString("N");
 
-        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_search_result", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(contentType, "google_search_result", StringComparison.OrdinalIgnoreCase))
         {
             return new InteractionGoogleSearchResultContent
             {
-                CallId = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
-                IsError = ExtractProviderMetadataBool(payload?.ProviderMetadata, "interactions.is_error"),
+                CallId = callId,
+                Signature = signature,
+                IsError = isError,
                 Result = DeserializeFromObject<List<InteractionGoogleSearchResult>>(TryGetStructuredContentResult(payload?.Output))
             };
         }
 
-        if (string.Equals(TryGetProviderMetadataString(payload?.ProviderMetadata, "type"), "google_maps_result", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(contentType, "google_maps_result", StringComparison.OrdinalIgnoreCase))
         {
             return new InteractionGoogleMapsResultContent
             {
-                CallId = TryGetProviderMetadataString(payload?.ProviderMetadata, "tool_use_id") ?? Guid.NewGuid().ToString("N"),
+                CallId = callId,
+                Signature = signature,
                 Result = DeserializeFromObject<List<InteractionGoogleMapsResult>>(TryGetStructuredContentResult(payload?.Output))
+            };
+        }
+
+        if (string.Equals(contentType, "code_execution_result", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionCodeExecutionResultContent
+            {
+                CallId = callId,
+                Signature = signature,
+                IsError = isError,
+                Result = SerializePayload(payload?.Output, string.Empty)
+            };
+        }
+
+        if (string.Equals(contentType, "url_context_result", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionUrlContextResultContent
+            {
+                CallId = callId,
+                Signature = signature,
+                IsError = isError,
+                Result = DeserializeFromObject<List<InteractionUrlContextResult>>(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
+            };
+        }
+
+        if (string.Equals(contentType, "file_search_result", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionFileSearchResultContent
+            {
+                CallId = callId,
+                Signature = signature,
+                Result = DeserializeFromObject<List<InteractionFileSearchResult>>(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
+            };
+        }
+
+        if (string.Equals(contentType, "mcp_server_tool_result", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionMcpServerToolResultContent
+            {
+                CallId = callId,
+                Signature = signature,
+                Name = toolName,
+                ServerName = serverName,
+                Result = CloneIfJsonElement(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
             };
         }
 
         return new InteractionFunctionResultContent
         {
-            CallId = Guid.NewGuid().ToString("N"),
-            Result = CloneIfJsonElement(payload?.Output)
+            CallId = callId,
+            Name = toolName,
+            Signature = signature,
+            IsError = isError,
+            Result = CloneIfJsonElement(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
         };
     }
 
     private static InteractionContentDeltaData CreateReasoningDeltaData(string providerId, AIReasoningDeltaEventData? data)
     {
-        if (TryGetThoughtSignatureProviderMetadata(data, providerId, out var signature))
+        if (string.IsNullOrWhiteSpace(data?.Delta)
+            && TryGetThoughtSignatureProviderMetadata(data, providerId, out var signature))
         {
             return new InteractionContentDeltaData
             {
@@ -772,6 +901,9 @@ public static partial class InteractionsUnifiedMapper
             Type = "thought_summary",
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
+                ["signature"] = JsonSerializer.SerializeToElement(
+                    ExtractThoughtSignatureFromProviderMetadata(data?.ProviderMetadata, providerId),
+                    Json),
                 ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent
                 {
                     Text = data?.Delta
@@ -800,49 +932,27 @@ public static partial class InteractionsUnifiedMapper
         return delta.Delta?.Text;
     }
 
-    private static Dictionary<string, Dictionary<string, object>> CreateGoogleSearchToolProviderMetadata(
+    private static Dictionary<string, Dictionary<string, object>>? CreateGoogleSearchToolProviderMetadata(
         string providerId,
-        string toolCallId,
-        string type,
+        string? signature = null,
         string? searchType = null,
         bool? isError = null)
     {
-        var metadata = new Dictionary<string, object>
-        {
-            ["type"] = type,
-            ["tool_use_id"] = toolCallId,
-            ["tool_name"] = "google_search",
-            ["name"] = "google_search",
-            ["title"] = "google_search"
-        };
-
-        if (!string.IsNullOrWhiteSpace(searchType))
-            metadata["search_type"] = searchType;
-
-        if (isError is not null)
-            metadata["interactions.is_error"] = isError.Value;
-
-        return new Dictionary<string, Dictionary<string, object>>
-        {
-            [providerId] = metadata
-        };
+        var metadata = CreateToolProviderMetadata(signature, isError, null, searchType);
+        return metadata.Count == 0
+            ? null
+            : CreateProviderScopedMetadata(providerId, metadata.Where(a => a.Value is not null).ToDictionary(a => a.Key, a => ConvertProviderMetadataValue(a.Value)!));
     }
 
-    private static Dictionary<string, Dictionary<string, object>> CreateGoogleMapsToolProviderMetadata(
+    private static Dictionary<string, Dictionary<string, object>>? CreateGoogleMapsToolProviderMetadata(
         string providerId,
-        string toolCallId,
-        string type)
-        => new()
-        {
-            [providerId] = new Dictionary<string, object>
-            {
-                ["type"] = type,
-                ["tool_use_id"] = toolCallId,
-                ["tool_name"] = "google_maps",
-                ["name"] = "google_maps",
-                ["title"] = "google_maps"
-            }
-        };
+        string? signature = null)
+    {
+        var metadata = CreateToolProviderMetadata(signature);
+        return metadata.Count == 0
+            ? null
+            : CreateProviderScopedMetadata(providerId, metadata.Where(a => a.Value is not null).ToDictionary(a => a.Key, a => ConvertProviderMetadataValue(a.Value)!));
+    }
 
     private static IEnumerable<AIStreamEvent> CreateGoogleMapsSourceUrlEvents(
         string providerId,

@@ -150,6 +150,20 @@ public static partial class InteractionsUnifiedMapper
         foreach (var part in item.Content ?? [])
         {
             var mapped = ToInteractionContent(part);
+            if (mapped is InteractionThoughtContent thought
+                && string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary))
+                && !string.IsNullOrWhiteSpace(thought.Signature))
+            {
+                var previousThought = content.OfType<InteractionThoughtContent>().LastOrDefault();
+                if (previousThought is not null
+                    && (string.IsNullOrWhiteSpace(previousThought.Signature)
+                        || string.Equals(previousThought.Signature, thought.Signature, StringComparison.Ordinal)))
+                {
+                    previousThought.Signature ??= thought.Signature;
+                    continue;
+                }
+            }
+
             if (mapped is not null)
                 content.Add(mapped);
         }

@@ -91,6 +91,9 @@ public sealed class AIToolInputAvailableEventData
 
 public sealed class AIToolOutputAvailableEventData
 {
+    [JsonPropertyName("toolName")]
+    public string? ToolName { get; init; }
+
     [JsonPropertyName("output")]
     public required object Output { get; init; }
 
