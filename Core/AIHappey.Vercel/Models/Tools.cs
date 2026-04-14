@@ -14,6 +14,10 @@ public class Tool
     [JsonPropertyName("title")]
     public string? Title { get; set; }
 
+    [JsonPropertyName("defer_loading")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? DeferLoading { get; set; }
+
     [JsonPropertyName("inputSchema")]
     public ToolInputSchema? InputSchema { get; set; }
 }

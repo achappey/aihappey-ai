@@ -459,6 +459,12 @@ public partial class MistralProvider : IModelProvider
             Temperature = request.Temperature,
             MaxTokens = request.MaxOutputTokens,
             TopP = request.TopP,
+            RandomSeed = providerMetadata?.CompletionArgs?.TryGetValue("random_seed", out var o) == true
+                ? o switch { int i => i, long l => (int)l, string s when int.TryParse(s, out var i) => i, JsonElement j when j.TryGetInt32(out var i) => i, _ => null }
+                : null,
+            FrequencyPenalty = providerMetadata?.CompletionArgs?.GetDouble("frequency_penalty"),
+            PresencePenalty = providerMetadata?.CompletionArgs?.GetDouble("presence_penalty"),
+            ReasoningEffort = providerMetadata?.CompletionArgs?.GetValueOrDefault("reasoning_effort")?.ToString(),
             ToolChoice = NormalizeUnifiedToolChoice(request.ToolChoice),
             ResponseFormat = request.ResponseFormat is null
                 ? null

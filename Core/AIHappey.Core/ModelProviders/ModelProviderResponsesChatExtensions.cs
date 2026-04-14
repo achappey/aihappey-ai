@@ -87,6 +87,9 @@ public static class ModelProviderResponsesChatExtensions
         messagesRequest.Thinking ??= messagesRequest.Metadata?
             .GetProviderOption<MessagesThinkingConfig>(modelProvider.GetIdentifier(), "thinking");
 
+        messagesRequest.ContextManagement ??= messagesRequest.Metadata?
+            .GetProviderOption<object>(modelProvider.GetIdentifier(), "context_management");
+
         messagesRequest.Metadata?.AdditionalProperties = null;
     }
 

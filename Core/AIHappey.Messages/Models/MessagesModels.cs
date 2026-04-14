@@ -50,6 +50,9 @@ public sealed class MessagesRequest
     [JsonPropertyName("tool_choice")]
     public MessageToolChoice? ToolChoice { get; set; }
 
+    [JsonPropertyName("context_management")]
+    public object? ContextManagement { get; set; }
+
     [JsonPropertyName("tools")]
     public List<MessageToolDefinition>? Tools { get; set; }
 

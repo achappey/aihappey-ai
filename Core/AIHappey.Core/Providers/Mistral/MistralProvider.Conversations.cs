@@ -431,6 +431,22 @@ public partial class MistralProvider
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? ToolChoice { get; init; }
 
+        [JsonPropertyName("reasoning_effort")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ReasoningEffort { get; init; }
+
+        [JsonPropertyName("random_seed")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? RandomSeed { get; init; }
+
+        [JsonPropertyName("frequency_penalty")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public double? FrequencyPenalty { get; init; }
+
+        [JsonPropertyName("presence_penalty")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public double? PresencePenalty { get; init; }
+
         [JsonPropertyName("response_format")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public JsonNode? ResponseFormat { get; init; }
