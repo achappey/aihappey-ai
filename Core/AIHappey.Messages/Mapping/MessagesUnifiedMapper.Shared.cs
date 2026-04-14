@@ -97,6 +97,35 @@ public static partial class MessagesUnifiedMapper
         return DeserializeFromObject<T>(value);
     }
 
+    public static T? GetProviderOption<T>(
+           this Dictionary<string, object?>? metadata,
+           string providerId,
+           string key)
+    {
+        if (metadata is null)
+            return default;
+
+        if (!metadata.TryGetValue(providerId, out var providerObj) ||
+            providerObj is not Dictionary<string, object?> provider)
+            return default;
+
+        if (!provider.TryGetValue(key, out var value) || value is null)
+            return default;
+
+        try
+        {
+            if (value is T cast)
+                return cast;
+
+            // fallback for loose types (e.g. JsonElement, boxed primitives)
+            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value));
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
     private static T? ExtractValue<T>(Dictionary<string, object?>? metadata, string key)
     {
         if (metadata is null || !metadata.TryGetValue(key, out var value) || value is null)

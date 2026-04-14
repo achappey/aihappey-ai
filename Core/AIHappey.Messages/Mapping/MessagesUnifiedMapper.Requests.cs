@@ -52,7 +52,7 @@ public static partial class MessagesUnifiedMapper
         {
             Model = request.Model,
             MaxTokens = request.MaxOutputTokens,
-            Messages = ToMessageParams(request.Input?.Items ?? []).ToList(),
+            Messages = [.. ToMessageParams(request.Input?.Items ?? [], providerId)],
             CacheControl = ExtractObject<CacheControlEphemeral>(metadata, "messages.request.cache_control"),
             Container = ExtractValue<string>(metadata, "messages.request.container"),
             InferenceGeo = ExtractValue<string>(metadata, "messages.request.inference_geo"),
@@ -125,7 +125,7 @@ public static partial class MessagesUnifiedMapper
             }
         };
 
-    private static IEnumerable<MessageParam> ToMessageParams(IEnumerable<AIInputItem> items)
+    private static IEnumerable<MessageParam> ToMessageParams(IEnumerable<AIInputItem> items, string providerId)
     {
         var yielded = new List<MessageParam>();
         var pendingAssistantBlocks = new List<MessageContentBlock>();
@@ -191,7 +191,22 @@ public static partial class MessagesUnifiedMapper
                         pendingAssistantBlocks.Add(new MessageContentBlock { Type = "text", Text = text.Text });
                         break;
                     case AIReasoningContentPart reasoning:
-                        pendingAssistantBlocks.Add(new MessageContentBlock { Type = "thinking", Thinking = reasoning.Text });
+
+                        var signature = reasoning.Metadata?.GetProviderOption<string?>(providerId, "signature");
+
+                        var block = new MessageContentBlock
+                        {
+                            Type = "thinking",
+                            Thinking = reasoning.Text,
+                            Signature = signature
+                        };
+
+                        if (!string.IsNullOrWhiteSpace(signature))
+                        {
+                            pendingAssistantBlocks.Add(block);
+                        }
+
+
                         break;
                     case AIFileContentPart file:
                         var fileBlock = ToMessageFileBlock(file);
