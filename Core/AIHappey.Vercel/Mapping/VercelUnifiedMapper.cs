@@ -384,9 +384,9 @@ public static class VercelUnifiedMapper
                     Type = "reasoning",
                     Text = reasoning.Text,
                     Metadata = reasoning.ProviderMetadata?.ToDictionary(a => a.Key, a => (object?)a.Value)
-                    /*   Metadata = new Dictionary<string, object?>
-                       {
-                           ["vercel.type"] = reasoning.Type,
+                     /*   Metadata = new Dictionary<string, object?>
+                        {
+                            ["vercel.type"] = reasoning.Type,
                            ["vercel.id"] = reasoning.Id,
                            ["vercel.providerMetadata"] = reasoning.ProviderMetadata
                        }*/

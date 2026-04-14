@@ -154,17 +154,19 @@ public static partial class ResponsesUnifiedMapper
                 };
 
             case ResponseReasoningItem reasoning:
+                var reasoningMetadata = new Dictionary<string, object?>();
+                if (!string.IsNullOrWhiteSpace(reasoning.Id))
+                    reasoningMetadata["id"] = reasoning.Id;
+
+                MergeProviderScopedEncryptedContentMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
+
                 return new AIInputItem
                 {
                     Type = "reasoning",
                     Content = reasoning.Summary
                         .Select(a => (AIContentPart)new AITextContentPart { Type = "text", Text = a.Text, Metadata = new Dictionary<string, object?> { ["type"] = a.Type } })
                         .ToList(),
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["id"] = reasoning.Id,
-                        ["encrypted_content"] = reasoning.EncryptedContent
-                    }
+                    Metadata = reasoningMetadata
                 };
 
             case ResponseCompactionItem compaction:
@@ -277,21 +279,20 @@ public static partial class ResponsesUnifiedMapper
         var kind = item.Type?.Trim().ToLowerInvariant();
         var metadata = item.Metadata ?? new Dictionary<string, object?>();
         var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
-        var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
+        var reasoningParts = (item.Content ?? []).OfType<AIReasoningContentPart>().ToList();
+        var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart && a is not AIReasoningContentPart).ToList();
 
         if (kind == "message")
         {
-            if (nonToolParts.Count > 0 || toolParts.Count == 0)
+            foreach (var reasoningPart in reasoningParts)
             {
-                yield return new ResponseInputMessage
-                {
-                    Role = ParseRole(item.Role),
-                    Content = new ResponseMessageContent(ToResponsesContentParts(nonToolParts, item.Role).ToList()),
-                    Id = ExtractValue<string>(metadata, "id"),
-                    Status = ExtractValue<string>(metadata, "status"),
-                    Phase = ExtractValue<string>(metadata, "phase")
-                };
+                var reasoningItem = CreateResponseReasoningItem(item, metadata, providerId, reasoningPart);
+                if (reasoningItem is not null)
+                    yield return reasoningItem;
             }
+
+            if (nonToolParts.Count > 0 || (toolParts.Count == 0 && reasoningParts.Count == 0))
+                yield return CreateResponseInputMessage(item, metadata, nonToolParts);
 
             foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall))
             {
@@ -322,11 +323,9 @@ public static partial class ResponsesUnifiedMapper
             }
             case "reasoning":
             {
-                yield return new ResponseReasoningItem
-                {
-                    Id = item.Id,
-                    EncryptedContent = ExtractNestedValue<string>(metadata, providerId, "encrypted_content")
-                };
+                var reasoningItem = CreateResponseReasoningItem(item, metadata, providerId);
+                if (reasoningItem is not null)
+                    yield return reasoningItem;
                 yield break;
             }
             case "compaction":
@@ -369,6 +368,78 @@ public static partial class ResponsesUnifiedMapper
                 };
                 yield break;
         }
+    }
+
+    private static ResponseInputMessage CreateResponseInputMessage(
+        AIInputItem item,
+        Dictionary<string, object?> metadata,
+        IReadOnlyCollection<AIContentPart> parts)
+        => new()
+        {
+            Role = ParseRole(item.Role),
+            Content = new ResponseMessageContent(ToResponsesContentParts(parts, item.Role).ToList()),
+            Id = ExtractValue<string>(metadata, "id"),
+            Status = ExtractValue<string>(metadata, "status"),
+            Phase = ExtractValue<string>(metadata, "phase")
+        };
+
+    private static ResponseReasoningItem? CreateResponseReasoningItem(
+        AIInputItem item,
+        Dictionary<string, object?> metadata,
+        string providerId,
+        AIReasoningContentPart? reasoningPart = null)
+    {
+        var reasoningMetadata = reasoningPart?.Metadata;
+
+        var encryptedContent = reasoningMetadata is not null
+            ? ExtractNestedValue<string>(reasoningMetadata, providerId, "encrypted_content")
+            : null;
+
+        encryptedContent ??= ExtractNestedValue<string>(metadata, providerId, "encrypted_content");
+
+        var summary = reasoningMetadata is not null
+            ? ExtractNestedValue<List<ResponseReasoningSummaryTextPart>>(reasoningMetadata, providerId, "summary")
+            : null;
+
+        summary ??= ExtractNestedValue<List<ResponseReasoningSummaryTextPart>>(metadata, providerId, "summary");
+
+        if (summary is null || summary.Count == 0)
+        {
+            summary = [];
+
+            if (!string.IsNullOrWhiteSpace(reasoningPart?.Text))
+            {
+                summary.Add(new ResponseReasoningSummaryTextPart
+                {
+                    Text = reasoningPart.Text
+                });
+            }
+            else
+            {
+                foreach (var textPart in item.Content?.OfType<AITextContentPart>() ?? [])
+                {
+                    if (string.IsNullOrWhiteSpace(textPart.Text))
+                        continue;
+
+                    summary.Add(new ResponseReasoningSummaryTextPart
+                    {
+                        Type = ExtractValue<string>(textPart.Metadata, "type") ?? "summary_text",
+                        Text = textPart.Text
+                    });
+                }
+            }
+        }
+
+        if (summary.Count == 0 && string.IsNullOrWhiteSpace(encryptedContent))
+            return null;
+
+        return new ResponseReasoningItem
+        {
+            Id = ExtractValue<string>(reasoningMetadata, "id")
+                 ?? ExtractValue<string>(metadata, "id"),
+            Summary = summary,
+            EncryptedContent = encryptedContent
+        };
     }
 
     private static T? ExtractNestedValue<T>(
