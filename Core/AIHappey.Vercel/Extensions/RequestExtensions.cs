@@ -84,6 +84,26 @@ public static class RequestExtensions
             Title = tool.Title
         };
 
+    public  static T? TryDeserialize<T>(this object? value)
+    {
+        if (value is null)
+            return default;
+
+        if (value is T cast)
+            return cast;
+
+        try
+        {
+            if (value is JsonElement json)
+                return JsonSerializer.Deserialize<T>(json.GetRawText(), JsonSerializerOptions.Web);
+
+            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, JsonSerializerOptions.Web), JsonSerializerOptions.Web);
+        }
+        catch
+        {
+            return default;
+        }
+    }
 
 }
 

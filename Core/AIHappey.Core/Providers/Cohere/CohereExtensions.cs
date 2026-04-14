@@ -1,6 +1,3 @@
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
-
 namespace AIHappey.Core.Providers.Cohere;
 
 public static partial class CohereExtensions
@@ -20,43 +17,5 @@ public static partial class CohereExtensions
             _ => "stop"
         };
 
-    public static object? ToMessagePart(this UIMessagePart uiMessage)
-    {
-        if (uiMessage is TextUIPart textUIPart)
-        {
-            return textUIPart;
-        }
-
-        if (uiMessage is FileUIPart fileUIPart
-            && fileUIPart.IsImage())
-        {
-            return new
-            {
-                type = "image_url",
-                image_url = new
-                {
-                    url = fileUIPart.Url,
-                    detail = "high"
-                }
-            };
-        }
-
-        return null;
-    }
-
-    public static IEnumerable<object> ToMessageParts(this List<UIMessagePart> uiMessages) =>
-        uiMessages.Select(a => a.ToMessagePart()).OfType<object>();
-
-    public static object ToMessage(this UIMessage uiMessage)
-    {
-        return new
-        {
-            role = uiMessage.Role,
-            content = uiMessage.Parts.ToMessageParts()
-        };
-    }
-
-    public static IEnumerable<object> ToMessages(this IEnumerable<UIMessage> uiMessages)
-        => uiMessages.Select(a => a.ToMessage());
 
 }

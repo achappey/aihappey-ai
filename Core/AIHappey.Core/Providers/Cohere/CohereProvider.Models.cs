@@ -68,7 +68,7 @@ public partial class CohereProvider
                     });
                 }
 
-                return result;
+                return result.WithPricing(GetIdentifier());
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,

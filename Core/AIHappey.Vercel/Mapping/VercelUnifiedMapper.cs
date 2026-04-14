@@ -1,6 +1,8 @@
 using System.Text.Json;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+
 
 namespace AIHappey.Vercel.Mapping;
 
@@ -238,8 +240,8 @@ public static class VercelUnifiedMapper
                 Url = GetTypedData<AIFileEventData>(envelope)?.Url
                     ?? GetValue<string>(data, "url")
                     ?? string.Empty,
-              //  Filename = GetTypedData<AIFileEventData>(envelope)?.Filename
-               //     ?? GetValue<string>(data, "filename"),
+                //  Filename = GetTypedData<AIFileEventData>(envelope)?.Filename
+                //     ?? GetValue<string>(data, "filename"),
                 ProviderMetadata = GetTypedData<AIFileEventData>(envelope)?.ProviderMetadata
                     ?? GetDoubleNestedProviderMetadata(data)
             },
@@ -384,12 +386,12 @@ public static class VercelUnifiedMapper
                     Type = "reasoning",
                     Text = reasoning.Text,
                     Metadata = reasoning.ProviderMetadata?.ToDictionary(a => a.Key, a => (object?)a.Value)
-                     /*   Metadata = new Dictionary<string, object?>
-                        {
-                            ["vercel.type"] = reasoning.Type,
-                           ["vercel.id"] = reasoning.Id,
-                           ["vercel.providerMetadata"] = reasoning.ProviderMetadata
-                       }*/
+                    /*   Metadata = new Dictionary<string, object?>
+                       {
+                           ["vercel.type"] = reasoning.Type,
+                          ["vercel.id"] = reasoning.Id,
+                          ["vercel.providerMetadata"] = reasoning.ProviderMetadata
+                      }*/
                 };
 
             case ToolInvocationPart invocation:
@@ -582,6 +584,19 @@ public static class VercelUnifiedMapper
 
         if (rawPart is not null)
             metadata["vercel.part.raw"] = JsonSerializer.SerializeToElement(rawPart, rawPart.GetType(), Json);
+
+        ModelContextProtocol.Protocol.CallToolResult? callToolResult = output switch
+        {
+            ModelContextProtocol.Protocol.CallToolResult ctr => ctr,
+            JsonElement json => json.TryDeserialize<ModelContextProtocol.Protocol.CallToolResult>(),
+            _ => output.TryDeserialize<ModelContextProtocol.Protocol.CallToolResult>()
+        };
+
+        if (callToolResult is not null)
+        {
+            callToolResult.Meta = null;
+            output = JsonSerializer.SerializeToElement(callToolResult);
+        }
 
         return new AIToolCallContentPart
         {

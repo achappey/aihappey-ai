@@ -8,10 +8,15 @@ using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.ChatCompletions.Mapping;
+using System.Runtime.CompilerServices;
+using AIHappey.Responses.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Sampling.Mapping;
 
 namespace AIHappey.Core.Providers.Cohere;
 
-public partial class CohereProvider : IModelProvider
+public partial class CohereProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly HttpClient _client;
 
@@ -19,7 +24,7 @@ public partial class CohereProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public CohereProvider(IApiKeyResolver keyResolver, 
+    public CohereProvider(IApiKeyResolver keyResolver,
         AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
@@ -43,27 +48,31 @@ public partial class CohereProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var result = await this.ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
 
-        return await _client.GetChatCompletion(
-             options,
-             relativeUrl: "compatibility/v1",
-             ct: cancellationToken);
+        return result.ToChatCompletion();
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var request = options.ToUnifiedRequest(GetIdentifier());
 
-        return _client.GetChatCompletionUpdates(
-                    options,
-                    relativeUrl: "compatibility/v1",
-                    ct: cancellationToken);
+        await foreach (var update in StreamUnifiedAsync(
+                                 request,
+                                  cancellationToken: cancellationToken))
+        {
+            yield return update.ToChatCompletionUpdate();
+        }
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+         cancellationToken);
+
+        return result.ToSamplingResult();
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
@@ -75,14 +84,26 @@ public partial class CohereProvider : IModelProvider
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await this.ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToResponseResult();
     }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var request = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var update in StreamUnifiedAsync(
+                                 request,
+                                  cancellationToken: cancellationToken))
+        {
+
+            yield return update.ToResponseStreamPart();
+        }
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
@@ -90,16 +111,28 @@ public partial class CohereProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await this.ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+          cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var update in StreamUnifiedAsync(
+                                 unifiedRequest,
+                                  cancellationToken: cancellationToken))
+        {
+            foreach (var result in update.ToMessageStreamParts())
+                yield return result;
+        }
     }
 }
