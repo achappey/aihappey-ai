@@ -3,9 +3,6 @@ using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using OpenAI.Models;
-using OAI = OpenAI;
-using OpenAI.Containers;
-using OpenAI.Files;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Net.Http.Headers;
@@ -54,15 +51,7 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedMo
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-
-
-    private OpenAIFileClient GetFileClient() => new(GetKey());
-
-    private ContainerClient GetContainerClient() => new(GetKey());
-
     public string GetIdentifier() => Constants.OpenAI;
-
-    private static OAI.Chat.ChatCompletionOptions ToChatCompletionOptions(string model) => new();
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
