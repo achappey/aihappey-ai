@@ -252,50 +252,8 @@ public static class VercelUnifiedMapper
             },
             "finish" => new FinishUIPart
             {
-                FinishReason = GetValue<string>(data, "finishReason"),
-                MessageMetadata = (
-           envelope?.Metadata?
-               .Where(a => a.Value is not null)
-               .ToDictionary(a => a.Key, a => (object)a.Value!)
-           ?? []
-       ) is var meta
-           ? meta.Concat(
-               new[]
-               {
-                !meta.ContainsKey("timestamp")
-                    ? new KeyValuePair<string, object>(
-                        "timestamp",
-                        GetValue<object>(data, "completed_at") switch
-                        {
-                            long l => DateTimeOffset.FromUnixTimeSeconds(l).UtcDateTime.ToString("O"),
-                            int i => DateTimeOffset.FromUnixTimeSeconds(i).UtcDateTime.ToString("O"),
-                            string s when long.TryParse(s, out var l)
-                                => DateTimeOffset.FromUnixTimeSeconds(l).UtcDateTime.ToString("O"),
-                            _ => DateTime.UtcNow.ToString("O")
-                        })
-                    : default,
-
-                !meta.ContainsKey("model") && GetValue<object>(data, "model") is { } model
-                    ? new KeyValuePair<string, object>(
-                        "model",
-                        $"{providerId}/{model}")
-                    : default,
-
-                !meta.ContainsKey("inputTokens") && GetValue<object>(data, "inputTokens") is { } it
-                    ? new KeyValuePair<string, object>("inputTokens", it)
-                    : default,
-
-                !meta.ContainsKey("outputTokens") && GetValue<object>(data, "outputTokens") is { } ot
-                    ? new KeyValuePair<string, object>("outputTokens", ot)
-                    : default,
-
-                !meta.ContainsKey("totalTokens") && GetValue<object>(data, "totalTokens") is { } tt
-                    ? new KeyValuePair<string, object>("totalTokens", tt)
-                    : default
-               }
-               .Where(kv => !kv.Equals(default)))
-               .ToDictionary(k => k.Key, v => v.Value)
-           : []
+                FinishReason = NormalizeFinishReason(GetValue<string>(data, "finishReason") ?? GetTypedData<AIFinishEventData>(envelope)?.FinishReason),
+                MessageMetadata = CreateFinishMessageMetadata(envelope, data, providerId)
             },
             "step-start" => new StepStartUIPart(),
             "start-step" => new StartStepUIPart(),
@@ -742,6 +700,165 @@ public static class VercelUnifiedMapper
         catch
         {
             return default;
+        }
+    }
+
+    private static FinishMessageMetadata CreateFinishMessageMetadata(
+        AIEventEnvelope envelope,
+        Dictionary<string, object?> data,
+        string providerId)
+    {
+        var typedData = GetTypedData<AIFinishEventData>(envelope);
+        if (typedData?.MessageMetadata is { } typedMetadata)
+            return NormalizeFinishMessageMetadata(typedMetadata, providerId, typedData);
+
+        var metadata = envelope.Metadata?
+            .Where(a => a.Value is not null)
+            .ToDictionary(a => a.Key, a => a.Value)
+            ?? [];
+
+        if (!metadata.ContainsKey("model"))
+            metadata["model"] = typedData?.Model ?? GetValue<object>(data, "model");
+
+        metadata["model"] = NormalizeFinishModel(metadata.TryGetValue("model", out var modelValue) ? modelValue : null, providerId);
+        metadata["timestamp"] = ResolveFinishTimestamp(metadata.TryGetValue("timestamp", out var timestampValue) ? timestampValue : null, typedData?.CompletedAt ?? GetValue<object>(data, "completed_at"));
+
+        SetFinishMetadataValue(metadata, "inputTokens", typedData?.InputTokens, data);
+        SetFinishMetadataValue(metadata, "outputTokens", typedData?.OutputTokens, data);
+        SetFinishMetadataValue(metadata, "totalTokens", typedData?.TotalTokens, data);
+        SetFinishMetadataValue(metadata, "temperature", typedData?.MessageMetadata?.Temperature, data);
+        SetFinishMetadataValue(metadata, "reasoningTokens", typedData?.MessageMetadata?.ReasoningTokens, data);
+        SetFinishMetadataValue(metadata, "cachedInputTokens", typedData?.MessageMetadata?.CachedInputTokens, data);
+        SetFinishMetadataValue(metadata, "cachedInputReadTokens", typedData?.MessageMetadata?.CachedInputReadTokens, data);
+        SetFinishMetadataValue(metadata, "cachedInputWriteTokens", typedData?.MessageMetadata?.CachedInputWriteTokens, data);
+        SetFinishMetadataValue(metadata, "runtimeMs", typedData?.MessageMetadata?.RuntimeMs, data);
+
+        return FinishMessageMetadata.FromDictionary(
+            metadata.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
+            fallbackModel: NormalizeFinishModel(typedData?.Model, providerId),
+            fallbackTimestamp: ResolveFinishTimestamp(null, typedData?.CompletedAt));
+    }
+
+    private static FinishMessageMetadata NormalizeFinishMessageMetadata(
+        AIFinishMessageMetadata metadata,
+        string providerId,
+        AIFinishEventData? finishData)
+    {
+        var normalized = metadata.ToDictionary();
+        normalized["model"] = NormalizeFinishModel(metadata.Model, providerId);
+        normalized["timestamp"] = ResolveFinishTimestamp(metadata.Timestamp, finishData?.CompletedAt);
+        SetFinishMetadataValue(normalized, "inputTokens", finishData?.InputTokens);
+        SetFinishMetadataValue(normalized, "outputTokens", finishData?.OutputTokens);
+        SetFinishMetadataValue(normalized, "totalTokens", finishData?.TotalTokens);
+
+        return FinishMessageMetadata.FromDictionary(
+            normalized.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            fallbackModel: NormalizeFinishModel(finishData?.Model ?? metadata.Model, providerId),
+            fallbackTimestamp: metadata.Timestamp);
+    }
+
+    private static void SetFinishMetadataValue<T>(Dictionary<string, object?> metadata, string key, T? typedValue, Dictionary<string, object?> data)
+    {
+        if (HasFinishMetadataValue(metadata, key))
+            return;
+
+        if (typedValue is not null)
+        {
+            metadata[key] = typedValue;
+            return;
+        }
+
+        metadata[key] = data.TryGetValue(key, out var value) ? value : null;
+    }
+
+    private static void SetFinishMetadataValue<T>(Dictionary<string, object?> metadata, string key, T? typedValue)
+    {
+        if (HasFinishMetadataValue(metadata, key))
+            return;
+
+        metadata[key] = typedValue;
+    }
+
+    private static bool HasFinishMetadataValue(Dictionary<string, object?> metadata, string key)
+    {
+        if (!metadata.TryGetValue(key, out var value) || value is null)
+            return false;
+
+        return value is not JsonElement json
+            || json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined;
+    }
+
+    private static string NormalizeFinishReason(string? finishReason)
+        => finishReason?.Trim().ToLowerInvariant() switch
+        {
+            "stop" => "stop",
+            "length" => "length",
+            "content-filter" => "content-filter",
+            "tool-calls" => "tool-calls",
+            "error" => "error",
+            "other" => "other",
+            null or "" => "other",
+            _ => "other"
+        };
+
+    private static string NormalizeFinishModel(object? model, string providerId)
+    {
+        var modelText = (model switch
+        {
+            null => null,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
+            _ => model.ToString()
+        })?.Trim();
+
+        if (string.IsNullOrWhiteSpace(modelText))
+            throw new InvalidOperationException("Finish metadata must include a model value.");
+
+        return modelText.Contains('/', StringComparison.Ordinal)
+            ? modelText
+            : $"{providerId}/{modelText}";
+    }
+
+    private static DateTimeOffset ResolveFinishTimestamp(object? timestamp, object? completedAt)
+    {
+        if (TryParseFinishTimestamp(timestamp, out var explicitTimestamp))
+            return explicitTimestamp;
+
+        if (TryParseFinishTimestamp(completedAt, out var completedAtTimestamp))
+            return completedAtTimestamp;
+
+        return DateTimeOffset.UtcNow;
+    }
+
+    private static bool TryParseFinishTimestamp(object? value, out DateTimeOffset timestamp)
+    {
+        switch (value)
+        {
+            case DateTimeOffset dto:
+                timestamp = dto;
+                return true;
+            case DateTime dt:
+                timestamp = new DateTimeOffset(dt.ToUniversalTime());
+                return true;
+            case long l:
+                timestamp = DateTimeOffset.FromUnixTimeSeconds(l);
+                return true;
+            case int i:
+                timestamp = DateTimeOffset.FromUnixTimeSeconds(i);
+                return true;
+            case string s when DateTimeOffset.TryParse(s, out var parsed):
+                timestamp = parsed;
+                return true;
+            case string s when long.TryParse(s, out var unix):
+                timestamp = DateTimeOffset.FromUnixTimeSeconds(unix);
+                return true;
+            case JsonElement json when json.ValueKind == JsonValueKind.String:
+                return TryParseFinishTimestamp(json.GetString(), out timestamp);
+            case JsonElement json when json.ValueKind == JsonValueKind.Number && json.TryGetInt64(out var unixValue):
+                timestamp = DateTimeOffset.FromUnixTimeSeconds(unixValue);
+                return true;
+            default:
+                timestamp = default;
+                return false;
         }
     }
 

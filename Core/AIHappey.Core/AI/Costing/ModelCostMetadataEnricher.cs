@@ -12,33 +12,36 @@ public static class ModelCostMetadataEnricher
         if (pricing == null || finish.MessageMetadata == null)
             return finish;
 
-        if (!TryGetInt(finish.MessageMetadata, "inputTokens", out var inputTokens))
+        var metadata = finish.MessageMetadata;
+
+        if (!(metadata.InputTokens is int inputTokens))
             return finish;
 
-        TryGetInt(finish.MessageMetadata, "cachedInputTokens", out var cachedInputReadTokens);
-        TryGetInt(finish.MessageMetadata, "cachedInputReadTokens", out var cachedInputReadTokensFallback);
-        TryGetInt(finish.MessageMetadata, "cachedInputWriteTokens", out var cachedInputWriteTokens);
-        TryGetInt(finish.MessageMetadata, "outputTokens", out var outputTokens);
+        var cachedInputReadTokens = metadata.CachedInputTokens ?? 0;
+        var cachedInputReadTokensFallback = metadata.CachedInputReadTokens ?? 0;
+        var cachedInputWriteTokens = metadata.CachedInputWriteTokens ?? 0;
+        var outputTokens = metadata.OutputTokens ?? 0;
 
         if (cachedInputReadTokens == 0)
             cachedInputReadTokens = cachedInputReadTokensFallback;
 
         if (outputTokens == 0
-            && TryGetInt(finish.MessageMetadata, "totalTokens", out var totalTokens)
+            && metadata.TotalTokens is int totalTokens
             && totalTokens > 0)
         {
             outputTokens = Math.Max(0, totalTokens - inputTokens - cachedInputReadTokens - cachedInputWriteTokens);
         }
 
         var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, cachedInputWriteTokens);
-        var metadata = AddCost(
-            finish.MessageMetadata.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
-            cost);
+        var enriched = AddCost(metadata.ToDictionary(), cost);
 
         return new FinishUIPart
         {
             FinishReason = finish.FinishReason,
-            MessageMetadata = metadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value!)
+            MessageMetadata = FinishMessageMetadata.FromDictionary(
+                enriched.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                fallbackModel: metadata.Model,
+                fallbackTimestamp: metadata.Timestamp)
         };
     }
 

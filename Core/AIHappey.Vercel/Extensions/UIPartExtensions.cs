@@ -34,40 +34,53 @@ public static class UIPartExtensions
        Dictionary<string, object>? extraMetadata = null
    )
     {
-        var metadata = new Dictionary<string, object>
-        {
-         //   { "finishReason", finishReason },
-            { "model", model },
-            { "timestamp", DateTime.UtcNow },
-            { "outputTokens", outputTokens },
-            { "inputTokens", inputTokens },
-            { "totalTokens", totalTokens },
-        };
+        FinishGatewayMetadata? gateway = null;
+        long? runtimeMs = null;
+        Dictionary<string, object?>? additionalProperties = null;
 
-        if (temperature.HasValue)
+        if (extraMetadata is not null)
         {
-            metadata["temperature"] = temperature;
-        }
+            additionalProperties = [];
+            foreach (var (key, value) in extraMetadata)
+            {
+                switch (key)
+                {
+                    case "gateway" when value is Dictionary<string, object> gatewayDict:
+                        gateway = FinishGatewayMetadata.FromDictionary(gatewayDict);
+                        break;
+                    case "runtimeMs":
+                        runtimeMs = value switch
+                        {
+                            long l => l,
+                            int i => i,
+                            string s when long.TryParse(s, out var parsed) => parsed,
+                            _ => runtimeMs
+                        };
+                        break;
+                    default:
+                        additionalProperties[key] = value;
+                        break;
+                }
+            }
 
-        if (extraMetadata != null)
-        {
-            foreach (var kv in extraMetadata)
-                metadata[kv.Key] = kv.Value;
-        }
-
-        if (reasoningTokens != null)
-        {
-            metadata["reasoningTokens"] = reasoningTokens.Value;
-        }
-
-        if (cachedInputTokens != null)
-        {
-            metadata["cachedInputTokens"] = cachedInputTokens.Value;
+            if (additionalProperties.Count == 0)
+                additionalProperties = null;
         }
 
         return new()
         {
-            MessageMetadata = metadata,
+            MessageMetadata = FinishMessageMetadata.Create(
+                model: model,
+                timestamp: DateTimeOffset.UtcNow,
+                outputTokens: outputTokens,
+                inputTokens: inputTokens,
+                totalTokens: totalTokens,
+                temperature: temperature,
+                reasoningTokens: reasoningTokens,
+                cachedInputTokens: cachedInputTokens,
+                runtimeMs: runtimeMs,
+                gateway: gateway,
+                additionalProperties: additionalProperties),
             FinishReason = finishReason
         };
     }

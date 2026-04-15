@@ -1,0 +1,19 @@
+event: response.created
+data: {"type":"response.created","sequence_number":1,"response":{"id":"resp_fixture_1","object":"response","created_at":1735689600,"completed_at":1735689601,"status":"completed","model":"gpt-fixture","output":[],"tools":[]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"msg_fixture_1","type":"message","status":"in_progress","role":"assistant"}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":3,"item_id":"msg_fixture_1","content_index":0,"output_index":0,"delta":"Hello world"}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","sequence_number":4,"item_id":"msg_fixture_1","content_index":0,"output_index":0,"text":"Hello world"}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":5,"output_index":0,"item":{"id":"msg_fixture_1","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"Hello world","annotations":[]}]}}
+
+event: response.completed
+data: {"type":"response.completed","sequence_number":6,"response":{"id":"resp_fixture_1","object":"response","created_at":1735689600,"completed_at":1735689601,"status":"completed","model":"gpt-fixture","output":[],"tools":[]}}
+
+data: [DONE]

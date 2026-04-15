@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AIHappey.Abstractions\AIHappey.Abstractions.csproj" />
+    <ProjectReference Include="..\AIHappey.ChatCompletions\AIHappey.ChatCompletions.csproj" />
+    <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
+    <ProjectReference Include="..\AIHappey.Messages\AIHappey.Messages.csproj" />
+    <ProjectReference Include="..\AIHappey.Responses\AIHappey.Responses.csproj" />
+    <ProjectReference Include="..\AIHappey.Unified\AIHappey.Unified.csproj" />
+    <ProjectReference Include="..\AIHappey.Vercel\AIHappey.Vercel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Fixtures\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

@@ -12,6 +12,7 @@ namespace AIHappey.AzureAuth.Controllers;
 public class MessagesController(IAIModelProviderResolver resolver) : ControllerBase
 {
     private readonly IAIModelProviderResolver _resolver = resolver;
+    private static readonly JsonSerializerOptions Json = MessagesJson.Default;
 
     [HttpPost]
     [Authorize]
@@ -44,7 +45,7 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
 
             await foreach (var chunk in provider.MessagesStreamingAsync(body, headers, cancellationToken))
             {
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
+                await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk, Json)}\n\n");
                 await writer.FlushAsync(cancellationToken);
             }
 
@@ -57,7 +58,7 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
         try
         {
             var result = await provider.MessagesAsync(body, headers, cancellationToken);
-            return Ok(result);
+            return Content(JsonSerializer.Serialize(result, Json), "application/json");
         }
         catch (Exception e)
         {

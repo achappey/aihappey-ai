@@ -35,9 +35,7 @@ public partial class AnthropicProvider
             {
                 if (uiPart is FinishUIPart finishPart)
                 {
-                    var responseModel = finishPart.MessageMetadata?.TryGetValue("model", out var modelObj) == true
-                        ? modelObj?.ToString()
-                        : null;
+                    var responseModel = finishPart.MessageMetadata?.Model;
 
                     var pricing = ResolveModelPricing(responseModel, chatRequest.Model);
                     yield return ModelCostMetadataEnricher.AddCost(finishPart, pricing);

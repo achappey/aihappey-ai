@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Unified.Models;
@@ -167,13 +168,151 @@ public sealed class AIFileEventData
     public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
+public sealed record AIFinishGatewayMetadata
+{
+    private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
+
+    [JsonPropertyName("cost")]
+    public decimal? Cost { get; init; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
+
+    public Dictionary<string, object?> ToDictionary()
+        => JsonSerializer.SerializeToElement(this, Json)
+            .Deserialize<Dictionary<string, object?>>(Json)
+            ?? [];
+
+    public static AIFinishGatewayMetadata? FromDictionary(Dictionary<string, object>? metadata)
+    {
+        if (metadata is null || metadata.Count == 0)
+            return null;
+
+        return JsonSerializer.SerializeToElement(metadata, Json)
+            .Deserialize<AIFinishGatewayMetadata>(Json);
+    }
+}
+
+public sealed record AIFinishMessageMetadata
+{
+    private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
+
+    [JsonPropertyName("model")]
+    public required string Model { get; init; }
+
+    [JsonPropertyName("timestamp")]
+    public required DateTimeOffset Timestamp { get; init; }
+
+    [JsonPropertyName("outputTokens")]
+    public int? OutputTokens { get; init; }
+
+    [JsonPropertyName("inputTokens")]
+    public int? InputTokens { get; init; }
+
+    [JsonPropertyName("totalTokens")]
+    public int? TotalTokens { get; init; }
+
+    [JsonPropertyName("temperature")]
+    public float? Temperature { get; init; }
+
+    [JsonPropertyName("reasoningTokens")]
+    public int? ReasoningTokens { get; init; }
+
+    [JsonPropertyName("cachedInputTokens")]
+    public int? CachedInputTokens { get; init; }
+
+    [JsonPropertyName("cachedInputReadTokens")]
+    public int? CachedInputReadTokens { get; init; }
+
+    [JsonPropertyName("cachedInputWriteTokens")]
+    public int? CachedInputWriteTokens { get; init; }
+
+    [JsonPropertyName("runtimeMs")]
+    public long? RuntimeMs { get; init; }
+
+    [JsonPropertyName("gateway")]
+    public AIFinishGatewayMetadata? Gateway { get; init; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
+
+    public Dictionary<string, object?> ToDictionary()
+        => JsonSerializer.SerializeToElement(this, Json)
+            .Deserialize<Dictionary<string, object?>>(Json)
+            ?? [];
+
+    public static AIFinishMessageMetadata Create(
+        string model,
+        DateTimeOffset timestamp,
+        int? outputTokens = null,
+        int? inputTokens = null,
+        int? totalTokens = null,
+        float? temperature = null,
+        int? reasoningTokens = null,
+        int? cachedInputTokens = null,
+        int? cachedInputReadTokens = null,
+        int? cachedInputWriteTokens = null,
+        long? runtimeMs = null,
+        AIFinishGatewayMetadata? gateway = null,
+        Dictionary<string, object?>? additionalProperties = null)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["model"] = model,
+            ["timestamp"] = timestamp,
+            ["outputTokens"] = outputTokens,
+            ["inputTokens"] = inputTokens,
+            ["totalTokens"] = totalTokens,
+            ["temperature"] = temperature,
+            ["reasoningTokens"] = reasoningTokens,
+            ["cachedInputTokens"] = cachedInputTokens,
+            ["cachedInputReadTokens"] = cachedInputReadTokens,
+            ["cachedInputWriteTokens"] = cachedInputWriteTokens,
+            ["runtimeMs"] = runtimeMs,
+            ["gateway"] = gateway
+        };
+
+        if (additionalProperties is not null)
+        {
+            foreach (var item in additionalProperties)
+                metadata[item.Key] = item.Value;
+        }
+
+        return JsonSerializer.SerializeToElement(metadata, Json)
+            .Deserialize<AIFinishMessageMetadata>(Json)
+            ?? throw new JsonException("Failed to create unified finish metadata.");
+    }
+
+    public static AIFinishMessageMetadata FromDictionary(
+        Dictionary<string, object>? metadata,
+        string? fallbackModel = null,
+        DateTimeOffset? fallbackTimestamp = null)
+    {
+        var merged = metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value) ?? [];
+
+        if (!merged.ContainsKey("model") && !string.IsNullOrWhiteSpace(fallbackModel))
+            merged["model"] = fallbackModel;
+
+        if (!merged.ContainsKey("timestamp"))
+            merged["timestamp"] = fallbackTimestamp ?? DateTimeOffset.UtcNow;
+
+        return JsonSerializer.SerializeToElement(merged, Json)
+            .Deserialize<AIFinishMessageMetadata>(Json)
+            ?? throw new JsonException("Failed to deserialize unified finish metadata.");
+    }
+
+    public static implicit operator AIFinishMessageMetadata?(Dictionary<string, object>? metadata)
+        => metadata is null ? null : FromDictionary(metadata);
+
+}
+
 public sealed class AIFinishEventData
 {
     [JsonPropertyName("finishReason")]
     public string? FinishReason { get; init; }
 
     [JsonPropertyName("messageMetadata")]
-    public Dictionary<string, object>? MessageMetadata { get; init; }
+    public AIFinishMessageMetadata? MessageMetadata { get; init; }
 
     [JsonPropertyName("model")]
     public string? Model { get; init; }
