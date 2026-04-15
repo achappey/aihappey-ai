@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using AIHappey.Messages;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
@@ -28,9 +27,13 @@ public partial class PerplexityProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public PerplexityProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+     private readonly AsyncCacheHelper _memoryCache;
+
+    public PerplexityProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _httpClientFactory = httpClientFactory;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri(BASE_URL);
@@ -54,8 +57,8 @@ public partial class PerplexityProvider : IModelProvider
         return result.ToSamplingResult();
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-            => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+  //  public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+   //         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
