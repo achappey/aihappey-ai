@@ -65,7 +65,7 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(975, finishPart.MessageMetadata?.Usage.TotalTokens);
         Assert.Equal(0.005828m, finishPart.MessageMetadata?.Gateway?.Cost);
 
-        var providerMetadata = Assert.Contains("anthropic", finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var providerMetadata = Assert.Contains("anthropic", finishPart.MessageMetadata?.AdditionalProperties ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(321, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(120, providerUsage.GetProperty("input_tokens_details").GetProperty("cached_tokens").GetInt32());
@@ -109,7 +109,7 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Null(reasoningStartPart.ProviderMetadata);
 
         var reasoningEndPart = Assert.IsType<ReasoningEndUIPart>(reasoningUiParts[^1]);
-        var providerMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        var providerMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? []);
 
         Assert.Equal(originalSignature, Assert.IsType<string>(providerMetadata["signature"]));
     }
@@ -174,15 +174,15 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Null(reasoningStartPart.ProviderMetadata);
 
         var reasoningEndPart = Assert.IsType<ReasoningEndUIPart>(uiParts.Single(part => part.Type == "reasoning-end"));
-        var reasoningProviderMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        var reasoningProviderMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? []);
         Assert.Equal(originalSignature, Assert.IsType<string>(reasoningProviderMetadata["signature"]));
 
         var toolStartPart = Assert.IsType<ToolCallStreamingStartPart>(uiParts.Single(part => part.Type == "tool-input-start"));
         Assert.Equal(toolUseId, toolStartPart.ToolCallId);
         Assert.Equal("web_search", toolStartPart.ToolName);
         Assert.True(toolStartPart.ProviderExecuted);
-        var toolStartProviderMetadata = Assert.Contains(ProviderId, toolStartPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
-        Assert.Empty(toolStartProviderMetadata ?? new Dictionary<string, object>());
+        var toolStartProviderMetadata = Assert.Contains(ProviderId, toolStartPart.ProviderMetadata ?? []);
+        Assert.Empty(toolStartProviderMetadata ?? []);
 
         var toolInputDeltaParts = uiParts.OfType<ToolCallDeltaPart>().ToList();
         Assert.All(toolInputDeltaParts, part => Assert.Equal(toolUseId, part.ToolCallId));
@@ -192,8 +192,8 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(toolUseId, toolCallPart.ToolCallId);
         Assert.Equal("web_search", toolCallPart.ToolName);
         Assert.True(toolCallPart.ProviderExecuted);
-        var toolCallProviderMetadata = Assert.Contains(ProviderId, toolCallPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
-        Assert.Empty(toolCallProviderMetadata ?? new Dictionary<string, object>());
+        var toolCallProviderMetadata = Assert.Contains(ProviderId, toolCallPart.ProviderMetadata ?? []);
+        Assert.Empty(toolCallProviderMetadata ?? []);
 
         var toolInput = JsonSerializer.SerializeToElement(toolCallPart.Input, JsonSerializerOptions.Web);
         Assert.Equal("latest news war Iran 2026", toolInput.GetProperty("query").GetString());
@@ -201,7 +201,7 @@ public sealed class ApiChatStreamFixtureTests
         var toolOutputPart = Assert.IsType<ToolOutputAvailablePart>(uiParts.Single(part => part.Type == "tool-output-available"));
         Assert.Equal(toolUseId, toolOutputPart.ToolCallId);
         Assert.True(toolOutputPart.ProviderExecuted);
-        var toolOutputProviderMetadata = Assert.Contains(ProviderId, toolOutputPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
+        var toolOutputProviderMetadata = Assert.Contains(ProviderId, toolOutputPart.ProviderMetadata ?? []);
         Assert.Equal(toolUseId, Assert.IsType<string>(toolOutputProviderMetadata?["tool_use_id"]));
 
         var toolOutput = JsonSerializer.SerializeToElement(toolOutputPart.Output, JsonSerializerOptions.Web);
@@ -227,7 +227,7 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(789, finishPart.MessageMetadata?.Usage.CompletionTokens);
         Assert.Equal(20035, finishPart.MessageMetadata?.Usage.TotalTokens);
 
-        var finishProviderMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var finishProviderMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
         var providerUsage = finishProviderMetadata.GetProperty("usage");
         Assert.Equal(19246, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(789, providerUsage.GetProperty("output_tokens").GetInt32());
@@ -252,8 +252,8 @@ public sealed class ApiChatStreamFixtureTests
 
         Assert.Equal("tool-call-1", part.ToolCallId);
         Assert.True(part.ProviderExecuted);
-        var providerMetadata = Assert.Contains(ProviderId, part.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
-        Assert.Empty(providerMetadata ?? new Dictionary<string, object>());
+        var providerMetadata = Assert.Contains(ProviderId, part.ProviderMetadata ?? []);
+        Assert.Empty(providerMetadata ?? []);
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public static partial class ResponsesUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var metadata = request.Metadata ?? new Dictionary<string, object?>();
+        var metadata = request.Metadata ?? [];
 
         return new ResponseRequest
         {
@@ -370,7 +370,7 @@ public static partial class ResponsesUnifiedMapper
         bool preferEncryptedReasoningReplay)
     {
         var kind = item.Type?.Trim().ToLowerInvariant();
-        var metadata = item.Metadata ?? new Dictionary<string, object?>();
+        var metadata = item.Metadata ?? [];
         var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
         var reasoningParts = (item.Content ?? []).OfType<AIReasoningContentPart>().ToList();
         var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart && a is not AIReasoningContentPart).ToList();
@@ -603,7 +603,7 @@ public static partial class ResponsesUnifiedMapper
 
         foreach (var reasoningPart in reasoningParts)
         {
-            var encryptedContent = ExtractNestedValue<string>(reasoningPart.Metadata ?? new Dictionary<string, object?>(), providerId, "encrypted_content");
+            var encryptedContent = ExtractNestedValue<string>(reasoningPart.Metadata ?? [], providerId, "encrypted_content");
             if (string.IsNullOrWhiteSpace(encryptedContent))
                 continue;
 

@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Abstractions.Http;
 using AIHappey.Messages;
-using System.Net.Http.Json;
 
 namespace AIHappey.Core.AI;
 

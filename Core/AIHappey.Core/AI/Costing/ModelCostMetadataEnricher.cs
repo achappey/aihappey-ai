@@ -16,23 +16,13 @@ public static class ModelCostMetadataEnricher
         var enriched = AddCostFromUsage(usage, metadata.ToDictionary(), pricing);
 
         return FinishMessageMetadata.FromDictionary(
-            enriched.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            enriched
+                .Where(kvp => kvp.Value is not null)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!),
             fallbackModel: metadata.Model,
             fallbackTimestamp: metadata.Timestamp);
     }
-
-    public static FinishUIPart AddCost(FinishUIPart finish, ModelPricing? pricing)
-    {
-        if (pricing == null || finish.MessageMetadata == null)
-            return finish;
-
-        return new FinishUIPart
-        {
-            FinishReason = finish.FinishReason,
-            MessageMetadata = AddCost(finish.MessageMetadata, pricing)
-        };
-    }
-
+  
     public static Dictionary<string, object?> AddCost(
         Dictionary<string, object?>? existingMetadata,
         decimal? cost)
@@ -46,7 +36,7 @@ public static class ModelCostMetadataEnricher
 
         if (!metadata.TryGetValue("gateway", out var gatewayObj) || gatewayObj is not Dictionary<string, object?> gateway)
         {
-            gateway = new Dictionary<string, object?>();
+            gateway = [];
             metadata["gateway"] = gateway;
         }
 

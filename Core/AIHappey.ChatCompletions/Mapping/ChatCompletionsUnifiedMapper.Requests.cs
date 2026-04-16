@@ -61,13 +61,16 @@ public static partial class ChatCompletionsUnifiedMapper
         };
     }
 
-    public static ChatCompletionOptions ToChatCompletionOptions(this AIRequest request)
+    public static ChatCompletionOptions ToChatCompletionOptions(this AIRequest request, string providerId)
     {
         ArgumentNullException.ThrowIfNull(request);
 
         var normalizedToolChoice = NormalizeToolChoice(request.ToolChoice, request.Tools);
         var normalizedModel = NormalizeRequestModel(request.Model, request.ProviderId);
         var additionalProperties = BuildChatCompletionRequestAdditionalProperties(request);
+
+        IEnumerable<object> tools = [.. ToChatTools(request.Tools).ToList() ?? [],
+            .. request.Metadata.GetChatCompletionToolDefinitions(providerId) ?? []];
 
         var options = new ChatCompletionOptions
         {
@@ -76,7 +79,7 @@ public static partial class ChatCompletionsUnifiedMapper
             ParallelToolCalls = request.ParallelToolCalls,
             Stream = request.Stream,
             Messages = ToChatMessages(request.Input).ToList(),
-            Tools = ToChatTools(request.Tools).ToList(),
+            Tools = tools,
             ToolChoice = normalizedToolChoice,
             StreamOptions = new StreamOptions()
             {
@@ -88,9 +91,14 @@ public static partial class ChatCompletionsUnifiedMapper
             AdditionalProperties = additionalProperties
         };
 
+        providerId.ApplyProviderOptions(request.Metadata, options.AdditionalProperties ??=
+                [], ["tools"]);
+
+        options.Metadata = null;
+
         return options;
     }
-   
+
     private static Dictionary<string, object?> BuildUnifiedRequestMetadata(JsonElement request)
     {
         var metadata = new Dictionary<string, object?>

@@ -9,7 +9,6 @@ using AIHappey.Core.MCP;
 using AIHappey.Telemetry.MCP;
 using AIHappey.Core.Providers.Azure;
 using System.Text.Json.Serialization;
-using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;

@@ -398,9 +398,9 @@ public partial class VeniceProvider
     private static JsonObject CreatePayloadFromMetadata(JsonElement metadata)
     {
         if (metadata.ValueKind != JsonValueKind.Object)
-            return new JsonObject();
+            return [];
 
-        var payload = JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? new JsonObject();
+        var payload = JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? [];
         payload.Remove("content_type");
         return payload;
     }

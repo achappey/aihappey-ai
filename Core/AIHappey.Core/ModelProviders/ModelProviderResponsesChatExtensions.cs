@@ -65,7 +65,6 @@ public static class ModelProviderResponsesChatExtensions
         responseRequest.Metadata = null;
     }
 
-
     public static void SetDefaultChatCompletionProperties(
         this IModelProvider modelProvider, ChatCompletionOptions chatCompletionOptions, HashSet<string>? exclude = null)
     {

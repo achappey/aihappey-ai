@@ -697,7 +697,7 @@ public partial class BLACKBOXProvider
         BlackboxNativeTaskStatus status)
     {
         var merged = metadata is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(metadata);
 
         merged["blackbox_task_id"] = task.Id;

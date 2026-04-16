@@ -417,7 +417,7 @@ public partial class NimbleWayProvider
     private static Dictionary<string, object?> BuildResultMetadata(NimbleWayUnifiedResult result)
     {
         var metadata = result.Metadata is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(result.Metadata);
 
         metadata["answer"] = result.Answer;
@@ -435,7 +435,7 @@ public partial class NimbleWayProvider
             return null;
 
         var merged = existing is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(existing);
 
         if (add is not null)

@@ -82,8 +82,8 @@ public partial class QuiverAIProvider
     {
         var providerObj = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var payload = providerObj.ValueKind == JsonValueKind.Object
-            ? JsonNode.Parse(providerObj.GetRawText()) as JsonObject ?? new JsonObject()
-            : new JsonObject();
+            ? JsonNode.Parse(providerObj.GetRawText()) as JsonObject ?? []
+            : [];
 
         if (!payload.ContainsKey("model") && !string.IsNullOrWhiteSpace(request.Model))
             payload["model"] = request.Model;

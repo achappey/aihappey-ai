@@ -194,8 +194,8 @@ public partial class AlibabaProvider
     ];
 
 
-    private HashSet<string> SupportedLanguages = new HashSet<string>
-    {
+    private HashSet<string> SupportedLanguages =
+    [
         "English",
         "Chinese",
         "Russian",
@@ -214,7 +214,7 @@ public partial class AlibabaProvider
         "Hindi",
         "Greek",
         "Turkish"
-    };
+    ];
 
 
 }

@@ -173,7 +173,7 @@ public partial class NinjaChatProvider
         Dictionary<string, object>? providerMetadata = null;
         if (!string.IsNullOrWhiteSpace(source.Content) || !string.IsNullOrWhiteSpace(source.PublishedDate))
         {
-            providerMetadata = new Dictionary<string, object>();
+            providerMetadata = [];
             if (!string.IsNullOrWhiteSpace(source.Content))
                 providerMetadata["content"] = source.Content!;
             if (!string.IsNullOrWhiteSpace(source.PublishedDate))

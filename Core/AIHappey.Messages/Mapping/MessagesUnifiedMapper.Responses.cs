@@ -32,7 +32,7 @@ public static partial class MessagesUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        var metadata = response.Metadata ?? new Dictionary<string, object?>();
+        var metadata = response.Metadata ?? [];
         var role = ExtractValue<string>(metadata, "messages.response.role") ?? "assistant";
 
         return new MessagesResponse
@@ -217,7 +217,8 @@ public static partial class MessagesUnifiedMapper
                         yield return new MessageContentBlock { Type = "thinking", Thinking = reasoning.Text };
                         break;
                     case AIFileContentPart file:
-                        yield return ToMessageFileBlock(file);
+                        if (ToMessageFileBlock(file) is { } fileBlock)
+                            yield return fileBlock;
                         break;
                 }
             }

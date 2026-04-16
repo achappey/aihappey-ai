@@ -250,7 +250,8 @@ public static partial class MessagesUnifiedMapper
                         ? []
                         : part.Metadata.ToDictionary(a => a.Key, a => (object)a.Value);
 
-                    finishMetadata["usage"] = state.Usage;
+                    if (state.Usage is not null)
+                        finishMetadata["usage"] = state.Usage;
                 }
 
                 yield return CreateEnvelope("finish", state.CurrentMessage?.Id, new AIFinishEventData
@@ -1133,7 +1134,7 @@ public static partial class MessagesUnifiedMapper
 
         return new Dictionary<string, Dictionary<string, object>>
         {
-            [providerId] = providerMetadata ?? new Dictionary<string, object>()
+            [providerId] = providerMetadata ?? []
         };
     }
 
@@ -1141,9 +1142,10 @@ public static partial class MessagesUnifiedMapper
         string providerId,
         MessageContentBlock block)
     {
-        var providerMetadata = new Dictionary<string, object>();
-
-        providerMetadata["type"] = block.Type;
+        var providerMetadata = new Dictionary<string, object>
+        {
+            ["type"] = block.Type
+        };
 
         if (!string.IsNullOrWhiteSpace(block.ToolName))
             providerMetadata["tool_name"] = block.ToolName;

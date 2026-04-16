@@ -106,7 +106,7 @@ public partial class StealthGPTProvider
         string endpoint)
     {
         var mapped = metadata is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(metadata);
 
         mapped[nameof(StealthGPT).ToLowerInvariant()] = new Dictionary<string, object?>

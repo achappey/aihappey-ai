@@ -18,7 +18,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
 
-        var responseRequest = request.ToChatCompletionOptions();
+        var responseRequest = request.ToChatCompletionOptions(modelProvider.GetIdentifier());
         responseRequest.Stream = false;
         responseRequest.Store ??= false;
 
@@ -36,7 +36,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
 
-        var responseRequest = request.ToChatCompletionOptions();
+        var responseRequest = request.ToChatCompletionOptions(modelProvider.GetIdentifier());
         responseRequest.Stream = true;
         responseRequest.Store ??= false;
 

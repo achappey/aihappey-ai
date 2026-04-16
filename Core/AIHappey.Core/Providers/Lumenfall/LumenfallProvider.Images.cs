@@ -184,10 +184,11 @@ public partial class LumenfallProvider
         JsonElement metadata,
         List<object> warnings)
     {
-        var form = new MultipartFormDataContent();
-
-        form.Add(new StringContent(request.Model), "model");
-        form.Add(new StringContent(request.Prompt), "prompt");
+        var form = new MultipartFormDataContent
+        {
+            { new StringContent(request.Model), "model" },
+            { new StringContent(request.Prompt), "prompt" }
+        };
 
         var n = NormalizeN(request.N, warnings);
         if (n.HasValue)

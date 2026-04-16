@@ -208,7 +208,7 @@ public partial class OrqAgentRuntimeProvider
         var (nativeMetadata, requestMetadata) = ExtractResponseRequestMetadata(options.Metadata);
 
         var extraParams = nativeMetadata?.ExtraParams is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(nativeMetadata.ExtraParams, StringComparer.OrdinalIgnoreCase);
 
         AddIfValue(extraParams, "temperature", options.Temperature);
@@ -244,7 +244,7 @@ public partial class OrqAgentRuntimeProvider
     {
         var nativeMetadata = request.GetProviderMetadata<OrqAgentsRequestMetadata>(GetIdentifier()) ?? new OrqAgentsRequestMetadata();
         var extraParams = nativeMetadata.ExtraParams is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(nativeMetadata.ExtraParams, StringComparer.OrdinalIgnoreCase);
 
         AddIfValue(extraParams, "temperature", request.Temperature);
@@ -785,7 +785,7 @@ public partial class OrqAgentRuntimeProvider
                             : new
                             {
                                 type = typedTool.InputSchema.Type,
-                                properties = typedTool.InputSchema.Properties ?? new Dictionary<string, object>(),
+                                properties = typedTool.InputSchema.Properties ?? [],
                                 required = typedTool.InputSchema.Required?.ToArray() ?? Array.Empty<string>(),
                                 additionalProperties = false
                             }

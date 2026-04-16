@@ -33,7 +33,7 @@ public partial class ElevenLabsProvider
         if (model.EndsWith("/text-to-dialogue", StringComparison.OrdinalIgnoreCase))
             model = model[..^"/text-to-dialogue".Length];
 
-        var inputs = metadata?.Dialogue?.Inputs?.ToList() ?? new List<ElevenLabsSpeechDialogueInput>();
+        var inputs = metadata?.Dialogue?.Inputs?.ToList() ?? [];
         if (inputs.Count == 0)
             throw new ArgumentException("ElevenLabs Text-to-Dialogue requires providerOptions.elevenlabs.dialogue.inputs.", nameof(request));
 

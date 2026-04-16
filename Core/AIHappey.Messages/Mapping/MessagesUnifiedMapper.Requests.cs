@@ -40,33 +40,45 @@ public static partial class MessagesUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var metadata = request.Metadata ?? new Dictionary<string, object?>();
+        var metadata = request.Metadata ?? [];
         var inputItems = request.Input?.Items ?? [];
         var systemFromInput = ToSystemContent(inputItems, providerId);
-        var system = ExtractObject<MessagesContent>(metadata, "messages.request.system")
-                     ?? systemFromInput
+        var system = systemFromInput
                      ?? (!string.IsNullOrWhiteSpace(request.Instructions) ? new MessagesContent(request.Instructions) : null);
 
         var metadataObj = JsonSerializer.Deserialize<MessagesRequestMetadata>(
             JsonSerializer.Serialize(metadata, JsonSerializerOptions.Web)
         );
 
-        return new MessagesRequest
+        metadataObj?.AdditionalProperties = null;
+
+        List<MessageToolDefinition>? tools = [.. request.Tools?.Select(ToMessageTool).ToList() ?? [],
+            .. request.Metadata?.GetMessageToolDefinitions(providerId) ?? []];
+
+        var result = new MessagesRequest
         {
             Model = NormalizeRequestModel(request.Model, providerId),
-            MaxTokens = request.MaxOutputTokens,
+            MaxTokens = request.MaxOutputTokens ?? request.Metadata?
+                .GetProviderOption<int?>(providerId, "max_tokens"),
             Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],
-            CacheControl = ExtractObject<CacheControlEphemeral>(metadata, "messages.request.cache_control"),
-            Container = ExtractValue<string>(metadata, "messages.request.container"),
-            InferenceGeo = ExtractValue<string>(metadata, "messages.request.inference_geo"),
+            CacheControl = request.Metadata?
+                .GetProviderOption<CacheControlEphemeral>(providerId, "cache_control"),
+            Container = request.Metadata?
+                .GetProviderOption<string>(providerId, "container"),
+            InferenceGeo = request.Metadata?
+                .GetProviderOption<string>(providerId, "inference_geo"),
             Metadata = metadataObj,
+            ContextManagement = request.Metadata?
+                .GetProviderOption<object>(providerId, "context_management"),
             OutputConfig = ExtractObject<MessagesOutputConfig>(metadata, "messages.request.output_config"),
-            ServiceTier = ExtractValue<string>(metadata, "messages.request.service_tier"),
+            ServiceTier = request.Metadata?
+                .GetProviderOption<string>(providerId, "service_tier"),
             StopSequences = ExtractObject<List<string>>(metadata, "messages.request.stop_sequences"),
             Stream = request.Stream,
             System = system,
             Temperature = request.Temperature,
-            Thinking = ExtractObject<MessagesThinkingConfig>(metadata, "messages.request.thinking"),
+            Thinking = request.Metadata?
+                .GetProviderOption<MessagesThinkingConfig>(providerId, "thinking"),
             ToolChoice = request.ToolChoice == null ? new MessageToolChoice()
             {
                 Type = "auto",
@@ -77,11 +89,16 @@ public static partial class MessagesUnifiedMapper
                 Type = request.ToolChoice?.ToString()!,
                 DisableParallelToolUse = false
             },
-            Tools = request.Tools?.Select(ToMessageTool).ToList(),
+            Tools = tools,
             TopK = ExtractValue<int?>(metadata, "messages.request.top_k"),
             TopP = request.TopP,
             AdditionalProperties = ExtractObject<Dictionary<string, JsonElement>>(metadata, "messages.request.unmapped")
         };
+
+        providerId.ApplyProviderOptions(metadata, result.AdditionalProperties ??=
+                       [], ["tools", "anthropic-beta"]);
+
+        return result;
     }
 
     private static bool IsSystemRole(string? role)

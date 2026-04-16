@@ -11,5 +11,5 @@ public class User
 
     public string Username { get; set; } = null!;
 
-      public ICollection<Request> Requests { get; set; } = new List<Request>();
+      public ICollection<Request> Requests { get; set; } = [];
 }

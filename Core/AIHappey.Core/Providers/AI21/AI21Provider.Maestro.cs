@@ -126,7 +126,7 @@ public sealed partial class AI21Provider
 
         if (!string.IsNullOrWhiteSpace(source.Text) || source.Score is not null)
         {
-            providerMetadata = new Dictionary<string, object>();
+            providerMetadata = [];
             if (!string.IsNullOrWhiteSpace(source.Text))
                 providerMetadata["text"] = source.Text!;
             if (source.Score is not null)
@@ -147,7 +147,7 @@ public sealed partial class AI21Provider
         Dictionary<string, object>? providerMetadata = null;
         if (!string.IsNullOrWhiteSpace(source.Text) || source.Score is not null || source.Order is not null)
         {
-            providerMetadata = new Dictionary<string, object>();
+            providerMetadata = [];
             if (!string.IsNullOrWhiteSpace(source.Text))
                 providerMetadata["text"] = source.Text!;
             if (source.Score is not null)

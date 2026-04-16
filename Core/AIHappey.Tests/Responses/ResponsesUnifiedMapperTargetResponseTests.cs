@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.ChatCompletions.Mapping;
-using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;

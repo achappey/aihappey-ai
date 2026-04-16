@@ -50,7 +50,7 @@ public sealed partial class RunwareProvider
                 var first = request.Files.First();
                 var inputs = payload.TryGetValue("inputs", out var inputsObj) && inputsObj is Dictionary<string, object?> existing
                     ? existing
-                    : new Dictionary<string, object?>();
+                    : [];
 
                 inputs["image"] = first.Data.ToDataUrl(first.MediaType);
                 payload["inputs"] = inputs;

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ModelContextProtocol.Protocol;
 using AIHappey.Telemetry;
-using System.Text.Json.Nodes;
 using AIHappey.AzureAuth.Extensions;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.AI;
@@ -51,18 +50,14 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
         var result = await provider.SamplingAsync(requestDto, cancellationToken);
 
         var endedAt = DateTime.UtcNow;
-        int inputTokens = 0;
-        int totalTokens = 0;
+        var usageNode = (result?.Meta)?["usage"];
 
-        if (result?.Meta is JsonObject meta)
-        {
-            inputTokens = meta["inputTokens"]?.GetValue<int>() ?? 0;
-            totalTokens = meta["totalTokens"]?.GetValue<int>() ?? 0;
-        }
+        int inputTokens = usageNode?["promptTokens"]?.GetValue<int>() ?? 0;
+        int totalTokens = usageNode?["totalTokens"]?.GetValue<int>() ?? 0;
 
         await chatTelemetryService.TrackChatRequestAsync(new Vercel.Models.ChatRequest()
         {
-            Model = result?.Model!,
+            Model = result?.Model!.SplitModelId().Model!,
             Temperature = requestDto.Temperature ?? 1,
         },
             HttpContext.GetUserOid()!,

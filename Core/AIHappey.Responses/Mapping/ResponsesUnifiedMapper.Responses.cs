@@ -28,7 +28,7 @@ public static partial class ResponsesUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        var metadata = response.Metadata ?? new Dictionary<string, object?>();
+        var metadata = response.Metadata ?? [];
 
         return new ResponseResult
         {

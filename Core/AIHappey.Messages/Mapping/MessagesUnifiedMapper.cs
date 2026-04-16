@@ -46,7 +46,7 @@ public static partial class MessagesUnifiedMapper
 
     public sealed class MessagesStreamMappingState
     {
-        internal readonly Dictionary<int, StreamBlockState> Blocks = new();
+        internal readonly Dictionary<int, StreamBlockState> Blocks = [];
 
         internal readonly HashSet<string> SeenSourceIds = new(StringComparer.OrdinalIgnoreCase);
 

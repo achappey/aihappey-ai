@@ -302,7 +302,7 @@ public partial class NinjaChatProvider
         NinjaChatSearchResponse response)
     {
         var result = metadata is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(metadata);
 
         result["query"] = response.Query;

@@ -137,9 +137,10 @@ public partial class IdeogramProvider
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var form = new MultipartFormDataContent();
-
-        form.Add("prompt".NamedField(request.Prompt));
+        var form = new MultipartFormDataContent
+        {
+            "prompt".NamedField(request.Prompt)
+        };
         AddSeed(request, form);
 
         var resolution = ResolveResolution(request, metadata, warnings, allowResolution: !transparent);
@@ -165,8 +166,10 @@ public partial class IdeogramProvider
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var form = new MultipartFormDataContent();
-        form.Add("prompt".NamedField(request.Prompt));
+        var form = new MultipartFormDataContent
+        {
+            "prompt".NamedField(request.Prompt)
+        };
         AddSeed(request, form);
 
         var aspect = ResolveAspectRatio(request, metadata, warnings);
@@ -206,8 +209,10 @@ public partial class IdeogramProvider
             });
         }
 
-        var form = new MultipartFormDataContent();
-        form.Add("prompt".NamedField(request.Prompt));
+        var form = new MultipartFormDataContent
+        {
+            "prompt".NamedField(request.Prompt)
+        };
         AddSeed(request, form);
         AddCommonIdeogramOptions(form, request, metadata, warnings, includeStyleSettings: true, includeColorPalette: true);
 
@@ -241,9 +246,11 @@ public partial class IdeogramProvider
             });
         }
 
-        var form = new MultipartFormDataContent();
-        form.Add("prompt".NamedField(request.Prompt));
-        form.Add(CreateImageContent(files[0]), "image", "image");
+        var form = new MultipartFormDataContent
+        {
+            "prompt".NamedField(request.Prompt),
+            { CreateImageContent(files[0]), "image", "image" }
+        };
 
         if (metadata?.ImageWeight is not null)
             form.Add("image_weight".NamedField(metadata.ImageWeight.Value.ToString(CultureInfo.InvariantCulture)));
@@ -288,9 +295,11 @@ public partial class IdeogramProvider
         if (string.IsNullOrWhiteSpace(resolution))
             throw new ArgumentException("Reframe requires a resolution (use size or providerOptions.resolution).", nameof(request));
 
-        var form = new MultipartFormDataContent();
-        form.Add(CreateImageContent(files[0]), "image", "image");
-        form.Add("resolution".NamedField(resolution));
+        var form = new MultipartFormDataContent
+        {
+            { CreateImageContent(files[0]), "image", "image" },
+            "resolution".NamedField(resolution)
+        };
 
         AddSeed(request, form);
         AddCommonIdeogramOptions(form, request, metadata, warnings, includeStyleSettings: false, includeColorPalette: true);
@@ -322,9 +331,11 @@ public partial class IdeogramProvider
             });
         }
 
-        var form = new MultipartFormDataContent();
-        form.Add("prompt".NamedField(request.Prompt));
-        form.Add(CreateImageContent(files[0]), "image", "image");
+        var form = new MultipartFormDataContent
+        {
+            "prompt".NamedField(request.Prompt),
+            { CreateImageContent(files[0]), "image", "image" }
+        };
 
         AddSeed(request, form);
         AddCommonIdeogramOptions(form, request, metadata, warnings, includeStyleSettings: false, includeColorPalette: true);

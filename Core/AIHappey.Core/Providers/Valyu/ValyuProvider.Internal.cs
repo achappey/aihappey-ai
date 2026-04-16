@@ -686,7 +686,7 @@ public partial class ValyuProvider
             return null;
 
         var merged = existing is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(existing);
 
         if (add is not null)

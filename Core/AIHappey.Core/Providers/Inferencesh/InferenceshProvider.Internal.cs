@@ -192,10 +192,9 @@ public partial class InferenceshProvider
         var dataLines = new List<string>();
         InferenceTask? lastTask = null;
 
-        while (!reader.EndOfStream)
+        while (!cancellationToken.IsCancellationRequested)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var line = await reader.ReadLineAsync();
+            var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null)
                 break;
 

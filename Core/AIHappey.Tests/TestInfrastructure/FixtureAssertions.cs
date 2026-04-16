@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace AIHappey.Tests.TestInfrastructure;
 
 internal static class FixtureAssertions

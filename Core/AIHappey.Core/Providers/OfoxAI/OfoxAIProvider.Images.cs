@@ -88,8 +88,8 @@ public partial class OfoxAIProvider
             warnings.Add(new { type = "unsupported", feature = "aspectRatio" });
 
         var payload = metadata.ValueKind == JsonValueKind.Object
-            ? JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? new JsonObject()
-            : new JsonObject();
+            ? JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? []
+            : [];
 
         payload["model"] = request.Model;
         payload["prompt"] = request.Prompt;

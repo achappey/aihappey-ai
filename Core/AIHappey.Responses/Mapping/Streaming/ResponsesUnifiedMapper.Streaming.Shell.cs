@@ -575,11 +575,11 @@ public static partial class ResponsesUnifiedMapper
 
     private sealed class ResponseShellStreamState
     {
-        public Dictionary<int, ShellInputAccumulator> InputsByOutputIndex { get; } = new();
+        public Dictionary<int, ShellInputAccumulator> InputsByOutputIndex { get; } = [];
 
         public Dictionary<string, ShellInputAccumulator> InputsByCallId { get; } = new(StringComparer.Ordinal);
 
-        public Dictionary<int, ShellOutputAccumulator> OutputsByOutputIndex { get; } = new();
+        public Dictionary<int, ShellOutputAccumulator> OutputsByOutputIndex { get; } = [];
 
         public Dictionary<string, ShellOutputAccumulator> OutputsByCallId { get; } = new(StringComparer.Ordinal);
     }
@@ -615,7 +615,7 @@ public static partial class ResponsesUnifiedMapper
 
         public bool FinalOutputEmitted { get; set; }
 
-        public SortedDictionary<int, ShellOutputChunkAccumulator> Chunks { get; } = new();
+        public SortedDictionary<int, ShellOutputChunkAccumulator> Chunks { get; } = [];
     }
 
     private sealed class ShellOutputChunkAccumulator

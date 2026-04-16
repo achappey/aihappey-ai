@@ -153,10 +153,11 @@ public partial class PicsartProvider
     {
         if (endpoint.Equals("v1/logo", StringComparison.OrdinalIgnoreCase))
         {
-            var form = new MultipartFormDataContent();
-
-            form.Add("brand_name".NamedField(request.Prompt));
-            form.Add("business_description".NamedField(request.Prompt));
+            var form = new MultipartFormDataContent
+            {
+                "brand_name".NamedField(request.Prompt),
+                "business_description".NamedField(request.Prompt)
+            };
 
             if (count is not null)
                 form.Add("count".NamedField(count.Value.ToString(CultureInfo.InvariantCulture)));

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -214,7 +213,7 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(35, finishPart.MessageMetadata?.Usage.TotalTokens);
         Assert.True(finishPart.MessageMetadata?.Timestamp > DateTimeOffset.UnixEpoch);
 
-        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(12, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(23, providerUsage.GetProperty("output_tokens").GetInt32());
@@ -267,7 +266,7 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(52, finishPart.MessageMetadata?.Usage.TotalTokens);
         Assert.True(finishPart.MessageMetadata?.Timestamp > DateTimeOffset.UnixEpoch);
 
-        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(10, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(42, providerUsage.GetProperty("output_tokens").GetInt32());
@@ -319,7 +318,7 @@ public sealed class MessagesStreamFixtureTests
 
         var reasoningEndEvent = unifiedEvents.Single(streamEvent => streamEvent.Event.Type == "reasoning-end");
         var reasoningEndData = Assert.IsType<AIReasoningEndEventData>(reasoningEndEvent.Event.Data);
-        var reasoningEndProviderMetadata = Assert.Contains(ProviderId, reasoningEndData.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        var reasoningEndProviderMetadata = Assert.Contains(ProviderId, reasoningEndData.ProviderMetadata ?? []);
 
         Assert.Equal(originalSignature, Assert.IsType<string>(reasoningEndProviderMetadata["signature"]));
 
@@ -344,7 +343,7 @@ public sealed class MessagesStreamFixtureTests
         Assert.Null(reasoningStartPart.ProviderMetadata);
 
         var reasoningEndPart = Assert.IsType<ReasoningEndUIPart>(reasoningUiParts[^1]);
-        var uiProviderMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        var uiProviderMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? []);
 
         Assert.Equal(originalSignature, Assert.IsType<string>(uiProviderMetadata["signature"]));
     }

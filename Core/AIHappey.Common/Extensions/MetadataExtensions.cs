@@ -61,7 +61,7 @@ public static class MetadataExtensions
         return element.ValueKind == JsonValueKind.Object
             ? element.EnumerateObject()
                 .ToDictionary(p => p.Name, p => (object?)p.Value)
-            : new();
+            : [];
     }
 
 

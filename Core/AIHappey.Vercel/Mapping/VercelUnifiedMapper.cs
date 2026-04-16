@@ -266,7 +266,8 @@ public static class VercelUnifiedMapper
                     ?? string.Empty,
                 //  Filename = GetTypedData<AIFileEventData>(envelope)?.Filename
                 //     ?? GetValue<string>(data, "filename"),
-                ProviderMetadata = GetTypedData<AIFileEventData>(envelope)?.ProviderMetadata
+                ProviderMetadata = ToNullableNestedProviderMetadata(
+                        GetTypedData<AIFileEventData>(envelope)?.ProviderMetadata)
                     ?? GetDoubleNestedProviderMetadata(data)
             },
             "message-metadata" => new MessageMetadataUIPart
@@ -366,7 +367,7 @@ public static class VercelUnifiedMapper
 
             case ReasoningUIPart reasoning:
                 var reasoningMetadata = reasoning.ProviderMetadata?.ToDictionary(a => a.Key, a => (object?)a.Value)
-                                        ?? new Dictionary<string, object?>();
+                                        ?? [];
 
                 if (!string.IsNullOrWhiteSpace(reasoning.Id))
                     reasoningMetadata["id"] = reasoning.Id;
@@ -420,7 +421,7 @@ public static class VercelUnifiedMapper
     private static Dictionary<string, object?> ToObjectMap(object? value)
     {
         if (value is null)
-            return new Dictionary<string, object?>();
+            return [];
 
         if (value is Dictionary<string, object?> dict)
             return dict;
@@ -434,11 +435,11 @@ public static class VercelUnifiedMapper
         try
         {
             return JsonSerializer.Deserialize<Dictionary<string, object?>>(JsonSerializer.Serialize(value, Json), Json)
-                   ?? new Dictionary<string, object?>();
+                   ?? [];
         }
         catch
         {
-            return new Dictionary<string, object?>();
+            return [];
         }
     }
 
@@ -487,7 +488,7 @@ public static class VercelUnifiedMapper
         }
 
         if (!string.IsNullOrWhiteSpace(providerId) && !normalized.ContainsKey(providerId))
-            normalized[providerId] = new Dictionary<string, object>();
+            normalized[providerId] = [];
 
         return normalized.Count == 0 ? null : normalized;
     }
@@ -577,6 +578,17 @@ public static class VercelUnifiedMapper
 
     private static Dictionary<string, Dictionary<string, object>?>? GetDoubleNestedProviderMetadata(Dictionary<string, object?> data)
         => GetValue<Dictionary<string, Dictionary<string, object>?>>(data, "providerMetadata");
+
+    private static Dictionary<string, Dictionary<string, object>?>? ToNullableNestedProviderMetadata(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata)
+    {
+        if (providerMetadata is null)
+            return null;
+
+        return providerMetadata.ToDictionary(
+            entry => entry.Key,
+            entry => (Dictionary<string, object>?)entry.Value);
+    }
 
     private static AIToolCallContentPart CreateUnifiedToolCallPart(
         string type,
@@ -930,10 +942,15 @@ public static class VercelUnifiedMapper
         SetFinishMetadataValue(metadata, "temperature", typedData?.MessageMetadata?.Temperature, data);
 
         return FinishMessageMetadata.FromDictionary(
-            metadata.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
+            ToNonNullableMetadataDictionary(metadata),
             fallbackModel: NormalizeFinishModel(typedData?.Model, providerId),
             fallbackTimestamp: ResolveFinishTimestamp(null, typedData?.CompletedAt));
     }
+
+    private static Dictionary<string, object> ToNonNullableMetadataDictionary(Dictionary<string, object?> metadata)
+        => metadata
+            .Where(kvp => kvp.Value is not null)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
 
     private static void SetFinishMetadataValue<T>(Dictionary<string, object?> metadata, string key, T? typedValue, Dictionary<string, object?> data)
     {
@@ -982,7 +999,7 @@ public static class VercelUnifiedMapper
             JsonElement json when json.ValueKind == JsonValueKind.Object
                 => JsonSerializer.Deserialize<Dictionary<string, object?>>(json.GetRawText(), JsonSerializerOptions.Web) ?? [],
             Dictionary<string, object?> dictionary => dictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-            _ => new Dictionary<string, object?>()
+            _ => []
         };
 
         providerMetadata["usage"] = rawUsage;

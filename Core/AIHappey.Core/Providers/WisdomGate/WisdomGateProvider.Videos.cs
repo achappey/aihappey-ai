@@ -124,9 +124,11 @@ public partial class WisdomGateProvider
 
     private static HttpContent BuildVideoCreateContent(VideoRequest request, JsonElement metadata, List<object> warnings)
     {
-        var form = new MultipartFormDataContent();
-        form.Add(new StringContent(request.Prompt), "prompt");
-        form.Add(new StringContent(request.Model), "model");
+        var form = new MultipartFormDataContent
+        {
+            { new StringContent(request.Prompt), "prompt" },
+            { new StringContent(request.Model), "model" }
+        };
 
         var seconds = request.Duration?.ToString(CultureInfo.InvariantCulture)
             ?? WgVideoTryGetString(metadata, "seconds");

@@ -443,7 +443,7 @@ public partial class SmoothProvider
         int downloadedImagesCount)
     {
         var merged = current is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(current);
 
         merged["smooth_task_id"] = task.Id;
@@ -663,7 +663,7 @@ public partial class SmoothProvider
             if (!string.Equals(tool.Type, "function", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var extra = tool.Extra ?? new Dictionary<string, JsonElement>();
+            var extra = tool.Extra ?? [];
             if (!extra.TryGetValue("name", out var nameEl) || nameEl.ValueKind != JsonValueKind.String)
                 continue;
 

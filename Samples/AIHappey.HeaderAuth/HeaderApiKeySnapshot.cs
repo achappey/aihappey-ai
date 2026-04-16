@@ -7,7 +7,7 @@ namespace AIHappey.HeaderAuth;
 /// </summary>
 public sealed class HeaderApiKeySnapshot(IHttpContextAccessor http)
 {
-    private readonly ConditionalWeakTable<HttpContext, SnapshotEntry> _cache = new();
+    private readonly ConditionalWeakTable<HttpContext, SnapshotEntry> _cache = [];
     private static readonly IReadOnlyDictionary<string, string> EmptyProviderKeys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     public IReadOnlyDictionary<string, string> ProviderKeys => GetSnapshot().ProviderKeys;

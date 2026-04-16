@@ -294,7 +294,7 @@ public partial class LLMLayerProvider
         LLMLayerAnswerResponse response)
     {
         var merged = current is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(current);
 
         if (response.Sources.ValueKind == JsonValueKind.Array)

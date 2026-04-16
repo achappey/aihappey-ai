@@ -41,8 +41,6 @@ public partial class JinaProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        this.SetDefaultChatCompletionProperties(options);
-
         return await _client.GetChatCompletion(
              options, ct: cancellationToken);
     }
@@ -64,8 +62,6 @@ public partial class JinaProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
-
-        this.SetDefaultChatCompletionProperties(options);
 
         return _client.GetChatCompletionUpdates(
                     options, ct: cancellationToken);

@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using AIHappey.Core.Contracts;
 using AIHappey.Unified.Models;
 using AIHappey.Responses.Mapping;
-using System.Text.Json;
 
 namespace AIHappey.Core.AI;
 

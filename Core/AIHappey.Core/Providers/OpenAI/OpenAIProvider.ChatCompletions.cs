@@ -14,8 +14,6 @@ public partial class OpenAIProvider
 
         options.ParallelToolCalls ??= true;
 
-        this.SetDefaultChatCompletionProperties(options);
-
         return _client.GetChatCompletionUpdates(
                    options, ct: cancellationToken);
     }
@@ -26,8 +24,6 @@ public partial class OpenAIProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         chatRequest.ParallelToolCalls ??= true;
-
-        this.SetDefaultChatCompletionProperties(chatRequest);
 
         return await _client.GetChatCompletion(
            chatRequest, ct: cancellationToken);

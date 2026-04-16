@@ -31,7 +31,7 @@ public static partial class InteractionsUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var metadata = request.Metadata ?? new Dictionary<string, object?>();
+        var metadata = request.Metadata ?? [];
         var storedModel = ExtractValue<string>(metadata, "interactions.request.model");
         var storedAgent = ExtractValue<string>(metadata, "interactions.request.agent");
         var providerConfig = metadata.TryGetValue(providerId, out object? config) ? config.ToDictionary() : null;

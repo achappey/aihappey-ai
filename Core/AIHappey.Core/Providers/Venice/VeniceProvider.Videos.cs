@@ -230,15 +230,15 @@ public partial class VeniceProvider
     private static JsonObject CreateQueuePayloadFromMetadata(JsonElement metadata)
     {
         if (metadata.ValueKind != JsonValueKind.Object)
-            return new JsonObject();
+            return [];
 
         if (metadata.TryGetProperty("queue", out var queueNode)
             && queueNode.ValueKind == JsonValueKind.Object)
         {
-            return JsonNode.Parse(queueNode.GetRawText()) as JsonObject ?? new JsonObject();
+            return JsonNode.Parse(queueNode.GetRawText()) as JsonObject ?? [];
         }
 
-        var payload = JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? new JsonObject();
+        var payload = JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? [];
         payload.Remove("retrieve");
         payload.Remove("poll_interval_seconds");
         payload.Remove("poll_timeout_minutes");
@@ -249,12 +249,12 @@ public partial class VeniceProvider
     private static JsonObject CreateRetrievePayloadFromMetadata(JsonElement metadata)
     {
         if (metadata.ValueKind != JsonValueKind.Object)
-            return new JsonObject();
+            return [];
 
         if (metadata.TryGetProperty("retrieve", out var retrieveNode)
             && retrieveNode.ValueKind == JsonValueKind.Object)
         {
-            return JsonNode.Parse(retrieveNode.GetRawText()) as JsonObject ?? new JsonObject();
+            return JsonNode.Parse(retrieveNode.GetRawText()) as JsonObject ?? [];
         }
 
         var payload = new JsonObject();

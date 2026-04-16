@@ -153,7 +153,7 @@ public partial class BytePlusProvider
 
         var content = payload.TryGetValue("content", out var contentObj) && contentObj is List<Dictionary<string, object?>> list
             ? list
-            : new List<Dictionary<string, object?>>();
+            : [];
 
         if (request.Image is not null)
         {

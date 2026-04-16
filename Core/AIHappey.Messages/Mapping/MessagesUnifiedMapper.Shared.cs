@@ -4,6 +4,80 @@ namespace AIHappey.Messages.Mapping;
 
 public static partial class MessagesUnifiedMapper
 {
+
+
+    public static void ApplyProviderOptions(
+    this string provider,
+    Dictionary<string, object?>? metadata,
+    IDictionary<string, JsonElement>? additional, HashSet<string>? exclude = null)
+    {
+        if (metadata is null || additional is null)
+            return;
+
+        if (!metadata.TryGetValue(provider, out var obj))
+            return;
+
+        if (obj is not JsonElement json)
+            return;
+
+        foreach (var prop in json.EnumerateObject())
+        {
+            if (exclude?.Contains(prop.Name) == true)
+                continue;
+
+            additional[prop.Name] = prop.Value;
+        }
+    }
+
+
+    public static List<MessageToolDefinition>? GetMessageToolDefinitions(
+     this Dictionary<string, object?>? metadata,
+     string providerId)
+    {
+        if (metadata is null)
+            return null;
+
+        if (!metadata.TryGetValue(providerId, out var providerObj) || providerObj is null)
+            return null;
+
+        JsonElement providerJson;
+
+        try
+        {
+            providerJson = providerObj switch
+            {
+                JsonElement je when je.ValueKind == JsonValueKind.Object => je,
+                _ => JsonSerializer.SerializeToElement(providerObj, JsonSerializerOptions.Web)
+            };
+        }
+        catch
+        {
+            return null;
+        }
+
+        if (!providerJson.TryGetProperty("tools", out var toolsEl) ||
+            toolsEl.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var result = new List<MessageToolDefinition>();
+
+        foreach (var toolEl in toolsEl.EnumerateArray())
+        {
+            try
+            {
+                var def = toolEl.Deserialize<MessageToolDefinition>(JsonSerializerOptions.Web);
+                if (def is not null)
+                    result.Add(def);
+            }
+            catch
+            {
+                // ignore invalid entries
+            }
+        }
+
+        return result.Count > 0 ? result : null;
+    }
+
     public static string? StripBase64Prefix(this string? value) =>
     value is null ? null :
     (value.Contains(',') ? value[(value.IndexOf(',') + 1)..] : value);

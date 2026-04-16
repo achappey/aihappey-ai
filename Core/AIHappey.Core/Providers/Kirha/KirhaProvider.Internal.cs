@@ -391,7 +391,7 @@ public partial class KirhaProvider
 
         public List<KirhaReasoningItem> ReasoningItems { get; init; } = [];
 
-        public Dictionary<string, object?> Metadata { get; init; } = new();
+        public Dictionary<string, object?> Metadata { get; init; } = [];
     }
 
     private sealed class KirhaToolCall
@@ -412,7 +412,7 @@ public partial class KirhaProvider
 
         public KirhaRawDataItem? RawData { get; init; }
 
-        public Dictionary<string, object?> Metadata { get; init; } = new();
+        public Dictionary<string, object?> Metadata { get; init; } = [];
     }
 
     private sealed class KirhaReasoningItem
@@ -421,7 +421,7 @@ public partial class KirhaProvider
 
         public string Text { get; init; } = default!;
 
-        public Dictionary<string, object?> Metadata { get; init; } = new();
+        public Dictionary<string, object?> Metadata { get; init; } = [];
     }
 
     private sealed class KirhaSearchResponse

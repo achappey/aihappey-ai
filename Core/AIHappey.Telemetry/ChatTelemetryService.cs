@@ -20,39 +20,6 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
      DateTime started, DateTime ended,
      CancellationToken cancellationToken = default)
     {
-
-        /*        var record = new ChatTelemetryRecord(chatRequest, userId, username,
-                          inputTokens, totalTokens, providerName, requestType, started, ended);
-
-                // hard non-blocking; if the buffer is full, we drop the oldest (telemetry is best-effort)
-                queue.TryQueue(record);*/
-
-        /*
-                var record = new ChatTelemetryRecord(
-                  chatRequest, userId, username,
-                  inputTokens, totalTokens,
-                  providerName, requestType,
-                  started, ended);
-
-                // Hard non-blocking
-                if (!queue.TryQueue(record))
-                {
-                    // still non-blocking: schedule without awaiting
-                    _ = queue.QueueAsync(record);
-                }
-        */
-        // return Task.CompletedTask;
-
-
-        /*  var record = new ChatTelemetryRecord(
-          chatRequest, userId, username,
-          inputTokens, totalTokens,
-          providerName, requestType,
-          started, ended);
-
-          // non-blocking enqueue
-          return queue.QueueAsync(record, cancellationToken).AsTask();*/
-
         // 1. Ensure the User exists
         var user = await _db.Users
             .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
@@ -70,8 +37,14 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
             await _db.SaveChangesAsync(cancellationToken);
         }
 
+        var prefix = $"{providerName}/";
+
+        var modelId = chatRequest.Model.StartsWith(prefix)
+            ? chatRequest.Model[prefix.Length..]
+            : chatRequest.Model;
+
         var model = await _db.Models
-                   .FirstOrDefaultAsync(u => u.ModelName == chatRequest.Model, cancellationToken);
+                   .FirstOrDefaultAsync(u => u.ModelName == modelId, cancellationToken);
 
         if (model == null)
         {
@@ -85,7 +58,7 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
                 await _db.SaveChangesAsync(cancellationToken);
             }
 
-            model = new Model { ModelName = chatRequest.Model, ProviderId = providerItem.Id };
+            model = new Model { ModelName = modelId, ProviderId = providerItem.Id };
             _db.Models.Add(model);
             await _db.SaveChangesAsync(cancellationToken);
         }

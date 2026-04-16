@@ -27,7 +27,7 @@ public static partial class InteractionsUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        var metadata = response.Metadata ?? new Dictionary<string, object?>();
+        var metadata = response.Metadata ?? [];
         var outputParts = ToInteractionOutputContent(response.Output).ToList();
 
         return new Interaction

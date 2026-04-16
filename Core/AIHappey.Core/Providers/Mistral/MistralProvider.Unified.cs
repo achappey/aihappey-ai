@@ -665,7 +665,7 @@ public partial class MistralProvider : IModelProvider
         var files = new List<Dictionary<string, object?>>();
         var downloadErrors = new List<string>();
 
-        foreach (var output in response.Outputs ?? new JsonArray())
+        foreach (var output in response.Outputs ?? [])
         {
             if (output is null)
                 continue;
@@ -772,10 +772,10 @@ public partial class MistralProvider : IModelProvider
                 {
                     Type = outputType,
                     Role = "assistant",
-                    Content = new List<AIContentPart>
-                    {
+                    Content =
+                    [
                         CreateUnifiedToolCallContentPart(output)
-                    },
+                    ],
                     Metadata = new Dictionary<string, object?>
                     {
                         ["mistral.output.raw"] = output.DeepClone()
@@ -1307,13 +1307,13 @@ public partial class MistralProvider : IModelProvider
             Preliminary = preliminary,
             Output = new CallToolResult
             {
-                Content = new List<ContentBlock>
-                {
+                Content =
+                [
                     new TextContentBlock
                     {
                         Text = $"Provider-side tool '{resolvedToolName}' completed. Mistral did not expose an explicit tool output payload in this conversations stream."
                     }
-                },
+                ],
                 StructuredContent = JsonSerializer.SerializeToElement(new
                 {
                     tool_name = resolvedToolName,

@@ -101,7 +101,7 @@ public static partial class ResponsesUnifiedMapper
     private static Dictionary<string, object?> ToJsonMap(object? value)
     {
         if (value is null)
-            return new Dictionary<string, object?>();
+            return [];
 
         if (value is Dictionary<string, object?> dict)
             return dict;
@@ -115,11 +115,11 @@ public static partial class ResponsesUnifiedMapper
         try
         {
             return JsonSerializer.Deserialize<Dictionary<string, object?>>(JsonSerializer.Serialize(value, Json), Json)
-                   ?? new Dictionary<string, object?>();
+                   ?? [];
         }
         catch
         {
-            return new Dictionary<string, object?>();
+            return [];
         }
     }
 

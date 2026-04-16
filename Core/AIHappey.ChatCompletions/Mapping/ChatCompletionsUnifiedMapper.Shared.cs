@@ -6,6 +6,115 @@ namespace AIHappey.ChatCompletions.Mapping;
 
 public static partial class ChatCompletionsUnifiedMapper
 {
+    public static void ApplyProviderOptions(
+   this string provider,
+   Dictionary<string, object?>? metadata,
+   IDictionary<string, JsonElement>? additional, HashSet<string>? exclude = null)
+    {
+        if (metadata is null || additional is null)
+            return;
+
+        if (!metadata.TryGetValue(provider, out var obj))
+            return;
+
+        if (obj is not JsonElement json)
+            return;
+
+        foreach (var prop in json.EnumerateObject())
+        {
+            if (exclude?.Contains(prop.Name) == true)
+                continue;
+
+            additional[prop.Name] = prop.Value;
+        }
+    }
+
+    public static List<object>? GetChatCompletionToolDefinitions(
+     this Dictionary<string, object?>? metadata,
+     string providerId)
+    {
+        if (metadata is null)
+            return null;
+
+        if (!metadata.TryGetValue(providerId, out var providerObj) || providerObj is null)
+            return null;
+
+        var toolsEl = ExtractToolsArray(providerObj);
+        if (toolsEl is null || toolsEl.Value.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var result = new List<object>();
+
+        foreach (var toolEl in toolsEl.Value.EnumerateArray())
+        {
+            try
+            {
+                // raw passthrough object
+                var obj = JsonSerializer.Deserialize<object>(toolEl.GetRawText(), JsonSerializerOptions.Web);
+                if (obj != null)
+                    result.Add(obj);
+            }
+            catch
+            {
+                // ignore bad entries
+            }
+        }
+
+        return result.Count > 0 ? result : null;
+    }
+
+    private static JsonElement ToJsonElement(object? obj)
+    {
+        if (obj is JsonElement je)
+            return je;
+
+        if (obj is System.Text.Json.Nodes.JsonNode node)
+            return JsonSerializer.SerializeToElement(node, JsonSerializerOptions.Web);
+
+        return JsonSerializer.SerializeToElement(obj, JsonSerializerOptions.Web);
+    }
+
+
+    private static JsonElement? ExtractToolsArray(object providerObj)
+    {
+        switch (providerObj)
+        {
+            case JsonElement je:
+                if (je.ValueKind == JsonValueKind.Object &&
+                    je.TryGetProperty("tools", out var t) &&
+                    t.ValueKind == JsonValueKind.Array)
+                    return t;
+                break;
+
+            case System.Text.Json.Nodes.JsonObject jo:
+                if (jo["tools"] is System.Text.Json.Nodes.JsonArray arr)
+                    return ToJsonElement(arr);
+                break;
+
+            case Dictionary<string, object?> dict:
+                if (dict.TryGetValue("tools", out var toolsObj))
+                    return ToJsonElement(toolsObj);
+                break;
+        }
+
+        // 🔥 last resort: serialize → parse → extract
+        try
+        {
+            var json = JsonSerializer.Serialize(providerObj, JsonSerializerOptions.Web);
+            using var doc = JsonDocument.Parse(json);
+
+            if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                doc.RootElement.TryGetProperty("tools", out var t) &&
+                t.ValueKind == JsonValueKind.Array)
+            {
+                return t.Clone(); // important: avoid disposed doc
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
     private static readonly HashSet<string> MappedRequestFields =
     [
         "model",

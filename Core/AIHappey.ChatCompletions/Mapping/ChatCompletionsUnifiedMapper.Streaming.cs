@@ -1,7 +1,6 @@
 using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Unified.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.ChatCompletions.Mapping;
 
@@ -71,7 +70,7 @@ public static partial class ChatCompletionsUnifiedMapper
             yield break;
 
         var ts = timestamp ?? DateTimeOffset.UtcNow;
-        foreach (var evt in EmitPendingToolInputs(providerId, ts, new Dictionary<string, object?>(), state))
+        foreach (var evt in EmitPendingToolInputs(providerId, ts, [], state))
             yield return evt;
     }
 
@@ -404,11 +403,7 @@ public static partial class ChatCompletionsUnifiedMapper
                 ExtractValue<long?>(chunk, "created") ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds()),
             Data = data,
             Output = ParseChunkOutput(chunk),
-            Metadata = new Dictionary<string, object?>
-            {
-                //  ["chatcompletions.stream.raw"] = chunk.Clone(),
-                // ["chatcompletions.stream.object"] = ExtractValue<string>(chunk, "object")
-            }
+            Metadata = []
         };
     }
 
@@ -962,9 +957,9 @@ public static partial class ChatCompletionsUnifiedMapper
 
     public sealed class ChatCompletionsStreamMappingState
     {
-        internal Dictionary<int, ToolCallAccumulator> PendingToolCalls { get; } = new();
+        internal Dictionary<int, ToolCallAccumulator> PendingToolCalls { get; } = [];
 
-        internal Dictionary<string, PerplexityReasoningAccumulator> PerplexityReasoningSteps { get; } = new();
+        internal Dictionary<string, PerplexityReasoningAccumulator> PerplexityReasoningSteps { get; } = [];
 
         internal HashSet<string> SeenSourceUrls { get; } = new(StringComparer.OrdinalIgnoreCase);
     }

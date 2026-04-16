@@ -139,6 +139,6 @@ public partial class StealthGPTProvider
         public object RequestBody { get; init; } = default!;
         public object ResponseBody { get; init; } = default!;
         public object Usage { get; init; } = default!;
-        public Dictionary<string, object?> ProviderMetadata { get; init; } = new();
+        public Dictionary<string, object?> ProviderMetadata { get; init; } = [];
     }
 }

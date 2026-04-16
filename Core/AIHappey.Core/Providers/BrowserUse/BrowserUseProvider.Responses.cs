@@ -240,7 +240,7 @@ public partial class BrowserUseProvider
         BrowserUseSessionResponse session)
     {
         var merged = current is null
-            ? new Dictionary<string, object?>()
+            ? []
             : new Dictionary<string, object?>(current);
 
         merged["browseruse_session_id"] = session.Id;

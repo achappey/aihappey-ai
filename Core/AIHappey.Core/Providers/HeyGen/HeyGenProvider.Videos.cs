@@ -147,8 +147,8 @@ public partial class HeyGenProvider
     private static JsonObject BuildVideoAgentGeneratePayload(string prompt, JsonElement metadata)
     {
         var payload = metadata.ValueKind == JsonValueKind.Object
-            ? JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? new JsonObject()
-            : new JsonObject();
+            ? JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? []
+            : [];
 
         if (!payload.ContainsKey("prompt"))
             payload["prompt"] = prompt.Trim();

@@ -148,22 +148,22 @@ public partial class BotVerseProvider
             Status = "completed",
             Output = new AIOutput
             {
-                Items = new List<AIOutputItem>
-                {
+                Items =
+                [
                     new()
                     {
                         Type = "message",
                         Role = "assistant",
-                        Content = new List<AIContentPart>
-                        {
+                        Content =
+                        [
                             new AITextContentPart
                             {
                                 Type = "text",
                                 Text = result.Text
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             },
             Usage = new Dictionary<string, object?>
             {

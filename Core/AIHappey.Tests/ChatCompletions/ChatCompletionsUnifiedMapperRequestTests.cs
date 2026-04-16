@@ -1,6 +1,5 @@
 using System.Text.Json;
 using AIHappey.ChatCompletions.Mapping;
-using AIHappey.ChatCompletions.Models;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;

@@ -113,9 +113,9 @@ public partial class VeniceProvider
     private static JsonObject CreateSpeechPayloadFromMetadata(JsonElement metadata)
     {
         if (metadata.ValueKind != JsonValueKind.Object)
-            return new JsonObject();
+            return [];
 
-        return JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? new JsonObject();
+        return JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? [];
     }
 
     private static void SetIfMissing(JsonObject payload, string key, float value)

@@ -925,8 +925,8 @@ public partial class CohereProvider
                 foreach (var message in FlushAssistantReplaySegment(pendingContent, pendingToolParts))
                     yield return message;
 
-                pendingContent = new List<AIContentPart>();
-                pendingToolParts = new List<AIToolCallContentPart>();
+                pendingContent = [];
+                pendingToolParts = [];
             }
 
             pendingContent.Add(part);

@@ -18,7 +18,7 @@ public static class ModelProviderMessagesUnifiedExtensions
         var messageRequest = request.ToMessagesRequest(modelProvider.GetIdentifier());
         messageRequest.Stream = false;
 
-        var response = await modelProvider.MessagesAsync(messageRequest, request.Headers ?? new Dictionary<string, string>(), cancellationToken);
+        var response = await modelProvider.MessagesAsync(messageRequest, request.Headers ?? [], cancellationToken);
 
         return response.ToUnifiedResponse(modelProvider.GetIdentifier());
 
@@ -37,7 +37,7 @@ public static class ModelProviderMessagesUnifiedExtensions
 
         var state = new MessagesUnifiedMapper.MessagesStreamMappingState();
 
-        await foreach (var part in modelProvider.MessagesStreamingAsync(messageRequest, request.Headers ?? new Dictionary<string, string>(), cancellationToken))
+        await foreach (var part in modelProvider.MessagesStreamingAsync(messageRequest, request.Headers ?? [], cancellationToken))
         {
             if (part is null)
                 continue;

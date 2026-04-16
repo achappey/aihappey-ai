@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -88,22 +87,22 @@ public sealed class ResponsesStreamFixtureTests
             },
             Input = new AIInput
             {
-                Items = new List<AIInputItem>
-                {
+                Items =
+                [
                     new()
                     {
                         Type = "message",
                         Role = "user",
-                        Content = new List<AIContentPart>
-                        {
+                        Content =
+                        [
                             new AITextContentPart
                             {
                                 Type = "text",
                                 Text = "Say hello"
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             }
         };
 
@@ -136,7 +135,7 @@ public sealed class ResponsesStreamFixtureTests
 
         var reasoningEndEvent = unifiedEvents.First(streamEvent => streamEvent.Event.Type == "reasoning-end");
         var reasoningEndData = Assert.IsType<AIReasoningEndEventData>(reasoningEndEvent.Event.Data);
-        var reasoningProviderMetadata = Assert.Contains(reasoningProviderId, reasoningEndData.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        var reasoningProviderMetadata = Assert.Contains(reasoningProviderId, reasoningEndData.ProviderMetadata ?? []);
 
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(reasoningProviderMetadata["id"]));
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(reasoningProviderMetadata["item_id"]));
@@ -147,7 +146,7 @@ public sealed class ResponsesStreamFixtureTests
             .OfType<ReasoningEndUIPart>()
             .First();
 
-        var uiProviderMetadata = Assert.Contains(reasoningProviderId, reasoningUiPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        var uiProviderMetadata = Assert.Contains(reasoningProviderId, reasoningUiPart.ProviderMetadata ?? []);
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["id"]));
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["item_id"]));
     }
