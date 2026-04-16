@@ -29,7 +29,8 @@ public static class SamplingUnifiedMapper
             {
                 Items = request.Messages?.Select(ToUnifiedInputItem).ToList()
             },
-            Metadata = BuildUnifiedRequestMetadata(request)
+            Metadata = request.Metadata?
+                .ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value)
         };
     }
 
@@ -42,9 +43,7 @@ public static class SamplingUnifiedMapper
             SystemPrompt = request.Instructions,
             Temperature = request.Temperature,
             MaxTokens = request.MaxOutputTokens ?? int.MaxValue,
-            Messages = (request.Input?.Items ?? [])
-                .Select(ToSamplingMessage)
-                .ToList(),
+            Messages = [.. (request.Input?.Items ?? []).Select(ToSamplingMessage)],
             Metadata = BuildSamplingRequestMetadata(request.Metadata)
         };
 
@@ -66,11 +65,10 @@ public static class SamplingUnifiedMapper
                 {
                     Type = "message",
                     Role = result.Role.ToString().ToLowerInvariant(),
-                    Content = (result.Content ?? [])
+                    Content = [.. (result.Content ?? [])
                         .Select(ToUnifiedContentPart)
                         .Where(a => a is not null)
-                        .Select(a => a!)
-                        .ToList()
+                        .Select(a => a!)]
                 }
             ]
         };
@@ -104,7 +102,7 @@ public static class SamplingUnifiedMapper
 
         return new CreateMessageResult
         {
-            Model = response.Model ?? "unknown",
+            Model = NormalizeSamplingModel(response.Model, response.ProviderId, response.Metadata),
             StopReason = ToSamplingStopReason(response.Status),
             Role = ParseRole(firstOutput?.Role),
             Content = content,
@@ -263,7 +261,9 @@ public static class SamplingUnifiedMapper
         switch (part)
         {
             case AITextContentPart text:
-                return new TextContentBlock { Text = text.Text };
+                return string.IsNullOrWhiteSpace(text.Text)
+                    ? null
+                    : new TextContentBlock { Text = text.Text };
 
             case AIFileContentPart file:
                 return ToSamplingFileContentBlock(file);
@@ -349,30 +349,6 @@ public static class SamplingUnifiedMapper
         };
     }
 
-    private static Dictionary<string, object?> BuildUnifiedRequestMetadata(CreateMessageRequestParams request)
-    {
-        var metadata = new Dictionary<string, object?>
-        {
-            ["sampling.model_preferences"] = JsonSerializer.SerializeToElement(request.ModelPreferences, Json),
-            ["sampling.system_prompt"] = request.SystemPrompt,
-            ["sampling.temperature"] = request.Temperature,
-            ["sampling.max_tokens"] = request.MaxTokens,
-            ["sampling.rawRequest"] = JsonSerializer.SerializeToElement(request, Json)
-        };
-
-        if (request.Metadata is JsonObject json)
-        {
-            foreach (var (key, value) in json)
-            {
-                metadata[key] = value is null
-                    ? null
-                    : JsonSerializer.SerializeToElement(value, Json);
-            }
-        }
-
-        return metadata;
-    }
-
     private static JsonObject? BuildSamplingRequestMetadata(Dictionary<string, object?>? metadata)
     {
         if (metadata is null || metadata.Count == 0)
@@ -404,8 +380,25 @@ public static class SamplingUnifiedMapper
 
         if (result.Meta is JsonObject meta)
         {
+            if (meta.TryGetPropertyValue("metadata", out var nestedMetadata))
+            {
+                foreach (var property in EnumerateObjectProperties(nestedMetadata))
+                {
+                    if (metadata.ContainsKey(property.Name) || IsLegacyUsageKey(property.Name))
+                        continue;
+
+                    metadata[property.Name] = property.Value.Clone();
+                }
+            }
+
             foreach (var (key, value) in meta)
             {
+                if (string.Equals(key, "metadata", StringComparison.OrdinalIgnoreCase)
+                    || IsLegacyUsageKey(key))
+                {
+                    continue;
+                }
+
                 metadata[key] = value is null
                     ? null
                     : JsonSerializer.SerializeToElement(value, Json);
@@ -420,16 +413,19 @@ public static class SamplingUnifiedMapper
         if (meta is null)
             return null;
 
-        var usage = new Dictionary<string, object?>();
+        var promptTokens = ExtractUsageInt(meta, "promptTokens", "prompt_tokens", "inputTokens", "input_tokens");
+        var completionTokens = ExtractUsageInt(meta, "completionTokens", "completion_tokens", "outputTokens", "output_tokens");
+        var totalTokens = ExtractUsageInt(meta, "totalTokens", "total_tokens");
 
-        if (meta.TryGetPropertyValue("inputTokens", out var inputTokensNode))
-            usage["input_tokens"] = inputTokensNode?.GetValue<int>();
+        if (promptTokens is null && completionTokens is null && totalTokens is null)
+            return null;
 
-        if (meta.TryGetPropertyValue("outputTokens", out var outputTokensNode))
-            usage["output_tokens"] = outputTokensNode?.GetValue<int>();
-
-        if (meta.TryGetPropertyValue("totalTokens", out var totalTokensNode))
-            usage["total_tokens"] = totalTokensNode?.GetValue<int>();
+        var usage = new Dictionary<string, object?>
+        {
+            ["promptTokens"] = promptTokens,
+            ["completionTokens"] = completionTokens,
+            ["totalTokens"] = totalTokens ?? ((promptTokens ?? 0) + (completionTokens ?? 0))
+        };
 
         return usage.Count == 0 ? null : usage;
     }
@@ -442,39 +438,249 @@ public static class SamplingUnifiedMapper
         {
             foreach (var (key, value) in response.Metadata)
             {
-                if (key.StartsWith("sampling.", StringComparison.OrdinalIgnoreCase))
+                if (key.StartsWith("sampling.", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(key, "metadata", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(key, "usage", StringComparison.OrdinalIgnoreCase)
+                    || IsLegacyUsageKey(key))
+                {
                     continue;
+                }
 
                 meta[key] = value is null
                     ? null
                     : JsonSerializer.SerializeToNode(value, Json);
             }
+
+            if (response.Metadata.TryGetValue("metadata", out var nestedMetadata))
+            {
+                foreach (var property in EnumerateObjectProperties(nestedMetadata))
+                {
+                    if (meta.ContainsKey(property.Name) || IsLegacyUsageKey(property.Name))
+                        continue;
+
+                    meta[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+                }
+            }
         }
 
-        if (response.Usage is not null)
+        var usage = BuildSamplingMetaUsage(response.Usage, response.Metadata);
+        if (usage is not null)
         {
-            var usage = JsonSerializer.SerializeToElement(response.Usage, Json);
-            AddUsage(meta, usage, "input_tokens", "inputTokens");
-            AddUsage(meta, usage, "prompt_tokens", "inputTokens");
-            AddUsage(meta, usage, "output_tokens", "outputTokens");
-            AddUsage(meta, usage, "completion_tokens", "outputTokens");
-            AddUsage(meta, usage, "total_tokens", "totalTokens");
+            meta["usage"] = usage;
         }
+
+        meta.Remove("inputTokens");
+        meta.Remove("outputTokens");
+        meta.Remove("totalTokens");
 
         return meta.Count == 0 ? null : meta;
     }
 
-    private static void AddUsage(JsonObject meta, JsonElement usage, string sourceProperty, string targetProperty)
+    private static JsonObject? BuildSamplingMetaUsage(object? usage, Dictionary<string, object?>? metadata)
     {
-        if (meta[targetProperty] is not null)
-            return;
+        var promptTokens = ExtractUsageInt(usage, "promptTokens", "prompt_tokens", "inputTokens", "input_tokens")
+            ?? ExtractMetadataInt(metadata, "promptTokens", "prompt_tokens", "inputTokens", "input_tokens");
+        var completionTokens = ExtractUsageInt(usage, "completionTokens", "completion_tokens", "outputTokens", "output_tokens")
+            ?? ExtractMetadataInt(metadata, "completionTokens", "completion_tokens", "outputTokens", "output_tokens");
+        var totalTokens = ExtractUsageInt(usage, "totalTokens", "total_tokens")
+            ?? ExtractMetadataInt(metadata, "totalTokens", "total_tokens");
 
-        if (usage.ValueKind == JsonValueKind.Object
-            && usage.TryGetProperty(sourceProperty, out var value)
-            && value.ValueKind == JsonValueKind.Number)
+        if (promptTokens is null && completionTokens is null && totalTokens is null)
+            return null;
+
+        return new JsonObject
         {
-            meta[targetProperty] = value.GetInt32();
+            ["promptTokens"] = promptTokens,
+            ["completionTokens"] = completionTokens,
+            ["totalTokens"] = totalTokens ?? ((promptTokens ?? 0) + (completionTokens ?? 0))
+        };
+    }
+
+    private static int? ExtractMetadataInt(Dictionary<string, object?>? metadata, params string[] keys)
+    {
+        if (metadata is null || metadata.Count == 0)
+            return null;
+
+        foreach (var key in keys)
+        {
+            if (TryReadInt(metadata.TryGetValue(key, out var directValue) ? directValue : null, out var directInt))
+                return directInt;
         }
+
+        if (!metadata.TryGetValue("usage", out var rawUsage))
+            rawUsage = null;
+
+        var usageValue = ExtractUsageInt(rawUsage, keys);
+        if (usageValue is not null)
+            return usageValue;
+
+        if (!metadata.TryGetValue("metadata", out var nestedMetadata))
+            return null;
+
+        foreach (var property in EnumerateObjectProperties(nestedMetadata))
+        {
+            if (!keys.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            if (TryReadInt(property.Value, out var nestedInt))
+                return nestedInt;
+        }
+
+        return null;
+    }
+
+    private static int? ExtractUsageInt(JsonObject? meta, params string[] keys)
+    {
+        if (meta is null)
+            return null;
+
+        if (meta.TryGetPropertyValue("usage", out var usageNode))
+        {
+            var usageValue = ExtractUsageInt(usageNode, keys);
+            if (usageValue is not null)
+                return usageValue;
+        }
+
+        foreach (var key in keys)
+        {
+            if (meta.TryGetPropertyValue(key, out var directNode)
+                && TryReadInt(directNode, out var directInt))
+            {
+                return directInt;
+            }
+        }
+
+        if (!meta.TryGetPropertyValue("metadata", out var nestedMetadata))
+            return null;
+
+        foreach (var property in EnumerateObjectProperties(nestedMetadata))
+        {
+            if (!keys.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            if (TryReadInt(property.Value, out var nestedInt))
+                return nestedInt;
+        }
+
+        return null;
+    }
+
+    private static int? ExtractUsageInt(object? usage, params string[] keys)
+    {
+        var json = SerializeToJsonElement(usage);
+        if (json is not { ValueKind: JsonValueKind.Object })
+            return null;
+
+        foreach (var key in keys)
+        {
+            if (json.Value.TryGetProperty(key, out var value)
+                && TryReadInt(value, out var parsed))
+            {
+                return parsed;
+            }
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<JsonProperty> EnumerateObjectProperties(object? value)
+    {
+        var json = SerializeToJsonElement(value);
+        if (json is not { ValueKind: JsonValueKind.Object })
+            return [];
+
+        return json.Value.EnumerateObject().ToArray();
+    }
+
+    private static JsonElement? SerializeToJsonElement(object? value)
+    {
+        if (value is null)
+            return null;
+
+        if (value is JsonElement json)
+            return json;
+
+        try
+        {
+            return JsonSerializer.SerializeToElement(value, Json);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool TryReadInt(object? value, out int result)
+    {
+        result = 0;
+
+        if (value is null)
+            return false;
+
+        if (value is JsonNode node)
+            return TryReadInt(SerializeToJsonElement(node), out result);
+
+        if (value is JsonElement json)
+            return TryReadInt(json, out result);
+
+        return value switch
+        {
+            int intValue => (result = intValue) == intValue,
+            long longValue when longValue >= int.MinValue && longValue <= int.MaxValue => (result = (int)longValue) >= int.MinValue,
+            string text when int.TryParse(text, out var parsed) => (result = parsed) == parsed,
+            _ => int.TryParse(value.ToString(), out result)
+        };
+    }
+
+    private static bool TryReadInt(JsonElement? value, out int result)
+    {
+        result = 0;
+
+        if (value is null)
+            return false;
+
+        return TryReadInt(value.Value, out result);
+    }
+
+    private static bool TryReadInt(JsonElement value, out int result)
+    {
+        result = 0;
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt32(out var intValue) => (result = intValue) == intValue,
+            JsonValueKind.Number when value.TryGetInt64(out var longValue) && longValue >= int.MinValue && longValue <= int.MaxValue => (result = (int)longValue) >= int.MinValue,
+            JsonValueKind.String when int.TryParse(value.GetString(), out var parsed) => (result = parsed) == parsed,
+            _ => false
+        };
+    }
+
+    private static bool IsLegacyUsageKey(string key)
+        => key is "inputTokens" or "outputTokens" or "totalTokens";
+
+    private static string NormalizeSamplingModel(string? model, string providerId, Dictionary<string, object?>? metadata)
+    {
+        var modelText = model?.Trim();
+        modelText ??= GetString(metadata, "model")?.Trim();
+
+        if (string.IsNullOrWhiteSpace(modelText) && metadata?.TryGetValue("metadata", out var nestedMetadata) == true)
+        {
+            foreach (var property in EnumerateObjectProperties(nestedMetadata))
+            {
+                if (!string.Equals(property.Name, "model", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                modelText = property.Value.GetString()?.Trim();
+                break;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(modelText))
+            modelText = "unknown";
+
+        return modelText.Contains('/', StringComparison.Ordinal)
+            ? modelText
+            : $"{providerId}/{modelText}";
     }
 
     private static string? GetString(Dictionary<string, object?>? metadata, string key)

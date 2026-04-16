@@ -513,7 +513,7 @@ public partial class OrqAgentRuntimeProvider
             });
         }
 
-        return messages.ToArray();
+        return [.. messages];
     }
 
     private object[] BuildInvokeMessagesFromUiMessages(IEnumerable<UIMessage>? messages)
@@ -583,7 +583,7 @@ public partial class OrqAgentRuntimeProvider
                 var payload = new Dictionary<string, object?>
                 {
                     ["role"] = role,
-                    ["content"] = contentParts.Count == 0 ? null : (contentParts.Count == 1 && contentParts[0] is not null ? new[] { contentParts[0] } : contentParts.ToArray())
+                    ["content"] = contentParts.Count == 0 ? null : (contentParts.Count == 1 && contentParts[0] is not null ? new[] { contentParts[0] } : [.. contentParts])
                 };
 
                 if (toolCalls.Count > 0)
@@ -605,7 +605,7 @@ public partial class OrqAgentRuntimeProvider
             });
         }
 
-        return result.ToArray();
+        return [.. result];
     }
 
     private static object ToInvokeMessage(ChatMessage message)

@@ -457,7 +457,7 @@ public static partial class ChatCompletionsUnifiedMapper
 
         var rawToolCalls = ExtractMetadataElement(metadata, "chatcompletions.message.tool_calls");
         return rawToolCalls is { ValueKind: JsonValueKind.Array }
-            ? rawToolCalls.Value.EnumerateArray().Select(e => (object)e.Clone()).ToList()
+            ? [.. rawToolCalls.Value.EnumerateArray().Select(e => (object)e.Clone())]
             : null;
     }
 

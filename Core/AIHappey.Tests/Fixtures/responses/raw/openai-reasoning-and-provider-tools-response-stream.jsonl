@@ -1,0 +1,1158 @@
+event: response.created
+data: {"type":"response.created","response":{"id":"resp_04c8e0b6f86052560169e0881b558881a39f1329904fa6b2df","object":"response","created_at":1776322587,"status":"in_progress","background":false,"completed_at":null,"error":null,"frequency_penalty":0.0,"incomplete_details":null,"instructions":null,"max_output_tokens":32000,"max_tool_calls":null,"model":"gpt-5.4-nano-2026-03-17","output":[],"parallel_tool_calls":true,"presence_penalty":0.0,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":"medium","summary":"detailed"},"safety_identifier":null,"service_tier":"auto","store":false,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"web_search","search_context_size":"low","user_location":{"type":"approximate","city":null,"country":"US","region":null,"timezone":null}}],"top_logprobs":0,"top_p":0.98,"truncation":"auto","usage":null,"user":null,"metadata":{}},"sequence_number":0}
+
+event: response.in_progress
+data: {"type":"response.in_progress","response":{"id":"resp_04c8e0b6f86052560169e0881b558881a39f1329904fa6b2df","object":"response","created_at":1776322587,"status":"in_progress","background":false,"completed_at":null,"error":null,"frequency_penalty":0.0,"incomplete_details":null,"instructions":null,"max_output_tokens":32000,"max_tool_calls":null,"model":"gpt-5.4-nano-2026-03-17","output":[],"parallel_tool_calls":true,"presence_penalty":0.0,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":"medium","summary":"detailed"},"safety_identifier":null,"service_tier":"auto","store":false,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"web_search","search_context_size":"low","user_location":{"type":"approximate","city":null,"country":"US","region":null,"timezone":null}}],"top_logprobs":0,"top_p":0.98,"truncation":"auto","usage":null,"user":null,"metadata":{}},"sequence_number":1}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","type":"reasoning","encrypted_content":"gAAAAABp4Igb336NmgbumhbahKeWlNraFpevr2pgHytjJYIKeCMeB3gZ5dswmNxePJzkZvFqmYfbBAkkuifyOq6SAeu945_XpYi7lBGpDH5Clu1ykpWOlnZe-jsrvm0O453kchj2i6izUMXaNSUmDuDwyw9akdqVFKv2s7Chq3SBOhjpYSe_r5_9dhDms5oRw5UyId-9m6YTZTomoZd59-jzoZQgnyl3wXX7vZL3r81x2FbeIHZt0GldsjvEx678kknLhwR7YdfMaUneTebScM2MPJdvYZcL4E-GzVR2hThJ2mevLjt0pcr4iPenyASSxu_zH6GF5THcXodTsV2oL3CWywFR-UGS3AV2ErY_TKl2P-mEKtHSQMfOQmFoOPnADARgj178yP6GeNElFYm5TqJP_VEdHWhwwXEfSLC-Gz81NjQtIJD7ZaE8ZPT-KPaD6m-DmAI99_7CJTcDam6g22DSmt0TgyT263JThiMQ25ZqDI2bX9uTWfQldoayP2v6I9pSI7PjbpRe10FNSL630ZOJJLzzEnw72yftrt2x9HqRwCmzwumgfRq2_A-aDAyskerh0SaOI4s5nmogC8m4-xwVvL-qtS4Fy_OCKwdeBnBG7BdfcCwSn014snFb1TaP7QRdm8eTHd51vo9yxVpkxmOa7T9EE8_4QJbNXf_Gmw81uX8ycHSoAzdEzsjX0xZfQo0PRTNk05HYLCxWwN4t4tGRPQwwozjGF6UAicwOcgN4l3364YEGQ0MDuLkFWNra0jKZIxmdOfBOOt3r5fYY1fUwr08wVZgpGtMB5CapTvXobGY8vRpIV2FRGVLtEhWmiKJwUFsCUQVA","summary":[]},"output_index":0,"sequence_number":2}
+
+event: response.reasoning_summary_part.added
+data: {"type":"response.reasoning_summary_part.added","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","output_index":0,"part":{"type":"summary_text","text":""},"sequence_number":3,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"**Searching for latest news**\n\nI","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"","output_index":0,"sequence_number":4,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" need","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"m5tJ4qexARP","output_index":0,"sequence_number":5,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"HhKv32jMiV7wZ","output_index":0,"sequence_number":6,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" use","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"WJy2xBMp3UoE","output_index":0,"sequence_number":7,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" web","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"LjzsgYZsPmOB","output_index":0,"sequence_number":8,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".run","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"PuVsXqRPwMO8","output_index":0,"sequence_number":9,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"EbfHQCBFJcloS","output_index":0,"sequence_number":10,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" find","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"5JSwc7dbbEE","output_index":0,"sequence_number":11,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"tA8bKfMJ4w5w","output_index":0,"sequence_number":12,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" latest","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"VjeV5bxmv","output_index":0,"sequence_number":13,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" news","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"JcIhRYkx44O","output_index":0,"sequence_number":14,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"pYdV7U9cafXuxDv","output_index":0,"sequence_number":15,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"GCUTd2wkZKe1","output_index":0,"sequence_number":16,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"sYwNwdFoxoka","output_index":0,"sequence_number":17,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" user","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"uVmwYCj0iax","output_index":0,"sequence_number":18,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" mentioned","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"mv0LvI","output_index":0,"sequence_number":19,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" they're","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"qkjCeGoX","output_index":0,"sequence_number":20,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" looking","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"EWG8vJZs","output_index":0,"sequence_number":21,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" for","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"5Mncdv4dHeeU","output_index":0,"sequence_number":22,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" information","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"MXu2","output_index":0,"sequence_number":23,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" in","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"B40TyOWvIhnr1","output_index":0,"sequence_number":24,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Dutch","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"jdoyMz49iB","output_index":0,"sequence_number":25,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"7vcBKTwnhMk7YBS","output_index":0,"sequence_number":26,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" They","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"dBTNq3TBVHw","output_index":0,"sequence_number":27,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" want","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"64hvAPMgHpG","output_index":0,"sequence_number":28,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" updates","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"nnCfSOqU","output_index":0,"sequence_number":29,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" about","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"4gaFhWGcvI","output_index":0,"sequence_number":30,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"PRlqKVc6mlX3","output_index":0,"sequence_number":31,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" current","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"7e7wfnuk","output_index":0,"sequence_number":32,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" situation","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"2y9r7I","output_index":0,"sequence_number":33,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" in","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"ABnACCAKzNnht","output_index":0,"sequence_number":34,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Iran","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"00Z613l2Nj3","output_index":0,"sequence_number":35,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"NHZGT5egI0iBXo5","output_index":0,"sequence_number":36,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" specifically","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"XUe","output_index":0,"sequence_number":37,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" around","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"9I6A7pk83","output_index":0,"sequence_number":38,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"9gi1hiowA0Mv","output_index":0,"sequence_number":39,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" war","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"CY4lXld8kViB","output_index":0,"sequence_number":40,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"z8uyhrT89bIVCkT","output_index":0,"sequence_number":41,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"CZqKwsNoPoZssN","output_index":0,"sequence_number":42,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"’m","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"ZASYlhkGZDw4dy","output_index":0,"sequence_number":43,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" thinking","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"jbzOjIy","output_index":0,"sequence_number":44,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"aHAWQVKxKkqITs","output_index":0,"sequence_number":45,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" should","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"Dt207vZlS","output_index":0,"sequence_number":46,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" clarify","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"70N3Bxbf","output_index":0,"sequence_number":47,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" if","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"f4luUN0miHp7u","output_index":0,"sequence_number":48,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" they're","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"7YPqa4JX","output_index":0,"sequence_number":49,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" interested","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"4Kjtk","output_index":0,"sequence_number":50,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" in","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"g9nj4Ozm18MVi","output_index":0,"sequence_number":51,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" specific","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"HrdEgfs","output_index":0,"sequence_number":52,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" aspects","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"NvXnFUkX","output_index":0,"sequence_number":53,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" like","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"6hR3uav1E7S","output_index":0,"sequence_number":54,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"IfSAhH1cZDDa","output_index":0,"sequence_number":55,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Israel","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"oEB4pZmod","output_index":0,"sequence_number":56,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"-I","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"EALowmyoZMf83c","output_index":0,"sequence_number":57,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"ran","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"Y4mU643r3slG3","output_index":0,"sequence_number":58,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" tensions","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"xYKcVgQ","output_index":0,"sequence_number":59,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" or","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"lwAm8hgtix0i6","output_index":0,"sequence_number":60,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Iran","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"5fuTnTHx5E4","output_index":0,"sequence_number":61,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"-backed","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"ilPsXqg8s","output_index":0,"sequence_number":62,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" milit","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"vH9vtqTf8T","output_index":0,"sequence_number":63,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"ias","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"4JrLvEAY150Nz","output_index":0,"sequence_number":64,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"r0b5UXbSLoMjoGr","output_index":0,"sequence_number":65,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"uGZnk5xBqM30yF","output_index":0,"sequence_number":66,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"’m","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"puk0pUtWIv5nAd","output_index":0,"sequence_number":67,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" planning","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"I6v4ucp","output_index":0,"sequence_number":68,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"sFQBSuU9UBPkS","output_index":0,"sequence_number":69,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" search","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"EDYqGf2TO","output_index":0,"sequence_number":70,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" multiple","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"GogAzMb","output_index":0,"sequence_number":71,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" queries","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"52b1aNeI","output_index":0,"sequence_number":72,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" about","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"WbF49W3oWl","output_index":0,"sequence_number":73,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"XxcTmiUQt9AX","output_index":0,"sequence_number":74,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Iran","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"f1Pzd5Fwufo","output_index":0,"sequence_number":75,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" conflict","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"CurSIF9","output_index":0,"sequence_number":76,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" from","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"vx8IZUHNr2c","output_index":0,"sequence_number":77,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"w2JdFnlfxubw","output_index":0,"sequence_number":78,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" past","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"8yQwruX4T3L","output_index":0,"sequence_number":79,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" week","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"YNuS1rECKJ6","output_index":0,"sequence_number":80,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"MDMRVaIxC6sJL","output_index":0,"sequence_number":81,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" gather","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"8qNPNYtLC","output_index":0,"sequence_number":82,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" recent","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"AlsdzctLp","output_index":0,"sequence_number":83,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"Bd6wZikhe1CX","output_index":0,"sequence_number":84,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" relevant","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"PGVgqZE","output_index":0,"sequence_number":85,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" news","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"TL98g2N5Ium","output_index":0,"sequence_number":86,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","obfuscation":"wmfn4lKpxqfx0sG","output_index":0,"sequence_number":87,"summary_index":0}
+
+event: response.reasoning_summary_text.done
+data: {"type":"response.reasoning_summary_text.done","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","output_index":0,"sequence_number":88,"summary_index":0,"text":"**Searching for latest news**\n\nI need to use web.run to find the latest news, and the user mentioned they're looking for information in Dutch. They want updates about the current situation in Iran, specifically around the war. I’m thinking I should clarify if they're interested in specific aspects like the Israel-Iran tensions or Iran-backed militias. I’m planning to search multiple queries about the Iran conflict from the past week to gather recent and relevant news."}
+
+event: response.reasoning_summary_part.done
+data: {"type":"response.reasoning_summary_part.done","item_id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","output_index":0,"part":{"type":"summary_text","text":"**Searching for latest news**\n\nI need to use web.run to find the latest news, and the user mentioned they're looking for information in Dutch. They want updates about the current situation in Iran, specifically around the war. I’m thinking I should clarify if they're interested in specific aspects like the Israel-Iran tensions or Iran-backed militias. I’m planning to search multiple queries about the Iran conflict from the past week to gather recent and relevant news."},"sequence_number":89,"summary_index":0}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","type":"reasoning","encrypted_content":"gAAAAABp4IgeBRM37RkYbw8x5KyYuukYynVb1ENE-RjbPfGD0x4XDEbrOt7yJwX2uhprCfhvDvt_AQBgBetH0PXbcBJnjaORQC0VBgbMvb-sq9DK9WutXvF2GBL3_KNLi7Gu300duoy4r_RDhUK3iFwQzLSwV2xyWs1Mp5UB8eUqLNWdCJ2IAm1YZ308BPZkjmQsg7-AIpYBAljeR8eJHs1YWzkg1xSslVMMTWt5bxH3SLtoB5UaP07LcCQp2VrF42_7a95RJM7EIDm97383_EO8_qdD2mjFG32VixX14QHzl5TbD2jWAWfXmI8A8_KuktkQqy0yT6ipEZX3N4JxVSY5gNDLsvwwgPYnyhHw2W8iN_NKBRR81qEV9t7_E_0QR5L0vWBkC6QBc4atilUbOO8UIUg7kkk7fsKqRdKPOFak_iaww2BlI-wRZuCZU8DF2AaEZ5LmWEFM04olOX7GPjGY0yybCpOZ0yKQRTbmdUYlw0lZOBuff0GVhHea5ObZpj42f6URKX4_loUCXrcuhN2OitBVJ-Az1S0vbJoW6YbRYJYsWwWn7UgZWgxHfwgc227mjYBW0pcrVoS6qbBM1aF5rqrJDY7lPnqAxI3qu40BbAPuTtKQcw1lQZGhMLsbZYw_LXKGP2Ho-jQUu0GIQM7lAUm-v9hOhjwz8stfsYV1VfaLGmRLZmo9NUD4LT3WcGeRYgRTAcNI59_4vY3UchzLZLxuuujjZ7KrN3z2ZJ6aig7zlrizq8yitfsmr0dFmZHDuXnGBDMXA9_-eqdNN3gfBZv9Dm0LHtvYlUO2bnRXA5WsKmCXX2lsVIVulcbz3qsBFv9vM0bLJMRPOo4hGngvP69zsRtnNUbK97JlOD-f1D9zHiQBR9Qxd-kgUmkHRyvI4B-UqmdyfQLmHzgP8PQ4MAetnvl00gvckM9J5AuebsPhbxfzK1nkz2vrU2if1UT2MRI4cRB__gM7U95hjRbaxdhj2Nm6mv0-kc-wNi9yJ5qLMyA8u2yduEp2jSJUuZA08D2W_Iy_oDeWMw24q42yG_G2SdYc74PUUsQ0b18T43-Mm4T9h7-q4406SeeT4DoT2wCE4NhMzgvowsc10rQcrFnT85SNG95fAfLo7p2yfGsK7U3OW58SsQpfZa-pAJ2IVitjxtGNxwRjyI7jxjzkwkyjHnkYtgvi7fRf72DfAr624bpU8qkHc-kNh28JkjrNYw91lJeSUTVeAj9hb1BrDde8Y8j_Jb3qgKSjvp24kCv2BOv_k8v59pvPllBnQmc_ZXJnf517p-XqepD_XFjth_NEyIBJIa6zlwzDwvBSRlHs1m46pY6_D_GvpSUw_Z5nkacOG6-GDc_E8c22Xo3kgsiRhiM_b4mTnkpe0nr4u4qOyR9XWT8FavHG2mGMn6irhTFKZ-aPrrk8_w5QteoSJkAamypFsw==","summary":[{"type":"summary_text","text":"**Searching for latest news**\n\nI need to use web.run to find the latest news, and the user mentioned they're looking for information in Dutch. They want updates about the current situation in Iran, specifically around the war. I’m thinking I should clarify if they're interested in specific aspects like the Israel-Iran tensions or Iran-backed militias. I’m planning to search multiple queries about the Iran conflict from the past week to gather recent and relevant news."}]},"output_index":0,"sequence_number":90}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"ws_04c8e0b6f86052560169e0881e75c881a38d66ee4ea5314a75","type":"web_search_call","status":"in_progress"},"output_index":1,"sequence_number":91}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","item_id":"ws_04c8e0b6f86052560169e0881e75c881a38d66ee4ea5314a75","output_index":1,"sequence_number":92}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","item_id":"ws_04c8e0b6f86052560169e0881e75c881a38d66ee4ea5314a75","output_index":1,"sequence_number":93}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","item_id":"ws_04c8e0b6f86052560169e0881e75c881a38d66ee4ea5314a75","output_index":1,"sequence_number":94}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"ws_04c8e0b6f86052560169e0881e75c881a38d66ee4ea5314a75","type":"web_search_call","status":"completed","action":{"type":"search","queries":["laatste nieuws oorlog in Iran","Iran conflict latest news April 2026","Iran Israel war latest news April 2026","Iran fighting latest news unrest April 2026"],"query":"laatste nieuws oorlog in Iran","sources":[{"type":"url","url":"https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5"},{"type":"url","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url","url":"https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4"},{"type":"url","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},{"type":"url","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},{"type":"url","url":"https://www.axios.com/2026/04/15/lebanon-ceasefire-israel-trump"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_South_Pars_field_attack"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Strait_of_Hormuz_campaign"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Iranian_strikes_on_Bahrain"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Iranian_strikes_on_Israel"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Fardis_massacre"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Iranian_strikes_on_Jordan"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/04/06/iran-israel-us-lebanon-latest-april-6-2026/ba41c2b8-3178-11f1-b85b-2cd751275c1d_story.html/"},{"type":"url","url":"https://www.globalsecurity.org/military/ops/iran-war-20260404.htm"},{"type":"url","url":"https://www.aljazeera.com/news/2026/2/25/iran-rejects-fictional-narratives-power-grab-after-protest-killings"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/04/09/iran-israel-us-lebanon-latest-april-9-2026/51510934-33d1-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.newsrael.com/posts/650ps8ulwa6"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/03/29/iran-israel-us-latest-march-29-2026/0dcce7dc-2b25-11f1-a0f2-3ba4c9fe08ac_story.html"},{"type":"url","url":"https://www.globalsecurity.org/military/ops/iran-war-20260412.htm"},{"type":"url","url":"https://img2.washingtonpost.com/national/2026/04/07/iran-israel-us-lebanon-latest-april-7-2026/7ad503d0-323e-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.nbcsandiego.com/news/national-international/israel-us-iran-war-middle-east-april-10-2026-live-updates/4008222/"},{"type":"url","url":"https://www.ncr-iran.org/en/news/iran-news-in-brief-news/iran-news-in-brief-april-1-2026/"},{"type":"url","url":"https://www.longwarjournal.org/archives/2026/03/iran-braces-for-internal-unrest-as-us-and-israeli-attacks-persist-march-14-16-updates.php"},{"type":"url","url":"https://www.idf.il/en/mini-sites/iran-israel-war-2026/iran-israel-war-2026-live-updates-1/april-4-2026-iran-israel-war-2026-live-updates/"}]}},"output_index":1,"sequence_number":95}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"rs_04c8e0b6f86052560169e08828542481a39420b5af4c47a842","type":"reasoning","encrypted_content":"gAAAAABp4IgokIvYcgcT8tE7C9CESwu4Aq6wr2cbu06cpPnEov5cuN6Zp0dT64sE3AxXh1AWQ7ALiHHivQhIVD2Ni-rYt6GqB6KVc7hE1SpmzITFyePvs4VBM7KOPU5FJXY0DY-sm1pKp8O3WYCs83mOc7QgFLZdb6WveGZdi2Avsn0HEO2zMh-O8VdGS-kpCpYmYQB6BsRiCV3-Fj3eSBeOAyEqnYpxlVqI934oQz7Fw0nF2EnlbpczqMkmJPYjzeTBpHQQNJaLCioLstH-saOqTjlzqcRdtcuwT1-5NbdFtPiOknu8XNH2Wr4yRLN6765fXEWRPPUP_E3MKlsMcb4Fb10VBR0S4zostoILlQbU5Dxe_ClZAUYhGxnItgrpMAv26-z8UaT1jynKAVcsVbA1ebG2O8BAwsPkopkf7IE9OmLfhMba5cTNlnPPoz9zo751XYQgdadMDMR0y99V5Fe4SlQNFgS6BkeR1dskENRc-5p7KQZ4VecdbaV1t-IXY0LEXHvzEnBqr3TGdSJ2_st5QS1jPkvvlReVZtxS80AWUXX2T0X_9U186VnhnKnIXAK6M6Hwz26GiW1RlRwgeTsBiI4upGH3-bljfcQmke2n58IYGlcQolcy2urcSy5YMJdqqVKqvEORHBhrYJzm31PtpHgBCXdBqrmzAT0UMnnrV3gmmqJ-l2duuec1CoDH-tJiiRp7aVGv3ojIFVb8Pco-u1KwYmmLfsmPWcxGZ-zNd68yrCOUGeL8rWPwyjMKpqpKZPgZ4n_xmkRkw2l5kgycnJ3Xv2LCOwK2NYttPVV-9RXdDbIjt4kAZQiojg9Cr4p3OmHuFzkt","summary":[]},"output_index":2,"sequence_number":96}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"rs_04c8e0b6f86052560169e08828542481a39420b5af4c47a842","type":"reasoning","encrypted_content":"gAAAAABp4IgoxDBWTC9hC4K--XVWdPYS5CI6fLqQ6kYYIaJrPM52w7O7QKrKpfcS5o8dqTe3maYQ500NomSxAr075688GQAqwHZLHhEl4ND_3161zFYgwUIMmNam_DbHTxdJDPzHzmMNGBc6jso9zwZXLJXiLSB-oAnGLE8Ia7h3X5IJGL8YUOb_yNELirg8WDhEbh4y6BgspaVqVpMFtgto1qPYtFyrRQeXAh8k4qqitBLWIAr-fL7rLfJmbKioILrD5Q4uC7fWlEusYstIA-r-7B4iHEKOwbRjBhbMnmOyRgXZ89Y3bD1BuEkhnpAO43QwiqAp-yY-WQAC-L3mLdGa_HeI_k53nlKBsLi2oam0dRembFqd-Q7enXwGWF1FyvIV9nmh6sFsmeCLyxv4tnu_eTMeUGQzxhOZEz7F83CH0c_Toi1J9bXll8E0UWFqWq9KibX6RuCCof6EVQfQBR5ZBgp7Oy0kgWjmuGl0aOMW-z6cFPHSvXYnzRVTMsOeRmw1_RMP7IYfSTZT9qc3THIq2HjhKpJqPVSJw4JXspOQR4aB74TUOwNYnGJk8EaaKm5dsfxW6uwI4_LVUNPHgZVDRtRQBxjtU6ppS-TdH6ViOtXRe7ph12BxPbwsam5Ch2fnV4Z0Mbx04BzCtJTMHpZw6BQsCa9QGAWoJlibkrZcZOIBaInz_XxmLX7lqflar7nbOHUV1PCr7tBK0QwXeuo4rIX3dj66_OzxyAwkcL2gyvs1zOHH4q3q-DqE83SBZJi2nePa4DKS7oZPBbVQuxmszJPtVQ-q99fUSasASwDWVfhA7KT8upW2iFwJ8lCeSr-t0rUCGNcQE1RghvAcvYAlhjbbS2sx8wddUoL2IcGPOa0KGEsO7vuNW6SJiad1rOkjFR4H24XNBLtYxW_VUGPX9Ogbh2IeTZIUOvoRXIkSOUx_0_LguspWv4POIQFSt8Iv0TqWtAsG3iy5VWu2HjRwyGyiDbgxvOWSgxdXEKp_FFmBgMAC7MKI1uVUf72oYzvvyzUNY31ajBdmuCCbe4UvjH3FtHIANIP8_NTRrKUujU7KB5ASYImbOfGZygM7iNrS9mpSmE3BApoS2vcUAbPqzZsFKrogC1dSnNF09y_pXj_klRWGaWffOCDCG8mPAL620dtsPpY7H5nYnJLDnz4-Bi0cCSpjFyoLWa0X8Y8zKNB6imCpA4QUQurfKWDm4rHtWSlQA8iotzkRpAWq1IO-USZ9_ckClnkFNVUEAKYs-bHOdjAqz5iBMJjiQymFlvPQwdc5kTn-ThojVSHCjvqI_B7533a5iBsJLEGAT4QYRPkkVnb_GZl1xAH8ErwpLsFSpLO4iFKQi8e1NpkMuAUgxYEQHFpacsKFiBXEG5vAxFGENtMerNMDh4K1pC-pPndKeAbFxP93pDp9uPFQWgYGPXut4y3A9MmRaCdxQG1soRnOTypCEcXlYjcu2bj4OLyJzv5zH67pcIqW21CMuA4fRxwFjsqDR5RxdBxIBNvkrHBQZjQW2BZvkNzOCyEZiuB40iSf2QnCS0JlBf7Esd7KHAP4wbbTgFy_bfXSCNpnFQkfeSS0R0c=","summary":[]},"output_index":2,"sequence_number":97}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"ws_04c8e0b6f86052560169e08828c56081a3b43b4ae5a397a51e","type":"web_search_call","status":"in_progress"},"output_index":3,"sequence_number":98}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","item_id":"ws_04c8e0b6f86052560169e08828c56081a3b43b4ae5a397a51e","output_index":3,"sequence_number":99}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","item_id":"ws_04c8e0b6f86052560169e08828c56081a3b43b4ae5a397a51e","output_index":3,"sequence_number":100}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","item_id":"ws_04c8e0b6f86052560169e08828c56081a3b43b4ae5a397a51e","output_index":3,"sequence_number":101}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"ws_04c8e0b6f86052560169e08828c56081a3b43b4ae5a397a51e","type":"web_search_call","status":"completed","action":{"type":"open_page","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"}},"output_index":3,"sequence_number":102}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"rs_04c8e0b6f86052560169e0882d394881a386bc8e86f3286817","type":"reasoning","encrypted_content":"gAAAAABp4IgtofTqVxP8kLC1oQiV5ZiVwZcF0djwJ4TOGGR8gWnkZySpiuYynuHkeHDnvBouUU-sTTDfuHPkV0ddQqtJ4EkjMRG6XCotOedRVFT758y9MRw1RQNw_ehC2eSZ4W2MvIZ9bQQFHUNQMxOjkL1SB3NlrjV2nA4s9SjGznc_BE5MqOTLWqk_e42kULBc-HzlS7HH9TgCN206IsDWkOdFmpSx1ZpB1Yws5ULcDffvFQeHbhVarZzfztTNUXMZ5cMfXUzxJOYx1_h6iyXnHN4ga-kJR4n0tpvkmdnE25hxMhdlvpghZ_RDFmTOOc-XDjfevMp7KH1WYyxGAIgbyC2IG_Hli2IU7lIE3EO50RJeIlNmuoZ_UjDGpllt8oocqI06UIT9riW64ilSG4sj8OtYAkJpFCFgwS80SY18xctySCJh9ahYPUVg_0WFBPGI5azmu3bqhh14ni5NTaDrMjG3tsS7uBv4lr1oPZ0HFf9qkTsN3XqhSv_WBAtUa4Z3kzJFUg8otWGUbKb_VRP464PwsmiGedUNFxFgCbQJ6DH7U2Nfu9u208na45HIu_u2y9qsHyiAPeYdcAEeyq6B2u0ZYzK8-g5kuwgqr8VziFEvo_KTkdit1QjDPtnaz7qTx4kTagSHEZvHSGaI9OuXY_22ixpVAUdgB2oEvMw6V7LedkK2qvkOSWvsrym5QPYEfPN0EVS9EKAOjAUyCHrR2DKYxeN_vFTWRPocOb3SYn0AaAcWf7n4VNqhPwCWncjmlTxpMLVUnGNMBvnN4MbsodW5_LLVX8icY3kPygi-4-br4BKDZiS77qjDqg9818G1K5khScZw","summary":[]},"output_index":4,"sequence_number":103}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"rs_04c8e0b6f86052560169e0882d394881a386bc8e86f3286817","type":"reasoning","encrypted_content":"gAAAAABp4IgtDT2p9el7srgyXXUX80i7O2kNC523ac_2Evu0uTd8p0cbXSFFA_fHEA47SfEnFS-czMrtitEpKsf6Y-W0NCl8IptTF1NfdFTUH510paPS4cOL6Pw2fZfmNu19AUXRc9YnLIMt_-b0BojR5r0bgQtGoyifwgQqL6P1NeYGrApWc4tVuh9ppTAxc8-iz8_Nhqxu9st3cwuxONiiPkjFcNChnhZLloiUNEIJh1ANVaHB1c6qPo6CkhzPMDcB0x5etkEVgqJ_mbzYsGDqOaDAAgtfVcZylnL-7abR98B_20QsqZgHPonmBNYYhinn35DUTA2Ij_-32tWCrhDW-dQ7RyyTuDwZapvTK0Iax1Q2kLXSUoP0D_4R0yXSePLC2ZF2LrhBKqfXRCFCuMx3fyp2R_39kTwLUpXJv4MPOiPmEB-ON2q00rHsCMn7XIQeft7ZASG-ep_GTvEuDt6SpHIoRSEvW5HGwlFf7IwlIoHtmu0KTDK8gvO6Gn4nZWuC0sNlZLDBPzQTgDGDF7UsC-HP-arwXSNLha9WKYneGrZWObrYME7WtftmcjSGESbWZAblYkx0bX4RLAoF61ldZ0Cl9a5D1K1MTDhRhNznSmVeKO7Cn7zWW-769dEpCXxn50ST3CY3MJg6GP6vEjkT-EY7quJMXrCPkmlD7I_KGgHsF-LGSwKR8g82F5W-Qyutpf4v5ZafvJzS95FO2tH9wJzj_t9ryW_DB_8zw27I4p3mElxPXZi0AMbOopbiy5xsmgfklxGaekUBJCLEdHYPitVNGWcsL4ba1TLJiWJnUK_qbSZm7btKwimYIb_9HeiON9wOCFMn6JlNuVaMKzagX1BhAzd5NMrMIuaWZzGNU_yQ1cGkFaZ1cA9473zS7HGs7E33QwGgXDCNBS4nTl_fexvXfZfKsx5LVA8HtFo0WWyjlJ5em5gqYACNBQHKihqB4y5tx2JG6brsynRUBTfdFHvzPsbhwjHFudPtO7skBGDnYP3wxDE0h1vcqBQqaGSyQYPQbfepqSmTf54kcG_Jo-IhmJW-JvGk-PzIGy5m5S7Q4S5k7jnkWkUt11DMcsYdDyGI_-lIhKanmLpEOCD6KP4YDoWSRknNXtEE5PW7nE6eES1HvxZgXR-UMyNpAidrzU35RX8blxxLZ7oONSFDCpGouPvyXokhLu1LXxP2I9a6dZVCiLX29k9g27XFUpzg3JQb5DFP","summary":[]},"output_index":4,"sequence_number":104}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"ws_04c8e0b6f86052560169e0882dd96c81a38a9acd3b4395c0e9","type":"web_search_call","status":"in_progress"},"output_index":5,"sequence_number":105}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","item_id":"ws_04c8e0b6f86052560169e0882dd96c81a38a9acd3b4395c0e9","output_index":5,"sequence_number":106}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","item_id":"ws_04c8e0b6f86052560169e0882dd96c81a38a9acd3b4395c0e9","output_index":5,"sequence_number":107}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","item_id":"ws_04c8e0b6f86052560169e0882dd96c81a38a9acd3b4395c0e9","output_index":5,"sequence_number":108}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"ws_04c8e0b6f86052560169e0882dd96c81a38a9acd3b4395c0e9","type":"web_search_call","status":"completed","action":{"type":"open_page","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"}},"output_index":5,"sequence_number":109}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","type":"reasoning","encrypted_content":"gAAAAABp4Igyz5ItBqp-DN7OILODGclCBqwEC5bvT10c1QIHNs78c2yUmgZAVuoowbQWsmyxfuFpXh8gqCrSi3y3L7_8870SkURPclvgycX8igQ3eMOCTF2wxD46Fcc-mUPERrVd0d01OhABGuUEat80sP1ZsYxBDOH2xjhbSdWpxxSpqWXdjYOZIIIt75ekJmxxbsWLCKxmaw5mM8Ft73iKsukncUPXbQb4BIJof8cIvGVIt4yFQWEVbV1vaAwaufHshdRf2BoIwdXxsu6QHx5s4zaCar7lvr6nzqmsKe1MIRSa8196F-fAerIp6W73c13INsZDeQSQxuSq-eyUD03JFSXBXwttAhLNMc3-SBPXKhwmWpLbCKqc3DofJ0wA4RFoamN6eZSHdmVG-Y5_4EmLGc3sWxg7w1bQa5w6uhhotcsINUTqPcEsCMktOt82EMsHtBdOw-2XlIctsMEAU0gFkY3ZdZDM-FBYuvEUs2hG7Ooaqv4CaTLYcPcFb71gZo7qyF7BKIHV5cjbfMJ80Dhw0SjT4D5_gsyTvxJXxtpDWIQIXS64X0ddGqWAyqo11Cm2zqK5J3XZmRl74wyKa7vdkf3u7PUdaAbuiUIGiH3fZ0VoaprtHspLAMnG6MajO29Po2KwBSCB4qZgD3prwq9-jT9UTsmkd_3az4-d1zQeFzrkdqYo1K09AF2CdPk29L8udqHxmqFB1-h3qlSKDtssYHRtQTOlKkkaTMlXDFV7tkuL0D9aCOwqYI0rVa_FdNY8dnQbxk4KPh7bZb5Yhq4FXInSWWin5jKd1SgntxWIy9eKk2GQhgX-SBrt5zRU0OAnPRejHI1g","summary":[]},"output_index":6,"sequence_number":110}
+
+event: response.reasoning_summary_part.added
+data: {"type":"response.reasoning_summary_part.added","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","output_index":6,"part":{"type":"summary_text","text":""},"sequence_number":111,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"**Considering conflict updates**\n\nI","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ICemWwaUT9Xlf","output_index":6,"sequence_number":112,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" need","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"2h4qlH1DFkP","output_index":6,"sequence_number":113,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"lqoRrxaMBSz6u","output_index":6,"sequence_number":114,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" mention","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"xNII5I71","output_index":6,"sequence_number":115,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" that","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"24hK3K4DEL5","output_index":6,"sequence_number":116,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"TEr5mcrJKNFn","output_index":6,"sequence_number":117,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" cease","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ZlEYCGhM7g","output_index":6,"sequence_number":118,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"fire","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"GEvNdAk1J5Rn","output_index":6,"sequence_number":119,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" expires","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"3NuCB7aC","output_index":6,"sequence_number":120,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" next","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Sie34R1cfNe","output_index":6,"sequence_number":121,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" week","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"sUpVzRsSnXw","output_index":6,"sequence_number":122,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"oU8Jccg2AJsS","output_index":6,"sequence_number":123,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" highlight","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Ho12Md","output_index":6,"sequence_number":124,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"sDD0EKWBpSNP","output_index":6,"sequence_number":125,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" framework","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"zbiJx4","output_index":6,"sequence_number":126,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" deal","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ERqJ2Qzdbc2","output_index":6,"sequence_number":127,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" set","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"zUa1tOQtfZ0c","output_index":6,"sequence_number":128,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" before","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"jzHRbokRD","output_index":6,"sequence_number":129,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" April","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"xHbz8J5nhb","output_index":6,"sequence_number":130,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 21","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"rYFtcUVUdC6t8","output_index":6,"sequence_number":131,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"XUFZng1UhfAlvlx","output_index":6,"sequence_number":132,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" citing","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"YQy9UMYc3","output_index":6,"sequence_number":133,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Axios","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"FlZ0mRElLB","output_index":6,"sequence_number":134,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"L7XWtTqUIw2K","output_index":6,"sequence_number":135,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" AP","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ois97NC9GbPhQ","output_index":6,"sequence_number":136,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" lines","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"cOlgv4YjCR","output_index":6,"sequence_number":137,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"qLgK6GpycfImIYo","output_index":6,"sequence_number":138,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" The","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"6ZDSQf7yaT0O","output_index":6,"sequence_number":139,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" user","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"DBHcxN7LrFt","output_index":6,"sequence_number":140,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" asked","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"JlUmTd96u3","output_index":6,"sequence_number":141,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" about","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"4hqbSzj9cj","output_index":6,"sequence_number":142,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"mwWarnR92D0J","output_index":6,"sequence_number":143,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" \"","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"rhD0Th69avHXGp","output_index":6,"sequence_number":144,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"oor","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ntfH7g0YF5Zt2","output_index":6,"sequence_number":145,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"log","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"w4qkuwW6hZXpq","output_index":6,"sequence_number":146,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" in","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"iZfww4dVtwNl4","output_index":6,"sequence_number":147,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Iran","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"z9k7FqC1rwb","output_index":6,"sequence_number":148,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"\",","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"BioKaoUDjQVcDT","output_index":6,"sequence_number":149,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" but","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"bRSpMU3wTQDX","output_index":6,"sequence_number":150,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" we","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"VeWj17wOs61Qf","output_index":6,"sequence_number":151,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" may","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"D0Oda5VqjUfK","output_index":6,"sequence_number":152,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" not","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"RwmwyTB72ng2","output_index":6,"sequence_number":153,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" need","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"iH3mCF7MNxE","output_index":6,"sequence_number":154,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Hj0XVNibqQxLo","output_index":6,"sequence_number":155,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" focus","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"wOPAWAAOgM","output_index":6,"sequence_number":156,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" solely","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"NxMgtBEFl","output_index":6,"sequence_number":157,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" on","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Z2k6E4aLGgGbZ","output_index":6,"sequence_number":158,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"NbwxuH6NSsPL","output_index":6,"sequence_number":159,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" US","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Tdjl5gEXSkk24","output_index":6,"sequence_number":160,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" angle","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"fIzGZ7HRTs","output_index":6,"sequence_number":161,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"hbjnY9pxnZEw0QB","output_index":6,"sequence_number":162,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"NYlYuuy5wJGEjE","output_index":6,"sequence_number":163,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"’ll","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"IrPKcE1agZraP","output_index":6,"sequence_number":164,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" note","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"pnTTgXQsvXG","output_index":6,"sequence_number":165,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" that","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ln6GWjEc9Rx","output_index":6,"sequence_number":166,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" recent","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"mXrxDVFxe","output_index":6,"sequence_number":167,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" reports","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Y4b5rDas","output_index":6,"sequence_number":168,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" indicate","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"9Ze9TID","output_index":6,"sequence_number":169,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"LmMJuBWYCbrg","output_index":6,"sequence_number":170,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" conflict","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"wYJwtM8","output_index":6,"sequence_number":171,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" involves","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"kGd6PZM","output_index":6,"sequence_number":172,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"0tcRwLkIMn9C","output_index":6,"sequence_number":173,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" US","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"1slECmNUeLYcS","output_index":6,"sequence_number":174,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ITbvobcc5b3J","output_index":6,"sequence_number":175,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Iran","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"vKiyF3mZyjL","output_index":6,"sequence_number":176,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" with","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"7ySchvWpfxq","output_index":6,"sequence_number":177,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" broader","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"aWihzIT2","output_index":6,"sequence_number":178,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" regional","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"AIiNX8T","output_index":6,"sequence_number":179,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" components","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"tzZmG","output_index":6,"sequence_number":180,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"gfTqlaHxlD8d6sf","output_index":6,"sequence_number":181,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" including","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"eNKNwk","output_index":6,"sequence_number":182,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Israel","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"4UbZIefti","output_index":6,"sequence_number":183,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"pKaLa1maDuxFIs6","output_index":6,"sequence_number":184,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Hezbollah","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"seszp4","output_index":6,"sequence_number":185,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"XxlsfVrDRm700KB","output_index":6,"sequence_number":186,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"0NKoqPnE18jT","output_index":6,"sequence_number":187,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"IcGFCKw1Kr3O","output_index":6,"sequence_number":188,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Hou","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"HDTLlSGbwNNq","output_index":6,"sequence_number":189,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"this","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"EqG0OnHgD15p","output_index":6,"sequence_number":190,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"uh34JdcT9SmRe6F","output_index":6,"sequence_number":191,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"HkVINHusbDk2LY","output_index":6,"sequence_number":192,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" should","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"vQ1peRumN","output_index":6,"sequence_number":193,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" ensure","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Udyazlw9D","output_index":6,"sequence_number":194,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"IjhXBjOJH3XQ","output_index":6,"sequence_number":195,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" dates","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"lmotYqlsu4","output_index":6,"sequence_number":196,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" are","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"8yVHL0m05vYV","output_index":6,"sequence_number":197,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" correct","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"DNNCmjVm","output_index":6,"sequence_number":198,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"—","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"dvQtuxNDStD2grP","output_index":6,"sequence_number":199,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"today","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"dVtjdgXYWih","output_index":6,"sequence_number":200,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" is","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"kZtodB9AUBGZs","output_index":6,"sequence_number":201,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" April","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"NYQEiLaFXv","output_index":6,"sequence_number":202,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 16","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"rU5ca8u3M6ojb","output_index":6,"sequence_number":203,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"Bmy97N9UAdGBZ6u","output_index":6,"sequence_number":204,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 202","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"jGYus6PEDSv0","output_index":6,"sequence_number":205,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"6","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"SWYJXw9S39vgSNb","output_index":6,"sequence_number":206,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"GkHQOSsTmCNx4uT","output_index":6,"sequence_number":207,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"QpgT0nDI1e7f","output_index":6,"sequence_number":208,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" reference","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ZdE6WT","output_index":6,"sequence_number":209,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" April","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"QI3rRHE1Ro","output_index":6,"sequence_number":210,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 15","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"SVxLsYqBkXCKS","output_index":6,"sequence_number":211,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"-","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"PjKZa47hrvA56dF","output_index":6,"sequence_number":212,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"16","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"onW4hC9TT5yB1L","output_index":6,"sequence_number":213,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"cktIpe2JC40qyrR","output_index":6,"sequence_number":214,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I'll","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"BwuYQfF5ruS","output_index":6,"sequence_number":215,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" check","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"1Ox9fcEVBA","output_index":6,"sequence_number":216,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" for","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ie5S79PIpwYx","output_index":6,"sequence_number":217,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" additional","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"kNPl5","output_index":6,"sequence_number":218,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" coverage","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"mhYX8F3","output_index":6,"sequence_number":219,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" from","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"AssCedRW2Om","output_index":6,"sequence_number":220,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Reuters","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"bH9VK71G","output_index":6,"sequence_number":221,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" for","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"X5Utuk2wJgNh","output_index":6,"sequence_number":222,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" diverse","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"gGgRVynJ","output_index":6,"sequence_number":223,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" sourcing","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"ssEAvSG","output_index":6,"sequence_number":224,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","obfuscation":"GZ5gHW4GqKtdz6b","output_index":6,"sequence_number":225,"summary_index":0}
+
+event: response.reasoning_summary_text.done
+data: {"type":"response.reasoning_summary_text.done","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","output_index":6,"sequence_number":226,"summary_index":0,"text":"**Considering conflict updates**\n\nI need to mention that the ceasefire expires next week and highlight the framework deal set before April 21, citing Axios and AP lines. The user asked about the \"oorlog in Iran\", but we may not need to focus solely on the US angle. I’ll note that recent reports indicate the conflict involves the US and Iran with broader regional components, including Israel, Hezbollah, and the Houthis. I should ensure the dates are correct—today is April 16, 2026, and reference April 15-16. I'll check for additional coverage from Reuters for diverse sourcing."}
+
+event: response.reasoning_summary_part.done
+data: {"type":"response.reasoning_summary_part.done","item_id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","output_index":6,"part":{"type":"summary_text","text":"**Considering conflict updates**\n\nI need to mention that the ceasefire expires next week and highlight the framework deal set before April 21, citing Axios and AP lines. The user asked about the \"oorlog in Iran\", but we may not need to focus solely on the US angle. I’ll note that recent reports indicate the conflict involves the US and Iran with broader regional components, including Israel, Hezbollah, and the Houthis. I should ensure the dates are correct—today is April 16, 2026, and reference April 15-16. I'll check for additional coverage from Reuters for diverse sourcing."},"sequence_number":227,"summary_index":0}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","type":"reasoning","encrypted_content":"gAAAAABp4Ig0hRBsmtdJJhlHSpbfxv_BOKGKDN6mUDMlK9Q_2B1lbhHUppEsWMjRMZQWuuqbV4Dms-v38UWoMOL0YcxJxXwTVMZRjPvCy-3iTbhRXDR1zVvGIp_92OJt1g-TbHjgqMMImxxazeuJMja3lfYm6B_ImupwBtzCfIPRDYun6Ysl1KsEKcYY0XqD4n0iEXnyAGaflUBdz-q-4e9KWxkj1yQ6fze88KndKOWp5zdJQEw0LtQVom7udatuoi76rK0bRYD3-_ipMK0m-BvcsPHnEfQi_a9bExxGGYoUDIQvE-NCOST5eionN4Rj4YkQhVu5UXrEyTscwW1xDnAbIG_LVupGeVTdFD6l1hmyG8T7OXQZTer_ANALYHXBYGB_TcihXmN3YvzKp8SpRlxS1I-xvWRp1y5Migq-cKkvt94IR2zEe36hA81Dy0afcju7VdshHbXl1sCgr-jLmIN3xFW1ALlkZSA-VtlUGpR9N37LlyDeHyZm6s1a1_GWdtJGBMqaR65DvMn8bbsuUOBwGZYfkR123DhxuJOTNIFrh6INi3WnDsP9KIndblJl8fxqSzrQDpo7Tg6QMnCMUc8Suhww_ToobnveVnHxMM8nqRGHD8TSJzGKQMSrBGSnYY1mm8pJ7n2bdXp5MFvlozZYIYiabRRcKzk7oPLvXCCy2VL0oOPggoCUgLBt-Nj5LXGPRipRiicA-hnOUKYMRfAzyrpKwyPRv6qAWqTKp3_zbzXNb07HOX9_g45acYSSRuVnWl86YW4uh54ERwEFnwFhSYE5pWD8p1jyWgL7soZvAB5khuKrmvPiGJl0JqEpi-EP6b5kKIo4PCwW8Sw6q2p4tnUoXMDHpmLMAiCYLDkUmemkCdnhWXNr90l6jXouXErptEK08Zk-ccS9KPy_cSQcVkhE1vmQlaW4O9S_46DUNAuGJNzGXeSahcJ0qAmel5wWOprUNSZL9maJ4oQGPACJ_QV-0I9QgtaMrrVFSXDziwdkbVmVoKXEZjQl5WKmKN_fTIJxSs5glBw7-M1a_Vhr19iHG5w6zPhs3kzV2k2bj0d20yA1q3QLeNspixnTDFh5GoY7oxi62TsRX63OVGUFYGPfp0gy6Tu3w53F545vkhWk5Q_brMKHXnIr4yqQxDyZEpYXLvGaeeUGhCKbLMzJ38tKplbxOkpVxYG1cpWwFIaFiRYjh0hbDHDEGDCBomXgCP7aiKg8ZZr2N4vWYwLrk7y1Z3thhQOrdSo1B1MMvZBkpAjHtT95d0jN6qmzZyv9Qjj6t6F7HIAGtSa6512QhCPwmSgP7Y2xFowOOKHpxipp3d-5S0erPB4RRCYD8pK-Sfv4cxefv1JWQ0jT544suFKuHl-zERNExue-6KXg8HuV-BJJv-h9DH1Y4cRdq-feFoiSOtKDpf3ERpDWvQtHjrjWxZ7oL672todxKMqHVXZJhH6PCgA2kuPneBQa5XVLzn0fAbkwSDcKYQ0xUsf9jnC7-HZiPrF8V_Qe52HJdCBPxdAiDc282LFW2hJU5xcyd97mWMuEv9GPI8pA_B2GOJi9VGaYeddy86J11SI2lBEII_ctSrm_3Hrwa3ZqLiDBb7NCdbs1Bnw6tsU5WQJPFksubj8t6B_wRS6SlEVH7G1Iyf1zdNXRmmdZzCUlvhq41_cZ7NkY","summary":[{"type":"summary_text","text":"**Considering conflict updates**\n\nI need to mention that the ceasefire expires next week and highlight the framework deal set before April 21, citing Axios and AP lines. The user asked about the \"oorlog in Iran\", but we may not need to focus solely on the US angle. I’ll note that recent reports indicate the conflict involves the US and Iran with broader regional components, including Israel, Hezbollah, and the Houthis. I should ensure the dates are correct—today is April 16, 2026, and reference April 15-16. I'll check for additional coverage from Reuters for diverse sourcing."}]},"output_index":6,"sequence_number":228}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"ws_04c8e0b6f86052560169e08834c3ec81a3a0ba4e840baa68e4","type":"web_search_call","status":"in_progress"},"output_index":7,"sequence_number":229}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","item_id":"ws_04c8e0b6f86052560169e08834c3ec81a3a0ba4e840baa68e4","output_index":7,"sequence_number":230}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","item_id":"ws_04c8e0b6f86052560169e08834c3ec81a3a0ba4e840baa68e4","output_index":7,"sequence_number":231}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","item_id":"ws_04c8e0b6f86052560169e08834c3ec81a3a0ba4e840baa68e4","output_index":7,"sequence_number":232}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"ws_04c8e0b6f86052560169e08834c3ec81a3a0ba4e840baa68e4","type":"web_search_call","status":"completed","action":{"type":"search","queries":["Reuters April 16 2026 Iran war ceasefire expires April 21 framework deal","Iran war economic sanctions secondary sanctions financial institutions Reuters April 2026 Bessent","ceasefire expires April 21 2026 US Iran Reuters","Iran war Pakistan mediating US Iran talks Tehran April 16 2026 Reuters"],"query":"Reuters April 16 2026 Iran war ceasefire expires April 21 framework deal","sources":[{"type":"url","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url","url":"https://apnews.com/article/80f5a0a27bb28d9fe4236b961b60ab21"},{"type":"url","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},{"type":"url","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},{"type":"url","url":"https://apnews.com/article/00bf6d9a8f19565dbcd437bc6bf09ea0"},{"type":"url","url":"https://www.tbsnews.net/worldbiz/middle-east/us-iran-and-mediators-make-push-45-day-ceasefire-axios-1403801"},{"type":"url","url":"https://www.aljazeera.com/news/2026/4/8/us-iran-ceasefire-deal-what-are-the-terms-and-whats-next"},{"type":"url","url":"https://www.washingtonpost.com/world/2026/04/12/iran-us-israel-trump-lebanon-april-12-2026/eac2ef80-3631-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.aljazeera.com/news/2026/3/24/pakistan-ready-to-host-us-iran-talks-can-latest-peace-push-work"},{"type":"url","url":"https://www.reutersconnect.com/item/one-incident-could-spark-fresh-fighting-after-us-iran-talks-fail-analyst-warns/dGFnOnJldXRlcnMuY29tLDIwMjY6bmV3c21sX1ZBMTg0MjEyMDQyMDI2UlAx"},{"type":"url","url":"https://asiatimes.com/2026/03/iran-drives-104b-surge-in-sanctions-busting-crypto-flows/"},{"type":"url","url":"https://www.wdrb.com/news/national/the-latest-iran-rejects-ceasefire-deal-as-trumps-deadline-for-attacks-on-infrastructure-nears/article_4f991ec5-2d68-542c-b9d9-c8d2e3efcce1.html"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/04/07/iran-israel-us-lebanon-latest-april-7-2026/7ad503d0-323e-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.al-monitor.com/originals/2026/04/talks-were-almost-dead-pakistans-last-ditch-effort-secure-iran-war-truce"},{"type":"url","url":"https://gvwire.com/2026/04/07/us-iran-mediation-efforts-via-pakistan-continue-say-sources/"},{"type":"url","url":"https://www.aljazeera.com/news/2026/4/10/pakistan-sets-modest-goal-for-us-iran-summit-a-deal-to-keep-talks-going"},{"type":"url","url":"https://www.theguardian.com/business/2026/mar/07/us-considers-lifting-more-sanctions-on-russian-oil-as-iran-conflict-sees-global-prices-surge"},{"type":"url","url":"https://en.wikipedia.org/wiki/Naval_blockade_of_Iran"},{"type":"url","url":"https://en.wikipedia.org/wiki/Twelve-Day_War_ceasefire"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_attack_on_the_United_States_consulate_in_Karachi"}]}},"output_index":7,"sequence_number":233}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","type":"reasoning","encrypted_content":"gAAAAABp4Ig9NmWRgvcNqkviinWkMoyF7swewDVXi8bi7DbzAsz8GdDv3B9lrEollP0z4iBzjZe6T8PfR7kOV4BGnnYi2BP2TwgEA4OhsaeTeVA209LXPG3--5fWj_Yv53XP4RlEhRr64TYtuV4iM6Fer0EhlozAadNWBCfeHl1Pr_C4Rm2rzE-hZfF-dsYmkZXsq2QpVZpPAfrlOw6gKawJzmBA23KUpXdN9uAPkjpXRCmj_LY1b2ymPylAjUwsbqgvXV3H2DikyhKrOD2EzNmDcpRLCJr3wHBrujO56AHEiuJrNhsWmnVypMOdU-lPk5UVEZg6pVt4g4gAZd4V4HhlOmVCYqucvBnbC2sAlydxJ1J_goC_vnoL9AbHZZIHXNJFPGz_J5HY1P9Hm7i1VDgYDvJOjMlVsxeeKhGam0cY5gkiHVflKey6IvfaMiNQgqo_ttTlxzhjqlOv-1VAtEvJ1XU8h7f8qV2NpGCBlPtMg1evsNYqt27bfOdJHOLZ3_OzveEmBXtVTBuT9SQz3-33wHbEOOdvgupeoaCqB15Tyzo090wGlrZhs_Uo6OKMi3VEzLRtRxGwczKt2gO_ZO0S29C9iwm9u4Y3K9Utdieixn2him-FPkT7IzvuEgQytqgjUSFd3NNAxBKMYWCDTcaELBd03VAfXG9lA0_FcLsX2RMR4rVvauaA666otFtrJyNIoMPdcVzK-ghW8RSwXVQusjyTNahMSzxTCXRQq1Gw1ZGkHWl16ZqfQFoqBPPv7b8YKH-ISFdzlAJTbjWhEKxo9TEQCp8eQkPRf5ImykZck_ESD4qe2TIYCjhqbba5jyS5JOsElgGQ","summary":[]},"output_index":8,"sequence_number":234}
+
+event: response.reasoning_summary_part.added
+data: {"type":"response.reasoning_summary_part.added","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","output_index":8,"part":{"type":"summary_text","text":""},"sequence_number":235,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"**Clarifying conflict context**\n\nI","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"mp6ley595MRlNv","output_index":8,"sequence_number":236,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" need","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"XIfoGdw4SLj","output_index":8,"sequence_number":237,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"9MifovVuTg7Ui","output_index":8,"sequence_number":238,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" clarify","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"qKK3zXXb","output_index":8,"sequence_number":239,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" with","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"WVz6Fh7sN9y","output_index":8,"sequence_number":240,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"v6EHu9ilyOZF","output_index":8,"sequence_number":241,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" user","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"k5qBISyfgDg","output_index":8,"sequence_number":242,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" whether","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"W3m9lssb","output_index":8,"sequence_number":243,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" they're","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"kEnmidpv","output_index":8,"sequence_number":244,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" asking","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"fpTHlhUOi","output_index":8,"sequence_number":245,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" about","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"1crKS5sGZl","output_index":8,"sequence_number":246,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"T56xvKHqeABB","output_index":8,"sequence_number":247,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" US","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"Q7J2Kcz2jPEpo","output_index":8,"sequence_number":248,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"-I","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"L7voCVALtPeVIt","output_index":8,"sequence_number":249,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"ran","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"YsYLWG6MWZUMy","output_index":8,"sequence_number":250,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" war","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"YhwiLAI8Fv3b","output_index":8,"sequence_number":251,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" or","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"mSR8bLGhkwd48","output_index":8,"sequence_number":252,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" domestic","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"iI996Wt","output_index":8,"sequence_number":253,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" unrest","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"sZFtpGkt4","output_index":8,"sequence_number":254,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"jDlaYvg2wGLbn2s","output_index":8,"sequence_number":255,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"bybs3dPjEAl9BJ","output_index":8,"sequence_number":256,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" want","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"LzoZl3fNOs1","output_index":8,"sequence_number":257,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"3shTpKhbhxbOa","output_index":8,"sequence_number":258,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" summarize","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"Acsvmx","output_index":8,"sequence_number":259,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" it","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"z0OWPP9ZLIpkA","output_index":8,"sequence_number":260,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" as","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"dYroViEZSnx7z","output_index":8,"sequence_number":261,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" “","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"ekTztO3OOrF3sD","output_index":8,"sequence_number":262,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"according","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"hAQxSzA","output_index":8,"sequence_number":263,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"CpTAgH5jLK5gx","output_index":8,"sequence_number":264,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" recent","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"cAoeM7idN","output_index":8,"sequence_number":265,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" reports","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"s8Cm8B2O","output_index":8,"sequence_number":266,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"AMUtxVbanYSFhvY","output_index":8,"sequence_number":267,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" mainly","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"r8ADdQFJy","output_index":8,"sequence_number":268,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"Fxg0WWQsXmJI","output_index":8,"sequence_number":269,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" conflict","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"fLYSfbn","output_index":8,"sequence_number":270,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" between","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"PMSoIwU3","output_index":8,"sequence_number":271,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"Mvu2VHeK4MxE","output_index":8,"sequence_number":272,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" US","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"QDvl3lvU0Usa3","output_index":8,"sequence_number":273,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"hnPtTi8kzqTC","output_index":8,"sequence_number":274,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Iran","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"IgdsKtXOnAC","output_index":8,"sequence_number":275,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"UeAaxa4Jj1ht","output_index":8,"sequence_number":276,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"07G6RlgzAVTp","output_index":8,"sequence_number":277,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" broader","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"jsXaUfHc","output_index":8,"sequence_number":278,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" region","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"RbX4vpYIv","output_index":8,"sequence_number":279,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".”","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"ADBd0rcSVHEsNA","output_index":8,"sequence_number":280,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I'll","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"k70JsbE8S4d","output_index":8,"sequence_number":281,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" craft","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"Sc2mUwCado","output_index":8,"sequence_number":282,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" this","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"dB7XaPmcWZO","output_index":8,"sequence_number":283,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" in","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"ytUL8J985ikQK","output_index":8,"sequence_number":284,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" Dutch","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"RDkBgHQXz4","output_index":8,"sequence_number":285,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"ccmqjBkoi0EM","output_index":8,"sequence_number":286,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" include","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"lMXUG6Sy","output_index":8,"sequence_number":287,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"cFscW4AvhiWQ","output_index":8,"sequence_number":288,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" date","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"1ZWoFpppU2h","output_index":8,"sequence_number":289,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"eOBuTwxHimYIGIi","output_index":8,"sequence_number":290,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" which","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"ApAcZz0YgQ","output_index":8,"sequence_number":291,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" is","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"pVOLdXk5oMMsH","output_index":8,"sequence_number":292,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" today","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"u4pXpeN6ig","output_index":8,"sequence_number":293,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"OEPpFimc0ue3dI5","output_index":8,"sequence_number":294,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" April","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"1WxdE4PG0i","output_index":8,"sequence_number":295,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 16","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"PjJahNIrpLy1d","output_index":8,"sequence_number":296,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"dztSxgY8Ge3N7dW","output_index":8,"sequence_number":297,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 202","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"iI2CKmRlJ5jc","output_index":8,"sequence_number":298,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"6","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"oWNWXs7f6SMZSIq","output_index":8,"sequence_number":299,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"mILHK33wiCBmjVc","output_index":8,"sequence_number":300,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" I'll","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"2y1NQ87IBHo","output_index":8,"sequence_number":301,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" say","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"7XscZ1CUqbBC","output_index":8,"sequence_number":302,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"n3ZTzRHkmfmxZU7","output_index":8,"sequence_number":303,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" \"","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"6Ifqi8b808eVKH","output_index":8,"sequence_number":304,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"Here","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"auP0YUMyeC0g","output_index":8,"sequence_number":305,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" are","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"UPOcgCBiB0l0","output_index":8,"sequence_number":306,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"IJEiJHkIGoOU","output_index":8,"sequence_number":307,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" most","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"L7dl6HKNVox","output_index":8,"sequence_number":308,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" recent","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"2CsWo7BI4","output_index":8,"sequence_number":309,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" points","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"OYJO3ZCH9","output_index":8,"sequence_number":310,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" (","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"xQLwb96QL1JRzq","output_index":8,"sequence_number":311,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"latest","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"yRYv4ydBi7","output_index":8,"sequence_number":312,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" reports","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"SyszpY1r","output_index":8,"sequence_number":313,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" up","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"u1WD5P0rx9lE3","output_index":8,"sequence_number":314,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" to","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"eh4TWMhVVvH7O","output_index":8,"sequence_number":315,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" April","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"i1UdhFDMg4","output_index":8,"sequence_number":316,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 16","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"kqjI1nhalFncF","output_index":8,"sequence_number":317,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":",","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"7lWZzAtMleLy5eJ","output_index":8,"sequence_number":318,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" 202","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"zU8EtwgtuPiC","output_index":8,"sequence_number":319,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":"6","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"JfLyYnxJFJ7MaEa","output_index":8,"sequence_number":320,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":")\"","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"gjalvpuDcWwzav","output_index":8,"sequence_number":321,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" and","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"jijelCbHLWRo","output_index":8,"sequence_number":322,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" provide","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"Nk0dBl1h","output_index":8,"sequence_number":323,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" the","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"wbY5J0gKGNaO","output_index":8,"sequence_number":324,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" list","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"jppvGG0N9i9","output_index":8,"sequence_number":325,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"yEHBau8iouMrsB6","output_index":8,"sequence_number":326,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" No","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"53tuHun9r24l0","output_index":8,"sequence_number":327,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" further","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"qD6CYops","output_index":8,"sequence_number":328,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" web","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"J67w7Zei6ZNO","output_index":8,"sequence_number":329,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" calls","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"5ROtAebFls","output_index":8,"sequence_number":330,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" are","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"G13Fjv5SIsR3","output_index":8,"sequence_number":331,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":" necessary","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"jipP5N","output_index":8,"sequence_number":332,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","delta":".","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","obfuscation":"IEij35QjNswuA56","output_index":8,"sequence_number":333,"summary_index":0}
+
+event: response.reasoning_summary_text.done
+data: {"type":"response.reasoning_summary_text.done","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","output_index":8,"sequence_number":334,"summary_index":0,"text":"**Clarifying conflict context**\n\nI need to clarify with the user whether they're asking about the US-Iran war or domestic unrest. I want to summarize it as “according to recent reports, mainly the conflict between the US and Iran and the broader region.” I'll craft this in Dutch and include the date, which is today, April 16, 2026. I'll say, \"Here are the most recent points (latest reports up to April 16, 2026)\" and provide the list. No further web calls are necessary."}
+
+event: response.reasoning_summary_part.done
+data: {"type":"response.reasoning_summary_part.done","item_id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","output_index":8,"part":{"type":"summary_text","text":"**Clarifying conflict context**\n\nI need to clarify with the user whether they're asking about the US-Iran war or domestic unrest. I want to summarize it as “according to recent reports, mainly the conflict between the US and Iran and the broader region.” I'll craft this in Dutch and include the date, which is today, April 16, 2026. I'll say, \"Here are the most recent points (latest reports up to April 16, 2026)\" and provide the list. No further web calls are necessary."},"sequence_number":335,"summary_index":0}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","type":"reasoning","encrypted_content":"gAAAAABp4Ig_6uKqH87UkN_NScMWke-RN5kxUvfWDr8y-hYytNDMyldU8ejOQz9pKMAfmRRvTg2AMAorVpU9fLZYEFgIw7Xhv6R0r37YhC34FFRh4h_MBV7Ia-On77xpIEKMnxbQMByZIzitiLWYU4NMwB3EeNyoiPWdFZ8Ghey4OSCz7H3oHkrtfc-1ghOqKt7q-6GRKDqmDMMOq8HxFB8FgoizYykX-OWZJSmJSkJDxcMJBxtzDB7yT9wwfXPRAs7xV0vq-J7Gnn3_6CXirxDDTjybRV_a69B9pqPkhb4bK_m9CoOV4xwcdp5edrGscRcdGblr3Mye9WlBnNaPp14WvY06fyJYSgyvYQrGMUpRy78bRA1CUeXkJey3WwMs5ZPUa4haGn2p-7lOxUKkzoNO9t2TW_lONPL0IpYuWDNVhC4qzNsQbP8nbHVWEiI9MXdQHW9lKDsJuo1zGFl0bkpexAubuCbdYGTGLUJLTEwrXq1hxLwu-yCK2H3MFv02k8a9RF_6XPuOkx8FaCBVJ8o9c49xPVVNS29b3uMwhJDe1Lx01k4BYbSwlMKookk-eYnTfz41XYhxZ454xmqE24Xv3MEpOZnXDYi3xPrspmyAZ6yiRlZoO0pzqKcZtoRp4FrwIQ9azumJxZ14wBeeSfkArhpp2jWczdcwJrUo2G7kSpyXJ-pXpTqldH0mxbnolF21Fc6iy6nb6CNMpXU5w8J9N8hYY_irWKsoiKcA6bqcnRt24yNpa5CfjdeOKVTpCd6YQ4n064Sb-RR_Jg-8mKfCMtX2l0_TlPNrb6LBJU16idWfoumrii1IXsCx0d3MKhYWSI3ye7dhR37mYFfL2eDebS95izwQ6EIurvHsH-KsCh7i274Nga-ErRc02ht3FLUAekefx9HW5RWP9OTbD-Pp8K-HbuJp_HsTo0PLO6drO1IyAMxYYDONsXfJIWd8lnRTDxg2C39H2IG3-WdQHDQCnVpVYRUrbcxggTHed0xDWdwI9eiX4zdEchuv68eha3Chh-7QiWoHaCx-OB8wtl70HEmtNE_fqnPddylX3svrEQog5oKx12immnLK-C7KowS7ECFbTIIO7nUBQf6Qb7jWwW5jm_qPh9tdYm0spCMW7Z--M__sH9dpCBBnvV4V74PBzT2QJz00TcxJI1zO7CSDlwCVnvaxos4-MlDU1WNJ88yN9CCQA4CqdODcx_ikBTnG4Zd4orelAb_tFAGxO_k-p5seF7x16XD4GYnDifjtUL8b9tZkcmjkpBUSiU31cYN1aiAEAKjlyL-sT7gvLZdk7v86it1MZXXN9sKVKVCpL92OSBKI5EkQ-WDYWdkQ3xMQIWTwf6IVjiP8p33OUt-U1XYZzTz38SiPfeycg_JrtwlOw7Qz0ynzoajvIxQMaPl7WqJhm9f-03UEXZHLNX7twNjOoYI2VultJo9uibyDfSyCvYbTl6RvdDwqSKgjGX1hQ3ZeqgVxgwojbSklQxaq0DhpfY7NgjoJvYUca1ei6yyeZ98YvRWegIF0v8LXLMs1_7dqFGLuRNW0TJATuM0iq7fBFIAu6oLE-BaSLGkKZUlsGFqG1p6xxV-T0DMAJY6OCoSzC2yd4WyFfOuX8Uj2Vh0JfisDKcnpM06fzbrVoRyMSEF8tL6JTYcDXYo_ntpm9X2DmO9uMq9LpEKTm5rfz1DM5niE0dLdeQbGchewEt3uVa1Y7gThQa2gn9YF0myV2QSPJFwbfqKw1gZ535yjV004ZmFJ_8W_lov6Cw2dT0WUeEpIjUPmG3GG8WySgqgnb4ubZIkNuGQiG8EdoielsC0hO-iX3f1-kmLKWcJ9aUp_Ee-2AkDsiAtl4ob_04Vfu2rnqCDVaLiC9eUIaR0EzUidISEs0_ahqAMrdeNWj9P9ddkxDPQHVIVQ4XxAdiGomRpIPIDGIEuTonZ_nQIbF9LcuZehUv_jk3EbkIEmGtgZCpSbs5sn8nEDYuURV2m80eqP3FYXwCAOXyxfGWpatnY9bPEHXfTJs8zqCWquPwYEp7FP4Y--1QKxHI4hA3qY6znfJaQAXKNriTmRjHtWdyQnHC9GQo92hPbUU-fVCMsI7nUqH447BKe4C1gi-etsgx6mWF-vyB3ZNZ-RHOfWSwA8tzQxE3NHaSEC2pmNj-k43QhEbAg0fC3a2V86NCKwMnujiLzJU0TajBia9hc_E_kutd4WjiodoUvKGu6PAONdUkX15jpNjZzjuf4FHGk61gygTipoFllNcBu2WM6b75tS5HECaKLdw-PbH3jec6MIeRuE0f_R_4QZpTK1DYO3semxd4VU5VFoRDp8mj5U1aY4mHmssqptiZ-uRz6w9EziB-9YdwgaN7WVn8BsmcjXYYmu4gxQVu513VAu-RYXXCkn2uDMejQDAOg7aDtrM4sp14T_mXQcFwEcQbb8lKbGjpdxpU1oHOWZ2VeBnZC4TLDyZ4ovhti2eTFQsPgWKQCfHoBiMt0EePsvzrkd4k-Kl4CL3V5dboF5C4v3IK66o-bpExxIP403k_nlbpY6Uc8ir5KbMk6ftpIqtl9G13tVeAUmCm5R3hQ_ipIuQ3UN2n-kHSDfsSOnsdjgGjdzBwOVbTE8-pw8I7UMivcvbYAZllxMQRuxDwJ9cDqvzR9ROhExbDGGQEZEh-mpIj4o4Y4b-NItc_MjmCSMtkC0_48Ezan340aNJOUFwzFtA5ijys0inaFwyjQw8x-QSO3JeshO7LY3zXKWrgPmzjJc7TTAfrvD4oQw6j1Y4BcAUN22BuSUhVRbGYQg8GKLOWFYKT15y-ZRHUFKnwo9qt54A4ILE9voWDT7uYWLtG-AAptOo_ExEwsnZFs4XTG48dq_fyFwAZ7i0ok-YSLiHY2hPLAsrhm-8Adtub4wIueCqI_DvaeX1IFXcaGI8_dPF7upjZileUVKrpDM2nQ5M8Pa163-JZXbp8WfTs1vNjGtlfrPCKBdjl4UYtFM3j8Lu_JyrjVa579Dqnf0-PHQf_1sFJS4UaZzC_vB40hWM2zc3LSd12ip5E-YT_4smM0QzguqVB3uNut9Kw5E_Bcjfajv074IiO45kTeDNbFqKEZRWF0gIBzHSqWhHgYKvzHbCDYjHuYHPoZUqTRitsRPAX8fT1cWt7tzHB0TRm5r-NB1hxhoYotUvT9mdSVoz2TqKrETmSJwQXCQV2H642idQWuenxraVZyPT6g6LS7_CZImVwaZnsGZX0RduJQ1a2VE66Sb-bDiswsWUd8Pj8wT_8QwSeh0_iyQ3TN1q5cUV-x0WTiGJY2jFqgeKw==","summary":[{"type":"summary_text","text":"**Clarifying conflict context**\n\nI need to clarify with the user whether they're asking about the US-Iran war or domestic unrest. I want to summarize it as “according to recent reports, mainly the conflict between the US and Iran and the broader region.” I'll craft this in Dutch and include the date, which is today, April 16, 2026. I'll say, \"Here are the most recent points (latest reports up to April 16, 2026)\" and provide the list. No further web calls are necessary."}]},"output_index":8,"sequence_number":336}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","type":"message","status":"in_progress","content":[],"phase":"final_answer","role":"assistant"},"output_index":9,"sequence_number":337}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":""},"sequence_number":338}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Hier is **laatste nieuws (t/m ","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"S4","output_index":9,"sequence_number":339}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"16 april 2026)** over de **oorlog/conflict rond Iran** (","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"8uu0nSI7","output_index":9,"sequence_number":340}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"in de berichtgeving vooral het **VS–Iran-conflict**, met bredere regionale impact):\n\n- **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"bq07sXN","output_index":9,"sequence_number":341}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Nieuwe diplomatieke poging (VS–Iran) via Pakistan en Iran**\n  -","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"W","output_index":9,"sequence_number":342}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" De **legerchef van Pakistan** gaat naar **Teheran** om hernieuwde gesprekken te faciliteren en de spanningen te temperen, na bijna zeven","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"UFnLawR","output_index":9,"sequence_number":343}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" weken oorlog. ","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"k","output_index":9,"sequence_number":344}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"O1wL","output_index":9,"sequence_number":345}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":465,"start_index":390,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},"annotation_index":0,"content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"sequence_number":346}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"\n- **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"s6lImd5GJBJ","output_index":9,"sequence_number":347}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Onderhandelingen richting een “framework deal”**\n  -","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"Vqt66F5u8esL","output_index":9,"sequence_number":348}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" VS en Iran zouden **richting een kaderafspraak** gaan om de oorlog te beëindigen, met bemiddeling door o.a.","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"ev7l","output_index":9,"sequence_number":349}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Pakistan (en ook Egyptische/Turkse bemiddelaars genoemd).\n  -","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"TK","output_index":9,"sequence_number":350}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Er wordt gemeld dat het **sta","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"3T","output_index":9,"sequence_number":351}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"akt-het-vuren op 21 april 2026** afloopt, en dat men probeert vóór/rond die datum vooruitgang te boeken. ","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"EP3kdze","output_index":9,"sequence_number":352}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([axios.com](https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan)","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"fm4u4BYlaTcCEi","output_index":9,"sequence_number":353}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":")\n\n- **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"eeY1LQNJR","output_index":9,"sequence_number":354}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":911,"start_index":828,"title":"U.S. and Iran inch toward framework deal to end war, U.S. officials say","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},"annotation_index":1,"content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"sequence_number":355}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Mogelijke verschuiving naar “economische oorlogsvoering” als het niet lukt**\n  -","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"","output_index":9,"sequence_number":356}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" De VS bereidt, als er geen deal komt of geen verlenging volgt, een **meer economisch gerichte campagne** voor (o.a. **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"ZZU5ZsGVP","output_index":9,"sequence_number":357}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"secundaire sancties** en druk op financiële instellingen), “","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"rWG0","output_index":9,"sequence_number":358}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"als financieel equivalent” van de bombardementen. ","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"FL7ISjwVFMCEDV","output_index":9,"sequence_number":359}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([apnews.com](https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b))\n","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"M0b7","output_index":9,"sequence_number":360}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":1301,"start_index":1226,"title":"Trump administration pivots to economic warfare on Iran | AP News","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},"annotation_index":2,"content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"sequence_number":361}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"\n- **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"rzu7SGHH8KI","output_index":9,"sequence_number":362}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Amerikaans politiek debat: Senaat stemt tegen stopzetten van de oorlog**\n  -","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"WbJz","output_index":9,"sequence_number":363}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" De Senaat (met Republikeinse meerderheid) wijst een","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"9JKdPmc91a6w","output_index":9,"sequence_number":364}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" poging af om de oorlog te stoppen; er wordt gemeld dat het om een **47–52 stem** ging. ","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"WBLIlCh6","output_index":9,"sequence_number":365}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([apnews.com](https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4))\n\n- **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"1SOynULimQYw0Q8","output_index":9,"sequence_number":366}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":1598,"start_index":1523,"title":"Senate Republicans again reject effort to halt Iran war | AP News","url":"https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4"},"annotation_index":3,"content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"sequence_number":367}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Wat staat er inzet in diplomatieke “sticking points”?**\n  - In","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"A9","output_index":9,"sequence_number":368}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" dezelfde berichtgeving komen o.a. terug: **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"3e5N","output_index":9,"sequence_number":369}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Iran’s nucleair programma**, de **Straat van Hormuz**, en **compensatie voor oorlogsschade**. ","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"2u","output_index":9,"sequence_number":370}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"dh0nIVkFbhRxims","output_index":9,"sequence_number":371}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":1879,"start_index":1804,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},"annotation_index":4,"content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"sequence_number":372}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"Opvallend nevenbericht (sport)**\n  -","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"jeekF7RjyX7c","output_index":9,"sequence_number":373}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" FIFA-voorzitter **Infantino** zegt dat **Iran “voor zeker”**","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"CUl","output_index":9,"sequence_number":374}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" deelneemt aan het WK, ondanks de oorlog. ","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"mgBKIf","output_index":9,"sequence_number":375}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([apnews.com](https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5))\n","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"K7zt","output_index":9,"sequence_number":376}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":2099,"start_index":2024,"title":"FIFA president Infantino says Iran will participate in World Cup 'for sure' | AP News","url":"https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5"},"annotation_index":5,"content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"sequence_number":377}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"\nWil je dat ik dit toespits op **(1) gevechten/aanvallen**, **","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"LP","output_index":9,"sequence_number":378}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"(2)","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"VyMfhfKkQjBqP","output_index":9,"sequence_number":379}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" onderhandelingen & staakt-het-vuren**, of **(3)","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"","output_index":9,"sequence_number":380}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" binnenlandse situatie in Iran**?","item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"obfuscation":"7Q593hWYsfDPCeG","output_index":9,"sequence_number":381}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","logprobs":[],"output_index":9,"sequence_number":382,"text":"Hier is **laatste nieuws (t/m 16 april 2026)** over de **oorlog/conflict rond Iran** (in de berichtgeving vooral het **VS–Iran-conflict**, met bredere regionale impact):\n\n- **Nieuwe diplomatieke poging (VS–Iran) via Pakistan en Iran**\n  - De **legerchef van Pakistan** gaat naar **Teheran** om hernieuwde gesprekken te faciliteren en de spanningen te temperen, na bijna zeven weken oorlog. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Onderhandelingen richting een “framework deal”**\n  - VS en Iran zouden **richting een kaderafspraak** gaan om de oorlog te beëindigen, met bemiddeling door o.a. Pakistan (en ook Egyptische/Turkse bemiddelaars genoemd).\n  - Er wordt gemeld dat het **staakt-het-vuren op 21 april 2026** afloopt, en dat men probeert vóór/rond die datum vooruitgang te boeken. ([axios.com](https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan))\n\n- **Mogelijke verschuiving naar “economische oorlogsvoering” als het niet lukt**\n  - De VS bereidt, als er geen deal komt of geen verlenging volgt, een **meer economisch gerichte campagne** voor (o.a. **secundaire sancties** en druk op financiële instellingen), “als financieel equivalent” van de bombardementen. ([apnews.com](https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b))\n\n- **Amerikaans politiek debat: Senaat stemt tegen stopzetten van de oorlog**\n  - De Senaat (met Republikeinse meerderheid) wijst een poging af om de oorlog te stoppen; er wordt gemeld dat het om een **47–52 stem** ging. ([apnews.com](https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4))\n\n- **Wat staat er inzet in diplomatieke “sticking points”?**\n  - In dezelfde berichtgeving komen o.a. terug: **Iran’s nucleair programma**, de **Straat van Hormuz**, en **compensatie voor oorlogsschade**. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Opvallend nevenbericht (sport)**\n  - FIFA-voorzitter **Infantino** zegt dat **Iran “voor zeker”** deelneemt aan het WK, ondanks de oorlog. ([apnews.com](https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5))\n\nWil je dat ik dit toespits op **(1) gevechten/aanvallen**, **(2) onderhandelingen & staakt-het-vuren**, of **(3) binnenlandse situatie in Iran**?"}
+
+event: response.content_part.done
+data: {"type":"response.content_part.done","content_index":0,"item_id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","output_index":9,"part":{"type":"output_text","annotations":[{"type":"url_citation","end_index":465,"start_index":390,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url_citation","end_index":911,"start_index":828,"title":"U.S. and Iran inch toward framework deal to end war, U.S. officials say","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},{"type":"url_citation","end_index":1301,"start_index":1226,"title":"Trump administration pivots to economic warfare on Iran | AP News","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},{"type":"url_citation","end_index":1598,"start_index":1523,"title":"Senate Republicans again reject effort to halt Iran war | AP News","url":"https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4"},{"type":"url_citation","end_index":1879,"start_index":1804,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url_citation","end_index":2099,"start_index":2024,"title":"FIFA president Infantino says Iran will participate in World Cup 'for sure' | AP News","url":"https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5"}],"logprobs":[],"text":"Hier is **laatste nieuws (t/m 16 april 2026)** over de **oorlog/conflict rond Iran** (in de berichtgeving vooral het **VS–Iran-conflict**, met bredere regionale impact):\n\n- **Nieuwe diplomatieke poging (VS–Iran) via Pakistan en Iran**\n  - De **legerchef van Pakistan** gaat naar **Teheran** om hernieuwde gesprekken te faciliteren en de spanningen te temperen, na bijna zeven weken oorlog. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Onderhandelingen richting een “framework deal”**\n  - VS en Iran zouden **richting een kaderafspraak** gaan om de oorlog te beëindigen, met bemiddeling door o.a. Pakistan (en ook Egyptische/Turkse bemiddelaars genoemd).\n  - Er wordt gemeld dat het **staakt-het-vuren op 21 april 2026** afloopt, en dat men probeert vóór/rond die datum vooruitgang te boeken. ([axios.com](https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan))\n\n- **Mogelijke verschuiving naar “economische oorlogsvoering” als het niet lukt**\n  - De VS bereidt, als er geen deal komt of geen verlenging volgt, een **meer economisch gerichte campagne** voor (o.a. **secundaire sancties** en druk op financiële instellingen), “als financieel equivalent” van de bombardementen. ([apnews.com](https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b))\n\n- **Amerikaans politiek debat: Senaat stemt tegen stopzetten van de oorlog**\n  - De Senaat (met Republikeinse meerderheid) wijst een poging af om de oorlog te stoppen; er wordt gemeld dat het om een **47–52 stem** ging. ([apnews.com](https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4))\n\n- **Wat staat er inzet in diplomatieke “sticking points”?**\n  - In dezelfde berichtgeving komen o.a. terug: **Iran’s nucleair programma**, de **Straat van Hormuz**, en **compensatie voor oorlogsschade**. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Opvallend nevenbericht (sport)**\n  - FIFA-voorzitter **Infantino** zegt dat **Iran “voor zeker”** deelneemt aan het WK, ondanks de oorlog. ([apnews.com](https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5))\n\nWil je dat ik dit toespits op **(1) gevechten/aanvallen**, **(2) onderhandelingen & staakt-het-vuren**, of **(3) binnenlandse situatie in Iran**?"},"sequence_number":383}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","type":"message","status":"completed","content":[{"type":"output_text","annotations":[{"type":"url_citation","end_index":465,"start_index":390,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url_citation","end_index":911,"start_index":828,"title":"U.S. and Iran inch toward framework deal to end war, U.S. officials say","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},{"type":"url_citation","end_index":1301,"start_index":1226,"title":"Trump administration pivots to economic warfare on Iran | AP News","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},{"type":"url_citation","end_index":1598,"start_index":1523,"title":"Senate Republicans again reject effort to halt Iran war | AP News","url":"https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4"},{"type":"url_citation","end_index":1879,"start_index":1804,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url_citation","end_index":2099,"start_index":2024,"title":"FIFA president Infantino says Iran will participate in World Cup 'for sure' | AP News","url":"https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5"}],"logprobs":[],"text":"Hier is **laatste nieuws (t/m 16 april 2026)** over de **oorlog/conflict rond Iran** (in de berichtgeving vooral het **VS–Iran-conflict**, met bredere regionale impact):\n\n- **Nieuwe diplomatieke poging (VS–Iran) via Pakistan en Iran**\n  - De **legerchef van Pakistan** gaat naar **Teheran** om hernieuwde gesprekken te faciliteren en de spanningen te temperen, na bijna zeven weken oorlog. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Onderhandelingen richting een “framework deal”**\n  - VS en Iran zouden **richting een kaderafspraak** gaan om de oorlog te beëindigen, met bemiddeling door o.a. Pakistan (en ook Egyptische/Turkse bemiddelaars genoemd).\n  - Er wordt gemeld dat het **staakt-het-vuren op 21 april 2026** afloopt, en dat men probeert vóór/rond die datum vooruitgang te boeken. ([axios.com](https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan))\n\n- **Mogelijke verschuiving naar “economische oorlogsvoering” als het niet lukt**\n  - De VS bereidt, als er geen deal komt of geen verlenging volgt, een **meer economisch gerichte campagne** voor (o.a. **secundaire sancties** en druk op financiële instellingen), “als financieel equivalent” van de bombardementen. ([apnews.com](https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b))\n\n- **Amerikaans politiek debat: Senaat stemt tegen stopzetten van de oorlog**\n  - De Senaat (met Republikeinse meerderheid) wijst een poging af om de oorlog te stoppen; er wordt gemeld dat het om een **47–52 stem** ging. ([apnews.com](https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4))\n\n- **Wat staat er inzet in diplomatieke “sticking points”?**\n  - In dezelfde berichtgeving komen o.a. terug: **Iran’s nucleair programma**, de **Straat van Hormuz**, en **compensatie voor oorlogsschade**. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Opvallend nevenbericht (sport)**\n  - FIFA-voorzitter **Infantino** zegt dat **Iran “voor zeker”** deelneemt aan het WK, ondanks de oorlog. ([apnews.com](https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5))\n\nWil je dat ik dit toespits op **(1) gevechten/aanvallen**, **(2) onderhandelingen & staakt-het-vuren**, of **(3) binnenlandse situatie in Iran**?"}],"phase":"final_answer","role":"assistant"},"output_index":9,"sequence_number":384}
+
+event: response.completed
+data: {"type":"response.completed","response":{"id":"resp_04c8e0b6f86052560169e0881b558881a39f1329904fa6b2df","object":"response","created_at":1776322587,"status":"completed","background":false,"completed_at":1776322623,"error":null,"frequency_penalty":0.0,"incomplete_details":null,"instructions":null,"max_output_tokens":32000,"max_tool_calls":null,"model":"gpt-5.4-nano-2026-03-17","output":[{"id":"rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880","type":"reasoning","encrypted_content":"gAAAAABp4Ig_cURETyv4TgltZJ7R7_MxhRxn8CBRud0DSZzEI_p-uBuV8k_9MLQManN6epY584zhF2mOZ6HIrdK_D3sBXVkjSbQzHRETHxZ8ua8pwqSaWIN1-Bqly7B_SfhkHzVm94omN0_g3DOT9LRvJ02dDZo2o9YXlXkrZ7i5zhknj00mco9tqmRh8LVKmmfTUBtWjf1_5ETjiWYg91maXr0csDUqHPaUkYp_zrCWJh86-IRxmVzscm9qJNmRKdj8odxvDYsbvpfNg5WsVT2s88pr4Eo77_SqQKVdJ95Kg_iRLhGXnXvku74dtEONnqZuvI-JX-1ht00OeurC9D6dL9aXctI1lHgXazuijVANs1tardVKdpueiBd8dp-saxqZowVq3HvKQLsv9nt4vYjMNeJX2qB-RJt0qCSYfGnd_es2DjsKCcEvvKCAUGHKdidMCGL6LGQSaeUc90F7mvShOlAAZUmqlyyKaDG8Xd0XlfngTMGnim7BYPM48muLEyIirU_UhKUBNyG7DaUZGoEY2reQBssxoNH6sufsm61cX_ig-753jXg8YIzoXoqcdS-WEIY-ava2wReLS-kaURTp6HVgb4rHimi1Sd-A8EFPSZ_wQmtbYnOvJYCGtKKPadFyOUgwDfRXCGztYuJoFU9Bxk2MJr8NaMfbmD-VD4CPBfQiskagRxdTwUKYDp57jrDIM_-neunVvwefnlyUdzd89_K9EGLvAAlW5nnPLq0SWZ38VBbbVZBjdtLkmYl-mlHgeLeHIJnEPDTHX0wlWSXXCXkxGoYu-NqLm-qgO9LVY4e011bjUxCsjwdWFzZlD1nLLYLC0P1aA1wURIP_JOcmfIl78s_tVa8cACfFT8E22Y6p220ORKmZ-BfNc164ryq1qlg_zEjQD7F7G1Q_Jx5-EUAT143ZTwbGtiyc-mJ1-1sEfmSFnw4kxF3ZnsyDRBdN-iU1nxhFBKWLVoa6yu5TLkBrfLAXOwrOJu8J71mVQBVuEiE2dFFq8j-Hg0OG_F40W-jpH_BpEtp80SXrQEENgXtGmFj9mXaokio8UiWFbrx2fRdRBUTO1Fl_KGPNRBrc2hcV_mMazhUUYwjYnAP-TwsFCeoDzYcUEh9edfVhWdMlUzEwlbh2M0rP3U95RaSmHUzg0eD6r9Cv_lEZKeaEnDXQRX7oSmqUlmk6EfQ6eoxxufhb3WaEz_JLkLx3yMxAMxFyYfdyYXFWvC8pnOzQDsbisJC2dEa9URE7TcaZAmxT9R0AEhekvoW8_zplE6Kjg27105t9lOZqOD5u3eo72aj5yFMhxfnXjRBPWH9wl-K1COuoyS_pJSsZCp3wmIZT740-HTV-_Lg6wmZgBJSr_Gi1dqk7b39-jQFLj1pknP7TLgMnh2bMSvXtieT16CUYoh6JUgTis-Fx8wdiZ0AiRYib7ddjoA==","summary":[{"type":"summary_text","text":"**Searching for latest news**\n\nI need to use web.run to find the latest news, and the user mentioned they're looking for information in Dutch. They want updates about the current situation in Iran, specifically around the war. I’m thinking I should clarify if they're interested in specific aspects like the Israel-Iran tensions or Iran-backed militias. I’m planning to search multiple queries about the Iran conflict from the past week to gather recent and relevant news."}]},{"id":"ws_04c8e0b6f86052560169e0881e75c881a38d66ee4ea5314a75","type":"web_search_call","status":"completed","action":{"type":"search","queries":["laatste nieuws oorlog in Iran","Iran conflict latest news April 2026","Iran Israel war latest news April 2026","Iran fighting latest news unrest April 2026"],"query":"laatste nieuws oorlog in Iran","sources":[{"type":"url","url":"https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5"},{"type":"url","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url","url":"https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4"},{"type":"url","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},{"type":"url","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},{"type":"url","url":"https://www.axios.com/2026/04/15/lebanon-ceasefire-israel-trump"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_South_Pars_field_attack"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Strait_of_Hormuz_campaign"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Iranian_strikes_on_Bahrain"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Iranian_strikes_on_Israel"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Fardis_massacre"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_Iranian_strikes_on_Jordan"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/04/06/iran-israel-us-lebanon-latest-april-6-2026/ba41c2b8-3178-11f1-b85b-2cd751275c1d_story.html/"},{"type":"url","url":"https://www.globalsecurity.org/military/ops/iran-war-20260404.htm"},{"type":"url","url":"https://www.aljazeera.com/news/2026/2/25/iran-rejects-fictional-narratives-power-grab-after-protest-killings"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/04/09/iran-israel-us-lebanon-latest-april-9-2026/51510934-33d1-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.newsrael.com/posts/650ps8ulwa6"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/03/29/iran-israel-us-latest-march-29-2026/0dcce7dc-2b25-11f1-a0f2-3ba4c9fe08ac_story.html"},{"type":"url","url":"https://www.globalsecurity.org/military/ops/iran-war-20260412.htm"},{"type":"url","url":"https://img2.washingtonpost.com/national/2026/04/07/iran-israel-us-lebanon-latest-april-7-2026/7ad503d0-323e-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.nbcsandiego.com/news/national-international/israel-us-iran-war-middle-east-april-10-2026-live-updates/4008222/"},{"type":"url","url":"https://www.ncr-iran.org/en/news/iran-news-in-brief-news/iran-news-in-brief-april-1-2026/"},{"type":"url","url":"https://www.longwarjournal.org/archives/2026/03/iran-braces-for-internal-unrest-as-us-and-israeli-attacks-persist-march-14-16-updates.php"},{"type":"url","url":"https://www.idf.il/en/mini-sites/iran-israel-war-2026/iran-israel-war-2026-live-updates-1/april-4-2026-iran-israel-war-2026-live-updates/"}]}},{"id":"rs_04c8e0b6f86052560169e08828542481a39420b5af4c47a842","type":"reasoning","encrypted_content":"gAAAAABp4Ig_mrF6Bt1INCRF0-dAAMrk2nrDehmO75m0yOTVXEPEzPTb1EPCEcv_58CDXcmnrZX_jT6mBFW6AU85vmD4KMl2zJYOqLaNxnQv46hgKVsxFXPvRlmSdk08S7NvuUI0REjC6FpOA8oMrUj276Jc8abE12c8NIsx7n9XSoUbToTDo7B1IoSbTeakWd7dgkhVr89p0nHkw_2-1wEFl67US2UXmnLhD7L07RywDaxJQsyB-a2mLRqRcnTcoTlPFCEeqexTpz_o7miZT7c-EWbyvAZ5McipfPodPI_Zsn5bda-V_kqENQnrOfVcnvzCRtoIH6RRPSY7gcNVERhak-KGB5kSM9b-TcmGnrz0QLl3dwSV2UEVvHV5NnI7jalA66JpM6OKQdhrerYHxkmoTIN-EMlGQGVb4BJX0UoqdiqPatQH4OOUgSEaOj8Ex8M29VMOWCEXXw3eIp5ONOWgSFPEuzCCX1Uy_kuOhBTPVfUGKrMzH3-522uWRLn97Eg7Sut2GgaMXFXNTlJdaT1qMU03aSbegJHfeijzAojJEvVhiJiXfCRRWKJUzf0w5qKOwRjvz1yGMTtbEaxD8GXCOcY-jiUgrHKAkC4SU4gBTpLEFNbKIqG-DRYuWkZBy6RUVqbEM-m67fGgzswI8s1DZm5MVQrGHwNeNxmkZMfCOWhTPVQyInP336T7e1Rcvt_bpBjzLtEmzWB6OW8eEGCe9R4AC1b0SOgDXCJHFBK0Bz1vDjMJFPzVO_sM9-nCzNl6j7gmQl6bRm-D8y26osoHxif9avw1oCj2IUhW9MDo2DeNl9JZziKLTwiJCWdlhlNbs8xOBJ5Mly9N6sAyq2xnuOlZ_JIFeNj3oXgeVAYP-dPBv5RLDMIu9ovwK6oUT0U1alD3HjzuMNFUrbf1iRNxdwxFM6WPF5S18Q0ltBwsBFcjBeR3PA5QWXT4SZyG2S1iNx2mi0IlDxqmErxPhy470dcmd_ETmlv7J9M67mBWuH2mkNLh4Z_fRjn8dMn5JsakUUbAkOzKSkhASc6CvzigGxKh2LmLc_Nu4eeNgfXfZrTrouFgA6OPQB16XXT0-ile7_xCcSaHLughsH8PGIqV2ufDGc7xtbWiFgWHkQ-xt26_I4jvYJuzgWjKG1Sy6Hdi0mUTfHW8LNaeUMgzJC9QovsG_ldM99Fg_forkF22v1d0QPETR6NRKl26y5HjWBwsrl657mZ0jMg-FmJP-yqD5swM5_Fqi3JKJWUX_GXZwbJj4s0ou5R337CYl63OGrE9uVwTyWPeqUwTFIj_3MJPPVzJ-fKu6rMOAxXmFBgxqujuCBD0w4bckHWmLqnH5imbpX8pZAwUGGtCDEirP1BjFgo8D7z9UmkzM_ke7uAUKM9vEFLok2SAErtm9AeU5HODb86C1GDaK1R-jddefMOFeJffmYBPsQzjTmu6U4EMDKyorSQRJsrxQGnM70zwgFcqlyAwIPPqPHxC5QjY0o7aXrYJdZpzAX-fz7HP_gHnlrM8MEBUqjKNNeUiv--1enipEy63GJ7kxeyGyO8YBuA2Zf1zGzklS_AYGAeuUgAWarrwSkGH7uY=","summary":[]},{"id":"ws_04c8e0b6f86052560169e08828c56081a3b43b4ae5a397a51e","type":"web_search_call","status":"completed","action":{"type":"open_page","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"}},{"id":"rs_04c8e0b6f86052560169e0882d394881a386bc8e86f3286817","type":"reasoning","encrypted_content":"gAAAAABp4Ig_tc_uvLhh_C4OYni5q3UiPJlJLMpjgjMOInjUojQ3mMKBebcyUUh2z-i0VVvOf5ckPVXNwaR9WtlVce6NoXs4h7xQSTSG8xH-0ZV163p2gmqt33hVGPxIxlWS4WAC_09ZM8VqFNe5uBjnNvY5p1lc8IuDkKwLgnq4G4J0AX1YBBeaOEccmHgVdrHI_OML1als0C-81sThNKhCL0_BT64q8zm11BcriJZpm0v-0HcnNXyKEiA9MV4xX_tGpU9xyN4B4jUcj3sCLlkI5nHST8xwKU72sTSXp3kDRA14lYeBSWymH3g9vrBXPLdhvwmJYZuaUYyXmjLjvaZfQ2C-PIJp3mm6A2_B9CJ-dyiMbOsWS86My0Cy9QJZ0zbGPhtyZK5m4lfkPJVIFysT_uH72Rbc42z1NghtRsKDpp-BtX8JZmvSyieD-tdYnE2faE_ZdkC5juK-pmA1JokPZHq1LL0_FQBY55qTVTl_lfiMfNDtgcYuXfTp97EG-oniaeyI0l_BRoJ7YJSlo8YpMO13ua9leOb6k2mn6aZnGns99u3wXabXudH981-_1wRdddSSKYXCAw-TWZnOapDwgawwEeQVvkVQOX9bYWu-KHvNbp4zcZaeP3nkLiTiQ7A6WW5y4L2NkLDvgs7O-kzOLUr8NiczvYwLaPZVoJVZRG8jwZjjYn01jFv-sdWcmPSMB617HRiIOEEfNt4BWFruhg02kiCh3TPmEmuwzkWmUIXOfgnvSzzwmF3nh3p65dH5ZfgdVqA0MUOuwuBM8wTuUh1QG8pHT39N28deUu3BJvMxLZn7JyzTSqqlSAYNG5IflhObfNW-y14ygzi4naLJPFTTn9hJRnFX_STIW3MFoPW724V2svirh-XN2Yk6k8x3VD55R_UJZF7jiS0y1nFLbUGaoEj5OXnNKMBn-QJccPD68FWu2oihPsmJzoe6Tzl6Zli0TtCEkXHaR3X7uDGdw_ofjw15WzC4gIhGZxlDBhj6ucK1fUx38c8Aj62x1YlFGERVJEeLEhZPRfX7Ks-DWxR8tiyADsQfF2bDmN5WBc0Rkejs0iXPSa1DGBW1gCNKFjcO7mPEik7_iQh4dNtqGu4euw_lw8va3XPvi8RtairW1v79nQ7nV-O8zxU5mFmehYr_KbT4An2hG5nBDyEcNI1-wb8djOoIZu-aNpPAYXk-ockK7TtyHLaXHIj1In_sMm02eIb_","summary":[]},{"id":"ws_04c8e0b6f86052560169e0882dd96c81a38a9acd3b4395c0e9","type":"web_search_call","status":"completed","action":{"type":"open_page","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"}},{"id":"rs_04c8e0b6f86052560169e0883278f881a388c3291a6ab21f19","type":"reasoning","encrypted_content":"gAAAAABp4Ig_QSQ8IZWJJEehdz__IdprU6OXmVKyjApz3cBXCQPLOQgRXZhYufGU2zR8Ynb0wIH_bV0B4FeCN6kXO1vDGlIRonGYZ8Jb8QEKeZTmsATRX65Dcu7fwieBfdUGW1bMm6K7T7hEjz2R6fJvbTxtggUk8C5xsdrXhsDf4hwd6sft-b3uV_v8TGDbb7O32VvmtBDa_XVzeF8Mp_VTDqEofpiHXuzCuxFhdCvp8BCfPpr08TXpyCvXa8-xLdw7e4uYxDgvZrsWJIaQ0ZTHi2FVMeWiJmykxyNZfvsc0sDylIqj1Mm3Yi_qAQD8V4gdmauom-rH3ZFwPmBCfmNQ0SxIVYMBAC5w7KHG5oLJqs7SfOnGyHTiimZyUr6GqZN1CHn_z-4QwMeiiRdsaEY42ZhmTM3IDwp_B9NYjwdoUNXx-Pc6E91NlBcFwps4Nw5R35i4KLn3099OF93ss1Eo0w5OisI0_8VJJYB8nRRBN9iVfVC_yJx8nG59sgpmg3I1HfjOAtJha2rCwtxAPHuKYCLseT3WsQyr9a4_8oyLjt8L2i5mgKDRzHLhUmBa3RQXBs4REtyTMe3By-jP9NuKJteyaXBkGew5Lb0nA6r4Ne_ZDRNMZoSxX8Hed2V7uqwGfcNAmnU1d7m8VxTXAZyhDCMOYlHlHFu6O2Wtg_QMdpoDbkJqgvUio8hu-wmcdydmtJhyOyJZJFqF_32_CmmbMmKecW3Vl5vsKH4TE3H1d3kPETydOuH13UdoQ-oOQvKqsJ_qPjDS9alkO893gYCvSfUi0H9zqnlZCPhRZzfs-EE7xnXo5hdLGf0AXZtEMrpbO87_-8iKZwOgt8qYH0p8m0hwBCVYgscQgbOL-1-HCepeCd_1KwZKzRwGKEb1aLEHdH4m6AAnlfDZNmWjeZd99F_tkKnM3SUqIXWdfN0WtOKBKQHB6SaNQ2UG0HU3ri16BtGlm9yYOQM517QA_xnzptzIae0-_2ueGuCJs4sEaY6PZxdVB44VT9tTnA50gwPCtsTOuLW6j6fcEUMvX1lyVPurW_Q_bwRD6llu1ZwfJ6rLEz1LEUfFlPU_YjiU86CKsLRIP6OUKa-Ro8JSpmY9D03tFZo6IAQLfRNFl_CsATydOXon0gSouIsDQ0JXyKGDNEMTtoTxfiBvoz10VWJsdY7XIVudl4znKjlbbwY_kvKxf58ye3WVAhVMghQMm-hDtOFQYlCZKZ7bAi8xUkJTy6Oo6xVPgz3pyB8yblvJgClXpmKMHf-lOZ_xk5txozGeF5yczaur98lktPeHmnAsYjvqsUZqKK6WL0cg1qZiXA1X9lC61v0wXinvYtG1LkKDltbqdEKkyCloClvHq7q1g9H-4MTEPs1j9jRf65QcdOO2EzcHaL4NikxHyL4UIct5VqdWrvIcbKU7gvKpxDjQSfx8SrpDMde1NCIiQ7EG9GkQusl-bTIx1DQlC1whr-3IVt-OsYz-M7WEXaqfzaYlSjY_WCZMD-ZupELbKuCZ8UUDkWYkJP393TSyFLNTGaeYPojPNgcDDvvE8jO76ureJgrnAnqr4uK_SgpZ5Xwp7NUVz0jU1-HeSB2MPsRVb-vjbxAFyBOcptHqC1jUF2ajy1i_O7ii56AgV2fioaWOFeqtsq8hpwSf2MAK8h1mZUa4gH91s1dC","summary":[{"type":"summary_text","text":"**Considering conflict updates**\n\nI need to mention that the ceasefire expires next week and highlight the framework deal set before April 21, citing Axios and AP lines. The user asked about the \"oorlog in Iran\", but we may not need to focus solely on the US angle. I’ll note that recent reports indicate the conflict involves the US and Iran with broader regional components, including Israel, Hezbollah, and the Houthis. I should ensure the dates are correct—today is April 16, 2026, and reference April 15-16. I'll check for additional coverage from Reuters for diverse sourcing."}]},{"id":"ws_04c8e0b6f86052560169e08834c3ec81a3a0ba4e840baa68e4","type":"web_search_call","status":"completed","action":{"type":"search","queries":["Reuters April 16 2026 Iran war ceasefire expires April 21 framework deal","Iran war economic sanctions secondary sanctions financial institutions Reuters April 2026 Bessent","ceasefire expires April 21 2026 US Iran Reuters","Iran war Pakistan mediating US Iran talks Tehran April 16 2026 Reuters"],"query":"Reuters April 16 2026 Iran war ceasefire expires April 21 framework deal","sources":[{"type":"url","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url","url":"https://apnews.com/article/80f5a0a27bb28d9fe4236b961b60ab21"},{"type":"url","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},{"type":"url","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},{"type":"url","url":"https://apnews.com/article/00bf6d9a8f19565dbcd437bc6bf09ea0"},{"type":"url","url":"https://www.tbsnews.net/worldbiz/middle-east/us-iran-and-mediators-make-push-45-day-ceasefire-axios-1403801"},{"type":"url","url":"https://www.aljazeera.com/news/2026/4/8/us-iran-ceasefire-deal-what-are-the-terms-and-whats-next"},{"type":"url","url":"https://www.washingtonpost.com/world/2026/04/12/iran-us-israel-trump-lebanon-april-12-2026/eac2ef80-3631-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.aljazeera.com/news/2026/3/24/pakistan-ready-to-host-us-iran-talks-can-latest-peace-push-work"},{"type":"url","url":"https://www.reutersconnect.com/item/one-incident-could-spark-fresh-fighting-after-us-iran-talks-fail-analyst-warns/dGFnOnJldXRlcnMuY29tLDIwMjY6bmV3c21sX1ZBMTg0MjEyMDQyMDI2UlAx"},{"type":"url","url":"https://asiatimes.com/2026/03/iran-drives-104b-surge-in-sanctions-busting-crypto-flows/"},{"type":"url","url":"https://www.wdrb.com/news/national/the-latest-iran-rejects-ceasefire-deal-as-trumps-deadline-for-attacks-on-infrastructure-nears/article_4f991ec5-2d68-542c-b9d9-c8d2e3efcce1.html"},{"type":"url","url":"https://www.washingtonpost.com/national/2026/04/07/iran-israel-us-lebanon-latest-april-7-2026/7ad503d0-323e-11f1-b85b-2cd751275c1d_story.html"},{"type":"url","url":"https://www.al-monitor.com/originals/2026/04/talks-were-almost-dead-pakistans-last-ditch-effort-secure-iran-war-truce"},{"type":"url","url":"https://gvwire.com/2026/04/07/us-iran-mediation-efforts-via-pakistan-continue-say-sources/"},{"type":"url","url":"https://www.aljazeera.com/news/2026/4/10/pakistan-sets-modest-goal-for-us-iran-summit-a-deal-to-keep-talks-going"},{"type":"url","url":"https://www.theguardian.com/business/2026/mar/07/us-considers-lifting-more-sanctions-on-russian-oil-as-iran-conflict-sees-global-prices-surge"},{"type":"url","url":"https://en.wikipedia.org/wiki/Naval_blockade_of_Iran"},{"type":"url","url":"https://en.wikipedia.org/wiki/Twelve-Day_War_ceasefire"},{"type":"url","url":"https://en.wikipedia.org/wiki/2026_attack_on_the_United_States_consulate_in_Karachi"}]}},{"id":"rs_04c8e0b6f86052560169e0883d081881a3b0ee4cc0f64d8e25","type":"reasoning","encrypted_content":"gAAAAABp4Ig_VfmKR7JV2Y8yt2j3sMAw_zDIX-aB0_qg41-pCOSQITnx-W9KHYnxUrS1UN9rZISCSwCqv76W3eRiB1Mjz4EhhUhmNby1K1UlkXX2-b09BEVw8zJX3AdkC0j66Q-KB_Gz46UeOSpEttAKz5rd8U9fl2wq9ugOONOQbrncxH3ORLJ3BQe0dqdAsgxRNJ8QF4tjXfkXjZtTZbrYHLnFXIsWZrAuMkzW9aoQvP3X3voOyB13rRh0PZ27EP_-QCay-lCk8WJ3aFCXcwCzRBNV3zpRss9fjnTQa29UoM_fOeaGF9Hog084BhztKjZXtFw_CrbviZbpr0bY2E1FebRND-BiEcIJmcN6BllgvSOiDvW42D1O3CouQNlMYJPdBr_48Cf2TCuo8OmIi1uOuEdf_n9jcG8uqMHDPP2XwrZuu0ACF8Ct0hVzO1_-vNn4LMfF7XUsxb4U97bRmjedAHk0ecSemzw9m9Xf22emxnj6WQRuCoDJYJ8PE13AsIcjoTzf0zjDRA6grIAaiga_44xryHk3eOy16KCm1GHXl-nR5JKOQblhZtSXxdccZxVwBmYxbrkut1OMTcsQ2UKAkVve3lmWd3hu6bzdArk-TH-XmMkJhNLsv7iFEqsyWohyeNeCMCryXcEOxGwU3U2Je49V0-iszrT2yjEjnNcy8Ma8CdIMIegrnmeI9ZgEAU87nFFerxxSBWFmxr3cFUAyEJvwQ0ryKI5c_b5dZnfcJHgsixPu-lFNuwg8HdwuwZIVF-DiDTpq5JR1Ob_OY6E62UrzNtIRNjryiYgrOnLYqb1M0lOFmzlBtzFipB_VZqHS-QnaojjPIw6eRepUbeJc8Vq1-RKzoVfyPe0TDkFxaVXGnC93_OINbILMrCTb0IM3KQGo0JkZQBMBQvHbe1Qx7kNPfcmcVMxrmnILwe_CptYbWtSF-sb5BPcQpSKpUw3Upj93IKYiqi6Nh-ZUkK064cVBdHPVeowSdcpSQPqGlydvnK3M2C0bgnzX9bHwVSrCOKoVwpHV-4tNSzTvU5EOrAS5QTnaYEwlLQN1nJyAlwRCvz38iNcYqijjJKdQ-8U4DM67cA-eUQ9XU-qQLN6q6Wx1LNdmUTPq_8PYk4P4qb6p0Ld4JrJL03eZl4kpXk2XLs71QA0eLDQ-UQYFL1HTAbYGFjbefnb6_Rf68K36SZfyH51rk-XGAtHV7K1XC3DOXglNva1b0hWUBAE3YWd0240lHzMy5a5PbXBo9yAXvqXdbeyq4zyW3QTL5mjvA2aO14J5qkH1F_G85NjzAqxckN_jF0nMTAvV33ezrivUUOLAGANqyxP4CgvME8VtkxaQusniu6UqAYG9oBsuj0jc23HDCTp53mcdRB6HFYiof3mKPGAUEzsbV2QqvIv9Py9DkJ_HExfSVbjx4uNn8obXXvN_2ISpWI0h6zFh054AnxUAhSaOBvuuX8E8GOzFHcOdRP_ryqJB8ZyMOfKs4F0ZGSktxIDtu0sOsbdnA0XG6GUil_oaoiqjiD1n6q7ZKX2viygPeIlEF4XTkk1Q0ha84mCP2cHja0mj0yIqoC2dAFKj8QoB-_Y9w5hUjIz92yFuc4JTNVJyiPuzE7zxZ-v9k5ZVesbCG_CQ1V_34-736zfUpPVZRRH6-VNe8EAclrYlaLKviTNXz6mYH0owspf_3FNGC1Jo2omcCYByAw7iyonJuoAOdLZ5EPZaUpjOcshksxhKxqpcBrXMBYLlXxrJE2JTA84qUaqLlzLj7ILtyO9EtE-H_BovQV4INuf48qJUY-tTMcty-3BVn_LTeyuMqY4RZhu_u0ZLUV8tVMavxfPuoFzDO7LDniYvBSJI4cD5818CDZYBok8JzuA1NP7qEuUP1AcML1MJcV73fFCHm7_48LDP0e0N3o38YxRstx2Ir8RbHUuYKvR-NJWGfkk8P-HNjPAfVgtXJPCbEIWk3yS4Eli_VlVcqn5zyMBn2Qnvo3GjE80kPIgy6E0ZVrG39aiSs6Ipg9XY-yNnXbZ7Yog5GKiaotY2h49DEpZPtayW_AFDru8ENOm_aO6Oiv9Ywxu2tGgIWwB3EDq6P5-mJzuhvNZIY2XHF8q_Bx2W3396RXU2PIfAf3pqduwADlpUscdCCgcvHMJUV0w1K1EcttRJrSqBHRpX3za7Q3bLGXpNho8wkvuyjmlkc8aZXIBw2tp_cEByaY0vVZMsATSVGiVEzJE9UI-qWzTr4h0Rhr95nVZLOhgSPWe-CwZGytnmS2_2LGa8SUQw5WN5qkwjwDfT4uQLOmSV1Ai6StfwL3jFQTuaJYUSVuDOsrYVxryUbrURLrzaSkrq8zacHYE-rNeHNhRemCs1qoUKu4BR85qqudhhKdHDdYkC4Ub6KmEQSmlk3CeRBSZ4mCsHDiEPSTJjdLRFFY9h8Bgek9fzJG7Gg4pxyQ4zytJTKS6Dxcgv8cRIC35yYl6BnKer0TLAadCQYTqnEPVZBgGcdeRlZCXnvMSlrXEOmg_Xg5yZfvViiwxEzF_KABro7DLWfUO2qApdH0_Z4-RVP5fKwSPgnRDiDPq1dZoCYHAL7eXqdf_4YaokQVAsUb_v719He6AQqEBunM7pmwbyX88FXTf2q5azylGyte3ZflH0Sg2d94axNQZ0fxU8m6O7q0clAuUSrVtkiYC2DmEJPr2W2ttRqe7J83tX8YcK21ljPoIyQAA-oSUb_TD5NZT_PCl0aVbJIt4iMgTXQks13qD4kudk-ouXvyqbhP8arQuqnlyRVKhVh2AUQhvHXq1CyaDeuriwx_xNFdR9CvY1bwGbvFopZxWdteI0Ovfd_GYtIUoNYf1M73yUk8B8oXXoc6wTYOxE5uQANcD_3ta6RROaZUCNgKzVUbazCGcUWNPDhfDwKef6Gh07x2vmPBXGj-17RvnGIStDczU8twaAmyyY67uno0jBtpepzYJw7_6MWU5HzpuazT3Xn8UKXAo6KolaLjr8iAC72UVuvoXgkC6Z9LVo9bfHlLudhzjTIj0da-OB5MxVqxFHZvAts5CtMad4_EonF1H8VjA41q0g2cnzvRlgt7KSojBz68_Pg9i4z1ShaOvcvHasR-zrYnWSuqrzHzdU6Q4jXqlFybxRzCP1PARd7RwWcMRSJDrnxr4uA-B_Sa8p-TBo7r7hFqvjw5WNd1NuWVcAarzVPaOWhPGqnVPHjqdxmTWchJswjwc8N7dd2d7Xtf_h_gmAx3xzwWGNMsxFzExrXdk3q_RxV48TrK_5xA2mdgaVhEP4ZUujf5G2ldoK_SfRtdgQxw==","summary":[{"type":"summary_text","text":"**Clarifying conflict context**\n\nI need to clarify with the user whether they're asking about the US-Iran war or domestic unrest. I want to summarize it as “according to recent reports, mainly the conflict between the US and Iran and the broader region.” I'll craft this in Dutch and include the date, which is today, April 16, 2026. I'll say, \"Here are the most recent points (latest reports up to April 16, 2026)\" and provide the list. No further web calls are necessary."}]},{"id":"msg_04c8e0b6f86052560169e0883fa27481a3bf14854c9b644f9e","type":"message","status":"completed","content":[{"type":"output_text","annotations":[{"type":"url_citation","end_index":465,"start_index":390,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url_citation","end_index":911,"start_index":828,"title":"U.S. and Iran inch toward framework deal to end war, U.S. officials say","url":"https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan"},{"type":"url_citation","end_index":1301,"start_index":1226,"title":"Trump administration pivots to economic warfare on Iran | AP News","url":"https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b"},{"type":"url_citation","end_index":1598,"start_index":1523,"title":"Senate Republicans again reject effort to halt Iran war | AP News","url":"https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4"},{"type":"url_citation","end_index":1879,"start_index":1804,"title":"Pakistani army chief visits Tehran in bid to broker renewed talks between US and Iran | AP News","url":"https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151"},{"type":"url_citation","end_index":2099,"start_index":2024,"title":"FIFA president Infantino says Iran will participate in World Cup 'for sure' | AP News","url":"https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5"}],"logprobs":[],"text":"Hier is **laatste nieuws (t/m 16 april 2026)** over de **oorlog/conflict rond Iran** (in de berichtgeving vooral het **VS–Iran-conflict**, met bredere regionale impact):\n\n- **Nieuwe diplomatieke poging (VS–Iran) via Pakistan en Iran**\n  - De **legerchef van Pakistan** gaat naar **Teheran** om hernieuwde gesprekken te faciliteren en de spanningen te temperen, na bijna zeven weken oorlog. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Onderhandelingen richting een “framework deal”**\n  - VS en Iran zouden **richting een kaderafspraak** gaan om de oorlog te beëindigen, met bemiddeling door o.a. Pakistan (en ook Egyptische/Turkse bemiddelaars genoemd).\n  - Er wordt gemeld dat het **staakt-het-vuren op 21 april 2026** afloopt, en dat men probeert vóór/rond die datum vooruitgang te boeken. ([axios.com](https://www.axios.com/2026/04/15/iran-war-negotiations-deal-pakistan))\n\n- **Mogelijke verschuiving naar “economische oorlogsvoering” als het niet lukt**\n  - De VS bereidt, als er geen deal komt of geen verlenging volgt, een **meer economisch gerichte campagne** voor (o.a. **secundaire sancties** en druk op financiële instellingen), “als financieel equivalent” van de bombardementen. ([apnews.com](https://apnews.com/article/f45619d7ea3050bd4b1cdd9c3881ca2b))\n\n- **Amerikaans politiek debat: Senaat stemt tegen stopzetten van de oorlog**\n  - De Senaat (met Republikeinse meerderheid) wijst een poging af om de oorlog te stoppen; er wordt gemeld dat het om een **47–52 stem** ging. ([apnews.com](https://apnews.com/article/8a47ef050f05d49677c5f4cf2f6bfbd4))\n\n- **Wat staat er inzet in diplomatieke “sticking points”?**\n  - In dezelfde berichtgeving komen o.a. terug: **Iran’s nucleair programma**, de **Straat van Hormuz**, en **compensatie voor oorlogsschade**. ([apnews.com](https://apnews.com/article/297a8d2bb94add26e503a4ef3a5d1151))\n\n- **Opvallend nevenbericht (sport)**\n  - FIFA-voorzitter **Infantino** zegt dat **Iran “voor zeker”** deelneemt aan het WK, ondanks de oorlog. ([apnews.com](https://apnews.com/article/4854d5588b7985d2fb0a6c638f8e42b5))\n\nWil je dat ik dit toespits op **(1) gevechten/aanvallen**, **(2) onderhandelingen & staakt-het-vuren**, of **(3) binnenlandse situatie in Iran**?"}],"phase":"final_answer","role":"assistant"}],"parallel_tool_calls":true,"presence_penalty":0.0,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":null,"reasoning":{"effort":"medium","summary":"detailed"},"safety_identifier":null,"service_tier":"default","store":false,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tools":[{"type":"web_search","search_context_size":"low","user_location":{"type":"approximate","city":null,"country":"US","region":null,"timezone":null}}],"top_logprobs":0,"top_p":0.98,"truncation":"auto","usage":{"input_tokens":21561,"input_tokens_details":{"cached_tokens":0},"output_tokens":1761,"output_tokens_details":{"reasoning_tokens":1171},"total_tokens":23322},"user":null,"metadata":{}},"sequence_number":385}
+

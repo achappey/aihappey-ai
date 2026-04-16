@@ -243,7 +243,7 @@ public static partial class ResponsesUnifiedMapper
 
         var commands = ExtractShellCommands(item);
         if (commands.Count == 0)
-            commands = accumulator.CommandBuilders.Select(builder => builder.ToString()).ToList();
+            commands = [.. accumulator.CommandBuilders.Select(builder => builder.ToString())];
         else
             SyncShellCommands(accumulator, commands);
 
@@ -514,9 +514,7 @@ public static partial class ResponsesUnifiedMapper
             return [];
         }
 
-        return commands.EnumerateArray()
-            .Select(command => command.GetString() ?? command.ToString())
-            .ToList();
+        return [.. commands.EnumerateArray().Select(command => command.GetString() ?? command.ToString())];
     }
 
     private static void SyncShellCommands(ShellInputAccumulator accumulator, IReadOnlyList<string> commands)

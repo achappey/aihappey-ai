@@ -83,7 +83,7 @@ public static partial class ResponsesUnifiedMapper
                 {
                     Type = "message",
                     Role = message.Role.ToString().ToLowerInvariant(),
-                    Content = ToUnifiedContentParts(message.Content).ToList(),
+                    Content = [.. ToUnifiedContentParts(message.Content)],
                     Metadata = new Dictionary<string, object?>
                     {
                         ["id"] = message.Id,
@@ -163,9 +163,7 @@ public static partial class ResponsesUnifiedMapper
                 return new AIInputItem
                 {
                     Type = "reasoning",
-                    Content = reasoning.Summary
-                        .Select(a => (AIContentPart)new AITextContentPart { Type = "text", Text = a.Text, Metadata = new Dictionary<string, object?> { ["type"] = a.Type } })
-                        .ToList(),
+                    Content = [.. reasoning.Summary.Select(a => (AIContentPart)new AITextContentPart { Type = "text", Text = a.Text, Metadata = new Dictionary<string, object?> { ["type"] = a.Type } })],
                     Metadata = reasoningMetadata
                 };
 

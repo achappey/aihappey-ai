@@ -79,7 +79,7 @@ public static partial class InteractionsUnifiedMapper
         {
             return new AIInput
             {
-                Items = input.Turns!.Select(turn => ToUnifiedInputItem(turn, providerId)).ToList(),
+                Items = [.. input.Turns!.Select(turn => ToUnifiedInputItem(turn, providerId))],
                 Metadata = new Dictionary<string, object?> { ["interactions.input.shape"] = "turns" }
             };
         }
@@ -95,7 +95,7 @@ public static partial class InteractionsUnifiedMapper
                     {
                         Type = "message",
                         Role = "user",
-                        Content = ToUnifiedContentParts(content, providerId).ToList(),
+                        Content = [.. ToUnifiedContentParts(content, providerId)],
                         Metadata = new Dictionary<string, object?>
                         {
                             ["interactions.input.shape"] = input.IsSingleContent ? "single_content" : "content_array",
@@ -116,7 +116,7 @@ public static partial class InteractionsUnifiedMapper
     {
         var parts = turn.Content?.IsText == true
             ? new List<AIContentPart> { new AITextContentPart { Type = "text", Text = turn.Content.Text ?? string.Empty } }
-            : ToUnifiedContentParts(turn.Content?.Parts, providerId).ToList();
+            : [.. ToUnifiedContentParts(turn.Content?.Parts, providerId)];
 
         return new AIInputItem
         {

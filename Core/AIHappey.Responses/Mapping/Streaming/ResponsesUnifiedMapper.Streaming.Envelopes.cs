@@ -9,7 +9,7 @@ public static partial class ResponsesUnifiedMapper
         => new()
         {
             Type = type,
-            Output = new AIOutput { Items = ToUnifiedOutputItems(response, providerId).ToList() },
+            Output = new AIOutput { Items = [.. ToUnifiedOutputItems(response, providerId)] },
             Data = new Dictionary<string, object?>
             {
                 ["sequence_number"] = sequenceNumber,

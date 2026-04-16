@@ -1170,9 +1170,7 @@ public static partial class InteractionsUnifiedMapper
 
         try
         {
-            return (JsonSerializer.Deserialize<List<InteractionAnnotation>>(annotations.GetRawText(), Json) ?? [])
-                .Where(annotation => !string.IsNullOrWhiteSpace(annotation.Url))
-                .ToList();
+            return [.. (JsonSerializer.Deserialize<List<InteractionAnnotation>>(annotations.GetRawText(), Json) ?? []).Where(annotation => !string.IsNullOrWhiteSpace(annotation.Url))];
         }
         catch
         {

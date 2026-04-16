@@ -39,7 +39,7 @@ public static partial class MessagesUnifiedMapper
         {
             Id = ExtractValue<string>(metadata, "messages.response.id") ?? $"msg_{Guid.NewGuid():N}",
             Container = ExtractObject<MessagesContainer>(metadata, "messages.response.container"),
-            Content = ToMessageContentBlocks(response.Output).ToList(),
+            Content = [.. ToMessageContentBlocks(response.Output)],
             Model = response.Model,
             Role = role,
             StopDetails = ExtractObject<MessagesStopDetails>(metadata, "messages.response.stop_details"),
@@ -244,7 +244,7 @@ public static partial class MessagesUnifiedMapper
         if (block.Content is null)
             return null;
 
-        return ToUnifiedContentParts(block.Content).ToList();
+        return [.. ToUnifiedContentParts(block.Content)];
     }
 
     private static IEnumerable<AIOutputItem> ToSourceOutputItems(MessageContentBlock block)

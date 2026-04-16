@@ -136,7 +136,7 @@ public static partial class ChatCompletionsUnifiedMapper
         if (value is null || value.Value.ValueKind != JsonValueKind.Array)
             return [];
 
-        return value.Value.EnumerateArray().Select(a => (object)a.Clone()).ToList();
+        return [.. value.Value.EnumerateArray().Select(a => (object)a.Clone())];
     }
 
     private static List<object> ExtractEnumerable(JsonElement obj, string propertyName)
@@ -144,7 +144,7 @@ public static partial class ChatCompletionsUnifiedMapper
         if (!obj.TryGetProperty(propertyName, out var arr) || arr.ValueKind != JsonValueKind.Array)
             return [];
 
-        return arr.EnumerateArray().Select(a => (object)a.Clone()).ToList();
+        return [.. arr.EnumerateArray().Select(a => (object)a.Clone())];
     }
 
     private static void Set<T>(JsonObject obj, string name, T? value)

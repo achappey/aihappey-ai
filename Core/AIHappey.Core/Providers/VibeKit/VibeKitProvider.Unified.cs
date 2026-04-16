@@ -731,7 +731,7 @@ public partial class VibeKitProvider
             return null;
 
         if (value is IEnumerable<string> strings)
-            return strings.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            return [.. strings.Where(s => !string.IsNullOrWhiteSpace(s))];
 
         if (value is JsonElement json && json.ValueKind == JsonValueKind.Array)
         {

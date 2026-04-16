@@ -728,7 +728,7 @@ public partial class YouComProvider
 
                     if (responseEl.TryGetProperty("full", out var fullEl) && fullEl.ValueKind == JsonValueKind.Array)
                     {
-                        evt.Sources = fullEl.EnumerateArray()
+                        evt.Sources = [.. fullEl.EnumerateArray()
                             .Where(item => item.ValueKind == JsonValueKind.Object
                                            && item.TryGetProperty("url", out var urlEl)
                                            && urlEl.ValueKind == JsonValueKind.String
@@ -740,8 +740,7 @@ public partial class YouComProvider
                                     ? new List<string> { snippetEl.GetString()! }
                                     : [],
                                 item.TryGetProperty("source_type", out var sourceTypeEl) && sourceTypeEl.ValueKind == JsonValueKind.String ? sourceTypeEl.GetString() : null,
-                                item.TryGetProperty("citation_uri", out var citationUriEl) && citationUriEl.ValueKind == JsonValueKind.String ? citationUriEl.GetString() : null))
-                            .ToList();
+                                item.TryGetProperty("citation_uri", out var citationUriEl) && citationUriEl.ValueKind == JsonValueKind.String ? citationUriEl.GetString() : null))];
                     }
                     break;
 

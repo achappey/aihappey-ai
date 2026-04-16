@@ -59,7 +59,7 @@ public partial class YouComProvider
             Model = model,
             Endpoint = "agents.runs",
             Text = text.ToString(),
-            Sources = sources.Values.ToList(),
+            Sources = [.. sources.Values],
             FinishReason = finishReason,
             CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),

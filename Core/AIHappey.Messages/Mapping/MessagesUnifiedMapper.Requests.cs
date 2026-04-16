@@ -17,7 +17,7 @@ public static partial class MessagesUnifiedMapper
             Instructions = FlattenContentText(request.System),
             Input = new AIInput
             {
-                Items = request.Messages.Select(message => ToUnifiedInputItem(message, providerId)).ToList(),
+                Items = [.. request.Messages.Select(message => ToUnifiedInputItem(message, providerId))],
                 Metadata = new Dictionary<string, object?>
                 {
                     ["messages.input.raw"] = request.Messages.Count == 0
@@ -118,7 +118,7 @@ public static partial class MessagesUnifiedMapper
         {
             Type = "message",
             Role = message.Role,
-            Content = ToUnifiedContentParts(message.Content, providerId).ToList(),
+            Content = [.. ToUnifiedContentParts(message.Content, providerId)],
             Metadata = new Dictionary<string, object?>
             {
                 ["messages.message.raw"] = JsonSerializer.SerializeToElement(message, Json)

@@ -71,6 +71,12 @@ public static partial class ResponsesUnifiedMapper
                 continue;
             }
 
+            if (TryCreateImageOutputItem(item, map, role, type, out var imageItem))
+            {
+                yield return imageItem;
+                continue;
+            }
+
             var content = new List<AIContentPart>();
 
             if (map.TryGetValue("content", out var contentObj))
@@ -130,6 +136,56 @@ public static partial class ResponsesUnifiedMapper
                 Content = [new AITextContentPart { Type = "text", Text = response.Text.ToString() ?? string.Empty }]
             };
         }
+    }
+
+    private static bool TryCreateImageOutputItem(
+        object rawItem,
+        Dictionary<string, object?> map,
+        string role,
+        string type,
+        out AIOutputItem item)
+    {
+        if (!string.Equals(type, "image_generation_call", StringComparison.OrdinalIgnoreCase))
+        {
+            item = null!;
+            return false;
+        }
+
+        var result = GetValue<string>(map, "result");
+        if (string.IsNullOrWhiteSpace(result))
+        {
+            item = null!;
+            return false;
+        }
+
+        var mediaType = NormalizeImageMediaType(GetValue<string>(map, "output_format"))
+            ?? GuessMediaType(result)
+            ?? "image/png";
+
+        item = new AIOutputItem
+        {
+            Type = "message",
+            Role = role,
+            Content =
+            [
+                new AIFileContentPart
+                {
+                    Type = "file",
+                    MediaType = mediaType,
+                    Data = result,
+                    Metadata = new Dictionary<string, object?>
+                    {
+                        ["responses.type"] = type
+                    }
+                }
+            ],
+            Metadata = new Dictionary<string, object?>
+            {
+                ["responses.raw_output"] = rawItem
+            }
+        };
+
+        return true;
     }
 
     private static IEnumerable<object> ToResponseOutputObjects(AIOutput? output, string providerId)
@@ -367,23 +423,24 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static Dictionary<string, object?> BuildUnifiedResponseMetadata(ResponseResult response)
-        => new()
+    private static Dictionary<string, object?>? BuildUnifiedResponseMetadata(ResponseResult response)
+        => response.Metadata is { Count: > 0 }
+            ? new Dictionary<string, object?>
+            {
+                ["metadata"] = response.Metadata
+            }
+            : null;
+
+    private static string? NormalizeImageMediaType(string? outputFormat)
+        => outputFormat?.Trim().ToLowerInvariant() switch
         {
-            ["responses.id"] = response.Id,
-            ["responses.object"] = response.Object,
-            ["responses.created_at"] = response.CreatedAt,
-            ["responses.completed_at"] = response.CompletedAt,
-            ["responses.parallel_tool_calls"] = response.ParallelToolCalls,
-            ["responses.temperature"] = response.Temperature,
-            ["responses.text"] = response.Text,
-            ["responses.tool_choice"] = response.ToolChoice,
-            ["responses.tools"] = response.Tools?.ToList(),
-            ["responses.reasoning"] = response.Reasoning,
-            ["responses.store"] = response.Store,
-            ["responses.max_output_tokens"] = response.MaxOutputTokens,
-            ["responses.service_tier"] = response.ServiceTier,
-            ["responses.error"] = response.Error,
-            ["metadata"] = response.Metadata
+            null or "" => null,
+            var value when value.StartsWith("image/", StringComparison.Ordinal) => value,
+            "jpg" or "jpeg" => "image/jpeg",
+            "png" => "image/png",
+            "webp" => "image/webp",
+            "gif" => "image/gif",
+            "bmp" => "image/bmp",
+            _ => $"image/{outputFormat.Trim().ToLowerInvariant()}"
         };
 }

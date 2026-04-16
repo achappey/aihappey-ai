@@ -19,7 +19,7 @@ public static class VercelUnifiedMapper
             Type = "message",
             Role = message.Role.ToString(),
             Id = message.Id,
-            Content = message.Parts.Select(ToUnifiedContentPart).Where(a => a is not null).Select(a => a!).ToList(),
+            Content = [.. message.Parts.Select(ToUnifiedContentPart).Where(a => a is not null).Select(a => a!)],
             Metadata = message.Metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value)
         };
     }
