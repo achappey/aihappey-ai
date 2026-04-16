@@ -15,6 +15,7 @@ public static partial class ResponsesUnifiedMapper
                 {
                     ProviderMetadata = CreateReasoningProviderMetadata(
                         providerId,
+                        itemId: id,
                         encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"))
                 },
             };
@@ -28,6 +29,7 @@ public static partial class ResponsesUnifiedMapper
             {
                 ProviderMetadata = CreateReasoningProviderMetadata(
                     providerId,
+                    itemId: id,
                     encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"),
                     summary: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary"))
             },
@@ -69,6 +71,7 @@ public static partial class ResponsesUnifiedMapper
             {
                 ProviderMetadata = CreateReasoningProviderMetadata(
                     providerId,
+                    itemId: id,
                     encryptedContent: encrypted)
             }
         };
@@ -94,6 +97,7 @@ public static partial class ResponsesUnifiedMapper
             {
                 ProviderMetadata = CreateReasoningProviderMetadata(
                     providerId,
+                    itemId: id,
                     encryptedContent: encrypted,
                     summary: summaryVal)
             }
@@ -102,11 +106,18 @@ public static partial class ResponsesUnifiedMapper
 
     private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
         string providerId,
+        string? itemId = null,
         string? signature = null,
         object? encryptedContent = null,
         object? summary = null)
     {
         var providerMetadata = new Dictionary<string, object>();
+
+        if (!string.IsNullOrWhiteSpace(itemId))
+        {
+            providerMetadata["id"] = itemId;
+            providerMetadata["item_id"] = itemId;
+        }
 
         if (!string.IsNullOrWhiteSpace(signature))
             providerMetadata["signature"] = signature;

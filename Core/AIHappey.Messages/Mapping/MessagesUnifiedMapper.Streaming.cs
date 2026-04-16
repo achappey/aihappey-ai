@@ -131,7 +131,10 @@ public static partial class MessagesUnifiedMapper
                     {
                         ToolName = part.ContentBlock.Name ?? part.ContentBlock.Type,
                         Title = part.ContentBlock.Name,
-                        ProviderExecuted = IsProviderExecutedTool(part.ContentBlock.Type)
+                        ProviderExecuted = IsProviderExecutedTool(part.ContentBlock.Type),
+                        ProviderMetadata = CreateProviderExecutedToolProviderMetadata(
+                            providerId,
+                            IsProviderExecutedTool(part.ContentBlock.Type))
                     });
                 }
                 else if (IsToolOutputBlock(part.ContentBlock.Type))
@@ -214,12 +217,15 @@ public static partial class MessagesUnifiedMapper
                 }
                 else if (IsToolInputBlock(stopState.BlockType))
                 {
+                    var providerExecuted = IsProviderExecutedTool(stopState.BlockType);
+
                     yield return CreateEnvelope("tool-input-available", stopState.EventId, new AIToolInputAvailableEventData
                     {
                         ToolName = stopState.Block.Name ?? stopState.BlockType,
                         Title = stopState.Block.Name,
-                        ProviderExecuted = IsProviderExecutedTool(stopState.BlockType),
-                        Input = ParseToolInput(stopState) ?? JsonSerializer.SerializeToElement(new { }, Json)
+                        ProviderExecuted = providerExecuted,
+                        Input = ParseToolInput(stopState) ?? JsonSerializer.SerializeToElement(new { }, Json),
+                        ProviderMetadata = CreateProviderExecutedToolProviderMetadata(providerId, providerExecuted)
                     });
                 }
 
@@ -1117,6 +1123,20 @@ public static partial class MessagesUnifiedMapper
             };
     }
 
+    private static Dictionary<string, Dictionary<string, object>>? CreateProviderExecutedToolProviderMetadata(
+        string providerId,
+        bool providerExecuted,
+        Dictionary<string, object>? providerMetadata = null)
+    {
+        if (!providerExecuted || string.IsNullOrWhiteSpace(providerId))
+            return null;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = providerMetadata ?? new Dictionary<string, object>()
+        };
+    }
+
     private static Dictionary<string, Dictionary<string, object>>? CreateToolOutputProviderMetadata(
         string providerId,
         MessageContentBlock block)
@@ -1236,7 +1256,7 @@ public static partial class MessagesUnifiedMapper
             return current;
 
         current ??= new MessagesUsage();
-        current.InputTokens ??= update.InputTokens;
+        current.InputTokens = update.InputTokens ?? current.InputTokens;
         current.OutputTokens = update.OutputTokens ?? current.OutputTokens;
         current.CacheCreationInputTokens = update.CacheCreationInputTokens ?? current.CacheCreationInputTokens;
         current.CacheReadInputTokens = update.CacheReadInputTokens ?? current.CacheReadInputTokens;

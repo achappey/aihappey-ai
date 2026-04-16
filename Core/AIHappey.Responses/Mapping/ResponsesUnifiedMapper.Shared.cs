@@ -202,11 +202,56 @@ public static partial class ResponsesUnifiedMapper
         string providerId,
         object? encryptedContent)
     {
-        var providerMetadata = CreateProviderScopedEncryptedContentMetadata(providerId, encryptedContent);
-        if (providerMetadata is null)
+        if (!HasMeaningfulValue(encryptedContent))
             return;
 
-        metadata[providerId] = providerMetadata[providerId];
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["encrypted_content"] = CloneIfJsonElement(encryptedContent)!;
+        metadata[providerId] = providerMetadata;
+    }
+
+    private static void MergeProviderScopedReasoningItemIdMetadata(
+        Dictionary<string, object?> metadata,
+        string providerId,
+        string? itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+            return;
+
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["id"] = itemId;
+        providerMetadata["item_id"] = itemId;
+        metadata[providerId] = providerMetadata;
+    }
+
+    private static Dictionary<string, object> GetOrCreateProviderScopedMetadata(
+        Dictionary<string, object?> metadata,
+        string providerId)
+    {
+        if (metadata.TryGetValue(providerId, out var existingProviderMetadata))
+        {
+            switch (existingProviderMetadata)
+            {
+                case Dictionary<string, object> providerMetadata:
+                    return providerMetadata;
+                case JsonElement json when json.ValueKind == JsonValueKind.Object:
+                    return JsonSerializer.Deserialize<Dictionary<string, object>>(json.GetRawText(), Json) ?? [];
+                case not null:
+                    try
+                    {
+                        return JsonSerializer.Deserialize<Dictionary<string, object>>(
+                                   JsonSerializer.Serialize(existingProviderMetadata, Json),
+                                   Json)
+                               ?? [];
+                    }
+                    catch
+                    {
+                        break;
+                    }
+            }
+        }
+
+        return [];
     }
 
     private static object CreateCompactionToolInput(object? encryptedContent)

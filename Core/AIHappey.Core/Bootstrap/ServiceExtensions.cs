@@ -46,7 +46,6 @@ using AIHappey.Core.Providers.Sarvam;
 using AIHappey.Core.Providers.MiniMax;
 using AIHappey.Core.Providers.AssemblyAI;
 using AIHappey.Core.Providers.AI21;
-using Microsoft.KernelMemory;
 using AIHappey.Core.Providers.ResembleAI;
 using AIHappey.Core.Providers.Speechify;
 using AIHappey.Core.Providers.TTSReader;
@@ -1038,19 +1037,4 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, VibeKitProvider>();
 
     }
-
-    public static IServiceCollection AddKernelMemoryWithOptions(
-        this IServiceCollection services,
-        Action<IKernelMemoryBuilder> configure,
-        KernelMemoryBuilderBuildOptions buildOptions)
-    {
-        var builder = new KernelMemoryBuilder(services);
-        configure(builder);
-
-        var memoryClient = builder.Build(buildOptions);
-        services.AddSingleton(memoryClient);
-
-        return services;
-    }
-
 }

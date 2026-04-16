@@ -158,11 +158,13 @@ public static partial class ResponsesUnifiedMapper
                 if (!string.IsNullOrWhiteSpace(reasoning.Id))
                     reasoningMetadata["id"] = reasoning.Id;
 
+                MergeProviderScopedReasoningItemIdMetadata(reasoningMetadata, providerId, reasoning.Id);
                 MergeProviderScopedEncryptedContentMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
 
                 return new AIInputItem
                 {
                     Type = "reasoning",
+                    Id = reasoning.Id,
                     Content = [.. reasoning.Summary.Select(a => (AIContentPart)new AITextContentPart { Type = "text", Text = a.Text, Metadata = new Dictionary<string, object?> { ["type"] = a.Type } })],
                     Metadata = reasoningMetadata
                 };
@@ -216,6 +218,7 @@ public static partial class ResponsesUnifiedMapper
 
         var result = new List<ResponseInputItem>();
         var latestCompaction = FindLatestCompactionToolInvocation(items, providerId);
+        var preferEncryptedReasoningReplay = HasProviderScopedEncryptedReasoning(items, providerId);
         var startIndex = 0;
 
         if (latestCompaction is not null)
@@ -230,10 +233,37 @@ public static partial class ResponsesUnifiedMapper
         }
 
         for (var i = startIndex; i < items.Count; i++)
-            result.AddRange(ToResponsesInputItems(items[i], providerId));
+            result.AddRange(ToResponsesInputItems(items[i], providerId, preferEncryptedReasoningReplay));
 
         return result;
     }
+
+    private static bool HasProviderScopedEncryptedReasoning(
+        IReadOnlyList<AIInputItem> items,
+        string providerId)
+        => items.Any(item => HasProviderScopedEncryptedReasoning(item, providerId));
+
+    private static bool HasProviderScopedEncryptedReasoning(
+        AIInputItem item,
+        string providerId)
+    {
+        if (HasProviderScopedEncryptedContent(item.Metadata, providerId))
+            return true;
+
+        foreach (var reasoningPart in item.Content?.OfType<AIReasoningContentPart>() ?? [])
+        {
+            if (HasProviderScopedEncryptedContent(reasoningPart.Metadata, providerId))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasProviderScopedEncryptedContent(
+        Dictionary<string, object?>? metadata,
+        string providerId)
+        => metadata is not null
+           && !string.IsNullOrWhiteSpace(ExtractNestedValue<string>(metadata, providerId, "encrypted_content"));
 
     private static CompactionInvocationState? FindLatestCompactionToolInvocation(
         IReadOnlyList<AIInputItem> items,
@@ -272,7 +302,10 @@ public static partial class ResponsesUnifiedMapper
         return null;
     }
 
-    private static IEnumerable<ResponseInputItem> ToResponsesInputItems(AIInputItem item, string providerId)
+    private static IEnumerable<ResponseInputItem> ToResponsesInputItems(
+        AIInputItem item,
+        string providerId,
+        bool preferEncryptedReasoningReplay)
     {
         var kind = item.Type?.Trim().ToLowerInvariant();
         var metadata = item.Metadata ?? new Dictionary<string, object?>();
@@ -282,9 +315,27 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "message")
         {
-            foreach (var reasoningPart in reasoningParts)
+            foreach (var reasoningPart in SelectReasoningPartsForReplay(reasoningParts, providerId, preferEncryptedReasoningReplay))
             {
-                var reasoningItem = CreateResponseReasoningItem(item, metadata, providerId, reasoningPart);
+                var reasoningItem = CreateResponseReasoningItem(
+                    item,
+                    metadata,
+                    providerId,
+                    reasoningPart,
+                    requireEncryptedContent: preferEncryptedReasoningReplay);
+                if (reasoningItem is not null)
+                    yield return reasoningItem;
+            }
+
+            if (preferEncryptedReasoningReplay
+                && reasoningParts.Count == 0
+                && HasProviderScopedEncryptedContent(metadata, providerId))
+            {
+                var reasoningItem = CreateResponseReasoningItem(
+                    item,
+                    metadata,
+                    providerId,
+                    requireEncryptedContent: true);
                 if (reasoningItem is not null)
                     yield return reasoningItem;
             }
@@ -321,7 +372,11 @@ public static partial class ResponsesUnifiedMapper
             }
             case "reasoning":
             {
-                var reasoningItem = CreateResponseReasoningItem(item, metadata, providerId);
+                var reasoningItem = CreateResponseReasoningItem(
+                    item,
+                    metadata,
+                    providerId,
+                    requireEncryptedContent: preferEncryptedReasoningReplay);
                 if (reasoningItem is not null)
                     yield return reasoningItem;
                 yield break;
@@ -385,7 +440,8 @@ public static partial class ResponsesUnifiedMapper
         AIInputItem item,
         Dictionary<string, object?> metadata,
         string providerId,
-        AIReasoningContentPart? reasoningPart = null)
+        AIReasoningContentPart? reasoningPart = null,
+        bool requireEncryptedContent = false)
     {
         var reasoningMetadata = reasoningPart?.Metadata;
 
@@ -412,7 +468,7 @@ public static partial class ResponsesUnifiedMapper
                     Text = reasoningPart.Text
                 });
             }
-            else
+            else if (string.IsNullOrWhiteSpace(encryptedContent))
             {
                 foreach (var textPart in item.Content?.OfType<AITextContentPart>() ?? [])
                 {
@@ -428,16 +484,72 @@ public static partial class ResponsesUnifiedMapper
             }
         }
 
+        if (requireEncryptedContent && string.IsNullOrWhiteSpace(encryptedContent))
+            return null;
+
         if (summary.Count == 0 && string.IsNullOrWhiteSpace(encryptedContent))
             return null;
 
+        var reasoningItemId = ResolveReasoningItemId(item, metadata, reasoningMetadata, providerId);
+
         return new ResponseReasoningItem
         {
-            Id = ExtractValue<string>(reasoningMetadata, "id")
-                 ?? ExtractValue<string>(metadata, "id"),
+            Id = reasoningItemId,
             Summary = summary,
             EncryptedContent = encryptedContent
         };
+    }
+
+    private static string? ResolveReasoningItemId(
+        AIInputItem item,
+        Dictionary<string, object?> metadata,
+        Dictionary<string, object?>? reasoningMetadata,
+        string providerId)
+    {
+        var itemType = item.Type?.Trim().ToLowerInvariant();
+        var providerScopedReasoningId = reasoningMetadata is not null
+            ? ExtractNestedValue<string>(reasoningMetadata, providerId, "id")
+              ?? ExtractNestedValue<string>(reasoningMetadata, providerId, "item_id")
+            : null;
+
+        var providerScopedItemId = ExtractNestedValue<string>(metadata, providerId, "id")
+                                   ?? ExtractNestedValue<string>(metadata, providerId, "item_id");
+
+        return providerScopedReasoningId
+               ?? ExtractValue<string>(reasoningMetadata, "id")
+               ?? ExtractValue<string>(reasoningMetadata, "item_id")
+               ?? (string.Equals(itemType, "reasoning", StringComparison.OrdinalIgnoreCase) ? item.Id : null)
+               ?? (string.Equals(itemType, "reasoning", StringComparison.OrdinalIgnoreCase) ? providerScopedItemId : null)
+               ?? (string.Equals(itemType, "reasoning", StringComparison.OrdinalIgnoreCase) ? ExtractValue<string>(metadata, "id") : null)
+               ?? (string.Equals(itemType, "reasoning", StringComparison.OrdinalIgnoreCase) ? ExtractValue<string>(metadata, "item_id") : null);
+    }
+
+    private static IEnumerable<AIReasoningContentPart> SelectReasoningPartsForReplay(
+        IReadOnlyCollection<AIReasoningContentPart> reasoningParts,
+        string providerId,
+        bool preferEncryptedReasoningReplay)
+    {
+        if (!preferEncryptedReasoningReplay)
+        {
+            foreach (var reasoningPart in reasoningParts)
+                yield return reasoningPart;
+
+            yield break;
+        }
+
+        var seenEncryptedContents = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var reasoningPart in reasoningParts)
+        {
+            var encryptedContent = ExtractNestedValue<string>(reasoningPart.Metadata ?? new Dictionary<string, object?>(), providerId, "encrypted_content");
+            if (string.IsNullOrWhiteSpace(encryptedContent))
+                continue;
+
+            if (!seenEncryptedContents.Add(encryptedContent))
+                continue;
+
+            yield return reasoningPart;
+        }
     }
 
     private static T? ExtractNestedValue<T>(

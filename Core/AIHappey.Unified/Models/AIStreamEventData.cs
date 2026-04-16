@@ -64,6 +64,9 @@ public sealed class AIToolInputStartEventData
 
     [JsonPropertyName("title")]
     public string? Title { get; init; }
+
+    [JsonPropertyName("providerMetadata")]
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 public sealed class AIToolInputDeltaEventData
@@ -124,6 +127,9 @@ public sealed class AIToolOutputErrorEventData
 
     [JsonPropertyName("dynamic")]
     public bool? Dynamic { get; init; }
+
+    [JsonPropertyName("providerMetadata")]
+    public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }
 
 public sealed class AISourceUrlEventData

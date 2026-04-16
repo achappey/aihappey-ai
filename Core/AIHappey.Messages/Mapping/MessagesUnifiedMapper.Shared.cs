@@ -105,8 +105,13 @@ public static partial class MessagesUnifiedMapper
         if (metadata is null)
             return default;
 
-        if (!metadata.TryGetValue(providerId, out var providerObj) ||
-            providerObj is not Dictionary<string, object?> provider)
+        if (!metadata.TryGetValue(providerId, out var providerObj) || providerObj is null)
+            return default;
+
+        var provider = providerObj as Dictionary<string, object?>
+            ?? DeserializeFromObject<Dictionary<string, object?>>(providerObj);
+
+        if (provider is null)
             return default;
 
         if (!provider.TryGetValue(key, out var value) || value is null)

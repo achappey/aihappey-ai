@@ -1,0 +1,295 @@
+{
+    "model": "anthropic/claude-haiku-4-5-20251001",
+    "tools": [],
+    "maxOutputTokens": 32000,
+    "providerMetadata": {
+        "anthropic": {
+            "thinking": {
+                "type": "enabled",
+                "budget_tokens": 16768,
+                "display": "summarized"
+            },
+            "tools": [
+                {
+                    "name": "web_fetch",
+                    "type": "web_fetch_20260309",
+                    "max_uses": 5,
+                    "allowed_domains": null,
+                    "blocked_domains": null,
+                    "citations": {
+                        "enabled": true
+                    },
+                    "allowed_callers": [
+                        "direct"
+                    ]
+                },
+                {
+                    "name": "web_search",
+                    "type": "web_search_20260209",
+                    "max_uses": 5,
+                    "allowed_domains": null,
+                    "blocked_domains": null,
+                    "user_location": null,
+                    "allowed_callers": [
+                        "direct"
+                    ]
+                }
+            ]
+        }
+    },
+    "temperature": 1,
+    "id": "739795b2-e058-4d37-be0c-a1237f1b7ee1",
+    "messages": [
+        {
+            "id": "996e9b2c-1929-4aa2-8b06-d68aa7e37a73",
+            "role": "system",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "{\"chatBotInstructions\":\"- Use **Markdown formatting** for your responses, including tables and lists, unless specifically instructed to output CSV.\\n- When outputting **Chart.js**, always include a valid JSON data object inside a chartjs code block.\\n- When outputting **CSV**, always return raw CSV text inside a csv code block.\\n- When outputting **LaTeX or math**, return a single formula inside a latex code block without delimiters.\\n- Do **not** include base64 images; images are handled by the client.\\n- Always respond in the user’s preferred language.\"}"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-16T09:48:59.579Z",
+                "author": "system"
+            }
+        },
+        {
+            "id": "9dc6a1c6-f2bd-46cc-b9fa-84cfb2e64933",
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "search latest news about war in iran"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-16T09:48:58.593Z"
+            }
+        },
+        {
+            "id": "INqu0acIf1w7BGuV",
+            "metadata": {
+                "model": "anthropic/claude-haiku-4-5-20251001",
+                "usage": {
+                    "promptTokens": 16317,
+                    "completionTokens": 774,
+                    "totalTokens": 17091
+                },
+                "timestamp": "2026-04-16T09:49:11.0597965+00:00",
+                "temperature": null,
+                "gateway": {
+                    "cost": 0.020187
+                },
+                "anthropic": {
+                    "usage": {
+                        "cache_creation": {
+                            "ephemeral_1h_input_tokens": 0,
+                            "ephemeral_5m_input_tokens": 0
+                        },
+                        "cache_creation_input_tokens": 0,
+                        "cache_read_input_tokens": 0,
+                        "inference_geo": "not_available",
+                        "input_tokens": 16317,
+                        "output_tokens": 774,
+                        "server_tool_use": {
+                            "web_fetch_requests": 0,
+                            "web_search_requests": 1
+                        },
+                        "service_tier": "standard"
+                    }
+                }
+            },
+            "role": "assistant",
+            "parts": [
+                {
+                    "type": "reasoning",
+                    "text": "The user is asking me to search for latest news about war in Iran. This is a current events query that requires recent information, so I should use the web_search tool. Today's date is April 16, 2026 according to the system information provided.\n\nI'll search for recent news about war in Iran.",
+                    "providerMetadata": {
+                        "anthropic": {
+                            "signature": "EusDCmMIDBgCKkBJPWsN1PdbTS5QXu0XXXS/P0yoCvqK6eT1jsqsQY5jk5VK0ZoiR4Aa+2uHugiLg4fbFxd2HVyBhpH6IjaJjkmLMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDJ1UuTBZbsN1F+slAxoM6GeyW4YMAbUlq8JAIjDF2HflY0bLy2TmD29jTTA1RLSxTPu9DXgrwxh3vgJJ0yHc7B98wzFqkGFF18w5UjkqtQKJNhjvCxpmXVwQ+R5lVjGHZwXOTrYrDQQcKtmEjlHc9HLTRNMOjIE+ikdzyDhd1eFOzEnRPPt8s+gw1M12AYDhjanNVgkeKJxG2fk85w593ezZXgmQ2gFDw6sU0bOr027SSXoJ0TZv3A1/GyyomLHKPKag07jAQPrHgfqlMbBofaBcbhlf0UrGrvA9x0s9csp78acCmX66bhQechElOuHOK+s//gdpIZIvRr6Q1MJemLPKkTZFgYKbHp/fWqtl/HQoKsd55kvFyYabs5lPGx+ndKw2krfTDieC5soG2xnwdnbVBW6zuqhqHbTJMvO/wFw9yhHRa1FkD6e7EuP+DNeso3rIijVYv7A99tGFOQ91foRrzBZ3Iz0omr7aia+mYq34XkENLYSIQOI/cGMwa+YZWMGkxAEYAQ=="
+                        }
+                    },
+                    "state": "done"
+                },
+                {
+                    "type": "tool-web_search",
+                    "toolCallId": "srvtoolu_01EJR47SppRDwQBqGRLQ2Gbm",
+                    "state": "output-available",
+                    "title": "web_search",
+                    "input": {
+                        "query": "latest news war Iran today"
+                    },
+                    "output": {
+                        "structuredContent": {
+                            "content": [
+                                {
+                                    "type": "web_search_result",
+                                    "title": "US-Iran War Latest Update: What Did Trump Say About China & Iran? Inside His Claim of ‘Permanently Opening’ the Strait of Hormuz",
+                                    "encrypted_content": "EswJCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDA0XQOeD2ke418WjuhoM7U9p2VIEZ70O7sQ6IjAStsQstMW8q8PC8V0VarXaBQSvE32lue+06x79BXgTVnO74DJgMrrvr+Zx6PvdN8oqzwiv8ZVCJqm0DilSo4gDop0vUde3KEwKyOSIEVUNmsemPJgVCpqlvDn4jE+QLcQhcu2Xobah5FnU23UYNcwPncGdm7XWQyRpPl1Q/1Xzgu0wOwhymyGOtBZXp1TOi/+QqfIWXcWt5NEeVDs+wMsC47ZjBSM3pC/nGHgyUE3YgvSDP8UvfpURBn+wpn7LWyXqzq/66V/8fn35oUvCEKl+t7aRVfLzdxjG/H7AJw+7V4xiBp7Kmnt58zKedkbdcuLdFgFIu+mzvgBr+KeLKbUn504LYvJrDlAIBn7ccc9grvIftNo48+NJ/ZITHifyWuBD+TZhzBlr6aqu7RoB+rA2Cv6xoHIP+EAcA+R7B1+T4rAM+tXY3rJrlDrK+EdNPCBqjgyskUADluL3RJqcBG6pwrxq3adPoIB0xvzsQQgINKYK4F2y2+mAaTksFTKzTo3EIFpm4YVA5svBS3oJp4eN0MLzbiCYAcjd3nhnlPtJCx1Huhq+Uifdg5tMJCIJMuZevEGvpqqwC/DpDMx2D5NcON5jFyWta2Pw3N/rmAHteSuDJkuQ154ae1PW8c5MzaXxwAKBccXww90CAI/+pdF7GwfmdHOb2FyuBqcEHjgT+3e56C/Jw08DAD9Po1UouoEn2VAHz4ZSzvmxgfja3UehjkdM32iXAfthofCId9PNug5OiD/ijvYMQIEeolPFu8Dw1V8zor+Vb2m+IGm+ez9brYK0zYXzSaChZN+g7yDlhhIqwo/tsFRz0pC2aM6pLoRA1hA9nQK1eD0fEiMbbItAkpYo0mtKTaJ/PfzjYIj3mpn087tILD7pSpZ/1vktptmPq0F6G9d/EWWLo7uSA7zd+cCsMGZexjAWo61UVAR4teUH6LZCMv9O7kKoCu9zBaYrhdPP734W/nEThvaT7+6PSdolDfCIAfioULEGe981nvFGE+6CL2DKOM4WWbgayLO2okxBubEwH/j0zZGUTZQj5mF2/LENOh7CcnkMAolnNNrwKgIybYqtyVU1lnCnvlZxlBWLmMZYKnz3lKbhAsmmVf5BUFCqo4nKvTKY0Qyygcifv95fqd1G+ZPhIjLsuvTSKjbbUu1yQZBPy5+F9zq4ob99yOIok7sah9KvrYva6cQj/usB+3jvGqVCKoFVarbvXUHvB1a6SUfsD9AWyXaEbcKbU1xo8HbIHTsmBFM83Vz3LsAr4ObWnV+2a6zPp9SUjrVHavj4Zhk7nqtNfY6GWU7Fwe2hEQxRyWrp7VBHMfsw97M/80qkVlataM4loJ9rjngA8rqRKaBtQzNzGGWrr97FP+0hOyNFw/TtKuFr0Sb9xeHqgt/qf8a/p/EA6JqDcexwWcw1ZUKWMtM8EDxOwu2ql0I3S9dEtbeMoNvxQEn3+GWFW8rsgzoL7baNjsuKdL3YRs76UreQDJ62AhhaFTQcj3fhdWRAJXR4En16gngCn/f6tlNnAfkh51wvweAbdhgD",
+                                    "url": "https://sundayguardianlive.com/world/us-iran-war-latest-update-what-did-trump-say-about-china-iran-inside-his-claim-of-permanently-opening-the-strait-of-hormuz-184237/",
+                                    "page_age": "1 day ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Home | Iran International",
+                                    "encrypted_content": "Ev4ICioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDIam6Hh9cmvJs8v/5hoM7m1sy8ghNlgp1IwvIjCd1Me+QrtV36BmGKMUfiYC9+8fTX6bo7zbj+gW5CcpMUZjPSxd3OzNmQ+yQoflrP8qgQhuW1mFiVe4B3tQsavHzUb40ZfZ4T048CQw9sST+FOVvIYAGRIgGg6GXFgsw7PVjW4eu/9EMSh8JK4IzGv71UrENCOgtqE2g0lcKob1XLprDHs1zv4dTHYNvJZmyN11o9R0Mwf79TqaHjt3GEXU05mMj/LVPDFmhNBwv0SMoCgcVCmFdTnDTYBDH5JNHUSKMDUpnQfFc5zMltM1m95ssB4yMRfq34bxMIM3kOdpOoHZrBTWNQd3jgliH+4BsN63VXW9EVl9VC1PRD7TXUwiu9Fahk2LKtU0DVqRMFF1kWmKlkxY9sasu5xeTW64Yq+S2i6MKtyUdWt9qOMpM2Cvv2niPwD0FUcuUkQsPSUXwMA3WrDzokzi9RQWUSCOxXAkmuygDA8H0Sx9BW8Eu6xT4818xAfpjtJYZXq02onvB2LNNWQHC12EDe5DbOwzHlPEwQK5joRVwMXtxV9dK7POYj/oUdcS2UjEoLZw8Y/Oqo4yxFtzmgjsa3OR49DK/QeQaCs5NYkX/+C4HwUnDgAzy/AwHtEYyQaG5PKNCM7uK88ychwSzw54j8xlNGny7R7hnjCzFsZWxYzSnsaRz04QK5M4GN6syBUeF6sp+V3AmXS7UPij7p5qG8uNATqYshdNrfII+22VXwjLDRtqGzG9nkWPmouxBCOI/xMPRhDjEs+UfUkg+AxPI9UpScsOvEH8XLeUJX5Czi2d1UvO2+mjQuK0Ht8sRBuLy0uz+dyMtbYV5t1a3aWb2hRiSrBbBsEDneReZ4CEn/Ywbzhxc16b3B0F125GXkYw2GLvChZp39a0/RmFKch2mDpDKFOqIJfoW/xy6eFc8cUvTAFXHbNbtpJk7z5Qf/acc5cVzPv32dEsGssCSXgbiWJC7H/ux7q0/KU0eQoNQZ1gSjFW/7U48/0PM1ZCMRDxywbDbshfReZVBWLY/S42Ptqs/brLp4M72Qrz69iUHR/87/oIBEij29nE4ErhOAPhC/ek0E6EVnp4cJDjCzL2nuvOI+Yq4Dz4UkV3gu/ut8bxj+4iryqhOeD7NBXRf926p32YzGSeAssQiawZXfF2dB2z5Y6QsnUXjdd6/7J+Cd5UY/TNEXEWSeoATiB/tFU8Oz8zL92ReEkP+r8NHhkT+rfgD45zckkHr4aozfrDM4KyL8bte3uiQATqrut672Yyi0tH7TuNnetBCA4K3CCrdOn9vp5jLjIkpzJEgdhHqowgSIDd/JrludG3SJgiDfemXXqaJPIk0eJEyOGAGn2YhUaTc3w8NQyPiEhYZN2+LrYts6sG8DhS1w57HyU+HpATM+q5IfPe3/auXwvb4MGR2lLSYmwzRlSEy1mgbHAK2vr2UDNRjv1ZH3ix9hgD",
+                                    "url": "https://www.iranintl.com/en",
+                                    "page_age": "48 minutes ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Latest Analysis: War with Iran | CSIS",
+                                    "encrypted_content": "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",
+                                    "url": "https://www.csis.org/programs/latest-analysis-war-iran",
+                                    "page_age": "15 hours ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Iran war live: Pakistan in push for new round of US-Iran peace negotiations | US-Israel war on Iran News | Al Jazeera",
+                                    "encrypted_content": "Eu4DCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDBeCO9l/ZCnrJIgX0RoMdFgf+/fBKY2ZxxbhIjAGHloWiQ2zitXcr46MG5JU7ooUZ8qeOLY7p7Bm7ardREn4ErDCvjecBn91VohKhLkq8QKDQIEVak6GUQ9R7w2JaDb06/JPthMfW4QPejEgx+mvZfWdxWX9RZPIcrEB2gSohMnOJXA0o2/6suhntsB7hAZPV8n7V4tIIPaJ58riZaLYB4gacwNxaXshq4DAK8jm25TkLO+8MMrASe+78ewOQxZMbKoAixZG0FObSomqqao2SC+Gi+y1t/DIFVTE6VfChIZPmSg7em0+v5TULB0Rbr2tOXfvOwOyr2i5/wfibeu2XxAHeCplZjSKgArxGLroeXYeo3VbsMiI95OMaqnbiVum925u9a/97SZsohLgJ6xd7HBdVlLA3hMD7y3th71nM96GkDHvg540DJCGZSkK5QJQshkHqzGypal36qy+5i85NTOVAJf8q/IrLjwIypZPChyMRfFMvCpO2ve8bRjx+R+wXeGXeGSjql9Ebgy7xwdQV6Gwq10nqTj1sIiifGXv16usnEz0GdeW8WX5Cu21Z3KeRBGQ663ZqhvbPDWhdeqRAWcYAw==",
+                                    "url": "https://www.aljazeera.com/news/liveblog/2026/4/16/iran-war-live-pakistan-in-push-for-new-round-of-us-iran-peace-negotiations",
+                                    "page_age": "8 minutes ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Iran War: Latest News, Live Coverage and Video | NBC News",
+                                    "encrypted_content": "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",
+                                    "url": "https://www.nbcnews.com/world/iran-war",
+                                    "page_age": "10 hours ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Iran threatens shipping in Gulf, Red Sea; Trump's Strait of Hormuz blockade continues",
+                                    "encrypted_content": "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",
+                                    "url": "https://www.nbcnews.com/world/iran/live-blog/live-updates-us-blockade-iran-hormuz-trump-peace-talks-rcna331890",
+                                    "page_age": "2 hours ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Iran | Iran | Today's latest from Al Jazeera",
+                                    "encrypted_content": "EvQBCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDCG3TZR6Msqg2kar3hoMdUcwouZS2U2QjZ6yIjC99RvT96jDW0ftKPSVvJwHiy5891kgtR1eB4+Wmqdk1233G3Rp43U74LHo4gyh1kQqeGlZVvSvuu2os+dPReeePCZEmb1XQle52SrGCWxpMgoCz6KzFTA00je16mIlkdlxU/AZsaOGEzF4cCUWRakbunA/8F14xy+OwDtvfZCVI6AE2Mu57Q+esypzoRonArxVZqhxE9i1KcpYcr+cDDFvzsg9HXA/ibiQsBgD",
+                                    "url": "https://www.aljazeera.com/where/iran/",
+                                    "page_age": "1 hour ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Day 47 of Middle East conflict - Trump says Iran war ‘very close to over,’ Israel-Lebanon negotiations | CNN",
+                                    "encrypted_content": "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",
+                                    "url": "https://www.cnn.com/2026/04/15/world/live-news/iran-war-blockade-us-trump",
+                                    "page_age": "5 hours ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Live Updates: Trump says Iran war \"close to over\" as Pakistan pushes for new peace talks",
+                                    "encrypted_content": "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",
+                                    "url": "https://www.cbsnews.com/live-updates/trump-iran-war-strait-hormuz-ceasefire-pakistan-peace-talks-israel-lebanon/",
+                                    "page_age": "1 hour ago"
+                                },
+                                {
+                                    "type": "web_search_result",
+                                    "title": "Iran news - breaking stories, video and analysis | CNN",
+                                    "encrypted_content": "EpEGCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDDJcXx5CODrNHggxVhoMmvyVlw6RmEF9qOMWIjARG1pqAozqonuQEQZgz2Z/5nRDEbmkQbVBuzy8y8WZnKGQEKYjV5nI9Trv+TjpA6cqlAV6BNhs7AZZSxq5XxqNZJLwhrTvBj3wF6ff6SVpdO2xKwgmgCjL46nF/zI1ttxFocBYh0pEg1b51uizcz8Roq9TOdx3NjLudDlNv/b7zlEr5sH7csfgDkRqsZQpAdk69/S09W0cvPa8kVjjvg0Z666VfCMh0q5Nylm+uc/d5+cXkAF0hyzSwVsa6GivYazW6Ei/IfJhz8Wzc2XW+agAtZRiwiw74OpK2d6P3W6JFx9iCkjCXVK9xC5o1c9bxRxS6yLMDYXuBZYUzSv1R6duQu3O14acSdCPG1m8G10msFgts+OOI/ZSmHv9IDKZ8bjnq94P7RalNlRq7mkhSJmIvo7M4mB4GmK5UbsQHrAonN2v/Jlgd0pQk1KlltYuMzzc2G+b/0ilmf1hOyDd1ToxgQSzKYqEcQsQyMdbdnUIhlWYtiUAE3a+PVVrjvh8sTVneyx/H5/3wN/kl8YMtC8WeLzaQcPWtO1gcIlt3WaXwq1kaN/XJ7kLebOXhdkzuoDGHISkqEdMg6HfhZbZz7/QmuHB1l3PMpp08OBMHh8LIrXIfA2pOEBq7WJb3GnA3sWlWCUsHr1xvMLY+m6xjDywmmdrGessaImBEz89pt88r7xTH2GTTZ8TmnQAITj88L7Bev7aVr9ksMeX/z2hHyBKCGeMuNMr9ZHjuglf27XLVF6SDQKhR7EIZHzkm2UABaQOpNVk/HRo/tmu1T4w598EkqL3L2aQC8Ip+JlMF3gdhiSSCRUU/4Y4Q/VJCv8Jf4xT31WdXFZ6ycIWPTgjmntB9+ujU6AuSk7lLybpPAUSmB0/MeqSzEijBSct0262mTpxQDuvdAR0Lg0W0kJJVgYCR7+hszwcbFApqD+utRLnimbfVoRHArcYAw==",
+                                    "url": "https://www.cnn.com/world/middleeast/iran",
+                                    "page_age": "1 hour ago"
+                                }
+                            ]
+                        }
+                    },
+                    "providerExecuted": true,
+                    "callProviderMetadata": {
+                        "anthropic": {}
+                    },
+                    "resultProviderMetadata": {
+                        "anthropic": {
+                            "type": "web_search_tool_result",
+                            "tool_use_id": "srvtoolu_01EJR47SppRDwQBqGRLQ2Gbm",
+                            "caller": {
+                                "type": "direct"
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "text",
+                    "text": "## Laatste Nieuws over de Oorlog in Iran\n\nHier is een samenvatting van het meest recente nieuws (16 april 2026):\n\n### Vredesonderhandelingen in voorbereiding\nEen delegatie onder leiding van Pakistans legerleider voerde gesprekken met Iraanse ambtenaren over mogelijke nieuwe onderhandelingen tussen Teheran en Washington, met de White House uitdrukkend optimisme voor voortgezette onderhandelingen. Gesprekken tussen de VS en Iran zouden al deze week kunnen hervatten, en Trump zei dat een tweede ronde onderhandelingen \"in de volgende twee dagen\" plaats zou kunnen vinden in Islamabad.\n\n### Trump's uitspraken\nTrump stelt dat China heeft ingestemd niet te wapenen met Iran, terwijl hij belooft het Straat van Hormuz \"permanent\" open te zeggen. President Trump zei tegen Fox News dat de oorlog \"zeer dicht bij voorbij\" is.\n\n### Economische blokkade\nHet Amerikaanse leger gebruikt meer dan 100 Amerikaanse jagers- en surveillancevliegtuigen, evenals meer dan een dozijn schepen, om de blokkade af te dwingen. Het verkeer door de straat is wekenlang bijna volledig stilgelegd, waardoor prijzen van olie en andere essentiële goederen sterk zijn gestegen.\n\n### Belangrijkste onderhandelingspunten\nHet openen van het Straat van Hormuz en Teherans nucleaire capaciteit zijn grote strijdpunten in de onderhandelingen.\n\n### Overige ontwikkelingen\n- De VS stelde sancties in op een netwerk van bedrijven, schepen en individuen die aan Iraanse oliëhandelaar Mohammad Hossein Shamkhani zijn gekoppeld.\n- Iran eist schadevergoeding voor oorlogsschade veroorzaakt door Amerikaanse en Israëlische aanvallen op kritieke infrastructuur.",
+                    "state": "done"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "EpEBCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDF+1J3MPfFObpu4bEhoMKtdrFq8XS00ip7NRIjAibEAPJF/0snqU3efE1yd6bmNgIuJU0J9rvAewazTTQLmFqoce/MLDbneqLMV3YUwqFfAyCxtyeEVmSfEStfrJ8BMYzigZqBgE",
+                    "url": "https://www.aljazeera.com/news/liveblog/2026/4/16/iran-war-live-pakistan-in-push-for-new-round-of-us-iran-peace-negotiations",
+                    "title": "Iran war live: Pakistan in push for new round of US-Iran peace negotiations | US-Israel war on Iran News | Al Jazeera"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "Eo8BCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDDzUvvVTH2kMHLaAERoMj3EpaY7dKDUAteN9IjCOXYL0we9XPADn6pcjkCCJVpRET4XcBrdqB3FhVwUKvEi3YYNK81w725Fv303T7rIqE7sWAt1ue+ebw0ZP8Ds62p518dIYBA==",
+                    "url": "https://www.nbcnews.com/world/iran-war",
+                    "title": "Iran War: Latest News, Live Coverage and Video | NBC News"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "Eo8BCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDEzdOJUbIoSDR3ztRBoMxVcIr43Fn9J6GZMZIjAvrZGZ2iJfR1+FFR8bLIDlHllXmrPhj9F9dUhavD+gVH7J8IR2iguvmqyChS+I6kIqE7dbJqk1R25yq1r10tIij0GKGlEYBA==",
+                    "url": "https://www.cbsnews.com/live-updates/trump-iran-war-strait-hormuz-ceasefire-pakistan-peace-talks-israel-lebanon/",
+                    "title": "Live Updates: Trump says Iran war \"close to over\" as Pakistan pushes for new peace talks"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "Eo8BCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDAGAx8HbrqxBaYLYfxoMtcCCn6ZaIc+EHTDRIjBYcOQ2n+Tm4xl2qiS+ZOSlLecQ9RJ1cD7Q47Qs5+wfPGha0iQAs/Cz3HwOKRUPSksqE7WtfMqWsFhi7p5f1qsY6REYgx0YBA==",
+                    "url": "https://sundayguardianlive.com/world/us-iran-war-latest-update-what-did-trump-say-about-china-iran-inside-his-claim-of-permanently-opening-the-strait-of-hormuz-184237/",
+                    "title": "US-Iran War Latest Update: What Did Trump Say About China & Iran? Inside His Claim of ‘Permanently Opening’ the Strait of Hormuz"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "Eo8BCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDPL3iJ+Uey/2OJDVARoMwyr9236QiRFWzYtJIjDWOtaIysvckyYhoyXNULy/1cggNEaoQIc2dRxm/OGW6PhNkzvtrrJrGWPEB5sRzz0qE8XnO6inZ6jI90AwbyYTeyazYeEYBA==",
+                    "url": "https://www.cbsnews.com/live-updates/trump-iran-war-strait-hormuz-ceasefire-pakistan-peace-talks-israel-lebanon/",
+                    "title": "Live Updates: Trump says Iran war \"close to over\" as Pakistan pushes for new peace talks"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "Eo8BCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDCF+8DEN0IFO18j6kBoMIrEFynKAP8RTIciaIjD4yL1UkF1PDX1wWhxxp9j/4f+gBviBYVaU/wA6o//VYIocVpmD0OASItwo7MsiSB4qE4LzHgb1x1JNpJfFf70UzG4nq0oYBA==",
+                    "url": "https://www.nbcnews.com/world/iran-war",
+                    "title": "Iran War: Latest News, Live Coverage and Video | NBC News"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "EpABCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDJoGnp+Qwu6ugdGePRoMGEP6vnwEUjoQcekhIjAsG7sYHhyqGXGIBsABN2y44kl41xPN1o1PqEVIuQhooVC9etkwaiK2HmTJeoA72p4qFF2apGyKge9WR7S1JGStInvhVBe7GAQ=",
+                    "url": "https://www.nbcnews.com/world/iran-war",
+                    "title": "Iran War: Latest News, Live Coverage and Video | NBC News"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "EpABCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDCYGxeqtA4Lv9ZRnNRoMFRPqnyyMw0AVALNQIjDXxOlR+TXZzTTEKUHZ9T4tX2Q7sueZf/74gE64jK+ZvmotRRDXP0/i4dUEF2WOJvgqFD5o0EN1xh6r/WVMUVJLWnZgEvLXGAQ=",
+                    "url": "https://www.nbcnews.com/world/iran-war",
+                    "title": "Iran War: Latest News, Live Coverage and Video | NBC News"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "Eo8BCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDPB1B/9kkybszjY13BoMayDZtQvTIbC4K0E1IjCLiEgLGuOD1YMrkRMq26k0wNKSwUfChHQVmVd+dSypQmAzyU2NjYSd6Fhji4zcf+0qE/8T9KJcnXzXFgvPotiLXdGHdfAYBA==",
+                    "url": "https://www.iranintl.com/en",
+                    "title": "Home | Iran International"
+                },
+                {
+                    "type": "source-url",
+                    "sourceId": "Eo8BCioIDhgCIiQ5NzVhZjJhOS1iMmYxLTQ4ZTUtODNjNy1lNmRmMzFhZDZmMzQSDO1kwQnylAzO2JdeRBoMtL/VXpicYh9iVuEVIjAGJ4a3UQsyeFS+X49Z7bPzbLvegjHk3IYuZ+zj0QtlJ7A9YQWu4D1A3hexP1XPFwcqE/V73hjOoVvfbFQGX3Lzg8PEqRYYBA==",
+                    "url": "https://www.aljazeera.com/where/iran/",
+                    "title": "Iran | Iran | Today's latest from Al Jazeera"
+                }
+            ]
+        },
+        {
+            "id": "915b94ed-0e22-43e4-b566-5594f794819c",
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "Explain in max 10 words"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-16T09:53:36.375Z"
+            }
+        }
+    ],
+    "trigger": "submit-message"
+}

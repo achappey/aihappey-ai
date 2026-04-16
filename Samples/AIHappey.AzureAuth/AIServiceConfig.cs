@@ -46,7 +46,6 @@ public class AIServiceConfig
     public ProviderConfig? MiniMax { get; set; }
     public ProviderConfig? Sarvam { get; set; }
     public ProviderConfig? AssemblyAI { get; set; }
-    public ProviderConfig? KernelMemory { get; set; }
     public ProviderConfig? ResembleAI { get; set; }
     public ProviderConfig? Speechify { get; set; }
     public ProviderConfig? TTSReader { get; set; }

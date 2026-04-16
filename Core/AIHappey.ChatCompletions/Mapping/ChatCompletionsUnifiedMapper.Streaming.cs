@@ -655,12 +655,7 @@ public static partial class ChatCompletionsUnifiedMapper
                                 Data = new AIToolOutputAvailableEventData
                                 {
                                     ProviderExecuted = true,
-                                    Output = new CallToolResult
-                                    {
-                                        IsError = false,
-                                        StructuredContent = CreatePerplexityToolOutput(searchResults),
-                                        Content = []
-                                    }
+                                    Output = CreatePerplexityToolOutput(searchResults)
                                 }
                             },
                             Metadata = metadata

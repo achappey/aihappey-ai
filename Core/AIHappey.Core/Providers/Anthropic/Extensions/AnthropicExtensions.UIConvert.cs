@@ -68,9 +68,12 @@ public static partial class AnthropicExtensions
                     {
                         if (tip.Output is not null)
                         {
-                            var callToolResponse = JsonSerializer.Deserialize<
-                                ModelContextProtocol.Protocol.CallToolResult>(
-                                tip.Output.ToString()!, JsonSerializerOptions.Web);
+                            var callToolResponse = tip.Output switch
+                            {
+                                ModelContextProtocol.Protocol.CallToolResult ctr => ctr,
+                                JsonElement json => JsonSerializer.Deserialize<ModelContextProtocol.Protocol.CallToolResult>(json.GetRawText(), JsonSerializerOptions.Web),
+                                _ => JsonSerializer.Deserialize<ModelContextProtocol.Protocol.CallToolResult>(JsonSerializer.Serialize(tip.Output, JsonSerializerOptions.Web), JsonSerializerOptions.Web)
+                            };
 
                             if (callToolResponse is not null)
                             {
@@ -91,6 +94,17 @@ public static partial class AnthropicExtensions
                                         buffer.Add(trc.Text.ToTextContent());
                                     }
                                 }
+                            }
+                            else
+                            {
+                                var rawOutput = tip.Output switch
+                                {
+                                    JsonElement json => json.GetRawText(),
+                                    _ => JsonSerializer.Serialize(tip.Output, JsonSerializerOptions.Web)
+                                };
+
+                                if (!string.IsNullOrWhiteSpace(rawOutput))
+                                    buffer.Add(rawOutput.ToTextContent());
                             }
                         }
 

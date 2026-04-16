@@ -104,6 +104,12 @@ public static class VercelUnifiedMapper
         if (type is "tool-input-available" or "tool-call")
         {
             var providerExecuted = GetValue<bool?>(data, "providerExecuted");
+            var providerMetadata = EnsureProviderExecutedProviderMetadata(
+                providerId,
+                providerExecuted,
+                GetTypedData<AIToolInputAvailableEventData>(envelope)?.ProviderMetadata
+                ?? GetTypedData<AIToolInputStartEventData>(envelope)?.ProviderMetadata
+                ?? GetNestedProviderMetadata(data));
 
             yield return new ToolCallPart
             {
@@ -111,7 +117,8 @@ public static class VercelUnifiedMapper
                 ToolName = GetValue<string>(data, "toolName") ?? "unknown",
                 Input = GetValue<object>(data, "input") ?? new { },
                 ProviderExecuted = providerExecuted,
-                Title = GetValue<string>(data, "title")
+                Title = GetValue<string>(data, "title"),
+                ProviderMetadata = providerMetadata
             };
 
             if (providerExecuted == false)
@@ -195,7 +202,12 @@ public static class VercelUnifiedMapper
                 ToolCallId = envelope.Id ?? string.Empty,
                 ToolName = GetValue<string>(data, "toolName") ?? "unknown",
                 ProviderExecuted = GetValue<bool?>(data, "providerExecuted"),
-                Title = GetValue<string>(data, "title")
+                Title = GetValue<string>(data, "title"),
+                ProviderMetadata = EnsureProviderExecutedProviderMetadata(
+                    providerId,
+                    GetValue<bool?>(data, "providerExecuted"),
+                    GetTypedData<AIToolInputStartEventData>(envelope)?.ProviderMetadata
+                    ?? GetNestedProviderMetadata(data))
             },
             "tool-input-delta" => new ToolCallDeltaPart
             {
@@ -205,17 +217,29 @@ public static class VercelUnifiedMapper
             "tool-output-available" => new ToolOutputAvailablePart
             {
                 ToolCallId = envelope.Id ?? string.Empty,
-                Output = GetValue<object>(data, "output") ?? new { },
+                Output = WrapToolOutputForUi(
+                    GetValue<object>(data, "output"),
+                    GetValue<bool?>(data, "providerExecuted")) ?? new { },
                 ProviderExecuted = GetValue<bool?>(data, "providerExecuted"),
                 Dynamic = GetValue<bool?>(data, "dynamic"),
-                Preliminary = GetValue<bool?>(data, "preliminary")
+                Preliminary = GetValue<bool?>(data, "preliminary"),
+                ProviderMetadata = EnsureProviderExecutedProviderMetadata(
+                    providerId,
+                    GetValue<bool?>(data, "providerExecuted"),
+                    GetTypedData<AIToolOutputAvailableEventData>(envelope)?.ProviderMetadata
+                    ?? GetNestedProviderMetadata(data))
             },
             "tool-output-error" => new ToolOutputErrorPart
             {
                 ToolCallId = GetValue<string>(data, "toolCallId") ?? string.Empty,
                 ErrorText = GetValue<string>(data, "errorText") ?? string.Empty,
                 ProviderExecuted = GetValue<bool?>(data, "providerExecuted"),
-                Dynamic = GetValue<bool?>(data, "dynamic")
+                Dynamic = GetValue<bool?>(data, "dynamic"),
+                ProviderMetadata = EnsureProviderExecutedProviderMetadata(
+                    providerId,
+                    GetValue<bool?>(data, "providerExecuted"),
+                    GetTypedData<AIToolOutputErrorEventData>(envelope)?.ProviderMetadata
+                    ?? GetNestedProviderMetadata(data))
             },
             "source-url" => new SourceUIPart
             {
@@ -282,7 +306,9 @@ public static class VercelUnifiedMapper
                       Title = GetValue<string>(data, "title"),
                       Input = GetValue<object>(data, "input") ?? new { },
                       State = GetValue<string>(data, "state") ?? string.Empty,
-                      Output = GetValue<object>(data, "output") ?? new { },
+                      Output = WrapToolOutputForUi(
+                          GetValue<object>(data, "output"),
+                          GetValue<bool?>(data, "providerExecuted")) ?? new { },
                       ProviderExecuted = GetValue<bool?>(data, "providerExecuted"),
                       Approval = GetToolApproval(data)
                   },
@@ -339,11 +365,17 @@ public static class VercelUnifiedMapper
                 };
 
             case ReasoningUIPart reasoning:
+                var reasoningMetadata = reasoning.ProviderMetadata?.ToDictionary(a => a.Key, a => (object?)a.Value)
+                                        ?? new Dictionary<string, object?>();
+
+                if (!string.IsNullOrWhiteSpace(reasoning.Id))
+                    reasoningMetadata["id"] = reasoning.Id;
+
                 return new AIReasoningContentPart
                 {
                     Type = "reasoning",
                     Text = reasoning.Text,
-                    Metadata = reasoning.ProviderMetadata?.ToDictionary(a => a.Key, a => (object?)a.Value)
+                    Metadata = reasoningMetadata.Count == 0 ? null : reasoningMetadata
                     /*   Metadata = new Dictionary<string, object?>
                        {
                            ["vercel.type"] = reasoning.Type,
@@ -437,6 +469,28 @@ public static class VercelUnifiedMapper
     private static Dictionary<string, object>? GetReasoningProviderMetadata(Dictionary<string, object?> data)
         => GetValue<Dictionary<string, object>>(data, "providerMetadata")
             ?? ToLooseProviderMetadata(GetNestedProviderMetadata(data));
+
+    private static Dictionary<string, Dictionary<string, object>?>? EnsureProviderExecutedProviderMetadata(
+        string providerId,
+        bool? providerExecuted,
+        Dictionary<string, Dictionary<string, object>>? providerMetadata)
+    {
+        if (providerExecuted != true)
+            return null;
+
+        var normalized = new Dictionary<string, Dictionary<string, object>?>();
+
+        if (providerMetadata is not null)
+        {
+            foreach (var (key, value) in providerMetadata)
+                normalized[key] = value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(providerId) && !normalized.ContainsKey(providerId))
+            normalized[providerId] = new Dictionary<string, object>();
+
+        return normalized.Count == 0 ? null : normalized;
+    }
 
     private static Dictionary<string, object>? ToLooseProviderMetadata(
         Dictionary<string, Dictionary<string, object>>? providerMetadata)
@@ -543,18 +597,8 @@ public static class VercelUnifiedMapper
         if (rawPart is not null)
             metadata["vercel.part.raw"] = JsonSerializer.SerializeToElement(rawPart, rawPart.GetType(), Json);
 
-        ModelContextProtocol.Protocol.CallToolResult? callToolResult = output switch
-        {
-            ModelContextProtocol.Protocol.CallToolResult ctr => ctr,
-            JsonElement json => json.TryDeserialize<ModelContextProtocol.Protocol.CallToolResult>(),
-            _ => output.TryDeserialize<ModelContextProtocol.Protocol.CallToolResult>()
-        };
-
-        if (callToolResult is not null)
-        {
-            callToolResult.Meta = null;
-            output = JsonSerializer.SerializeToElement(callToolResult);
-        }
+        if (providerExecuted == true && rawPart is ToolInvocationPart invocation)
+            AppendMessagesProviderMetadata(metadata, invocation);
 
         return new AIToolCallContentPart
         {
@@ -564,11 +608,49 @@ public static class VercelUnifiedMapper
             Title = title,
             Input = input,
             State = state,
-            Output = output,
+            Output = UnwrapToolOutputFromUi(output, providerExecuted),
             ProviderExecuted = providerExecuted,
             Approval = approval,
             Metadata = metadata
         };
+    }
+
+    private static void AppendMessagesProviderMetadata(
+        Dictionary<string, object?> metadata,
+        ToolInvocationPart invocation)
+    {
+        var providerMetadata = NormalizeProviderMetadata(invocation.ResultProviderMetadata)
+            ?? NormalizeProviderMetadata(invocation.CallProviderMetadata);
+
+        if (providerMetadata is null || providerMetadata.Count == 0)
+            return;
+
+        var providerId = providerMetadata.Keys.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(providerId))
+            return;
+
+        metadata["messages.provider.id"] = providerId;
+        metadata["messages.provider.metadata"] = providerMetadata;
+
+        if (providerMetadata.TryGetValue(providerId, out var matchedProviderMetadata)
+            && matchedProviderMetadata.TryGetValue("type", out var blockType)
+            && blockType is not null)
+        {
+            metadata["messages.block.type"] = blockType.ToString();
+        }
+    }
+
+    private static Dictionary<string, Dictionary<string, object>>? NormalizeProviderMetadata(
+        Dictionary<string, Dictionary<string, object>?>? providerMetadata)
+    {
+        if (providerMetadata is null)
+            return null;
+
+        var normalized = providerMetadata
+            .Where(entry => entry.Value is not null && entry.Value.Count > 0)
+            .ToDictionary(entry => entry.Key, entry => entry.Value!);
+
+        return normalized.Count == 0 ? null : normalized;
     }
 
     private static UIMessagePart? ToUIMessagePart(AIToolCallContentPart part)
@@ -581,12 +663,126 @@ public static class VercelUnifiedMapper
                 Title = part.Title,
                 Input = part.Input ?? new { },
                 State = part.State ?? string.Empty,
-                Output = part.Output ?? new { },
+                Output = WrapToolOutputForUi(part.Output, part.ProviderExecuted) ?? new { },
                 ProviderExecuted = part.ProviderExecuted,
                 Approval = ToVercelApproval(part.Approval)
             }
             : null;
     }
+
+    private static object? WrapToolOutputForUi(object? output, bool? providerExecuted)
+    {
+        if (output is null || providerExecuted != true)
+            return output;
+
+        if (TryGetCallToolResult(output, out var callToolResult))
+            return JsonSerializer.SerializeToElement(CloneWithoutMeta(callToolResult), Json);
+
+        var serializedOutput = SerializeToJsonElement(output);
+
+        var wrapped = serializedOutput.ValueKind switch
+        {
+            JsonValueKind.String => new ModelContextProtocol.Protocol.CallToolResult
+            {
+                Content =
+                [
+                    new ModelContextProtocol.Protocol.TextContentBlock
+                    {
+                        Text = serializedOutput.GetString() ?? string.Empty
+                    }
+                ]
+            },
+            JsonValueKind.Null or JsonValueKind.Undefined => new ModelContextProtocol.Protocol.CallToolResult(),
+            _ => new ModelContextProtocol.Protocol.CallToolResult
+            {
+                StructuredContent = serializedOutput,
+                Content = []
+            }
+        };
+
+        return JsonSerializer.SerializeToElement(wrapped, Json);
+    }
+
+    private static object? UnwrapToolOutputFromUi(object? output, bool? providerExecuted)
+    {
+        if (output is null || providerExecuted != true)
+            return output;
+
+        if (!TryGetCallToolResult(output, out var callToolResult))
+            return output;
+
+        callToolResult = CloneWithoutMeta(callToolResult);
+
+        if (callToolResult.StructuredContent is JsonElement structuredContent
+            && structuredContent.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined
+            && (callToolResult.Content is null || callToolResult.Content.Count == 0)
+            && callToolResult.IsError != true)
+        {
+            return structuredContent.Clone();
+        }
+
+        return JsonSerializer.SerializeToElement(callToolResult, Json);
+    }
+
+    private static bool TryGetCallToolResult(
+        object? output,
+        out ModelContextProtocol.Protocol.CallToolResult callToolResult)
+    {
+        callToolResult = default!;
+
+        if (output is not ModelContextProtocol.Protocol.CallToolResult && !LooksLikeCallToolResult(output))
+            return false;
+
+        var candidate = output switch
+        {
+            ModelContextProtocol.Protocol.CallToolResult ctr => ctr,
+            JsonElement json => json.TryDeserialize<ModelContextProtocol.Protocol.CallToolResult>(),
+            _ => output.TryDeserialize<ModelContextProtocol.Protocol.CallToolResult>()
+        };
+
+        if (candidate is null)
+            return false;
+
+        callToolResult = candidate;
+        return true;
+    }
+
+    private static bool LooksLikeCallToolResult(object? output)
+    {
+        if (output is null)
+            return false;
+
+        if (output is ModelContextProtocol.Protocol.CallToolResult)
+            return true;
+
+        var json = output switch
+        {
+            JsonElement jsonElement => jsonElement,
+            _ => SerializeToJsonElement(output)
+        };
+
+        if (json.ValueKind != JsonValueKind.Object)
+            return false;
+
+        return json.TryGetProperty("structuredContent", out _)
+               || json.TryGetProperty("content", out _)
+               || json.TryGetProperty("isError", out _)
+               || json.TryGetProperty("meta", out _);
+    }
+
+    private static ModelContextProtocol.Protocol.CallToolResult CloneWithoutMeta(
+        ModelContextProtocol.Protocol.CallToolResult callToolResult)
+    {
+        callToolResult.Meta = null;
+        return callToolResult;
+    }
+
+    private static JsonElement SerializeToJsonElement(object output)
+        => output switch
+        {
+            JsonElement json => json.Clone(),
+            _ => JsonSerializer.SerializeToElement(output, Json)
+        };
 
     private static string GetToolName(string? type, string? title)
     {

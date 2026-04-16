@@ -15,6 +15,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string GroqErrorRawFixturePath = "Fixtures/chat-completions/raw/groq-error-completions-stream.jsonl";
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
     private const string ReasoningMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
+    private const string ReasoningAndProviderToolCallsMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string GroqProviderId = "groq";
     private const string PerplexityProviderId = "perplexity";
@@ -111,6 +112,168 @@ public sealed class ApiChatStreamFixtureTests
         var providerMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
 
         Assert.Equal(originalSignature, Assert.IsType<string>(providerMetadata["signature"]));
+    }
+
+    [Fact]
+    public void Messages_reasoning_and_provider_tool_calls_fixture_maps_to_expected_vercel_ui_stream_parts()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(ReasoningAndProviderToolCallsMessagesRawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var originalSignature = parts.Single(part => part.Delta?.Type == "signature_delta").Delta?.Signature;
+        var toolUseId = parts.Single(part => part.ContentBlock?.Type == "server_tool_use").ContentBlock?.Id;
+
+        var uiParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Where(streamEvent => streamEvent.Event.Type is
+                "reasoning-start" or
+                "reasoning-delta" or
+                "reasoning-end" or
+                "tool-input-start" or
+                "tool-input-delta" or
+                "tool-input-available" or
+                "tool-output-available" or
+                "source-url" or
+                "text-start" or
+                "text-delta" or
+                "text-end" or
+                "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(
+            uiParts.Select(part => part.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "tool-input-start",
+            "tool-input-delta",
+            "tool-input-available",
+            "tool-output-available",
+            "text-start",
+            "source-url",
+            "text-delta",
+            "text-end",
+            "finish");
+
+        Assert.Single(uiParts.OfType<ReasoningStartUIPart>());
+        Assert.Single(uiParts.OfType<ReasoningEndUIPart>());
+        Assert.Single(uiParts.OfType<ToolCallStreamingStartPart>());
+        Assert.Equal(8, uiParts.OfType<ToolCallDeltaPart>().Count());
+        Assert.Single(uiParts.OfType<ToolCallPart>());
+        Assert.Single(uiParts.OfType<ToolOutputAvailablePart>());
+        Assert.Equal(9, uiParts.OfType<SourceUIPart>().Count());
+        Assert.Single(uiParts.OfType<TextStartUIMessageStreamPart>());
+        Assert.Single(uiParts.OfType<TextEndUIMessageStreamPart>());
+        Assert.Single(uiParts.OfType<FinishUIPart>());
+
+        var reasoningText = string.Concat(uiParts.OfType<ReasoningDeltaUIPart>().Select(part => part.Delta));
+        Assert.Contains("latest news about war in Iran", reasoningText);
+        Assert.Contains("Let me search for latest news about war in Iran.", reasoningText);
+
+        var reasoningStartPart = Assert.IsType<ReasoningStartUIPart>(uiParts.Single(part => part.Type == "reasoning-start"));
+        Assert.Null(reasoningStartPart.ProviderMetadata);
+
+        var reasoningEndPart = Assert.IsType<ReasoningEndUIPart>(uiParts.Single(part => part.Type == "reasoning-end"));
+        var reasoningProviderMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        Assert.Equal(originalSignature, Assert.IsType<string>(reasoningProviderMetadata["signature"]));
+
+        var toolStartPart = Assert.IsType<ToolCallStreamingStartPart>(uiParts.Single(part => part.Type == "tool-input-start"));
+        Assert.Equal(toolUseId, toolStartPart.ToolCallId);
+        Assert.Equal("web_search", toolStartPart.ToolName);
+        Assert.True(toolStartPart.ProviderExecuted);
+        var toolStartProviderMetadata = Assert.Contains(ProviderId, toolStartPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
+        Assert.Empty(toolStartProviderMetadata ?? new Dictionary<string, object>());
+
+        var toolInputDeltaParts = uiParts.OfType<ToolCallDeltaPart>().ToList();
+        Assert.All(toolInputDeltaParts, part => Assert.Equal(toolUseId, part.ToolCallId));
+        Assert.Equal("{\"query\": \"latest news war Iran 2026\"}", string.Concat(toolInputDeltaParts.Select(part => part.InputTextDelta)));
+
+        var toolCallPart = Assert.IsType<ToolCallPart>(uiParts.Single(part => part.Type == "tool-input-available"));
+        Assert.Equal(toolUseId, toolCallPart.ToolCallId);
+        Assert.Equal("web_search", toolCallPart.ToolName);
+        Assert.True(toolCallPart.ProviderExecuted);
+        var toolCallProviderMetadata = Assert.Contains(ProviderId, toolCallPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
+        Assert.Empty(toolCallProviderMetadata ?? new Dictionary<string, object>());
+
+        var toolInput = JsonSerializer.SerializeToElement(toolCallPart.Input, JsonSerializerOptions.Web);
+        Assert.Equal("latest news war Iran 2026", toolInput.GetProperty("query").GetString());
+
+        var toolOutputPart = Assert.IsType<ToolOutputAvailablePart>(uiParts.Single(part => part.Type == "tool-output-available"));
+        Assert.Equal(toolUseId, toolOutputPart.ToolCallId);
+        Assert.True(toolOutputPart.ProviderExecuted);
+        var toolOutputProviderMetadata = Assert.Contains(ProviderId, toolOutputPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
+        Assert.Equal(toolUseId, Assert.IsType<string>(toolOutputProviderMetadata?["tool_use_id"]));
+
+        var toolOutput = JsonSerializer.SerializeToElement(toolOutputPart.Output, JsonSerializerOptions.Web);
+        var searchResults = toolOutput.GetProperty("structuredContent").GetProperty("content");
+        Assert.True(searchResults.GetArrayLength() >= 1);
+        Assert.Equal("2026 Iran war - Wikipedia", searchResults[0].GetProperty("title").GetString());
+        Assert.Equal("https://en.wikipedia.org/wiki/2026_Iran_war", searchResults[0].GetProperty("url").GetString());
+
+        var sourceParts = uiParts.OfType<SourceUIPart>().ToList();
+        Assert.Equal("https://en.wikipedia.org/wiki/2026_Iran_war", sourceParts[0].Url);
+        Assert.Contains(sourceParts, part => part.Url == "https://www.aljazeera.com/news/liveblog/2026/4/16/iran-war-live-pakistan-in-push-for-new-round-of-us-iran-peace-negotiations");
+        Assert.Contains(sourceParts, part => part.Url == "https://www.cnbc.com/2026/04/15/iran-war-trump-peace-deal-us-talks-stock-market-oil-prices-.html");
+
+        var text = string.Concat(uiParts.OfType<TextDeltaUIMessageStreamPart>().Select(part => part.Delta));
+        Assert.StartsWith("## Samenvatting: Nieuwste ontwikkelingen in de Iraanse oorlog", text);
+        Assert.Contains("Iran reageerde met raket- en dronenaanvallen", text);
+        Assert.Contains("Het Internationaal Monetair Fonds heeft gewaarschuwd", text);
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts.Single(part => part.Type == "finish"));
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal($"{ProviderId}/claude-haiku-4-5-20251001", finishPart.MessageMetadata?.Model);
+        Assert.Equal(19246, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(789, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(20035, finishPart.MessageMetadata?.Usage.TotalTokens);
+
+        var finishProviderMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var providerUsage = finishProviderMetadata.GetProperty("usage");
+        Assert.Equal(19246, providerUsage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(789, providerUsage.GetProperty("output_tokens").GetInt32());
+        Assert.Equal(1, providerUsage.GetProperty("server_tool_use").GetProperty("web_search_requests").GetInt32());
+    }
+
+    [Fact]
+    public void Provider_executed_tool_output_error_event_maps_to_ui_part_with_provider_metadata_key()
+    {
+        var envelope = new AIEventEnvelope
+        {
+            Type = "tool-output-error",
+            Data = new AIToolOutputErrorEventData
+            {
+                ToolCallId = "tool-call-1",
+                ErrorText = "provider tool failed",
+                ProviderExecuted = true
+            }
+        };
+
+        var part = Assert.IsType<ToolOutputErrorPart>(VercelUnifiedMapper.ToUIMessagePart(envelope, ProviderId).Single());
+
+        Assert.Equal("tool-call-1", part.ToolCallId);
+        Assert.True(part.ProviderExecuted);
+        var providerMetadata = Assert.Contains(ProviderId, part.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>?>());
+        Assert.Empty(providerMetadata ?? new Dictionary<string, object>());
+    }
+
+    [Fact]
+    public void Client_executed_tool_input_start_event_does_not_get_synthetic_provider_metadata()
+    {
+        var envelope = new AIEventEnvelope
+        {
+            Type = "tool-input-start",
+            Data = new AIToolInputStartEventData
+            {
+                ToolName = "client_tool",
+                ProviderExecuted = false,
+                Title = "Client tool"
+            }
+        };
+
+        var part = Assert.IsType<ToolCallStreamingStartPart>(VercelUnifiedMapper.ToUIMessagePart(envelope, ProviderId).Single());
+
+        Assert.False(part.ProviderExecuted);
+        Assert.Null(part.ProviderMetadata);
     }
 
     [Fact]

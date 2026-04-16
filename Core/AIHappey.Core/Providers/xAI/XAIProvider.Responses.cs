@@ -13,6 +13,17 @@ public partial class XAIProvider
 
         this.SetDefaultResponseProperties(options);
 
+        if (options.Input?.IsItems == true && options.Input.Items is not null)
+        {
+            var filtered = options.Input.Items
+                .Where(a => a is not ResponseReasoningItem)
+                .ToList();
+
+            options.Input = new ResponseInput(
+                items: filtered
+            );
+        }
+
         var response = await _client.GetResponses(
                    options, ct: cancellationToken);
 
@@ -31,6 +42,17 @@ public partial class XAIProvider
 
         this.SetDefaultResponseProperties(options);
 
+        if (options.Input?.IsItems == true && options.Input.Items is not null)
+        {
+            var filtered = options.Input.Items
+                .Where(a => a is not ResponseReasoningItem)
+                .ToList();
+
+            options.Input = new ResponseInput(
+                items: filtered
+            );
+        }
+        
         await foreach (var update in _client.GetResponsesUpdates(options, ct: cancellationToken))
         {
             if (update is ResponseCompleted completed)

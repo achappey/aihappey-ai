@@ -41,7 +41,10 @@ public static partial class MessagesUnifiedMapper
         ArgumentNullException.ThrowIfNull(request);
 
         var metadata = request.Metadata ?? new Dictionary<string, object?>();
+        var inputItems = request.Input?.Items ?? [];
+        var systemFromInput = ToSystemContent(inputItems, providerId);
         var system = ExtractObject<MessagesContent>(metadata, "messages.request.system")
+                     ?? systemFromInput
                      ?? (!string.IsNullOrWhiteSpace(request.Instructions) ? new MessagesContent(request.Instructions) : null);
 
         var metadataObj = JsonSerializer.Deserialize<MessagesRequestMetadata>(
@@ -52,7 +55,7 @@ public static partial class MessagesUnifiedMapper
         {
             Model = request.Model,
             MaxTokens = request.MaxOutputTokens,
-            Messages = [.. ToMessageParams(request.Input?.Items ?? [], providerId)],
+            Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],
             CacheControl = ExtractObject<CacheControlEphemeral>(metadata, "messages.request.cache_control"),
             Container = ExtractValue<string>(metadata, "messages.request.container"),
             InferenceGeo = ExtractValue<string>(metadata, "messages.request.inference_geo"),
@@ -79,6 +82,22 @@ public static partial class MessagesUnifiedMapper
             TopP = request.TopP,
             AdditionalProperties = ExtractObject<Dictionary<string, JsonElement>>(metadata, "messages.request.unmapped")
         };
+    }
+
+    private static bool IsSystemRole(string? role)
+        => string.Equals(role?.Trim(), "system", StringComparison.OrdinalIgnoreCase);
+
+    private static MessagesContent? ToSystemContent(IEnumerable<AIInputItem> items, string providerId)
+    {
+        var blocks = new List<MessageContentBlock>();
+
+        foreach (var item in items.Where(item => IsSystemRole(item.Role)))
+        {
+            foreach (var part in item.Content ?? [])
+                AppendMessageBlock(blocks, part, providerId);
+        }
+
+        return blocks.Count == 0 ? null : CreateMessagesContentFromBlocks(blocks);
     }
 
     private static Dictionary<string, object?> BuildUnifiedRequestMetadata(MessagesRequest request)
@@ -128,26 +147,31 @@ public static partial class MessagesUnifiedMapper
     private static IEnumerable<MessageParam> ToMessageParams(IEnumerable<AIInputItem> items, string providerId)
     {
         var yielded = new List<MessageParam>();
-        var pendingAssistantBlocks = new List<MessageContentBlock>();
-        string pendingAssistantRole = "assistant";
+        var pendingBlocks = new List<MessageContentBlock>();
+        string pendingRole = "assistant";
 
-        void FlushAssistant()
+        void FlushPending()
         {
-            if (pendingAssistantBlocks.Count == 0)
+            if (pendingBlocks.Count == 0)
                 return;
 
             yielded.Add(new MessageParam
             {
-                Role = pendingAssistantRole,
-                Content = CreateMessagesContentFromBlocks([.. pendingAssistantBlocks])
+                Role = pendingRole,
+                Content = CreateMessagesContentFromBlocks([.. pendingBlocks])
             });
 
-            pendingAssistantBlocks.Clear();
+            pendingBlocks.Clear();
         }
 
         foreach (var item in items)
         {
-            pendingAssistantRole = NormalizeRole(item.Role);
+            var itemRole = NormalizeRole(item.Role);
+
+            if (pendingBlocks.Count > 0 && !string.Equals(pendingRole, itemRole, StringComparison.Ordinal))
+                FlushPending();
+
+            pendingRole = itemRole;
 
             foreach (var part in item.Content ?? [])
             {
@@ -157,7 +181,7 @@ public static partial class MessagesUnifiedMapper
                     {
                         if (assistantBlock is not null)
                         {
-                            FlushAssistant();
+                            FlushPending();
                             yielded.Add(new MessageParam
                             {
                                 Role = "assistant",
@@ -167,6 +191,7 @@ public static partial class MessagesUnifiedMapper
 
                         if (userBlock is not null)
                         {
+                            FlushPending();
                             yielded.Add(new MessageParam
                             {
                                 Role = "user",
@@ -178,49 +203,50 @@ public static partial class MessagesUnifiedMapper
                     continue;
                 }
 
-                var raw = ExtractRawBlock(part.Metadata);
-                if (raw is not null)
-                {
-                    pendingAssistantBlocks.Add(raw);
-                    continue;
-                }
-
-                switch (part)
-                {
-                    case AITextContentPart text:
-                        pendingAssistantBlocks.Add(new MessageContentBlock { Type = "text", Text = text.Text });
-                        break;
-                    case AIReasoningContentPart reasoning:
-
-                        var signature = reasoning.Metadata?.GetProviderOption<string?>(providerId, "signature");
-
-                        var block = new MessageContentBlock
-                        {
-                            Type = "thinking",
-                            Thinking = reasoning.Text,
-                            Signature = signature
-                        };
-
-                        if (!string.IsNullOrWhiteSpace(signature))
-                        {
-                            pendingAssistantBlocks.Add(block);
-                        }
-
-
-                        break;
-                    case AIFileContentPart file:
-                        var fileBlock = ToMessageFileBlock(file);
-                        if (fileBlock != null)
-                            pendingAssistantBlocks.Add(fileBlock);
-                        break;
-                }
+                AppendMessageBlock(pendingBlocks, part, providerId);
             }
         }
 
-        FlushAssistant();
+        FlushPending();
 
         foreach (var message in yielded)
             yield return message;
+    }
+
+    private static void AppendMessageBlock(List<MessageContentBlock> target, AIContentPart part, string providerId)
+    {
+        var raw = ExtractRawBlock(part.Metadata);
+        if (raw is not null)
+        {
+            target.Add(raw);
+            return;
+        }
+
+        switch (part)
+        {
+            case AITextContentPart text:
+                target.Add(new MessageContentBlock { Type = "text", Text = text.Text });
+                break;
+            case AIReasoningContentPart reasoning:
+                var signature = reasoning.Metadata?.GetProviderOption<string?>(providerId, "signature");
+
+                if (!string.IsNullOrWhiteSpace(signature))
+                {
+                    target.Add(new MessageContentBlock
+                    {
+                        Type = "thinking",
+                        Thinking = reasoning.Text,
+                        Signature = signature
+                    });
+                }
+
+                break;
+            case AIFileContentPart file:
+                var fileBlock = ToMessageFileBlock(file);
+                if (fileBlock != null)
+                    target.Add(fileBlock);
+                break;
+        }
     }
 
 

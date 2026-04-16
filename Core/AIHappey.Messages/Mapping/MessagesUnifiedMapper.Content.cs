@@ -376,6 +376,14 @@ public static partial class MessagesUnifiedMapper
                 return true;
             }
 
+            if (outputJson.ValueKind == JsonValueKind.Object &&
+                outputJson.TryGetProperty("content", out var directContent) &&
+                directContent.ValueKind is JsonValueKind.Array or JsonValueKind.String or JsonValueKind.Object)
+            {
+                structuredContent = outputJson.Clone();
+                return true;
+            }
+
             var deserialized = DeserializeFromObject<ModelContextProtocol.Protocol.CallToolResult>(outputJson);
             if (deserialized?.StructuredContent is JsonElement deserializedStructuredContent &&
                 deserializedStructuredContent.ValueKind == JsonValueKind.Object)

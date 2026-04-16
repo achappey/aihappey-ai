@@ -191,6 +191,12 @@ public class ToolCallPart : UIMessagePart
             ToolName = toolName,
             Input = input,
         };
+
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+
+    public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
+
 }
 
 public class ToolCallStreamingStartPart : UIMessagePart
@@ -220,6 +226,9 @@ public class ToolCallStreamingStartPart : UIMessagePart
             ToolName = toolName
         };
 
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
 }
 
 
@@ -258,6 +267,10 @@ public class ToolOutputAvailablePart : UIMessagePart
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Preliminary { get; init; }
 
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
+
 }
 
 public class ToolOutputErrorPart : UIMessagePart
@@ -278,6 +291,10 @@ public class ToolOutputErrorPart : UIMessagePart
     [JsonPropertyName("dynamic")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Dynamic { get; init; }
+
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, Dictionary<string, object>?>? ProviderMetadata { get; init; }
 }
 
 public class ToolApproval
@@ -321,6 +338,13 @@ public class ToolInvocationPart : UIMessagePart
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ToolApproval? Approval { get; init; }
 
+    [JsonPropertyName("callProviderMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, Dictionary<string, object>?>? CallProviderMetadata { get; init; }
+
+    [JsonPropertyName("resultProviderMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, Dictionary<string, object>?>? ResultProviderMetadata { get; init; }
 }
 
 public class SourceUIPart : UIMessagePart

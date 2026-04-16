@@ -15,6 +15,7 @@ public sealed class MessagesStreamFixtureTests
     private const string TypedFixturePath = "Fixtures/messages/typed/basic-messages-stream.json";
     private const string RawFixturePath = "Fixtures/messages/raw/basic-messages-stream.jsonl";
     private const string ReasoningRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
+    private const string ReasoningAndProviderToolCallsRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string Model = "claude-haiku-4-5-20251001";
     private const string MessageId = "msg_017Kux9bNH5F1gph8C2FZhP1";
@@ -349,37 +350,94 @@ public sealed class MessagesStreamFixtureTests
     }
 
     [Fact]
-    public void Messages_unified_events_bridge_to_response_stream_parts_as_unknown_events_with_preserved_payloads()
+    public void Messages_reasoning_and_provider_tool_calls_bridge_to_response_stream_parts_with_preserved_order_and_payloads()
     {
-        var parts = FixtureFileLoader.LoadMessageTypedFixture(TypedFixturePath);
+        var parts = FixtureFileLoader.LoadMessageRawFixture(ReasoningAndProviderToolCallsRawFixturePath);
         var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var originalSignature = parts.Single(part => part.Delta?.Type == "signature_delta").Delta?.Signature;
+        var toolUseId = parts.Single(part => part.ContentBlock?.Type == "server_tool_use").ContentBlock?.Id;
 
         var responseParts = parts
             .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
             .Select(streamEvent => streamEvent.ToResponseStreamPart())
             .ToList();
 
-        Assert.Equal(
-            [
-                "text-start",
-                "text-delta",
-                "text-delta",
-                "text-delta",
-                "text-end",
-                "finish"
-            ],
-            responseParts.Select(part => part.Type).ToList());
-
         Assert.All(responseParts, part => Assert.IsType<ResponseUnknownEvent>(part));
 
-        var firstTextDelta = Assert.IsType<ResponseUnknownEvent>(responseParts[1]);
-        Assert.Equal("#", firstTextDelta.Data?["delta"].GetString());
+        FixtureAssertions.AssertContainsSubsequence(
+            responseParts.Select(part => part.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "tool-input-start",
+            "tool-input-delta",
+            "tool-input-available",
+            "tool-output-available",
+            "text-start",
+            "source-url",
+            "text-delta",
+            "text-end",
+            "finish");
+
+        Assert.Equal(8, responseParts.Count(part => part.Type == "tool-input-delta"));
+        Assert.Equal(9, responseParts.Count(part => part.Type == "source-url"));
+
+        var reasoningEnd = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "reasoning-end"));
+        var reasoningProviderMetadata = reasoningEnd.Data?["providerMetadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected provider metadata on reasoning-end response bridge event.");
+        Assert.Equal(originalSignature, reasoningProviderMetadata.GetProperty("signature").GetString());
+
+        var toolInputStart = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "tool-input-start"));
+        Assert.Equal("web_search", toolInputStart.Data?["toolName"].GetString());
+        Assert.True(toolInputStart.Data?["providerExecuted"].GetBoolean());
+        var toolInputStartProviderMetadata = toolInputStart.Data?["providerMetadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected provider metadata on tool-input-start response bridge event.");
+        Assert.Equal(JsonValueKind.Object, toolInputStartProviderMetadata.ValueKind);
+
+        var toolInputText = string.Concat(
+            responseParts
+                .Where(part => part.Type == "tool-input-delta")
+                .Select(part => Assert.IsType<ResponseUnknownEvent>(part).Data?["inputTextDelta"].GetString()));
+        Assert.Equal("{\"query\": \"latest news war Iran 2026\"}", toolInputText);
+
+        var toolInputAvailable = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "tool-input-available"));
+        Assert.Equal("latest news war Iran 2026", toolInputAvailable.Data?["input"].GetProperty("query").GetString());
+        var toolInputAvailableProviderMetadata = toolInputAvailable.Data?["providerMetadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected provider metadata on tool-input-available response bridge event.");
+        Assert.Equal(JsonValueKind.Object, toolInputAvailableProviderMetadata.ValueKind);
+
+        var toolOutputAvailable = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "tool-output-available"));
+        Assert.True(toolOutputAvailable.Data?["providerExecuted"].GetBoolean());
+        var toolOutputProviderMetadata = toolOutputAvailable.Data?["providerMetadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected provider metadata on tool-output-available response bridge event.");
+        Assert.Equal(toolUseId, toolOutputProviderMetadata.GetProperty("tool_use_id").GetString());
+        var toolOutputResults = toolOutputAvailable.Data?["output"].GetProperty("structuredContent").GetProperty("content")
+            ?? throw new InvalidOperationException("Expected structured search results on tool-output-available response bridge event.");
+        Assert.True(toolOutputResults.GetArrayLength() >= 1);
+        Assert.Equal("2026 Iran war - Wikipedia", toolOutputResults[0].GetProperty("title").GetString());
+        Assert.Equal("https://en.wikipedia.org/wiki/2026_Iran_war", toolOutputResults[0].GetProperty("url").GetString());
+
+        var sourceUrls = responseParts
+            .Where(part => part.Type == "source-url")
+            .Select(part => Assert.IsType<ResponseUnknownEvent>(part).Data?["url"].GetString())
+            .ToList();
+        Assert.Contains("https://en.wikipedia.org/wiki/2026_Iran_war", sourceUrls);
+        Assert.Contains("https://www.aljazeera.com/news/liveblog/2026/4/16/iran-war-live-pakistan-in-push-for-new-round-of-us-iran-peace-negotiations", sourceUrls);
+        Assert.Contains("https://www.cnbc.com/2026/04/15/iran-war-trump-peace-deal-us-talks-stock-market-oil-prices-.html", sourceUrls);
+
+        var bridgedText = string.Concat(
+            responseParts
+                .Where(part => part.Type == "text-delta")
+                .Select(part => Assert.IsType<ResponseUnknownEvent>(part).Data?["delta"].GetString()));
+        Assert.StartsWith("## Samenvatting: Nieuwste ontwikkelingen in de Iraanse oorlog", bridgedText);
+        Assert.Contains("Iran reageerde met raket- en dronenaanvallen", bridgedText);
+        Assert.Contains("Het Internationaal Monetair Fonds heeft gewaarschuwd", bridgedText);
 
         var finishPart = Assert.IsType<ResponseUnknownEvent>(responseParts[^1]);
         Assert.Equal(Model, finishPart.Data?["model"].GetString());
         Assert.Equal("stop", finishPart.Data?["finishReason"].GetString());
-        Assert.Equal(12, finishPart.Data?["inputTokens"].GetInt32());
-        Assert.Equal(23, finishPart.Data?["outputTokens"].GetInt32());
-        Assert.Equal(35, finishPart.Data?["totalTokens"].GetInt32());
+        Assert.Equal(19246, finishPart.Data?["inputTokens"].GetInt32());
+        Assert.Equal(789, finishPart.Data?["outputTokens"].GetInt32());
+        Assert.Equal(20035, finishPart.Data?["totalTokens"].GetInt32());
     }
 }
