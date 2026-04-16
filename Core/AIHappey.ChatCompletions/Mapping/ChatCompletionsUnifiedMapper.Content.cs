@@ -190,6 +190,23 @@ public static partial class ChatCompletionsUnifiedMapper
             return Enumerable.Empty<ChatMessage>();
 
         var list = new List<ChatMessage>();
+        var pendingParts = new List<AIContentPart>();
+        string? pendingRole = null;
+
+        void FlushPending()
+        {
+            if (string.IsNullOrWhiteSpace(pendingRole) || pendingParts.Count == 0)
+                return;
+
+            list.Add(new ChatMessage
+            {
+                Role = pendingRole,
+                Content = ToChatMessageContent(pendingParts, pendingRole)
+            });
+
+            pendingRole = null;
+            pendingParts.Clear();
+        }
 
         foreach (var item in input.Items)
         {
@@ -197,6 +214,8 @@ public static partial class ChatCompletionsUnifiedMapper
 
             if (string.Equals(item.Type, "function_call_output", StringComparison.OrdinalIgnoreCase))
             {
+                FlushPending();
+
                 foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall))
                 {
                     list.Add(new ChatMessage
@@ -225,6 +244,21 @@ public static partial class ChatCompletionsUnifiedMapper
 
             var toolCallId = ExtractMetadataValue<string>(item.Metadata, "chatcompletions.message.tool_call_id");
 
+            if (ShouldMergeUserMessageWithPending(pendingRole, pendingParts, role, nonToolParts, toolParts, toolCalls, toolCallId))
+            {
+                pendingParts.AddRange(nonToolParts);
+                continue;
+            }
+
+            FlushPending();
+
+            if (ShouldStartPendingUserMessage(role, nonToolParts, toolParts, toolCalls, toolCallId))
+            {
+                pendingRole = role;
+                pendingParts.AddRange(nonToolParts);
+                continue;
+            }
+
             list.Add(new ChatMessage
             {
                 Role = role,
@@ -244,8 +278,37 @@ public static partial class ChatCompletionsUnifiedMapper
             }
         }
 
+        FlushPending();
+
         return list;
     }
+
+    private static bool ShouldStartPendingUserMessage(
+        string role,
+        IReadOnlyCollection<AIContentPart> nonToolParts,
+        IReadOnlyCollection<AIToolCallContentPart> toolParts,
+        IReadOnlyCollection<object>? toolCalls,
+        string? toolCallId)
+        => string.Equals(role, "user", StringComparison.OrdinalIgnoreCase)
+           && nonToolParts.Count > 0
+           && toolParts.Count == 0
+           && toolCalls is not { Count: > 0 }
+           && string.IsNullOrWhiteSpace(toolCallId);
+
+    private static bool ShouldMergeUserMessageWithPending(
+        string? pendingRole,
+        IReadOnlyCollection<AIContentPart> pendingParts,
+        string role,
+        IReadOnlyCollection<AIContentPart> nonToolParts,
+        IReadOnlyCollection<AIToolCallContentPart> toolParts,
+        IReadOnlyCollection<object>? toolCalls,
+        string? toolCallId)
+        => string.Equals(pendingRole, "user", StringComparison.OrdinalIgnoreCase)
+           && ShouldStartPendingUserMessage(role, nonToolParts, toolParts, toolCalls, toolCallId)
+           && (ContainsFileContent(pendingParts) || ContainsFileContent(nonToolParts));
+
+    private static bool ContainsFileContent(IEnumerable<AIContentPart> parts)
+        => parts.Any(part => part is AIFileContentPart);
 
     private static JsonElement ToChatMessageContent(IEnumerable<AIContentPart>? parts, string role)
     {

@@ -66,10 +66,12 @@ public static partial class ChatCompletionsUnifiedMapper
         ArgumentNullException.ThrowIfNull(request);
 
         var normalizedToolChoice = NormalizeToolChoice(request.ToolChoice, request.Tools);
+        var normalizedModel = NormalizeRequestModel(request.Model, request.ProviderId);
+        var additionalProperties = BuildChatCompletionRequestAdditionalProperties(request);
 
         var options = new ChatCompletionOptions
         {
-            Model = request.Model ?? string.Empty,
+            Model = normalizedModel ?? string.Empty,
             Temperature = request.Temperature,
             ParallelToolCalls = request.ParallelToolCalls,
             Stream = request.Stream,
@@ -82,7 +84,8 @@ public static partial class ChatCompletionsUnifiedMapper
             },
             ResponseFormat = request.ResponseFormat,
             Metadata = request.Metadata,
-            Store = false
+            Store = false,
+            AdditionalProperties = additionalProperties
         };
 
         return options;

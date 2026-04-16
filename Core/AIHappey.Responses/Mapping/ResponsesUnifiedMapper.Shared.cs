@@ -170,6 +170,21 @@ public static partial class ResponsesUnifiedMapper
     private static object? CloneIfJsonElement(object? value)
         => value is JsonElement json ? json.Clone() : value;
 
+    private static string? NormalizeRequestModel(string? model, string? providerId)
+    {
+        var modelText = model?.Trim();
+        if (string.IsNullOrWhiteSpace(modelText))
+            return modelText;
+
+        if (string.IsNullOrWhiteSpace(providerId))
+            return modelText;
+
+        var prefix = providerId.Trim() + "/";
+        return modelText.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? modelText[prefix.Length..]
+            : modelText;
+    }
+
     private static string GetValueAsString(object? value, string fallback = "")
         => value switch
         {

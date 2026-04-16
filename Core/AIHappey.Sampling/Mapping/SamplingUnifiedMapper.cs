@@ -183,7 +183,7 @@ public static class SamplingUnifiedMapper
                 {
                     Type = "file",
                     MediaType = image.MimeType,
-                    Data = ToDataUrl(image.MimeType, image.Data.ToArray()),
+                    Data = ToDataUrl(image.MimeType, NormalizeBinaryData(image.Data)),
                     Metadata = new Dictionary<string, object?>
                     {
                         ["sampling.content.type"] = "image"
@@ -195,7 +195,7 @@ public static class SamplingUnifiedMapper
                 {
                     Type = "file",
                     MediaType = audio.MimeType,
-                    Data = ToDataUrl(audio.MimeType, audio.Data.ToArray()),
+                    Data = ToDataUrl(audio.MimeType, NormalizeBinaryData(audio.Data)),
                     Metadata = new Dictionary<string, object?>
                     {
                         ["sampling.content.type"] = "audio"
@@ -244,7 +244,7 @@ public static class SamplingUnifiedMapper
                 Type = "file",
                 MediaType = blob.MimeType,
                 Filename = TryGetFileName(blob.Uri),
-                Data = ToDataUrl(blob.MimeType, blob.Blob.ToArray()),
+                Data = ToDataUrl(blob.MimeType, NormalizeBinaryData(blob.Blob)),
                 Metadata = new Dictionary<string, object?>
                 {
                     ["sampling.content.type"] = "embedded_blob",
@@ -748,6 +748,32 @@ public static class SamplingUnifiedMapper
     {
         var mime = string.IsNullOrWhiteSpace(mediaType) ? "application/octet-stream" : mediaType;
         return $"data:{mime};base64,{Convert.ToBase64String(data)}";
+    }
+
+    private static byte[] NormalizeBinaryData(ReadOnlyMemory<byte> data)
+    {
+        var bytes = data.ToArray();
+        if (bytes.Length == 0 || !LooksLikeEncodedText(bytes))
+            return bytes;
+
+        var text = Encoding.UTF8.GetString(bytes).Trim();
+        return TryExtractBytes(text, out var normalized) && normalized.Length > 0
+            ? normalized
+            : bytes;
+    }
+
+    private static bool LooksLikeEncodedText(byte[] bytes)
+    {
+        foreach (var value in bytes)
+        {
+            if (value is 9 or 10 or 13)
+                continue;
+
+            if (value < 32 || value > 126)
+                return false;
+        }
+
+        return true;
     }
 
     private static bool TryExtractBytes(string? value, out byte[] bytes)

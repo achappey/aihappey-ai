@@ -182,6 +182,31 @@ public static partial class ChatCompletionsUnifiedMapper
         return additional.Count > 0 ? additional : null;
     }
 
+    private static Dictionary<string, JsonElement>? BuildChatCompletionRequestAdditionalProperties(AIRequest request)
+    {
+        var additional = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+
+        if (request.MaxOutputTokens is int maxTokens)
+            additional["max_tokens"] = JsonSerializer.SerializeToElement(maxTokens, Json);
+
+        return additional.Count > 0 ? additional : null;
+    }
+
+    private static string? NormalizeRequestModel(string? model, string? providerId)
+    {
+        var modelText = model?.Trim();
+        if (string.IsNullOrWhiteSpace(modelText))
+            return modelText;
+
+        if (string.IsNullOrWhiteSpace(providerId))
+            return modelText;
+
+        var prefix = providerId.Trim() + "/";
+        return modelText.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? modelText[prefix.Length..]
+            : modelText;
+    }
+
     private static Dictionary<string, JsonElement>? BuildChatCompletionUpdateAdditionalProperties(
         Dictionary<string, object?>? metadata)
     {

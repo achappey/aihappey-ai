@@ -35,7 +35,7 @@ public static partial class ResponsesUnifiedMapper
 
         return new ResponseRequest
         {
-            Model = request.Model,
+            Model = NormalizeRequestModel(request.Model, providerId),
             Instructions = request.Instructions,
             Input = request.Input is null ? null : ToResponsesInput(request.Input, providerId),
             Temperature = request.Temperature,
@@ -235,7 +235,69 @@ public static partial class ResponsesUnifiedMapper
         for (var i = startIndex; i < items.Count; i++)
             result.AddRange(ToResponsesInputItems(items[i], providerId, preferEncryptedReasoningReplay));
 
-        return result;
+        return MergeConsecutiveUserMessages(result);
+    }
+
+    private static List<ResponseInputItem> MergeConsecutiveUserMessages(IReadOnlyList<ResponseInputItem> items)
+    {
+        var merged = new List<ResponseInputItem>(items.Count);
+
+        foreach (var item in items)
+        {
+            if (merged.LastOrDefault() is ResponseInputMessage previous
+                && item is ResponseInputMessage current
+                && CanMergeUserMessages(previous, current))
+            {
+                merged[^1] = MergeUserMessages(previous, current);
+                continue;
+            }
+
+            merged.Add(item);
+        }
+
+        return merged;
+    }
+
+    private static bool CanMergeUserMessages(ResponseInputMessage previous, ResponseInputMessage current)
+    {
+        if (previous.Role != ResponseRole.User || current.Role != ResponseRole.User)
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(previous.Id)
+            || !string.IsNullOrWhiteSpace(previous.Status)
+            || !string.IsNullOrWhiteSpace(previous.Phase)
+            || !string.IsNullOrWhiteSpace(current.Id)
+            || !string.IsNullOrWhiteSpace(current.Status)
+            || !string.IsNullOrWhiteSpace(current.Phase))
+        {
+            return false;
+        }
+
+        var previousParts = ExpandToInputParts(previous.Content);
+        var currentParts = ExpandToInputParts(current.Content);
+
+        return previousParts.Count > 0
+               && currentParts.Count > 0
+               && (previousParts.Any(static part => part is InputImagePart)
+                   || currentParts.Any(static part => part is InputImagePart));
+    }
+
+    private static ResponseInputMessage MergeUserMessages(ResponseInputMessage previous, ResponseInputMessage current)
+        => new()
+        {
+            Role = ResponseRole.User,
+            Content = new ResponseMessageContent([.. ExpandToInputParts(previous.Content), .. ExpandToInputParts(current.Content)])
+        };
+
+    private static IReadOnlyList<ResponseContentPart> ExpandToInputParts(ResponseMessageContent content)
+    {
+        if (content.IsParts && content.Parts is not null)
+            return [.. content.Parts];
+
+        if (content.IsText)
+            return [new InputTextPart(content.Text ?? string.Empty)];
+
+        return [];
     }
 
     private static bool HasProviderScopedEncryptedReasoning(

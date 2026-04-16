@@ -7,6 +7,21 @@ public static partial class MessagesUnifiedMapper
 {
     private static readonly JsonSerializerOptions Json = MessagesJson.Default;
 
+    private static string? NormalizeRequestModel(string? model, string? providerId)
+    {
+        var modelText = model?.Trim();
+        if (string.IsNullOrWhiteSpace(modelText))
+            return modelText;
+
+        if (string.IsNullOrWhiteSpace(providerId))
+            return modelText;
+
+        var prefix = providerId.Trim() + "/";
+        return modelText.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? modelText[prefix.Length..]
+            : modelText;
+    }
+
     private static readonly HashSet<string> MappedRequestFields =
     [
         "model",

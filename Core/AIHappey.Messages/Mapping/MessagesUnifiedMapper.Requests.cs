@@ -53,7 +53,7 @@ public static partial class MessagesUnifiedMapper
 
         return new MessagesRequest
         {
-            Model = request.Model,
+            Model = NormalizeRequestModel(request.Model, providerId),
             MaxTokens = request.MaxOutputTokens,
             Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],
             CacheControl = ExtractObject<CacheControlEphemeral>(metadata, "messages.request.cache_control"),
