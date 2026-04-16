@@ -25,7 +25,7 @@ public sealed class SamplingUnifiedMapperRequestTests
         var (samplingRequest, fixture) = LoadSamplingRequestFixture();
         var chatCompletionOptions = samplingRequest
             .ToUnifiedRequest(ProviderId)
-            .ToChatCompletionOptions();
+            .ToChatCompletionOptions(ProviderId);
 
         Assert.Equal(ExpectedModelWithoutProviderPrefix, chatCompletionOptions.Model);
 

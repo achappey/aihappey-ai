@@ -180,6 +180,8 @@ public sealed class MessagesStreamFixtureTests
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
             .ToList();
 
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiParts);
+
         Assert.Equal(
             [
                 "text-start",
@@ -230,6 +232,8 @@ public sealed class MessagesStreamFixtureTests
             .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
             .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiParts);
 
         Assert.Equal(
             [
@@ -326,6 +330,8 @@ public sealed class MessagesStreamFixtureTests
             .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
             .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(reasoningUiParts);
 
         Assert.Equal(
             [

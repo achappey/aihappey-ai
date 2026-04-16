@@ -84,6 +84,8 @@ public sealed class ApiChatStreamFixtureTests
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
             .ToList();
 
+        FixtureAssertions.AssertAllSourceUrlsAreValid(reasoningUiParts);
+
         Assert.Equal(
             [
                 "reasoning-start",
@@ -139,6 +141,8 @@ public sealed class ApiChatStreamFixtureTests
                 "finish")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
             .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiParts);
 
         FixtureAssertions.AssertContainsSubsequence(
             uiParts.Select(part => part.Type).ToList(),
@@ -331,6 +335,8 @@ public sealed class ApiChatStreamFixtureTests
             .Where(streamEvent => streamEvent.Event.Type is "error" or "finish")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(GroqProviderId))
             .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiParts);
 
         Assert.Collection(
             uiParts,

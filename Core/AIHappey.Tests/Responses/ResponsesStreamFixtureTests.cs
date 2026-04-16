@@ -140,11 +140,14 @@ public sealed class ResponsesStreamFixtureTests
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(reasoningProviderMetadata["id"]));
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(reasoningProviderMetadata["item_id"]));
 
-        var reasoningUiPart = unifiedEvents
+        var reasoningUiParts = unifiedEvents
             .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(reasoningProviderId))
-            .OfType<ReasoningEndUIPart>()
-            .First();
+            .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(reasoningUiParts);
+
+        var reasoningUiPart = Assert.IsType<ReasoningEndUIPart>(reasoningUiParts.OfType<ReasoningEndUIPart>().First());
 
         var uiProviderMetadata = Assert.Contains(reasoningProviderId, reasoningUiPart.ProviderMetadata ?? []);
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["id"]));

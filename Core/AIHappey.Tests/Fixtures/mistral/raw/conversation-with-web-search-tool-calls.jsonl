@@ -1,0 +1,1293 @@
+event: conversation.response.started
+data: {"type":"conversation.response.started","created_at":"2026-04-16T17:10:57.707179Z","conversation_id":"conv_019d9746427d759b8f1adaa1fb22d773"}
+
+event: tool.execution.started
+data: {"type":"tool.execution.started","created_at":"2026-04-16T17:10:57.710383Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","model":"mistral-small-2603","name":"web_search_premium","arguments":"{\"","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.720386Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":"query\": \"rec","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.738519Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":"ente","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.756233Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":" nieu","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.771579Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":"ws oorlog","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.788247Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":" Iran","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.802609Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":" 202","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.817570Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":"6","function":"web_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.832537Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","arguments":"\"}","function":"web_search"}
+
+event: tool.execution.started
+data: {"type":"tool.execution.started","created_at":"2026-04-16T17:10:57.850182Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","model":"mistral-small-2603","name":"web_search_premium","arguments":"{\"query\":","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.866691Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":" \"oor","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.878813Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"log","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.895444Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":" Iran nieu","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.911837Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"ws\", \"start","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.927706Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"_date\": \"2","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.943413Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"026","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.957490Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"-04-","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.974647Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"01\", \"","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:57.990535Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"end_date\": \"","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:58.006759Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"2026","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:58.021875Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"-04-","function":"news_search"}
+
+event: tool.execution.delta
+data: {"type":"tool.execution.delta","created_at":"2026-04-16T17:10:58.042289Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","arguments":"16\"}","function":"news_search"}
+
+event: tool.execution.done
+data: {"type":"tool.execution.done","created_at":"2026-04-16T17:10:59.084400Z","output_index":0,"id":"tool_exec_019d974643ae744cb8f04395f3b1dbeb","name":"web_search_premium","function":"web_search","info":{}}
+
+event: tool.execution.done
+data: {"type":"tool.execution.done","created_at":"2026-04-16T17:10:59.100037Z","output_index":1,"id":"tool_exec_019d9746443a739894d684cbbe93b7a6","name":"web_search_premium","function":"news_search","info":{}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.412758Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"Hier"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.431692Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" is het"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.454141Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" laatste"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.479008Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" nieuws over de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.501031Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" oorlog in Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.523171Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":", zoals"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.545034Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" bekend"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.567642Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" op "}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.590000Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"16 april"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.611975Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" 202"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.635071Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"6:\n\n**"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.658173Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"Rec"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.679806Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ente"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.702485Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" ontwikk"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.725374Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"elingen in"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.749310Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" de oorlog"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.772880Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" ("}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.793724Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"f"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.815422Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ebru"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.840934Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ari"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.860413Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"-ap"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.883027Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ril 20"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.906772Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"26):**\n\n"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.929533Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"- Op"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.952057Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" "}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.975558Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"28"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:10:59.997831Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" februari 20"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.020415Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"26 lance"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.044497Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"erden"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.064693Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.086547Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" Verenigde Staten en Israël"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.109251Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" ver"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.131449Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"r"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.153727Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ass"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.175322Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ings"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.198693Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"l"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.222900Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ucht"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.246224Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"aan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.267778Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"vallen op"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.290327Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" Iran, ger"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.313656Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"icht"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.335382Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" op militaire"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.357432Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" en over"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.379347Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"heid"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.402738Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ss"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.424011Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ites"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.446865Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" en waarbij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.470013Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" onder"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.492214Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" meer"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.515595Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.537008Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" Ira"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.559157Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"anse opper"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.582271Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ste leider"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.604951Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" Ali"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.628140Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" Khamenei en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.649428Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" andere"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.681301Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" function"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.700246Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ar"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.721934Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"issen werden"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.747301Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" ged"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.767933Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ood"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.791320Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"."}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.812622Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" De aan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.837013Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"val vond"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.858572Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" plaats"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.884803Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" tijdens lop"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.905219Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"ende"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.973627Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" onder"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.975555Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":"handelingen tussen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:00.999219Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.000974Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" en de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.016411Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":0,"model":"mistral-small-2603","role":"assistant","content":" VS"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.059942Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":1,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"2026 Iran war - Wikipedia","url":"https://en.wikipedia.org/wiki/2026_Iran_war","description":"On 28 February 2026, <strong>the United States and Israel launched airstrikes on Iran, targeting military and government sites, assassinating Supreme Leader Ali Khamenei and other Iranian officials, and inflicting civilian casualties</strong>. The surprise attacks were launched during negotiations between Iran ..."}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.059964Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":".\n- S"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.082069Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"indsd"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.104543Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"ien zijn"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.128993Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" Israël"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.150299Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.177488Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" Iran verschillende"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.195370Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" mal"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.218267Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.244426Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" in"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.264032Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" conflict"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.285018Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" gek"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.307695Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"omen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.332252Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":", waarbij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.372902Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" ook"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.379352Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" Lib"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.405025Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"anon bet"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.427995Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"rokken ra"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.449787Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"akte"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.473661Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" door"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.495341Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" escal"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.521890Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"atie"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.541074Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" met"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.562573Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" He"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.586817Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"zbollah.\n"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.610655Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"- Op"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.638070Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" "}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.656429Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"7"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.678730Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" april 20"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.702270Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"26 vo"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.727318Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"erden"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.748920Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" Israël en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.774699Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.794902Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" VS nieuwe luch"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.816598Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"taan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.839054Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"vallen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.862730Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" uit"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.884545Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" op Iran, waarbij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.910440Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" explos"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.935472Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"ies"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.957943Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" in Te"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:01.997190Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"heran werden"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.007762Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" gem"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.028970Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"eld. De VS"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.046980Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" dre"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.069452Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"igde"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.091363Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" met"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.113518Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" verd"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.135509Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"ere"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.158509Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" aanv"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.181383Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"allen op cruc"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.204761Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"iale Ira"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.227371Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"anse infrastructuur"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.252576Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":", zoals elektr"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.273541Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"iciteits"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.295732Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"centrales,"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.314287Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" oliebronnen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.332206Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" en het"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.351953Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" eiland Kharg,"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.370564Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" dat cru"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.388498Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"ciaal is voor"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.407374Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":" de Ira"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.427095Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"anse olie-ex"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.444599Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"plor"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.464955Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":2,"model":"mistral-small-2603","role":"assistant","content":"atie"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.482422Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":3,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"LIVE | Israël voert nieuwe luchtaanvallen uit op Iran, explosies in Teheran gemeld - EW","url":"https://www.ewmagazine.nl/buitenland/blog/2026/02/iran-vs-oorlog-donald-trump-ali-khamenei-israel-1543634/","description":"Volgens Trump voeren de Verenigde Staten ‘serieuze gesprekken’ met wat hij omschrijft als ‘een nieuw en redelijker regime’ over het beëindigen van de oorlog die vorige maand begon. Komt er geen snelle deal, dan dreigt hij met zware aanvallen op Iraanse infrastructuur. „We zullen ons prettige verblijf beëindigen door alle elektriciteitscentrales, oliebronnen en het eiland Kharg volledig te vernietigen,” schrijft hij, waarbij hij aangeeft dat deze doelen tot nu toe bewust zijn ontzien. Kharg geldt als cruciaal voor Iran: vrijwel alle olie-export loopt via het eiland, dat daarmee de economische levensader van het land vormt."}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.482441Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":".\n- S"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.501217Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"inds 8"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.520062Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" april 20"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.541499Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"26 is een"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.559215Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" twe"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.580097Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"eda"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.601678Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"ags"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.619185Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" bestand"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.638302Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" van"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.655418Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" k"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.677005Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"racht"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.695465Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" tussen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.713681Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" de Verenigde"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.733611Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" Staten, Israël en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.752358Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" Iran, maar dit"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.771186Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" couvrant"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.789154Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" niet"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.811080Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" Lib"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.834619Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"anon,"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.857379Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" waar Israël"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.870655Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" nog steeds"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.902889Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" aanv"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.923431Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"allen uit"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.940755Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"voert"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.964870Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" op He"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:02.982849Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"zbollah"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.002561Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":". De"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.021657Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" onder"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.039163Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"handelingen in"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.058120Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" Islam"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.076544Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"abad ("}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.096543Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"Pakistan)"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.114496Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" om"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.132088Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" een"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.151912Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" blij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.170443Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"v"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.188375Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"ende"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.208714Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" cease"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.225609Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"fire te"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.246069Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" bere"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.263415Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"iken"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.283904Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":", zijn"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.302618Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" tot"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.324467Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" nu"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.341502Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" toe"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.358931Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" mis"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.378498Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"l"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.396306Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"ukt, maar er"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.415834Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" blijven inm"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.434369Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"idd"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.452550Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"els ber"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.472759Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"ichten over"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.490688Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" tuss"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.509155Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"ent"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.528849Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"ijdse"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:03.546616Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" communic"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.799111Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":"atie via"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.800675Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":4,"model":"mistral-small-2603","role":"assistant","content":" Pakistan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.802330Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":5,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Lees hier het volledige liveblog over de oorlog in het Midden-Oosten van 30 maart tot en met 9 april 2026 terug | de Volkskrant","url":"https://www.volkskrant.nl/buitenland/lees-hier-het-volledige-liveblog-over-de-oorlog-in-het-midden-oosten-van-30-maart-tot-en-met-9-april-2026-terug~b28549d00/","description":"Gepubliceerd op 03:04, 8-4-2026 · <strong>Het twee weken durende bestand tussen de Verenigde Staten, Israël en Iran zal ook Libanon omvatten</strong>, meldt de Israëlische nieuwssite Ynet op basis van veiligheidsbronnen."}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.802345Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":6,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"How did Pakistan broker a temporary truce between Iran and the US?","url":"news-afp-20260408-aa9736d0"}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.802353Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":7,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Iran FM welcomes Pakistani delegation led by army chief Munir","url":"news-afp-20260415-35fb497e"}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.802359Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":".\n\n"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.804734Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"**Polit"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.810052Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"ieke en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.811576Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" human"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.812902Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"itaire"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.814588Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" situ"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.816560Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"atie:**\n\n- Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.818095Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" mel"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.819371Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"de op"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.821064Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" 1"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.823644Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"5 april een"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.827485Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" aans"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.831412Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"lag"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.833895Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" met"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.836166Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" twee primit"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.839836Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"ieve"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.841312Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" bom"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.843693Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"auto"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.846460Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"’s op een"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.848823Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" controle"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.852856Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"post"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.855126Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" in Teheran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.857014Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":", waarbij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.859085Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" drie"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.860523Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" gew"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.862485Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"onden"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.865097Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" vielen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.866999Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":". Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.868515Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" besch"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.870833Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"uld"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.874905Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"igt"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.876478Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" extrem"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.877765Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"istische"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.879333Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" fact"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.881087Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":"ies"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.882592Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":", niet direct"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.883867Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" de VS"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.885450Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" of"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.887134Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":8,"model":"mistral-small-2603","role":"assistant","content":" Israël"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.888836Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":9,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Iran Update Special Report, April 15, 2026 | ISW","url":"https://understandingwar.org/research/middle-east/iran-update-special-report-april-15-2026/","description":"US naval forces continued to enforce the blockade of Iranian ports. CENTCOM reported that no vessels had breached it in the first 48 hours."}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.888850Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":".\n- De"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.891077Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" Amerikaanse"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.895693Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" president Donald Trump ze"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.897446Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"i"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.898912Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" op"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.900143Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" "}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.901826Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"15"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.903551Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" april dat"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.905114Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" de Verenigde Staten en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.906417Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" Iran \"ident"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.907986Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"ieke"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.909729Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" do"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.911349Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"elen\" hebben"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.913711Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":":"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.917777Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" het"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.919554Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" verwij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.921161Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"deren"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.922925Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" van ver"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.925139Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"rij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.927486Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"kt uranium"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.928960Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" uit"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.930554Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" Iran, het"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.932899Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" stop"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.934567Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"pen van ver"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.939252Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"rijk"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.940674Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"ing"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.942442Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" en het her"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.944253Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"open"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.946524Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.952571Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" van de Straat"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.971053Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":" van Horm"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:04.989628Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":10,"model":"mistral-small-2603","role":"assistant","content":"uz"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.007775Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":11,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Netanyahu says US, Israel have 'identical goals' on Iran","url":"news-afp-20260415-69f57e86"}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.007798Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":".\n- Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.025906Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" blij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.047488Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ft vas"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.066498Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"th"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.084482Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ouden aan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.105081Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" zijn"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.125891Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" recht"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.144113Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" op"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.160088Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" vre"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.178745Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ed"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.199174Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"zaam"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.216519Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" nucleair"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.235297Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" onderzoek"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.252982Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":", ond"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.271644Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"anks Amerikaanse"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.291381Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" druk"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.309063Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":".\n- De"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.326302Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" gas"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.345513Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"p"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.365437Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"rijzen in Europa"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.384744Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" zijn"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.402314Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" door"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.421573Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" de oorlog"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.438915Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" gestegen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.456997Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" tot"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.476220Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" record"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.494946Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ho"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.514091Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ogte"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.530870Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" (tot"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.550808Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" €70 per"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.569094Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" meg"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.587852Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"awattuur),"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.605639Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" en de ol"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.624232Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ie-ex"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.646009Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ploratie via"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.664568Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" het eiland Kharg"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.683082Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" is"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.701375Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":" ernst"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.720533Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ig ver"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.739981Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"sto"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.758973Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":12,"model":"mistral-small-2603","role":"assistant","content":"ord"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.779101Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":13,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Iranoorlog 2026 - Wikipedia","url":"https://nl.wikipedia.org/wiki/Iranoorlog_2026","description":"Na Opperste Leider Mojtaba Khamenei gold Larijani als de machtigste man van Iran. Na aanvallen door Israël op de installaties van het Iraanse South Pars-gasveld, en Iraanse tegenreacties de volgende ochtend in naburige Golfstaten, piekte de gasprijs rond €70 euro per megawattuur op de Nederlandse gasbeurs Title Transfer Facility, tegenover €30 voor de oorlog, een nieuwe fase in de energiecrisis van 2026."}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.779120Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":".\n\n"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.795841Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"**Intern"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.819425Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"ationale"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.833969Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" bem"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.851086Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"iddeling"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.869802Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":":**\n\n- Pakistan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.888550Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" fun"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.907893Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"geert als"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.926520Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" belangrijkste"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.944964Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" bem"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.962427Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"iddela"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:05.981793Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"ar tussen Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.006112Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" en de VS."}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.020117Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" Er"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.041444Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" zijn"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.058699Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" recent"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.087789Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"elijk"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.105357Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" deleg"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.129707Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"aties tussen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.148185Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.165006Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" twee landen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.183287Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" uitgew"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.204130Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"isseld, maar"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.220822Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" concrete"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.239841Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" door"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.258204Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"bra"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.278181Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":"ken"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.298956Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" zijn"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.315964Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" er"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.333834Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":14,"model":"mistral-small-2603","role":"assistant","content":" nog niet"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.409335Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":15,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"How did Pakistan broker a temporary truce between Iran and the US?","url":"news-afp-20260408-aa9736d0"}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.409353Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":16,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Iran FM welcomes Pakistani delegation led by army chief Munir","url":"news-afp-20260415-35fb497e"}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.409359Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":17,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Pakistan army chief meets Iran speaker Ghalibaf: state TV ","url":"news-afp-20260416-9b3c2d42"}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.409365Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":".\n\n**"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.427932Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":"Sport"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.452102Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":":"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.465363Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.483863Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" spe"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.502178Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":"elt"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.522072Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" toch"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.539777Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" mee"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.558543Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" aan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.577627Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" het"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.602521Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" WK voetbal"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.616372Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" 202"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.635970Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":"6**\n\n"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.665554Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":"-"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.676006Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" Ond"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.705534Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":"anks"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.714710Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.733621Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" oorlog heeft"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.751468Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" FIFA"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.770104Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" Iran"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.789882Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" toeg"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.808434Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":"estaan om mee"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.829531Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" te doen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.846604Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" aan"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.865958Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" het WK voetbal"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.884425Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" "}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.905106Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":"2026"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.922073Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":","}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.940528Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" dat"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.960882Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" in juni"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.979598Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" wordt gehouden"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:06.998964Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" in de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.017986Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" VS, Canada en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.035541Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":18,"model":"mistral-small-2603","role":"assistant","content":" Mexico"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.054427Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":19,"model":"mistral-small-2603","role":"assistant","content":{"type":"tool_reference","tool":"web_search_premium","title":"Iran participating in World Cup, FIFA president confirms","url":"news-afp-20260416-6180416b"}}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.054448Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":".\n\nK"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.071846Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"ortom:"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.091208Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" er"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.111386Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" is een frag"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.130274Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"iel"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.147248Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" bestand"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.166981Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":", maar de"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.184574Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" oorlog is"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.205020Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" nog niet"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.222768Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" voor"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.243750Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"bij"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.262181Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"."}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.280346Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" De"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.300197Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" kom"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.317867Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"ende"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.340704Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" dagen"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.355730Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" en"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.374319Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" we"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.394307Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"ken z"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.414332Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"ullen be"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.434280Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"pal"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.452740Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":"end"}
+
+event: message.output.delta
+data: {"type":"message.output.delta","created_at":"2026-04-16T17:11:07.471213Z","output_index":2,"id":"msg_019d97464a5474f39633df0889f344ea","content_index":20,"model":"mistral-small-2603","role":"assistant","content":" zijn voor"}
+
+event: conversation.response.done
+data: {"type":"conversation.response.done","created_at":"2026-04-16T17:11:07.707968Z","usage":{"prompt_tokens":1219,"completion_tokens":807,"total_tokens":12336,"connector_tokens":10310,"connectors":{"web_search_premium":2}}}
+

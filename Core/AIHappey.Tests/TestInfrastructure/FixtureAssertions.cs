@@ -1,3 +1,5 @@
+using AIHappey.Vercel.Models;
+
 namespace AIHappey.Tests.TestInfrastructure;
 
 internal static class FixtureAssertions
@@ -43,5 +45,18 @@ internal static class FixtureAssertions
             results.Add(item);
 
         return results;
+    }
+
+    public static void AssertAllSourceUrlsAreValid(IEnumerable<UIMessagePart> uiParts)
+    {
+        ArgumentNullException.ThrowIfNull(uiParts);
+
+        var sourceParts = uiParts.OfType<SourceUIPart>().ToList();
+
+        Assert.All(
+            sourceParts,
+            part => Assert.True(
+                Uri.TryCreate(part.Url, UriKind.Absolute, out var uri) && uri.IsAbsoluteUri,
+                $"Expected source-url UI part url to be a valid absolute URI, but found '{part.Url}'."));
     }
 }

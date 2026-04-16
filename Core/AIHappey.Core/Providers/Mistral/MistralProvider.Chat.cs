@@ -41,64 +41,17 @@ public partial class MistralProvider
 
 
     private static JsonNode? ToToolArrayNode(IEnumerable<JsonNode> tools)
-    {
-        var array = new JsonArray();
-
-        foreach (var tool in tools)
-        {
-            array.Add(tool.DeepClone());
-        }
-
-        return array.Count == 0 ? null : array;
-    }
+        => MistralExtensions.ToToolArrayNode(tools);
 
     private static void AddSerializedToolNode(List<JsonNode> tools, object? tool)
-    {
-        if (tool is null)
-            return;
-
-        var node = JsonSerializer.SerializeToNode(tool, MistralJsonSerializerOptions);
-        if (node is not null)
-            tools.Add(node);
-    }
+        => MistralExtensions.AddSerializedToolNode(tools, tool);
 
     private static JsonNode? TryCreateToolNode(JsonElement tool)
-    {
-        if (tool.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!tool.TryGetProperty("type", out var typeElement)
-            || typeElement.ValueKind != JsonValueKind.String
-            || string.IsNullOrWhiteSpace(typeElement.GetString()))
-        {
-            return null;
-        }
-
-        try
-        {
-            return JsonNode.Parse(tool.GetRawText());
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
+        => MistralExtensions.TryCreateToolNode(tool);
 
 
 
     private static object DeserializeToolInput(string input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-            return new { };
-
-        try
-        {
-            return JsonSerializer.Deserialize<object>(input, MistralJsonSerializerOptions) ?? new { };
-        }
-        catch (JsonException)
-        {
-            return input;
-        }
-    }
+        => MistralExtensions.DeserializeToolInput(input);
 
 }

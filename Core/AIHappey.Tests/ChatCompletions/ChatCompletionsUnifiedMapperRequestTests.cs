@@ -21,7 +21,7 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
             ?? throw new InvalidOperationException($"Could not deserialize fixture chat request from [{ApprovedToolCallWithOutputFixturePath}](Core/AIHappey.Tests/{ApprovedToolCallWithOutputFixturePath}).");
 
         var unifiedRequest = chatRequest.ToUnifiedRequest("openai");
-        var options = unifiedRequest.ToChatCompletionOptions();
+        var options = unifiedRequest.ToChatCompletionOptions("openai");
         var messages = options.Messages.ToList();
 
         Assert.Equal(4, messages.Count);

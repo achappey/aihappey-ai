@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Mistral;
@@ -79,7 +80,8 @@ public partial class MistralProvider
 
     private async Task<MistralConversationResponse> StartConversationAsync(
         MistralConversationRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ProviderBackendCaptureRequest? capture = null)
     {
         ApplyAuthHeader();
 
@@ -100,6 +102,8 @@ public partial class MistralProvider
         if (!resp.IsSuccessStatusCode)
             throw CreateConversationException(resp, body);
 
+        await ProviderBackendCapture.CaptureJsonAsync("conversations", resp, body, capture, cancellationToken);
+
         return JsonSerializer.Deserialize<MistralConversationResponse>(body, MistralJsonSerializerOptions)
             ?? throw new MistralConversationException(
                 resp.StatusCode,
@@ -109,7 +113,8 @@ public partial class MistralProvider
 
     private async IAsyncEnumerable<MistralConversationStreamEvent> StartConversationStreamAsync(
         MistralConversationRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
         ApplyAuthHeader();
 
@@ -137,6 +142,7 @@ public partial class MistralProvider
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("conversations", resp, capture);
 
         string? sseEvent = null;
         var dataBuilder = new StringBuilder();
@@ -146,6 +152,9 @@ public partial class MistralProvider
             var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null)
                 break;
+
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, cancellationToken);
 
             if (line.Length == 0)
             {
@@ -183,9 +192,8 @@ public partial class MistralProvider
 
     private static MistralConversationStreamEvent ParseConversationStreamEvent(string? sseEvent, string data)
     {
-        var payload = JsonNode.Parse(data) ?? new JsonObject();
-        var type = sseEvent ?? GetString(payload, "type") ?? string.Empty;
-        return new MistralConversationStreamEvent(type, payload);
+        var parsed = MistralExtensions.ParseConversationStreamEventEnvelope(sseEvent, data);
+        return new MistralConversationStreamEvent(parsed.Type, parsed.Payload);
     }
 
     private static JsonNode? GetPrimaryMessageOutput(MistralConversationResponse response)
@@ -195,71 +203,32 @@ public partial class MistralProvider
 
     private static IEnumerable<MistralContentPart> EnumerateContentParts(JsonNode? content)
     {
-        if (content is null)
-            yield break;
-
-        if (content is JsonValue value && value.TryGetValue<string>(out var textValue))
+        foreach (var part in MistralExtensions.EnumerateConversationContentParts(content))
         {
-            if (!string.IsNullOrEmpty(textValue))
-                yield return new MistralContentPart("text", Text: textValue, Raw: content);
-
-            yield break;
+            yield return new MistralContentPart(
+                part.Type,
+                part.Text,
+                part.FileId,
+                part.FileName,
+                part.FileType,
+                part.Url,
+                part.Title,
+                part.Raw);
         }
-
-        if (content is JsonArray array)
-        {
-            foreach (var item in array)
-            {
-                var parsed = ParseContentPart(item);
-                if (parsed is not null)
-                    yield return parsed;
-            }
-
-            yield break;
-        }
-
-        var single = ParseContentPart(content);
-        if (single is not null)
-            yield return single;
     }
 
     private static MistralContentPart? ParseContentPart(JsonNode? node)
-    {
-        if (node is null)
-            return null;
-
-        if (node is JsonValue value && value.TryGetValue<string>(out var textValue))
-            return string.IsNullOrEmpty(textValue)
-                ? null
-                : new MistralContentPart("text", Text: textValue, Raw: node);
-
-        var type = GetString(node, "type") ?? string.Empty;
-
-        return type switch
-        {
-            "output_text" or "text" => new MistralContentPart(
-                type,
-                Text: GetString(node, "text") ?? GetString(node, "content"),
-                Raw: node),
-            "tool_file" => new MistralContentPart(
-                type,
-                FileId: GetString(node, "file_id"),
-                FileName: GetString(node, "file_name"),
-                FileType: GetString(node, "file_type"),
-                Raw: node),
-            "tool_reference" => new MistralContentPart(
-                type,
-                Url: GetString(node, "url"),
-                Title: GetString(node, "title"),
-                Raw: node),
-            "document_url" => new MistralContentPart(
-                type,
-                Url: GetString(node, "document_url"),
-                Title: GetString(node, "document_name"),
-                Raw: node),
-            _ => new MistralContentPart(type, Raw: node)
-        };
-    }
+        => MistralExtensions.EnumerateConversationContentParts(node)
+            .Select(part => new MistralContentPart(
+                part.Type,
+                part.Text,
+                part.FileId,
+                part.FileName,
+                part.FileType,
+                part.Url,
+                part.Title,
+                part.Raw))
+            .FirstOrDefault();
 
     private static MistralConversationUsage ExtractUsage(JsonNode? usage)
     {
@@ -306,54 +275,16 @@ public partial class MistralProvider
     }
 
     private static string ReadNodeAsString(JsonNode? node)
-    {
-        if (node is null)
-            return string.Empty;
-
-        if (node is JsonValue value && value.TryGetValue<string>(out var textValue))
-            return textValue ?? string.Empty;
-
-        return node.ToJsonString(MistralJsonSerializerOptions);
-    }
+        => MistralExtensions.ReadNodeAsString(node);
 
     private static string? GetString(JsonNode? node, string propertyName)
-    {
-        var valueNode = node?[propertyName];
-        if (valueNode is null)
-            return null;
-
-        if (valueNode is JsonValue value && value.TryGetValue<string>(out var textValue))
-            return textValue;
-
-        return valueNode.ToJsonString(MistralJsonSerializerOptions);
-    }
+        => MistralExtensions.GetString(node, propertyName);
 
     private static int? GetInt32(JsonNode? node, string propertyName)
-    {
-        var valueNode = node?[propertyName];
-        if (valueNode is not JsonValue value)
-            return null;
-
-        if (value.TryGetValue<int>(out var intValue))
-            return intValue;
-
-        if (value.TryGetValue<long>(out var longValue))
-            return (int)longValue;
-
-        if (value.TryGetValue<double>(out var doubleValue))
-            return (int)doubleValue;
-
-        return null;
-    }
+        => MistralExtensions.GetInt32(node, propertyName);
 
     private static bool? GetBoolean(JsonNode? node, string propertyName)
-    {
-        var valueNode = node?[propertyName];
-        if (valueNode is not JsonValue value)
-            return null;
-
-        return value.TryGetValue<bool>(out var boolValue) ? boolValue : null;
-    }
+        => MistralExtensions.GetBoolean(node, propertyName);
 
     private static bool IsEmpty(JsonNode? node)
         => node is null || node is JsonArray array && array.Count == 0;
