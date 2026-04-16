@@ -65,8 +65,8 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
 
         if (finishUIPart != null)
         {
-            int inputTokens = finishUIPart.MessageMetadata?.InputTokens ?? 0;
-            int totalTokens = finishUIPart.MessageMetadata?.TotalTokens ?? 0;
+            int inputTokens = finishUIPart.MessageMetadata?.Usage?.PromptTokens ?? 0;
+            int totalTokens = finishUIPart.MessageMetadata?.Usage?.TotalTokens ?? 0;
 
             var endedAt = DateTime.UtcNow;
 

@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using AIHappey.Abstractions.Http;
 using AIHappey.Messages;
 using System.Net.Http.Json;
 
@@ -21,7 +22,8 @@ public static class MessagesExtensions
         MessagesRequest payload,
         Dictionary<string, string>? headers = null,
         string relativeUrl = "v1/messages",
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
 
@@ -42,7 +44,11 @@ public static class MessagesExtensions
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct);
 
-        return await resp.Content.ReadFromJsonAsync<MessagesResponse>(ct) ?? throw new Exception("Something went wrong");
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        await ProviderBackendCapture.CaptureJsonAsync("messages", resp, body, capture, ct);
+
+        return JsonSerializer.Deserialize<MessagesResponse>(body, Json)
+            ?? throw new Exception("Something went wrong");
     }
 
     public static async IAsyncEnumerable<MessageStreamPart> PostMessagesStreaming(
@@ -50,7 +56,8 @@ public static class MessagesExtensions
         MessagesRequest payload,
         Dictionary<string, string>? headers = null,
         string relativeUrl = "v1/messages",
-        [EnumeratorCancellation] CancellationToken ct = default)
+        [EnumeratorCancellation] CancellationToken ct = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
 
@@ -73,11 +80,15 @@ public static class MessagesExtensions
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("messages", resp, capture);
 
         string? line;
         while (!ct.IsCancellationRequested &&
                (line = await reader.ReadLineAsync(ct)) != null)
         {
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, ct);
+
             if (line.Length == 0) continue;
 
             if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))

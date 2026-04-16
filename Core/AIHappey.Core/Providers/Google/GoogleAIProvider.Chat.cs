@@ -48,9 +48,6 @@ public partial class GoogleAIProvider
         interactionRequest.Store = false;
         this.SetDefaultInteractionProperties(interactionRequest);
 
-        foreach (var part in interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier()).Event.ToUIMessagePart(GetIdentifier()))
-            yield return part;
-
         await foreach (var update in GetInteractions(
                                  interactionRequest,
                                   cancellationToken: cancellationToken))

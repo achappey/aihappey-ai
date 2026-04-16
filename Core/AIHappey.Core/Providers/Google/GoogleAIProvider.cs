@@ -84,8 +84,6 @@ public partial class GoogleAIProvider
         interactionRequest.Store = false;
         this.SetDefaultInteractionProperties(interactionRequest);
 
-        yield return interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier()).ToChatCompletionUpdate();
-
         await foreach (var update in GetInteractions(
                                  interactionRequest,
                                   cancellationToken: cancellationToken))
@@ -112,8 +110,6 @@ public partial class GoogleAIProvider
         interactionRequest.Stream = true;
         interactionRequest.Store = false;
         this.SetDefaultInteractionProperties(interactionRequest);
-
-        yield return interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier()).ToResponseStreamPart();
 
         await foreach (var update in GetInteractions(
                                  interactionRequest,
@@ -147,9 +143,6 @@ public partial class GoogleAIProvider
         interactionRequest.Stream = true;
         interactionRequest.Store = false;
         this.SetDefaultInteractionProperties(interactionRequest);
-
-        foreach (var part in interactionRequest.ToUnifiedRequestStreamEvent(GetIdentifier(), headers).ToMessageStreamParts())
-            yield return part;
 
         await foreach (var update in GetInteractions(
                                   interactionRequest,

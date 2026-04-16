@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using AIHappey.Abstractions.Http;
 using AIHappey.Telemetry;
 using AIHappey.AzureAuth;
 using AIHappey.Core.AI;
@@ -21,6 +22,11 @@ using AIHappey.Core.Storage;
 using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+    ProviderBackendCapture.ConfigureDevelopmentDefaults(builder.Environment.ContentRootPath);
+else
+    ProviderBackendCapture.Disable();
 
 builder.WebHost.ConfigureKestrel(o =>
 {

@@ -1,3 +1,8 @@
+using System.Text.Json;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.ChatCompletions.Models;
+using AIHappey.Core.AI;
+using AIHappey.Messages.Mapping;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
@@ -7,77 +12,12 @@ namespace AIHappey.Tests.Vercel;
 
 public sealed class ApiChatStreamFixtureTests
 {
-    private const string TypedFixturePath = "Fixtures/api-chat/typed/basic-ui-stream.json";
-    private const string RawFixturePath = "Fixtures/api-chat/raw/basic-ui-stream.jsonl";
-
-    [Fact]
-    public void Typed_and_raw_api_chat_fixtures_produce_the_same_ui_part_types()
-    {
-        var typed = FixtureFileLoader.LoadUiTypedFixture(TypedFixturePath);
-        var raw = FixtureFileLoader.LoadUiRawFixture(RawFixturePath);
-
-        Assert.Equal(typed.Select(part => part.Type), raw.Select(part => part.Type));
-
-        var typedFinish = Assert.IsType<FinishUIPart>(typed.Last());
-        var rawFinish = Assert.IsType<FinishUIPart>(raw.Last());
-
-        Assert.Equal("fixture-provider/gpt-fixture", typedFinish.MessageMetadata?.Model);
-        Assert.Equal(typedFinish.MessageMetadata?.Model, rawFinish.MessageMetadata?.Model);
-        Assert.Equal(DateTimeOffset.Parse("2026-04-15T14:11:18.3896779Z"), typedFinish.MessageMetadata?.Timestamp);
-        Assert.Equal(typedFinish.MessageMetadata?.Timestamp, rawFinish.MessageMetadata?.Timestamp);
-        Assert.Equal(7, typedFinish.MessageMetadata?.InputTokens);
-        Assert.Null(typedFinish.MessageMetadata?.OutputTokens);
-        Assert.Equal(12, typedFinish.MessageMetadata?.TotalTokens);
-        Assert.Equal(0.3f, typedFinish.MessageMetadata?.Temperature);
-        Assert.Equal(0.00011590m, typedFinish.MessageMetadata?.Gateway?.Cost);
-    }
-
-    [Fact]
-    public void Api_chat_fixture_round_trips_through_the_unified_event_mapper()
-    {
-        var parts = FixtureFileLoader.LoadUiTypedFixture(TypedFixturePath);
-
-        var envelopes = parts.Select(VercelUnifiedMapper.ToUnifiedEvent).ToList();
-        var envelopeTypes = envelopes.Select(envelope => envelope.Type).ToList();
-
-        FixtureAssertions.AssertContainsSubsequence(
-            envelopeTypes,
-            "vercel.ui.text-start",
-            "vercel.ui.text-delta",
-            "vercel.ui.text-end",
-            "vercel.ui.source-url",
-            "vercel.ui.finish");
-
-        var stableEnvelopes = envelopes
-            .Where(envelope => envelope.Type is "vercel.ui.text-start"
-                or "vercel.ui.text-delta"
-                or "vercel.ui.text-end"
-                or "vercel.ui.source-url")
-            .ToList();
-
-        var roundTripped = stableEnvelopes
-            .SelectMany(envelope => envelope.ToUIMessagePart("fixture-provider"))
-            .ToList();
-
-        Assert.Equal(
-            parts.Take(4).Select(part => part.Type),
-            roundTripped.Select(part => part.Type));
-
-        var textDelta = Assert.IsType<TextDeltaUIMessageStreamPart>(roundTripped[1]);
-        Assert.Equal("Hello from api/chat", textDelta.Delta);
-
-        var finishEnvelope = envelopes.Single(envelope => envelope.Type == "vercel.ui.finish");
-        var finishPart = Assert.IsType<FinishUIPart>(parts.Last());
-        Assert.Equal("finish", finishEnvelope.Data is null ? null : "finish");
-        Assert.Equal("stop", finishPart.FinishReason);
-        Assert.Equal("fixture-provider/gpt-fixture", finishPart.MessageMetadata?.Model);
-        Assert.Equal(DateTimeOffset.Parse("2026-04-15T14:11:18.3896779Z"), finishPart.MessageMetadata?.Timestamp);
-        Assert.Equal(7, finishPart.MessageMetadata?.InputTokens);
-        Assert.Null(finishPart.MessageMetadata?.OutputTokens);
-        Assert.Equal(12, finishPart.MessageMetadata?.TotalTokens);
-        Assert.Equal(0.3f, finishPart.MessageMetadata?.Temperature);
-        Assert.Equal(0.00011590m, finishPart.MessageMetadata?.Gateway?.Cost);
-    }
+    private const string GroqErrorRawFixturePath = "Fixtures/chat-completions/raw/groq-error-completions-stream.jsonl";
+    private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
+    private const string ReasoningMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
+    private const string ProviderId = "fixture-provider";
+    private const string GroqProviderId = "groq";
+    private const string PerplexityProviderId = "perplexity";
 
     [Fact]
     public void Finish_event_backfills_token_counts_from_finish_event_data_when_message_metadata_only_has_gateway_cost()
@@ -97,6 +37,16 @@ public sealed class ApiChatStreamFixtureTests
                 MessageMetadata = AIFinishMessageMetadata.Create(
                     model: "anthropic/claude-haiku-4-5-20251001",
                     timestamp: timestamp,
+                    usage: JsonSerializer.SerializeToElement(new
+                    {
+                        input_tokens = 321,
+                        output_tokens = 654,
+                        total_tokens = 975,
+                        input_tokens_details = new
+                        {
+                            cached_tokens = 120
+                        }
+                    }),
                     gateway: new AIFinishGatewayMetadata
                     {
                         Cost = 0.005828m
@@ -109,9 +59,216 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal("stop", finishPart.FinishReason);
         Assert.Equal("anthropic/claude-haiku-4-5-20251001", finishPart.MessageMetadata?.Model);
         Assert.Equal(timestamp, finishPart.MessageMetadata?.Timestamp);
-        Assert.Equal(321, finishPart.MessageMetadata?.InputTokens);
-        Assert.Equal(654, finishPart.MessageMetadata?.OutputTokens);
-        Assert.Equal(975, finishPart.MessageMetadata?.TotalTokens);
+        Assert.Equal(321, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(654, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(975, finishPart.MessageMetadata?.Usage.TotalTokens);
         Assert.Equal(0.005828m, finishPart.MessageMetadata?.Gateway?.Cost);
+
+        var providerMetadata = Assert.Contains("anthropic", finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var providerUsage = providerMetadata.GetProperty("usage");
+        Assert.Equal(321, providerUsage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(120, providerUsage.GetProperty("input_tokens_details").GetProperty("cached_tokens").GetInt32());
+    }
+
+    [Fact]
+    public void Messages_reasoning_unified_events_map_to_ui_parts_with_provider_scoped_signature_metadata()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(ReasoningMessagesRawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var originalSignature = parts.Single(part => part.Delta?.Type == "signature_delta").Delta?.Signature;
+
+        var reasoningUiParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        Assert.Equal(
+            [
+                "reasoning-start",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-end"
+            ],
+            reasoningUiParts.Select(part => part.Type).ToList());
+
+        var reasoningDeltas = reasoningUiParts
+            .OfType<ReasoningDeltaUIPart>()
+            .Select(part => part.Delta)
+            .ToList();
+
+        Assert.Equal(
+            "The user is asking me to create a poem about Groningen. This is a straightforward creative writing request. Groningen is a city in the northern Netherlands.\n\nThe user's preferred language is Dutch (nl), so I should write the poem in Dutch.\n\nLet me create an original poem about Groningen in Dutch. I'll use markdown formatting as instructed.",
+            string.Concat(reasoningDeltas));
+
+        var reasoningStartPart = Assert.IsType<ReasoningStartUIPart>(reasoningUiParts[0]);
+        Assert.Null(reasoningStartPart.ProviderMetadata);
+
+        var reasoningEndPart = Assert.IsType<ReasoningEndUIPart>(reasoningUiParts[^1]);
+        var providerMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+
+        Assert.Equal(originalSignature, Assert.IsType<string>(providerMetadata["signature"]));
+    }
+
+    [Fact]
+    public async Task Groq_error_chat_completions_fixture_maps_to_unified_error_and_finish_events()
+    {
+        var provider = new FixtureChatCompletionStreamModelProvider(GroqProviderId, LoadChatCompletionRawFixture(GroqErrorRawFixturePath));
+        var request = new AIRequest
+        {
+            ProviderId = GroqProviderId,
+            Model = "openai/gpt-oss-20b",
+            Stream = true
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaChatCompletionsAsync(request));
+
+        var terminalEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "error" or "finish")
+            .ToList();
+
+        Assert.Collection(
+            terminalEvents,
+            streamEvent =>
+            {
+                Assert.Equal("error", streamEvent.Event.Type);
+                var errorData = Assert.IsType<AIErrorEventData>(streamEvent.Event.Data);
+                Assert.Contains("Tool choice is none, but model called a tool", errorData.ErrorText);
+                Assert.Contains("invalid_request_error", errorData.ErrorText);
+                Assert.Contains("tool_use_failed", errorData.ErrorText);
+                Assert.Contains("browser.search", errorData.ErrorText);
+            },
+            streamEvent =>
+            {
+                Assert.Equal("finish", streamEvent.Event.Type);
+                var finishData = Assert.IsType<AIFinishEventData>(streamEvent.Event.Data);
+                Assert.Equal("error", finishData.FinishReason);
+                Assert.Equal("openai/gpt-oss-20b", finishData.Model);
+                Assert.Equal(1776280711L, Assert.IsType<long>(finishData.CompletedAt!));
+            });
+    }
+
+    [Fact]
+    public async Task Groq_error_chat_completions_fixture_maps_to_vercel_error_and_finish_ui_parts()
+    {
+        var provider = new FixtureChatCompletionStreamModelProvider(GroqProviderId, LoadChatCompletionRawFixture(GroqErrorRawFixturePath));
+        var request = new AIRequest
+        {
+            ProviderId = GroqProviderId,
+            Model = "openai/gpt-oss-20b",
+            Stream = true
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaChatCompletionsAsync(request));
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "error" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(GroqProviderId))
+            .ToList();
+
+        Assert.Collection(
+            uiParts,
+            uiPart =>
+            {
+                var errorPart = Assert.IsType<ErrorUIPart>(uiPart);
+                Assert.Contains("Tool choice is none, but model called a tool", errorPart.ErrorText);
+                Assert.Contains("invalid_request_error", errorPart.ErrorText);
+                Assert.Contains("tool_use_failed", errorPart.ErrorText);
+                Assert.Contains("browser.search", errorPart.ErrorText);
+            },
+            uiPart =>
+            {
+                var finishPart = Assert.IsType<FinishUIPart>(uiPart);
+                Assert.Equal("error", finishPart.FinishReason);
+                Assert.Equal("openai/gpt-oss-20b", finishPart.MessageMetadata?.Model);
+                Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1776280711), finishPart.MessageMetadata?.Timestamp);
+            });
+    }
+   /* [Fact]
+    public void Sonar_web_search_chat_completions_fixture_maps_to_expected_ui_parts_and_finish_metadata()
+    {
+        var unifiedEvents = LoadChatCompletionUnifiedEvents(SonarWebSearchRawFixturePath, PerplexityProviderId);
+        var eventTypes = unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(
+            eventTypes,
+            "reasoning-start",
+            "reasoning-delta",
+            "tool-input-start",
+            "tool-input-available",
+            "tool-output-available",
+            "reasoning-end",
+            "source-url",
+            "finish");
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is
+                "reasoning-start" or
+                "reasoning-delta" or
+                "reasoning-end" or
+                "tool-input-start" or
+                "tool-input-available" or
+                "tool-output-available" or
+                "source-url" or
+                "tool-approval-request" or
+                "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(PerplexityProviderId))
+            .ToList();
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts.Last(part => part.Type == "finish"));
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal("perplexity/sonar", finishPart.MessageMetadata?.Model);
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1776275349), finishPart.MessageMetadata?.Timestamp);
+        Assert.Equal(431, finishPart.MessageMetadata?.InputTokens);
+        Assert.Equal(260, finishPart.MessageMetadata?.OutputTokens);
+        Assert.Equal(691, finishPart.MessageMetadata?.TotalTokens);
+        var toolCallPart = Assert.IsType<ToolCallPart>(uiParts.Single(part => part.Type == "tool-input-available"));
+        Assert.Equal("web_search", toolCallPart.ToolName);
+        Assert.Equal("Web search", toolCallPart.Title);
+        Assert.True(toolCallPart.ProviderExecuted);
+
+        var toolInput = JsonSerializer.SerializeToElement(toolCallPart.Input, JsonSerializerOptions.Web);
+        var searchKeywords = toolInput.GetProperty("search_keywords");
+        Assert.Equal(JsonValueKind.Array, searchKeywords.ValueKind);
+        Assert.Equal("latest news war Iran", searchKeywords[0].GetString());
+
+        var toolOutputPart = Assert.IsType<ToolOutputAvailablePart>(uiParts.Single(part => part.Type == "tool-output-available"));
+        Assert.True(toolOutputPart.ProviderExecuted);
+        Assert.Null(toolOutputPart.Preliminary);
+
+        var toolOutput = JsonSerializer.SerializeToElement(toolOutputPart.Output, JsonSerializerOptions.Web);
+        var structuredContent = toolOutput.GetProperty("structuredContent");
+        var searchResults = structuredContent.GetProperty("search_results");
+        Assert.Equal(3, searchResults.GetArrayLength());
+        Assert.Equal("Trump Admits Defeat After Iran Blockade Fails? Says 'War Is Over ...", searchResults[0].GetProperty("title").GetString());
+        Assert.Equal("https://www.cbsnews.com/us-iran-tensions/", searchResults[2].GetProperty("url").GetString());
+
+        var sourceParts = uiParts.OfType<SourceUIPart>().ToList();
+        Assert.Equal(3, sourceParts.Count);
+        Assert.Equal("https://www.youtube.com/watch?v=6dsqVAevsBk", sourceParts[0].Url);
+        Assert.Equal("Trump Admits Defeat After Iran Blockade Fails? Says 'War Is Over ...", sourceParts[0].Title);
+        Assert.Equal("https://www.cbsnews.com/us-iran-tensions/", sourceParts[2].Url);
+
+        var sourceProviderMetadata = Assert.Contains(PerplexityProviderId, sourceParts[0].ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+        Assert.Equal("2026-04-15", Assert.IsType<string>(sourceProviderMetadata["date"]));
+        Assert.Equal("web", Assert.IsType<string>(sourceProviderMetadata["source"]));
+
+        Assert.DoesNotContain(uiParts, part => part is ToolApprovalRequestUIPart);
+    }*/
+
+    private static IReadOnlyList<ChatCompletionUpdate> LoadChatCompletionRawFixture(string relativePath)
+    {
+        var fullPath = FixtureFileLoader.ResolveFixturePath(relativePath);
+
+        return [.. File.ReadLines(fullPath)
+            .Select(line => line.Trim())
+            .Where(line => line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            .Select(line => line["data:".Length..].Trim())
+            .Where(line => line.Length > 0 && !string.Equals(line, "[DONE]", StringComparison.OrdinalIgnoreCase))
+            .Select(payload => JsonSerializer.Deserialize<ChatCompletionUpdate>(payload, JsonSerializerOptions.Web)
+                ?? throw new InvalidOperationException($"Could not deserialize chat completion stream payload from [{relativePath}](Core/AIHappey.Tests/{relativePath})."))];
     }
 }

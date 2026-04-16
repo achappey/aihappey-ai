@@ -196,12 +196,16 @@ public sealed record AIFinishGatewayMetadata
 public sealed record AIFinishMessageMetadata
 {
     private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
+    private static readonly JsonElement EmptyUsage = JsonSerializer.SerializeToElement(new Dictionary<string, object?>(), Json);
 
     [JsonPropertyName("model")]
     public required string Model { get; init; }
 
     [JsonPropertyName("timestamp")]
     public required DateTimeOffset Timestamp { get; init; }
+
+    [JsonPropertyName("usage")]
+    public required JsonElement Usage { get; init; }
 
     [JsonPropertyName("outputTokens")]
     public int? OutputTokens { get; init; }
@@ -244,6 +248,7 @@ public sealed record AIFinishMessageMetadata
     public static AIFinishMessageMetadata Create(
         string model,
         DateTimeOffset timestamp,
+        object? usage = null,
         int? outputTokens = null,
         int? inputTokens = null,
         int? totalTokens = null,
@@ -260,6 +265,7 @@ public sealed record AIFinishMessageMetadata
         {
             ["model"] = model,
             ["timestamp"] = timestamp,
+            ["usage"] = NormalizeUsage(usage, inputTokens, outputTokens, totalTokens),
             ["outputTokens"] = outputTokens,
             ["inputTokens"] = inputTokens,
             ["totalTokens"] = totalTokens,
@@ -290,6 +296,8 @@ public sealed record AIFinishMessageMetadata
     {
         var merged = metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value) ?? [];
 
+        EnsureUsage(merged);
+
         if (!merged.ContainsKey("model") && !string.IsNullOrWhiteSpace(fallbackModel))
             merged["model"] = fallbackModel;
 
@@ -303,6 +311,80 @@ public sealed record AIFinishMessageMetadata
 
     public static implicit operator AIFinishMessageMetadata?(Dictionary<string, object>? metadata)
         => metadata is null ? null : FromDictionary(metadata);
+
+    private static void EnsureUsage(Dictionary<string, object?> metadata)
+    {
+        metadata["usage"] = NormalizeUsage(
+            metadata.TryGetValue("usage", out var usage) ? usage : null,
+            ExtractInt(metadata, "inputTokens"),
+            ExtractInt(metadata, "outputTokens"),
+            ExtractInt(metadata, "totalTokens"));
+    }
+
+    private static object NormalizeUsage(object? usage, int? inputTokens, int? outputTokens, int? totalTokens)
+    {
+        if (TryGetObjectLikeUsage(usage, out var normalizedUsage))
+            return normalizedUsage;
+
+        if (inputTokens is null && outputTokens is null && totalTokens is null)
+            return EmptyUsage.Clone();
+
+        return new Dictionary<string, object?>
+        {
+            ["inputTokens"] = inputTokens,
+            ["outputTokens"] = outputTokens,
+            ["totalTokens"] = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0))
+        };
+    }
+
+    private static bool TryGetObjectLikeUsage(object? usage, out object normalizedUsage)
+    {
+        switch (usage)
+        {
+            case JsonElement json when json.ValueKind == JsonValueKind.Object:
+                normalizedUsage = json.Clone();
+                return true;
+            case Dictionary<string, object?> dictionary:
+                normalizedUsage = dictionary;
+                return true;
+            case not null:
+                try
+                {
+                    var serializedUsage = JsonSerializer.SerializeToElement(usage, Json);
+                    if (serializedUsage.ValueKind == JsonValueKind.Object)
+                    {
+                        normalizedUsage = serializedUsage;
+                        return true;
+                    }
+                }
+                catch
+                {
+                }
+
+                break;
+            default:
+                break;
+        }
+
+        normalizedUsage = EmptyUsage.Clone();
+        return false;
+    }
+
+    private static int? ExtractInt(Dictionary<string, object?> metadata, string key)
+    {
+        if (!metadata.TryGetValue(key, out var raw) || raw is null)
+            return null;
+
+        return raw switch
+        {
+            int value => value,
+            long value when value >= int.MinValue && value <= int.MaxValue => (int)value,
+            JsonElement json when json.ValueKind == JsonValueKind.Number && json.TryGetInt32(out var value) => value,
+            JsonElement json when json.ValueKind == JsonValueKind.String && int.TryParse(json.GetString(), out var value) => value,
+            string value when int.TryParse(value, out var parsed) => parsed,
+            _ => null
+        };
+    }
 
 }
 

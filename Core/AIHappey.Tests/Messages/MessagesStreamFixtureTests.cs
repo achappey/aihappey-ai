@@ -1,8 +1,12 @@
 using System.Text.Json;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using AIHappey.Responses.Streaming;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Tests.Messages;
 
@@ -10,6 +14,7 @@ public sealed class MessagesStreamFixtureTests
 {
     private const string TypedFixturePath = "Fixtures/messages/typed/basic-messages-stream.json";
     private const string RawFixturePath = "Fixtures/messages/raw/basic-messages-stream.jsonl";
+    private const string ReasoningRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string Model = "claude-haiku-4-5-20251001";
     private const string MessageId = "msg_017Kux9bNH5F1gph8C2FZhP1";
@@ -122,21 +127,12 @@ public sealed class MessagesStreamFixtureTests
 
         Assert.Equal(
             [
-                "data-messages.message_start",
-                "data-messages.content_block_start",
-                "data-messages.ping",
                 "text-start",
                 "text-delta",
-                "data-messages.content_block_delta",
                 "text-delta",
-                "data-messages.content_block_delta",
                 "text-delta",
-                "data-messages.content_block_delta",
-                "data-messages.content_block_stop",
-                "data-messages.message_delta",
                 "text-end",
-                "finish",
-                "data-messages.message_stop"
+                "finish"
             ],
             unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList());
 
@@ -154,14 +150,6 @@ public sealed class MessagesStreamFixtureTests
             textDeltas);
         Assert.Equal("# yow\n\nHey! 👋 What's up? How can I help you?", string.Concat(textDeltas));
 
-        var transientRawEvents = unifiedEvents
-            .Where(streamEvent => streamEvent.Event.Type == "data-messages.content_block_delta")
-            .Select(streamEvent => Assert.IsType<AIDataEventData>(streamEvent.Event.Data))
-            .ToList();
-
-        Assert.Equal(3, transientRawEvents.Count);
-        Assert.All(transientRawEvents, rawEvent => Assert.True(rawEvent.Transient));
-
         var finishEvent = unifiedEvents.Single(streamEvent => streamEvent.Event.Type == "finish");
         var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
 
@@ -171,119 +159,227 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(23, finishData.OutputTokens);
         Assert.Equal(35, finishData.TotalTokens);
         Assert.Null(finishData.StopSequence);
-        Assert.Null(finishData.MessageMetadata);
+        Assert.NotNull(finishData.MessageMetadata);
+        Assert.Equal(Model, finishData.MessageMetadata?.Model);
+        Assert.Equal(12, finishData.MessageMetadata?.Usage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(23, finishData.MessageMetadata?.Usage.GetProperty("output_tokens").GetInt32());
         Assert.IsType<long>(finishData.CompletedAt);
 
         Assert.Equal("message_stop", finishEvent.Metadata?["messages.stream.type"]);
-
-        var lastRawEvent = unifiedEvents.Last();
-        var lastRawData = Assert.IsType<AIDataEventData>(lastRawEvent.Event.Data);
-        Assert.False(lastRawData.Transient);
-
-        var rawMessageStop = Assert.IsType<JsonElement>(lastRawData.Data);
-        Assert.Equal("message_stop", rawMessageStop.GetProperty("type").GetString());
     }
 
     [Fact]
-    public void Unified_events_from_typed_messages_fixture_round_trip_back_to_original_stream_parts()
+    public void Typed_messages_fixture_maps_to_expected_vercel_ui_stream_parts_and_finish_metadata()
     {
         var parts = FixtureFileLoader.LoadMessageTypedFixture(TypedFixturePath);
         var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+
+        var uiParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        Assert.Equal(
+            [
+                "text-start",
+                "text-delta",
+                "text-delta",
+                "text-delta",
+                "text-end",
+                "finish"
+            ],
+            uiParts.Select(part => part.Type).ToList());
+
+        var textDeltas = uiParts
+            .OfType<TextDeltaUIMessageStreamPart>()
+            .Select(part => part.Delta)
+            .ToList();
+
+        Assert.Equal(
+            [
+                "#",
+                " yow\n\nHey! 👋 What's up? How can",
+                " I help you?"
+            ],
+            textDeltas);
+        Assert.Equal("# yow\n\nHey! 👋 What's up? How can I help you?", string.Concat(textDeltas));
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts[^1]);
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal($"{ProviderId}/{Model}", finishPart.MessageMetadata?.Model);
+        Assert.Equal(12, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(23, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(35, finishPart.MessageMetadata?.Usage.TotalTokens);
+        Assert.True(finishPart.MessageMetadata?.Timestamp > DateTimeOffset.UnixEpoch);
+
+        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var providerUsage = providerMetadata.GetProperty("usage");
+        Assert.Equal(12, providerUsage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(23, providerUsage.GetProperty("output_tokens").GetInt32());
+    }
+
+    [Fact]
+    public void Raw_messages_fixture_maps_to_expected_vercel_ui_stream_parts_and_finish_metadata()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(RawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+
+        var uiParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        Assert.Equal(
+            [
+                "text-start",
+                "text-delta",
+                "text-delta",
+                "text-delta",
+                "text-end",
+                "finish"
+            ],
+            uiParts.Select(part => part.Type).ToList());
+
+        var textDeltas = uiParts
+            .OfType<TextDeltaUIMessageStreamPart>()
+            .Select(part => part.Delta)
+            .ToList();
+
+        Assert.Equal(
+            [
+                "Hello! ",
+                "👋 Welcome! How can I help you today? Whether you want to chat, ask questions, or work through",
+                " something together, I'm here for you. 😊"
+            ],
+            textDeltas);
+        Assert.Equal(
+            "Hello! 👋 Welcome! How can I help you today? Whether you want to chat, ask questions, or work through something together, I'm here for you. 😊",
+            string.Concat(textDeltas));
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts[^1]);
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal($"{ProviderId}/claude-opus-4-6", finishPart.MessageMetadata?.Model);
+        Assert.Equal(10, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(42, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(52, finishPart.MessageMetadata?.Usage.TotalTokens);
+        Assert.True(finishPart.MessageMetadata?.Timestamp > DateTimeOffset.UnixEpoch);
+
+        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? new Dictionary<string, JsonElement>());
+        var providerUsage = providerMetadata.GetProperty("usage");
+        Assert.Equal(10, providerUsage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(42, providerUsage.GetProperty("output_tokens").GetInt32());
+    }
+
+    [Fact]
+    public void Raw_reasoning_messages_fixture_maps_to_unified_reasoning_events_and_ui_parts_with_provider_scoped_signature_metadata()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(ReasoningRawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var originalSignature = parts.Single(part => part.Delta?.Type == "signature_delta").Delta?.Signature;
 
         var unifiedEvents = parts
             .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
             .ToList();
 
-        var rawBackedEvents = unifiedEvents
-            .Where(streamEvent => streamEvent.Event.Type.StartsWith("data-messages.", StringComparison.Ordinal))
-            .ToList();
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "text-start",
+            "text-delta",
+            "text-end",
+            "finish");
 
-        var reverseState = new MessagesUnifiedMapper.MessagesReverseStreamMappingState();
-        var roundTripped = rawBackedEvents
-            .SelectMany(streamEvent => streamEvent.ToMessageStreamParts(reverseState))
-            .ToList();
+        var reasoningStartEvent = unifiedEvents.First(streamEvent => streamEvent.Event.Type == "reasoning-start");
+        var reasoningStartData = Assert.IsType<AIReasoningStartEventData>(reasoningStartEvent.Event.Data);
+        Assert.Null(reasoningStartData.ProviderMetadata);
 
-        Assert.Equal(parts.Select(part => part.Type), roundTripped.Select(part => part.Type));
-        Assert.Equal(MessageId, roundTripped[0].Message?.Id);
-        Assert.Equal(Model, roundTripped[0].Message?.Model);
-        Assert.Equal("#", roundTripped[3].Delta?.Text);
-        Assert.Equal(" yow\n\nHey! 👋 What's up? How can", roundTripped[4].Delta?.Text);
-        Assert.Equal(" I help you?", roundTripped[5].Delta?.Text);
-        Assert.Equal("end_turn", roundTripped[7].Delta?.StopReason);
-        Assert.Equal(23, roundTripped[7].Usage?.OutputTokens);
-    }
-
-    [Fact]
-    public void Synthetic_messages_unified_events_expand_into_expected_message_stream_parts()
-    {
-        var reverseState = new MessagesUnifiedMapper.MessagesReverseStreamMappingState();
-        var sharedMetadata = new Dictionary<string, object?>
-        {
-            ["messages.response.id"] = "msg_synthetic_fixture",
-            ["messages.response.model"] = Model,
-            ["messages.response.role"] = "assistant"
-        };
-
-        var syntheticEvents = new List<AIStreamEvent>
-        {
-            new()
-            {
-                ProviderId = ProviderId,
-                Event = new AIEventEnvelope
-                {
-                    Type = "text-delta",
-                    Id = "msg_synthetic_fixture:0:text",
-                    Data = new AITextDeltaEventData
-                    {
-                        Delta = "Hello from synthetic unified event"
-                    }
-                },
-                Metadata = sharedMetadata
-            },
-            new()
-            {
-                ProviderId = ProviderId,
-                Event = new AIEventEnvelope
-                {
-                    Type = "finish",
-                    Id = "msg_synthetic_fixture",
-                    Data = new AIFinishEventData
-                    {
-                        Model = Model,
-                        FinishReason = "stop",
-                        InputTokens = 9,
-                        OutputTokens = 16,
-                        TotalTokens = 25
-                    }
-                },
-                Metadata = sharedMetadata
-            }
-        };
-
-        var parts = syntheticEvents
-            .SelectMany(streamEvent => streamEvent.ToMessageStreamParts(reverseState))
+        var reasoningDeltas = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "reasoning-delta")
+            .Select(streamEvent => Assert.IsType<AIReasoningDeltaEventData>(streamEvent.Event.Data).Delta)
             .ToList();
 
         Assert.Equal(
             [
-                "message_start",
-                "content_block_start",
-                "content_block_delta",
-                "content_block_stop",
-                "message_delta",
-                "message_stop"
+                "The user is asking me to create a",
+                " poem about Groningen. This is a straightforward creative writing request. Groningen is a city in the northern Netherlands.\n\nThe user's",
+                " preferred language is Dutch (nl), so I should write the poem in Dutch.\n\nLet me create",
+                " an original poem about Groningen in Dutch. I'll use markdown formatting as instructed.",
+                string.Empty
             ],
-            parts.Select(part => part.Type).ToList());
+            reasoningDeltas);
 
-        Assert.Equal("msg_synthetic_fixture", parts[0].Message?.Id);
-        Assert.Equal(Model, parts[0].Message?.Model);
-        Assert.Equal("assistant", parts[0].Message?.Role);
-        Assert.Equal("text", parts[1].ContentBlock?.Type);
-        Assert.Equal("Hello from synthetic unified event", parts[2].Delta?.Text);
-        Assert.Equal("text_delta", parts[2].Delta?.Type);
-        Assert.Equal("stop_sequence", parts[4].Delta?.StopReason);
-        Assert.Equal(9, parts[4].Usage?.InputTokens);
-        Assert.Equal(16, parts[4].Usage?.OutputTokens);
-        Assert.Null(parts[5].Metadata);
+        Assert.Equal(
+            "The user is asking me to create a poem about Groningen. This is a straightforward creative writing request. Groningen is a city in the northern Netherlands.\n\nThe user's preferred language is Dutch (nl), so I should write the poem in Dutch.\n\nLet me create an original poem about Groningen in Dutch. I'll use markdown formatting as instructed.",
+            string.Concat(reasoningDeltas));
+
+        var reasoningEndEvent = unifiedEvents.Single(streamEvent => streamEvent.Event.Type == "reasoning-end");
+        var reasoningEndData = Assert.IsType<AIReasoningEndEventData>(reasoningEndEvent.Event.Data);
+        var reasoningEndProviderMetadata = Assert.Contains(ProviderId, reasoningEndData.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+
+        Assert.Equal(originalSignature, Assert.IsType<string>(reasoningEndProviderMetadata["signature"]));
+
+        var reasoningUiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        Assert.Equal(
+            [
+                "reasoning-start",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-delta",
+                "reasoning-end"
+            ],
+            reasoningUiParts.Select(part => part.Type).ToList());
+
+        var reasoningStartPart = Assert.IsType<ReasoningStartUIPart>(reasoningUiParts[0]);
+        Assert.Null(reasoningStartPart.ProviderMetadata);
+
+        var reasoningEndPart = Assert.IsType<ReasoningEndUIPart>(reasoningUiParts[^1]);
+        var uiProviderMetadata = Assert.Contains(ProviderId, reasoningEndPart.ProviderMetadata ?? new Dictionary<string, Dictionary<string, object>>());
+
+        Assert.Equal(originalSignature, Assert.IsType<string>(uiProviderMetadata["signature"]));
+    }
+
+    [Fact]
+    public void Messages_unified_events_bridge_to_response_stream_parts_as_unknown_events_with_preserved_payloads()
+    {
+        var parts = FixtureFileLoader.LoadMessageTypedFixture(TypedFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+
+        var responseParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Select(streamEvent => streamEvent.ToResponseStreamPart())
+            .ToList();
+
+        Assert.Equal(
+            [
+                "text-start",
+                "text-delta",
+                "text-delta",
+                "text-delta",
+                "text-end",
+                "finish"
+            ],
+            responseParts.Select(part => part.Type).ToList());
+
+        Assert.All(responseParts, part => Assert.IsType<ResponseUnknownEvent>(part));
+
+        var firstTextDelta = Assert.IsType<ResponseUnknownEvent>(responseParts[1]);
+        Assert.Equal("#", firstTextDelta.Data?["delta"].GetString());
+
+        var finishPart = Assert.IsType<ResponseUnknownEvent>(responseParts[^1]);
+        Assert.Equal(Model, finishPart.Data?["model"].GetString());
+        Assert.Equal("stop", finishPart.Data?["finishReason"].GetString());
+        Assert.Equal(12, finishPart.Data?["inputTokens"].GetInt32());
+        Assert.Equal(23, finishPart.Data?["outputTokens"].GetInt32());
+        Assert.Equal(35, finishPart.Data?["totalTokens"].GetInt32());
     }
 }

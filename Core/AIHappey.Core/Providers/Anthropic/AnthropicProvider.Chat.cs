@@ -38,7 +38,11 @@ public partial class AnthropicProvider
                     var responseModel = finishPart.MessageMetadata?.Model;
 
                     var pricing = ResolveModelPricing(responseModel, chatRequest.Model);
-                    yield return ModelCostMetadataEnricher.AddCost(finishPart, pricing);
+                    yield return new FinishUIPart
+                    {
+                        FinishReason = finishPart.FinishReason,
+                        MessageMetadata = ModelCostMetadataEnricher.AddCost(finishPart.MessageMetadata, pricing)
+                    };
                     continue;
                 }
 

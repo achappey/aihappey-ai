@@ -39,6 +39,10 @@ public class ChatCompletionOptions
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Store { get; set; }
 
+    [JsonPropertyName("stream_options")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public StreamOptions? StreamOptions { get; set; }
+
     [JsonPropertyName("metadata")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object?>? Metadata { get; set; }
@@ -48,6 +52,8 @@ public class ChatCompletionOptions
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+
 
 }
 
@@ -66,4 +72,18 @@ public class ChatMessage
     [JsonPropertyName("tool_calls")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IEnumerable<object>? ToolCalls { get; set; }
+}
+
+
+public class StreamOptions
+{
+    [JsonPropertyName("include_usage")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? IncludeUsage { get; set; }
+
+    [JsonPropertyName("include_obfuscation")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? IncludeObfuscation { get; set; }
+
+
 }

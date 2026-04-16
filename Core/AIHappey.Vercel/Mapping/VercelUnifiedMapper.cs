@@ -709,10 +709,8 @@ public static class VercelUnifiedMapper
         string providerId)
     {
         var typedData = GetTypedData<AIFinishEventData>(envelope);
-        if (typedData?.MessageMetadata is { } typedMetadata)
-            return NormalizeFinishMessageMetadata(typedMetadata, providerId, typedData);
-
-        var metadata = envelope.Metadata?
+        var metadata = typedData?.MessageMetadata?.ToDictionary()
+            ?? envelope.Metadata?
             .Where(a => a.Value is not null)
             .ToDictionary(a => a.Key, a => a.Value)
             ?? [];
@@ -723,38 +721,22 @@ public static class VercelUnifiedMapper
         metadata["model"] = NormalizeFinishModel(metadata.TryGetValue("model", out var modelValue) ? modelValue : null, providerId);
         metadata["timestamp"] = ResolveFinishTimestamp(metadata.TryGetValue("timestamp", out var timestampValue) ? timestampValue : null, typedData?.CompletedAt ?? GetValue<object>(data, "completed_at"));
 
-        SetFinishMetadataValue(metadata, "inputTokens", typedData?.InputTokens, data);
-        SetFinishMetadataValue(metadata, "outputTokens", typedData?.OutputTokens, data);
-        SetFinishMetadataValue(metadata, "totalTokens", typedData?.TotalTokens, data);
+        var rawUsage = ResolveRawFinishUsage(typedData, metadata);
+        metadata["usage"] = BuildNormalizedFinishUsage(
+            typedData?.InputTokens,
+            typedData?.OutputTokens,
+            typedData?.TotalTokens,
+            rawUsage);
+        metadata[providerId] = BuildProviderMetadataContainer(
+            metadata.TryGetValue(providerId, out var existingProviderMetadata) ? existingProviderMetadata : null,
+            rawUsage);
+
         SetFinishMetadataValue(metadata, "temperature", typedData?.MessageMetadata?.Temperature, data);
-        SetFinishMetadataValue(metadata, "reasoningTokens", typedData?.MessageMetadata?.ReasoningTokens, data);
-        SetFinishMetadataValue(metadata, "cachedInputTokens", typedData?.MessageMetadata?.CachedInputTokens, data);
-        SetFinishMetadataValue(metadata, "cachedInputReadTokens", typedData?.MessageMetadata?.CachedInputReadTokens, data);
-        SetFinishMetadataValue(metadata, "cachedInputWriteTokens", typedData?.MessageMetadata?.CachedInputWriteTokens, data);
-        SetFinishMetadataValue(metadata, "runtimeMs", typedData?.MessageMetadata?.RuntimeMs, data);
 
         return FinishMessageMetadata.FromDictionary(
             metadata.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
             fallbackModel: NormalizeFinishModel(typedData?.Model, providerId),
             fallbackTimestamp: ResolveFinishTimestamp(null, typedData?.CompletedAt));
-    }
-
-    private static FinishMessageMetadata NormalizeFinishMessageMetadata(
-        AIFinishMessageMetadata metadata,
-        string providerId,
-        AIFinishEventData? finishData)
-    {
-        var normalized = metadata.ToDictionary();
-        normalized["model"] = NormalizeFinishModel(metadata.Model, providerId);
-        normalized["timestamp"] = ResolveFinishTimestamp(metadata.Timestamp, finishData?.CompletedAt);
-        SetFinishMetadataValue(normalized, "inputTokens", finishData?.InputTokens);
-        SetFinishMetadataValue(normalized, "outputTokens", finishData?.OutputTokens);
-        SetFinishMetadataValue(normalized, "totalTokens", finishData?.TotalTokens);
-
-        return FinishMessageMetadata.FromDictionary(
-            normalized.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-            fallbackModel: NormalizeFinishModel(finishData?.Model ?? metadata.Model, providerId),
-            fallbackTimestamp: metadata.Timestamp);
     }
 
     private static void SetFinishMetadataValue<T>(Dictionary<string, object?> metadata, string key, T? typedValue, Dictionary<string, object?> data)
@@ -777,6 +759,186 @@ public static class VercelUnifiedMapper
             return;
 
         metadata[key] = typedValue;
+    }
+
+    private static Usage BuildNormalizedFinishUsage(
+        int? inputTokens,
+        int? outputTokens,
+        int? totalTokens,
+        object? rawUsage)
+    {
+        inputTokens ??= ExtractUsageInt(rawUsage, "promptTokens", "prompt_tokens", "inputTokens", "input_tokens");
+        outputTokens ??= ExtractUsageInt(rawUsage, "completionTokens", "completion_tokens", "outputTokens", "output_tokens");
+        totalTokens ??= ExtractUsageInt(rawUsage, "totalTokens", "total_tokens");
+
+        return new Usage
+        {
+            PromptTokens = inputTokens,
+            CompletionTokens = outputTokens,
+            TotalTokens = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0))
+        };
+    }
+
+    private static object BuildProviderMetadataContainer(object? existingProviderMetadata, object rawUsage)
+    {
+        var providerMetadata = existingProviderMetadata switch
+        {
+            JsonElement json when json.ValueKind == JsonValueKind.Object
+                => JsonSerializer.Deserialize<Dictionary<string, object?>>(json.GetRawText(), JsonSerializerOptions.Web) ?? [],
+            Dictionary<string, object?> dictionary => dictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            _ => new Dictionary<string, object?>()
+        };
+
+        providerMetadata["usage"] = rawUsage;
+        return providerMetadata;
+    }
+
+    private static object ResolveRawFinishUsage(AIFinishEventData? typedData, Dictionary<string, object?> metadata)
+    {
+        if (typedData?.MessageMetadata is { } typedMetadata
+            && typedMetadata.Usage.ValueKind == JsonValueKind.Object
+            && typedMetadata.Usage.EnumerateObject().Any())
+        {
+            return typedMetadata.Usage.Clone();
+        }
+
+        if (metadata.TryGetValue("usage", out var rawMetadataUsage) && HasUsageObject(rawMetadataUsage))
+            return CloneUsageObject(rawMetadataUsage!);
+
+        if (TryExtractUsageFromResponse(typedData?.Response, out var responseUsage))
+            return responseUsage;
+
+        if (typedData?.InputTokens is not null || typedData?.OutputTokens is not null || typedData?.TotalTokens is not null)
+        {
+            return JsonSerializer.SerializeToElement(new Dictionary<string, object?>
+            {
+                ["inputTokens"] = typedData?.InputTokens,
+                ["outputTokens"] = typedData?.OutputTokens,
+                ["totalTokens"] = typedData?.TotalTokens ?? ((typedData?.InputTokens ?? 0) + (typedData?.OutputTokens ?? 0))
+            }, JsonSerializerOptions.Web);
+        }
+
+        return JsonSerializer.SerializeToElement(new Dictionary<string, object?>(), JsonSerializerOptions.Web);
+    }
+
+    private static bool TryExtractUsageFromResponse(object? response, out JsonElement usage)
+    {
+        usage = default;
+
+        if (response is null)
+            return false;
+
+        if (response is JsonElement json)
+            return TryExtractUsageFromJson(json, out usage);
+
+        try
+        {
+            var serializedResponse = JsonSerializer.SerializeToElement(response, JsonSerializerOptions.Web);
+            return TryExtractUsageFromJson(serializedResponse, out usage);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryExtractUsageFromJson(JsonElement response, out JsonElement usage)
+    {
+        usage = default;
+
+        if (response.ValueKind != JsonValueKind.Object)
+            return false;
+
+        foreach (var property in response.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, "usage", StringComparison.OrdinalIgnoreCase)
+                || property.Value.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            usage = property.Value.Clone();
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasUsageObject(object? usage)
+        => usage switch
+        {
+            JsonElement json => json.ValueKind == JsonValueKind.Object,
+            Dictionary<string, object?> => true,
+            _ => false
+        };
+
+    private static object CloneUsageObject(object usage)
+        => usage switch
+        {
+            JsonElement json => json.Clone(),
+            Dictionary<string, object?> dictionary => dictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            _ => JsonSerializer.SerializeToElement(new Dictionary<string, object?>(), JsonSerializerOptions.Web)
+        };
+
+    private static int? ExtractUsageInt(object? usage, params string[] keys)
+    {
+        if (usage is null)
+            return null;
+
+        foreach (var key in keys)
+        {
+            if (TryExtractUsageInt(usage, key, out var value))
+                return value;
+        }
+
+        return null;
+    }
+
+    private static bool TryExtractUsageInt(object usage, string key, out int value)
+    {
+        value = 0;
+
+        switch (usage)
+        {
+            case JsonElement json when json.ValueKind == JsonValueKind.Object:
+                foreach (var property in json.EnumerateObject())
+                {
+                    if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase)
+                        && property.Value.ValueKind == JsonValueKind.Number
+                        && property.Value.TryGetInt32(out value))
+                    {
+                        return true;
+                    }
+
+                    if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase)
+                        && property.Value.ValueKind == JsonValueKind.String
+                        && int.TryParse(property.Value.GetString(), out value))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            case Dictionary<string, object?> dictionary:
+                return dictionary.TryGetValue(key, out var raw) && TryConvertUsageValue(raw, out value);
+            default:
+                return false;
+        }
+    }
+
+    private static bool TryConvertUsageValue(object? raw, out int value)
+    {
+        value = 0;
+
+        return raw switch
+        {
+            int intValue => (value = intValue) >= 0 || intValue < 0,
+            long longValue when longValue >= int.MinValue && longValue <= int.MaxValue => (value = (int)longValue) >= 0 || longValue < 0,
+            string stringValue when int.TryParse(stringValue, out var parsed) => (value = parsed) >= 0 || parsed < 0,
+            JsonElement json when json.ValueKind == JsonValueKind.Number && json.TryGetInt32(out var numericValue) => (value = numericValue) >= 0 || numericValue < 0,
+            JsonElement json when json.ValueKind == JsonValueKind.String && int.TryParse(json.GetString(), out var parsedValue) => (value = parsedValue) >= 0 || parsedValue < 0,
+            _ => false
+        };
     }
 
     private static bool HasFinishMetadataValue(Dictionary<string, object?> metadata, string key)

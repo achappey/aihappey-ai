@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using AIHappey.Abstractions.Http;
 using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Responses.Extensions;
@@ -24,7 +25,8 @@ public static class HttpExtensions
         ResponseRequest options,
         string relativeUrl = "v1/responses",
         CancellationToken ct = default,
-        JsonElement? extraRootProperties = null)
+        JsonElement? extraRootProperties = null,
+        ProviderBackendCaptureRequest? capture = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
@@ -38,8 +40,10 @@ public static class HttpExtensions
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct);
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-        var result = await JsonSerializer.DeserializeAsync<ResponseResult>(stream, cancellationToken: ct);
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        await ProviderBackendCapture.CaptureJsonAsync("responses", resp, body, capture, ct);
+
+        var result = JsonSerializer.Deserialize<ResponseResult>(body, ResponseJson.Default);
 
         if (result is null)
             throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
@@ -56,7 +60,8 @@ public static class HttpExtensions
         ResponseRequest options,
         string relativeUrl = "v1/responses",
         [EnumeratorCancellation] CancellationToken ct = default,
-        JsonElement? extraRootProperties = null)
+        JsonElement? extraRootProperties = null,
+        ProviderBackendCaptureRequest? capture = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
@@ -75,11 +80,15 @@ public static class HttpExtensions
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("responses", resp, capture);
 
         string? line;
         while (!ct.IsCancellationRequested &&
                (line = await reader.ReadLineAsync(ct)) != null)
         {
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, ct);
+
             if (line is null) yield break;
 
             if (line.Length == 0) continue; // keepalive

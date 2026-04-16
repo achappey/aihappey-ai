@@ -37,18 +37,6 @@ public static partial class MessagesUnifiedMapper
             };
         }
 
-        yield return new AIStreamEvent
-        {
-            ProviderId = providerId,
-            Event = CreateDataEnvelope(
-                part.Type,
-                JsonSerializer.SerializeToElement(part, part.GetType(), Json)),
-            Metadata = new Dictionary<string, object?>
-            {
-                ["messages.stream.type"] = part.Type,
-                ["messages.stream.raw"] = JsonSerializer.SerializeToElement(part, Json)
-            }
-        };
     }
 
     public static MessageStreamPart? ToMessageStreamPart(
@@ -249,6 +237,16 @@ public static partial class MessagesUnifiedMapper
                     yield return CreateEnvelope("text-end", finalTextEventId, new AITextEndEventData());
                 }
 
+                Dictionary<string, object>? finishMetadata = null;
+                if (part.Metadata is not null || state.Usage is not null)
+                {
+                    finishMetadata = part.Metadata is null
+                        ? []
+                        : part.Metadata.ToDictionary(a => a.Key, a => (object)a.Value);
+
+                    finishMetadata["usage"] = state.Usage;
+                }
+
                 yield return CreateEnvelope("finish", state.CurrentMessage?.Id, new AIFinishEventData
                 {
                     Model = state.CurrentMessage?.Model,
@@ -259,10 +257,10 @@ public static partial class MessagesUnifiedMapper
                         + (state.Usage?.OutputTokens ?? 0)
                         + (state.Usage?.CacheCreationInputTokens ?? 0)
                         + (state.Usage?.CacheReadInputTokens ?? 0),
-                    MessageMetadata = part.Metadata is null
+                    MessageMetadata = finishMetadata is null
                         ? null
                         : AIFinishMessageMetadata.FromDictionary(
-                            part.Metadata.ToDictionary(a => a.Key, a => (object)a.Value),
+                            finishMetadata,
                             fallbackModel: state.CurrentMessage?.Model,
                             fallbackTimestamp: DateTimeOffset.UtcNow),
                     FinishReason = ToUiFinishReason(state.StopReason),
@@ -1026,9 +1024,41 @@ public static partial class MessagesUnifiedMapper
 
         return new MessagesUsage
         {
-            InputTokens = finishData?.InputTokens ?? finishData?.MessageMetadata?.InputTokens,
-            OutputTokens = finishData?.OutputTokens ?? finishData?.MessageMetadata?.OutputTokens
+            InputTokens = finishData?.InputTokens
+                ?? finishData?.MessageMetadata?.InputTokens
+                ?? GetUsageInt(finishData?.MessageMetadata?.Usage, "input_tokens", "prompt_tokens", "inputTokens", "promptTokens"),
+            OutputTokens = finishData?.OutputTokens
+                ?? finishData?.MessageMetadata?.OutputTokens
+                ?? GetUsageInt(finishData?.MessageMetadata?.Usage, "output_tokens", "completion_tokens", "outputTokens", "completionTokens")
         };
+    }
+
+    private static int? GetUsageInt(JsonElement? usage, params string[] keys)
+    {
+        if (!usage.HasValue)
+            return null;
+
+        var usageValue = usage.Value;
+
+        if (usageValue.ValueKind != JsonValueKind.Object)
+            return null;
+
+        foreach (var key in keys)
+        {
+            foreach (var property in usageValue.EnumerateObject())
+            {
+                if (!string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (property.Value.ValueKind == JsonValueKind.Number && property.Value.TryGetInt32(out var numericValue))
+                    return numericValue;
+
+                if (property.Value.ValueKind == JsonValueKind.String && int.TryParse(property.Value.GetString(), out var parsedValue))
+                    return parsedValue;
+            }
+        }
+
+        return null;
     }
 
     private static string? ToMessagesStreamStopReason(string? finishReason)

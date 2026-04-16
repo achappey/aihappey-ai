@@ -424,42 +424,46 @@ public sealed record FinishGatewayMetadata
     }
 }
 
-public sealed record FinishMessageMetadata
+
+public sealed record Usage
 {
-    private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
+    [JsonPropertyName("promptTokens")]
+    public int? PromptTokens { get; init; }
 
-    [JsonPropertyName("model")]
-    public required string Model { get; init; }
-
-    [JsonPropertyName("timestamp")]
-    public required DateTimeOffset Timestamp { get; init; }
-
-    [JsonPropertyName("outputTokens")]
-    public int? OutputTokens { get; init; }
-
-    [JsonPropertyName("inputTokens")]
-    public int? InputTokens { get; init; }
+    [JsonPropertyName("completionTokens")]
+    public int? CompletionTokens { get; init; }
 
     [JsonPropertyName("totalTokens")]
     public int? TotalTokens { get; init; }
 
+}
+
+public sealed record FinishMessageMetadata
+{
+    private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
+    private static readonly HashSet<string> LegacyMetadataKeysToStrip =
+    [
+        "inputTokens",
+        "outputTokens",
+        "totalTokens",
+        "reasoningTokens",
+        "cachedInputTokens",
+        "cachedInputReadTokens",
+        "cachedInputWriteTokens",
+        "runtimeMs"
+    ];
+
+    [JsonPropertyName("model")]
+    public required string Model { get; init; }
+
+    [JsonPropertyName("usage")]
+    public required Usage Usage { get; init; }
+
+    [JsonPropertyName("timestamp")]
+    public required DateTimeOffset Timestamp { get; init; }
+
     [JsonPropertyName("temperature")]
     public float? Temperature { get; init; }
-
-    [JsonPropertyName("cachedInputTokens")]
-    public int? CachedInputTokens { get; init; }
-
-    [JsonPropertyName("cachedInputReadTokens")]
-    public int? CachedInputReadTokens { get; init; }
-
-    [JsonPropertyName("cachedInputWriteTokens")]
-    public int? CachedInputWriteTokens { get; init; }
-
-/*    [JsonPropertyName("reasoningTokens")]
-    public int? ReasoningTokens { get; init; }
-
-    [JsonPropertyName("runtimeMs")]
-    public long? RuntimeMs { get; init; }*/
 
     [JsonPropertyName("gateway")]
     public FinishGatewayMetadata? Gateway { get; init; }
@@ -491,15 +495,13 @@ public sealed record FinishMessageMetadata
         {
             ["model"] = model,
             ["timestamp"] = timestamp,
-            ["outputTokens"] = outputTokens,
-            ["inputTokens"] = inputTokens,
-            ["totalTokens"] = totalTokens,
+            ["usage"] = new Usage
+            {
+                PromptTokens = inputTokens,
+                CompletionTokens = outputTokens,
+                TotalTokens = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0))
+            },
             ["temperature"] = temperature,
-            ["reasoningTokens"] = reasoningTokens,
-            ["cachedInputTokens"] = cachedInputTokens,
-            ["cachedInputReadTokens"] = cachedInputReadTokens,
-            ["cachedInputWriteTokens"] = cachedInputWriteTokens,
-            ["runtimeMs"] = runtimeMs,
             ["gateway"] = gateway
         };
 
@@ -521,6 +523,15 @@ public sealed record FinishMessageMetadata
     {
         var merged = metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value) ?? [];
 
+        merged["usage"] = NormalizeUsage(
+            merged.TryGetValue("usage", out var usage) ? usage : null,
+            ExtractInt(merged, "inputTokens"),
+            ExtractInt(merged, "outputTokens"),
+            ExtractInt(merged, "totalTokens"));
+
+        foreach (var legacyKey in LegacyMetadataKeysToStrip)
+            merged.Remove(legacyKey);
+
         if (!merged.ContainsKey("model") && !string.IsNullOrWhiteSpace(fallbackModel))
             merged["model"] = fallbackModel;
 
@@ -534,6 +545,153 @@ public sealed record FinishMessageMetadata
 
     public static implicit operator FinishMessageMetadata?(Dictionary<string, object>? metadata)
         => metadata is null ? null : FromDictionary(metadata);
+
+    private static Usage NormalizeUsage(object? usage, int? inputTokens, int? outputTokens, int? totalTokens)
+    {
+        if (TryReadUsageInt(usage, out var promptTokens, "promptTokens", "prompt_tokens", "inputTokens", "input_tokens")
+            || TryReadUsageInt(usage, out _, "completionTokens", "completion_tokens", "outputTokens", "output_tokens")
+            || TryReadUsageInt(usage, out _, "totalTokens", "total_tokens"))
+        {
+            TryReadUsageInt(usage, out var completionTokens, "completionTokens", "completion_tokens", "outputTokens", "output_tokens");
+            TryReadUsageInt(usage, out var usageTotalTokens, "totalTokens", "total_tokens");
+
+            return new Usage
+            {
+                PromptTokens = promptTokens,
+                CompletionTokens = completionTokens,
+                TotalTokens = usageTotalTokens ?? ((promptTokens ?? 0) + (completionTokens ?? 0))
+            };
+        }
+
+        return new Usage
+        {
+            PromptTokens = inputTokens,
+            CompletionTokens = outputTokens,
+            TotalTokens = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0))
+        };
+    }
+
+    private static int? ExtractInt(Dictionary<string, object?> metadata, string key)
+    {
+        if (!metadata.TryGetValue(key, out var raw) || raw is null)
+            return null;
+
+        return raw switch
+        {
+            int value => value,
+            long value when value >= int.MinValue && value <= int.MaxValue => (int)value,
+            JsonElement json when json.ValueKind == JsonValueKind.Number && json.TryGetInt32(out var value) => value,
+            JsonElement json when json.ValueKind == JsonValueKind.String && int.TryParse(json.GetString(), out var value) => value,
+            string value when int.TryParse(value, out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static bool TryReadUsageInt(object? usage, out int? value, params string[] keys)
+    {
+        value = null;
+        if (usage is null)
+            return false;
+
+        foreach (var key in keys)
+        {
+            if (TryReadUsageInt(usage, key, out var parsed))
+            {
+                value = parsed;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryReadUsageInt(object usage, string key, out int value)
+    {
+        value = 0;
+
+        return usage switch
+        {
+            Usage normalized => TryReadUsageInt(normalized, key, out value),
+            JsonElement json => TryReadUsageInt(json, key, out value),
+            Dictionary<string, object?> dictionary => TryReadUsageInt(dictionary, key, out value),
+            _ => false
+        };
+    }
+
+    private static bool TryReadUsageInt(Usage usage, string key, out int value)
+    {
+        value = key switch
+        {
+            "promptTokens" or "prompt_tokens" or "inputTokens" or "input_tokens" => usage.PromptTokens ?? 0,
+            "completionTokens" or "completion_tokens" or "outputTokens" or "output_tokens" => usage.CompletionTokens ?? 0,
+            "totalTokens" or "total_tokens" => usage.TotalTokens ?? 0,
+            _ => 0
+        };
+
+        return key switch
+        {
+            "promptTokens" or "prompt_tokens" or "inputTokens" or "input_tokens" => usage.PromptTokens is not null,
+            "completionTokens" or "completion_tokens" or "outputTokens" or "output_tokens" => usage.CompletionTokens is not null,
+            "totalTokens" or "total_tokens" => usage.TotalTokens is not null,
+            _ => false
+        };
+    }
+
+    private static bool TryReadUsageInt(Dictionary<string, object?> usage, string key, out int value)
+    {
+        value = 0;
+        return usage.TryGetValue(key, out var raw) && TryConvertToInt(raw, out value);
+    }
+
+    private static bool TryReadUsageInt(JsonElement usage, string key, out int value)
+    {
+        value = 0;
+
+        if (usage.ValueKind != JsonValueKind.Object)
+            return false;
+
+        foreach (var property in usage.EnumerateObject())
+        {
+            if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))
+                return TryConvertToInt(property.Value, out value);
+        }
+
+        return false;
+    }
+
+    private static bool TryConvertToInt(object? raw, out int value)
+    {
+        value = 0;
+
+        switch (raw)
+        {
+            case int intValue:
+                value = intValue;
+                return true;
+            case long longValue when longValue >= int.MinValue && longValue <= int.MaxValue:
+                value = (int)longValue;
+                return true;
+            case JsonElement json:
+                return TryConvertToInt(json, out value);
+            case string stringValue when int.TryParse(stringValue, out var parsed):
+                value = parsed;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool TryConvertToInt(JsonElement raw, out int value)
+    {
+        value = 0;
+
+        return raw.ValueKind switch
+        {
+            JsonValueKind.Number when raw.TryGetInt32(out var numericValue) => (value = numericValue) >= 0 || numericValue < 0,
+            JsonValueKind.String when int.TryParse(raw.GetString(), out var parsedValue) => (value = parsedValue) >= 0 || parsedValue < 0,
+            _ => false
+        };
+    }
 
 }
 

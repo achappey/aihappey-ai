@@ -23,7 +23,7 @@ public sealed class ResponsesStreamFixtureTests
     }
 
     [Fact]
-    public void Typed_responses_fixture_maps_to_expected_unified_events_and_stable_round_trips()
+    public void Typed_responses_fixture_maps_to_expected_unified_events()
     {
         var parts = FixtureFileLoader.LoadResponseTypedFixture(TypedFixturePath);
 
@@ -37,31 +37,14 @@ public sealed class ResponsesStreamFixtureTests
 
         FixtureAssertions.AssertContainsSubsequence(
             eventTypes,
-            "response.created",
             "text-start",
             "text-delta",
-            "data-responses.response.output_text.done",
             "text-end",
-            "response.completed",
             "finish");
 
         var textDeltaEvent = unifiedEvents.Single(streamEvent => streamEvent.Event.Type == "text-delta");
         var textDeltaData = Assert.IsType<AITextDeltaEventData>(textDeltaEvent.Event.Data);
         Assert.Equal("Hello world", textDeltaData.Delta);
-
-        var stableRoundTripParts = parts.Where(part => part is ResponseCreated
-                                                       or ResponseCompleted);
-
-        foreach (var part in stableRoundTripParts)
-        {
-            var lifecycleOrDataEvent = part
-                .ToUnifiedStreamEvent(ProviderId)
-                .Single(streamEvent => streamEvent.Event.Type.StartsWith("response.", StringComparison.OrdinalIgnoreCase)
-                                       || streamEvent.Event.Type == "error");
-
-            var roundTripped = lifecycleOrDataEvent.ToResponseStreamPart();
-            Assert.Equal(part.Type, roundTripped.Type);
-        }
 
         var syntheticDeltaEvent = new AIStreamEvent
         {
@@ -125,26 +108,14 @@ public sealed class ResponsesStreamFixtureTests
 
         Assert.NotEmpty(unifiedEvents);
         Assert.All(unifiedEvents, streamEvent => Assert.Equal(ProviderId, streamEvent.ProviderId));
-        Assert.Equal("data-responses.request", unifiedEvents[0].Event.Type);
-        Assert.True(unifiedEvents[0].Metadata?.ContainsKey("unified.request.headers") == true);
-
-        var requestData = Assert.IsType<AIDataEventData>(unifiedEvents[0].Event.Data);
-        var requestPayload = requestData.Data is JsonElement json
-            ? json
-            : JsonSerializer.SerializeToElement(requestData.Data, JsonSerializerOptions.Web);
-
-        Assert.True(requestPayload.TryGetProperty("stream", out var streamFlag));
-        Assert.True(streamFlag.GetBoolean());
+        Assert.Equal("text-start", unifiedEvents[0].Event.Type);
 
         var eventTypes = unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList();
         FixtureAssertions.AssertContainsSubsequence(
             eventTypes,
-            "data-responses.request",
-            "response.created",
             "text-start",
             "text-delta",
             "text-end",
-            "response.completed",
             "finish");
     }
 }

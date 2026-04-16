@@ -60,12 +60,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             int? totalTokens = null;
             var mappingState = new ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState();
 
-            yield return CreateDataStreamEvent(
-                modelProvider.GetIdentifier(),
-                "data-chatcompletions.request",
-                JsonSerializer.SerializeToElement(responseRequest, JsonSerializerOptions.Web),
-                request.Headers);
-
             await foreach (var update in modelProvider.CompleteChatStreamingAsync(responseRequest, cancellationToken))
             {
                 CaptureStreamTail(update, ref activeId, ref activeModel, ref lastTimestamp, ref lastFinishReason, ref inputTokens, ref outputTokens, ref totalTokens);
@@ -81,7 +75,12 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                     if (!string.IsNullOrWhiteSpace(update.Model))
                         activeModel = update.Model;
 
-                    lastTimestamp = mapped.Event.Timestamp ?? lastTimestamp;
+                    if (mapped.Event.Timestamp is not null
+                        && (update.Created > 0 || normalizedType != "error"))
+                    {
+                        lastTimestamp = mapped.Event.Timestamp;
+                    }
+
                     lastMetadata = mapped.Metadata ?? lastMetadata;
 
                     if (normalizedType == "reasoning-start")
@@ -306,6 +305,12 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             lastTimestamp = DateTimeOffset.FromUnixTimeSeconds(update.Created);
 
         var chunk = JsonSerializer.SerializeToElement(update, JsonSerializerOptions.Web);
+
+        if (chunk.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
+        {
+            lastFinishReason = "error";
+            return;
+        }
 
         if (chunk.TryGetProperty("usage", out var usage) && usage.ValueKind == JsonValueKind.Object)
         {

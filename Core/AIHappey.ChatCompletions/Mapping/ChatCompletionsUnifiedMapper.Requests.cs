@@ -76,63 +76,18 @@ public static partial class ChatCompletionsUnifiedMapper
             Messages = ToChatMessages(request.Input).ToList(),
             Tools = ToChatTools(request.Tools).ToList(),
             ToolChoice = normalizedToolChoice,
+            StreamOptions = new StreamOptions()
+            {
+                IncludeUsage = true
+            },
             ResponseFormat = request.ResponseFormat,
             Metadata = request.Metadata,
-            Store = ExtractMetadataValue<bool?>(request.Metadata, "chatcompletions.request.store")
+            Store = false
         };
 
         return options;
     }
-/*
-    public static JsonElement ToChatCompletionRequestJson(this AIRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-
-        var root = new JsonObject();
-
-        var raw = ExtractMetadataElement(request.Metadata, "chatcompletions.request.raw");
-        if (raw is { ValueKind: JsonValueKind.Object })
-            root = JsonNode.Parse(raw.Value.GetRawText())?.AsObject() ?? new JsonObject();
-
-        var unmapped = ExtractMetadataElement(request.Metadata, "chatcompletions.request.unmapped");
-        if (unmapped is { ValueKind: JsonValueKind.Object })
-        {
-            foreach (var prop in unmapped.Value.EnumerateObject())
-                root[prop.Name] = JsonNode.Parse(prop.Value.GetRawText());
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Model))
-            root["model"] = request.Model;
-
-        Set(root, "temperature", request.Temperature);
-        Set(root, "top_p", request.TopP);
-        Set(root, "max_completion_tokens", request.MaxOutputTokens);
-        Set(root, "stream", request.Stream);
-        Set(root, "parallel_tool_calls", request.ParallelToolCalls);
-
-        if (request.ToolChoice is not null)
-            root["tool_choice"] = ToJsonNode(request.ToolChoice);
-
-        if (request.ResponseFormat is not null)
-            root["response_format"] = ToJsonNode(request.ResponseFormat);
-
-        if (request.Tools is { Count: > 0 })
-        {
-            root["tools"] = JsonValue.Create(JsonSerializer.Serialize(request.Tools.Select(ToRawChatTool).ToList(), Json));
-            root["tools"] = ToJsonNode(request.Tools.Select(ToRawChatTool).ToList());
-        }
-
-        var messages = ToChatMessages(request.Input).ToList();
-        if (messages.Count > 0)
-            root["messages"] = ToJsonNode(messages);
-
-        var store = ExtractMetadataValue<bool?>(request.Metadata, "chatcompletions.request.store");
-        if (store is not null)
-            root["store"] = store.Value;
-
-        return JsonSerializer.SerializeToElement(root, Json);
-    }*/
-
+   
     private static Dictionary<string, object?> BuildUnifiedRequestMetadata(JsonElement request)
     {
         var metadata = new Dictionary<string, object?>

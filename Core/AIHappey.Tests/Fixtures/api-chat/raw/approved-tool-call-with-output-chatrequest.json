@@ -1,0 +1,178 @@
+{
+    "model": "openai/gpt-4o",
+    "tools": [
+        {
+            "name": "github_rest_countries_search_codes",
+            "title": "Search country codes and names",
+            "icons": [
+                {
+                    "src": "https://api.nuget.org/v3-flatcontainer/restcountries.net/3.5.0/icon"
+                }
+            ],
+            "description": "Search country codes and names",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Search query by name (contains)",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "annotations": {
+                "title": "Search country codes and names",
+                "readOnlyHint": true,
+                "openWorldHint": false
+            },
+            "execution": {
+                "taskSupport": "optional"
+            }
+        },
+        {
+            "name": "github_rest_countries_get_detail",
+            "title": "Get all country details by the alpha-2 code",
+            "icons": [
+                {
+                    "src": "https://api.nuget.org/v3-flatcontainer/restcountries.net/3.5.0/icon"
+                }
+            ],
+            "description": "Get all country details by the alpha-2 code",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "cca": {
+                        "description": "The alpha-2 code of the country",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "cca"
+                ]
+            },
+            "annotations": {
+                "title": "Get all country details by the alpha-2 code",
+                "readOnlyHint": true,
+                "openWorldHint": false
+            },
+            "execution": {
+                "taskSupport": "optional"
+            }
+        },
+        {
+            "name": "github_rest_countries_get_by_region",
+            "title": "Get countries by region",
+            "icons": [
+                {
+                    "src": "https://api.nuget.org/v3-flatcontainer/restcountries.net/3.5.0/icon"
+                }
+            ],
+            "description": "Get countries by region",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "region": {
+                        "description": "The region to filter on (e.g. Europe, Asia, Africa).",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "region"
+                ]
+            },
+            "annotations": {
+                "title": "Get countries by region",
+                "readOnlyHint": true,
+                "openWorldHint": false
+            },
+            "execution": {
+                "taskSupport": "optional"
+            }
+        }
+    ],
+    "providerMetadata": {
+        "openai": {
+            "parallel_tool_calls": true
+        }
+    },
+    "temperature": 1,
+    "id": "04a123f6-c2f0-423e-91e8-299494c6fe3d",
+    "messages": [
+        {
+            "id": "d26f7107-b8b9-4cd8-91cd-4c605eb81d8d",
+            "role": "system",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "{\"chatBotInstructions\":\"- Use **Markdown formatting** for your responses, including tables and lists, unless specifically instructed to output CSV.\\n- When outputting **Chart.js**, always include a valid JSON data object inside a chartjs code block.\\n- When outputting **CSV**, always return raw CSV text inside a csv code block.\\n- When outputting **LaTeX or math**, return a single formula inside a latex code block without delimiters.\\n- Do **not** include base64 images; images are handled by the client.\\n- Always respond in the user’s preferred language.\"}"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-15T21:29:54.237Z",
+                "author": "system"
+            }
+        },
+        {
+            "id": "78beeca2-6700-4f19-96c1-07f95c05e47f",
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "zoek alles over poland"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-15T21:29:53.222Z"
+            }
+        },
+        {
+            "id": "4ZXANJSCgIVj5QVh",
+            "metadata": {
+                "model": "openai/gpt-4o-2024-08-06",
+                "timestamp": "2026-04-15T21:29:56+00:00",
+                "outputTokens": null,
+                "inputTokens": null,
+                "totalTokens": null,
+                "temperature": null,
+                "cachedInputTokens": null,
+                "cachedInputReadTokens": null,
+                "cachedInputWriteTokens": null,
+                "gateway": null,
+                "reasoningTokens": null,
+                "runtimeMs": null
+            },
+            "role": "assistant",
+            "parts": [
+                {
+                    "type": "tool-github_rest_countries_search_codes",
+                    "toolCallId": "call_xyP61r9U4PJRpE095iQXjn2g",
+                    "state": "approval-responded",
+                    "input": {
+                        "name": "Poland"
+                    },
+                    "output": {
+                        "content": [
+                            {
+                                "type": "resource",
+                                "resource": {
+                                    "uri": "https://github.com/egbakou/RESTCountries.NET",
+                                    "mimeType": "application/json",
+                                    "text": "[{\"common\":\"Poland\",\"official\":\"Republic of Poland\",\"cca2\":\"PL\"}]"
+                                }
+                            }
+                        ]
+                    },
+                    "providerExecuted": false,
+                    "approval": {
+                        "id": "call_xyP61r9U4PJRpE095iQXjn2g",
+                        "approved": true
+                    }
+                }
+            ]
+        }
+    ],
+    "trigger": "submit-message",
+    "messageId": "4ZXANJSCgIVj5QVh"
+}

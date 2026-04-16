@@ -47,26 +47,6 @@ public static class ModelProviderResponsesUnifiedExtensions
         {
             var seenPerplexitySearchSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            yield return new AIStreamEvent
-            {
-                ProviderId = modelProvider.GetIdentifier(),
-                Event = new AIEventEnvelope
-                {
-                    Type = "data-responses.request",
-                    Timestamp = DateTimeOffset.UtcNow,
-                    Data = new AIDataEventData
-                    {
-                        Data = JsonSerializer.SerializeToElement(responseRequest, JsonSerializerOptions.Web)
-                    }
-                },
-                Metadata = request.Headers is null || request.Headers.Count == 0
-                    ? null
-                    : new Dictionary<string, object?>
-                    {
-                        ["unified.request.headers"] = request.Headers.ToDictionary(a => a.Key, a => (object?)a.Value)
-                    }
-            };
-
             await foreach (var update in modelProvider.ResponsesStreamingAsync(responseRequest, cancellationToken))
             {
                 foreach (var evt in update.ToUnifiedStreamEvent(modelProvider.GetIdentifier()))

@@ -1,0 +1,111 @@
+event: message_start
+data: {"type":"message_start","message":{"model":"claude-haiku-4-5-20251001","id":"msg_019JtfkfqyQcPRcdeYWJXpGG","type":"message","role":"assistant","content":[],"stop_reason":null,"stop_sequence":null,"stop_details":null,"usage":{"input_tokens":4453,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":8,"service_tier":"standard","inference_geo":"not_available"}} }
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}        }
+
+event: ping
+data: {"type": "ping"}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"The user is asking me to create a"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" poem about Groningen. This is a straightforward creative writing request. Groningen is a city in the northern Netherlands.\n\nThe user's"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" preferred language is Dutch (nl), so I should write the poem in Dutch.\n\nLet me create"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" an original poem about Groningen in Dutch. I'll use markdown formatting as instructed."}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":""}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"EpsECmMIDBgCKkDZP9cMpgsfgeJUhc5kQUIBGKKQ74ghZGSGZeBW16sYXBEd479AMPWfHm4CcNJwCm1y4POeCZsCIQBKh46eTm0BMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOAASDD6+UawiM34a+3wOMxoM41pxIQlW2ZQeyFNBIjCWhU1Y4rgrmmBpxObfyPh0gXykUyTgXYb7gYmhSEdh10W9urypchQCsgYjimkpk58q5QLEdtMbYPUifWwU86OvRLbPMpYC4PG+ohdcF/t3IrbDCJVuz+vFlWTP+tfuJbxs52/qTYc9YcwPHod82AV3YLTkq8uU/ZtyDvtYH1IZzqsYRS010NptMtABvwGbRqlTNO4rRrU8crbIl4eXy/lk7UneBxO7s7Xc6GVQJuro54TDGU1NSph5fDfSC48tRCPCaDBYSdxaerD+TxRiXxw85SeeLeFc0Idb8lQygkG6OkAI5sNmffxlo9wGwPMg2uDHQCLQMzWLRl2UQCE+/VabcELCX/DhyGYHUz0C18XuW2zKzod00z/i7akPYA1LcyzsV4wRdU6YDG/ieePmavp1wdRfXYln9zr/A/SKmPLUNKyYtQj6yCenwcKrwJC0pF78oNNsDBGjltB2ogkgoogJ8yC0iMMRD3xYsq953D9ykzpNZaZed6qZTbWW/cRGL5MGGxYdpOF3bGYLsB42EMwm643V8z6T7oIYAQ=="}   }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0               }
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"# Groningen\n\nHier in het noorden waar de wind"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" waait vrij,\nWaar student en burger elkaar"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" hand in hand bij,\nGroningen staat sterk met zijn historie"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" oud,\nEen stad vol ambities, van je"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"ugd en van voud.\n\nDe Martinitoren ste"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"ekt hoog in de lucht,\nEen baken van trots"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" met zijn krachtige kracht,\nOver pleinen en grachten die"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" glinsteren blauw,\nEen erfgoed van eeu"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"wen, vast en van klauw.\n\nFietsen en voet"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"gangers dansen door straten,\nWaar gezelligheid en warm"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"te elkaar ontmoeten, hun kansen,\nVan Zern"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"ike tot aan het centrum vol leven,\nGroningen ge"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"eft studenten hun dromen, hun streven.\n\nIn café's en kro"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"egen wordt samen gelachen,\nTongen uitgewisseld, vri"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"endschappen gemaakt,\nEen stad waar verleden en toekomst versmel"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"ten,\nWaar harten en handen zich steeds naar"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" elkaar welten.\n\nGroningen, groene juweel in"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" het noorden van Holland,\nJij hebt mijn hart, j"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"ij bent voorgoed in mijn hand,\nMet je kar"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"akter en glans, je ontembare ziel,\nGroningen, je"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" bent meer dan mooi—je bent veel.\n\n---\n\n*"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Geniet van je mooie stad!*"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" 🌿"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1           }
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null,"stop_details":null},"usage":{"input_tokens":4453,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":422}   }
+
+event: message_stop
+data: {"type":"message_stop"     }
+

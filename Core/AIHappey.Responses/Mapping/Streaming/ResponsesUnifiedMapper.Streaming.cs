@@ -302,18 +302,18 @@ public static partial class ResponsesUnifiedMapper
         {
             case ResponseCreated created:
                 ClearShellStreamState();
-                yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response, providerId);
+                //    yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response, providerId);
                 yield break;
 
             case ResponseInProgress inProgress:
-                yield return CreateLifecycleEnvelope(inProgress.Type, inProgress.SequenceNumber, inProgress.Response, providerId);
+                //     yield return CreateLifecycleEnvelope(inProgress.Type, inProgress.SequenceNumber, inProgress.Response, providerId);
                 yield break;
 
             case ResponseCompleted completed:
                 foreach (var env in CreatePendingShellCompletionEnvelopes(providerId, completed.Response))
                     yield return env;
 
-                yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
+                //   yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
 
                 yield return CreateFinishEnvelope(completed.Type,
                     completed.SequenceNumber, completed.Response);
@@ -321,7 +321,7 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseFailed failed:
-                yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response, providerId);
+                //      yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response, providerId);
                 ClearShellStreamState();
                 yield break;
 
@@ -385,10 +385,6 @@ public static partial class ResponsesUnifiedMapper
                     yield break;
                 }
 
-                yield return CreateDataEnvelope(
-                        part.Type,
-                        JsonSerializer.SerializeToElement(part, part.GetType(), Json));
-
                 yield break;
 
             case ResponseContentPartDone responseContentPartDone:
@@ -447,10 +443,6 @@ public static partial class ResponsesUnifiedMapper
                         }
                     }
                 }
-
-                yield return CreateDataEnvelope(
-                         part.Type,
-                         JsonSerializer.SerializeToElement(part, part.GetType(), Json));
 
                 yield break;
             case ResponseOutputTextAnnotationAdded responseOutputTextAnnotationAdded:
@@ -716,10 +708,6 @@ public static partial class ResponsesUnifiedMapper
 
                     yield break;
                 }
-
-                yield return CreateDataEnvelope(
-                       part.Type,
-                       JsonSerializer.SerializeToElement(part, part.GetType(), Json));
 
                 yield break;
 
@@ -1016,40 +1004,27 @@ public static partial class ResponsesUnifiedMapper
                 }
                 else
                 {
-                    yield return CreateDataEnvelope(
-                            part.Type,
-                            JsonSerializer.SerializeToElement(part, part.GetType(), Json));
+                    yield break;
                 }
 
                 yield break;
 
             case ResponseOutputTextDone done:
-                yield return CreateDataEnvelope(done.Type, new Dictionary<string, object?>
-                {
-                    ["sequence_number"] = done.SequenceNumber,
-                    ["item_id"] = done.ItemId,
-                    ["content_index"] = done.ContentIndex,
-                    ["output_index"] = done.Outputindex,
-                    ["text"] = done.Text
-                });
                 yield break;
 
             case ResponseError error:
-                yield return CreateDataEnvelope(error.Type, new Dictionary<string, object?>
+                yield return new AIEventEnvelope
                 {
-                    ["sequence_number"] = error.SequenceNumber,
-                    ["message"] = error.Message,
-                    ["param"] = error.Param,
-                    ["code"] = error.Code
-                });
+                    Type = "error",
+                    Data = new AIErrorEventData
+                    {
+                        ErrorText = error.Message
+                    }
+                };
                 yield break;
 
             case ResponseUnknownEvent unknown
                 when string.Equals(unknown.Type, "response.reasoning.search_results", StringComparison.OrdinalIgnoreCase):
-                yield return CreateDataEnvelope(
-                    unknown.Type,
-                    JsonSerializer.SerializeToElement(unknown, unknown.GetType(), Json));
-
                 foreach (var envelope in CreateSourceUrlEnvelopesFromSearchResults(
                              providerId,
                              TryGetUnknownEventProperty(unknown, "results", out var reasoningResults) ? reasoningResults : null,
@@ -1074,9 +1049,6 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             default:
-                yield return CreateDataEnvelope(
-                    part.Type,
-                    JsonSerializer.SerializeToElement(part, part.GetType(), Json));
                 yield break;
         }
     }

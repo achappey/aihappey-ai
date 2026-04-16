@@ -37,26 +37,6 @@ public static class ModelProviderMessagesUnifiedExtensions
 
         var state = new MessagesUnifiedMapper.MessagesStreamMappingState();
 
-        yield return new AIStreamEvent
-        {
-            ProviderId = modelProvider.GetIdentifier(),
-            Event = new AIEventEnvelope
-            {
-                Type = "data-messages.request",
-                Timestamp = DateTimeOffset.UtcNow,
-                Data = new AIDataEventData
-                {
-                    Data = messageRequest
-                }
-            },
-            Metadata = request.Headers is null || request.Headers.Count == 0
-                ? null
-                : new Dictionary<string, object?>
-                {
-                    ["unified.request.headers"] = request.Headers.ToDictionary(a => a.Key, a => (object?)a.Value)
-                }
-        };
-
         await foreach (var part in modelProvider.MessagesStreamingAsync(messageRequest, request.Headers ?? new Dictionary<string, string>(), cancellationToken))
         {
             if (part is null)

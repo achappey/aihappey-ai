@@ -2,7 +2,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using AIHappey.Abstractions.Http;
 using AIHappey.ChatCompletions.Models;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.AI;
 
@@ -18,7 +20,8 @@ public static class ChatCompletionsExtensions
         this HttpClient client,
         JsonElement payload,
         string relativeUrl = "v1/chat/completions",
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
@@ -26,14 +29,16 @@ public static class ChatCompletionsExtensions
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
-        //   var payload = JsonSerializer.SerializeToElement(options);
+
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct);
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-        var result = await JsonSerializer.DeserializeAsync<ChatCompletion>(stream, cancellationToken: ct);
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        await ProviderBackendCapture.CaptureJsonAsync("chat-completions", resp, body, capture, ct);
+
+        var result = JsonSerializer.Deserialize<ChatCompletion>(body, JsonSerializerOptions.Web);
 
         if (result is null)
             throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
@@ -49,8 +54,9 @@ public static class ChatCompletionsExtensions
         ChatCompletionOptions options,
         string relativeUrl = "v1/chat/completions",
         CancellationToken ct = default,
-        JsonElement? extraRootProperties = null)
-        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), relativeUrl, ct);
+        JsonElement? extraRootProperties = null,
+        ProviderBackendCaptureRequest? capture = null)
+        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), relativeUrl, ct, capture);
 
     /// <summary>
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
@@ -61,10 +67,14 @@ public static class ChatCompletionsExtensions
         ChatCompletionOptions options,
         string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
-        [EnumeratorCancellation] CancellationToken ct = default)
+        [EnumeratorCancellation] CancellationToken ct = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
+
+        options.StreamOptions ??= new StreamOptions();
+        options.StreamOptions.IncludeUsage = true;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
 
@@ -79,11 +89,15 @@ public static class ChatCompletionsExtensions
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("chat-completions", resp, capture);
 
         string? line;
         while (!ct.IsCancellationRequested &&
                (line = await reader.ReadLineAsync(ct)) != null)
         {
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, ct);
+
             if (line is null) yield break;
 
             if (line.Length == 0) continue; // keepalive
@@ -121,7 +135,7 @@ public static class ChatCompletionsExtensions
 
     private static JsonElement BuildPayload(ChatCompletionOptions options, JsonElement? extraRootProperties)
     {
-        var payload = JsonSerializer.SerializeToElement(options, JsonSerializerOptions.Web);
+        var payload = JsonSerializer.SerializeToElement(options, Json);
 
         if (extraRootProperties is not JsonElement extra)
             return payload;
@@ -143,8 +157,13 @@ public static class ChatCompletionsExtensions
                 merged[property.Name] = property.Value.Clone();
         }
 
-        return JsonSerializer.SerializeToElement(merged, JsonSerializerOptions.Web);
+        return JsonSerializer.SerializeToElement(merged, Json);
     }
+
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 }
 
 

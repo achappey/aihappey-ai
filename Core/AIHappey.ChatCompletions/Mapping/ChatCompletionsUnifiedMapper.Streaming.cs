@@ -54,28 +54,10 @@ public static partial class ChatCompletionsUnifiedMapper
         }
 
         if (!emittedUiEnvelope && !HasToolCallDelta(chunk))
-            yield return chunk.ToUnifiedStreamEvent(providerId);
+            yield break;
 
         foreach (var sourceEvent in MapSourceUrlEvents(chunk, providerId, timestamp, metadata, state))
             yield return sourceEvent;
-
-        // Always keep raw visibility for debugging and non-lossy pass-through.
-        yield return new AIStreamEvent
-        {
-            ProviderId = providerId,
-            Event = new AIEventEnvelope
-            {
-                Type = "data-chat.completion.chunk",
-                Id = ExtractValue<string>(chunk, "id"),
-                Timestamp = timestamp,
-                Data = new AIDataEventData
-                {
-                    Id = ExtractValue<string>(chunk, "id"),
-                    Data = chunk.Clone()
-                }
-            },
-            Metadata = metadata
-        };
     }
 
     public static IEnumerable<AIStreamEvent> FinalizeUnifiedStreamEvents(
@@ -296,6 +278,13 @@ public static partial class ChatCompletionsUnifiedMapper
 
     private static IEnumerable<AIEventEnvelope> MapUiEnvelopes(JsonElement chunk)
     {
+        var errorEnvelope = TryMapTopLevelErrorEnvelope(chunk);
+        if (errorEnvelope is not null)
+        {
+            yield return errorEnvelope;
+            yield break;
+        }
+
         if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
             yield break;
 
@@ -423,8 +412,54 @@ public static partial class ChatCompletionsUnifiedMapper
         };
     }
 
+    private static AIEventEnvelope? TryMapTopLevelErrorEnvelope(JsonElement chunk)
+    {
+        if (!chunk.TryGetProperty("error", out var error) || error.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var errorText = BuildTopLevelErrorText(error);
+        if (string.IsNullOrWhiteSpace(errorText))
+            errorText = error.GetRawText();
+
+        return CreateUiEnvelope(chunk, "error", new AIErrorEventData
+        {
+            ErrorText = errorText
+        });
+    }
+
+    private static string BuildTopLevelErrorText(JsonElement error)
+    {
+        var lines = new List<string>();
+
+        var message = ExtractValue<string>(error, "message");
+        var type = ExtractValue<string>(error, "type");
+        var code = ExtractValue<string>(error, "code");
+        var failedGeneration = ExtractValue<string>(error, "failed_generation");
+        var statusCode = ExtractValue<int?>(error, "status_code");
+
+        if (!string.IsNullOrWhiteSpace(message))
+            lines.Add(message);
+
+        if (!string.IsNullOrWhiteSpace(type))
+            lines.Add($"type: {type}");
+
+        if (!string.IsNullOrWhiteSpace(code))
+            lines.Add($"code: {code}");
+
+        if (statusCode is not null)
+            lines.Add($"status_code: {statusCode}");
+
+        if (!string.IsNullOrWhiteSpace(failedGeneration))
+            lines.Add($"failed_generation: {failedGeneration}");
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
     private static bool IsHeartbeatChunk(JsonElement chunk)
     {
+        if (chunk.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
+            return false;
+
         var id = ExtractValue<string>(chunk, "id");
         var model = ExtractValue<string>(chunk, "model");
         var created = ExtractValue<long?>(chunk, "created") ?? 0;

@@ -232,6 +232,16 @@ public static partial class ChatCompletionsUnifiedMapper
                 ToolCallId = toolCallId,
                 ToolCalls = toolCalls
             });
+
+            foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall && HasToolOutput(a)))
+            {
+                list.Add(new ChatMessage
+                {
+                    Role = "tool",
+                    ToolCallId = toolPart.ToolCallId,
+                    Content = SerializeJsonElement(ToolOutputToChatContent(toolPart) ?? string.Empty)
+                });
+            }
         }
 
         return list;
@@ -502,6 +512,9 @@ public static partial class ChatCompletionsUnifiedMapper
             _ => JsonSerializer.Serialize(toolCall.Output, Json)
         };
     }
+
+    private static bool HasToolOutput(AIToolCallContentPart toolCall)
+        => toolCall.Output is not null;
 
     private static string SerializeToolPayload(object? value, string fallback)
     {

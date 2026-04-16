@@ -7,41 +7,29 @@ namespace AIHappey.Core.AI;
 
 public static class ModelCostMetadataEnricher
 {
+    public static FinishMessageMetadata? AddCost(FinishMessageMetadata? metadata, ModelPricing? pricing)
+    {
+        if (pricing == null || metadata == null)
+            return metadata;
+
+        var usage = GetProviderUsage(metadata);
+        var enriched = AddCostFromUsage(usage, metadata.ToDictionary(), pricing);
+
+        return FinishMessageMetadata.FromDictionary(
+            enriched.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            fallbackModel: metadata.Model,
+            fallbackTimestamp: metadata.Timestamp);
+    }
+
     public static FinishUIPart AddCost(FinishUIPart finish, ModelPricing? pricing)
     {
         if (pricing == null || finish.MessageMetadata == null)
             return finish;
 
-        var metadata = finish.MessageMetadata;
-
-        if (!(metadata.InputTokens is int inputTokens))
-            return finish;
-
-        var cachedInputReadTokens = metadata.CachedInputTokens ?? 0;
-        var cachedInputReadTokensFallback = metadata.CachedInputReadTokens ?? 0;
-        var cachedInputWriteTokens = metadata.CachedInputWriteTokens ?? 0;
-        var outputTokens = metadata.OutputTokens ?? 0;
-
-        if (cachedInputReadTokens == 0)
-            cachedInputReadTokens = cachedInputReadTokensFallback;
-
-        if (outputTokens == 0
-            && metadata.TotalTokens is int totalTokens
-            && totalTokens > 0)
-        {
-            outputTokens = Math.Max(0, totalTokens - inputTokens - cachedInputReadTokens - cachedInputWriteTokens);
-        }
-
-        var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, cachedInputWriteTokens);
-        var enriched = AddCost(metadata.ToDictionary(), cost);
-
         return new FinishUIPart
         {
             FinishReason = finish.FinishReason,
-            MessageMetadata = FinishMessageMetadata.FromDictionary(
-                enriched.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                fallbackModel: metadata.Model,
-                fallbackTimestamp: metadata.Timestamp)
+            MessageMetadata = AddCost(finish.MessageMetadata, pricing)
         };
     }
 
@@ -87,7 +75,9 @@ public static class ModelCostMetadataEnricher
                 : [];
 
         if (!TryGetUsageInt(usage, "input_tokens", out var inputTokens)
-            && !TryGetUsageInt(usage, "inputTokens", out inputTokens))
+            && !TryGetUsageInt(usage, "inputTokens", out inputTokens)
+            && !TryGetUsageInt(usage, "prompt_tokens", out inputTokens)
+            && !TryGetUsageInt(usage, "promptTokens", out inputTokens))
         {
             return existingMetadata != null
                 ? new Dictionary<string, object?>(existingMetadata)
@@ -97,6 +87,10 @@ public static class ModelCostMetadataEnricher
         TryGetUsageInt(usage, "output_tokens", out var outputTokens);
         if (outputTokens == 0)
             TryGetUsageInt(usage, "outputTokens", out outputTokens);
+        if (outputTokens == 0)
+            TryGetUsageInt(usage, "completion_tokens", out outputTokens);
+        if (outputTokens == 0)
+            TryGetUsageInt(usage, "completionTokens", out outputTokens);
 
         TryGetUsageInt(usage, "total_tokens", out var totalTokens);
         if (totalTokens == 0)
@@ -154,6 +148,31 @@ public static class ModelCostMetadataEnricher
 
         return JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
             .Deserialize<Dictionary<string, object?>>(JsonSerializerOptions.Web);
+    }
+
+    private static object? GetProviderUsage(FinishMessageMetadata metadata)
+    {
+        if (metadata.AdditionalProperties is not null)
+        {
+            foreach (var item in metadata.AdditionalProperties)
+            {
+                if (item.Value.ValueKind != JsonValueKind.Object)
+                    continue;
+
+                if (item.Value.TryGetProperty("usage", out var providerUsage)
+                    && providerUsage.ValueKind == JsonValueKind.Object)
+                {
+                    return providerUsage.Clone();
+                }
+            }
+        }
+
+        return new Dictionary<string, object?>
+        {
+            ["promptTokens"] = metadata.Usage.PromptTokens,
+            ["completionTokens"] = metadata.Usage.CompletionTokens,
+            ["totalTokens"] = metadata.Usage.TotalTokens
+        };
     }
 
     private static bool TryGetUsageInt(object usage, string key, out int value)

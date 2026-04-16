@@ -81,7 +81,6 @@ public static partial class InteractionsUnifiedMapper
                     part,
                     start.Index);
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, start.Index), part, start.Index);
                 yield break;
             }
 
@@ -172,7 +171,6 @@ public static partial class InteractionsUnifiedMapper
                         yield break;
                 }
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, start.Index), part, start.Index);
                 yield break;
             }
 
@@ -223,7 +221,6 @@ public static partial class InteractionsUnifiedMapper
                         delta.Index);
                 }
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
             }
 
@@ -269,7 +266,6 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought", StringComparison.OrdinalIgnoreCase):
                 RememberStreamContentType(providerId, delta.Index, "thought");
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
 
             case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_call", StringComparison.OrdinalIgnoreCase):
@@ -332,7 +328,6 @@ public static partial class InteractionsUnifiedMapper
                     part,
                     delta.Index);
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
             }
 
@@ -373,7 +368,6 @@ public static partial class InteractionsUnifiedMapper
                     part,
                     delta.Index);
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
             }
 
@@ -436,7 +430,6 @@ public static partial class InteractionsUnifiedMapper
                     part,
                     delta.Index);
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
             }
 
@@ -473,7 +466,6 @@ public static partial class InteractionsUnifiedMapper
                 foreach (var sourceEvent in CreateGoogleMapsSourceUrlEvents(providerId, delta, toolCallId, resultPayload))
                     yield return sourceEvent;
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
             }
 
@@ -505,12 +497,10 @@ public static partial class InteractionsUnifiedMapper
                         delta.Index);
                 }
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
             }
 
             case InteractionContentDeltaEvent delta:
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, delta.Index), part, delta.Index);
                 yield break;
 
             case InteractionContentStopEvent stop:
@@ -609,25 +599,14 @@ public static partial class InteractionsUnifiedMapper
                             stop.Index);*/
                     }
 
-                    yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, stop.Index), part, stop.Index);
                     yield break;
                 }
 
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, stop.Index), part, stop.Index);
                 yield break;
             }
 
             case InteractionCompleteEvent complete:
                 ForgetOpenThoughtAnchor(providerId);
-                if (complete.Interaction is not null)
-                {
-                    yield return CreateStreamEvent(
-                        providerId,
-                        CreateResponseDataEnvelope(complete.Interaction),
-                        part,
-                        0);
-                }
-
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -676,7 +655,6 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             default:
-                yield return CreateStreamEvent(providerId, CreateDataEnvelope(part, 0), part, 0);
                 yield break;
         }
     }
