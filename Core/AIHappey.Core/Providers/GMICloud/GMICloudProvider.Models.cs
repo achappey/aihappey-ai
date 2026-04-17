@@ -16,7 +16,7 @@ public partial class GMICloudProvider
 
         var cacheKey = this.GetCacheKey(key);
 
-        return await _memoryCache.GetOrCreateAsync<List<Model>>(
+        return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {

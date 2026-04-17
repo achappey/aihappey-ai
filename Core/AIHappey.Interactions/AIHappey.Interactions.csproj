@@ -12,5 +12,6 @@
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.2.0" />		
 
     <ProjectReference Include="..\AIhappey.Unified\AIhappey.Unified.csproj" />
+    <ProjectReference Include="..\AIHappey.Abstractions\AIHappey.Abstractions.csproj" />
   </ItemGroup>
 </Project>

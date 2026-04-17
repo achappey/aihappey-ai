@@ -7,7 +7,7 @@ namespace AIHappey.Common.Model.Providers.Freepik.ImageGeneration;
 /// </summary>
 /// <remarks>
 /// Maps 1:1 to <c>POST /v1/ai/text-to-image</c> request body, excluding the required <c>prompt</c>
-/// which is taken from <see cref="AIHappey.Common.Model.ImageRequest.Prompt"/>.
+/// which is taken from <see cref="Model.ImageRequest.Prompt"/>.
 /// </remarks>
 public sealed class ClassicFast
 {

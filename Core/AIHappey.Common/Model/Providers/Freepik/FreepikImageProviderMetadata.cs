@@ -48,7 +48,7 @@ public sealed class FreepikImageProviderMetadata
     /// <remarks>
     /// Maps 1:1 to POST /v1/ai/beta/text-to-image/reimagine-flux body, excluding
     /// <c>image</c>, <c>prompt</c>, and <c>webhook_url</c>.
-    /// Prompt must come from <see cref="AIHappey.Common.Model.ImageRequest.Prompt"/>.
+    /// Prompt must come from <see cref="Model.ImageRequest.Prompt"/>.
     /// </remarks>
     [JsonPropertyName("reimagine_flux")]
     public ReimagineFlux? ReimagineFlux { get; set; }

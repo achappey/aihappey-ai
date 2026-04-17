@@ -86,7 +86,7 @@ public partial class ExaProvider
         return string.Join("\n\n", lines);
     }
 
-    private static string BuildPromptFromUiMessages(IEnumerable<AIHappey.Vercel.Models.UIMessage> messages)
+    private static string BuildPromptFromUiMessages(IEnumerable<Vercel.Models.UIMessage> messages)
     {
         var all = messages?.ToList() ?? [];
         if (all.Count == 0)
@@ -96,7 +96,7 @@ public partial class ExaProvider
         foreach (var msg in all)
         {
             var text = string.Join("\n", msg.Parts
-                .OfType<AIHappey.Vercel.Models.TextUIPart>()
+                .OfType<Vercel.Models.TextUIPart>()
                 .Select(p => p.Text)
                 .Where(t => !string.IsNullOrWhiteSpace(t)));
 

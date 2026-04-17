@@ -6,6 +6,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.ChatCompletions.Models;
 using System.Text.Json;
 using AIHappey.Interactions;
+using AIHappey.ChatCompletions.Mapping;
 
 namespace AIHappey.Core.AI;
 
@@ -57,7 +58,8 @@ public static class ModelProviderResponsesChatExtensions
        this IModelProvider modelProvider, InteractionRequest responseRequest, HashSet<string>? exclude = null)
     {
         responseRequest.Tools = [.. responseRequest.Tools ?? [],
-            .. responseRequest.Metadata.GetInteractionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+            .. responseRequest.Metadata.GetInteractionToolDefinitions(modelProvider.GetIdentifier())?
+            .Where(p => responseRequest.Tools?.Any(e => e.Type == p.Type) != true) ?? []];
 
         modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
                 [], [.. exclude ?? [], "tools"]);
@@ -69,7 +71,7 @@ public static class ModelProviderResponsesChatExtensions
         this IModelProvider modelProvider, ChatCompletionOptions chatCompletionOptions, HashSet<string>? exclude = null)
     {
         chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
-            .. chatCompletionOptions.Metadata.GetResponseToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+            .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
         modelProvider.ApplyProviderOptions(chatCompletionOptions.Metadata, chatCompletionOptions.AdditionalProperties ??=
                 [], [.. exclude ?? [], "tools"]);
@@ -81,7 +83,8 @@ public static class ModelProviderResponsesChatExtensions
        this IModelProvider modelProvider, MessagesRequest messagesRequest)
     {
         messagesRequest.Tools = [.. messagesRequest.Tools ?? [],
-            .. messagesRequest.Metadata?.GetMessageToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+            .. messagesRequest.Metadata?.GetMessageToolDefinitions(modelProvider.GetIdentifier())?
+            .Where(p => messagesRequest.Tools?.Any(e => e.Type == p.Type) != true) ?? []];
 
         messagesRequest.Thinking ??= messagesRequest.Metadata?
             .GetProviderOption<MessagesThinkingConfig>(modelProvider.GetIdentifier(), "thinking");

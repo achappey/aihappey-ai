@@ -18,7 +18,7 @@ public sealed class MessagesRequest
     public CacheControlEphemeral? CacheControl { get; set; }
 
     [JsonPropertyName("container")]
-    public string? Container { get; set; }
+    public JsonElement? Container { get; set; }
 
     [JsonPropertyName("inference_geo")]
     public string? InferenceGeo { get; set; }

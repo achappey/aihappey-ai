@@ -18,7 +18,7 @@ public static partial class ChatCompletionsUnifiedMapper
     public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvents(
         this ChatCompletionUpdate update,
         string providerId,
-        ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState? state = null)
+        ChatCompletionsStreamMappingState? state = null)
     {
         ArgumentNullException.ThrowIfNull(update);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
@@ -61,7 +61,7 @@ public static partial class ChatCompletionsUnifiedMapper
 
     public static IEnumerable<AIStreamEvent> FinalizeUnifiedStreamEvents(
         string providerId,
-        ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState? state,
+        ChatCompletionsStreamMappingState? state,
         DateTimeOffset? timestamp = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
@@ -189,7 +189,7 @@ public static partial class ChatCompletionsUnifiedMapper
         string providerId,
         DateTimeOffset timestamp,
         Dictionary<string, object?> metadata,
-        ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState? state)
+        ChatCompletionsStreamMappingState? state)
     {
         if (string.Equals(providerId, "jina", StringComparison.OrdinalIgnoreCase)
             && chunk.TryGetProperty("readURLs", out var readUrls)
@@ -496,7 +496,7 @@ public static partial class ChatCompletionsUnifiedMapper
         string providerId,
         DateTimeOffset timestamp,
         Dictionary<string, object?> metadata,
-        ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState state)
+        ChatCompletionsStreamMappingState state)
     {
         var chunkObject = ExtractValue<string>(chunk, "object");
         if (!string.Equals(chunkObject, "chat.reasoning", StringComparison.OrdinalIgnoreCase))
@@ -690,7 +690,7 @@ public static partial class ChatCompletionsUnifiedMapper
         string providerId,
         DateTimeOffset timestamp,
         Dictionary<string, object?> metadata,
-        ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState state)
+        ChatCompletionsStreamMappingState state)
     {
         if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
             yield break;
@@ -772,7 +772,7 @@ public static partial class ChatCompletionsUnifiedMapper
         string providerId,
         DateTimeOffset timestamp,
         Dictionary<string, object?> metadata,
-        ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState state)
+        ChatCompletionsStreamMappingState state)
     {
         foreach (var kvp in state.PendingToolCalls.OrderBy(a => a.Key))
         {

@@ -13,7 +13,7 @@ public class GoogleProviderMetadata
     public GoogleSearch? GoogleSearch { get; set; }
 
     [JsonPropertyName("code_execution")]
-    public Mscc.GenerativeAI.CodeExecution? CodeExecution { get; set; }
+    public CodeExecution? CodeExecution { get; set; }
 
     [JsonPropertyName("url_context")]
     public UrlContext? UrlContext { get; set; }

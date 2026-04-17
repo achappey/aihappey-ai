@@ -109,7 +109,7 @@ public partial class MistralProvider : IModelProvider
                             }
 
                             if ((part.Type == "tool_reference" || part.Type == "document_url")
-                                && TryGetValidSourceUrl(part.Url, out var sourceUrl))
+                                && TryGetValidSourceUrl(part.Url, out var sourceUrl) && !string.IsNullOrEmpty(sourceUrl))
                             {
                                 yield return CreateSourceUrlEvent(providerId, responseEventId, sourceUrl, part, lastTimestamp, responseMetadata);
                                 continue;

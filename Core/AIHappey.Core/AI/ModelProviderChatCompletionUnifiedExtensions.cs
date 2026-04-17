@@ -58,7 +58,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             int? inputTokens = null;
             int? outputTokens = null;
             int? totalTokens = null;
-            var mappingState = new ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState();
+            var mappingState = new ChatCompletionsStreamMappingState();
 
             await foreach (var update in modelProvider.CompleteChatStreamingAsync(responseRequest, cancellationToken))
             {
@@ -286,7 +286,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         };
 
     private static void CaptureStreamTail(
-        AIHappey.ChatCompletions.Models.ChatCompletionUpdate update,
+        ChatCompletions.Models.ChatCompletionUpdate update,
         ref string? activeId,
         ref string? activeModel,
         ref DateTimeOffset? lastTimestamp,

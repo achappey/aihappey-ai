@@ -9,7 +9,7 @@ namespace AIHappey.Core.Providers.Exa;
 
 public partial class ExaProvider
 {
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = options?.Model ?? throw new ArgumentException("Model missing", nameof(options));
 
@@ -27,7 +27,7 @@ public partial class ExaProvider
     }
 
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var model = options?.Model ?? throw new ArgumentException("Model missing", nameof(options));

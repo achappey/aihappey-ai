@@ -1,13 +1,15 @@
 using AIHappey.Core.AI;
 using AIHappey.Interactions.Extensions;
 using AIHappey.Interactions;
+using AIHappey.Abstractions.Http;
 
 namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
 {
     public async IAsyncEnumerable<InteractionStreamEventPart> GetInteractions(InteractionRequest request,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
 
         ApplyAuthHeader();
@@ -21,8 +23,6 @@ public partial class GoogleAIProvider
                            request,
                            ct: cancellationToken))
         {
-
-
             yield return update;
         }
 

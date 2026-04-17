@@ -6,7 +6,7 @@ namespace AIHappey.Core.Providers.DeepL;
 
 public partial class DeepLProvider
 {
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
         ArgumentNullException.ThrowIfNull(options);
@@ -14,8 +14,8 @@ public partial class DeepLProvider
         return await TranslateResponsesAsync(options, cancellationToken);
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
-        Responses.ResponseRequest options,
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

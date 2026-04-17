@@ -50,8 +50,6 @@ public static partial class MessagesUnifiedMapper
             JsonSerializer.Serialize(metadata, JsonSerializerOptions.Web)
         );
 
-        metadataObj?.AdditionalProperties = null;
-
         List<MessageToolDefinition>? tools = [.. request.Tools?.Select(ToMessageTool).ToList() ?? [],
             .. request.Metadata?.GetMessageToolDefinitions(providerId) ?? []];
 
@@ -64,7 +62,7 @@ public static partial class MessagesUnifiedMapper
             CacheControl = request.Metadata?
                 .GetProviderOption<CacheControlEphemeral>(providerId, "cache_control"),
             Container = request.Metadata?
-                .GetProviderOption<string>(providerId, "container"),
+                .GetProviderOption<JsonElement>(providerId, "container"),
             InferenceGeo = request.Metadata?
                 .GetProviderOption<string>(providerId, "inference_geo"),
             Metadata = metadataObj,

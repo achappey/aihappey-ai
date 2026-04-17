@@ -68,7 +68,7 @@ public static partial class ChatCompletionsUnifiedMapper
         if (obj is JsonElement je)
             return je;
 
-        if (obj is System.Text.Json.Nodes.JsonNode node)
+        if (obj is JsonNode node)
             return JsonSerializer.SerializeToElement(node, JsonSerializerOptions.Web);
 
         return JsonSerializer.SerializeToElement(obj, JsonSerializerOptions.Web);
@@ -86,8 +86,8 @@ public static partial class ChatCompletionsUnifiedMapper
                     return t;
                 break;
 
-            case System.Text.Json.Nodes.JsonObject jo:
-                if (jo["tools"] is System.Text.Json.Nodes.JsonArray arr)
+            case JsonObject jo:
+                if (jo["tools"] is JsonArray arr)
                     return ToJsonElement(arr);
                 break;
 
