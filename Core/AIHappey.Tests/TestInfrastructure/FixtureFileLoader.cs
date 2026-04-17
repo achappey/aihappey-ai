@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using AIHappey.Interactions;
 using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
@@ -31,6 +32,12 @@ internal static class FixtureFileLoader
         => LoadJsonPayloads(relativePath)
             .Select(payload => JsonSerializer.Deserialize<ResponseStreamPart>(payload, ResponseJson.Default)
                 ?? throw new InvalidOperationException($"Could not deserialize response stream payload from [{relativePath}](Core/AIHappey.Tests/{relativePath})."))
+            .ToList();
+
+    public static IReadOnlyList<InteractionStreamEventPart> LoadInteractionRawFixture(string relativePath)
+        => LoadJsonPayloads(relativePath)
+            .Select(payload => JsonSerializer.Deserialize<InteractionStreamEventPart>(payload, InteractionJson.Default)
+                ?? throw new InvalidOperationException($"Could not deserialize interaction stream payload from [{relativePath}](Core/AIHappey.Tests/{relativePath})."))
             .ToList();
 
     public static IReadOnlyList<UIMessagePart> LoadUiTypedFixture(string relativePath)

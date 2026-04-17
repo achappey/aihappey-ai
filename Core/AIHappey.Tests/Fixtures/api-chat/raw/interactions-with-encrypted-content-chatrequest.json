@@ -1,0 +1,240 @@
+{
+    "model": "google/gemini-flash-lite-latest",
+    "tools": [],
+    "providerMetadata": {
+        "google": {
+            "service_tier": "standard",
+            "response_modalities": [
+                "text"
+            ],
+            "generation_config": {
+                "thinking_level": "low",
+                "thinking_summaries": "auto"
+            },
+            "tools": [
+                {
+                    "type": "code_execution"
+                }
+            ]
+        }
+    },
+    "temperature": 1,
+    "id": "d8ad7a12-64bb-48d0-8c77-3ea18d9ed888",
+    "messages": [
+        {
+            "id": "15212ce1-88df-41c6-b7bc-6c492e2e4246",
+            "role": "system",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "{\"chatBotInstructions\":\"- Use **Markdown formatting** for your responses, including tables and lists, unless specifically instructed to output CSV.\\n- When outputting **Chart.js**, always include a valid JSON data object inside a chartjs code block.\\n- When outputting **CSV**, always return raw CSV text inside a csv code block.\\n- When outputting **LaTeX or math**, return a single formula inside a latex code block without delimiters.\\n- Do **not** include base64 images; images are handled by the client.\\n- Always respond in the user’s preferred language.\"}"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-17T18:14:19.055Z",
+                "author": "system"
+            }
+        },
+        {
+            "id": "43a4faa8-1531-4cc2-98a3-31695fbfb92a",
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "kan jij een stukje PYTHON code uitvoeren. verzin zelf de code. simpel graag"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-17T17:39:52.198Z"
+            }
+        },
+        {
+            "id": "Jq7UHQtnTI5QpQ6B",
+            "metadata": {
+                "model": "google/gemini-flash-lite-latest",
+                "usage": {
+                    "promptTokens": 638,
+                    "completionTokens": 92,
+                    "totalTokens": 1906
+                },
+                "timestamp": "2026-04-17T17:39:57+00:00",
+                "temperature": null,
+                "gateway": null,
+                "status": "completed",
+                "id": "",
+                "google": {
+                    "usage": {
+                        "total_input_tokens": 638,
+                        "input_tokens_by_modality": [
+                            {
+                                "modality": "text",
+                                "tokens": 638
+                            }
+                        ],
+                        "total_cached_tokens": 0,
+                        "cached_tokens_by_modality": null,
+                        "total_output_tokens": 92,
+                        "output_tokens_by_modality": null,
+                        "total_tool_use_tokens": 1042,
+                        "tool_use_tokens_by_modality": [
+                            {
+                                "modality": "text",
+                                "tokens": 1042
+                            }
+                        ],
+                        "total_thought_tokens": 134,
+                        "total_tokens": 1906
+                    }
+                }
+            },
+            "role": "assistant",
+            "parts": [
+                {
+                    "type": "reasoning",
+                    "text": "",
+                    "providerMetadata": {
+                        "google": {
+                            "type": "thought_signature",
+                            "signature": "EsYECsMEAQw51sfxVMHe7rbBPauIEE8BGDRnuuAGbGGLwFW5Tg+wGdmrvEHdHSktPSYj4L7eigUKB9d8I16oKCG0n3Q3jJ9zOQ89LfO3LIOZg3hKofNstf67HyOflyLKGk3tHfwXT89tR8W99pFoDMsv1uWvPRyVZzdE06m5nty8WhlEdBaCBMBIlo4/HFHSFALISQ76U40f70MCso3uL9w6Qj0CJeB2bTZT2BxJM66HK0c60FbdGqS9eKyk3F9dtpWCPCpfnz0vwGIEdEW14l902cavn8ScEqqurNWZJqdXz9DAacCoIcDI5ejnE3jVG/BmG2/J3vik+RbET+POmYOgqwzOgFHZ6r/YNksIfkzdPdm9+t+AOo2bYLTz1QHdTLYjVl+VSShp3qTga7Y5ErQiUUoFaCELkXDrSPCR+e2EAOF12MQ20Ae+UBVQ5MBqUhQ4hRrBV0PRtDSNgN05U3gdmfAsbEA+BGPNs/4T++bK4BxOMregcw2EXmj+ewNdcG8/ldfgUOvgyMykPStln5R03Txt/d5Sk65UHsuFhuBXVdS2xySx1zuNJyHMjjjpG43UZhrrki1G5QyhsNCqbMGXYq5a9xgS4f5rzZXEcAxKrTHEHBiI59/2mSFzDQsfGVVahmI+uxMg330L6XbtVzOAwS3UAXadAWbuLZQ+PodrxevG89NPNmSLqIwuR2L4XgB895fOOEHUo7UcM2ijuoOKMT67NCuFiU8e0NK5frL+vuH8jOAMUgTzR4Pm3uMFOXxv+O+REVH1",
+                            "encrypted_content": "EsYECsMEAQw51sfxVMHe7rbBPauIEE8BGDRnuuAGbGGLwFW5Tg+wGdmrvEHdHSktPSYj4L7eigUKB9d8I16oKCG0n3Q3jJ9zOQ89LfO3LIOZg3hKofNstf67HyOflyLKGk3tHfwXT89tR8W99pFoDMsv1uWvPRyVZzdE06m5nty8WhlEdBaCBMBIlo4/HFHSFALISQ76U40f70MCso3uL9w6Qj0CJeB2bTZT2BxJM66HK0c60FbdGqS9eKyk3F9dtpWCPCpfnz0vwGIEdEW14l902cavn8ScEqqurNWZJqdXz9DAacCoIcDI5ejnE3jVG/BmG2/J3vik+RbET+POmYOgqwzOgFHZ6r/YNksIfkzdPdm9+t+AOo2bYLTz1QHdTLYjVl+VSShp3qTga7Y5ErQiUUoFaCELkXDrSPCR+e2EAOF12MQ20Ae+UBVQ5MBqUhQ4hRrBV0PRtDSNgN05U3gdmfAsbEA+BGPNs/4T++bK4BxOMregcw2EXmj+ewNdcG8/ldfgUOvgyMykPStln5R03Txt/d5Sk65UHsuFhuBXVdS2xySx1zuNJyHMjjjpG43UZhrrki1G5QyhsNCqbMGXYq5a9xgS4f5rzZXEcAxKrTHEHBiI59/2mSFzDQsfGVVahmI+uxMg330L6XbtVzOAwS3UAXadAWbuLZQ+PodrxevG89NPNmSLqIwuR2L4XgB895fOOEHUo7UcM2ijuoOKMT67NCuFiU8e0NK5frL+vuH8jOAMUgTzR4Pm3uMFOXxv+O+REVH1"
+                        }
+                    },
+                    "state": "done"
+                },
+                {
+                    "type": "text",
+                    "text": "Natuurlijk! Hier is een simpel Python-script dat de eerste 10 getallen van de Fibonacci-reeks berekent en print.\n\nIk zal de code direct voor je uitvoeren.\n\n```python\n# Een simpel script voor de Fibonacci-reeks\ndef fibonacci(n):\n    a, b = 0, 1\n    reeks = []\n    for _ in range(n):\n        reeks.append(a)\n        a, b = b, a + b\n    return reeks\n\n# Bereken de eerste 10 getallen\nresultaat = fibonacci(10)\nprint(resultaat)\n```\n\n",
+                    "state": "done"
+                },
+                {
+                    "type": "tool-code_execution",
+                    "toolCallId": "e6qt9h2z",
+                    "state": "output-available",
+                    "title": "code_execution",
+                    "input": {
+                        "language": "python",
+                        "code": "def fibonacci(n):\n    a, b = 0, 1\n    reeks = []\n    for _ in range(n):\n        reeks.append(a)\n        a, b = b, a + b\n    return reeks\n\nprint(fibonacci(10))"
+                    },
+                    "output": {
+                        "content": [],
+                        "structuredContent": null,
+                        "isError": null,
+                        "task": null,
+                        "_meta": null
+                    },
+                    "providerExecuted": true,
+                    "callProviderMetadata": {
+                        "google": {}
+                    },
+                    "resultProviderMetadata": {
+                        "google": {
+                            "type": "code_execution_tool_result",
+                            "tool_name": "code_execution",
+                            "title": "code_execution",
+                            "tool_use_id": "e6qt9h2z"
+                        }
+                    }
+                },
+                {
+                    "type": "reasoning",
+                    "text": "",
+                    "providerMetadata": {
+                        "google": {
+                            "type": "thought_signature",
+                            "signature": "ErgCCrUCAQw51seHOgdnuQsdgjzoP5hiOnlMZTzP65P7sS75ZE/A0m5y5QrpK5GNARk2kUedep+o+4GHq5CsWu9MU7Ngqwk+Y0dEg/qZ3JjO4kUevAZc+Nt6RpnI+DrvX9uI21WsAv1/QldXi//B17Q836/Jz4dF3cEf+z23XmNiE2CB/dKUgo6t5VusM6Z/xFD1U+uO38MLDkkuo6fonU+CxsA0LCZWa40Z1Ru4MtKirMgClUhGi1qSSwEAOYWsbQSLJY3wIhuZSQozLVtDC4Zi4TAVMBEHUnRmSXdYvDJh80GKOIhQjbzF+zfgcVvheOPO0BHJ3uII0oUuM33KRORNVgXWcx7Zc/LKhbJCwxS1guLyF2MdtuZr/Nhaak7mG58KsJa+aZ6Lnvb2QtgXGEwwq1/ZcXtr6kKS",
+                            "encrypted_content": "ErgCCrUCAQw51seHOgdnuQsdgjzoP5hiOnlMZTzP65P7sS75ZE/A0m5y5QrpK5GNARk2kUedep+o+4GHq5CsWu9MU7Ngqwk+Y0dEg/qZ3JjO4kUevAZc+Nt6RpnI+DrvX9uI21WsAv1/QldXi//B17Q836/Jz4dF3cEf+z23XmNiE2CB/dKUgo6t5VusM6Z/xFD1U+uO38MLDkkuo6fonU+CxsA0LCZWa40Z1Ru4MtKirMgClUhGi1qSSwEAOYWsbQSLJY3wIhuZSQozLVtDC4Zi4TAVMBEHUnRmSXdYvDJh80GKOIhQjbzF+zfgcVvheOPO0BHJ3uII0oUuM33KRORNVgXWcx7Zc/LKhbJCwxS1guLyF2MdtuZr/Nhaak7mG58KsJa+aZ6Lnvb2QtgXGEwwq1/ZcXtr6kKS"
+                        }
+                    },
+                    "state": "done"
+                },
+                {
+                    "type": "text",
+                    "text": "De code is succesvol uitgevoerd. Hier is de output:\n\n**Resultaat:**\n`[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]`\n\nDit script genereert de bekende reeks waarbij elk getal de som is van de twee voorgaande getallen. Laat het weten als je wilt dat ik iets anders voor je programmeer!",
+                    "state": "done"
+                }
+            ]
+        },
+        {
+            "id": "6236a30a-ffe1-4c5f-b34b-46639887a81f",
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "thanks!"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-17T17:40:30.820Z"
+            }
+        },
+        {
+            "id": "goJcLFZUgHA6co7X",
+            "metadata": {
+                "model": "google/gemini-flash-lite-latest",
+                "usage": {
+                    "promptTokens": 755,
+                    "completionTokens": 37,
+                    "totalTokens": 896
+                },
+                "timestamp": "2026-04-17T17:40:33+00:00",
+                "temperature": null,
+                "gateway": null,
+                "status": "completed",
+                "id": "",
+                "google": {
+                    "usage": {
+                        "total_input_tokens": 755,
+                        "input_tokens_by_modality": [
+                            {
+                                "modality": "text",
+                                "tokens": 755
+                            }
+                        ],
+                        "total_cached_tokens": 0,
+                        "cached_tokens_by_modality": null,
+                        "total_output_tokens": 37,
+                        "output_tokens_by_modality": null,
+                        "total_tool_use_tokens": 0,
+                        "tool_use_tokens_by_modality": null,
+                        "total_thought_tokens": 104,
+                        "total_tokens": 896
+                    }
+                }
+            },
+            "role": "assistant",
+            "parts": [
+                {
+                    "type": "reasoning",
+                    "text": "",
+                    "providerMetadata": {
+                        "google": {
+                            "type": "thought_signature",
+                            "signature": "EqcECqQEAQw51scyEHEsyRSyHTcZEVT0Llc2GBqAD9M2ZeREWf4ScaGDZAidJuup1gy+xkGWmd+voWLScgeVoyTlbu8pSzq/qGc6Gc0uba14wBXVZgr0v3LLAASu9K4RnchNuSGdhdNRcsd3plEO0bxvW+BQnMXnYgwaNXdoNG3Gu8+7ZOqPbjFWxZ0F5x+OZ6cdqtClXSzCHADfiBLbPZM4HDFFv2ziqtvKBShJZR+ygcDx7EmpW/6K5bNpj8PuzV7TJyzsnQY+VebeNs4Ms+SBxO6NmoBh8ogbIT0S5yv2ZfUhrdC0u90HBKalYr23K5Pvtp1W3hHpj3MJRcNkbq1upgNKTZ87X58y3IADm40TZmMHFCgsmqc5IveCXW5s6y7UClbafHvUBRRm7qbd1lMAQKuJQ70FnhXFN7Bh9kUWjbbSaGRp+vle5UmIWqaG35crxS1eeSImdrnfMJ11t5K+BnNXWGUBwm/NbuPCnG3hGhJjgcEuRrx4+VvBOv0TRCYUheUJWJcekiTLn6ANRQzAT4tSYZwVAheOaHANpnYqK6tlgXwgb1Y/UeE6Fd0gDYpxwWuazlOSaueKMIsulRZZHxUqQxlZpcKy9fMiCkzCO91rkQxZ2O3oeZsih/2eYVkWMgGN+3G/LGJf0jhWtrnokrm/tDkBQ8yJeJhAT8SAeVuxMPs/dl7e4m0QndJO2dKVPm0TlpShepOU5VOZ4KmOJXL4PHOwBrA=",
+                            "encrypted_content": "EqcECqQEAQw51scyEHEsyRSyHTcZEVT0Llc2GBqAD9M2ZeREWf4ScaGDZAidJuup1gy+xkGWmd+voWLScgeVoyTlbu8pSzq/qGc6Gc0uba14wBXVZgr0v3LLAASu9K4RnchNuSGdhdNRcsd3plEO0bxvW+BQnMXnYgwaNXdoNG3Gu8+7ZOqPbjFWxZ0F5x+OZ6cdqtClXSzCHADfiBLbPZM4HDFFv2ziqtvKBShJZR+ygcDx7EmpW/6K5bNpj8PuzV7TJyzsnQY+VebeNs4Ms+SBxO6NmoBh8ogbIT0S5yv2ZfUhrdC0u90HBKalYr23K5Pvtp1W3hHpj3MJRcNkbq1upgNKTZ87X58y3IADm40TZmMHFCgsmqc5IveCXW5s6y7UClbafHvUBRRm7qbd1lMAQKuJQ70FnhXFN7Bh9kUWjbbSaGRp+vle5UmIWqaG35crxS1eeSImdrnfMJ11t5K+BnNXWGUBwm/NbuPCnG3hGhJjgcEuRrx4+VvBOv0TRCYUheUJWJcekiTLn6ANRQzAT4tSYZwVAheOaHANpnYqK6tlgXwgb1Y/UeE6Fd0gDYpxwWuazlOSaueKMIsulRZZHxUqQxlZpcKy9fMiCkzCO91rkQxZ2O3oeZsih/2eYVkWMgGN+3G/LGJf0jhWtrnokrm/tDkBQ8yJeJhAT8SAeVuxMPs/dl7e4m0QndJO2dKVPm0TlpShepOU5VOZ4KmOJXL4PHOwBrA="
+                        }
+                    },
+                    "state": "done"
+                },
+                {
+                    "type": "text",
+                    "text": "Graag gedaan! Als je nog een keer hulp nodig hebt met Python, data-analyse, berekeningen of iets anders, laat het gerust weten. Fijne dag nog!",
+                    "state": "done"
+                }
+            ]
+        },
+        {
+            "id": "fa2791f9-8a41-431d-9303-b98ccc182649",
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "nogmaals dank!"
+                }
+            ],
+            "metadata": {
+                "timestamp": "2026-04-17T18:14:33.744Z"
+            }
+        }
+    ],
+    "trigger": "submit-message"
+}

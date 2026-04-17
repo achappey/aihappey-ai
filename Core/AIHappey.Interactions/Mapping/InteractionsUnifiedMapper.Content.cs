@@ -70,8 +70,7 @@ public static partial class InteractionsUnifiedMapper
                             metadata[providerId] = new Dictionary<string, object?>
                             {
                                 ["type"] = "thought_signature",
-                                ["signature"] = thought.Signature,
-                                ["encrypted_content"] = thought.Signature
+                                ["signature"] = thought.Signature
                             };
                         }
 
@@ -166,7 +165,7 @@ public static partial class InteractionsUnifiedMapper
             };
     }
 
-    private static InteractionContent? ToInteractionContent(AIContentPart part)
+    private static InteractionContent? ToInteractionContent(AIContentPart part, string? providerId = null)
     {
         switch (part)
         {
@@ -179,19 +178,24 @@ public static partial class InteractionsUnifiedMapper
 
             case AIReasoningContentPart reasoning:
                 {
+                    var rawThought = ExtractObject<InteractionThoughtContent>(reasoning.Metadata, "interactions.raw");
                     var signature = ExtractValue<string>(reasoning.Metadata, "interactions.signature")
-                                    ?? ExtractThoughtSignatureFromProviderMetadata(reasoning.Metadata);
+                                    ?? ExtractThoughtSignature(reasoning.Metadata, providerId);
+                    var summary = ResolveThoughtSummary(reasoning, rawThought, providerId);
+                    var additionalProperties = ResolveThoughtAdditionalProperties(reasoning.Metadata, rawThought, providerId);
+
+                    if (string.IsNullOrWhiteSpace(signature)
+                        && (summary is null || summary.Count == 0)
+                        && (additionalProperties is null || additionalProperties.Count == 0))
+                    {
+                        return null;
+                    }
 
                     return new InteractionThoughtContent
                     {
                         Signature = signature,
-                        Summary =
-                        [
-                            new InteractionTextContent
-                        {
-                            Text = reasoning.Text ?? string.Empty
-                        }
-                        ]
+                        Summary = summary,
+                        AdditionalProperties = additionalProperties
                     };
                 }
 
@@ -270,6 +274,118 @@ public static partial class InteractionsUnifiedMapper
         return !string.IsNullOrWhiteSpace(data)
             ? new InteractionTextContent { Text = data }
             : null;
+    }
+
+    private static string? ExtractThoughtSignature(Dictionary<string, object?>? metadata, string? providerId)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+            return ExtractThoughtSignatureFromProviderMetadata(metadata);
+
+        var scopedMetadata = GetProviderScopedMetadata(metadata, providerId);
+        if (scopedMetadata is null || scopedMetadata.Count == 0)
+            return null;
+
+        var type = scopedMetadata.TryGetValue("type", out var rawType)
+            ? rawType?.ToString()
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(type)
+            && !string.Equals(type, "thought_signature", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (scopedMetadata.TryGetValue("signature", out var rawSignature)
+            && !string.IsNullOrWhiteSpace(rawSignature?.ToString()))
+        {
+            return rawSignature?.ToString();
+        }
+
+        return null;
+    }
+
+    private static List<InteractionContent>? ResolveThoughtSummary(
+        AIReasoningContentPart reasoning,
+        InteractionThoughtContent? rawThought,
+        string? providerId)
+    {
+        var storedSummary = ExtractObject<List<InteractionContent>>(reasoning.Metadata, "interactions.summary");
+        if (storedSummary is { Count: > 0 })
+            return storedSummary;
+
+        if (rawThought?.Summary is { Count: > 0 })
+            return rawThought.Summary.Select(CloneInteractionContent).Where(static part => part is not null).Select(static part => part!).ToList();
+
+        if (!string.IsNullOrWhiteSpace(providerId))
+        {
+            var scopedMetadata = GetProviderScopedMetadata(reasoning.Metadata, providerId);
+            if (scopedMetadata is not null
+                && scopedMetadata.TryGetValue("summary", out var scopedSummary))
+            {
+                var parsedSummary = DeserializeFromObject<List<InteractionContent>>(scopedSummary);
+                if (parsedSummary is { Count: > 0 })
+                    return parsedSummary;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(reasoning.Text))
+            return null;
+
+        return
+        [
+            new InteractionTextContent
+            {
+                Text = reasoning.Text
+            }
+        ];
+    }
+
+    private static Dictionary<string, JsonElement>? ResolveThoughtAdditionalProperties(
+        Dictionary<string, object?>? metadata,
+        InteractionThoughtContent? rawThought,
+        string? providerId)
+    {
+        Dictionary<string, JsonElement>? additionalProperties = null;
+
+        if (rawThought?.AdditionalProperties is { Count: > 0 })
+        {
+            additionalProperties = rawThought.AdditionalProperties
+                .ToDictionary(a => a.Key, a => a.Value.Clone(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        if (string.IsNullOrWhiteSpace(providerId))
+            return additionalProperties;
+
+        var scopedMetadata = GetProviderScopedMetadata(metadata, providerId);
+        if (scopedMetadata is null || scopedMetadata.Count == 0)
+            return additionalProperties;
+
+        foreach (var entry in scopedMetadata)
+        {
+            if (entry.Value is null
+                || string.Equals(entry.Key, "type", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.Key, "signature", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.Key, "summary", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            additionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+            if (!additionalProperties.ContainsKey(entry.Key))
+                additionalProperties[entry.Key] = JsonSerializer.SerializeToElement(entry.Value, Json);
+        }
+
+        return additionalProperties;
+    }
+
+    private static InteractionContent? CloneInteractionContent(InteractionContent? content)
+    {
+        if (content is null)
+            return null;
+
+        return JsonSerializer.Deserialize<InteractionContent>(
+            JsonSerializer.Serialize(content, content.GetType(), Json),
+            Json);
     }
 
     private static InteractionContent ToInteractionToolContent(AIToolCallContentPart tool)

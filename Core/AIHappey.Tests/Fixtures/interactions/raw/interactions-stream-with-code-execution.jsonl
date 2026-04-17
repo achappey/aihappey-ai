@@ -1,0 +1,92 @@
+event: interaction.start
+data: {"interaction":{"id":"","status":"in_progress","object":"interaction","model":"gemini-flash-lite-latest"},"event_type":"interaction.start"}
+
+event: interaction.status_update
+data: {"interaction_id":"","status":"in_progress","event_type":"interaction.status_update"}
+
+event: content.start
+data: {"index":0,"content":{"type":"thought"},"event_type":"content.start"}
+
+event: content.delta
+data: {"index":0,"delta":{"signature":"Es8ECswEAQw51sdiHRz0TMkkVG8YXPlMiWbJcLAS1pBgkOxKZMEv1XQ+QmSkzpfuzL4mzQaif86L5XlnP/iIyg32WNIgqy7HWNLkg+egZ+fPW9wNl8pJQAW+/A/CCbcs3zcTP0ST7E900440skf5HBG8aNm5kVtbLHSPZ/ohEO63tLdWGT6DhgQvdbPNCoV1yRdzbcTBiv3lmFwyI1sFD/CAw/VAHWDDpjCiqP9P3weMWfknERc8QJ7g4PvF08HOQX2aIfH1SKYZJzwHBikzIWlIYKs47BrWEI+a1OUqi1YJgqv6yu0o1LMQowP5TIIELZ+cQjNkqfmXe5iv/wr99MZYiQpXtfsyhkKWefhM5M5qYywh6nJ5UcNAEs7v+OMUEEoNuUtLEOHhBnAFxGhHRoMbEEBYEM6ULZOiVGalmVeuMRTZz1b1wUSmDRmZPFw2evzuVk3qCZXJI7R/0c3metEoaodEZG4H84R+78AEoCI0RG4EXrQdh7rLvEoftKWe0RUORtzIKlA3N1ubMRvIX2MH+fjQaCVd6du6N9jrxn3otOzpGGHf1XmaO+mIlAtwAwgFBP/KUCAWkAXY70a7/WQnf8EMmEGsDmu9vMqEnMfayWi4m3sGq8PWEmKYJfiNo2RNp9DSuNKU3WSeE81ySDg9bHYKJzoo4KtvO6NmqjMJYGASgD+HppHjeuOMtb/OHuMqrxUhw/tT2HlL8b9itgPdHIbtmNg/1z53m2L2Ht7Er5FpKGLFrw8ZX31eD692u+iKbcbGDjMylAs1Xgu6EgXQ","type":"thought_signature"},"event_type":"content.delta"}
+
+event: content.stop
+data: {"index":0,"event_type":"content.stop"}
+
+event: content.start
+data: {"index":1,"content":{"type":"text"},"event_type":"content.start"}
+
+event: content.delta
+data: {"index":1,"delta":{"text":"Zeker,","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":1,"delta":{"text":" dat kan ik! Ik zal een simpel Python-script uitvoeren dat een korte berekening maakt en de resultaten in","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":1,"delta":{"text":" een tabelletje weergeeft.\n\nIk ga een lijst met kwadraten berekenen voor de getallen 1 tot","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":1,"delta":{"text":" en met 10.\n\n","type":"text"},"event_type":"content.delta"}
+
+event: content.stop
+data: {"index":1,"event_type":"content.stop"}
+
+event: content.start
+data: {"index":2,"content":{"type":"code_execution_call","id":"pfdjxngl"},"event_type":"content.start"}
+
+event: content.delta
+data: {"index":2,"delta":{"arguments":{"language":"python","code":"# Een simpel script om kwadraten te berekenen\ndata = []\nfor i in range(1, 11):\n    data.append({\"Getal\": i, \"Kwadraat\": i**2})\n\nimport pandas as pd\ndf = pd.DataFrame(data)\nprint(df.to_markdown(index=False))"},"type":"code_execution_call","id":"pfdjxngl"},"event_type":"content.delta"}
+
+event: content.stop
+data: {"index":2,"event_type":"content.stop"}
+
+event: content.start
+data: {"index":3,"content":{"type":"code_execution_result","call_id":"pfdjxngl"},"event_type":"content.start"}
+
+event: content.delta
+data: {"index":3,"delta":{"result":"|   Getal |   Kwadraat |\n|--------:|-----------:|\n|       1 |          1 |\n|       2 |          4 |\n|       3 |          9 |\n|       4 |         16 |\n|       5 |         25 |\n|       6 |         36 |\n|       7 |         49 |\n|       8 |         64 |\n|       9 |         81 |\n|      10 |        100 |\n","type":"code_execution_result","call_id":"pfdjxngl"},"event_type":"content.delta"}
+
+event: content.stop
+data: {"index":3,"event_type":"content.stop"}
+
+event: content.start
+data: {"index":4,"content":{"type":"thought"},"event_type":"content.start"}
+
+event: content.delta
+data: {"index":4,"delta":{"signature":"EsYCCsMCAQw51seZ5LkyeD+cYYMdwz2eaK3RdGRL+OXgzkMIRYc6zdctZ3fg6kJJBEs3Dt37H/nzNNyz2aqBtXfQX4/RNg22jHm/hbTjJk7qAgjs8H2H3EMMmmSQIy0XwNfZp6VwojkWVXm5pJesgsV9DSoskMlwXBZ4Ufnv1ok20lzwsBWfNsVAuUIb28Z6gwYNzYXC9stZj7CXmaS6kDwNILVO8h2bRPJJqPage/Aje1c5Y+6aENEtV0TWyF3BT4z1Y45ygHITv5R93K82wQqmd/pj6s/vRwivBSP9foEPW8GeAOlBMKZ+r8LULyxy9qu7o+NoH2o+agNPetLyiocemoa3X9YrTAoBxWveHyQJwuRg6FjJYhIZlFd1+A5GqQyNiBEJ6dPkDpqE4BCneJ27I5W+uuJzhzTx99kjHmGykS+UOLqBd+Y=","type":"thought_signature"},"event_type":"content.delta"}
+
+event: content.stop
+data: {"index":4,"event_type":"content.stop"}
+
+event: content.start
+data: {"index":5,"content":{"type":"text"},"event_type":"content.start"}
+
+event: content.delta
+data: {"index":5,"delta":{"text":"Dat is gelukt! Hier is het resultaat van de berekening:\n\n| Get","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":5,"delta":{"text":"al | Kwadraat |\n| :--- | :--- |\n| 1 | 1 |\n","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":5,"delta":{"text":"| 2 | 4 |\n| 3 | 9 |\n| 4 | 16 |","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":5,"delta":{"text":"\n| 5 | 25 |\n| 6 | 36 |\n| 7 | ","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":5,"delta":{"text":"49 |\n| 8 | 64 |\n| 9 | 81 |\n| ","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":5,"delta":{"text":"10 | 100 |\n\nWil je dat ik iets anders voor je bereken of heb je een specifiekere","type":"text"},"event_type":"content.delta"}
+
+event: content.delta
+data: {"index":5,"delta":{"text":" opdracht?","type":"text"},"event_type":"content.delta"}
+
+event: content.stop
+data: {"index":5,"event_type":"content.stop"}
+
+event: interaction.complete
+data: {"interaction":{"id":"","status":"completed","usage":{"total_tokens":1968,"total_input_tokens":660,"input_tokens_by_modality":[{"modality":"text","tokens":660}],"total_cached_tokens":0,"total_output_tokens":143,"total_tool_use_tokens":1071,"tool_use_tokens_by_modality":[{"modality":"text","tokens":1071}],"total_thought_tokens":94},"role":"model","created":"2026-04-17T16:01:35Z","updated":"2026-04-17T16:01:35Z","service_tier":"standard","object":"interaction","model":"gemini-flash-lite-latest"},"event_type":"interaction.complete"}
+
+event: done
+data: [DONE]

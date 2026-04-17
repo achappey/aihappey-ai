@@ -629,8 +629,7 @@ public static partial class InteractionsUnifiedMapper
             [providerId] = new Dictionary<string, object>
             {
                 ["type"] = "thought_signature",
-                ["signature"] = signature,
-                ["encrypted_content"] = signature
+                ["signature"] = signature
             }
         };
     }
@@ -651,12 +650,6 @@ public static partial class InteractionsUnifiedMapper
             && !string.IsNullOrWhiteSpace(rawSignature?.ToString()))
         {
             return rawSignature?.ToString();
-        }
-
-        if (scoped.TryGetValue("encrypted_content", out var rawEncryptedContent)
-            && !string.IsNullOrWhiteSpace(rawEncryptedContent?.ToString()))
-        {
-            return rawEncryptedContent?.ToString();
         }
 
         return null;
@@ -703,9 +696,7 @@ public static partial class InteractionsUnifiedMapper
             var type = nested.TryGetValue("type", out var typeValue) ? typeValue?.ToString() : null;
             var signature = nested.TryGetValue("signature", out var signatureValue)
                 ? signatureValue?.ToString()
-                : nested.TryGetValue("encrypted_content", out var encryptedContentValue)
-                    ? encryptedContentValue?.ToString()
-                    : null;
+                : null;
 
             if (!string.IsNullOrWhiteSpace(signature)
                 && (string.IsNullOrWhiteSpace(type)

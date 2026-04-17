@@ -24,6 +24,7 @@
     <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
     <ProjectReference Include="..\AIHappey.Messages\AIHappey.Messages.csproj" />
     <ProjectReference Include="..\AIHappey.Responses\AIHappey.Responses.csproj" />
+    <ProjectReference Include="..\AIHappey.Interactions\AIHappey.Interactions.csproj" />
     <ProjectReference Include="..\AIHappey.Unified\AIHappey.Unified.csproj" />
     <ProjectReference Include="..\AIHappey.Vercel\AIHappey.Vercel.csproj" />
   </ItemGroup>

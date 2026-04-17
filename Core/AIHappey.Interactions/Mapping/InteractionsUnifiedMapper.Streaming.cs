@@ -57,122 +57,122 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             case InteractionContentStartEvent { Content: InteractionImageContent image } start:
-            {
-                RememberStreamContentType(providerId, start.Index, "image");
-                RememberStreamImageStart(providerId, start.Index, image.MimeType);
+                {
+                    RememberStreamContentType(providerId, start.Index, "image");
+                    RememberStreamImageStart(providerId, start.Index, image.MimeType);
 
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-input-available",
-                        Id = BuildImageToolCallId(start.Index),
-                        Data = new AIToolInputAvailableEventData
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
                         {
-                            ToolName = "image",
-                            Input = new
+                            Type = "tool-input-available",
+                            Id = BuildImageToolCallId(start.Index),
+                            Data = new AIToolInputAvailableEventData
                             {
-                            },
-                            ProviderExecuted = true,
-                            Title = "image",
-                            ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, start.Index, image.MimeType)
-                        }
-                    },
-                    part,
-                    start.Index);
+                                ToolName = "image",
+                                Input = new
+                                {
+                                },
+                                ProviderExecuted = true,
+                                Title = "image",
+                                ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, start.Index, image.MimeType)
+                            }
+                        },
+                        part,
+                        start.Index);
 
-                yield break;
-            }
-
-            case InteractionContentStartEvent { Content: InteractionThoughtContent thought } start:
-            {
-                var hasSummaryText = !string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary));
-                RememberStreamContentType(providerId, start.Index, hasSummaryText ? "thought" : "thought_signature_only");
-                RememberStreamThoughtHasText(providerId, start.Index, hasSummaryText);
-                RememberStreamThoughtSignature(providerId, start.Index, thought.Signature);
-
-                if (hasSummaryText)
-                {
-                    RememberOpenThoughtAnchor(providerId, start.Index);
-                }
-                else if (GetOpenThoughtAnchor(providerId) is { } anchorIndex && anchorIndex != start.Index)
-                {
-                    RememberStreamThoughtSignature(providerId, anchorIndex, thought.Signature);
                     yield break;
                 }
 
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "reasoning-start",
-                        Id = BuildContentEventId(start.Index),
-                        Data = new AIReasoningStartEventData
-                        {
-                            ProviderMetadata = CreateThoughtSignatureProviderMetadata(providerId, thought.Signature)
-                        }
-                    },
-                    part,
-                    start.Index);
-                yield break;
-            }
-
-            case InteractionContentStartEvent start:
-            {
-                var unifiedContent = ToUnifiedContentParts([start.Content!], providerId).OfType<AIToolCallContentPart>().FirstOrDefault();
-                if (unifiedContent is not null)
+            case InteractionContentStartEvent { Content: InteractionThoughtContent thought } start:
                 {
-                    var emittedToolEvent = false;
+                    var hasSummaryText = !string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary));
+                    RememberStreamContentType(providerId, start.Index, hasSummaryText ? "thought" : "thought_signature_only");
+                    RememberStreamThoughtHasText(providerId, start.Index, hasSummaryText);
+                    RememberStreamThoughtSignature(providerId, start.Index, thought.Signature);
 
-                    if (HasMeaningfulValue(unifiedContent.Input))
+                    if (hasSummaryText)
                     {
-                        emittedToolEvent = true;
-                        yield return CreateStreamEvent(
-                            providerId,
-                            new AIEventEnvelope
-                            {
-                                Type = "tool-input-available",
-                                Id = unifiedContent.ToolCallId,
-                                Data = new AIToolInputAvailableEventData
-                                {
-                                    ToolName = unifiedContent.ToolName ?? "tool",
-                                    Input = CloneIfJsonElement(unifiedContent.Input) ?? new { },
-                                    ProviderExecuted = unifiedContent.ProviderExecuted,
-                                    Title = unifiedContent.Title,
-                                    ProviderMetadata = GetProviderScopedMetadataEnvelope(unifiedContent.Metadata, providerId)
-                                }
-                            },
-                            part,
-                            start.Index);
+                        RememberOpenThoughtAnchor(providerId, start.Index);
                     }
-                    
-                    if (HasMeaningfulValue(unifiedContent.Output))
+                    else if (GetOpenThoughtAnchor(providerId) is { } anchorIndex && anchorIndex != start.Index)
                     {
-                        emittedToolEvent = true;
-                        yield return CreateStreamEvent(
-                            providerId,
-                            new AIEventEnvelope
-                            {
-                                Type = "tool-output-available",
-                                Id = unifiedContent.ToolCallId,
-                                Data = new AIToolOutputAvailableEventData
-                                {
-                                    ToolName = unifiedContent.ToolName,
-                                    Output = CloneIfJsonElement(unifiedContent.Output) ?? new { },
-                                    ProviderExecuted = unifiedContent.ProviderExecuted,
-                                    ProviderMetadata = GetProviderScopedMetadataEnvelope(unifiedContent.Metadata, providerId)
-                                }
-                            },
-                            part,
-                            start.Index);
-                    }
-
-                    if (emittedToolEvent)
+                        RememberStreamThoughtSignature(providerId, anchorIndex, thought.Signature);
                         yield break;
+                    }
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "reasoning-start",
+                            Id = BuildContentEventId(start.Index),
+                            Data = new AIReasoningStartEventData
+                            {
+                                ProviderMetadata = CreateThoughtSignatureProviderMetadata(providerId, thought.Signature)
+                            }
+                        },
+                        part,
+                        start.Index);
+                    yield break;
                 }
 
-                yield break;
-            }
+            case InteractionContentStartEvent start:
+                {
+                    var unifiedContent = ToUnifiedContentParts([start.Content!], providerId).OfType<AIToolCallContentPart>().FirstOrDefault();
+                    if (unifiedContent is not null)
+                    {
+                        var emittedToolEvent = false;
+
+                        if (HasMeaningfulValue(unifiedContent.Input))
+                        {
+                            emittedToolEvent = true;
+                            yield return CreateStreamEvent(
+                                providerId,
+                                new AIEventEnvelope
+                                {
+                                    Type = "tool-input-available",
+                                    Id = unifiedContent.ToolCallId,
+                                    Data = new AIToolInputAvailableEventData
+                                    {
+                                        ToolName = unifiedContent.ToolName ?? "tool",
+                                        Input = CloneIfJsonElement(unifiedContent.Input) ?? new { },
+                                        ProviderExecuted = unifiedContent.ProviderExecuted,
+                                        Title = unifiedContent.Title,
+                                        ProviderMetadata = GetProviderScopedMetadataEnvelope(unifiedContent.Metadata, providerId)
+                                    }
+                                },
+                                part,
+                                start.Index);
+                        }
+
+                        if (HasMeaningfulValue(unifiedContent.Output))
+                        {
+                            emittedToolEvent = true;
+                            yield return CreateStreamEvent(
+                                providerId,
+                                new AIEventEnvelope
+                                {
+                                    Type = "tool-output-available",
+                                    Id = unifiedContent.ToolCallId,
+                                    Data = new AIToolOutputAvailableEventData
+                                    {
+                                        ToolName = unifiedContent.ToolName,
+                                        Output = CloneIfJsonElement(unifiedContent.Output) ?? new { },
+                                        ProviderExecuted = unifiedContent.ProviderExecuted,
+                                        ProviderMetadata = GetProviderScopedMetadataEnvelope(unifiedContent.Metadata, providerId)
+                                    }
+                                },
+                                part,
+                                start.Index);
+                        }
+
+                        if (emittedToolEvent)
+                            yield break;
+                    }
+
+                    yield break;
+                }
 
             case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "text", StringComparison.OrdinalIgnoreCase):
                 yield return CreateStreamEvent(
@@ -191,419 +191,413 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "image", StringComparison.OrdinalIgnoreCase):
-            {
-                RememberStreamContentType(providerId, delta.Index, "image");
-
-                var mimeType = GetDeltaAdditionalString(delta, "mime_type")
-                               ?? GetStreamImage(providerId, delta.Index)?.MimeType
-                               ?? "image/png";
-                var imageData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
-                var imageState = RememberStreamImageDelta(providerId, delta.Index, mimeType, imageData);
-
-                if (TryCreateInteractionImageToolResult(imageState, out var preliminaryImageOutput))
                 {
-                    yield return CreateStreamEvent(
-                        providerId,
-                        new AIEventEnvelope
-                        {
-                            Type = "tool-output-available",
-                            Id = imageState.ToolCallId,
-                            Data = new AIToolOutputAvailableEventData
-                            {
-                                ToolName = "image",
-                                Output = preliminaryImageOutput,
-                                ProviderExecuted = true,
-                                Preliminary = true,
-                                ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, delta.Index, mimeType)
-                            }
-                        },
-                        part,
-                        delta.Index);
-                }
+                    RememberStreamContentType(providerId, delta.Index, "image");
 
-                yield break;
-            }
+                    var mimeType = GetDeltaAdditionalString(delta, "mime_type")
+                                   ?? GetStreamImage(providerId, delta.Index)?.MimeType
+                                   ?? "image/png";
+                    var imageData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
+                    var imageState = RememberStreamImageDelta(providerId, delta.Index, mimeType, imageData);
 
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_signature", StringComparison.OrdinalIgnoreCase)
-                                                       || !string.IsNullOrWhiteSpace(GetThoughtSignature(delta)):
-            {
-                var signature = GetThoughtSignature(delta);
-                var targetIndex = GetStreamThoughtHasText(providerId, delta.Index) || GetOpenThoughtAnchor(providerId) is not { } anchorIndex || anchorIndex == delta.Index
-                    ? delta.Index
-                    : anchorIndex;
-
-                RememberStreamContentType(providerId, delta.Index, GetStreamThoughtHasText(providerId, delta.Index) ? "thought" : "thought_signature_only");
-                RememberStreamThoughtSignature(providerId, delta.Index, signature);
-                RememberStreamThoughtSignature(providerId, targetIndex, signature);
-                yield break;
-            }
-
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_summary", StringComparison.OrdinalIgnoreCase):
-            {
-                var summaryText = GetThoughtSummaryText(delta);
-                RememberStreamContentType(providerId, delta.Index, "thought");
-                RememberStreamThoughtHasText(providerId, delta.Index, !string.IsNullOrWhiteSpace(summaryText));
-                if (!string.IsNullOrWhiteSpace(summaryText))
-                    RememberOpenThoughtAnchor(providerId, delta.Index);
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "reasoning-delta",
-                        Id = BuildContentEventId(delta.Index),
-                        Data = new AIReasoningDeltaEventData
-                        {
-                            Delta = summaryText ?? string.Empty,
-                            ProviderMetadata = CreateThoughtSignatureProviderMetadata(
-                                providerId,
-                                GetStreamThoughtSignature(providerId, delta.Index))
-                        }
-                    },
-                    part,
-                    delta.Index);
-                yield break;
-            }
-
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought", StringComparison.OrdinalIgnoreCase):
-                RememberStreamContentType(providerId, delta.Index, "thought");
-                yield break;
-
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_call", StringComparison.OrdinalIgnoreCase):
-            {
-                var toolCallId = GetDeltaAdditionalString(delta, "id")
-                                 ?? GetDeltaAdditionalString(delta, "call_id")
-                                 ?? BuildContentEventId(delta.Index);
-                var toolName = "google_search";
-                var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
-                var providerMetadata = CreateGoogleSearchToolProviderMetadata(
-                    providerId,
-                    searchType: GetDeltaAdditionalString(delta, "search_type"));
-
-             /*   yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-input-start",
-                        Id = toolCallId,
-                        Data = new AIToolInputStartEventData
-                        {
-                            ToolName = toolName,
-                            ProviderExecuted = true,
-                            Title = toolName
-                        }
-                    },
-                    part,
-                    delta.Index);
-
-                var inputJson = SerializePayload(input, "{}");
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-input-delta",
-                        Id = toolCallId,
-                        Data = new AIToolInputDeltaEventData
-                        {
-                            InputTextDelta = inputJson
-                        }
-                    },
-                    part,
-                    delta.Index);*/
-
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-input-available",
-                        Id = toolCallId,
-                        Data = new AIToolInputAvailableEventData
-                        {
-                            ToolName = toolName,
-                            Input = CloneIfJsonElement(input) ?? new { },
-                            ProviderExecuted = true,
-                            Title = toolName,
-                            ProviderMetadata = providerMetadata
-                        }
-                    },
-                    part,
-                    delta.Index);
-
-                yield break;
-            }
-
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_result", StringComparison.OrdinalIgnoreCase):
-            {
-                var toolCallId = GetDeltaAdditionalString(delta, "call_id")
-                                 ?? GetDeltaAdditionalString(delta, "id")
-                                 ?? BuildContentEventId(delta.Index);
-                var resultPayload = GetDeltaAdditionalObject(delta, "result")
-                                    ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleSearchResult>(), Json);
-                var structuredContent = JsonSerializer.SerializeToElement(new
-                {
-                    content = CloneIfJsonElement(resultPayload) ?? resultPayload,
-                    result = CloneIfJsonElement(resultPayload) ?? resultPayload
-                }, Json);
-                var providerMetadata = CreateGoogleSearchToolProviderMetadata(
-                    providerId,
-                    toolCallId,
-                    "google_search_result",
-                    isError: GetDeltaAdditionalBool(delta, "is_error"));
-
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-output-available",
-                        Id = toolCallId,
-                        Data = new AIToolOutputAvailableEventData
-                        {
-                            Output = new CallToolResult
-                            {
-                                StructuredContent = structuredContent.Clone()
-                            },
-                            ProviderExecuted = true,
-                            ProviderMetadata = providerMetadata
-                        }
-                    },
-                    part,
-                    delta.Index);
-
-                yield break;
-            }
-
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_maps_call", StringComparison.OrdinalIgnoreCase):
-            {
-                var toolCallId = GetDeltaAdditionalString(delta, "id")
-                                 ?? GetDeltaAdditionalString(delta, "call_id")
-                                 ?? BuildContentEventId(delta.Index);
-                var toolName = "google_maps";
-                var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
-                var providerMetadata = CreateGoogleMapsToolProviderMetadata(
-                    providerId);
-
-            /*    yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-input-start",
-                        Id = toolCallId,
-                        Data = new AIToolInputStartEventData
-                        {
-                            ToolName = toolName,
-                            ProviderExecuted = true,
-                            Title = toolName
-                        }
-                    },
-                    part,
-                    delta.Index);
-
-                var inputJson = SerializePayload(input, "{}");
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-input-delta",
-                        Id = toolCallId,
-                        Data = new AIToolInputDeltaEventData
-                        {
-                            InputTextDelta = inputJson
-                        }
-                    },
-                    part,
-                    delta.Index);
-*/
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-input-available",
-                        Id = toolCallId,
-                        Data = new AIToolInputAvailableEventData
-                        {
-                            ToolName = toolName,
-                            Input = CloneIfJsonElement(input) ?? new { },
-                            ProviderExecuted = true,
-                            Title = toolName,
-                            ProviderMetadata = providerMetadata
-                        }
-                    },
-                    part,
-                    delta.Index);
-
-                yield break;
-            }
-
-            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_maps_result", StringComparison.OrdinalIgnoreCase):
-            {
-                var toolCallId = GetDeltaAdditionalString(delta, "call_id")
-                                 ?? GetDeltaAdditionalString(delta, "id")
-                                 ?? BuildContentEventId(delta.Index);
-                var resultPayload = GetDeltaAdditionalObject(delta, "result")
-                                    ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
-                var structuredContent = CloneIfJsonElement(resultPayload) ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
-                var providerMetadata = CreateGoogleMapsToolProviderMetadata(
-                    providerId);
-
-                yield return CreateStreamEvent(
-                    providerId,
-                    new AIEventEnvelope
-                    {
-                        Type = "tool-output-available",
-                        Id = toolCallId,
-                        Data = new AIToolOutputAvailableEventData
-                        {
-                            Output = new CallToolResult
-                            {
-                                StructuredContent = (JsonElement)structuredContent
-                            },
-                            ProviderExecuted = true,
-                            ProviderMetadata = providerMetadata
-                        }
-                    },
-                    part,
-                    delta.Index);
-
-                foreach (var sourceEvent in CreateGoogleMapsSourceUrlEvents(providerId, delta, toolCallId, resultPayload))
-                    yield return sourceEvent;
-
-                yield break;
-            }
-
-            case InteractionContentDeltaEvent delta when HasSourceUrlAnnotations(delta):
-            {
-                var annotations = GetSourceUrlAnnotations(delta);
-                for (var i = 0; i < annotations.Count; i++)
-                {
-                    var annotation = annotations[i];
-                    if (string.IsNullOrWhiteSpace(annotation.Url))
-                        continue;
-
-                    yield return CreateStreamEvent(
-                        providerId,
-                        new AIEventEnvelope
-                        {
-                            Type = "source-url",
-                            Id = BuildContentEventId(delta.Index),
-                            Data = new AISourceUrlEventData
-                            {
-                                SourceId = BuildCitationSourceId(delta, i, annotation),
-                                Url = annotation.Url,
-                                Title = GetAnnotationTitle(annotation),
-                                Type = annotation.Type,
-                                ProviderMetadata = CreateAnnotationProviderMetadata(providerId, delta, annotation)
-                            }
-                        },
-                        part,
-                        delta.Index);
-                }
-
-                yield break;
-            }
-
-            case InteractionContentDeltaEvent delta:
-                yield break;
-
-            case InteractionContentStopEvent stop:
-            {
-                var rememberedType = ForgetStreamContentType(providerId, stop.Index);
-                var rememberedSignature = GetStreamThoughtSignature(providerId, stop.Index);
-                var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
-                var rememberedImage = ForgetStreamImage(providerId, stop.Index);
-
-                if (string.Equals(rememberedType, "text", StringComparison.OrdinalIgnoreCase))
-                {
-                    yield return CreateStreamEvent(
-                        providerId,
-                        new AIEventEnvelope
-                        {
-                            Type = "text-end",
-                            Id = BuildContentEventId(stop.Index),
-                            Data = new AITextEndEventData()
-                        },
-                        part,
-                        stop.Index);
-
-                    yield break;
-                }
-
-                if (string.Equals(rememberedType, "thought", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(rememberedType, "thought_signature_only", StringComparison.OrdinalIgnoreCase)
-                    || !string.IsNullOrWhiteSpace(rememberedSignature))
-                {
-                    if (!rememberedHasText
-                        && GetOpenThoughtAnchor(providerId) is { } anchorIndex
-                        && anchorIndex != stop.Index)
-                    {
-                        ForgetStreamThoughtSignature(providerId, stop.Index);
-                        yield break;
-                    }
-
-                    if (GetOpenThoughtAnchor(providerId) == stop.Index)
-                        ForgetOpenThoughtAnchor(providerId);
-
-                    yield return CreateStreamEvent(
-                        providerId,
-                        new AIEventEnvelope
-                        {
-                            Type = "reasoning-end",
-                            Id = BuildContentEventId(stop.Index),
-                            Data = new AIReasoningEndEventData
-                            {
-                                ProviderMetadata = CreateThoughtSignatureProviderMetadata(
-                                    providerId,
-                                    ForgetStreamThoughtSignature(providerId, stop.Index) ?? rememberedSignature)
-                            }
-                        },
-                        part,
-                        stop.Index);
-
-                    yield break;
-                }
-
-                if (string.Equals(rememberedType, "image", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (TryCreateInteractionImageToolResult(rememberedImage, out var finalImageOutput))
+                    if (TryCreateInteractionImageToolResult(imageState, out var preliminaryImageOutput))
                     {
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
                             {
                                 Type = "tool-output-available",
-                                Id = rememberedImage?.ToolCallId ?? BuildImageToolCallId(stop.Index),
+                                Id = imageState.ToolCallId,
                                 Data = new AIToolOutputAvailableEventData
                                 {
                                     ToolName = "image",
-                                    Output = finalImageOutput,
+                                    Output = preliminaryImageOutput,
                                     ProviderExecuted = true,
-                                    Preliminary = false,
-                                    ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, stop.Index, rememberedImage?.MimeType)
+                                    Preliminary = true,
+                                    ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, delta.Index, mimeType)
                                 }
                             },
                             part,
-                            stop.Index);
-
-                     /*   yield return CreateStreamEvent(
-                            providerId,
-                            new AIEventEnvelope
-                            {
-                                Type = "file",
-                                Id = BuildContentEventId(stop.Index),
-                                Data = new AIFileEventData
-                                {
-                                    MediaType = rememberedImage?.MimeType ?? "image/png",
-                                    Url = ToInteractionImageDataUrl(rememberedImage?.MimeType, rememberedImage?.Data),
-                                    ProviderMetadata = CreateInteractionImageFileProviderMetadata(providerId, stop.Index, rememberedImage?.MimeType)
-                                }
-                            },
-                            part,
-                            stop.Index);*/
+                            delta.Index);
                     }
 
                     yield break;
                 }
 
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_signature", StringComparison.OrdinalIgnoreCase)
+                                                       || !string.IsNullOrWhiteSpace(GetThoughtSignature(delta)):
+                {
+                    var signature = GetThoughtSignature(delta);
+                    var targetIndex = GetStreamThoughtHasText(providerId, delta.Index) || GetOpenThoughtAnchor(providerId) is not { } anchorIndex || anchorIndex == delta.Index
+                        ? delta.Index
+                        : anchorIndex;
+
+                    RememberStreamContentType(providerId, delta.Index, GetStreamThoughtHasText(providerId, delta.Index) ? "thought" : "thought_signature_only");
+                    RememberStreamThoughtSignature(providerId, delta.Index, signature);
+                    RememberStreamThoughtSignature(providerId, targetIndex, signature);
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_summary", StringComparison.OrdinalIgnoreCase):
+                {
+                    var summaryText = GetThoughtSummaryText(delta);
+                    RememberStreamContentType(providerId, delta.Index, "thought");
+                    RememberStreamThoughtHasText(providerId, delta.Index, !string.IsNullOrWhiteSpace(summaryText));
+                    if (!string.IsNullOrWhiteSpace(summaryText))
+                        RememberOpenThoughtAnchor(providerId, delta.Index);
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "reasoning-delta",
+                            Id = BuildContentEventId(delta.Index),
+                            Data = new AIReasoningDeltaEventData
+                            {
+                                Delta = summaryText ?? string.Empty,
+                                ProviderMetadata = CreateThoughtSignatureProviderMetadata(
+                                    providerId,
+                                    GetStreamThoughtSignature(providerId, delta.Index))
+                            }
+                        },
+                        part,
+                        delta.Index);
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought", StringComparison.OrdinalIgnoreCase):
+                RememberStreamContentType(providerId, delta.Index, "thought");
                 yield break;
-            }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_call", StringComparison.OrdinalIgnoreCase):
+                {
+                    var toolCallId = GetDeltaAdditionalString(delta, "id")
+                                     ?? GetDeltaAdditionalString(delta, "call_id")
+                                     ?? BuildContentEventId(delta.Index);
+                    var toolName = "code_execution";
+                    var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-input-available",
+                            Id = toolCallId,
+                            Data = new AIToolInputAvailableEventData
+                            {
+                                ToolName = toolName,
+                                Input = CloneIfJsonElement(input) ?? new { },
+                                ProviderExecuted = true,
+                                Title = toolName
+                            }
+                        },
+                        part,
+                        delta.Index);
+
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_result", StringComparison.OrdinalIgnoreCase):
+                {
+                    var toolCallId = GetDeltaAdditionalString(delta, "call_id")
+                                     ?? GetDeltaAdditionalString(delta, "id")
+                                     ?? BuildContentEventId(delta.Index);
+                    var resultText = GetDeltaAdditionalString(delta, "result") ?? delta.Delta?.Text ?? string.Empty;
+                    var isError = GetDeltaAdditionalBool(delta, "is_error");
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-output-available",
+                            Id = toolCallId,
+                            Data = new AIToolOutputAvailableEventData
+                            {
+                                ToolName = "code_execution",
+                                Output = CreateCodeExecutionToolResultPayload(resultText),
+                                ProviderExecuted = true,
+                                ProviderMetadata = CreateCodeExecutionToolOutputProviderMetadata(providerId, toolCallId, isError)
+                            }
+                        },
+                        part,
+                        delta.Index);
+
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_call", StringComparison.OrdinalIgnoreCase):
+                {
+                    var toolCallId = GetDeltaAdditionalString(delta, "id")
+                                     ?? GetDeltaAdditionalString(delta, "call_id")
+                                     ?? BuildContentEventId(delta.Index);
+                    var toolName = "google_search";
+                    var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
+                    var providerMetadata = CreateGoogleSearchToolProviderMetadata(
+                        providerId,
+                        searchType: GetDeltaAdditionalString(delta, "search_type"));
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-input-available",
+                            Id = toolCallId,
+                            Data = new AIToolInputAvailableEventData
+                            {
+                                ToolName = toolName,
+                                Input = CloneIfJsonElement(input) ?? new { },
+                                ProviderExecuted = true,
+                                Title = toolName,
+                                ProviderMetadata = providerMetadata
+                            }
+                        },
+                        part,
+                        delta.Index);
+
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_result", StringComparison.OrdinalIgnoreCase):
+                {
+                    var toolCallId = GetDeltaAdditionalString(delta, "call_id")
+                                     ?? GetDeltaAdditionalString(delta, "id")
+                                     ?? BuildContentEventId(delta.Index);
+                    var resultPayload = GetDeltaAdditionalObject(delta, "result")
+                                        ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleSearchResult>(), Json);
+                    var structuredContent = JsonSerializer.SerializeToElement(new
+                    {
+                        content = CloneIfJsonElement(resultPayload) ?? resultPayload,
+                        result = CloneIfJsonElement(resultPayload) ?? resultPayload
+                    }, Json);
+                    var providerMetadata = CreateGoogleSearchToolProviderMetadata(
+                        providerId,
+                        toolCallId,
+                        "google_search_result",
+                        isError: GetDeltaAdditionalBool(delta, "is_error"));
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-output-available",
+                            Id = toolCallId,
+                            Data = new AIToolOutputAvailableEventData
+                            {
+                                Output = new CallToolResult
+                                {
+                                    StructuredContent = structuredContent.Clone()
+                                },
+                                ProviderExecuted = true,
+                                ProviderMetadata = providerMetadata
+                            }
+                        },
+                        part,
+                        delta.Index);
+
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_maps_call", StringComparison.OrdinalIgnoreCase):
+                {
+                    var toolCallId = GetDeltaAdditionalString(delta, "id")
+                                     ?? GetDeltaAdditionalString(delta, "call_id")
+                                     ?? BuildContentEventId(delta.Index);
+                    var toolName = "google_maps";
+                    var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
+                    var providerMetadata = CreateGoogleMapsToolProviderMetadata(
+                        providerId);
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-input-available",
+                            Id = toolCallId,
+                            Data = new AIToolInputAvailableEventData
+                            {
+                                ToolName = toolName,
+                                Input = CloneIfJsonElement(input) ?? new { },
+                                ProviderExecuted = true,
+                                Title = toolName,
+                                ProviderMetadata = providerMetadata
+                            }
+                        },
+                        part,
+                        delta.Index);
+
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_maps_result", StringComparison.OrdinalIgnoreCase):
+                {
+                    var toolCallId = GetDeltaAdditionalString(delta, "call_id")
+                                     ?? GetDeltaAdditionalString(delta, "id")
+                                     ?? BuildContentEventId(delta.Index);
+                    var resultPayload = GetDeltaAdditionalObject(delta, "result")
+                                        ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
+                    var structuredContent = CloneIfJsonElement(resultPayload) ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleMapsResult>(), Json);
+                    var providerMetadata = CreateGoogleMapsToolProviderMetadata(
+                        providerId);
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-output-available",
+                            Id = toolCallId,
+                            Data = new AIToolOutputAvailableEventData
+                            {
+                                Output = new CallToolResult
+                                {
+                                    StructuredContent = (JsonElement)structuredContent
+                                },
+                                ProviderExecuted = true,
+                                ProviderMetadata = providerMetadata
+                            }
+                        },
+                        part,
+                        delta.Index);
+
+                    foreach (var sourceEvent in CreateGoogleMapsSourceUrlEvents(providerId, delta, toolCallId, resultPayload))
+                        yield return sourceEvent;
+
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta when HasSourceUrlAnnotations(delta):
+                {
+                    var annotations = GetSourceUrlAnnotations(delta);
+                    for (var i = 0; i < annotations.Count; i++)
+                    {
+                        var annotation = annotations[i];
+                        if (string.IsNullOrWhiteSpace(annotation.Url))
+                            continue;
+
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "source-url",
+                                Id = BuildContentEventId(delta.Index),
+                                Data = new AISourceUrlEventData
+                                {
+                                    SourceId = BuildCitationSourceId(delta, i, annotation),
+                                    Url = annotation.Url,
+                                    Title = GetAnnotationTitle(annotation),
+                                    Type = annotation.Type,
+                                    ProviderMetadata = CreateAnnotationProviderMetadata(providerId, delta, annotation)
+                                }
+                            },
+                            part,
+                            delta.Index);
+                    }
+
+                    yield break;
+                }
+
+            case InteractionContentDeltaEvent delta:
+                yield break;
+
+            case InteractionContentStopEvent stop:
+                {
+                    var rememberedType = ForgetStreamContentType(providerId, stop.Index);
+                    var rememberedSignature = GetStreamThoughtSignature(providerId, stop.Index);
+                    var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
+                    var rememberedImage = ForgetStreamImage(providerId, stop.Index);
+
+                    if (string.Equals(rememberedType, "text", StringComparison.OrdinalIgnoreCase))
+                    {
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "text-end",
+                                Id = BuildContentEventId(stop.Index),
+                                Data = new AITextEndEventData()
+                            },
+                            part,
+                            stop.Index);
+
+                        yield break;
+                    }
+
+                    if (string.Equals(rememberedType, "thought", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(rememberedType, "thought_signature_only", StringComparison.OrdinalIgnoreCase)
+                        || !string.IsNullOrWhiteSpace(rememberedSignature))
+                    {
+                        if (!rememberedHasText
+                            && GetOpenThoughtAnchor(providerId) is { } anchorIndex
+                            && anchorIndex != stop.Index)
+                        {
+                            ForgetStreamThoughtSignature(providerId, stop.Index);
+                            yield break;
+                        }
+
+                        if (GetOpenThoughtAnchor(providerId) == stop.Index)
+                            ForgetOpenThoughtAnchor(providerId);
+
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "reasoning-end",
+                                Id = BuildContentEventId(stop.Index),
+                                Data = new AIReasoningEndEventData
+                                {
+                                    ProviderMetadata = CreateThoughtSignatureProviderMetadata(
+                                        providerId,
+                                        ForgetStreamThoughtSignature(providerId, stop.Index) ?? rememberedSignature)
+                                }
+                            },
+                            part,
+                            stop.Index);
+
+                        yield break;
+                    }
+
+                    if (string.Equals(rememberedType, "image", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (TryCreateInteractionImageToolResult(rememberedImage, out var finalImageOutput))
+                        {
+                            yield return CreateStreamEvent(
+                                providerId,
+                                new AIEventEnvelope
+                                {
+                                    Type = "tool-output-available",
+                                    Id = rememberedImage?.ToolCallId ?? BuildImageToolCallId(stop.Index),
+                                    Data = new AIToolOutputAvailableEventData
+                                    {
+                                        ToolName = "image",
+                                        Output = finalImageOutput,
+                                        ProviderExecuted = true,
+                                        Preliminary = false,
+                                        ProviderMetadata = CreateInteractionImageToolProviderMetadata(providerId, stop.Index, rememberedImage?.MimeType)
+                                    }
+                                },
+                                part,
+                                stop.Index);
+
+                            /*   yield return CreateStreamEvent(
+                                   providerId,
+                                   new AIEventEnvelope
+                                   {
+                                       Type = "file",
+                                       Id = BuildContentEventId(stop.Index),
+                                       Data = new AIFileEventData
+                                       {
+                                           MediaType = rememberedImage?.MimeType ?? "image/png",
+                                           Url = ToInteractionImageDataUrl(rememberedImage?.MimeType, rememberedImage?.Data),
+                                           ProviderMetadata = CreateInteractionImageFileProviderMetadata(providerId, stop.Index, rememberedImage?.MimeType)
+                                       }
+                                   },
+                                   part,
+                                   stop.Index);*/
+                        }
+
+                        yield break;
+                    }
+
+                    yield break;
+                }
 
             case InteractionCompleteEvent complete:
                 ForgetOpenThoughtAnchor(providerId);
@@ -1039,6 +1033,38 @@ public static partial class InteractionsUnifiedMapper
             ? null
             : CreateProviderScopedMetadata(providerId, metadata.Where(a => a.Value is not null).ToDictionary(a => a.Key, a => ConvertProviderMetadataValue(a.Value)!));
     }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateCodeExecutionToolOutputProviderMetadata(
+        string providerId,
+        string toolCallId,
+        bool? isError = null)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "code_execution_tool_result",
+            ["tool_name"] = "code_execution",
+            ["title"] = "code_execution",
+            ["tool_use_id"] = toolCallId
+        };
+
+        if (isError is not null)
+            metadata["is_error"] = isError.Value;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = metadata
+        };
+    }
+
+    private static JsonElement CreateCodeExecutionToolResultPayload(string resultText)
+        => JsonSerializer.SerializeToElement(new
+        {
+            type = "code_execution_result",
+            stdout = resultText,
+            stderr = string.Empty,
+            return_code = 0,
+            content = Array.Empty<object>()
+        }, Json);
 
     private static IEnumerable<AIStreamEvent> CreateGoogleMapsSourceUrlEvents(
         string providerId,

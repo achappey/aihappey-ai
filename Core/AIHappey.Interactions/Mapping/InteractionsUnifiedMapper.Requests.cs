@@ -141,7 +141,7 @@ public static partial class InteractionsUnifiedMapper
             return new InteractionsInput();
 
         var turns = items
-            .Select(ToInteractionTurn)
+            .Select(item => ToInteractionTurn(item, providerId))
             .Where(a =>
                 a.Content?.IsParts != true || (a.Content?.Parts?.Count ?? 0) > 0
             )
@@ -150,12 +150,12 @@ public static partial class InteractionsUnifiedMapper
         return new InteractionsInput(turns, true);
     }
 
-    private static InteractionTurn ToInteractionTurn(AIInputItem item)
+    private static InteractionTurn ToInteractionTurn(AIInputItem item, string providerId)
     {
         var content = new List<InteractionContent>();
         foreach (var part in item.Content ?? [])
         {
-            var mapped = ToInteractionContent(part);
+            var mapped = ToInteractionContent(part, providerId);
             if (mapped is InteractionThoughtContent thought
                 && string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary))
                 && !string.IsNullOrWhiteSpace(thought.Signature))
@@ -166,6 +166,7 @@ public static partial class InteractionsUnifiedMapper
                         || string.Equals(previousThought.Signature, thought.Signature, StringComparison.Ordinal)))
                 {
                     previousThought.Signature ??= thought.Signature;
+                    MergeAdditionalProperties(previousThought, thought);
                     continue;
                 }
             }
@@ -185,5 +186,19 @@ public static partial class InteractionsUnifiedMapper
             Role = NormalizeInteractionRole(item.Role),
             Content = turnContent
         };
+    }
+
+    private static void MergeAdditionalProperties(InteractionContent target, InteractionContent source)
+    {
+        if (source.AdditionalProperties is null || source.AdditionalProperties.Count == 0)
+            return;
+
+        target.AdditionalProperties ??= new Dictionary<string, JsonElement>();
+
+        foreach (var property in source.AdditionalProperties)
+        {
+            if (!target.AdditionalProperties.ContainsKey(property.Key))
+                target.AdditionalProperties[property.Key] = property.Value.Clone();
+        }
     }
 }
