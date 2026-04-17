@@ -720,17 +720,26 @@ public static class VercelUnifiedMapper
         if (output is null || providerExecuted != true)
             return output;
 
+        if (output is JsonElement outputJson
+            && outputJson.ValueKind == JsonValueKind.Object
+            && outputJson.TryGetProperty("structuredContent", out var structuredContent)
+            && structuredContent.ValueKind == JsonValueKind.Object
+            && structuredContent.TryGetProperty("type", out _))
+        {
+            return structuredContent.Clone();
+        }
+
         if (!TryGetCallToolResult(output, out var callToolResult))
             return output;
 
         callToolResult = CloneWithoutMeta(callToolResult);
 
-        if (callToolResult.StructuredContent is JsonElement structuredContent
-            && structuredContent.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined
+        if (callToolResult.StructuredContent is JsonElement structuredPayload
+            && structuredPayload.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined
             && (callToolResult.Content is null || callToolResult.Content.Count == 0)
             && callToolResult.IsError != true)
         {
-            return structuredContent.Clone();
+            return structuredPayload.Clone();
         }
 
         return JsonSerializer.SerializeToElement(callToolResult, Json);

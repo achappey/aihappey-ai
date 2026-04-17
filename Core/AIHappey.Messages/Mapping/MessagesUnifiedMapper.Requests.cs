@@ -196,12 +196,11 @@ public static partial class MessagesUnifiedMapper
                     {
                         if (assistantBlock is not null)
                         {
-                            FlushPending();
-                            yielded.Add(new MessageParam
-                            {
-                                Role = "assistant",
-                                Content = CreateMessagesContentFromBlocks([assistantBlock])
-                            });
+                            if (!string.Equals(pendingRole, "assistant", StringComparison.Ordinal))
+                                FlushPending();
+
+                            pendingRole = "assistant";
+                            pendingBlocks.Add(assistantBlock);
                         }
 
                         if (userBlock is not null)
@@ -218,7 +217,8 @@ public static partial class MessagesUnifiedMapper
                     continue;
                 }
 
-                AppendMessageBlock(pendingBlocks, part, providerId);
+                if (part is not AIFileContentPart || item.Role == "user")
+                    AppendMessageBlock(pendingBlocks, part, providerId);
             }
         }
 

@@ -79,7 +79,7 @@ public class AnthropicProviderChatStreamTests
 
         var filePart = Assert.IsType<FileUIPart>(uiParts.Single(part => part.Type == "file"));
         Assert.Equal(mediaType, filePart.MediaType);
-        Assert.Equal(filename, filePart.Filename);
+        Assert.Null(filePart.Filename);
         Assert.Equal(Convert.ToBase64String(fileBytes), filePart.Url);
 
         var fileProviderMetadata = Assert.Contains("anthropic", filePart.ProviderMetadata ?? []);

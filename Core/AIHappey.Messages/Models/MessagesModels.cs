@@ -315,6 +315,10 @@ public sealed class MessageContentBlock
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Url { get; set; }
 
+    [JsonPropertyName("server_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ServerName { get; set; }
+
     [JsonPropertyName("retrieved_at")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? RetrievedAt { get; set; }
