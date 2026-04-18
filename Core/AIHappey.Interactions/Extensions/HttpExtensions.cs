@@ -22,6 +22,7 @@ public static class HttpExtensions
     public static async Task<Interaction> GetInteraction(
         this HttpClient client,
         InteractionRequest options,
+        string providerId,
         string relativeUrl = "v1beta/interactions",
         ProviderBackendCaptureRequest? capture = null,
         CancellationToken ct = default)
@@ -41,11 +42,10 @@ public static class HttpExtensions
         var body = await resp.Content.ReadAsStringAsync(ct);
         await ProviderBackendCapture.CaptureJsonAsync("interactions", resp, body, capture, ct);
 
-        //        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-        //      var result = await JsonSerializer.DeserializeAsync<Interaction>(stream, cancellationToken: ct);
-
         var result = JsonSerializer.Deserialize<Interaction>(body)
             ?? throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
+
+        result.Model = $"{providerId}/{result.Model}";
         return result;
     }
 
@@ -56,6 +56,7 @@ public static class HttpExtensions
     public static async IAsyncEnumerable<InteractionStreamEventPart> GetInteractions(
         this HttpClient client,
         InteractionRequest options,
+        string providerId,
         string relativeUrl = "v1beta/interactions",
         ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken ct = default)
@@ -106,6 +107,16 @@ public static class HttpExtensions
             catch (Exception ex)
             {
                 throw new InvalidOperationException($"Failed to parse SSE json event: {data}", ex);
+            }
+
+            if (evt is InteractionCompleteEvent interactionCompleteEvent)
+            {
+                interactionCompleteEvent.Interaction?.Model = $"{providerId}/{interactionCompleteEvent.Interaction?.Model}";
+            }
+
+            if (evt is InteractionStartEvent interactionStartEvent)
+            {
+                interactionStartEvent.Interaction?.Model = $"{providerId}/{interactionStartEvent.Interaction?.Model}";
             }
 
             if (evt is not null)

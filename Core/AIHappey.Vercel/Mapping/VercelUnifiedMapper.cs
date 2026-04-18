@@ -45,11 +45,16 @@ public static class VercelUnifiedMapper
                     break;
 
                 case AIFileContentPart file:
+                    var data = file.Data?.ToString() ?? string.Empty;
+                    var base64 = data.Contains(',')
+                        ? data[(data.IndexOf(',') + 1)..]
+                        : data;
+
                     parts.Add(new FileUIPart
                     {
                         MediaType = file.MediaType ?? "application/octet-stream",
                         Filename = file.Filename,
-                        Url = file.Data?.ToString() ?? string.Empty
+                        Url = base64 ?? string.Empty
                     });
                     break;
 

@@ -89,7 +89,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         {
             var textStarted = false;
             var reasoningStarted = false;
-            var finishEmitted = false;
+            var finishObserved = false;
             string? activeId = null;
             string? activeModel = null;
             DateTimeOffset? lastTimestamp = null;
@@ -98,11 +98,22 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             int? inputTokens = null;
             int? outputTokens = null;
             int? totalTokens = null;
+            object? rawUsage = null;
+            AIStreamEvent? pendingFinish = null;
             var mappingState = new ChatCompletionsStreamMappingState();
 
             await foreach (var update in modelProvider.CompleteChatStreamingAsync(responseRequest, cancellationToken))
             {
-                CaptureStreamTail(update, ref activeId, ref activeModel, ref lastTimestamp, ref lastFinishReason, ref inputTokens, ref outputTokens, ref totalTokens);
+                CaptureStreamTail(
+                    update,
+                    ref activeId,
+                    ref activeModel,
+                    ref lastTimestamp,
+                    ref lastFinishReason,
+                    ref inputTokens,
+                    ref outputTokens,
+                    ref totalTokens,
+                    ref rawUsage);
 
                 foreach (var mapped in update.ToUnifiedStreamEvents(modelProvider.GetIdentifier(), mappingState))
                 {
@@ -181,7 +192,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                     if (normalizedType == "finish")
                     {
-                        finishEmitted = true;
+                        finishObserved = true;
 
                         if (reasoningStarted)
                         {
@@ -204,6 +215,9 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                                 timestamp: mapped.Event.Timestamp,
                                 metadata: mapped.Metadata);
                         }
+
+                        pendingFinish = mapped;
+                        continue;
                     }
 
                     yield return mapped;
@@ -218,7 +232,29 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                 yield return tail;
             }
 
-            if (!finishEmitted && (activeId is not null || activeModel is not null || lastTimestamp is not null))
+            if (pendingFinish is not null)
+            {
+                var finishData = pendingFinish.Event.Data as AIFinishEventData;
+                var finishTimestamp = pendingFinish.Event.Timestamp ?? lastTimestamp ?? DateTimeOffset.UtcNow;
+
+                yield return CreateSyntheticFinishStreamEvent(
+                    providerId: modelProvider.GetIdentifier(),
+                    id: pendingFinish.Event.Id ?? activeId,
+                    timestamp: finishTimestamp,
+                    metadata: pendingFinish.Metadata ?? lastMetadata,
+                    finishReason: finishData?.FinishReason ?? lastFinishReason ?? "stop",
+                    model: finishData?.Model ?? activeModel ?? responseRequest.Model,
+                    inputTokens: finishData?.InputTokens ?? inputTokens,
+                    outputTokens: finishData?.OutputTokens ?? outputTokens,
+                    totalTokens: finishData?.TotalTokens ?? totalTokens,
+                    completedAt: finishData?.CompletedAt,
+                    rawUsage: rawUsage,
+                    messageMetadata: finishData?.MessageMetadata);
+
+                yield break;
+            }
+
+            if (!finishObserved && (activeId is not null || activeModel is not null || lastTimestamp is not null))
             {
                 var finishTimestamp = lastTimestamp ?? DateTimeOffset.UtcNow;
 
@@ -253,7 +289,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                     model: activeModel ?? responseRequest.Model,
                     inputTokens: inputTokens,
                     outputTokens: outputTokens,
-                    totalTokens: totalTokens);
+                    totalTokens: totalTokens,
+                    rawUsage: rawUsage);
             }
         }
     }
@@ -303,7 +340,10 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         string? model,
         int? inputTokens,
         int? outputTokens,
-        int? totalTokens)
+        int? totalTokens,
+        object? completedAt = null,
+        object? rawUsage = null,
+        AIFinishMessageMetadata? messageMetadata = null)
         => new()
         {
             ProviderId = providerId,
@@ -316,13 +356,70 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                 {
                     FinishReason = finishReason,
                     Model = model,
-                    CompletedAt = timestamp.ToUnixTimeSeconds(),
+                    CompletedAt = completedAt ?? timestamp.ToUnixTimeSeconds(),
                     InputTokens = inputTokens,
                     OutputTokens = outputTokens,
-                    TotalTokens = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0))
+                    TotalTokens = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0)),
+                    MessageMetadata = BuildFinishMessageMetadata(
+                        messageMetadata,
+                        model,
+                        timestamp,
+                        rawUsage,
+                        inputTokens,
+                        outputTokens,
+                        totalTokens)
                 }
             },
             Metadata = metadata
+        };
+
+    private static AIFinishMessageMetadata? BuildFinishMessageMetadata(
+        AIFinishMessageMetadata? existingMessageMetadata,
+        string? model,
+        DateTimeOffset timestamp,
+        object? rawUsage,
+        int? inputTokens,
+        int? outputTokens,
+        int? totalTokens)
+    {
+        if (existingMessageMetadata is null
+            && rawUsage is null
+            && inputTokens is null
+            && outputTokens is null
+            && totalTokens is null
+            && string.IsNullOrWhiteSpace(model))
+        {
+            return null;
+        }
+
+        var metadata = existingMessageMetadata?.ToDictionary() ?? [];
+
+        if (!string.IsNullOrWhiteSpace(model))
+            metadata["model"] = model;
+
+        metadata["timestamp"] = timestamp;
+
+        if (rawUsage is not null)
+            metadata["usage"] = CloneUsageObject(rawUsage);
+
+        if (inputTokens is not null)
+            metadata["inputTokens"] = inputTokens;
+
+        if (outputTokens is not null)
+            metadata["outputTokens"] = outputTokens;
+
+        if (totalTokens is not null || inputTokens is not null || outputTokens is not null)
+            metadata["totalTokens"] = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0));
+
+        return AIFinishMessageMetadata.FromDictionary(metadata, fallbackModel: model, fallbackTimestamp: timestamp);
+    }
+
+    private static object CloneUsageObject(object rawUsage)
+        => rawUsage switch
+        {
+            JsonElement json => json.Clone(),
+            Dictionary<string, object?> dictionary => dictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+            _ => JsonSerializer.SerializeToElement(rawUsage, JsonSerializerOptions.Web)
         };
 
     private static void CaptureStreamTail(
@@ -333,7 +430,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         ref string? lastFinishReason,
         ref int? inputTokens,
         ref int? outputTokens,
-        ref int? totalTokens)
+        ref int? totalTokens,
+        ref object? rawUsage)
     {
         if (!string.IsNullOrWhiteSpace(update.Id))
             activeId = update.Id;
@@ -354,6 +452,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
         if (chunk.TryGetProperty("usage", out var usage) && usage.ValueKind == JsonValueKind.Object)
         {
+            rawUsage = usage.Clone();
+
             if (usage.TryGetProperty("prompt_tokens", out var promptTokens) && promptTokens.TryGetInt32(out var parsedPromptTokens))
                 inputTokens = parsedPromptTokens;
 

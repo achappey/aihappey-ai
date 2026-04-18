@@ -122,6 +122,9 @@ public sealed class Interaction
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+    [JsonPropertyName("metadata")]
+    public Dictionary<string, object?>? Metadata { get; set; }
 }
 
 [JsonConverter(typeof(InteractionsInputJsonConverter))]

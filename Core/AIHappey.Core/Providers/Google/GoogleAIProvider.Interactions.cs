@@ -21,6 +21,7 @@ public partial class GoogleAIProvider
 
         await foreach (var update in _client.GetInteractions(
                            request,
+                           GetIdentifier(),
                            ct: cancellationToken))
         {
             yield return update;
@@ -41,6 +42,7 @@ public partial class GoogleAIProvider
 
         return await _client.GetInteraction(
                             request,
+                            GetIdentifier(),
                             ct: cancellationToken);
 
     }

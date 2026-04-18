@@ -12,8 +12,12 @@ namespace AIHappey.Tests.Vercel;
 
 public sealed class ApiChatStreamFixtureTests
 {
+    private const string GitHubRawFixturePath = "Fixtures/chat-completions/raw/github-chat-completions-stream.jsonl";
     private const string GroqErrorRawFixturePath = "Fixtures/chat-completions/raw/groq-error-completions-stream.jsonl";
+    private const string OpenAiWebSearchRawFixturePath = "Fixtures/chat-completions/raw/openai-web-search-chat-completions.jsonl";
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
+    private const string GitHubProviderId = "github";
+    private const string OpenAiProviderId = "openai";
     private const string ReasoningMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
     private const string ReasoningAndProviderToolCallsMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
     private const string ProviderId = "fixture-provider";
@@ -281,6 +285,110 @@ public sealed class ApiChatStreamFixtureTests
     }
 
     [Fact]
+    public async Task Github_chat_completions_fixture_with_trailing_usage_emits_single_terminal_finish_with_usage_metadata()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            GitHubRawFixturePath,
+            GitHubProviderId,
+            "github/Phi-4-mini-reasoning");
+
+        Assert.Equal("finish", unifiedEvents[^1].Event.Type);
+
+        var finishEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "finish");
+        var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
+
+        Assert.Equal("stop", finishData.FinishReason);
+        Assert.Equal(441, finishData.InputTokens);
+        Assert.Equal(2652, finishData.OutputTokens);
+        Assert.Equal(3093, finishData.TotalTokens);
+        Assert.Equal(441, finishData.MessageMetadata?.Usage.GetProperty("prompt_tokens").GetInt32());
+        Assert.Equal(2652, finishData.MessageMetadata?.Usage.GetProperty("completion_tokens").GetInt32());
+        Assert.Equal(3093, finishData.MessageMetadata?.Usage.GetProperty("total_tokens").GetInt32());
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(GitHubProviderId))
+            .ToList();
+
+        Assert.Equal("finish", uiParts[^1].Type);
+
+        var finishPart = Assert.Single(uiParts.OfType<FinishUIPart>());
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(441, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(2652, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(3093, finishPart.MessageMetadata?.Usage.TotalTokens);
+    }
+
+    [Fact]
+    public async Task Openai_chat_completions_fixture_with_usage_only_tail_emits_single_terminal_finish_with_usage_metadata()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            OpenAiWebSearchRawFixturePath,
+            OpenAiProviderId,
+            "gpt-5-search-api-2025-10-14");
+
+        Assert.Equal("finish", unifiedEvents[^1].Event.Type);
+
+        var finishEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "finish");
+        var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
+
+        Assert.Equal("stop", finishData.FinishReason);
+        Assert.Equal(16317, finishData.InputTokens);
+        Assert.Equal(101, finishData.OutputTokens);
+        Assert.Equal(16418, finishData.TotalTokens);
+        Assert.Equal(1408, finishData.MessageMetadata?.Usage.GetProperty("prompt_tokens_details").GetProperty("cached_tokens").GetInt32());
+
+        var finishPart = Assert.IsType<FinishUIPart>(finishEvent.Event.ToUIMessagePart(OpenAiProviderId).Single());
+        Assert.Equal(16317, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(101, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(16418, finishPart.MessageMetadata?.Usage.TotalTokens);
+
+        var providerMetadata = Assert.Contains(OpenAiProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var providerUsage = providerMetadata.GetProperty("usage");
+        Assert.Equal(1408, providerUsage.GetProperty("prompt_tokens_details").GetProperty("cached_tokens").GetInt32());
+    }
+
+    [Fact]
+    public async Task Sonar_chat_completions_fixture_with_inline_finish_usage_emits_single_terminal_finish_with_preserved_provider_usage()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            SonarWebSearchRawFixturePath,
+            PerplexityProviderId,
+            "sonar");
+
+        Assert.Equal("finish", unifiedEvents[^1].Event.Type);
+        Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "finish");
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is
+                "reasoning-start" or
+                "reasoning-delta" or
+                "reasoning-end" or
+                "tool-input-start" or
+                "tool-input-available" or
+                "tool-output-available" or
+                "source-url" or
+                "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(PerplexityProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiParts);
+        Assert.Equal("finish", uiParts[^1].Type);
+
+        var finishPart = Assert.Single(uiParts.OfType<FinishUIPart>());
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(431, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(260, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(691, finishPart.MessageMetadata?.Usage.TotalTokens);
+
+        var providerMetadata = Assert.Contains(PerplexityProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var providerUsage = providerMetadata.GetProperty("usage");
+        Assert.Equal("medium", providerUsage.GetProperty("search_context_size").GetString());
+        Assert.Equal(0.00869m, providerUsage.GetProperty("cost").GetProperty("total_cost").GetDecimal());
+        Assert.Equal(0.008m, providerUsage.GetProperty("cost").GetProperty("request_cost").GetDecimal());
+    }
+
+    [Fact]
     public async Task Groq_error_chat_completions_fixture_maps_to_unified_error_and_finish_events()
     {
         var provider = new FixtureChatCompletionStreamModelProvider(GroqProviderId, LoadChatCompletionRawFixture(GroqErrorRawFixturePath));
@@ -439,5 +547,21 @@ public sealed class ApiChatStreamFixtureTests
             .Where(line => line.Length > 0 && !string.Equals(line, "[DONE]", StringComparison.OrdinalIgnoreCase))
             .Select(payload => JsonSerializer.Deserialize<ChatCompletionUpdate>(payload, JsonSerializerOptions.Web)
                 ?? throw new InvalidOperationException($"Could not deserialize chat completion stream payload from [{relativePath}](Core/AIHappey.Tests/{relativePath})."))];
+    }
+
+    private static async Task<List<AIStreamEvent>> LoadChatCompletionUnifiedEventsAsync(
+        string relativePath,
+        string providerId,
+        string model)
+    {
+        var provider = new FixtureChatCompletionStreamModelProvider(providerId, LoadChatCompletionRawFixture(relativePath));
+        var request = new AIRequest
+        {
+            ProviderId = providerId,
+            Model = model,
+            Stream = true
+        };
+
+        return await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaChatCompletionsAsync(request));
     }
 }

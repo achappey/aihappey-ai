@@ -335,52 +335,52 @@ public static partial class ChatCompletionsUnifiedMapper
                 continue;
             }
 
-            if (part is AIFileContentPart file)
+            if (part is AIFileContentPart file
+                && string.Equals(role, "user", StringComparison.OrdinalIgnoreCase))
             {
-                if (role == "user")
+                if (file.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    if (file.MediaType?.StartsWith("image/") == true)
+                    mapped.Add(new
                     {
-                        mapped.Add(new
+                        type = "image_url",
+                        image_url = new
                         {
-                            type = "image_url",
-                            image_url = new
-                            {
-                                url = file.Data
-                            }
-                        });
-                    }
-                    else if (file.MediaType?.StartsWith("audio/") == true)
-                    {
-                        var format = !string.IsNullOrEmpty(file.Filename)
-                                    ? Path.GetExtension(file.Filename).TrimStart('.')
-                                    : file.MediaType.Split("/").Last() == "mpeg"
-                                    ? "mp3" : file.MediaType.Split("/").Last();
-
-                        mapped.Add(new
-                        {
-                            type = "input_audio",
-                            input_audio = new
-                            {
-                                format = format,
-                                data = file.Data
-                            }
-                        });
-                    }
-                    else
-                    {
-                        mapped.Add(new
-                        {
-                            type = "file",
-                            file = new
-                            {
-                                filename = file.Filename,
-                                file_data = file.Data
-                            }
-                        });
-                    }
-
+                            url = file.Data
+                        }
+                    });
+                    continue;
                 }
+
+                if (file.MediaType?.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    var mediaSubtype = file.MediaType.Split('/').Last();
+                    var format = !string.IsNullOrEmpty(file.Filename)
+                                ? Path.GetExtension(file.Filename).TrimStart('.')
+                                : mediaSubtype == "mpeg"
+                                    ? "mp3"
+                                    : mediaSubtype;
+
+                    mapped.Add(new
+                    {
+                        type = "input_audio",
+                        input_audio = new
+                        {
+                            format = format,
+                            data = file.Data
+                        }
+                    });
+                    continue;
+                }
+
+                mapped.Add(new
+                {
+                    type = "file",
+                    file = new
+                    {
+                        filename = file.Filename,
+                        file_data = file.Data
+                    }
+                });
             }
         }
 

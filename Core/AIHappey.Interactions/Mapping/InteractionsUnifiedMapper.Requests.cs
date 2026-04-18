@@ -23,7 +23,7 @@ public static partial class InteractionsUnifiedMapper
             ToolChoice = CloneIfJsonElement(request.GenerationConfig?.ToolChoice),
             ResponseFormat = CloneIfJsonElement(request.ResponseFormat),
             Tools = request.Tools?.Select(ToUnifiedTool).ToList(),
-            Metadata = BuildUnifiedRequestMetadata(request)
+            Metadata = request.Metadata
         };
     }
 

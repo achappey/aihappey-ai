@@ -19,7 +19,7 @@ public static partial class InteractionsUnifiedMapper
             Status = response.Status,
             Usage = response.Usage,
             Output = outputItems.Count == 0 ? null : new AIOutput { Items = outputItems },
-            Metadata = BuildUnifiedResponseMetadata(response)
+            Metadata = response.Metadata
         };
     }
 

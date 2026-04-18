@@ -41,8 +41,6 @@ public partial class GoogleAIProvider
                 break;
         }
 
-
-
         var interactionRequest = request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
         interactionRequest.Stream = true;
         interactionRequest.Store = false;

@@ -14,6 +14,59 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
     private const string ProviderToolsWithFollowUpFixturePath = "Fixtures/api-chat/raw/provider-tools-with-follow-up-chatrequest.json";
 
     [Fact]
+    public void Unified_user_message_with_inline_file_content_maps_to_chat_completions_file_part()
+    {
+        var request = new AIRequest
+        {
+            Model = "gpt-4.1-mini",
+            ProviderId = "openai",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "user",
+                        Content =
+                        [
+                            new AITextContentPart
+                            {
+                                Type = "text",
+                                Text = "Summarize the attached file."
+                            },
+                            new AIFileContentPart
+                            {
+                                Type = "file",
+                                MediaType = "text/plain",
+                                Filename = "notes.txt",
+                                Data = "SGVsbG8gZnJvbSB0aGUgZmlsZSE="
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var options = request.ToChatCompletionOptions("openai");
+        var message = Assert.Single(options.Messages);
+
+        Assert.Equal("user", message.Role);
+        Assert.Equal(JsonValueKind.Array, message.Content.ValueKind);
+
+        var contentParts = message.Content.EnumerateArray().ToList();
+        Assert.Equal(2, contentParts.Count);
+
+        Assert.Equal("text", contentParts[0].GetProperty("type").GetString());
+        Assert.Equal("Summarize the attached file.", contentParts[0].GetProperty("text").GetString());
+
+        Assert.Equal("file", contentParts[1].GetProperty("type").GetString());
+
+        var filePart = contentParts[1].GetProperty("file");
+        Assert.Equal("notes.txt", filePart.GetProperty("filename").GetString());
+        Assert.Equal("SGVsbG8gZnJvbSB0aGUgZmlsZSE=", filePart.GetProperty("file_data").GetString());
+    }
+
+    [Fact]
     public void Vercel_chat_request_with_client_tool_output_maps_to_assistant_tool_call_followed_by_tool_message()
     {
         var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(ApprovedToolCallWithOutputFixturePath));
