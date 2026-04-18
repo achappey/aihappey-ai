@@ -15,10 +15,12 @@ public static class CompletionsExtensions
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static async IAsyncEnumerable<UIMessagePart> CompletionsStreamAsync(this HttpClient client, ChatRequest chatRequest,
-        Dictionary<string, object?>? metadata = null,
-        string url = "v1/chat/completions",
-       [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    [Obsolete("Use unified model")]
+    public static async IAsyncEnumerable<UIMessagePart> CompletionsStreamAsync(this HttpClient client,
+            ChatRequest chatRequest,
+            Dictionary<string, object?>? metadata = null,
+            string url = "v1/chat/completions",
+           [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
         var messages = chatRequest.Messages.ToCompletionMessages();

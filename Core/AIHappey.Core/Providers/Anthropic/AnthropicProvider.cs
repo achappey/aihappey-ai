@@ -176,10 +176,10 @@ public partial class AnthropicProvider : IModelProvider
 
         this.SetDefaultMessagesProperties(request);
 
-        var response = await _client.PostMessages(
+        var response = await this.GetMessage(_client,
             request,
-            headers,
-            ct: cancellationToken);
+            headers: headers,
+            cancellationToken: cancellationToken);
 
         var pricing = ResolveModelPricing(response?.Model, request.Model);
 
@@ -201,10 +201,10 @@ public partial class AnthropicProvider : IModelProvider
         MessagesUsage? usage = null;
         string? responseModel = null;
 
-        await foreach (var part in _client.PostMessagesStreaming(
+        await foreach (var part in this.GetMessages(_client,
             options,
-            headers,
-            ct: cancellationToken).WithCancellation(cancellationToken))
+            headers: headers,
+            cancellationToken: cancellationToken))
         {
             if (!string.IsNullOrWhiteSpace(part?.Message?.Model))
                 responseModel = part.Message.Model;

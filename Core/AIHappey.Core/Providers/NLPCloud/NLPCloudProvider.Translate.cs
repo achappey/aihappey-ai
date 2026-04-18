@@ -161,7 +161,7 @@ public partial class NLPCloudProvider
         var translations = new List<string>(texts.Count);
         foreach (var text in texts)
         {
-            translations.Add(await SendTranslationAsync(modelId, text, targetLanguage, cancellationToken).ConfigureAwait(false));
+            translations.Add(await SendTranslationAsync(modelId, text, targetLanguage, cancellationToken));
         }
 
         var joined = string.Join("\n", translations);
@@ -190,7 +190,7 @@ public partial class NLPCloudProvider
         var translations = new List<string>(texts.Count);
         foreach (var text in texts)
         {
-            translations.Add(await SendTranslationAsync(modelId, text, targetLanguage, cancellationToken).ConfigureAwait(false));
+            translations.Add(await SendTranslationAsync(modelId, text, targetLanguage, cancellationToken));
         }
 
         var joined = string.Join("\n", translations);
@@ -251,7 +251,7 @@ public partial class NLPCloudProvider
             var translations = new List<string>(texts.Count);
             foreach (var text in texts)
             {
-                translations.Add(await SendTranslationAsync(chatRequest.Model, text, targetLanguage, cancellationToken).ConfigureAwait(false));
+                translations.Add(await SendTranslationAsync(chatRequest.Model, text, targetLanguage, cancellationToken));
             }
             translated = translations;
         }

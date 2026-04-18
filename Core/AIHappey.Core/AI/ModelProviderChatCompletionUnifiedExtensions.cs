@@ -5,11 +5,51 @@ using AIHappey.Unified.Models;
 using AIHappey.Responses.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using static AIHappey.ChatCompletions.Mapping.ChatCompletionsUnifiedMapper;
+using AIHappey.ChatCompletions.Models;
 
 namespace AIHappey.Core.AI;
 
 public static class ModelProviderChatCompletionUnifiedExtensions
 {
+    public static async Task<ChatCompletion> GetChatCompletion(
+         this IModelProvider modelProvider,
+         HttpClient client,
+         ChatCompletionOptions options,
+         string relativeUrl = "v1/chat/completions",
+         System.Text.Json.JsonElement? extraRootProperties = null,
+         Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
+         CancellationToken cancellationToken = default)
+    {
+        modelProvider.SetDefaultChatCompletionProperties(options);
+
+        return await client.GetChatCompletion(options,
+            modelProvider.GetIdentifier(),
+            relativeUrl,
+            extraRootProperties: extraRootProperties,
+            capture: capture,
+            ct: cancellationToken);
+    }
+
+    public static async IAsyncEnumerable<ChatCompletionUpdate> GetChatCompletions(
+        this IModelProvider modelProvider,
+        HttpClient client,
+        ChatCompletionOptions options,
+        string relativeUrl = "v1/responses",
+        System.Text.Json.JsonElement? extraRootProperties = null,
+        Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        modelProvider.SetDefaultChatCompletionProperties(options);
+        
+        await foreach (var update in client.GetChatCompletionUpdates(options,
+            relativeUrl: relativeUrl,
+            providerId: modelProvider.GetIdentifier(),
+            extraRootProperties: extraRootProperties,
+            capture: capture,
+            ct: cancellationToken))
+            yield return update;
+    }
+
     public static async Task<AIResponse> ExecuteUnifiedViaChatCompletionsAsync(
         this IModelProvider modelProvider,
         AIRequest request,

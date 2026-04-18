@@ -47,9 +47,6 @@ public class ChatCompletionOptions
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object?>? Metadata { get; set; }
 
-    //   [JsonIgnore]
-    //  public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
-
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 

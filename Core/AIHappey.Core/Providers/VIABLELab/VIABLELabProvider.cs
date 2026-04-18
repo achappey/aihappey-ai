@@ -67,8 +67,8 @@ public partial class VIABLELabProvider : IModelProvider
 
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(VIABLELab).ToLowerInvariant();

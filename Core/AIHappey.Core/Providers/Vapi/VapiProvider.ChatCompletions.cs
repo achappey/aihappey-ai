@@ -48,8 +48,7 @@ public partial class VapiProvider
         var created = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var roleSent = false;
 
-        await foreach (var part in ResponsesStreamingAsyncInternal(request, cancellationToken)
-            .WithCancellation(cancellationToken))
+        await foreach (var part in ResponsesStreamingAsyncInternal(request, cancellationToken))
         {
             switch (part)
             {

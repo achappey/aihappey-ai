@@ -42,16 +42,16 @@ public partial class MaritacaAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(MaritacaAI).ToLowerInvariant();
@@ -81,9 +81,9 @@ public partial class MaritacaAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(_client,
            options,
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
 

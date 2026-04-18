@@ -14,10 +14,10 @@ public partial class PerplexityProvider
 
         var request = PrepareResponsesRequest(options);
 
-        var response = await _client.GetResponses(
+        var response = await this.GetResponse(_client,
                    request,
                    relativeUrl: "v1/agent",
-                   ct: cancellationToken);
+                   cancellationToken: cancellationToken);
 
         if (response.Usage is JsonElement usage)
         {
@@ -37,10 +37,10 @@ public partial class PerplexityProvider
 
         var request = PrepareResponsesRequest(options);
 
-        await foreach (var update in _client.GetResponsesUpdates(
+        await foreach (var update in this.GetResponses(_client,
                            request,
                            relativeUrl: "v1/agent",
-                           ct: cancellationToken).WithCancellation(cancellationToken))
+                           cancellationToken: cancellationToken))
         {
             if (update is ResponseCompleted completed
                 && completed.Response.Usage is JsonElement usage)

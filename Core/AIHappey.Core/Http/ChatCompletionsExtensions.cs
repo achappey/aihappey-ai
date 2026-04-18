@@ -19,6 +19,7 @@ public static class ChatCompletionsExtensions
     public static async Task<ChatCompletion> GetChatCompletion(
         this HttpClient client,
         JsonElement payload,
+        string providerId,
         string relativeUrl = "v1/chat/completions",
         CancellationToken ct = default,
         ProviderBackendCaptureRequest? capture = null)
@@ -43,6 +44,8 @@ public static class ChatCompletionsExtensions
         if (result is null)
             throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
 
+        result.Model = $"{providerId}/{result.Model}";
+
         return result;
     }
 
@@ -52,11 +55,12 @@ public static class ChatCompletionsExtensions
     public static async Task<ChatCompletion> GetChatCompletion(
         this HttpClient client,
         ChatCompletionOptions options,
+        string providerId,
         string relativeUrl = "v1/chat/completions",
         CancellationToken ct = default,
         JsonElement? extraRootProperties = null,
         ProviderBackendCaptureRequest? capture = null)
-        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), relativeUrl, ct, capture);
+        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), providerId, relativeUrl, ct, capture);
 
     /// <summary>
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
@@ -65,6 +69,7 @@ public static class ChatCompletionsExtensions
     public static async IAsyncEnumerable<ChatCompletionUpdate> GetChatCompletionUpdates(
         this HttpClient client,
         ChatCompletionOptions options,
+        string providerId,
         string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
         [EnumeratorCancellation] CancellationToken ct = default,
@@ -120,10 +125,131 @@ public static class ChatCompletionsExtensions
                 throw new InvalidOperationException($"Failed to parse SSE json event: {data}", ex);
             }
 
+            if (!string.IsNullOrEmpty(evt?.Model))
+                evt.Model = $"{providerId}/{evt.Model}";
+
             if (evt is not null)
                 yield return evt;
         }
     }
+
+
+
+    [Obsolete]
+    /// <summary>
+    /// POST JSON and deserialize JSON response into T (non-stream).
+    /// </summary>
+    public static async Task<ChatCompletion> GetChatCompletion(
+            this HttpClient client,
+            JsonElement payload,
+            string relativeUrl = "v1/chat/completions",
+            CancellationToken ct = default,
+            ProviderBackendCaptureRequest? capture = null)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
+        req.Headers.Accept.Clear();
+        req.Headers.Accept.Add(AcceptJson);
+
+        req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
+
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        await ThrowIfNotSuccess(resp, ct);
+
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        await ProviderBackendCapture.CaptureJsonAsync("chat-completions", resp, body, capture, ct);
+
+        var result = JsonSerializer.Deserialize<ChatCompletion>(body, JsonSerializerOptions.Web);
+
+        if (result is null)
+            throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
+
+        return result;
+    }
+
+    [Obsolete]
+    /// <summary>
+    /// POST JSON and deserialize JSON response into T (non-stream).
+    /// </summary>
+    public static async Task<ChatCompletion> GetChatCompletion(
+            this HttpClient client,
+            ChatCompletionOptions options,
+            string relativeUrl = "v1/chat/completions",
+            CancellationToken ct = default,
+            JsonElement? extraRootProperties = null,
+            ProviderBackendCaptureRequest? capture = null)
+            => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), relativeUrl, ct, capture);
+
+    [Obsolete]
+    /// <summary>
+    /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
+    /// Ends on "data: [DONE]".
+    /// </summary>
+    public static async IAsyncEnumerable<ChatCompletionUpdate> GetChatCompletionUpdates(
+            this HttpClient client,
+            ChatCompletionOptions options,
+            string relativeUrl = "v1/chat/completions",
+            JsonElement? extraRootProperties = null,
+            [EnumeratorCancellation] CancellationToken ct = default,
+            ProviderBackendCaptureRequest? capture = null)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
+
+        options.StreamOptions ??= new StreamOptions();
+        options.StreamOptions.IncludeUsage = true;
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
+
+        req.Headers.Accept.Clear();
+        req.Headers.Accept.Add(AcceptSse);
+        req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
+        var payload = BuildPayload(options, extraRootProperties);
+        req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
+
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        await ThrowIfNotSuccess(resp, ct);
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("chat-completions", resp, capture);
+
+        string? line;
+        while (!ct.IsCancellationRequested &&
+               (line = await reader.ReadLineAsync(ct)) != null)
+        {
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, ct);
+
+            if (line is null) yield break;
+
+            if (line.Length == 0) continue; // keepalive
+
+            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var data = line["data:".Length..].Trim();
+            if (data.Length == 0) continue;
+
+            if (data == "[DONE]") yield break;
+
+            ChatCompletionUpdate? evt;
+            try
+            {
+                evt = JsonSerializer.Deserialize<ChatCompletionUpdate>(data);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to parse SSE json event: {data}", ex);
+            }
+
+            if (evt is not null)
+                yield return evt;
+        }
+    }
+
 
     private static async Task ThrowIfNotSuccess(HttpResponseMessage resp, CancellationToken ct)
     {

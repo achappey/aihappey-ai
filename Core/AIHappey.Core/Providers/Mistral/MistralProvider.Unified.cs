@@ -627,39 +627,17 @@ public partial class MistralProvider : IModelProvider
         }
 
         var usage = ExtractUsage(response.Usage);
-        var primaryOutput = GetPrimaryMessageOutput(response);
-        var normalizedModel = NormalizeReportedModel(GetString(primaryOutput, "model"), target);
-
-        var metadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["mistral.conversation_id"] = response.ConversationId,
-            ["mistral.requested_model"] = request.Model,
-            ["mistral.target_model"] = target.Model,
-            ["mistral.target_agent_id"] = target.AgentId,
-            ["mistral.outputs"] = response.Outputs?.DeepClone(),
-            ["mistral.usage"] = response.Usage?.DeepClone(),
-            ["mistral.sources"] = sources.Count == 0 ? null : JsonSerializer.SerializeToElement(sources, JsonSerializerOptions.Web),
-            ["mistral.files"] = files.Count == 0 ? null : JsonSerializer.SerializeToElement(files, JsonSerializerOptions.Web),
-            ["mistral.file_download_errors"] = downloadErrors.Count == 0 ? null : downloadErrors
-        };
 
         return new AIResponse
         {
             ProviderId = GetIdentifier(),
-            Model = normalizedModel,
+            Model = $"{GetIdentifier()}/{request.Model}",
             Status = "completed",
             Output = new AIOutput
             {
                 Items = outputItems,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["mistral.sources"] = sources.Count == 0 ? null : JsonSerializer.SerializeToElement(sources, JsonSerializerOptions.Web),
-                    ["mistral.files"] = files.Count == 0 ? null : JsonSerializer.SerializeToElement(files, JsonSerializerOptions.Web),
-                    ["mistral.file_download_errors"] = downloadErrors.Count == 0 ? null : downloadErrors
-                }
             },
-            Usage = CreateUsageObject(usage),
-            Metadata = metadata
+            Usage = CreateUsageObject(usage)
         };
     }
 
@@ -962,7 +940,7 @@ public partial class MistralProvider : IModelProvider
                 Data = new AIFinishEventData
                 {
                     FinishReason = "stop",
-                    Model = model,
+                    Model = $"{providerId}/{model}",
                     CompletedAt = timestamp.ToUnixTimeSeconds(),
                     InputTokens = usage?.PromptTokens,
                     OutputTokens = usage?.CompletionTokens,

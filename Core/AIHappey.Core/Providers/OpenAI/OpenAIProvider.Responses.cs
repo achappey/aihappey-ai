@@ -20,7 +20,9 @@ public partial class OpenAIProvider
         this.SetDefaultResponseProperties(options);
 
         var response = await _client.GetResponses(
-                   options, ct: cancellationToken);
+                   options,
+                   providerId: GetIdentifier(),
+                   ct: cancellationToken);
 
         var effectiveModelId = string.IsNullOrWhiteSpace(response.Model)
             ? options.Model
@@ -51,7 +53,9 @@ public partial class OpenAIProvider
 
         this.SetDefaultResponseProperties(options);
 
-        await foreach (var update in _client.GetResponsesUpdates(options, ct: cancellationToken))
+        await foreach (var update in _client.GetResponsesUpdates(options,
+            providerId: GetIdentifier(),
+            ct: cancellationToken))
         {
             if (update is ResponseCompleted completed)
             {

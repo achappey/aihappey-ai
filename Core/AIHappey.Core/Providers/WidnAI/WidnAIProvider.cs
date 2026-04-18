@@ -57,8 +57,8 @@ public partial class WidnAIProvider : IModelProvider
 
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(WidnAI).ToLowerInvariant();

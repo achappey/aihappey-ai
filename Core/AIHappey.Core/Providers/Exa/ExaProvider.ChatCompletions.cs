@@ -21,7 +21,7 @@ public partial class ExaProvider
             throw new NotSupportedException($"Exa chat completions only support model 'exa'. Requested: '{options.Model}'.");
 
         ApplyChatAuthHeader();
-        return await _client.GetChatCompletion(options, relativeUrl: "chat/completions", ct: cancellationToken);
+        return await this.GetChatCompletion(_client, options, relativeUrl: "chat/completions", cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -38,7 +38,7 @@ public partial class ExaProvider
             throw new NotSupportedException($"Exa chat completions only support model 'exa'. Requested: '{options.Model}'.");
 
         ApplyChatAuthHeader();
-        return _client.GetChatCompletionUpdates(options, relativeUrl: "chat/completions", ct: cancellationToken);
+        return this.GetChatCompletions(_client, options, relativeUrl: "chat/completions", cancellationToken: cancellationToken);
     }
 
     private async IAsyncEnumerable<ChatCompletionUpdate> CompleteResearchChatStreamingAsync(

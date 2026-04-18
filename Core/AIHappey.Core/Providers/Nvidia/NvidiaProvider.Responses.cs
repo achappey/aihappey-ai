@@ -1,5 +1,6 @@
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Nvidia;
 
@@ -10,16 +11,16 @@ public partial class NvidiaProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetResponses(
-                   options, ct: cancellationToken);
+        return await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(_client,
            options,
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 }

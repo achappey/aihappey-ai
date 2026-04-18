@@ -96,9 +96,9 @@ public partial class BytePlusProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetResponses(options,
+        return await this.GetResponse(_client, options,
             relativeUrl: "v3/responses",
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
     }
 
@@ -107,11 +107,10 @@ public partial class BytePlusProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        await foreach (var update in _client.GetResponsesUpdates(options,
-            relativeUrl: "v3/responses",
-            ct: cancellationToken))
+        await foreach (var update in this.GetResponses(_client, options,
+            "v3/responses",
+            cancellationToken: cancellationToken))
             yield return update;
-
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

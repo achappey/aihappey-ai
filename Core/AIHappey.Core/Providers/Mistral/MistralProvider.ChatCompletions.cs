@@ -12,8 +12,8 @@ public partial class MistralProvider : IModelProvider
 
         this.SetDefaultChatCompletionProperties(options);
 
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -22,7 +22,7 @@ public partial class MistralProvider : IModelProvider
 
         this.SetDefaultChatCompletionProperties(options);
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 }

@@ -78,17 +78,17 @@ public partial class EdenAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetResponses(
-                   options, ct: cancellationToken);
+        return await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(_client,
            options,
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

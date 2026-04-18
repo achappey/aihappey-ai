@@ -37,8 +37,8 @@ public partial class HicapProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -48,8 +48,8 @@ public partial class HicapProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Hicap).ToLowerInvariant();

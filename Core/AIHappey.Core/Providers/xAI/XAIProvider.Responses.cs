@@ -24,8 +24,8 @@ public partial class XAIProvider
             );
         }
 
-        var response = await _client.GetResponses(
-                   options, ct: cancellationToken);
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
 
         response.Metadata = ModelCostMetadataEnricher.AddCost(
             response.Metadata,
@@ -52,8 +52,8 @@ public partial class XAIProvider
                 items: filtered
             );
         }
-        
-        await foreach (var update in _client.GetResponsesUpdates(options, ct: cancellationToken))
+
+        await foreach (var update in this.GetResponses(_client, options, cancellationToken: cancellationToken))
         {
             if (update is ResponseCompleted completed)
             {

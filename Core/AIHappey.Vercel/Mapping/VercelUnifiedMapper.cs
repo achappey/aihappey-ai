@@ -932,10 +932,13 @@ public static class VercelUnifiedMapper
             .ToDictionary(a => a.Key, a => a.Value)
             ?? [];
 
-        if (!metadata.ContainsKey("model"))
-            metadata["model"] = typedData?.Model ?? GetValue<object>(data, "model");
+        metadata["model"] = typedData?.Model ?? (metadata.TryGetValue("model", out var modelValue) ? modelValue : null);
+        // metadata["model"] = metadata.TryGetValue("model", out var modelValue) ? modelValue : null;
 
-        metadata["model"] = NormalizeFinishModel(metadata.TryGetValue("model", out var modelValue) ? modelValue : null, providerId);
+        //    if (!metadata.ContainsKey("model"))
+        //       metadata["model"] = typedData?.Model ?? GetValue<object>(data, "model");
+
+        //  metadata["model"] = NormalizeFinishModel(metadata.TryGetValue("model", out var modelValue) ? modelValue : null, providerId);
         metadata["timestamp"] = ResolveFinishTimestamp(metadata.TryGetValue("timestamp", out var timestampValue) ? timestampValue : null, typedData?.CompletedAt ?? GetValue<object>(data, "completed_at"));
 
         var rawUsage = ResolveRawFinishUsage(typedData, metadata);
@@ -944,6 +947,7 @@ public static class VercelUnifiedMapper
             typedData?.OutputTokens,
             typedData?.TotalTokens,
             rawUsage);
+
         metadata[providerId] = BuildProviderMetadataContainer(
             metadata.TryGetValue(providerId, out var existingProviderMetadata) ? existingProviderMetadata : null,
             rawUsage);
@@ -952,7 +956,7 @@ public static class VercelUnifiedMapper
 
         return FinishMessageMetadata.FromDictionary(
             ToNonNullableMetadataDictionary(metadata),
-            fallbackModel: NormalizeFinishModel(typedData?.Model, providerId),
+            //fallbackModel: NormalizeFinishModel(typedData?.Model, providerId),
             fallbackTimestamp: ResolveFinishTimestamp(null, typedData?.CompletedAt));
     }
 
@@ -1185,22 +1189,22 @@ public static class VercelUnifiedMapper
             _ => "other"
         };
 
-    private static string NormalizeFinishModel(object? model, string providerId)
-    {
-        var modelText = (model switch
-        {
-            null => null,
-            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
-            _ => model.ToString()
-        })?.Trim();
+    /* private static string NormalizeFinishModel(object? model, string providerId)
+     {
+         var modelText = (model switch
+         {
+             null => null,
+             JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
+             _ => model.ToString()
+         })?.Trim();
 
-        if (string.IsNullOrWhiteSpace(modelText))
-            throw new InvalidOperationException("Finish metadata must include a model value.");
+         if (string.IsNullOrWhiteSpace(modelText))
+             throw new InvalidOperationException("Finish metadata must include a model value.");
 
-        return modelText.Contains('/', StringComparison.Ordinal)
-            ? modelText
-            : $"{providerId}/{modelText}";
-    }
+         return modelText.Contains('/', StringComparison.Ordinal)
+             ? modelText
+             : $"{providerId}/{modelText}";
+     }*/
 
     private static DateTimeOffset ResolveFinishTimestamp(object? timestamp, object? completedAt)
     {

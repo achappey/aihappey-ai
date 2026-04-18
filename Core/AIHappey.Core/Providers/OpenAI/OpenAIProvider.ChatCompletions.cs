@@ -14,8 +14,10 @@ public partial class OpenAIProvider
 
         options.ParallelToolCalls ??= true;
 
-        return _client.GetChatCompletionUpdates(
-                   options, ct: cancellationToken);
+        this.SetDefaultChatCompletionProperties(options);
+
+        return this.GetChatCompletions(_client,
+                   options, cancellationToken: cancellationToken);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions chatRequest, CancellationToken cancellationToken = default)
@@ -25,7 +27,9 @@ public partial class OpenAIProvider
 
         chatRequest.ParallelToolCalls ??= true;
 
-        return await _client.GetChatCompletion(
-           chatRequest, ct: cancellationToken);
+        this.SetDefaultChatCompletionProperties(chatRequest);
+
+        return await this.GetChatCompletion(_client,
+           chatRequest, cancellationToken: cancellationToken);
     }
 }

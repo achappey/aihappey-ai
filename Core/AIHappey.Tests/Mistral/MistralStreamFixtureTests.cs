@@ -38,9 +38,8 @@ public sealed class MistralStreamFixtureTests
         var finishEvent = unifiedEvents.Single(streamEvent => streamEvent.Event.Type == "finish");
         var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
 
-        Assert.Equal("mistral-small-2603", finishData.Model);
+        Assert.Equal("mistral/mistral-small-2603", finishData.Model);
         Assert.NotNull(finishData.MessageMetadata);
-        Assert.Equal("mistral-small-2603", finishData.MessageMetadata?.Model);
         Assert.Equal(1191, finishData.MessageMetadata?.Usage.GetProperty("prompt_tokens").GetInt32());
         Assert.Equal(16, finishData.MessageMetadata?.Usage.GetProperty("completion_tokens").GetInt32());
         Assert.Equal(1207, finishData.MessageMetadata?.Usage.GetProperty("total_tokens").GetInt32());

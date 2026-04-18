@@ -49,20 +49,16 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
     {
         ApplyAuthHeader();
 
-        this.SetDefaultChatCompletionProperties(options);
-
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        this.SetDefaultChatCompletionProperties(options);
-
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
@@ -82,10 +78,8 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
     {
         ApplyAuthHeader();
 
-        this.SetDefaultResponseProperties(options);
-
-        var response = await _client.GetResponses(
-                   options, ct: cancellationToken);
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
 
         var pricing = ResolveCatalogPricing(string.IsNullOrWhiteSpace(response.Model)
             ? options.Model
@@ -112,9 +106,9 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var update in _client.GetResponsesUpdates(
+        await foreach (var update in this.GetResponses(_client,
                            options,
-                           ct: cancellationToken))
+                           cancellationToken: cancellationToken))
         {
             if (update is Responses.Streaming.ResponseCompleted completed)
             {
@@ -171,22 +165,8 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
         if (pricing == null || pricing.Count == 0)
             return null;
 
-        var candidates = new[]
-        {
-            modelId,
-            modelId.ToModelId(GetIdentifier()),
-            modelId.StartsWith($"{GetIdentifier()}/", StringComparison.OrdinalIgnoreCase)
-                ? modelId[(GetIdentifier().Length + 1)..]
-                : null
-        }
-        .Where(candidate => !string.IsNullOrWhiteSpace(candidate))
-        .Distinct(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var candidate in candidates)
-        {
-            if (candidate != null && pricing.TryGetValue(candidate, out var modelPricing))
-                return modelPricing;
-        }
+        if (pricing.TryGetValue(modelId, out var modelPricing))
+            return modelPricing;
 
         return null;
     }

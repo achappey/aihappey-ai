@@ -66,10 +66,10 @@ public partial class PerplexityProvider : IModelProvider
 
         var (requestOptions, extraRootProperties) = PrepareChatCompletionRequest(options);
 
-        var result = await _client.GetChatCompletion(
+        var result = await this.GetChatCompletion(_client,
                     requestOptions,
                     relativeUrl: "v1/sonar",
-                    ct: cancellationToken,
+                    cancellationToken: cancellationToken,
                     extraRootProperties: extraRootProperties);
 
         return await EnrichChatCompletionImagesAsync(result, cancellationToken);
@@ -102,14 +102,13 @@ public partial class PerplexityProvider : IModelProvider
         ApplyAuthHeader();
 
         var (requestOptions, extraRootProperties) = PrepareChatCompletionRequest(options);
-
         var downloadedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        await foreach (var update in _client.GetChatCompletionUpdates(
+        await foreach (var update in this.GetChatCompletions(_client,
             requestOptions,
             relativeUrl: "v1/sonar",
             extraRootProperties: extraRootProperties,
-            ct: cancellationToken).WithCancellation(cancellationToken))
+            cancellationToken: cancellationToken))
         {
             if (TryGetImagesFromAdditionalProperties(update.AdditionalProperties, out var imagesElement))
             {

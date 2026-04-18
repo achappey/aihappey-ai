@@ -21,8 +21,7 @@ public partial class VapiProvider
         bool finishSent = false;
         string currentTextId = "vapi-response";
 
-        await foreach (var part in ResponsesStreamingAsyncInternal(responseRequest, cancellationToken)
-            .WithCancellation(cancellationToken))
+        await foreach (var part in ResponsesStreamingAsyncInternal(responseRequest, cancellationToken))
         {
             switch (part)
             {

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Contracts;
+using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Unified.Models;
 
@@ -7,6 +8,46 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderMessagesUnifiedExtensions
 {
+     public static async Task<MessagesResponse> GetMessage(
+          this IModelProvider modelProvider,
+          HttpClient client,
+          MessagesRequest options,
+          string relativeUrl = "v1/messages",
+          Dictionary<string, string>? headers = null,
+          Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
+          CancellationToken cancellationToken = default)
+    {
+        return await client.PostMessages(options,
+            modelProvider.GetIdentifier(),
+            headers,
+            relativeUrl,
+            capture: capture,
+            ct: cancellationToken);
+
+    }
+
+
+    public static async IAsyncEnumerable<MessageStreamPart> GetMessages(
+        this IModelProvider modelProvider,
+        HttpClient client,
+        MessagesRequest options,
+        string relativeUrl = "v1/messages",
+        Dictionary<string, string>? headers = null,
+        Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var update in client.PostMessagesStreaming(options,
+            modelProvider.GetIdentifier(),
+            headers,
+            relativeUrl: relativeUrl,
+            capture: capture,
+            ct: cancellationToken))
+            yield return update;
+
+    }
+
+
+
     public static async Task<AIResponse> ExecuteUnifiedViaMessagesAsync(
         this IModelProvider modelProvider,
         AIRequest request,

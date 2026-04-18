@@ -42,16 +42,16 @@ public partial class AISieuReProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(AISieuRe).ToLowerInvariant();
@@ -74,17 +74,17 @@ public partial class AISieuReProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetResponses(
-                   options, ct: cancellationToken);
+        return await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(_client,
            options,
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
 
@@ -106,10 +106,10 @@ public partial class AISieuReProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.PostMessages(
+        return await this.GetMessage(_client,
             request,
-            headers,
-            ct: cancellationToken);
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
@@ -119,9 +119,9 @@ public partial class AISieuReProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return _client.PostMessagesStreaming(
+        return this.GetMessages(_client,
             request,
-            headers,
-            ct: cancellationToken);
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 }

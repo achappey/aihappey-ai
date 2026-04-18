@@ -45,8 +45,8 @@ public partial class InceptionLabsProvider : IModelProvider
 
         var relativeUrl = ResolveChatCompletionsRelativeUrl(options.Model);
 
-        return await _client.GetChatCompletion(
-             options, relativeUrl: relativeUrl, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+             options, relativeUrl: relativeUrl, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -55,8 +55,8 @@ public partial class InceptionLabsProvider : IModelProvider
 
         var relativeUrl = ResolveChatCompletionsRelativeUrl(options.Model);
 
-        return _client.GetChatCompletionUpdates(
-                    options, relativeUrl: relativeUrl, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, relativeUrl: relativeUrl, cancellationToken: cancellationToken);
     }
 
     private static string ResolveChatCompletionsRelativeUrl(string? model)
@@ -96,7 +96,7 @@ public partial class InceptionLabsProvider : IModelProvider
         ApplyAuthHeader();
 
         if (!IsMercuryEditModel(options.Model))
-            return _client.GetResponses(options, ct: cancellationToken);
+            return this.GetResponse(_client, options, cancellationToken: cancellationToken);
 
         return CompleteMercuryEditResponsesAsync(options, cancellationToken);
     }
@@ -106,7 +106,7 @@ public partial class InceptionLabsProvider : IModelProvider
         ApplyAuthHeader();
 
         if (!IsMercuryEditModel(options.Model))
-            return _client.GetResponsesUpdates(options, ct: cancellationToken);
+            return this.GetResponses(_client, options, cancellationToken: cancellationToken);
 
         return CompleteMercuryEditResponsesStreamingAsync(options, cancellationToken);
     }
@@ -118,10 +118,10 @@ public partial class InceptionLabsProvider : IModelProvider
         var chatOptions = ToMercuryEditChatCompletionOptions(options, stream: false);
         var relativeUrl = ResolveChatCompletionsRelativeUrl(options.Model);
 
-        var completion = await _client.GetChatCompletion(
+        var completion = await this.GetChatCompletion(_client,
             chatOptions,
             relativeUrl: relativeUrl,
-            ct: cancellationToken);
+            cancellationToken: cancellationToken);
 
         var text = ExtractAssistantText(completion);
         return BuildResponseResult(completion.Id, completion.Created, completion.Model, text, completion.Usage, options);
@@ -167,10 +167,10 @@ public partial class InceptionLabsProvider : IModelProvider
             Response = inProgress
         };
 
-        await foreach (var update in _client.GetChatCompletionUpdates(
+        await foreach (var update in this.GetChatCompletions(_client,
             chatOptions,
             relativeUrl: relativeUrl,
-            ct: cancellationToken).ConfigureAwait(false))
+            cancellationToken: cancellationToken))
         {
             var delta = ExtractDeltaText(update);
             if (string.IsNullOrEmpty(delta))

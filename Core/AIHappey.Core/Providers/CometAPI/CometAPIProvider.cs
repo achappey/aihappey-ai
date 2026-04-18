@@ -65,33 +65,56 @@ public partial class CometAPIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
-             options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
+    /*
 
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+        {
+            ApplyAuthHeader();
+
+            return await _client.GetResponses(
+                       options, ct: cancellationToken);
+        }
+
+        */
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return await _client.GetResponses(
-                   options, ct: cancellationToken);
+        return await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
     }
+
+    /*
+
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+        {
+            ApplyAuthHeader();
+
+            return _client.GetResponsesUpdates(
+               options,
+               ct: cancellationToken);
+        }
+
+    */
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(_client,
            options,
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)

@@ -88,8 +88,8 @@ public partial class BLACKBOXProvider : IModelProvider
         if (IsNativeAgentModel(options.Model))
             return await ExecuteNativeAgentResponsesAsync(options, cancellationToken);
 
-        return await _client.GetResponses(
-                   options, ct: cancellationToken);
+        return await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
@@ -99,9 +99,9 @@ public partial class BLACKBOXProvider : IModelProvider
         if (IsNativeAgentModel(options.Model))
             return ExecuteNativeAgentResponsesStreamingAsync(options, cancellationToken);
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(_client,
            options,
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

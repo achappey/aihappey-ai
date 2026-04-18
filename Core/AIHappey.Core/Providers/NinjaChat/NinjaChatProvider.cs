@@ -84,9 +84,9 @@ public partial class NinjaChatProvider : IModelProvider
             throw new NotImplementedException();
         //return ExecuteNativeSearchMessagesStreamingAsync(JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web), cancellationToken);
 
-        return _client.PostMessagesStreaming(
+        return this.GetMessages(_client,
             request,
-            headers,
-            ct: cancellationToken);
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 }

@@ -84,10 +84,10 @@ public partial class RelaxAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.PostMessages(
+        return await this.GetMessage(_client,
             request,
-            headers,
-            ct: cancellationToken);
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
@@ -97,9 +97,9 @@ public partial class RelaxAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return _client.PostMessagesStreaming(
+        return this.GetMessages(_client,
             request,
-            headers,
-            ct: cancellationToken);
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 }
