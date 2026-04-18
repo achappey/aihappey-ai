@@ -31,10 +31,24 @@ public static partial class ResponsesUnifiedMapper
     public static ResponseStreamPart ToResponseStreamPart(this AIStreamEvent streamEvent)
     {
         ArgumentNullException.ThrowIfNull(streamEvent);
-
         var envelope = streamEvent.Event;
         var kind = envelope.Type;
         var data = ToJsonMap(envelope.Data);
+
+        if (TryMapSyntheticResponseStreamPart(streamEvent, envelope, kind, data, out var syntheticPart))
+            return syntheticPart;
+
+        if (kind == "text-delta" && streamEvent.Event.Data is AITextDeltaEventData aITextDeltaEventData)
+        {
+            return new ResponseOutputTextDelta
+            {
+                SequenceNumber = GetValue<int>(data, "sequence_number"),
+                Delta = aITextDeltaEventData.Delta,
+                ItemId = streamEvent.Event.Id ?? GetValue<string>(data, "item_id") ?? string.Empty,
+                ContentIndex = GetValue<int>(data, "content_index"),
+                Outputindex = GetValue<int>(data, "output_index")
+            };
+        }
 
         return kind switch
         {
@@ -61,7 +75,7 @@ public static partial class ResponsesUnifiedMapper
             "error" => new ResponseError
             {
                 SequenceNumber = GetValue<int>(data, "sequence_number"),
-                Message = GetValue<string>(data, "message") ?? "Unknown error",
+                Message = GetValue<string>(data, "message") ?? GetValue<string>(data, "errorText") ?? "Unknown error",
                 Param = GetValue<string>(data, "param") ?? string.Empty,
                 Code = GetValue<string>(data, "code") ?? string.Empty
             },

@@ -70,7 +70,7 @@ public partial class RadianceProvider
 
                     const decimal PerToken = 1_000_000m;
 
-                    if (el.TryGetProperty("pricing", out var pricingEl) &&
+            /*        if (el.TryGetProperty("pricing", out var pricingEl) &&
                         pricingEl.ValueKind == JsonValueKind.Object &&
                         pricingEl.TryGetProperty("prompt", out var inputEl) &&
                         pricingEl.TryGetProperty("completion", out var outputEl) &&
@@ -89,7 +89,7 @@ public partial class RadianceProvider
                         {
                             model.Pricing.InputCacheRead = cache / PerToken;
                         }
-                    }
+                    }*/
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);

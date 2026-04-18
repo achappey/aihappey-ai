@@ -52,6 +52,8 @@ public static partial class MessagesUnifiedMapper
 
         List<MessageToolDefinition>? tools = [.. request.Tools?.Select(ToMessageTool).ToList() ?? [],
             .. request.Metadata?.GetMessageToolDefinitions(providerId) ?? []];
+        var container = request.Metadata?
+            .GetProviderOption<JsonElement>(providerId, "container");
 
         var result = new MessagesRequest
         {
@@ -61,8 +63,9 @@ public static partial class MessagesUnifiedMapper
             Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],
             CacheControl = request.Metadata?
                 .GetProviderOption<CacheControlEphemeral>(providerId, "cache_control"),
-            Container = request.Metadata?
-                .GetProviderOption<JsonElement>(providerId, "container"),
+            Container = container is JsonElement je && je.ValueKind != JsonValueKind.Undefined
+                ? je.Clone()
+                : null,
             InferenceGeo = request.Metadata?
                 .GetProviderOption<string>(providerId, "inference_geo"),
             Metadata = metadataObj,

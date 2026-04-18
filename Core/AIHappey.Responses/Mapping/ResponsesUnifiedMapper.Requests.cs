@@ -23,7 +23,7 @@ public static partial class ResponsesUnifiedMapper
             ParallelToolCalls = request.ParallelToolCalls,
             ToolChoice = request.ToolChoice,
             Tools = request.Tools?.Select(ToUnifiedTool).ToList(),
-            Metadata = BuildUnifiedRequestMetadata(request)
+            Metadata = request.Metadata
         };
     }
 
@@ -419,62 +419,62 @@ public static partial class ResponsesUnifiedMapper
         switch (kind)
         {
             case "function_call":
-            {
-                var toolPart = toolParts.FirstOrDefault();
-                if (toolPart is not null && toolPart.IsClientToolCall)
-                    yield return CreateResponseFunctionCallItem(toolPart, metadata);
-                yield break;
-            }
-            case "function_call_output":
-            {
-                var toolPart = toolParts.FirstOrDefault();
-                if (toolPart is not null && toolPart.IsClientToolCall && HasToolOutput(toolPart))
-                    yield return CreateResponseFunctionCallOutputItem(toolPart, metadata);
-                yield break;
-            }
-            case "reasoning":
-            {
-                var reasoningItem = CreateResponseReasoningItem(
-                    item,
-                    metadata,
-                    providerId,
-                    requireEncryptedContent: preferEncryptedReasoningReplay);
-                if (reasoningItem is not null)
-                    yield return reasoningItem;
-                yield break;
-            }
-            case "compaction":
-            {
-                var encryptedContent = ExtractNestedValue<string>(metadata, providerId, "encrypted_content");
-                if (!string.IsNullOrWhiteSpace(encryptedContent))
                 {
-                    yield return new ResponseCompactionItem
-                    {
-                        Id = item.Id ?? ExtractValue<string>(metadata, "id"),
-                        EncryptedContent = encryptedContent
-                    };
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null && toolPart.IsClientToolCall)
+                        yield return CreateResponseFunctionCallItem(toolPart, metadata);
+                    yield break;
                 }
+            case "function_call_output":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null && toolPart.IsClientToolCall && HasToolOutput(toolPart))
+                        yield return CreateResponseFunctionCallOutputItem(toolPart, metadata);
+                    yield break;
+                }
+            case "reasoning":
+                {
+                    var reasoningItem = CreateResponseReasoningItem(
+                        item,
+                        metadata,
+                        providerId,
+                        requireEncryptedContent: preferEncryptedReasoningReplay);
+                    if (reasoningItem is not null)
+                        yield return reasoningItem;
+                    yield break;
+                }
+            case "compaction":
+                {
+                    var encryptedContent = ExtractNestedValue<string>(metadata, providerId, "encrypted_content");
+                    if (!string.IsNullOrWhiteSpace(encryptedContent))
+                    {
+                        yield return new ResponseCompactionItem
+                        {
+                            Id = item.Id ?? ExtractValue<string>(metadata, "id"),
+                            EncryptedContent = encryptedContent
+                        };
+                    }
 
-                yield break;
-            }
+                    yield break;
+                }
             case "image_generation_call":
-            {
-                yield return new ResponseImageGenerationCallItem
                 {
-                    Id = ExtractValue<string>(metadata, "id"),
-                    Result = ExtractValue<string>(metadata, "result") ?? string.Empty,
-                    Status = ExtractValue<string>(metadata, "status")
-                };
-                yield break;
-            }
+                    yield return new ResponseImageGenerationCallItem
+                    {
+                        Id = ExtractValue<string>(metadata, "id"),
+                        Result = ExtractValue<string>(metadata, "result") ?? string.Empty,
+                        Status = ExtractValue<string>(metadata, "status")
+                    };
+                    yield break;
+                }
             case "item_reference":
-            {
-                yield return new ResponseItemReference
                 {
-                    Id = ExtractValue<string>(metadata, "id") ?? string.Empty
-                };
-                yield break;
-            }
+                    yield return new ResponseItemReference
+                    {
+                        Id = ExtractValue<string>(metadata, "id") ?? string.Empty
+                    };
+                    yield break;
+                }
             default:
                 yield return new ResponseInputMessage
                 {
@@ -639,8 +639,8 @@ public static partial class ResponsesUnifiedMapper
             case Dictionary<string, object> dict:
                 json = JsonSerializer.SerializeToElement(dict, JsonSerializerOptions.Web);
                 return true;
-          //  case Dictionary<string, object?> nullableDict:
-           //     json = JsonSerializer.SerializeToElement(nullableDict, JsonSerializerOptions.Web);
+            //  case Dictionary<string, object?> nullableDict:
+            //     json = JsonSerializer.SerializeToElement(nullableDict, JsonSerializerOptions.Web);
             //    return true;
             case null:
                 json = default;
@@ -658,21 +658,7 @@ public static partial class ResponsesUnifiedMapper
                 }
         }
     }
-
-    private static Dictionary<string, object?> BuildUnifiedRequestMetadata(ResponseRequest request)
-        => new()
-        {
-            ["responses.metadata"] = request.Metadata,
-            ["responses.store"] = request.Store,
-            ["responses.service_tier"] = request.ServiceTier,
-            ["responses.include"] = request.Include,
-            ["responses.text"] = request.Text,
-            ["responses.top_logprobs"] = request.TopLogprobs,
-            ["responses.truncation"] = request.Truncation,
-            ["responses.reasoning"] = request.Reasoning,
-            ["responses.context_management"] = request.ContextManagement
-        };
-
+   
     private static ResponseRole ParseRole(string? role)
         => role?.Trim().ToLowerInvariant() switch
         {

@@ -277,6 +277,64 @@ public sealed class MessagesStreamFixtureTests
     }
 
     [Fact]
+    public void Basic_messages_bridge_to_native_response_stream_parts_with_text_boundaries_and_finish_payload()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(RawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+
+        var responseParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Select(streamEvent => streamEvent.ToResponseStreamPart())
+            .ToList();
+
+        Assert.Equal(
+            [
+                "response.output_item.added",
+                "response.output_text.delta",
+                "response.output_text.delta",
+                "response.output_text.delta",
+                "response.output_item.done",
+                "response.completed"
+            ],
+            responseParts.Select(part => part.Type).ToList());
+
+        var textStarted = Assert.IsType<ResponseOutputItemAdded>(responseParts[0]);
+        Assert.Equal("message", textStarted.Item.Type);
+        Assert.Equal("assistant", textStarted.Item.Role);
+
+        var deltas = responseParts
+            .Skip(1)
+            .Take(3)
+            .Select(part => Assert.IsType<ResponseOutputTextDelta>(part).Delta)
+            .ToList();
+
+        Assert.Equal(
+            [
+                "Hello! ",
+                "👋 Welcome! How can I help you today? Whether you want to chat, ask questions, or work through",
+                " something together, I'm here for you. 😊"
+            ],
+            deltas);
+
+        var textCompleted = Assert.IsType<ResponseOutputItemDone>(responseParts[4]);
+        Assert.Equal("message", textCompleted.Item.Type);
+        var textContent = Assert.Single(textCompleted.Item.Content ?? throw new InvalidOperationException("Expected completed message content."));
+        Assert.Equal("output_text", textContent.Type);
+        Assert.Equal(
+            "Hello! 👋 Welcome! How can I help you today? Whether you want to chat, ask questions, or work through something together, I'm here for you. 😊",
+            textContent.Text);
+
+        var completed = Assert.IsType<ResponseCompleted>(responseParts[^1]);
+        Assert.Equal("claude-opus-4-6", completed.Response.Model);
+        Assert.Equal("completed", completed.Response.Status);
+
+        var usage = JsonSerializer.SerializeToElement(completed.Response.Usage, JsonSerializerOptions.Web);
+        Assert.Equal(10, usage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(42, usage.GetProperty("output_tokens").GetInt32());
+        Assert.Equal(52, usage.GetProperty("total_tokens").GetInt32());
+    }
+
+    [Fact]
     public void Raw_reasoning_messages_fixture_maps_to_unified_reasoning_events_and_ui_parts_with_provider_scoped_signature_metadata()
     {
         var parts = FixtureFileLoader.LoadMessageRawFixture(ReasoningRawFixturePath);
@@ -367,64 +425,66 @@ public sealed class MessagesStreamFixtureTests
             .Select(streamEvent => streamEvent.ToResponseStreamPart())
             .ToList();
 
-        Assert.All(responseParts, part => Assert.IsType<ResponseUnknownEvent>(part));
-
         FixtureAssertions.AssertContainsSubsequence(
             responseParts.Select(part => part.Type).ToList(),
-            "reasoning-start",
-            "reasoning-delta",
-            "reasoning-end",
-            "tool-input-start",
-            "tool-input-delta",
-            "tool-input-available",
-            "tool-output-available",
-            "text-start",
-            "source-url",
-            "text-delta",
-            "text-end",
-            "finish");
+            "response.output_item.added",
+            "response.reasoning_text.delta",
+            "response.output_item.done",
+            "response.output_item.added",
+            "response.custom_tool_call_input.delta",
+            "response.custom_tool_call_input.done",
+            "response.output_item.done",
+            "response.output_item.added",
+            "response.output_text.annotation.added",
+            "response.output_text.delta",
+            "response.output_item.done",
+            "response.completed");
 
-        Assert.Equal(8, responseParts.Count(part => part.Type == "tool-input-delta"));
-        Assert.Equal(9, responseParts.Count(part => part.Type == "source-url"));
+        Assert.Equal(8, responseParts.Count(part => part.Type == "response.custom_tool_call_input.delta"));
+        Assert.Equal(9, responseParts.Count(part => part.Type == "response.output_text.annotation.added"));
 
-        var reasoningEnd = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "reasoning-end"));
-        var reasoningProviderMetadata = reasoningEnd.Data?["providerMetadata"].GetProperty(ProviderId)
-            ?? throw new InvalidOperationException("Expected provider metadata on reasoning-end response bridge event.");
+        var firstOutputItemDone = Assert.IsType<ResponseOutputItemDone>(responseParts.First(part => part.Type == "response.output_item.done"));
+        Assert.Equal("reasoning", firstOutputItemDone.Item.Type);
+        var reasoningProviderMetadata = firstOutputItemDone.Item.AdditionalProperties?["provider_metadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected provider metadata on reasoning output item.");
         Assert.Equal(originalSignature, reasoningProviderMetadata.GetProperty("signature").GetString());
 
-        var toolInputStart = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "tool-input-start"));
-        Assert.Equal("web_search", toolInputStart.Data?["toolName"].GetString());
-        Assert.True(toolInputStart.Data?["providerExecuted"].GetBoolean());
-        var toolInputStartProviderMetadata = toolInputStart.Data?["providerMetadata"].GetProperty(ProviderId)
-            ?? throw new InvalidOperationException("Expected provider metadata on tool-input-start response bridge event.");
-        Assert.Equal(JsonValueKind.Object, toolInputStartProviderMetadata.ValueKind);
+        var toolInputStart = Assert.IsType<ResponseOutputItemAdded>(responseParts
+            .Where(part => part.Type == "response.output_item.added")
+            .Skip(1)
+            .First());
+        Assert.Equal("web_search_call", toolInputStart.Item.Type);
+        Assert.Equal("web_search", toolInputStart.Item.Name);
+        Assert.True(toolInputStart.Item.AdditionalProperties?["provider_executed"].GetBoolean());
 
         var toolInputText = string.Concat(
             responseParts
-                .Where(part => part.Type == "tool-input-delta")
-                .Select(part => Assert.IsType<ResponseUnknownEvent>(part).Data?["inputTextDelta"].GetString()));
+                .Where(part => part.Type == "response.custom_tool_call_input.delta")
+                .Select(part => Assert.IsType<ResponseCustomToolCallInputDelta>(part).Delta));
         Assert.Equal("{\"query\": \"latest news war Iran 2026\"}", toolInputText);
 
-        var toolInputAvailable = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "tool-input-available"));
-        Assert.Equal("latest news war Iran 2026", toolInputAvailable.Data?["input"].GetProperty("query").GetString());
-        var toolInputAvailableProviderMetadata = toolInputAvailable.Data?["providerMetadata"].GetProperty(ProviderId)
-            ?? throw new InvalidOperationException("Expected provider metadata on tool-input-available response bridge event.");
-        Assert.Equal(JsonValueKind.Object, toolInputAvailableProviderMetadata.ValueKind);
+        var toolInputAvailable = Assert.IsType<ResponseCustomToolCallInputDone>(responseParts.Single(part => part.Type == "response.custom_tool_call_input.done"));
+        var toolInputJson = JsonDocument.Parse(toolInputAvailable.Input).RootElement;
+        Assert.Equal("latest news war Iran 2026", toolInputJson.GetProperty("query").GetString());
 
-        var toolOutputAvailable = Assert.IsType<ResponseUnknownEvent>(responseParts.Single(part => part.Type == "tool-output-available"));
-        Assert.True(toolOutputAvailable.Data?["providerExecuted"].GetBoolean());
-        var toolOutputProviderMetadata = toolOutputAvailable.Data?["providerMetadata"].GetProperty(ProviderId)
-            ?? throw new InvalidOperationException("Expected provider metadata on tool-output-available response bridge event.");
+        var toolOutputAvailable = Assert.IsType<ResponseOutputItemDone>(responseParts
+            .Where(part => part.Type == "response.output_item.done")
+            .Skip(1)
+            .First());
+        Assert.Equal("web_search_call", toolOutputAvailable.Item.Type);
+        Assert.True(toolOutputAvailable.Item.AdditionalProperties?["provider_executed"].GetBoolean());
+        var toolOutputProviderMetadata = toolOutputAvailable.Item.AdditionalProperties?["provider_metadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected provider metadata on completed tool item.");
         Assert.Equal(toolUseId, toolOutputProviderMetadata.GetProperty("tool_use_id").GetString());
-        var toolOutputResults = toolOutputAvailable.Data?["output"].GetProperty("structuredContent").GetProperty("content")
-            ?? throw new InvalidOperationException("Expected structured search results on tool-output-available response bridge event.");
+        var toolOutputResults = toolOutputAvailable.Item.AdditionalProperties?["output"].GetProperty("structuredContent").GetProperty("content")
+            ?? throw new InvalidOperationException("Expected structured search results on completed tool item.");
         Assert.True(toolOutputResults.GetArrayLength() >= 1);
         Assert.Equal("2026 Iran war - Wikipedia", toolOutputResults[0].GetProperty("title").GetString());
         Assert.Equal("https://en.wikipedia.org/wiki/2026_Iran_war", toolOutputResults[0].GetProperty("url").GetString());
 
         var sourceUrls = responseParts
-            .Where(part => part.Type == "source-url")
-            .Select(part => Assert.IsType<ResponseUnknownEvent>(part).Data?["url"].GetString())
+            .Where(part => part.Type == "response.output_text.annotation.added")
+            .Select(part => Assert.IsType<ResponseOutputTextAnnotationAdded>(part).Annotation.AdditionalProperties?["url"].GetString())
             .ToList();
         Assert.Contains("https://en.wikipedia.org/wiki/2026_Iran_war", sourceUrls);
         Assert.Contains("https://www.aljazeera.com/news/liveblog/2026/4/16/iran-war-live-pakistan-in-push-for-new-round-of-us-iran-peace-negotiations", sourceUrls);
@@ -432,17 +492,18 @@ public sealed class MessagesStreamFixtureTests
 
         var bridgedText = string.Concat(
             responseParts
-                .Where(part => part.Type == "text-delta")
-                .Select(part => Assert.IsType<ResponseUnknownEvent>(part).Data?["delta"].GetString()));
+                .Where(part => part.Type == "response.output_text.delta")
+                .Select(part => Assert.IsType<ResponseOutputTextDelta>(part).Delta));
         Assert.StartsWith("## Samenvatting: Nieuwste ontwikkelingen in de Iraanse oorlog", bridgedText);
         Assert.Contains("Iran reageerde met raket- en dronenaanvallen", bridgedText);
         Assert.Contains("Het Internationaal Monetair Fonds heeft gewaarschuwd", bridgedText);
 
-        var finishPart = Assert.IsType<ResponseUnknownEvent>(responseParts[^1]);
-        Assert.Equal(Model, finishPart.Data?["model"].GetString());
-        Assert.Equal("stop", finishPart.Data?["finishReason"].GetString());
-        Assert.Equal(19246, finishPart.Data?["inputTokens"].GetInt32());
-        Assert.Equal(789, finishPart.Data?["outputTokens"].GetInt32());
-        Assert.Equal(20035, finishPart.Data?["totalTokens"].GetInt32());
+        var finishPart = Assert.IsType<ResponseCompleted>(responseParts[^1]);
+        Assert.Equal(Model, finishPart.Response.Model);
+        Assert.Equal("completed", finishPart.Response.Status);
+        var finishUsage = JsonSerializer.SerializeToElement(finishPart.Response.Usage, JsonSerializerOptions.Web);
+        Assert.Equal(19246, finishUsage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(789, finishUsage.GetProperty("output_tokens").GetInt32());
+        Assert.Equal(20035, finishUsage.GetProperty("total_tokens").GetInt32());
     }
 }
