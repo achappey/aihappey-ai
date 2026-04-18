@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.Providers.Mistral;
 using AIHappey.Unified.Models;
 

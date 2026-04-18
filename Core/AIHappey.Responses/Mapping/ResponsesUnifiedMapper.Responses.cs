@@ -19,8 +19,7 @@ public static partial class ResponsesUnifiedMapper
             Status = response.Status,
             Usage = response.Usage,
             Output = outputItems.Count > 0 ? new AIOutput { Items = outputItems } : null,
-            Metadata = BuildUnifiedResponseMetadata(response),
-            //  Events = null
+            Metadata = response.Metadata,
         };
     }
 
@@ -50,7 +49,7 @@ public static partial class ResponsesUnifiedMapper
             MaxOutputTokens = ExtractValue<int?>(metadata, "responses.max_output_tokens"),
             ServiceTier = ExtractValue<string>(metadata, "responses.service_tier"),
             Error = ExtractObject<ResponseResultError>(metadata, "responses.error"),
-            Metadata = ExtractObject<Dictionary<string, object?>>(metadata, "responses.metadata")
+            Metadata = response.Metadata
         };
     }
 
@@ -74,6 +73,12 @@ public static partial class ResponsesUnifiedMapper
             if (TryCreateImageOutputItem(item, map, role, type, out var imageItem))
             {
                 yield return imageItem;
+                continue;
+            }
+
+            if (TryCreateReasoningOutputItem(item, map, role, type, providerId, out var reasoningItem))
+            {
+                yield return reasoningItem;
                 continue;
             }
 
@@ -136,6 +141,177 @@ public static partial class ResponsesUnifiedMapper
                 Content = [new AITextContentPart { Type = "text", Text = response.Text.ToString() ?? string.Empty }]
             };
         }
+    }
+
+    private static bool TryCreateReasoningOutputItem(
+        object rawItem,
+        Dictionary<string, object?> map,
+        string role,
+        string type,
+        string providerId,
+        out AIOutputItem item)
+    {
+        if (!string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase))
+        {
+            item = null!;
+            return false;
+        }
+
+        var reasoningId = GetValue<string>(map, "id");
+        var encryptedContent = GetValue<object>(map, "encrypted_content");
+        var status = GetValue<string>(map, "status");
+        var summary = ExtractReasoningSummaryParts(map);
+        var content = new List<AIContentPart>();
+
+        if (map.TryGetValue("content", out var contentObj)
+            && contentObj is JsonElement contentJson
+            && contentJson.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var part in contentJson.EnumerateArray())
+            {
+                var partType = part.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
+                var text = part.TryGetProperty("text", out var textProp) ? textProp.GetString() ?? string.Empty : string.Empty;
+
+                if (partType is "reasoning_text" or "summary_text")
+                {
+                    content.Add(new AIReasoningContentPart
+                    {
+                        Type = "reasoning",
+                        Text = text,
+                        Metadata = CreateReasoningContentMetadata(providerId, reasoningId, encryptedContent, summary, partType)
+                    });
+                    continue;
+                }
+
+                content.Add(new AITextContentPart
+                {
+                    Type = "text",
+                    Text = part.GetRawText(),
+                    Metadata = new Dictionary<string, object?> { ["responses.raw_content_part"] = true }
+                });
+            }
+        }
+
+        if (content.Count == 0)
+        {
+            foreach (var summaryPart in summary)
+            {
+                content.Add(new AIReasoningContentPart
+                {
+                    Type = "reasoning",
+                    Text = summaryPart.Text,
+                    Metadata = CreateReasoningContentMetadata(providerId, reasoningId, encryptedContent, summary, summaryPart.Type)
+                });
+            }
+        }
+
+        if (content.Count == 0 && HasMeaningfulValue(encryptedContent))
+        {
+            content.Add(new AIReasoningContentPart
+            {
+                Type = "reasoning",
+                Text = string.Empty,
+                Metadata = CreateReasoningContentMetadata(providerId, reasoningId, encryptedContent, summary, "reasoning")
+            });
+        }
+
+        item = new AIOutputItem
+        {
+            Type = type,
+            Role = role,
+            Content = content.Count > 0 ? content : null,
+            Metadata = CreateReasoningItemMetadata(providerId, reasoningId, encryptedContent, summary, status, rawItem)
+        };
+
+        return true;
+    }
+
+    private static List<ResponseReasoningSummaryTextPart> ExtractReasoningSummaryParts(Dictionary<string, object?> map)
+    {
+        if (!map.TryGetValue("summary", out var summaryObj)
+            || summaryObj is not JsonElement summaryJson
+            || summaryJson.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var summary = new List<ResponseReasoningSummaryTextPart>();
+        foreach (var part in summaryJson.EnumerateArray())
+        {
+            var type = part.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
+            var text = part.TryGetProperty("text", out var textProp) ? textProp.GetString() : null;
+
+            if (string.IsNullOrWhiteSpace(text))
+                continue;
+
+            summary.Add(new ResponseReasoningSummaryTextPart
+            {
+                Type = string.IsNullOrWhiteSpace(type) ? "summary_text" : type!,
+                Text = text
+            });
+        }
+
+        return summary;
+    }
+
+    private static Dictionary<string, object?> CreateReasoningItemMetadata(
+        string providerId,
+        string? reasoningId,
+        object? encryptedContent,
+        IReadOnlyCollection<ResponseReasoningSummaryTextPart> summary,
+        string? status,
+        object rawItem)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["responses.type"] = "reasoning",
+            ["responses.raw_output"] = rawItem
+        };
+
+        if (!string.IsNullOrWhiteSpace(reasoningId))
+            metadata["id"] = reasoningId;
+
+        if (!string.IsNullOrWhiteSpace(status))
+            metadata["status"] = status;
+
+        MergeProviderScopedReasoningItemIdMetadata(metadata, providerId, reasoningId);
+        MergeProviderScopedEncryptedContentMetadata(metadata, providerId, encryptedContent);
+        MergeProviderScopedReasoningSummaryMetadata(metadata, providerId, summary);
+        return metadata;
+    }
+
+    private static Dictionary<string, object?> CreateReasoningContentMetadata(
+        string providerId,
+        string? reasoningId,
+        object? encryptedContent,
+        IReadOnlyCollection<ResponseReasoningSummaryTextPart> summary,
+        string? partType)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["responses.type"] = partType ?? "reasoning"
+        };
+
+        if (!string.IsNullOrWhiteSpace(reasoningId))
+            metadata["id"] = reasoningId;
+
+        MergeProviderScopedReasoningItemIdMetadata(metadata, providerId, reasoningId);
+        MergeProviderScopedEncryptedContentMetadata(metadata, providerId, encryptedContent);
+        MergeProviderScopedReasoningSummaryMetadata(metadata, providerId, summary);
+        return metadata;
+    }
+
+    private static void MergeProviderScopedReasoningSummaryMetadata(
+        Dictionary<string, object?> metadata,
+        string providerId,
+        IReadOnlyCollection<ResponseReasoningSummaryTextPart>? summary)
+    {
+        if (summary is not { Count: > 0 })
+            return;
+
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["summary"] = JsonSerializer.SerializeToElement(summary, Json);
+        metadata[providerId] = providerMetadata;
     }
 
     private static bool TryCreateImageOutputItem(
@@ -422,14 +598,6 @@ public static partial class ResponsesUnifiedMapper
             _ => hasOutput ? "completed" : "in_progress"
         };
     }
-
-    private static Dictionary<string, object?>? BuildUnifiedResponseMetadata(ResponseResult response)
-        => response.Metadata is { Count: > 0 }
-            ? new Dictionary<string, object?>
-            {
-                ["metadata"] = response.Metadata
-            }
-            : null;
 
     private static string? NormalizeImageMediaType(string? outputFormat)
         => outputFormat?.Trim().ToLowerInvariant() switch

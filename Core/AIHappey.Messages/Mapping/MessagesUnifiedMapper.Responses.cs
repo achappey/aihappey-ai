@@ -23,7 +23,6 @@ public static partial class MessagesUnifiedMapper
             Status = ToUnifiedStatus(response.StopReason),
             Usage = response.Usage,
             Output = outputItems.Count == 0 ? null : new AIOutput { Items = outputItems },
-            //  Metadata = BuildUnifiedResponseMetadata(response)
             Metadata = metadata
         };
     }
@@ -35,13 +34,24 @@ public static partial class MessagesUnifiedMapper
         var metadata = response.Metadata ?? [];
         var role = ExtractValue<string>(metadata, "messages.response.role") ?? "assistant";
 
+        var resultMetadata = response.Metadata?
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value is JsonElement je
+                    ? je
+                    : JsonSerializer.Deserialize<JsonElement>(
+                        JsonSerializer.Serialize(kvp.Value)
+                      )
+            );
+
         return new MessagesResponse
         {
             Id = ExtractValue<string>(metadata, "messages.response.id") ?? $"msg_{Guid.NewGuid():N}",
             Container = ExtractObject<MessagesContainer>(metadata, "messages.response.container"),
-            Content = [.. ToMessageContentBlocks(response.Output)],
+            Content = [.. ToMessageContentBlocks(response.Output, response.ProviderId)],
             Model = response.Model,
             Role = role,
+            Metadata = resultMetadata,
             StopDetails = ExtractObject<MessagesStopDetails>(metadata, "messages.response.stop_details"),
             StopReason = ExtractValue<string>(metadata, "messages.response.stop_reason") ?? ToMessagesStopReason(response.Status),
             StopSequence = ExtractValue<string>(metadata, "messages.response.stop_sequence"),
@@ -49,46 +59,6 @@ public static partial class MessagesUnifiedMapper
             Usage = ExtractObject<MessagesUsage>(metadata, "messages.response.usage") ?? DeserializeFromObject<MessagesUsage>(response.Usage),
             AdditionalProperties = ExtractObject<Dictionary<string, JsonElement>>(metadata, "messages.response.unmapped")
         };
-    }
-
-    private static Dictionary<string, object?> BuildUnifiedResponseMetadata(MessagesResponse response)
-    {
-        var raw = JsonSerializer.SerializeToElement(response, Json);
-        var metadata = new Dictionary<string, object?>
-        {
-            ["messages.response.raw"] = raw,
-            ["messages.response.id"] = response.Id,
-            ["messages.response.container"] = response.Container,
-            ["messages.response.role"] = response.Role,
-            ["messages.response.stop_details"] = response.StopDetails,
-            ["messages.response.stop_reason"] = response.StopReason,
-            ["messages.response.stop_sequence"] = response.StopSequence,
-            ["messages.response.type"] = response.Type,
-            ["messages.response.usage"] = response.Usage
-        };
-
-        var unmapped = new Dictionary<string, JsonElement>();
-        foreach (var prop in raw.EnumerateObject())
-        {
-            metadata[$"messages.response.{prop.Name}"] = prop.Value.Clone();
-
-            if (prop.Name is not "id"
-                and not "container"
-                and not "content"
-                and not "model"
-                and not "role"
-                and not "stop_details"
-                and not "stop_reason"
-                and not "stop_sequence"
-                and not "type"
-                and not "usage")
-            {
-                unmapped[prop.Name] = prop.Value.Clone();
-            }
-        }
-
-        metadata["messages.response.unmapped"] = JsonSerializer.SerializeToElement(unmapped, Json);
-        return metadata;
     }
 
     private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(MessagesResponse response)
@@ -168,7 +138,7 @@ public static partial class MessagesUnifiedMapper
         }
     }
 
-    private static IEnumerable<MessageContentBlock> ToMessageContentBlocks(AIOutput? output)
+    private static IEnumerable<MessageContentBlock> ToMessageContentBlocks(AIOutput? output, string? providerId)
     {
         foreach (var item in output?.Items ?? [])
         {
@@ -214,7 +184,7 @@ public static partial class MessagesUnifiedMapper
                         yield return new MessageContentBlock { Type = "text", Text = text.Text };
                         break;
                     case AIReasoningContentPart reasoning:
-                        yield return new MessageContentBlock { Type = "thinking", Thinking = reasoning.Text };
+                        yield return ToReasoningMessageBlock(reasoning, providerId);
                         break;
                     case AIFileContentPart file:
                         if (ToMessageFileBlock(file) is { } fileBlock)
@@ -223,6 +193,40 @@ public static partial class MessagesUnifiedMapper
                 }
             }
         }
+    }
+
+    private static MessageContentBlock ToReasoningMessageBlock(AIReasoningContentPart reasoning, string? providerId)
+    {
+        var reasoningId = !string.IsNullOrWhiteSpace(providerId)
+            ? reasoning.Metadata.GetProviderOption<string>(providerId!, "id")
+              ?? reasoning.Metadata.GetProviderOption<string>(providerId!, "item_id")
+            : null;
+
+        reasoningId ??= ExtractValue<string>(reasoning.Metadata, "id")
+                        ?? ExtractValue<string>(reasoning.Metadata, "item_id");
+
+        var encryptedContent = !string.IsNullOrWhiteSpace(providerId)
+            ? reasoning.Metadata.GetProviderOption<string>(providerId!, "encrypted_content")
+            : null;
+
+        var signature = !string.IsNullOrWhiteSpace(providerId)
+            ? reasoning.Metadata.GetProviderOption<string>(providerId!, "signature")
+            : null;
+
+        signature ??= ExtractValue<string>(reasoning.Metadata, "signature");
+
+        var isRedacted = string.IsNullOrWhiteSpace(reasoning.Text)
+                         && !string.IsNullOrWhiteSpace(encryptedContent);
+
+        return new MessageContentBlock
+        {
+            Type = isRedacted ? "redacted_thinking" : "thinking",
+            Thinking = isRedacted ? null : reasoning.Text,
+            Data = isRedacted ? reasoning.Text : null,
+            Signature = signature,
+            Id = reasoningId,
+            EncryptedContent = encryptedContent
+        };
     }
 
     private static AIFileContentPart ToUnifiedFilePart(MessageContentBlock block)

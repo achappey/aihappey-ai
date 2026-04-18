@@ -160,7 +160,6 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(35, finishData.TotalTokens);
         Assert.Null(finishData.StopSequence);
         Assert.NotNull(finishData.MessageMetadata);
-        Assert.Equal(Model, finishData.MessageMetadata?.Model);
         Assert.Equal(12, finishData.MessageMetadata?.Usage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(23, finishData.MessageMetadata?.Usage.GetProperty("output_tokens").GetInt32());
         Assert.IsType<long>(finishData.CompletedAt);

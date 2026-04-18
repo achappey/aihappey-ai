@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using ModelContextProtocol.Protocol;

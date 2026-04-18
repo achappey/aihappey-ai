@@ -204,9 +204,6 @@ public sealed record AIFinishMessageMetadata
     private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
     private static readonly JsonElement EmptyUsage = JsonSerializer.SerializeToElement(new Dictionary<string, object?>(), Json);
 
-    [JsonPropertyName("model")]
-    public required string Model { get; init; }
-
     [JsonPropertyName("timestamp")]
     public required DateTimeOffset Timestamp { get; init; }
 
@@ -224,21 +221,6 @@ public sealed record AIFinishMessageMetadata
 
     [JsonPropertyName("temperature")]
     public float? Temperature { get; init; }
-
-    [JsonPropertyName("reasoningTokens")]
-    public int? ReasoningTokens { get; init; }
-
-    [JsonPropertyName("cachedInputTokens")]
-    public int? CachedInputTokens { get; init; }
-
-    [JsonPropertyName("cachedInputReadTokens")]
-    public int? CachedInputReadTokens { get; init; }
-
-    [JsonPropertyName("cachedInputWriteTokens")]
-    public int? CachedInputWriteTokens { get; init; }
-
-    [JsonPropertyName("runtimeMs")]
-    public long? RuntimeMs { get; init; }
 
     [JsonPropertyName("gateway")]
     public AIFinishGatewayMetadata? Gateway { get; init; }

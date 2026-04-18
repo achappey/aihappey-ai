@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
@@ -15,6 +14,7 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
 {
     private const string SimpleResponseFixturePath = "Fixtures/responses/raw/simple-response-non-streaming.json";
     private const string OpenAiImageResponseFixturePath = "Fixtures/responses/raw/openai-image-output-non-streaming.json";
+    private const string GroqReasoningResponseFixturePath = "Fixtures/responses/raw/groq-with-reasoning-non-streaming.json";
     private const string ProviderId = "openai";
     private const string ExpectedModel = "gpt-5.4-nano-2026-03-17";
     private const string ExpectedSamplingModel = $"{ProviderId}/{ExpectedModel}";
@@ -85,6 +85,38 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
         Assert.NotNull(messagesResponse.Usage);
         Assert.Equal(170, messagesResponse.Usage!.InputTokens);
         Assert.Equal(12, messagesResponse.Usage.OutputTokens);
+    }
+
+    [Fact]
+    public void Groq_non_streaming_reasoning_response_maps_to_unified_reasoning_and_messages_thinking_blocks()
+    {
+        var unifiedResponse = LoadUnifiedResponse(GroqReasoningResponseFixturePath);
+
+        var outputItems = Assert.IsAssignableFrom<IReadOnlyList<AIOutputItem>>(unifiedResponse.Output?.Items);
+        Assert.Equal("reasoning", outputItems[0].Type);
+
+        var reasoningPart = Assert.IsType<AIReasoningContentPart>(Assert.Single(outputItems[0].Content!));
+        Assert.Equal("User says \"thanks bro\". Probably respond politely.", reasoningPart.Text);
+
+        var messagesResponse = unifiedResponse.ToMessagesResponse();
+
+        Assert.Equal("groq/openai/gpt-oss-20b", messagesResponse.Model);
+        Assert.Equal("assistant", messagesResponse.Role);
+        Assert.Equal("end_turn", messagesResponse.StopReason);
+
+        Assert.Collection(
+            messagesResponse.Content,
+            block =>
+            {
+                Assert.Equal("thinking", block.Type);
+                Assert.Equal("User says \"thanks bro\". Probably respond politely.", block.Thinking);
+                Assert.Null(block.Text);
+            },
+            block =>
+            {
+                Assert.Equal("text", block.Type);
+                Assert.Equal("You’re welcome! Anytime you need help, just let me know. 😎", block.Text);
+            });
     }
 
     [Fact]

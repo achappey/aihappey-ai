@@ -1,0 +1,72 @@
+{
+    "id": "resp_01kpggyjmve9t8kxa97gt7wqg9",
+    "object": "response",
+    "status": "completed",
+    "created_at": 1776523627,
+    "output": [
+        {
+            "type": "reasoning",
+            "id": "resp_01kpggyjmve9tsty12swtryhpb",
+            "status": "completed",
+            "content": [
+                {
+                    "type": "reasoning_text",
+                    "text": "User says \"thanks bro\". Probably respond politely."
+                }
+            ],
+            "summary": []
+        },
+        {
+            "type": "message",
+            "id": "msg_01kpggyjmve9vax1ekqr3yhf1e",
+            "status": "completed",
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "output_text",
+                    "text": "You’re welcome! Anytime you need help, just let me know. 😎",
+                    "annotations": [],
+                    "logprobs": null
+                }
+            ]
+        }
+    ],
+    "previous_response_id": null,
+    "model": "groq/openai/gpt-oss-20b",
+    "reasoning": {
+        "effort": "medium"
+    },
+    "max_output_tokens": null,
+    "text": {
+        "format": {
+            "type": "text"
+        }
+    },
+    "tools": [],
+    "tool_choice": "auto",
+    "truncation": "disabled",
+    "metadata": {},
+    "groq": null,
+    "temperature": 1,
+    "top_p": 1,
+    "user": null,
+    "service_tier": "default",
+    "background": false,
+    "error": null,
+    "incomplete_details": null,
+    "usage": {
+        "input_tokens": 272,
+        "input_tokens_details": {
+            "cached_tokens": 0
+        },
+        "output_tokens": 36,
+        "output_tokens_details": {
+            "reasoning_tokens": 11
+        },
+        "total_tokens": 308
+    },
+    "parallel_tool_calls": true,
+    "store": false,
+    "top_logprobs": null,
+    "max_tool_calls": null
+}

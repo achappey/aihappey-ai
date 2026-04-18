@@ -202,7 +202,7 @@ public static partial class ResponsesUnifiedMapper
             CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             CompletedAt = completedAt ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Status = status,
-            Model = finishData.Model ?? finishData.MessageMetadata?.Model ?? "unknown",
+            Model = finishData.Model ?? "unknown",
             Usage = usage,
             Output = []
         };
