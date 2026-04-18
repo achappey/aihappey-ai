@@ -14,7 +14,7 @@
   "instructions": null,
   "max_output_tokens": 4096,
   "max_tool_calls": null,
-  "model": "gpt-5.4-nano-2026-03-17",
+  "model": "openai/gpt-5.4-nano-2026-03-17",
   "output": [
     {
       "id": "msg_097a0520147ddb860169e024e96d108190a41ad36a76613397",

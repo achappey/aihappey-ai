@@ -28,7 +28,6 @@ public static class ModelProviderResponsesUnifiedExtensions
 
     }
 
-
     public static async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> GetResponses(
         this IModelProvider modelProvider,
         HttpClient client,

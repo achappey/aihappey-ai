@@ -35,7 +35,7 @@ public static partial class ResponsesUnifiedMapper
 
         return new ResponseRequest
         {
-            Model = NormalizeRequestModel(request.Model, providerId),
+            Model = request.Model,
             Instructions = request.Instructions,
             Input = request.Input is null ? null : ToResponsesInput(request.Input, providerId),
             Temperature = request.Temperature,
@@ -658,7 +658,7 @@ public static partial class ResponsesUnifiedMapper
                 }
         }
     }
-   
+
     private static ResponseRole ParseRole(string? role)
         => role?.Trim().ToLowerInvariant() switch
         {

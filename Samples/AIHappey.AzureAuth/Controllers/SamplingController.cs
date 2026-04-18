@@ -42,10 +42,10 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
 
         var startedAt = DateTime.UtcNow;
         var modelHint = requestDto.ModelPreferences?.Hints?.FirstOrDefault(a => a.Name?.StartsWith(provider.GetIdentifier()) == true);
-        requestDto.ModelPreferences?.Hints = [ new ModelHint()
+      /*  requestDto.ModelPreferences?.Hints = [ new ModelHint()
             {
                 Name = modelHint?.Name?.SplitModelId().Model
-            }];
+            }];*/
 
         var result = await provider.SamplingAsync(requestDto, cancellationToken);
 

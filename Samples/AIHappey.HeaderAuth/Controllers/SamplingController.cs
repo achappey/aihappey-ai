@@ -41,10 +41,10 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
         provider ??= _resolver.GetProvider();
 
         var modelHint = requestDto.ModelPreferences?.Hints?.FirstOrDefault(a => a.Name?.StartsWith(provider.GetIdentifier()) == true);
-        requestDto.ModelPreferences?.Hints = [ new ModelHint()
-            {
-                Name = modelHint?.Name?.SplitModelId().Model
-            }];
+        /*      requestDto.ModelPreferences?.Hints = [ new ModelHint()
+                  {
+                      Name = modelHint?.Name?.SplitModelId().Model
+                  }];*/
 
 
         var result = await provider.SamplingAsync(requestDto, cancellationToken);

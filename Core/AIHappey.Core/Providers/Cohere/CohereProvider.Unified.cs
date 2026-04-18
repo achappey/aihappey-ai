@@ -1136,18 +1136,6 @@ public partial class CohereProvider
 
         var metadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
-            ["cohere.id"] = response.TryGetProperty("id", out var idElement) ? idElement.GetString() : null,
-            ["cohere.requested_model"] = request.Model,
-            ["cohere.finish_reason"] = finishReason,
-            ["cohere.request"] = JsonSerializer.SerializeToElement(payload, CohereJsonSerializerOptions),
-            ["cohere.replay.input_items"] = request.Input?.Items is { Count: > 0 } inputItems
-                ? JsonSerializer.SerializeToElement(inputItems, CohereJsonSerializerOptions)
-                : null,
-            ["cohere.replay.messages"] = payload["messages"]?.DeepClone(),
-            ["cohere.response"] = response.Clone(),
-            ["cohere.usage"] = responseUsage,
-            ["cohere.sources"] = sources.Count == 0 ? null : JsonSerializer.SerializeToElement(sources, CohereJsonSerializerOptions),
-            ["unified.request.headers"] = request.Headers?.ToDictionary(pair => pair.Key, pair => (object?)pair.Value)
         };
 
         metadata = EnrichMetadataWithGatewayCost(metadata, responseUsage, responseModel);
@@ -1155,7 +1143,7 @@ public partial class CohereProvider
         return new AIResponse
         {
             ProviderId = GetIdentifier(),
-            Model = request.Model,
+            Model = $"{GetIdentifier()}/{request.Model}",
             Status = InferUnifiedStatus(finishReason),
             Output = new AIOutput
             {
@@ -1789,7 +1777,7 @@ public partial class CohereProvider
                 Data = new AIFinishEventData
                 {
                     FinishReason = finishReason,
-                    Model = model,
+                    Model = $"{providerId}/{model}",
                     CompletedAt = timestamp.ToUnixTimeSeconds(),
                     InputTokens = inputTokens,
                     OutputTokens = outputTokens,

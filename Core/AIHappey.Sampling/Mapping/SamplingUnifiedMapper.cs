@@ -17,11 +17,15 @@ public static class SamplingUnifiedMapper
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
 
         var model = request.ModelPreferences?.Hints?.FirstOrDefault()?.Name;
+        var modelId = model?.Contains('/')
+            == true
+                ? model.Split('/', 2)[1]
+                : model;
 
         return new AIRequest
         {
             ProviderId = providerId,
-            Model = model,
+            Model = modelId,
             Instructions = request.SystemPrompt,
             Temperature = request.Temperature,
             MaxOutputTokens = request.MaxTokens,
@@ -102,7 +106,7 @@ public static class SamplingUnifiedMapper
 
         return new CreateMessageResult
         {
-            Model = NormalizeSamplingModel(response.Model, response.ProviderId, response.Metadata),
+            Model = response.Model ?? string.Empty,
             StopReason = ToSamplingStopReason(response.Status),
             Role = ParseRole(firstOutput?.Role),
             Content = content,
@@ -657,31 +661,6 @@ public static class SamplingUnifiedMapper
 
     private static bool IsLegacyUsageKey(string key)
         => key is "inputTokens" or "outputTokens" or "totalTokens";
-
-    private static string NormalizeSamplingModel(string? model, string providerId, Dictionary<string, object?>? metadata)
-    {
-        var modelText = model?.Trim();
-        modelText ??= GetString(metadata, "model")?.Trim();
-
-        if (string.IsNullOrWhiteSpace(modelText) && metadata?.TryGetValue("metadata", out var nestedMetadata) == true)
-        {
-            foreach (var property in EnumerateObjectProperties(nestedMetadata))
-            {
-                if (!string.Equals(property.Name, "model", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                modelText = property.Value.GetString()?.Trim();
-                break;
-            }
-        }
-
-        if (string.IsNullOrWhiteSpace(modelText))
-            modelText = "unknown";
-
-        return modelText.Contains('/', StringComparison.Ordinal)
-            ? modelText
-            : $"{providerId}/{modelText}";
-    }
 
     private static string? GetString(Dictionary<string, object?>? metadata, string key)
     {

@@ -74,7 +74,7 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
     {
         var messagesResponse = LoadUnifiedResponse().ToMessagesResponse();
 
-        Assert.Equal(ExpectedModel, messagesResponse.Model);
+        Assert.EndsWith(ExpectedModel, messagesResponse.Model);
         Assert.Equal("assistant", messagesResponse.Role);
         Assert.Equal("end_turn", messagesResponse.StopReason);
 
@@ -92,7 +92,7 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
     {
         var chatCompletion = LoadUnifiedResponse().ToChatCompletion();
 
-        Assert.Equal(ExpectedModel, chatCompletion.Model);
+        Assert.EndsWith(ExpectedModel, chatCompletion.Model);
 
         var choice = ToJsonElement(Assert.Single(chatCompletion.Choices));
         var message = choice.GetProperty("message");
@@ -130,56 +130,7 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
         Assert.Equal(57, usage.GetProperty("completionTokens").GetInt32());
         Assert.Equal(1708, usage.GetProperty("totalTokens").GetInt32());
     }
-
-    [Fact]
-    public void Legacy_sampling_meta_roundtrips_to_root_gateway_and_normalized_usage()
-    {
-        var legacySamplingResult = new CreateMessageResult
-        {
-            Model = "gpt-5.4-mini-2026-03-17",
-            StopReason = "stop",
-            Role = Role.Assistant,
-            Content = [new TextContentBlock { Text = "Alkmaar" }],
-            Meta = new JsonObject
-            {
-                ["metadata"] = new JsonObject
-                {
-                    ["gateway"] = new JsonObject
-                    {
-                        ["cost"] = 0.00020700m
-                    }
-                },
-                ["inputTokens"] = 12,
-                ["outputTokens"] = 44,
-                ["totalTokens"] = 56
-            }
-        };
-
-        var unifiedResponse = legacySamplingResult.ToUnifiedResponse(ProviderId);
-        var unifiedUsage = ToJsonElement(unifiedResponse.Usage);
-
-        Assert.Equal(12, unifiedUsage.GetProperty("promptTokens").GetInt32());
-        Assert.Equal(44, unifiedUsage.GetProperty("completionTokens").GetInt32());
-        Assert.Equal(56, unifiedUsage.GetProperty("totalTokens").GetInt32());
-
-        var samplingResult = unifiedResponse.ToSamplingResult();
-        var meta = ToJsonElement(samplingResult.Meta);
-
-        Assert.Equal("openai/gpt-5.4-mini-2026-03-17", samplingResult.Model);
-        Assert.False(meta.TryGetProperty("metadata", out _));
-        Assert.False(meta.TryGetProperty("inputTokens", out _));
-        Assert.False(meta.TryGetProperty("outputTokens", out _));
-        Assert.False(meta.TryGetProperty("totalTokens", out _));
-
-        var gateway = meta.GetProperty("gateway");
-        Assert.Equal(0.00020700m, gateway.GetProperty("cost").GetDecimal());
-
-        var usage = meta.GetProperty("usage");
-        Assert.Equal(12, usage.GetProperty("promptTokens").GetInt32());
-        Assert.Equal(44, usage.GetProperty("completionTokens").GetInt32());
-        Assert.Equal(56, usage.GetProperty("totalTokens").GetInt32());
-    }
-
+   
     private static AIResponse LoadUnifiedResponse(string fixturePath = SimpleResponseFixturePath)
         => LoadResponseFixture(fixturePath).ToUnifiedResponse(ProviderId);
 

@@ -57,7 +57,7 @@ public static partial class MessagesUnifiedMapper
 
         var result = new MessagesRequest
         {
-            Model = NormalizeRequestModel(request.Model, providerId),
+            Model = request.Model,
             MaxTokens = request.MaxOutputTokens ?? request.Metadata?
                 .GetProviderOption<int?>(providerId, "max_tokens"),
             Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],

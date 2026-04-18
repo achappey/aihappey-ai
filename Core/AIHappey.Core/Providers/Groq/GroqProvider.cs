@@ -97,8 +97,6 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
     {
         ApplyAuthHeader();
 
-        this.SetDefaultResponseProperties(options);
-
         return ResponsesStreamingInternalAsync(options, cancellationToken);
     }
 
