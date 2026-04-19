@@ -6,6 +6,13 @@
       "output": "0.0000025"
     }
   },
+  "perplexity/anthropic/claude-opus-4-7": {
+    "pricing": {
+      "input": "0.000005",
+      "input_cache_read": "0.0000005",
+      "output": "0.000025"
+    }
+  },
   "perplexity/anthropic/claude-opus-4-6": {
     "pricing": {
       "input": "0.000005",

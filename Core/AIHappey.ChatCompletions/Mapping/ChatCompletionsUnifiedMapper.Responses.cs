@@ -40,10 +40,40 @@ public static partial class ChatCompletionsUnifiedMapper
                     Metadata = outputMetadata.Count > 0 ? outputMetadata : null
                 }
                 : null,
-            Metadata = BuildUnifiedResponseMetadata(response)
+            Metadata = response.TryGetProperty("metadata", out var metadata) ? ToDictionary(metadata) : null
         };
     }
 
+    private static Dictionary<string, object?>? ToDictionary(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var dict = new Dictionary<string, object?>();
+
+        foreach (var prop in element.EnumerateObject())
+        {
+            dict[prop.Name] = ToObject(prop.Value);
+        }
+
+        return dict;
+    }
+
+    private static object? ToObject(JsonElement el)
+    {
+        return el.ValueKind switch
+        {
+            JsonValueKind.Object => ToDictionary(el),
+            JsonValueKind.Array => el.EnumerateArray().Select(ToObject).ToList(),
+            JsonValueKind.String => el.GetString(),
+            JsonValueKind.Number => el.TryGetInt64(out var l) ? l :
+                                    el.TryGetDouble(out var d) ? d : null,
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            _ => null
+        };
+    }
     public static ChatCompletion ToChatCompletion(this AIResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);

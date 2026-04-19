@@ -1,4 +1,10 @@
 {
+  "anthropic/claude-opus-4-7": {
+    "pricing": {
+      "input": "0.000005",
+      "output": "0.000025"
+    }
+  },
   "anthropic/claude-opus-4-6": {
     "pricing": {
       "input": "0.000005",
