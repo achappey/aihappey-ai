@@ -109,28 +109,6 @@ public partial class MistralProvider
                 resp.StatusCode,
                 "Mistral returned an empty conversation response.",
                 body);
-
-    /*    if (result.Outputs is JsonArray outputs)
-        {
-            foreach (var node in outputs)
-            {
-                if (node is not JsonObject obj)
-                    continue;
-
-                if (!obj.TryGetPropertyValue("model", out var modelNode))
-                    continue;
-
-                if (modelNode is not JsonValue val)
-                    continue;
-
-                var model = val.GetValue<string>();
-                if (string.IsNullOrEmpty(model))
-                    continue;
-
-                obj["model"] = $"{GetIdentifier()}/{model}";
-            }
-        }
-*/
     }
 
     private async IAsyncEnumerable<MistralConversationStreamEvent> StartConversationStreamAsync(

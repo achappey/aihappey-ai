@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Responses.Streaming;
@@ -9,6 +10,9 @@ namespace AIHappey.Responses.Mapping;
 public static partial class ResponsesUnifiedMapper
 {
     private static readonly AsyncLocal<ResponseShellStreamState?> CurrentShellStreamState = new();
+    private static readonly ConcurrentDictionary<string, string> ToolItemIdsByCallIdGlobal = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, string> ToolItemIdsByOutputItemIdGlobal = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, string> CallIdsByOutputItemIdGlobal = new(StringComparer.Ordinal);
 
     private static ResponseShellStreamState GetShellStreamState()
         => CurrentShellStreamState.Value ??= new ResponseShellStreamState();
@@ -33,9 +37,19 @@ public static partial class ResponsesUnifiedMapper
         if (!string.IsNullOrWhiteSpace(callId))
         {
             state.InputsByCallId[callId] = accumulator;
+            state.ToolItemIdsByCallId[callId] = accumulator.ItemId;
+            ToolItemIdsByCallIdGlobal[callId] = accumulator.ItemId;
 
             if (state.OutputsByCallId.TryGetValue(callId, out var outputAccumulator))
+            {
                 outputAccumulator.ToolItemId = accumulator.ItemId;
+
+                if (!string.IsNullOrWhiteSpace(outputAccumulator.OutputItemId))
+                {
+                    ToolItemIdsByOutputItemIdGlobal[outputAccumulator.OutputItemId] = accumulator.ItemId;
+                    CallIdsByOutputItemIdGlobal[outputAccumulator.OutputItemId] = callId;
+                }
+            }
         }
     }
 
@@ -64,10 +78,50 @@ public static partial class ResponsesUnifiedMapper
         if (!string.IsNullOrWhiteSpace(callId) && state.InputsByCallId.TryGetValue(callId, out var inputAccumulator))
             accumulator.ToolItemId = inputAccumulator.ItemId;
 
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(callId)
+            && state.ToolItemIdsByCallId.TryGetValue(callId, out var toolItemId))
+        {
+            accumulator.ToolItemId = toolItemId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(callId)
+            && ToolItemIdsByCallIdGlobal.TryGetValue(callId, out var globalToolItemId))
+        {
+            accumulator.ToolItemId = globalToolItemId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.CallId)
+            && !string.IsNullOrWhiteSpace(accumulator.OutputItemId)
+            && CallIdsByOutputItemIdGlobal.TryGetValue(accumulator.OutputItemId, out var globalCallId))
+        {
+            accumulator.CallId = globalCallId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(accumulator.OutputItemId)
+            && ToolItemIdsByOutputItemIdGlobal.TryGetValue(accumulator.OutputItemId, out var outputItemToolId))
+        {
+            accumulator.ToolItemId = outputItemToolId;
+        }
+
         state.OutputsByOutputIndex[outputIndex] = accumulator;
 
         if (!string.IsNullOrWhiteSpace(accumulator.CallId))
             state.OutputsByCallId[accumulator.CallId] = accumulator;
+
+        if (!string.IsNullOrWhiteSpace(accumulator.CallId) && !string.IsNullOrWhiteSpace(accumulator.ToolItemId))
+            ToolItemIdsByCallIdGlobal[accumulator.CallId] = accumulator.ToolItemId;
+
+        if (!string.IsNullOrWhiteSpace(accumulator.OutputItemId))
+        {
+            if (!string.IsNullOrWhiteSpace(accumulator.CallId))
+                CallIdsByOutputItemIdGlobal[accumulator.OutputItemId] = accumulator.CallId;
+
+            if (!string.IsNullOrWhiteSpace(accumulator.ToolItemId))
+                ToolItemIdsByOutputItemIdGlobal[accumulator.OutputItemId] = accumulator.ToolItemId;
+        }
     }
 
     private static IEnumerable<AIEventEnvelope> CreatePendingShellCompletionEnvelopes(
@@ -130,14 +184,17 @@ public static partial class ResponsesUnifiedMapper
 
         if (accumulator is null)
         {
+            var outputIndex = TryGetItemInt(item, "output_index");
+
             accumulator = new ShellInputAccumulator
             {
                 ItemId = item.Id!,
-                OutputIndex = TryGetItemInt(item, "output_index") ?? -1,
+                OutputIndex = outputIndex ?? -1,
                 CallId = callId
             };
 
-            state.InputsByOutputIndex[accumulator.OutputIndex] = accumulator;
+            if (outputIndex is >= 0)
+                state.InputsByOutputIndex[outputIndex.Value] = accumulator;
         }
         else
         {
@@ -149,9 +206,19 @@ public static partial class ResponsesUnifiedMapper
             SyncShellCommands(accumulator, commands);
 
         state.InputsByCallId[callId] = accumulator;
+        state.ToolItemIdsByCallId[callId] = accumulator.ItemId;
+        ToolItemIdsByCallIdGlobal[callId] = accumulator.ItemId;
 
         if (state.OutputsByCallId.TryGetValue(callId, out var outputAccumulator))
+        {
             outputAccumulator.ToolItemId = accumulator.ItemId;
+
+            if (!string.IsNullOrWhiteSpace(outputAccumulator.OutputItemId))
+            {
+                ToolItemIdsByOutputItemIdGlobal[outputAccumulator.OutputItemId] = accumulator.ItemId;
+                CallIdsByOutputItemIdGlobal[outputAccumulator.OutputItemId] = callId;
+            }
+        }
     }
 
     private static IEnumerable<AIEventEnvelope> CreateShellToolInputDeltaEnvelopes(ResponseShellCallCommandAdded part)
@@ -267,6 +334,12 @@ public static partial class ResponsesUnifiedMapper
             input,
             "shell_call",
             providerExecuted: true);
+
+        if (!string.IsNullOrWhiteSpace(accumulator.CallId))
+        {
+            state.ToolItemIdsByCallId[accumulator.CallId] = accumulator.ItemId;
+            ToolItemIdsByCallIdGlobal[accumulator.CallId] = accumulator.ItemId;
+        }
     }
 
     private static IEnumerable<AIEventEnvelope> CreateShellToolOutputPreliminaryEnvelopes(
@@ -321,6 +394,34 @@ public static partial class ResponsesUnifiedMapper
             accumulator.ToolItemId = inputAccumulator.ItemId;
         }
 
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(accumulator.CallId)
+            && state.ToolItemIdsByCallId.TryGetValue(accumulator.CallId, out var toolItemId))
+        {
+            accumulator.ToolItemId = toolItemId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.CallId)
+            && !string.IsNullOrWhiteSpace(accumulator.OutputItemId)
+            && CallIdsByOutputItemIdGlobal.TryGetValue(accumulator.OutputItemId, out var globalCallId))
+        {
+            accumulator.CallId = globalCallId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(accumulator.CallId)
+            && ToolItemIdsByCallIdGlobal.TryGetValue(accumulator.CallId, out var globalToolItemId))
+        {
+            accumulator.ToolItemId = globalToolItemId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(accumulator.OutputItemId)
+            && ToolItemIdsByOutputItemIdGlobal.TryGetValue(accumulator.OutputItemId, out var outputItemToolId))
+        {
+            accumulator.ToolItemId = outputItemToolId;
+        }
+
         if (string.IsNullOrWhiteSpace(accumulator.ToolItemId))
             yield break;
 
@@ -339,21 +440,52 @@ public static partial class ResponsesUnifiedMapper
     {
         var state = GetShellStreamState();
         var callId = TryGetItemString(item, "call_id");
+        var hasValidOutputIndex = outputIndex >= 0;
 
-        var accumulator = ResolveShellOutputAccumulator(outputIndex)
+        var accumulator = (hasValidOutputIndex ? ResolveShellOutputAccumulator(outputIndex) : null)
             ?? (!string.IsNullOrWhiteSpace(callId) && state.OutputsByCallId.TryGetValue(callId, out var byCallId)
                 ? byCallId
                 : null)
             ?? new ShellOutputAccumulator();
 
-        accumulator.OutputIndex = outputIndex;
+        if (hasValidOutputIndex)
+            accumulator.OutputIndex = outputIndex;
+
         accumulator.OutputItemId = item.Id ?? accumulator.OutputItemId;
         accumulator.CallId = callId ?? accumulator.CallId;
         accumulator.Status = item.Status ?? accumulator.Status;
         accumulator.MaxOutputLength = TryGetItemInt(item, "max_output_length") ?? accumulator.MaxOutputLength;
 
+        if (string.IsNullOrWhiteSpace(accumulator.CallId)
+            && !string.IsNullOrWhiteSpace(accumulator.OutputItemId)
+            && CallIdsByOutputItemIdGlobal.TryGetValue(accumulator.OutputItemId, out var globalCallId))
+        {
+            accumulator.CallId = globalCallId;
+        }
+
         if (!string.IsNullOrWhiteSpace(accumulator.CallId) && state.InputsByCallId.TryGetValue(accumulator.CallId, out var inputAccumulator))
             accumulator.ToolItemId = inputAccumulator.ItemId;
+
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(accumulator.CallId)
+            && state.ToolItemIdsByCallId.TryGetValue(accumulator.CallId, out var toolItemId))
+        {
+            accumulator.ToolItemId = toolItemId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(accumulator.CallId)
+            && ToolItemIdsByCallIdGlobal.TryGetValue(accumulator.CallId, out var globalToolItemId))
+        {
+            accumulator.ToolItemId = globalToolItemId;
+        }
+
+        if (string.IsNullOrWhiteSpace(accumulator.ToolItemId)
+            && !string.IsNullOrWhiteSpace(accumulator.OutputItemId)
+            && ToolItemIdsByOutputItemIdGlobal.TryGetValue(accumulator.OutputItemId, out var outputItemToolId))
+        {
+            accumulator.ToolItemId = outputItemToolId;
+        }
 
         if (TryGetItemJson(item, "output", out var outputElement) && outputElement.ValueKind == JsonValueKind.Array)
             ApplyShellOutputChunks(accumulator, outputElement);
@@ -369,18 +501,29 @@ public static partial class ResponsesUnifiedMapper
         yield return CreateToolOutputEnvelope(
             accumulator.ToolItemId,
             CreateShellCallToolResult(accumulator),
+            preliminary: false,
             providerExecuted: true,
             providerMetadata: CreateShellToolOutputProviderMetadata(providerId, accumulator.ToolItemId, accumulator.CallId, accumulator.OutputItemId));
 
-        state.OutputsByOutputIndex.Remove(outputIndex);
+        if (hasValidOutputIndex)
+            state.OutputsByOutputIndex.Remove(outputIndex);
 
         if (!string.IsNullOrWhiteSpace(accumulator.CallId))
         {
             state.OutputsByCallId.Remove(accumulator.CallId);
             state.InputsByCallId.Remove(accumulator.CallId);
+            state.ToolItemIdsByCallId.Remove(accumulator.CallId);
+            ToolItemIdsByCallIdGlobal.TryRemove(accumulator.CallId, out _);
         }
 
-        if (state.InputsByOutputIndex.TryGetValue(outputIndex, out var shellInput)
+        if (!string.IsNullOrWhiteSpace(accumulator.OutputItemId))
+        {
+            ToolItemIdsByOutputItemIdGlobal.TryRemove(accumulator.OutputItemId, out _);
+            CallIdsByOutputItemIdGlobal.TryRemove(accumulator.OutputItemId, out _);
+        }
+
+        if (hasValidOutputIndex
+            && state.InputsByOutputIndex.TryGetValue(outputIndex, out var shellInput)
             && string.Equals(shellInput.ItemId, accumulator.ToolItemId, StringComparison.Ordinal))
         {
             state.InputsByOutputIndex.Remove(outputIndex);
@@ -546,12 +689,16 @@ public static partial class ResponsesUnifiedMapper
     }
 
     private static string? TryGetItemString(ResponseStreamItem item, string key)
-        => item.AdditionalProperties?.TryGetValue(key, out var value) == true
+        => string.Equals(key, "call_id", StringComparison.Ordinal)
+            ? item.CallId
+            : item.AdditionalProperties?.TryGetValue(key, out var value) == true
             ? value.ValueKind == JsonValueKind.String ? value.GetString() : value.ToString()
             : null;
 
     private static int? TryGetItemInt(ResponseStreamItem item, string key)
-        => item.AdditionalProperties?.TryGetValue(key, out var value) == true && TryGetInt32(value, out var number)
+        => string.Equals(key, "max_output_length", StringComparison.Ordinal)
+            ? item.MaxOutputLength
+            : item.AdditionalProperties?.TryGetValue(key, out var value) == true && TryGetInt32(value, out var number)
             ? number
             : null;
 
@@ -578,6 +725,8 @@ public static partial class ResponsesUnifiedMapper
         public Dictionary<int, ShellInputAccumulator> InputsByOutputIndex { get; } = [];
 
         public Dictionary<string, ShellInputAccumulator> InputsByCallId { get; } = new(StringComparer.Ordinal);
+
+        public Dictionary<string, string> ToolItemIdsByCallId { get; } = new(StringComparer.Ordinal);
 
         public Dictionary<int, ShellOutputAccumulator> OutputsByOutputIndex { get; } = [];
 

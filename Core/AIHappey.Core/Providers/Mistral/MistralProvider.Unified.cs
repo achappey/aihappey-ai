@@ -117,13 +117,66 @@ public partial class MistralProvider : IModelProvider
                             if (part.Type != "tool_file")
                                 continue;
 
+                            var toolId = Guid.NewGuid().ToString();
+
+                            yield return CreateStreamEvent(
+                                                  providerId,
+                                                  toolId,
+                                                  "tool-input-available",
+                                                  new AIToolInputAvailableEventData
+                                                  {
+                                                      ToolName = "download_file",
+                                                      ProviderExecuted = true,
+                                                      Input = new
+                                                      {
+                                                          file_id = part.FileId,
+                                                          file_name = part.FileName,
+                                                          file_type = part.FileType
+                                                      }
+                                                  },
+                                                  lastTimestamp,
+                                                  responseMetadata);
+
                             var download = await TryDownloadConversationFileAsync(part.FileId, part.FileType, cancellationToken);
                             if (download.File is not null)
                             {
+                                yield return CreateStreamEvent(
+                                                   providerId,
+                                                   toolId,
+                                                   "tool-output-available",
+                                                   new AIToolOutputAvailableEventData
+                                                   {
+                                                       ToolName = "download_file",
+                                                       ProviderExecuted = true,
+                                                       Output = new CallToolResult()
+                                                       {
+                                                           Content = [ImageContentBlock.FromBytes(download.File.Bytes,
+                                                            download.File.MimeType)]
+                                                       }
+                                                   },
+                                                   lastTimestamp,
+                                                   responseMetadata);
+
                                 yield return CreateFileStreamEvent(providerId, responseEventId, download.File, lastTimestamp, responseMetadata);
                             }
                             else if (!string.IsNullOrWhiteSpace(download.Error))
                             {
+                                yield return CreateStreamEvent(
+                                                     providerId,
+                                                     toolId,
+                                                     "tool-output-available",
+                                                     new AIToolOutputAvailableEventData
+                                                     {
+                                                         ToolName = "download_file",
+                                                         ProviderExecuted = true,
+                                                         Output = new
+                                                         {
+
+                                                         }
+                                                     },
+                                                     lastTimestamp,
+                                                     responseMetadata);
+
                                 yield return CreateToolOutputErrorStreamEvent(
                                     providerId,
                                     part.FileId,
@@ -132,6 +185,25 @@ public partial class MistralProvider : IModelProvider
                                     timestamp: lastTimestamp,
                                     metadata: responseMetadata);
                             }
+                            else
+                            {
+                                yield return CreateStreamEvent(
+                                                     providerId,
+                                                     toolId,
+                                                     "tool-output-available",
+                                                     new AIToolOutputAvailableEventData
+                                                     {
+                                                         ToolName = "download_file",
+                                                         ProviderExecuted = true,
+                                                         Output = new
+                                                         {
+
+                                                         }
+                                                     },
+                                                     lastTimestamp,
+                                                     responseMetadata);
+                            }
+
                         }
 
                         break;
@@ -556,6 +628,8 @@ public partial class MistralProvider : IModelProvider
 
                         case "tool_file":
                             {
+
+
                                 var download = await TryDownloadConversationFileAsync(part.FileId, part.FileType, cancellationToken);
                                 if (download.File is not null)
                                 {

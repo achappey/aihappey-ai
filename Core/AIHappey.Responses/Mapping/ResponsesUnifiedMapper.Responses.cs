@@ -100,6 +100,61 @@ public static partial class ResponsesUnifiedMapper
                                 Metadata = new Dictionary<string, object?> { ["responses.type"] = partType }
                             });
                         }
+                        else if (partType == "input_image")
+                        {
+                            var imageUrl = part.TryGetProperty("image_url", out var imageUrlProp)
+                                ? imageUrlProp.GetString()
+                                : null;
+                            var fileId = part.TryGetProperty("file_id", out var fileIdProp)
+                                ? fileIdProp.GetString()
+                                : null;
+                            var detail = part.TryGetProperty("detail", out var detailProp)
+                                ? detailProp.GetString()
+                                : null;
+
+                            content.Add(new AIFileContentPart
+                            {
+                                Type = "file",
+                                MediaType = GuessMediaType(imageUrl),
+                                Filename = fileId,
+                                Data = imageUrl,
+                                Metadata = new Dictionary<string, object?>
+                                {
+                                    ["responses.type"] = partType,
+                                    ["responses.detail"] = detail,
+                                    ["responses.file_id"] = fileId
+                                }
+                            });
+                        }
+                        else if (partType == "input_file")
+                        {
+                            var fileData = part.TryGetProperty("file_data", out var fileDataProp)
+                                ? fileDataProp.GetString()
+                                : null;
+                            var fileUrl = part.TryGetProperty("file_url", out var fileUrlProp)
+                                ? fileUrlProp.GetString()
+                                : null;
+                            var fileId = part.TryGetProperty("file_id", out var fileIdProp)
+                                ? fileIdProp.GetString()
+                                : null;
+                            var filename = part.TryGetProperty("filename", out var filenameProp)
+                                ? filenameProp.GetString()
+                                : null;
+
+                            content.Add(new AIFileContentPart
+                            {
+                                Type = "file",
+                                MediaType = GuessMediaType(fileData ?? fileUrl),
+                                Filename = filename,
+                                Data = fileData ?? fileUrl ?? fileId,
+                                Metadata = new Dictionary<string, object?>
+                                {
+                                    ["responses.type"] = partType,
+                                    ["responses.file_id"] = fileId,
+                                    ["responses.file_url"] = fileUrl
+                                }
+                            });
+                        }
                         else
                         {
                             content.Add(new AITextContentPart
@@ -510,6 +565,7 @@ public static partial class ResponsesUnifiedMapper
                 ToolName = GetValue<string>(map, "name") ?? type,
                 Title = GetValue<string>(map, "name"),
                 Input = GetValue<object>(map, "input") ?? ParseJsonString(GetValue<string>(map, "arguments")),
+                Output = GetValue<object>(map, "output"),
                 State = GetValue<string>(map, "status"),
                 ProviderExecuted = true,
                 Metadata = new Dictionary<string, object?>

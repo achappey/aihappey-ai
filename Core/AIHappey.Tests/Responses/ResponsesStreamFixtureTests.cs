@@ -1,3 +1,7 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
+using AIHappey.Responses.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -14,6 +18,7 @@ public sealed class ResponsesStreamFixtureTests
     private const string RawFixturePath = "Fixtures/responses/raw/basic-response-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string ReasoningAndProviderToolsRawFixturePath = "Fixtures/responses/raw/openai-reasoning-and-provider-tools-response-stream.jsonl";
+    private const string MultipleShellCallsWithStreamingOutputFixturePath = "Fixtures/responses/raw/openai-multiple-shell-calls-with-streaming-output.jsonl";
 
     [Fact]
     public void Typed_and_raw_responses_fixtures_produce_the_same_stream_part_types()
@@ -152,5 +157,180 @@ public sealed class ResponsesStreamFixtureTests
         var uiProviderMetadata = Assert.Contains(reasoningProviderId, reasoningUiPart.ProviderMetadata ?? []);
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["id"]));
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["item_id"]));
+    }
+
+    [Fact]
+    public void Multiple_shell_call_outputs_emit_preliminary_then_final_tool_output_events_for_each_tool_call()
+    {
+        const string providerId = "openai";
+
+        var parts = FixtureFileLoader.LoadResponseRawFixture(MultipleShellCallsWithStreamingOutputFixturePath);
+
+        var shellToolInputs = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .Where(streamEvent => streamEvent.Event.Type == "tool-input-available")
+            .Select(streamEvent => Assert.IsType<AIToolInputAvailableEventData>(streamEvent.Event.Data))
+            .Where(data => string.Equals(data.ToolName, "shell_call", StringComparison.Ordinal))
+            .ToList();
+
+        var toolOutputEvents = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
+            .Select(streamEvent => new
+            {
+                ToolCallId = streamEvent.Event.Id,
+                Data = Assert.IsType<AIToolOutputAvailableEventData>(streamEvent.Event.Data)
+            })
+            .Where(streamEvent => IsShellToolOutput(streamEvent.Data, providerId))
+            .ToList();
+
+        var toolCallGroups = toolOutputEvents
+            .GroupBy(streamEvent => streamEvent.ToolCallId)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.NotEmpty(shellToolInputs);
+        Assert.Equal(shellToolInputs.Count, toolCallGroups.Count);
+
+        foreach (var group in toolCallGroups)
+        {
+            Assert.Contains(group, item => item.Data.Preliminary == true);
+            Assert.Equal(false, group.Last().Data.Preliminary);
+        }
+    }
+
+    [Fact]
+    public void Completed_response_recovery_emits_final_shell_tool_outputs_for_each_shell_call()
+    {
+        const string providerId = "openai";
+
+        var parts = FixtureFileLoader.LoadResponseRawFixture(MultipleShellCallsWithStreamingOutputFixturePath)
+            .Where(part => !IsLiveShellOutputStreamingPart(part))
+            .ToList();
+
+        var unifiedEvents = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .Where(streamEvent => streamEvent.Event.Type is "tool-input-available" or "tool-output-available")
+            .ToList();
+
+        var shellToolInputs = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "tool-input-available")
+            .Select(streamEvent => new
+            {
+                ToolCallId = streamEvent.Event.Id,
+                Data = Assert.IsType<AIToolInputAvailableEventData>(streamEvent.Event.Data)
+            })
+            .Where(streamEvent => string.Equals(streamEvent.Data.ToolName, "shell_call", StringComparison.Ordinal))
+            .OrderBy(streamEvent => streamEvent.ToolCallId, StringComparer.Ordinal)
+            .ToList();
+
+        var shellFinalToolOutputs = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
+            .Select(streamEvent => new
+            {
+                ToolCallId = streamEvent.Event.Id,
+                Data = Assert.IsType<AIToolOutputAvailableEventData>(streamEvent.Event.Data)
+            })
+            .Where(streamEvent => streamEvent.Data.Preliminary is false or null)
+            .Where(streamEvent => IsShellToolOutput(streamEvent.Data, providerId))
+            .OrderBy(streamEvent => streamEvent.ToolCallId, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.NotEmpty(shellToolInputs);
+        Assert.Equal(shellToolInputs.Count, shellFinalToolOutputs.Count);
+        Assert.Equal(
+            shellToolInputs.Select(streamEvent => streamEvent.ToolCallId).ToList(),
+            shellFinalToolOutputs.Select(streamEvent => streamEvent.ToolCallId).ToList());
+    }
+
+    [Fact]
+    public async Task Responses_sse_parser_accumulates_multiline_data_blocks_before_deserializing()
+    {
+        const string providerId = "openai";
+
+        var handler = new StaticResponseHttpMessageHandler(_ => CreateStreamingResponse(CreateMultilineShellSseFixture()));
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://example.test/")
+        };
+
+        var responseParts = await FixtureAssertions.CollectAsync(httpClient.GetResponsesUpdates(
+            new AIHappey.Responses.ResponseRequest
+            {
+                Model = "gpt-test",
+                Stream = true
+            },
+            providerId: providerId,
+            capture: null));
+
+        var uiParts = responseParts
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .Where(streamEvent => streamEvent.Event.Type is "tool-input-available" or "tool-output-available")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(providerId))
+            .ToList();
+
+        var toolInputPart = Assert.IsType<ToolCallPart>(Assert.Single(uiParts.OfType<ToolCallPart>()));
+        Assert.Equal("sh_multiline", toolInputPart.ToolCallId);
+
+        var toolOutputPart = Assert.IsType<ToolOutputAvailablePart>(Assert.Single(uiParts.OfType<ToolOutputAvailablePart>()));
+        Assert.Equal("sh_multiline", toolOutputPart.ToolCallId);
+        Assert.Equal(false, toolOutputPart.Preliminary);
+    }
+
+    private static bool IsLiveShellOutputStreamingPart(ResponseStreamPart part)
+        => part is ResponseOutputItemDone { Item.Type: "shell_call_output" }
+            || part is ResponseUnknownEvent { Type: "response.shell_call_output_content.delta" or "response.shell_call_output_content.done" };
+
+    private static bool IsShellToolOutput(AIToolOutputAvailableEventData data, string providerId)
+        => data.ProviderMetadata?.TryGetValue(providerId, out var providerMetadata) == true
+            && providerMetadata.TryGetValue("tool_name", out var toolName)
+            && string.Equals(toolName?.ToString(), "shell_call", StringComparison.Ordinal);
+
+    private static HttpResponseMessage CreateStreamingResponse(string body)
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "text/event-stream")
+        };
+
+        response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/event-stream");
+        return response;
+    }
+
+    private static string CreateMultilineShellSseFixture()
+        => string.Join('\n',
+        [
+            "event: response.output_item.added",
+            "data: {\"type\":\"response.output_item.added\",",
+            "data: \"item\":{\"id\":\"sh_multiline\",\"type\":\"shell_call\",\"status\":\"in_progress\",\"call_id\":\"call_multiline\",\"action\":{\"commands\":[]}},",
+            "data: \"output_index\":0,\"sequence_number\":1}",
+            string.Empty,
+            "event: response.output_item.done",
+            "data: {\"type\":\"response.output_item.done\",",
+            "data: \"item\":{\"id\":\"sh_multiline\",\"type\":\"shell_call\",\"status\":\"completed\",\"call_id\":\"call_multiline\",\"action\":{\"commands\":[\"echo hello\"]}},",
+            "data: \"output_index\":0,\"sequence_number\":2}",
+            string.Empty,
+            "event: response.output_item.added",
+            "data: {\"type\":\"response.output_item.added\",",
+            "data: \"item\":{\"id\":\"sho_multiline\",\"type\":\"shell_call_output\",\"status\":\"in_progress\",\"call_id\":\"call_multiline\",\"output\":[]},",
+            "data: \"output_index\":1,\"sequence_number\":3}",
+            string.Empty,
+            "event: response.output_item.done",
+            "data: {\"type\":\"response.output_item.done\",",
+            "data: \"item\":{\"id\":\"sho_multiline\",\"type\":\"shell_call_output\",\"status\":\"completed\",\"call_id\":\"call_multiline\",\"output\":[{\"outcome\":{\"type\":\"exit\",\"exit_code\":0},\"stderr\":\"\",\"stdout\":\"hello\"}]},",
+            "data: \"output_index\":1,\"sequence_number\":4}",
+            string.Empty,
+            "data: [DONE]",
+            string.Empty
+        ]);
+
+    private sealed class StaticResponseHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = responder(request);
+            response.RequestMessage = request;
+            return Task.FromResult(response);
+        }
     }
 }

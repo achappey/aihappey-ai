@@ -1051,6 +1051,81 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseUnknownEvent unknown
+                when string.Equals(unknown.Type, "response.custom_tool_call.input", StringComparison.OrdinalIgnoreCase):
+                {
+                    var itemId = TryGetUnknownEventString(unknown, "item_id") ?? string.Empty;
+                    var toolName = TryGetUnknownEventString(unknown, "tool_name") ?? "custom_tool";
+                    var title = TryGetUnknownEventString(unknown, "title");
+                    var inputE = TryGetUnknownEventProperty(unknown, "input", out var inputElement)
+                        ? inputElement.Clone()
+                        : JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web);
+                    var providerExecuted = !TryGetUnknownEventProperty(unknown, "provider_executed", out var providerExecutedElement)
+                                           || providerExecutedElement.ValueKind != JsonValueKind.False;
+                    var providerMetadata = TryGetUnknownEventProperty(unknown, "provider_metadata", out var providerMetadataElement)
+                        ? JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, object>>>(providerMetadataElement.GetRawText(), JsonSerializerOptions.Web)
+                        : null;
+
+                    yield return CreateToolInputEndEnvelope(
+                        itemId,
+                        toolName,
+                        inputE,
+                        title,
+                        providerExecuted,
+                        providerMetadata);
+
+                    yield break;
+                }
+
+            case ResponseUnknownEvent unknown
+                when string.Equals(unknown.Type, "response.custom_tool_call.output", StringComparison.OrdinalIgnoreCase):
+                {
+                    var itemId = TryGetUnknownEventString(unknown, "item_id") ?? string.Empty;
+                    var providerExecuted = !TryGetUnknownEventProperty(unknown, "provider_executed", out var providerExecutedElement)
+                                           || providerExecutedElement.ValueKind != JsonValueKind.False;
+                    var output = TryGetUnknownEventProperty(unknown, "output", out var outputElement)
+                        ? outputElement.Clone()
+                        : JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web);
+                    var providerMetadata = TryGetUnknownEventProperty(unknown, "provider_metadata", out var providerMetadataElement)
+                        ? JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, object>>>(providerMetadataElement.GetRawText(), JsonSerializerOptions.Web)
+                        : null;
+
+                    yield return CreateToolOutputEnvelope(
+                        itemId,
+                        output,
+                        providerExecuted: providerExecuted,
+                        providerMetadata: providerMetadata);
+
+                    yield break;
+                }
+
+            case ResponseUnknownEvent unknown
+                when string.Equals(unknown.Type, "response.output_file.done", StringComparison.OrdinalIgnoreCase):
+                {
+                    var itemId = TryGetUnknownEventString(unknown, "item_id") ?? string.Empty;
+                    var mediaType = TryGetUnknownEventString(unknown, "media_type") ?? "application/octet-stream";
+                    var url = TryGetUnknownEventString(unknown, "url") ?? string.Empty;
+                    var filename = TryGetUnknownEventString(unknown, "filename");
+                    var providerMetadata = TryGetUnknownEventProperty(unknown, "provider_metadata", out var providerMetadataElement)
+                        ? JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, object>>>(providerMetadataElement.GetRawText(), JsonSerializerOptions.Web)
+                        : null;
+
+                    yield return new AIEventEnvelope
+                    {
+                        Type = "file",
+                        Id = itemId,
+                        Data = new AIFileEventData
+                        {
+                            MediaType = mediaType,
+                            Url = url,
+                            Filename = filename,
+                            ProviderMetadata = providerMetadata
+                        }
+                    };
+
+                    yield break;
+                }
+
+            case ResponseUnknownEvent unknown
                 when string.Equals(unknown.Type, "response.shell_call_output_content.delta", StringComparison.OrdinalIgnoreCase):
                 foreach (var env in CreateShellToolOutputPreliminaryEnvelopes(providerId, unknown, isCompletedChunk: false))
                     yield return env;

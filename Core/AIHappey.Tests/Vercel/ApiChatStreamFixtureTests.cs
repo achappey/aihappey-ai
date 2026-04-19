@@ -3,6 +3,8 @@ using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using AIHappey.Responses.Streaming;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
@@ -20,6 +22,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string OpenAiProviderId = "openai";
     private const string ReasoningMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
     private const string ReasoningAndProviderToolCallsMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
+    private const string MultipleShellCallsWithStreamingOutputFixturePath = "Fixtures/responses/raw/openai-multiple-shell-calls-with-streaming-output.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string GroqProviderId = "groq";
     private const string PerplexityProviderId = "perplexity";
@@ -464,6 +467,53 @@ public sealed class ApiChatStreamFixtureTests
                 Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1776280711), finishPart.MessageMetadata?.Timestamp);
             });
     }
+
+    [Fact]
+    public void Responses_shell_call_completed_response_recovery_maps_to_matching_final_tool_outputs_and_tool_inputs_in_ui_parts()
+    {
+        const string providerId = "openai";
+
+        var parts = FixtureFileLoader.LoadResponseRawFixture(MultipleShellCallsWithStreamingOutputFixturePath)
+            .Where(part => !IsLiveShellOutputStreamingPart(part))
+            .ToList();
+
+        var uiParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .Where(streamEvent => streamEvent.Event.Type is "tool-input-available" or "tool-output-available")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(providerId))
+            .ToList();
+
+        var toolInputParts = uiParts
+            .OfType<ToolCallPart>()
+            .Where(part => string.Equals(part.ToolName, "shell_call", StringComparison.Ordinal))
+            .OrderBy(part => part.ToolCallId, StringComparer.Ordinal)
+            .ToList();
+
+        var finalToolOutputParts = uiParts
+            .OfType<ToolOutputAvailablePart>()
+            .Where(part => part.Preliminary is false or null)
+            .Where(part => IsShellToolOutput(part, providerId))
+            .OrderBy(part => part.ToolCallId, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.NotEmpty(toolInputParts);
+        Assert.All(toolInputParts, part => Assert.True(part.ProviderExecuted));
+        Assert.All(finalToolOutputParts, part => Assert.True(part.ProviderExecuted));
+        Assert.Equal(toolInputParts.Count, finalToolOutputParts.Count);
+        Assert.Equal(
+            toolInputParts.Select(part => part.ToolCallId).ToList(),
+            finalToolOutputParts.Select(part => part.ToolCallId).ToList());
+    }
+
+    private static bool IsLiveShellOutputStreamingPart(ResponseStreamPart part)
+        => part is ResponseOutputItemDone { Item.Type: "shell_call_output" }
+            || part is ResponseUnknownEvent { Type: "response.shell_call_output_content.delta" or "response.shell_call_output_content.done" };
+
+    private static bool IsShellToolOutput(ToolOutputAvailablePart part, string providerId)
+        => part.ProviderMetadata?.TryGetValue(providerId, out var providerMetadata) == true
+            && providerMetadata?.TryGetValue("tool_name", out var toolName) == true
+            && string.Equals(toolName?.ToString(), "shell_call", StringComparison.Ordinal);
+
    /* [Fact]
     public void Sonar_web_search_chat_completions_fixture_maps_to_expected_ui_parts_and_finish_metadata()
     {

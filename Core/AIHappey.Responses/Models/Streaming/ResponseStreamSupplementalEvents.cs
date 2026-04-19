@@ -23,8 +23,14 @@ public class ResponseStreamItem
     [JsonPropertyName("name")]
     public string? Name { get; init; }
 
+    [JsonPropertyName("call_id")]
+    public string? CallId { get; init; }
+
     [JsonPropertyName("arguments")]
     public string? Arguments { get; init; }
+
+    [JsonPropertyName("max_output_length")]
+    public int? MaxOutputLength { get; init; }
 
     [JsonPropertyName("content")]
     public IReadOnlyList<ResponseStreamContentPart>? Content { get; init; }
