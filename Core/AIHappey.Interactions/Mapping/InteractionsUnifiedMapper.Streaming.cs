@@ -482,6 +482,8 @@ public static partial class InteractionsUnifiedMapper
                                 {
                                     SourceId = BuildCitationSourceId(delta, i, annotation),
                                     Url = annotation.Url,
+                                    StartIndex = annotation.StartIndex,
+                                    EndIndex = annotation.EndIndex,
                                     Title = GetAnnotationTitle(annotation),
                                     Type = annotation.Type,
                                     ProviderMetadata = CreateAnnotationProviderMetadata(providerId, delta, annotation)

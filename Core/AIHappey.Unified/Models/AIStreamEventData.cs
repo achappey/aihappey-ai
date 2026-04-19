@@ -155,6 +155,12 @@ public sealed class AISourceUrlEventData
     [JsonPropertyName("file_id")]
     public string? FileId { get; init; }
 
+    [JsonPropertyName("start_index")]
+    public int? StartIndex { get; init; }
+
+    [JsonPropertyName("end_index")]
+    public int? EndIndex { get; init; }
+
     [JsonPropertyName("providerMetadata")]
     public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
 }

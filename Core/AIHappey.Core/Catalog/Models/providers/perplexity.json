@@ -44,23 +44,38 @@
     {
       "id": "perplexity/fast-search",
       "object": "model",
+      "description": "Optimized for fast, straightforward queries without reasoning overhead.",
       "owned_by": "Perplexity",
       "name": "Fast Search",
-      "type": "language"
+      "type": "language",
+      "max_tokens": 3000
     },
     {
       "id": "perplexity/pro-search",
       "object": "model",
+      "description": "Balanced for accurate, well-researched responses with moderate reasoning.",
       "owned_by": "Perplexity",
       "name": "Pro Search",
-      "type": "language"
+      "type": "language",
+      "max_tokens": 3000
     },
     {
       "id": "perplexity/deep-research",
       "object": "model",
+      "description": "Optimized for complex, in-depth analysis requiring extensive research and reasoning.",
       "owned_by": "Perplexity",
       "name": "Deep Research",
-      "type": "language"
+      "type": "language",
+      "max_tokens": 10000
+    },
+    {
+      "id": "perplexity/advanced-deep-research",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "description": "Advanced preset for institutional-grade research with enhanced tool access and extended reasoning capabilities.",
+      "name": "Advanced Deep Research",
+      "type": "language",
+      "max_tokens": 10000
     }
   ]
 }

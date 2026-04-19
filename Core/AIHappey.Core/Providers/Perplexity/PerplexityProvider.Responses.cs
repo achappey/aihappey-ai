@@ -70,6 +70,29 @@ public partial class PerplexityProvider
             options.Model = null;
         }
 
+        var sonarOptions = new List<string>
+        {
+            "search_mode",
+            "reasoning_effort",
+            "return_images",
+            "disable_search",
+            "return_related_questions",
+            "search_recency_filter",
+            "enable_search_classifier",
+            "search_after_date_filter",
+            "search_before_date_filter",
+            "last_updated_after_filter",
+            "last_updated_before_filter",
+            "web_search_options",
+            "media_response"
+        };
+
+        foreach (var opt in sonarOptions)
+        {
+            if (options.AdditionalProperties?.ContainsKey(opt) == true)
+                options.AdditionalProperties.Remove(opt);
+        }
+
         return options;
     }
 }

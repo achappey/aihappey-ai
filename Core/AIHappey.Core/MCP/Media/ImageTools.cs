@@ -63,7 +63,7 @@ public class ImageTools
             {
                 if (MediaContentHelpers.TryParseDataUrl(img, out var mimeType, out var base64))
                 {
-                    blocks.Add(new ImageContentBlock { MimeType = mimeType, Data = Convert.FromBase64String(base64) });
+                    blocks.Add(ImageContentBlock.FromBytes(Convert.FromBase64String(base64), mimeType));
                     continue;
                 }
 

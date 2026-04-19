@@ -522,6 +522,8 @@ public static partial class ResponsesUnifiedMapper
                 {
                     ["source_id"] = sourceUrl.SourceId,
                     ["url"] = sourceUrl.Url,
+                    ["start_index"] = sourceUrl.StartIndex,
+                    ["end_index"] = sourceUrl.EndIndex,
                     ["title"] = sourceUrl.Title,
                     ["filename"] = sourceUrl.Filename,
                     ["container_id"] = sourceUrl.ContainerId,

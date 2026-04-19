@@ -301,11 +301,7 @@ public static class SamplingUnifiedMapper
         {
             if (TryExtractBytes(data, out var imageBytes))
             {
-                return new ImageContentBlock
-                {
-                    MimeType = mediaType,
-                    Data = imageBytes
-                };
+                return ImageContentBlock.FromBytes(imageBytes, mediaType);
             }
         }
 
