@@ -57,19 +57,6 @@ public partial class AnthropicProvider
 
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                if (uiPart is FinishUIPart finishPart)
-                {
-                    var responseModel = finishPart.MessageMetadata?.Model;
-
-                    var pricing = ResolveModelPricing(responseModel, chatRequest.Model);
-                    yield return new FinishUIPart
-                    {
-                        FinishReason = finishPart.FinishReason,
-                        MessageMetadata = ModelCostMetadataEnricher.AddCost(finishPart.MessageMetadata, pricing)
-                    };
-                    continue;
-                }
-
                 yield return uiPart;
             }
 

@@ -42,20 +42,22 @@ public partial class LMRouterProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
+        return await this.GetChatCompletion(
+             _client,
              options,
              relativeUrl: "openai/v1/chat/completions",
-             ct: cancellationToken);
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
+        return this.GetChatCompletions(
+                    _client,
                     options,
                     relativeUrl: "openai/v1/chat/completions",
-                    ct: cancellationToken);
+                    cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(LMRouter).ToLowerInvariant();
@@ -78,20 +80,22 @@ public partial class LMRouterProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetResponses(
+        return await this.GetResponse(
+                        _client,
                    options,
                    relativeUrl: "openai/v1/responses",
-                   ct: cancellationToken);
+                   cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(
+            _client,
            options,
            relativeUrl: "openai/v1/responses",
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -113,11 +117,12 @@ public partial class LMRouterProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.PostMessages(
+        return await this.GetMessage(
+            _client,
             request,
-            headers,
             relativeUrl: "anthropic/v1/messages",
-            ct: cancellationToken);
+            headers,
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
@@ -127,10 +132,11 @@ public partial class LMRouterProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return _client.PostMessagesStreaming(
+        return this.GetMessages(
+            _client,
             request,
-            headers,
             relativeUrl: "anthropic/v1/messages",
-            ct: cancellationToken);
+            headers,
+            cancellationToken: cancellationToken);
     }
 }

@@ -70,10 +70,11 @@ public partial class NinjaChatProvider : IModelProvider
             throw new NotImplementedException();
         // return ExecuteNativeSearchMessagesAsync(request, cancellationToken);
 
-        return _client.PostMessages(
+        return this.GetMessage(
+            _client,
             request,
-            headers,
-            ct: cancellationToken);
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)

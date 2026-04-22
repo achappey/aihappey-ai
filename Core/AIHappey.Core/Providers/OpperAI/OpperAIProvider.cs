@@ -42,20 +42,22 @@ public partial class OpperAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
+        return await this.GetChatCompletion(
+             _client,
              options,
              relativeUrl: "v3/compat/chat/completions",
-             ct: cancellationToken);
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
+        return this.GetChatCompletions(
+                   _client,
                     options,
                     relativeUrl: "v3/compat/chat/completions",
-                    ct: cancellationToken);
+                    cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(OpperAI).ToLowerInvariant();
@@ -75,20 +77,22 @@ public partial class OpperAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetResponses(
+        return await this.GetResponse(
+                    _client,
                    options,
                    relativeUrl: "v3/compat/responses",
-                   ct: cancellationToken);
+                   cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetResponsesUpdates(
+        return this.GetResponses(
+           _client,
            options,
            relativeUrl: "v3/compat/responses",
-           ct: cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
 
@@ -111,11 +115,12 @@ public partial class OpperAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.PostMessages(
+        return await this.GetMessage(
+            _client,
             request,
-            headers,
             relativeUrl: "v3/compat/v1/messages",
-            ct: cancellationToken);
+            headers,
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
@@ -125,10 +130,11 @@ public partial class OpperAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return _client.PostMessagesStreaming(
+        return this.GetMessages(
+            _client,
             request,
-            headers,
             relativeUrl: "v3/compat/v1/messages",
-            ct: cancellationToken);
+            headers,
+            cancellationToken: cancellationToken);
     }
 }

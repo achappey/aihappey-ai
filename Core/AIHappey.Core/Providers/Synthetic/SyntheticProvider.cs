@@ -40,20 +40,22 @@ public partial class SyntheticProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
+        return await this.GetChatCompletion(
+            _client,
              options,
              relativeUrl: "openai/v1/chat/completions",
-             ct: cancellationToken);
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
+        return this.GetChatCompletions(
+             _client,
                     options,
                     relativeUrl: "openai/v1/chat/completions",
-                    ct: cancellationToken);
+                    cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Synthetic).ToLowerInvariant();
@@ -100,11 +102,12 @@ public partial class SyntheticProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.PostMessages(
+        return await this.GetMessage(
+            _client,
             request,
-            headers,
             relativeUrl: "anthropic/v1/messages",
-            ct: cancellationToken);
+            headers,
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
@@ -114,10 +117,11 @@ public partial class SyntheticProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return _client.PostMessagesStreaming(
+        return this.GetMessages(
+            _client,
             request,
-            headers,
             relativeUrl: "anthropic/v1/messages",
-            ct: cancellationToken);
+            headers,
+            cancellationToken: cancellationToken);
     }
 }

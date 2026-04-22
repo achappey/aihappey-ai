@@ -181,7 +181,7 @@ public partial class AnthropicProvider : IModelProvider
             headers: headers,
             cancellationToken: cancellationToken);
 
-        var pricing = ResolveModelPricing(response?.Model, request.Model);
+        var pricing = ResolveModelPricing(response?.Model);
 
         return EnrichMessagesResponseJson(response!, response?.Usage, pricing);
     }
@@ -217,7 +217,7 @@ public partial class AnthropicProvider : IModelProvider
 
             if (string.Equals(part?.Type, "message_stop", StringComparison.OrdinalIgnoreCase))
             {
-                var pricing = ResolveModelPricing(responseModel, options.Model);
+                var pricing = ResolveModelPricing(responseModel);
                 yield return EnrichMessageStreamPartJson(part!, usage, pricing);
                 continue;
             }
@@ -226,24 +226,16 @@ public partial class AnthropicProvider : IModelProvider
         }
     }
 
-    private ModelPricing? ResolveModelPricing(string? responseModelId, string? fallbackModelId)
+    private ModelPricing? ResolveModelPricing(string? modelId)
     {
         var pricing = GetIdentifier().GetPricing();
         if (pricing is null || pricing.Count == 0)
             return null;
-
-        var modelId = !string.IsNullOrWhiteSpace(responseModelId)
-            ? responseModelId
-            : fallbackModelId;
-
+      
         if (string.IsNullOrWhiteSpace(modelId))
             return null;
 
-        var normalizedModelId = modelId.Contains('/', StringComparison.Ordinal)
-            ? modelId
-            : modelId.ToModelId(GetIdentifier());
-
-        return pricing.TryGetValue(normalizedModelId, out var modelPricing)
+        return pricing.TryGetValue(modelId, out var modelPricing)
             ? modelPricing
             : null;
     }
