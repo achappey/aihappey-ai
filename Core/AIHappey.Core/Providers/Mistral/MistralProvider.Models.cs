@@ -9,6 +9,7 @@ namespace AIHappey.Core.Providers.Mistral;
 public partial class MistralProvider
 {
     private const string AgentModelPrefix = "agent/";
+    private const int VoicePageSize = 100;
 
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -35,6 +36,7 @@ public partial class MistralProvider
                     .GetModelsAsync(cancellationToken: ct);
 
                 var agents = await ListAgentsAsync(ct);
+                var voices = await ListVoicesAsync(ct);
 
                 List<Model> imageModels = [new Model()
                         {
@@ -67,13 +69,13 @@ public partial class MistralProvider
                             : ["agent", a.Model!]
                     });
 
-                return models.Data
-                    .Select(a => new Model()
-                    {
-                        Id = a.Id.ToModelId(GetIdentifier()),
-                        Name = a.Id,
-                        OwnedBy = GetName(),
-                    })
+                var upstreamModels = models.Data
+                    .Select(a => CreateCatalogModel(a.Id))
+                    .ToList();
+
+                AddSpeechVoiceShortcutModels(upstreamModels, voices);
+
+                return upstreamModels
                     .Concat(imageModels)
                     .Concat(agentModels)
                     .OrderByDescending(a => a.Created ?? 0)
@@ -97,6 +99,103 @@ public partial class MistralProvider
         return JsonSerializer.Deserialize<List<MistralAgentDefinition>>(body, JsonSerializerOptions.Web) ?? [];
     }
 
+    private async Task<IReadOnlyList<MistralVoiceDefinition>> ListVoicesAsync(CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        var results = new List<MistralVoiceDefinition>();
+        var offset = 0;
+
+        while (true)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, $"/v1/audio/voices?limit={VoicePageSize}&offset={offset}");
+            using var resp = await _client.SendAsync(req, cancellationToken);
+            if (!resp.IsSuccessStatusCode)
+                return results;
+
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            var page = JsonSerializer.Deserialize<MistralVoiceListResponse>(body, JsonSerializerOptions.Web);
+            if (page?.Items is null || page.Items.Count == 0)
+                break;
+
+            results.AddRange(page.Items.Where(static voice => !string.IsNullOrWhiteSpace(voice.Id)));
+
+            offset += page.Items.Count;
+            if (page.Total > 0 && offset >= page.Total)
+                break;
+            if (page.Items.Count < VoicePageSize)
+                break;
+        }
+
+        return results;
+    }
+
+    private Model CreateCatalogModel(string modelId)
+    {
+        var isSpeechModel = modelId.Contains("tts", StringComparison.OrdinalIgnoreCase);
+
+        return new Model()
+        {
+            Id = modelId.ToModelId(GetIdentifier()),
+            Name = modelId,
+            OwnedBy = GetName(),
+            Type = isSpeechModel ? "speech" : string.Empty,
+            Description = isSpeechModel
+                ? $"{GetName()} text-to-speech base model '{modelId}'. Voice may be supplied via request.voice, providerOptions.mistral.voice_id, or model shortcut '{modelId}/{{voice-slug}}'."
+                : null,
+            Tags = isSpeechModel ? ["tts", $"model:{modelId}", "base"] : null
+        };
+    }
+
+    private void AddSpeechVoiceShortcutModels(List<Model> models, IReadOnlyList<MistralVoiceDefinition> voices)
+    {
+        var speechBaseModels = models
+            .Where(m => string.Equals(m.Type, "speech", StringComparison.OrdinalIgnoreCase))
+            .Select(m => m.Name)
+            .Where(static name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var baseModel in speechBaseModels)
+        {
+            foreach (var voice in voices)
+            {
+                if (string.IsNullOrWhiteSpace(voice.Slug))
+                    continue;
+
+                var shortcut = $"{baseModel}/{voice.Slug}";
+                AddModelIfMissing(models, new Model
+                {
+                    Id = shortcut.ToModelId(GetIdentifier()),
+                    Name = shortcut,
+                    OwnedBy = GetName(),
+                    Type = "speech",
+                    Description = $"{GetName()} text-to-speech model '{baseModel}' with preset voice slug '{voice.Slug}' (voice_id: {voice.Id}).",
+                    Tags = ["tts", $"model:{baseModel}", $"voice:{voice.Slug}", "shortcut"]
+                });
+            }
+        }
+    }
+
+    private static void AddModelIfMissing(List<Model> models, Model model)
+    {
+        if (models.Any(existing => string.Equals(existing.Id, model.Id, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        models.Add(model);
+    }
+
+    private async Task<MistralVoiceDefinition?> ResolveVoiceBySlugAsync(string slug, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(slug))
+            return null;
+
+        var voices = await ListVoicesAsync(cancellationToken);
+        return voices.FirstOrDefault(voice =>
+            !string.IsNullOrWhiteSpace(voice.Slug)
+            && string.Equals(voice.Slug, slug.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
     private sealed class MistralAgentDefinition
     {
         [JsonPropertyName("id")]
@@ -113,6 +212,27 @@ public partial class MistralProvider
 
         [JsonPropertyName("created_at")]
         public DateTimeOffset? CreatedAt { get; set; }
+    }
+
+    private sealed class MistralVoiceListResponse
+    {
+        [JsonPropertyName("items")]
+        public List<MistralVoiceDefinition> Items { get; set; } = [];
+
+        [JsonPropertyName("total")]
+        public int Total { get; set; }
+    }
+
+    private sealed class MistralVoiceDefinition
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("slug")]
+        public string? Slug { get; set; }
     }
 
 }

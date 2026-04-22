@@ -54,11 +54,14 @@ public partial class AIMLProvider
                     if (el.TryGetProperty("type", out var typeEl))
                     {
                         var type = typeEl.GetString();
-                        model.Type = type == "chat-completion" ? "language" :
-                            type == "responses" ? "language" :
-                            type == "tts" ? "speech" :
-                            type == "stt" ? "transcription"
-                            : model.Id.Contains("music")
+                        model.Type = type?.Contains("responses") == true ? "language" :
+                            type?.Contains("chat-completions") == true ? "language" :
+                            type?.Contains("anthropic") == true ? "language" :
+                            type?.Contains("optical-character-recognition") == true ? "language" :
+                            type?.Contains("text-to-speech") == true ? "speech" :
+                            type?.Contains("image-") == true ? "image" :
+                             type?.Contains("speech-to-text") == true ? "transcription"
+                            : type?.Contains("audio-generations") == true
                             ? "speech" : type ?? "";
                     }
 
