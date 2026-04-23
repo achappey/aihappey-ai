@@ -292,7 +292,6 @@ public class AIServiceConfig
     public ProviderConfig? IonRouter { get; set; }
     public ProviderConfig? FreedomGPT { get; set; }
     public ProviderConfig? PixIA { get; set; }
-    public ProviderConfig? AISieuRe { get; set; }
     public ProviderConfig? Kirha { get; set; }
     public ProviderConfig? SUFY { get; set; }
     public ProviderConfig? LogicosLLMHub { get; set; }
@@ -483,7 +482,6 @@ public class AIServiceConfig
     public ProviderConfig? SawtIA { get; set; }
     public ProviderConfig? Runtimo { get; set; }
     public ProviderConfig? AWstore { get; set; }
-    public ProviderConfig? HubotEng { get; set; }
     public ProviderConfig? Codzen { get; set; }
     public ProviderConfig? OpusCode { get; set; }
     public ProviderConfig? Concentrate { get; set; }
