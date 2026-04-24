@@ -7,33 +7,47 @@ namespace AIHappey.Responses.Mapping;
 public static partial class ResponsesUnifiedMapper
 {
     private static AIEventEnvelope CreateReasoningStartEnvelope(string providerId, string id, ResponseStreamContentPart responseStreamItem)
-            => new()
+    {
+        //var signature = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "signature")?.ToString();
+        var encryptedContent = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content");
+
+        return new()
+        {
+            Type = "reasoning-start",
+            Id = id,
+            Data = new AIReasoningStartEventData
             {
-                Type = "reasoning-start",
-                Id = id,
-                Data = new AIReasoningStartEventData
-                {
-                    ProviderMetadata = CreateReasoningProviderMetadata(
-                        providerId,
-                        itemId: id,
-                        encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"))
-                },
-            };
+                Signature = encryptedContent?.ToString(),
+                ProviderMetadata = CreateReasoningProviderMetadata(
+                    providerId,
+                    itemId: id,
+                    encryptedContent: encryptedContent)
+            },
+        };
+    }
 
     private static AIEventEnvelope CreateReasoningEndEnvelope(string providerId, string id, ResponseStreamContentPart responseStreamItem)
-        => new()
+    {
+        //   var signature = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "signature")?.ToString();
+        var encryptedContent = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content");
+        var summary = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary");
+
+        return new()
         {
             Type = "reasoning-end",
             Id = id,
             Data = new AIReasoningEndEventData
             {
+                Signature = encryptedContent?.ToString(),
                 ProviderMetadata = CreateReasoningProviderMetadata(
                     providerId,
                     itemId: id,
-                    encryptedContent: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content"),
-                    summary: GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary"))
+                    //  signature: signature,
+                    encryptedContent: encryptedContent,
+                    summary: summary)
             },
         };
+    }
 
     private static IEnumerable<AIEventEnvelope> CreateReasoningEnvelope(
     string providerId,
@@ -63,12 +77,14 @@ public static partial class ResponsesUnifiedMapper
 
         var summaryVal = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary");
         var encrypted = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content");
+        //  var signature = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "signature")?.ToString();
         yield return new AIEventEnvelope
         {
             Type = "reasoning-start",
             Id = id,
             Data = new AIReasoningStartEventData
             {
+                Signature = encrypted?.ToString(),
                 ProviderMetadata = CreateReasoningProviderMetadata(
                     providerId,
                     itemId: id,
@@ -95,6 +111,7 @@ public static partial class ResponsesUnifiedMapper
             Id = id,
             Data = new AIReasoningEndEventData
             {
+                Signature = encrypted?.ToString(),
                 ProviderMetadata = CreateReasoningProviderMetadata(
                     providerId,
                     itemId: id,
@@ -107,7 +124,6 @@ public static partial class ResponsesUnifiedMapper
     private static Dictionary<string, Dictionary<string, object>>? CreateReasoningProviderMetadata(
         string providerId,
         string? itemId = null,
-        string? signature = null,
         object? encryptedContent = null,
         object? summary = null)
     {
@@ -118,9 +134,6 @@ public static partial class ResponsesUnifiedMapper
             providerMetadata["id"] = itemId;
             providerMetadata["item_id"] = itemId;
         }
-
-        if (!string.IsNullOrWhiteSpace(signature))
-            providerMetadata["signature"] = signature;
 
         if (HasMeaningfulReasoningValue(encryptedContent))
             providerMetadata["encrypted_content"] = encryptedContent!;

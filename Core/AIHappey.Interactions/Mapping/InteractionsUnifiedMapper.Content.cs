@@ -78,6 +78,7 @@ public static partial class InteractionsUnifiedMapper
                         {
                             Type = "reasoning",
                             Text = FlattenContentText(thought.Summary),
+                            Signature = thought.Signature,
                             Metadata = metadata
                         };
                         break;
@@ -179,7 +180,8 @@ public static partial class InteractionsUnifiedMapper
             case AIReasoningContentPart reasoning:
                 {
                     var rawThought = ExtractObject<InteractionThoughtContent>(reasoning.Metadata, "interactions.raw");
-                    var signature = ExtractValue<string>(reasoning.Metadata, "interactions.signature")
+                    var signature = reasoning.Signature
+                                    ?? ExtractValue<string>(reasoning.Metadata, "interactions.signature")
                                     ?? ExtractThoughtSignature(reasoning.Metadata, providerId);
                     var summary = ResolveThoughtSummary(reasoning, rawThought, providerId);
                     var additionalProperties = ResolveThoughtAdditionalProperties(reasoning.Metadata, rawThought, providerId);

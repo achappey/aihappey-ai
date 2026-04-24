@@ -87,6 +87,10 @@ public sealed class ResponseReasoningItem : ResponseInputItem
     [JsonPropertyName("encrypted_content")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? EncryptedContent { get; set; }
+
+    [JsonPropertyName("signature")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Signature { get; set; }
 }
 
 public sealed class ResponseReasoningSummaryTextPart

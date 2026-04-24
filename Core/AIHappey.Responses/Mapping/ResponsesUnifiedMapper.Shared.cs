@@ -225,6 +225,19 @@ public static partial class ResponsesUnifiedMapper
         metadata[providerId] = providerMetadata;
     }
 
+    private static void MergeProviderScopedReasoningSignatureMetadata(
+        Dictionary<string, object?> metadata,
+        string providerId,
+        string? signature)
+    {
+        if (string.IsNullOrWhiteSpace(signature))
+            return;
+
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["signature"] = signature;
+        metadata[providerId] = providerMetadata;
+    }
+
     private static void MergeProviderScopedReasoningItemIdMetadata(
         Dictionary<string, object?> metadata,
         string providerId,

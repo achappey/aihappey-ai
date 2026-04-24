@@ -145,6 +145,12 @@ public static partial class ResponsesUnifiedMapper
         if (itemState.ProviderMetadata is not null)
             additionalProperties["provider_metadata"] = itemState.ProviderMetadata;
 
+        if (!string.IsNullOrWhiteSpace(itemState.Signature))
+        {
+            if (string.Equals(itemState.ItemType, "reasoning", StringComparison.OrdinalIgnoreCase))
+                additionalProperties["encrypted_content"] = itemState.Signature;
+        }
+
         if (itemState.Input is not null)
             additionalProperties["input"] = CloneIfJsonElement(itemState.Input);
 
@@ -164,6 +170,29 @@ public static partial class ResponsesUnifiedMapper
             Content = content,
             AdditionalProperties = ToJsonElementDictionary(additionalProperties)
         };
+    }
+
+    private static string? ExtractReasoningSignature(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata,
+        Dictionary<string, object?> data)
+    {
+        var signature = GetValue<string>(data, "signature");
+        if (!string.IsNullOrWhiteSpace(signature))
+            return signature;
+
+        if (providerMetadata is null)
+            return null;
+
+        foreach (var scoped in providerMetadata.Values)
+        {
+            if (scoped.TryGetValue("signature", out var value)
+                && !string.IsNullOrWhiteSpace(value?.ToString()))
+            {
+                return value.ToString();
+            }
+        }
+
+        return null;
     }
 
     private static string SerializeToolInput(object? input)
@@ -315,6 +344,7 @@ public static partial class ResponsesUnifiedMapper
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning");
             UpdateReverseItemState(itemState, itemType: "reasoning", providerMetadata: reasoningStart.ProviderMetadata);
+            itemState.Signature = reasoningStart.Signature ?? ExtractReasoningSignature(reasoningStart.ProviderMetadata, data);
 
             part = new ResponseOutputItemAdded
             {
@@ -330,6 +360,7 @@ public static partial class ResponsesUnifiedMapper
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning");
             itemState.ReasoningBuffer.Append(reasoningDelta.Delta);
+            itemState.Signature ??= reasoningDelta.Signature ?? ExtractReasoningSignature(reasoningDelta.ProviderMetadata, data);
 
             part = new ResponseReasoningTextDelta
             {
@@ -347,6 +378,7 @@ public static partial class ResponsesUnifiedMapper
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning");
             UpdateReverseItemState(itemState, itemType: "reasoning", providerMetadata: reasoningEnd.ProviderMetadata);
+            itemState.Signature ??= reasoningEnd.Signature ?? ExtractReasoningSignature(reasoningEnd.ProviderMetadata, data);
 
             part = new ResponseOutputItemDone
             {
@@ -599,6 +631,8 @@ public static partial class ResponsesUnifiedMapper
         public object? Output { get; set; }
 
         public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; set; }
+
+        public string? Signature { get; set; }
 
         public StringBuilder TextBuffer { get; } = new();
 

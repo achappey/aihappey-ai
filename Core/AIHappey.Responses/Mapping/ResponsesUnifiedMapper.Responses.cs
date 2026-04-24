@@ -214,6 +214,7 @@ public static partial class ResponsesUnifiedMapper
 
         var reasoningId = GetValue<string>(map, "id");
         var encryptedContent = GetValue<object>(map, "encrypted_content");
+        var signature = GetValue<string>(map, "signature");
         var status = GetValue<string>(map, "status");
         var summary = ExtractReasoningSummaryParts(map);
         var content = new List<AIContentPart>();
@@ -233,7 +234,8 @@ public static partial class ResponsesUnifiedMapper
                     {
                         Type = "reasoning",
                         Text = text,
-                        Metadata = CreateReasoningContentMetadata(providerId, reasoningId, encryptedContent, summary, partType)
+                        Signature = signature,
+                        Metadata = CreateReasoningContentMetadata(providerId, reasoningId, signature, encryptedContent, summary, partType)
                     });
                     continue;
                 }
@@ -255,18 +257,20 @@ public static partial class ResponsesUnifiedMapper
                 {
                     Type = "reasoning",
                     Text = summaryPart.Text,
-                    Metadata = CreateReasoningContentMetadata(providerId, reasoningId, encryptedContent, summary, summaryPart.Type)
+                    Signature = signature,
+                    Metadata = CreateReasoningContentMetadata(providerId, reasoningId, signature, encryptedContent, summary, summaryPart.Type)
                 });
             }
         }
 
-        if (content.Count == 0 && HasMeaningfulValue(encryptedContent))
+        if (content.Count == 0 && (HasMeaningfulValue(encryptedContent) || !string.IsNullOrWhiteSpace(signature)))
         {
             content.Add(new AIReasoningContentPart
             {
                 Type = "reasoning",
                 Text = string.Empty,
-                Metadata = CreateReasoningContentMetadata(providerId, reasoningId, encryptedContent, summary, "reasoning")
+                Signature = signature,
+                Metadata = CreateReasoningContentMetadata(providerId, reasoningId, signature, encryptedContent, summary, "reasoning")
             });
         }
 
@@ -275,7 +279,7 @@ public static partial class ResponsesUnifiedMapper
             Type = type,
             Role = role,
             Content = content.Count > 0 ? content : null,
-            Metadata = CreateReasoningItemMetadata(providerId, reasoningId, encryptedContent, summary, status, rawItem)
+            Metadata = CreateReasoningItemMetadata(providerId, reasoningId, signature, encryptedContent, summary, status, rawItem)
         };
 
         return true;
@@ -312,6 +316,7 @@ public static partial class ResponsesUnifiedMapper
     private static Dictionary<string, object?> CreateReasoningItemMetadata(
         string providerId,
         string? reasoningId,
+        string? signature,
         object? encryptedContent,
         IReadOnlyCollection<ResponseReasoningSummaryTextPart> summary,
         string? status,
@@ -330,6 +335,7 @@ public static partial class ResponsesUnifiedMapper
             metadata["status"] = status;
 
         MergeProviderScopedReasoningItemIdMetadata(metadata, providerId, reasoningId);
+        MergeProviderScopedReasoningSignatureMetadata(metadata, providerId, signature);
         MergeProviderScopedEncryptedContentMetadata(metadata, providerId, encryptedContent);
         MergeProviderScopedReasoningSummaryMetadata(metadata, providerId, summary);
         return metadata;
@@ -338,6 +344,7 @@ public static partial class ResponsesUnifiedMapper
     private static Dictionary<string, object?> CreateReasoningContentMetadata(
         string providerId,
         string? reasoningId,
+        string? signature,
         object? encryptedContent,
         IReadOnlyCollection<ResponseReasoningSummaryTextPart> summary,
         string? partType)
@@ -351,6 +358,7 @@ public static partial class ResponsesUnifiedMapper
             metadata["id"] = reasoningId;
 
         MergeProviderScopedReasoningItemIdMetadata(metadata, providerId, reasoningId);
+        MergeProviderScopedReasoningSignatureMetadata(metadata, providerId, signature);
         MergeProviderScopedEncryptedContentMetadata(metadata, providerId, encryptedContent);
         MergeProviderScopedReasoningSummaryMetadata(metadata, providerId, summary);
         return metadata;

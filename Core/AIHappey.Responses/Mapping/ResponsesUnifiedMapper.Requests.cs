@@ -160,12 +160,13 @@ public static partial class ResponsesUnifiedMapper
 
                 MergeProviderScopedReasoningItemIdMetadata(reasoningMetadata, providerId, reasoning.Id);
                 MergeProviderScopedEncryptedContentMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
+                MergeProviderScopedReasoningSignatureMetadata(reasoningMetadata, providerId, reasoning.Signature);
 
                 return new AIInputItem
                 {
                     Type = "reasoning",
                     Id = reasoning.Id,
-                    Content = [.. reasoning.Summary.Select(a => (AIContentPart)new AITextContentPart { Type = "text", Text = a.Text, Metadata = new Dictionary<string, object?> { ["type"] = a.Type } })],
+                    Content = [.. ToUnifiedReasoningInputContent(reasoning, reasoningMetadata, providerId)],
                     Metadata = reasoningMetadata
                 };
 
@@ -558,8 +559,47 @@ public static partial class ResponsesUnifiedMapper
         {
             Id = reasoningItemId,
             Summary = summary,
-            EncryptedContent = encryptedContent
+            EncryptedContent = encryptedContent,
+            Signature = reasoningPart?.Signature
+                        ?? (reasoningMetadata is not null ? ExtractNestedValue<string>(reasoningMetadata, providerId, "signature") : null)
+                        ?? ExtractNestedValue<string>(metadata, providerId, "signature")
+                        ?? ExtractValue<string>(reasoningMetadata, "signature")
+                        ?? ExtractValue<string>(metadata, "signature")
         };
+    }
+
+    private static IEnumerable<AIContentPart> ToUnifiedReasoningInputContent(
+        ResponseReasoningItem reasoning,
+        Dictionary<string, object?> reasoningMetadata,
+        string providerId)
+    {
+        if (reasoning.Summary.Count == 0 && !string.IsNullOrWhiteSpace(reasoning.Signature))
+        {
+            yield return new AIReasoningContentPart
+            {
+                Type = "reasoning",
+                Text = string.Empty,
+                Signature = reasoning.Signature,
+                Metadata = reasoningMetadata
+            };
+            yield break;
+        }
+
+        foreach (var part in reasoning.Summary)
+        {
+            var metadata = new Dictionary<string, object?> { ["type"] = part.Type };
+
+            if (!string.IsNullOrWhiteSpace(reasoning.Signature))
+                MergeProviderScopedReasoningSignatureMetadata(metadata, providerId, reasoning.Signature);
+
+            yield return new AIReasoningContentPart
+            {
+                Type = "reasoning",
+                Text = part.Text,
+                Signature = reasoning.Signature,
+                Metadata = metadata
+            };
+        }
     }
 
     private static string? ResolveReasoningItemId(

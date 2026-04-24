@@ -119,6 +119,7 @@ public static partial class MessagesUnifiedMapper
                 {
                     yield return CreateEnvelope("reasoning-start", eventId, new AIReasoningStartEventData
                     {
+                        Signature = part.ContentBlock.Signature,
                         ProviderMetadata = CreateReasoningProviderMetadata(
                             providerId,
                             signature: part.ContentBlock.Signature,
@@ -209,6 +210,7 @@ public static partial class MessagesUnifiedMapper
                 {
                     yield return CreateEnvelope("reasoning-end", stopState.EventId, new AIReasoningEndEventData
                     {
+                        Signature = stopState.Signature,
                         ProviderMetadata = CreateReasoningProviderMetadata(
                             providerId,
                             signature: stopState.Signature,
@@ -489,7 +491,7 @@ public static partial class MessagesUnifiedMapper
 
                     var data = DeserializeFromObject<AIReasoningStartEventData>(envelope.Data);
                     var block = state.GetOrCreateBlock(envelope.Id, ResolveReasoningBlockType(data?.ProviderMetadata, streamEvent.ProviderId));
-                    block.Signature = ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "signature");
+                    block.Signature = data?.Signature ?? ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "signature");
                     block.EncryptedContent = ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "encrypted_content");
 
                     foreach (var part in EnsureContentBlockStart(block, streamEvent, state))
@@ -526,7 +528,7 @@ public static partial class MessagesUnifiedMapper
                         yield break;
 
                     var data = DeserializeFromObject<AIReasoningEndEventData>(envelope.Data);
-                    block.Signature ??= ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "signature");
+                    block.Signature ??= data?.Signature ?? ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "signature");
                     block.EncryptedContent ??= ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "encrypted_content");
                     block.StopEmitted = true;
 

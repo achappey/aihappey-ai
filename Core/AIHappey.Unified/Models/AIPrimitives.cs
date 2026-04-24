@@ -66,6 +66,8 @@ public sealed class AIReasoningContentPart : AIContentPart
     }
 
     public required string? Text { get; init; }
+
+    public string? Signature { get; init; }
 }
 
 public sealed class AIFileContentPart : AIContentPart

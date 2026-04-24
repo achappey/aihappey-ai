@@ -109,6 +109,7 @@ public static partial class InteractionsUnifiedMapper
                             Id = BuildContentEventId(start.Index),
                             Data = new AIReasoningStartEventData
                             {
+                                Signature = thought.Signature,
                                 ProviderMetadata = CreateThoughtSignatureProviderMetadata(providerId, thought.Signature)
                             }
                         },
@@ -254,6 +255,7 @@ public static partial class InteractionsUnifiedMapper
                             Data = new AIReasoningDeltaEventData
                             {
                                 Delta = summaryText ?? string.Empty,
+                                Signature = GetStreamThoughtSignature(providerId, delta.Index),
                                 ProviderMetadata = CreateThoughtSignatureProviderMetadata(
                                     providerId,
                                     GetStreamThoughtSignature(providerId, delta.Index))
@@ -537,6 +539,8 @@ public static partial class InteractionsUnifiedMapper
                         if (GetOpenThoughtAnchor(providerId) == stop.Index)
                             ForgetOpenThoughtAnchor(providerId);
 
+                        var signature = ForgetStreamThoughtSignature(providerId, stop.Index) ?? rememberedSignature;
+
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -545,9 +549,10 @@ public static partial class InteractionsUnifiedMapper
                                 Id = BuildContentEventId(stop.Index),
                                 Data = new AIReasoningEndEventData
                                 {
+                                    Signature = signature,
                                     ProviderMetadata = CreateThoughtSignatureProviderMetadata(
                                         providerId,
-                                        ForgetStreamThoughtSignature(providerId, stop.Index) ?? rememberedSignature)
+                                        signature)
                                 }
                             },
                             part,
@@ -965,8 +970,10 @@ public static partial class InteractionsUnifiedMapper
 
     private static InteractionContentDeltaData CreateReasoningDeltaData(string providerId, AIReasoningDeltaEventData? data)
     {
+        var signature = data?.Signature ?? ExtractThoughtSignatureFromProviderMetadata(data?.ProviderMetadata, providerId);
+
         if (string.IsNullOrWhiteSpace(data?.Delta)
-            && TryGetThoughtSignatureProviderMetadata(data, providerId, out var signature))
+            && !string.IsNullOrWhiteSpace(signature))
         {
             return new InteractionContentDeltaData
             {
@@ -984,7 +991,7 @@ public static partial class InteractionsUnifiedMapper
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
                 ["signature"] = JsonSerializer.SerializeToElement(
-                    ExtractThoughtSignatureFromProviderMetadata(data?.ProviderMetadata, providerId),
+                    signature,
                     Json),
                 ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent
                 {

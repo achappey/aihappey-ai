@@ -99,6 +99,7 @@ public static partial class MessagesUnifiedMapper
                     {
                         Type = "reasoning",
                         Text = block.Thinking ?? block.Data,
+                        Signature = block.Signature,
                         Metadata = CreateBlockMetadata(block)
                     });
                     break;
@@ -209,7 +210,9 @@ public static partial class MessagesUnifiedMapper
             ? reasoning.Metadata.GetProviderOption<string>(providerId!, "encrypted_content")
             : null;
 
-        var signature = !string.IsNullOrWhiteSpace(providerId)
+        var signature = reasoning.Signature;
+
+        signature ??= !string.IsNullOrWhiteSpace(providerId)
             ? reasoning.Metadata.GetProviderOption<string>(providerId!, "signature")
             : null;
 

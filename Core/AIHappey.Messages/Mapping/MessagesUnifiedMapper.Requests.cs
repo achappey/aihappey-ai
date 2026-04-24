@@ -246,7 +246,8 @@ public static partial class MessagesUnifiedMapper
                 target.Add(new MessageContentBlock { Type = "text", Text = text.Text });
                 break;
             case AIReasoningContentPart reasoning:
-                var signature = reasoning.Metadata?.GetProviderOption<string?>(providerId, "signature");
+                var signature = reasoning.Signature
+                                ?? reasoning.Metadata?.GetProviderOption<string?>(providerId, "signature");
 
                 if (!string.IsNullOrWhiteSpace(signature))
                 {

@@ -45,6 +45,7 @@ public static partial class MessagesUnifiedMapper
                     {
                         Type = "reasoning",
                         Text = block.Thinking ?? block.Data,
+                        Signature = block.Signature,
                         Metadata = CreateBlockMetadata(block, providerId)
                     };
                     break;
