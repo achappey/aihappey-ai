@@ -139,11 +139,7 @@ public partial class MistralProvider
             Id = modelId.ToModelId(GetIdentifier()),
             Name = modelId,
             OwnedBy = GetName(),
-            Type = isSpeechModel ? "speech" : string.Empty,
-            Description = isSpeechModel
-                ? $"{GetName()} text-to-speech base model '{modelId}'. Voice may be supplied via request.voice, providerOptions.mistral.voice_id, or model shortcut '{modelId}/{{voice-slug}}'."
-                : null,
-            Tags = isSpeechModel ? ["tts", $"model:{modelId}", "base"] : null
+            Type = isSpeechModel ? "speech" : string.Empty
         };
     }
 
