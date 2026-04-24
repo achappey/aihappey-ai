@@ -339,23 +339,31 @@ public partial class MicrosoftProvider
                 if (toolPart.ProviderExecuted != true)
                     continue;
 
-                if (!string.Equals(toolPart.ToolName, CopilotConversationToolName, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(toolPart.Title, CopilotConversationToolName, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
                 if (TryExtractConversationId(toolPart.Output, out conversationId))
                     return true;
 
                 if (TryExtractConversationId(toolPart.Metadata, out conversationId))
                     return true;
+
+                if (IsCreateConversationToolPart(toolPart)
+                    && TryExtractConversationId(toolPart.Input, out conversationId))
+                {
+                    return true;
+                }
             }
         }
 
         conversationId = string.Empty;
         return false;
     }
+
+    private static bool IsCreateConversationToolPart(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.ToolName, CopilotConversationToolName, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.ToolName, $"tool-{CopilotConversationToolName}", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Title, CopilotConversationToolName, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Title, "Create Copilot conversation", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Type, $"tool-{CopilotConversationToolName}", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Metadata?.GetValueOrDefault("messages.block.type")?.ToString(), CopilotConversationToolName, StringComparison.OrdinalIgnoreCase);
 
     private static bool TryExtractConversationId(object? value, out string conversationId)
     {
@@ -372,6 +380,12 @@ public partial class MicrosoftProvider
 
         if (element.TryGetProperty("structuredContent", out var structuredContent))
             element = structuredContent;
+
+        if (element.TryGetProperty("output", out var output) && output.ValueKind == JsonValueKind.Object)
+        {
+            if (TryExtractConversationId(output, out conversationId))
+                return true;
+        }
 
         if (element.TryGetProperty("conversationId", out var id) && id.ValueKind == JsonValueKind.String)
             conversationId = id.GetString() ?? string.Empty;
