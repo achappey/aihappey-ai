@@ -28,6 +28,9 @@ public sealed class AIReasoningStartEventData
 {
     [JsonPropertyName("providerMetadata")]
     public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
+
+    [JsonPropertyName("signature")]
+    public string? Signature { get; init; }
 }
 
 public sealed class AIReasoningDeltaEventData
@@ -37,12 +40,19 @@ public sealed class AIReasoningDeltaEventData
 
     [JsonPropertyName("providerMetadata")]
     public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
+
+    [JsonPropertyName("signature")]
+    public string? Signature { get; init; }
 }
 
 public sealed class AIReasoningEndEventData
 {
     [JsonPropertyName("providerMetadata")]
     public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
+
+    [JsonPropertyName("signature")]
+    public string? Signature { get; init; }
+
 }
 
 public sealed class AIToolApprovalRequestEventData

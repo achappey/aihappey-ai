@@ -36,11 +36,11 @@ public class ConfigKeyResolver : IApiKeyResolver
             && Uri.TryCreate(vaultUri, UriKind.Absolute, out var uri)
             && !string.IsNullOrWhiteSpace(azureAd.TenantId)
             && !string.IsNullOrWhiteSpace(azureAd.ClientId)
-            && !string.IsNullOrWhiteSpace(azureAd.Secret))
+            && !string.IsNullOrWhiteSpace(azureAd.ClientSecret ?? azureAd.Secret))
         {
             _secretClient = new SecretClient(
                 uri,
-                new ClientSecretCredential(azureAd.TenantId, azureAd.ClientId, azureAd.Secret));
+                new ClientSecretCredential(azureAd.TenantId, azureAd.ClientId, azureAd.ClientSecret ?? azureAd.Secret));
         }
     }
 

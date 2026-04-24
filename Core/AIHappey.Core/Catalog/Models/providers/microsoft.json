@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "microsoft/copilot",
+      "object": "model",
+      "owned_by": "Microsoft",
+      "name": "Microsoft 365 Copilot",
+      "type": "language",
+      "description": "Supercharge productivity, streamline tasks, and uncover insights in seconds with secure AI chat powered by Work IQ. It works across Microsoft apps and gives everyone access to agents—all in the flow of work."
+    }
+  ]
+}

@@ -18,6 +18,7 @@ using AIHappey.Core.Providers.Inworld;
 using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
+using AIHappey.Core.Providers.Microsoft;
 using AIHappey.Core.Providers.Novita;
 using AIHappey.Core.Providers.Nvidia;
 using AIHappey.Core.Providers.Nscale;
@@ -514,6 +515,7 @@ public static class ServiceExtensions
     {
         services.TryAddSingleton<EndUserIdHasher>();
         services.TryAddSingleton<IEndUserIdResolver, NullEndUserIdResolver>();
+        services.TryAddSingleton<IMicrosoftGraphTokenResolver, NullMicrosoftGraphTokenResolver>();
         services.AddMemoryCache();
         services.AddSingleton<AsyncCacheHelper>();
         services.AddOptions<ModelListingStorageOptions>();
@@ -539,6 +541,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AlibabaProvider>();
         services.AddSingleton<IModelProvider, CohereProvider>();
         services.AddSingleton<IModelProvider, MistralProvider>();
+        services.AddSingleton<IModelProvider, MicrosoftProvider>();
         services.AddSingleton<IModelProvider, AnthropicProvider>();
         services.AddSingleton<IModelProvider, GoogleAIProvider>();
         services.AddSingleton<IModelProvider, JinaProvider>();

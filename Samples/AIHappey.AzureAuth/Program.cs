@@ -48,6 +48,13 @@ builder.Services.Configure<EndUserIdHashingOptions>(
 builder.Services.Configure<AzureProviderOptions>(
     builder.Configuration.GetSection("AIServices:Azure"));
 
+var legacyAzureAdSecret = builder.Configuration["AzureAd:Secret"];
+if (string.IsNullOrWhiteSpace(builder.Configuration["AzureAd:ClientSecret"])
+    && !string.IsNullOrWhiteSpace(legacyAzureAdSecret))
+{
+    builder.Configuration["AzureAd:ClientSecret"] = legacyAzureAdSecret;
+}
+
 builder.Services.Configure<AmazonProviderOptions>(
     builder.Configuration.GetSection("AIServices:AmazonBedrock"));
 
@@ -72,7 +79,9 @@ builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredServ
 builder.Services.AddSingleton<IAISkillProviderResolver, SkillProviderResolver>();
 // Add authentication/authorization
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"))
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddInMemoryTokenCaches();
 
 builder.Services.AddAuthorization();
 
@@ -92,6 +101,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IApiKeyResolver, ConfigKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, AzureEndUserIdResolver>();
+builder.Services.AddSingleton<IMicrosoftGraphTokenResolver, AzureAdMicrosoftGraphTokenResolver>();
 builder.Services.AddProviders();
 
 var modelListingStorage = builder.Configuration.GetSection("ModelListingStorage").Get<ModelListingStorageOptions>();
