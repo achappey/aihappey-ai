@@ -99,7 +99,7 @@ public class StorageBackedModelProviderResolver(
 
         var response = await memoryCache.GetOrCreateAsync(
             aggregateCacheKey,
-            async token => await LoadAggregateResponseAsync(token),
+            LoadAggregateResponseAsync,
             baseTtl: _options.MemoryCacheTtl,
             cancellationToken: ct);
 

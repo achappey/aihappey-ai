@@ -139,7 +139,7 @@ public partial class MistralProvider
             Id = modelId.ToModelId(GetIdentifier()),
             Name = modelId,
             OwnedBy = GetName(),
-            Type = isSpeechModel ? "speech" : string.Empty
+            Type = isSpeechModel ? "speech" : "language"
         };
     }
 
