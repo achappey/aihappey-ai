@@ -155,7 +155,7 @@ public static partial class InteractionsUnifiedMapper
         var content = new List<InteractionContent>();
         foreach (var part in item.Content ?? [])
         {
-            var mapped = ToInteractionContent(part, providerId);
+            var mapped = ToInteractionContent(part, item.Role, providerId);
             if (mapped is InteractionThoughtContent thought
                 && string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary))
                 && !string.IsNullOrWhiteSpace(thought.Signature))

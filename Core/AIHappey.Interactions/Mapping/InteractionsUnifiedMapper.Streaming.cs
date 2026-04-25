@@ -582,22 +582,6 @@ public static partial class InteractionsUnifiedMapper
                                 },
                                 part,
                                 stop.Index);
-
-                            /*   yield return CreateStreamEvent(
-                                   providerId,
-                                   new AIEventEnvelope
-                                   {
-                                       Type = "file",
-                                       Id = BuildContentEventId(stop.Index),
-                                       Data = new AIFileEventData
-                                       {
-                                           MediaType = rememberedImage?.MimeType ?? "image/png",
-                                           Url = ToInteractionImageDataUrl(rememberedImage?.MimeType, rememberedImage?.Data),
-                                           ProviderMetadata = CreateInteractionImageFileProviderMetadata(providerId, stop.Index, rememberedImage?.MimeType)
-                                       }
-                                   },
-                                   part,
-                                   stop.Index);*/
                         }
 
                         yield break;
@@ -656,6 +640,7 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             default:
+             
                 yield break;
         }
     }

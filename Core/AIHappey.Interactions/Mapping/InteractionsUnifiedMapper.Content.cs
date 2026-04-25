@@ -166,7 +166,7 @@ public static partial class InteractionsUnifiedMapper
             };
     }
 
-    private static InteractionContent? ToInteractionContent(AIContentPart part, string? providerId = null)
+    private static InteractionContent? ToInteractionContent(AIContentPart part, string? role = null, string? providerId = null)
     {
         switch (part)
         {
@@ -202,13 +202,20 @@ public static partial class InteractionsUnifiedMapper
                 }
 
             case AIFileContentPart file:
-                return ToInteractionFileContent(file);
+                if (role == "user")
+                    return ToInteractionFileContent(file);
 
+                return null;
             case AIToolCallContentPart tool:
-                if (IsSyntheticInteractionImageTool(tool))
-                    return null;
+                if (!tool.IsProviderToolCall)
+                {
+                    if (IsSyntheticInteractionImageTool(tool))
+                        return null;
 
-                return ToInteractionToolContent(tool);
+                    return ToInteractionToolContent(tool);
+                }
+
+                return null;
 
             default:
                 return null;
