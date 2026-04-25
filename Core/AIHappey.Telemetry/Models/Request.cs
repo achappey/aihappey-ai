@@ -8,8 +8,6 @@ public class Request
 
     public string? RequestId { get; set; }
 
-    //public string Model { get; set; } = null!;
-
     public string? ToolChoice { get; set; }
 
     public float Temperature { get; set; }
@@ -39,7 +37,8 @@ public class Request
 
 public enum RequestType
 {
-    Chat,
-    Sampling,
-    Completion
+    Chat = 0,
+    Sampling = 1,
+    Completion = 2,
+    Responses = 3
 }

@@ -19,41 +19,83 @@ public class ResponsesController(IAIModelProviderResolver resolver) : Controller
             return BadRequest(new { error = "'input' array and 'model' are required fields" });
 
         HeaderAuthModelContext.SetActiveProvider(HttpContext, requestDto.Model);
+
         var provider = await _resolver.Resolve(requestDto.Model, cancellationToken);
         if (provider == null)
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
         requestDto.Store = false;
-        requestDto.Truncation = TruncationStrategy.Auto;
 
         if (requestDto.Stream == true)
         {
             Response.ContentType = "text/event-stream";
-            await using var writer = new StreamWriter(Response.Body);
 
-            // Stream tokens or chunks, whatever your provider yields!
-            await foreach (var chunk in provider.ResponsesStreamingAsync(requestDto, cancellationToken))
+            try
             {
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
-                await writer.FlushAsync(cancellationToken);
-            }
+                await using var writer = new StreamWriter(Response.Body);
 
-            await writer.WriteAsync("data: [DONE]\n\n");
-            await writer.FlushAsync(cancellationToken);
-            return new EmptyResult();
+                await foreach (var chunk in provider.ResponsesStreamingAsync(requestDto, cancellationToken))
+                {
+                    await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
+                    await writer.FlushAsync(CancellationToken.None); // important
+                }
+
+                await writer.WriteAsync("data: [DONE]\n\n");
+                await writer.FlushAsync(CancellationToken.None);
+
+                return new EmptyResult();
+            }
+            catch (OperationCanceledException)
+            {
+                // client disconnected → silent exit
+                return new EmptyResult();
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    await Response.WriteAsync(
+                        $"data: {JsonSerializer.Serialize(new
+                        {
+                            error = new
+                            {
+                                message = ex.Message,
+                                type = "server_error",
+                                code = (string?)null
+                            }
+                        })}\n\n");
+                }
+                catch
+                {
+                    // socket already gone
+                }
+
+                return new EmptyResult();
+            }
         }
         else
         {
             try
             {
                 var content = await provider.ResponsesAsync(requestDto, cancellationToken);
-
                 return Ok(content);
             }
-            catch (Exception e)
+            catch (OperationCanceledException)
             {
-                return BadRequest(e.Message);
+                return new EmptyResult();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = new
+                    {
+                        message = ex.Message,
+                        type = "server_error",
+                        code = (string?)null
+                    }
+                });
             }
         }
     }

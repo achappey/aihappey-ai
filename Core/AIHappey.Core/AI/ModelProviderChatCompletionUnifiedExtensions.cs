@@ -16,7 +16,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
          HttpClient client,
          ChatCompletionOptions options,
          string relativeUrl = "v1/chat/completions",
-         System.Text.Json.JsonElement? extraRootProperties = null,
+         JsonElement? extraRootProperties = null,
          Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
          CancellationToken cancellationToken = default)
     {
@@ -35,7 +35,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         HttpClient client,
         ChatCompletionOptions options,
         string relativeUrl = "v1/responses",
-        System.Text.Json.JsonElement? extraRootProperties = null,
+        JsonElement? extraRootProperties = null,
         Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -423,7 +423,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         };
 
     private static void CaptureStreamTail(
-        ChatCompletions.Models.ChatCompletionUpdate update,
+        ChatCompletionUpdate update,
         ref string? activeId,
         ref string? activeModel,
         ref DateTimeOffset? lastTimestamp,

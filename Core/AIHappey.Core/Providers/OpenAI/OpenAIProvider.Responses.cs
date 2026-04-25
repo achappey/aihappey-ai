@@ -14,14 +14,14 @@ namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
         options.ParallelToolCalls ??= true;
         options.ContextManagement ??= options.Metadata
-            .GetProviderOption<System.Text.Json.JsonElement[]>(GetIdentifier(), "context_management");
+            .GetProviderOption<JsonElement[]>(GetIdentifier(), "context_management");
 
         this.SetDefaultResponseProperties(options);
 
@@ -52,7 +52,7 @@ public partial class OpenAIProvider
         return response;
     }
 
-    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());

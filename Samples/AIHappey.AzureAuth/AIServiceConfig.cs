@@ -11,6 +11,7 @@ public class AIServiceConfig
     public ProviderConfig? Groq { get; set; }
     public ProviderConfig? XAI { get; set; }
     public ProviderConfig? Together { get; set; }
+    public ProviderConfig? Microsoft { get; set; }
     public ProviderConfig? Cohere { get; set; }
     public ProviderConfig? Jina { get; set; }
     public ProviderConfig? Runway { get; set; }
@@ -530,7 +531,5 @@ public class AzureAdClientOptions
     public string? ClientId { get; set; }
 
     public string? ClientSecret { get; set; }
-
-    public string? Secret { get; set; }
 }
 
