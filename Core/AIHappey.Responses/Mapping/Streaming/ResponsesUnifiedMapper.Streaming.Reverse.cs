@@ -519,7 +519,14 @@ public static partial class ResponsesUnifiedMapper
         if (kind == "tool-output-available" && envelope.Data is AIToolOutputAvailableEventData toolOutputAvailable)
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "custom_tool_call");
-            UpdateReverseItemState(itemState, providerMetadata: toolOutputAvailable.ProviderMetadata);
+            UpdateReverseItemState(
+                itemState,
+                toolName: toolOutputAvailable.ToolName,
+                providerExecuted: toolOutputAvailable.ProviderExecuted,
+                providerMetadata: EnsureDownloadFileReverseProviderMetadata(
+                    streamEvent.ProviderId,
+                    itemState,
+                    toolOutputAvailable));
             itemState.Output = toolOutputAvailable.Output;
 
             part = new ResponseOutputItemDone
@@ -595,6 +602,112 @@ public static partial class ResponsesUnifiedMapper
 
         part = default!;
         return false;
+    }
+
+    private static Dictionary<string, Dictionary<string, object>>? EnsureDownloadFileReverseProviderMetadata(
+        string providerId,
+        ResponseReverseItemState itemState,
+        AIToolOutputAvailableEventData toolOutputAvailable)
+    {
+        var providerMetadata = toolOutputAvailable.ProviderMetadata ?? itemState.ProviderMetadata;
+        var toolName = toolOutputAvailable.ToolName ?? itemState.ToolName ?? itemState.Title;
+
+        if (!string.Equals(toolName, "download_file", StringComparison.OrdinalIgnoreCase))
+            return providerMetadata;
+
+        var normalized = providerMetadata is null
+            ? new Dictionary<string, Dictionary<string, object>>(StringComparer.Ordinal)
+            : providerMetadata.ToDictionary(
+                entry => entry.Key,
+                entry => new Dictionary<string, object>(entry.Value, StringComparer.Ordinal),
+                StringComparer.Ordinal);
+
+        var targetProviderId = !string.IsNullOrWhiteSpace(providerId)
+            ? providerId
+            : normalized.Keys.FirstOrDefault(key => !string.IsNullOrWhiteSpace(key)) ?? "provider";
+
+        if (!normalized.TryGetValue(targetProviderId, out var scoped))
+        {
+            scoped = new Dictionary<string, object>(StringComparer.Ordinal);
+            normalized[targetProviderId] = scoped;
+        }
+
+        scoped.TryAdd("tool_name", "download_file");
+        scoped.TryAdd("name", "download_file");
+        scoped.TryAdd("download_tool", true);
+
+        if (TryExtractDownloadFileReversePayload(toolOutputAvailable.Output, out var filename, out var mediaType, out var fileId))
+        {
+            if (!string.IsNullOrWhiteSpace(filename))
+                scoped.TryAdd("filename", filename);
+
+            if (!string.IsNullOrWhiteSpace(mediaType))
+                scoped.TryAdd("media_type", mediaType);
+
+            if (!string.IsNullOrWhiteSpace(fileId))
+                scoped.TryAdd("file_id", fileId);
+        }
+
+        return normalized;
+    }
+
+    private static bool TryExtractDownloadFileReversePayload(
+        object? output,
+        out string? filename,
+        out string? mediaType,
+        out string? fileId)
+    {
+        filename = null;
+        mediaType = null;
+        fileId = null;
+
+        JsonElement payload;
+        try
+        {
+            var json = output switch
+            {
+                JsonElement jsonElement => jsonElement,
+                null => default,
+                _ => JsonSerializer.SerializeToElement(output, Json)
+            };
+
+            payload = json.ValueKind == JsonValueKind.Object
+                && json.TryGetProperty("structuredContent", out var structuredContent)
+                && structuredContent.ValueKind == JsonValueKind.Object
+                    ? structuredContent
+                    : json;
+        }
+        catch
+        {
+            return false;
+        }
+
+        if (payload.ValueKind != JsonValueKind.Object)
+            return false;
+
+        filename = GetJsonString(payload, "filename")
+            ?? GetJsonString(payload, "file_name")
+            ?? GetJsonString(payload, "file_id");
+        mediaType = GetJsonString(payload, "media_type")
+            ?? GetJsonString(payload, "mediaType");
+        fileId = GetJsonString(payload, "file_id")
+            ?? GetJsonString(payload, "fileId");
+
+        return filename is not null || mediaType is not null || fileId is not null;
+    }
+
+    private static string? GetJsonString(JsonElement element, string propertyName)
+    {
+        if (element.ValueKind != JsonValueKind.Object
+            || !element.TryGetProperty(propertyName, out var value)
+            || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : value.ToString();
     }
 
     private sealed class ResponseReverseStreamState

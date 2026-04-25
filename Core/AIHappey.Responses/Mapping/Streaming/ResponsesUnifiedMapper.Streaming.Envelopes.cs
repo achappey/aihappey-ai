@@ -72,6 +72,7 @@ public static partial class ResponsesUnifiedMapper
 
     private static AIEventEnvelope CreateToolOutputEnvelope(string id,
            object output,
+           string? toolName = null,
            bool? preliminary = null,
            bool? dynamic = null,
            bool? providerExecuted = false,
@@ -81,11 +82,12 @@ public static partial class ResponsesUnifiedMapper
            Type = "tool-output-available",
            Id = id,
            Data = new AIToolOutputAvailableEventData
-           {
-               ProviderExecuted = providerExecuted,
-               Preliminary = preliminary,
-               Dynamic = dynamic,
-               Output = output,
+            {
+                ProviderExecuted = providerExecuted,
+                ToolName = toolName,
+                Preliminary = preliminary,
+                Dynamic = dynamic,
+                Output = output,
                ProviderMetadata = providerMetadata,
             },
         };

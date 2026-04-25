@@ -58,7 +58,8 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
         try
         {
             var result = await provider.MessagesAsync(body, headers, cancellationToken);
-            return Content(JsonSerializer.Serialize(result, Json), "application/json");
+            
+            return Ok(result);
         }
         catch (Exception e)
         {

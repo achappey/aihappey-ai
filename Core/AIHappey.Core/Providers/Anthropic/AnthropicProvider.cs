@@ -132,7 +132,7 @@ public partial class AnthropicProvider : IModelProvider
         var result = await this.ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 
-        return result.ToResponseResult();
+        return EnrichResponseResultWithAnthropicDownloadToolCalls(result.ToResponseResult(), result);
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
@@ -181,6 +181,8 @@ public partial class AnthropicProvider : IModelProvider
             headers: headers,
             cancellationToken: cancellationToken);
 
+        response = await EnrichMessagesResponseWithAnthropicFilesAsync(response!, cancellationToken);
+
         var pricing = ResolveModelPricing(response?.Model);
 
         return EnrichMessagesResponseJson(response!, response?.Usage, pricing);
@@ -200,6 +202,7 @@ public partial class AnthropicProvider : IModelProvider
 
         MessagesUsage? usage = null;
         string? responseModel = null;
+        var fileEnrichmentState = new AnthropicMessagesFileEnrichmentState();
 
         await foreach (var part in this.GetMessages(_client,
             options,
@@ -215,6 +218,8 @@ public partial class AnthropicProvider : IModelProvider
             if (part?.Usage is not null)
                 usage = MergeUsage(usage, part.Usage);
 
+            TrackAnthropicFileOutputBlock(part, fileEnrichmentState);
+
             if (string.Equals(part?.Type, "message_stop", StringComparison.OrdinalIgnoreCase))
             {
                 var pricing = ResolveModelPricing(responseModel);
@@ -223,6 +228,29 @@ public partial class AnthropicProvider : IModelProvider
             }
 
             yield return part!;
+
+            if (part is not null)
+            {
+                var syntheticParts = await CreateAnthropicFileDownloadStreamPartsAsync(
+                    part,
+                    fileEnrichmentState,
+                    cancellationToken);
+
+                foreach (var syntheticPart in syntheticParts)
+                {
+                    yield return syntheticPart;
+                }
+            }
+        }
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken))
+        {
+            yield return streamEvent;
         }
     }
 
@@ -358,9 +386,6 @@ public partial class AnthropicProvider : IModelProvider
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
        => this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
-
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
 
 }
 

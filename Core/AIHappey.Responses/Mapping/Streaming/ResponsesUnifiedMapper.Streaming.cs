@@ -1092,35 +1092,9 @@ public static partial class ResponsesUnifiedMapper
                     yield return CreateToolOutputEnvelope(
                         itemId,
                         output,
+                        toolName: TryGetUnknownEventString(unknown, "tool_name") ?? TryGetUnknownEventString(unknown, "title"),
                         providerExecuted: providerExecuted,
                         providerMetadata: providerMetadata);
-
-                    yield break;
-                }
-
-            case ResponseUnknownEvent unknown
-                when string.Equals(unknown.Type, "response.output_file.done", StringComparison.OrdinalIgnoreCase):
-                {
-                    var itemId = TryGetUnknownEventString(unknown, "item_id") ?? string.Empty;
-                    var mediaType = TryGetUnknownEventString(unknown, "media_type") ?? "application/octet-stream";
-                    var url = TryGetUnknownEventString(unknown, "url") ?? string.Empty;
-                    var filename = TryGetUnknownEventString(unknown, "filename");
-                    var providerMetadata = TryGetUnknownEventProperty(unknown, "provider_metadata", out var providerMetadataElement)
-                        ? JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, object>>>(providerMetadataElement.GetRawText(), JsonSerializerOptions.Web)
-                        : null;
-
-                    yield return new AIEventEnvelope
-                    {
-                        Type = "file",
-                        Id = itemId,
-                        Data = new AIFileEventData
-                        {
-                            MediaType = mediaType,
-                            Url = url,
-                            Filename = filename,
-                            ProviderMetadata = providerMetadata
-                        }
-                    };
 
                     yield break;
                 }

@@ -78,6 +78,9 @@ public partial class OpenAIProvider
         return new Dictionary<string, object>
         {
             ["type"] = "container_file_citation",
+            ["tool_name"] = "download_file",
+            ["name"] = "download_file",
+            ["download_tool"] = true,
             ["container_id"] = containerId,
             ["file_id"] = fileId,
             ["filename"] = filename ?? string.Empty,

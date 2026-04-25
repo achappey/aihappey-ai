@@ -40,30 +40,26 @@ public partial class AnthropicProvider
         string ContentType,
         string? Filename);
 
+    private sealed record AnthropicFileMetadata(
+        string? Id,
+        string? Filename,
+        string? MimeType,
+        long? SizeBytes,
+        bool? Downloadable,
+        JsonElement Raw);
+
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-        var emittedFileIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
             cancellationToken))
         {
-            var overriddenParts = await TryMapAnthropicToolOutputFileOverrideAsync(
-                part.Event,
-                emittedFileIds,
-                cancellationToken);
-
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
                 yield return uiPart;
-            }
-
-            if (overriddenParts is { Count: > 0 })
-            {
-                foreach (var overriddenPart in overriddenParts)
-                    yield return overriddenPart;
             }
         }
 
@@ -210,6 +206,35 @@ public partial class AnthropicProvider
             mediaTypeHint);
 
         return new AnthropicDownloadedFile(bytes, contentType, filename);
+    }
+
+    private async Task<AnthropicFileMetadata?> GetAnthropicFileMetadataAsync(
+        string fileId,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"v1/files/{Uri.EscapeDataString(fileId)}");
+        request.Headers.TryAddWithoutValidation(betaKey, FilesApiBeta);
+
+        using var response = await _client.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        var root = document.RootElement.Clone();
+
+        return new AnthropicFileMetadata(
+            TryGetString(root, "id"),
+            TryGetString(root, "filename"),
+            TryGetString(root, "mime_type"),
+            TryGetLong(root, "size_bytes"),
+            TryGetBool(root, "downloadable"),
+            root);
     }
 
     private static List<AnthropicToolFileDescriptor> ExtractAnthropicToolFileDescriptors(
@@ -451,6 +476,45 @@ public partial class AnthropicProvider
             }
 
             return property.Value.GetString();
+        }
+
+        return null;
+    }
+
+    private static long? TryGetLong(JsonElement element, string propertyName)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+            return null;
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase)
+                && property.Value.ValueKind == JsonValueKind.Number
+                && property.Value.TryGetInt64(out var value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool? TryGetBool(JsonElement element, string propertyName)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+            return null;
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            return property.Value.ValueKind switch
+            {
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                _ => null
+            };
         }
 
         return null;

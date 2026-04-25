@@ -218,21 +218,6 @@ public partial class OpenAIProvider
             }
         });
 
-        parts.Add(new ResponseUnknownEvent
-        {
-            SequenceNumber = state.NextSequenceNumber++,
-            Type = "response.output_file.done",
-            Data = ToJsonElementDictionary(new Dictionary<string, object?>
-            {
-                ["output_index"] = annotationAdded.OutputIndex,
-                ["item_id"] = string.IsNullOrWhiteSpace(annotationAdded.ItemId) ? download.ToolCallId : annotationAdded.ItemId,
-                ["filename"] = download.Filename,
-                ["media_type"] = download.MediaType,
-                ["url"] = download.DataUrl,
-                ["provider_metadata"] = download.ProviderMetadata
-            })
-        });
-
         return parts;
     }
 
@@ -389,7 +374,8 @@ public partial class OpenAIProvider
                 file_id = download.FileId,
                 filename = download.Filename,
                 media_type = download.MediaType,
-                url = download.CanonicalUrl
+                url = download.CanonicalUrl,
+                data_url = download.DataUrl
             }, JsonSerializerOptions.Web)
         };
 

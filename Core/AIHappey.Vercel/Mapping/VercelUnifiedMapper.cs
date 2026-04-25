@@ -138,6 +138,14 @@ public static class VercelUnifiedMapper
             yield break;
         }
 
+        if (type is "tool-output-available"
+            && TryCreateDownloadFileUIPart(envelope, data, providerId, out var toolOutputPart, out var filePart))
+        {
+            yield return toolOutputPart;
+            yield return filePart;
+            yield break;
+        }
+
 
         UIMessagePart part = type switch
         {
@@ -593,6 +601,196 @@ public static class VercelUnifiedMapper
         return providerMetadata.ToDictionary(
             entry => entry.Key,
             entry => (Dictionary<string, object>?)entry.Value);
+    }
+
+    private static bool TryCreateDownloadFileUIPart(
+        AIEventEnvelope envelope,
+        Dictionary<string, object?> data,
+        string providerId,
+        out ToolOutputAvailablePart toolOutputPart,
+        out FileUIPart filePart)
+    {
+        toolOutputPart = default!;
+        filePart = default!;
+
+        var typedData = GetTypedData<AIToolOutputAvailableEventData>(envelope);
+        var providerExecuted = typedData?.ProviderExecuted ?? GetValue<bool?>(data, "providerExecuted");
+        var providerMetadata = EnsureProviderExecutedProviderMetadata(
+            providerId,
+            providerExecuted,
+            typedData?.ProviderMetadata ?? GetNestedProviderMetadata(data));
+
+        var output = typedData?.Output ?? GetValue<object>(data, "output");
+        var wrappedOutput = WrapToolOutputForUi(output, providerExecuted) ?? new { };
+
+        toolOutputPart = new ToolOutputAvailablePart
+        {
+            ToolCallId = envelope.Id ?? string.Empty,
+            Output = wrappedOutput,
+            ProviderExecuted = providerExecuted,
+            Dynamic = typedData?.Dynamic ?? GetValue<bool?>(data, "dynamic"),
+            Preliminary = typedData?.Preliminary ?? GetValue<bool?>(data, "preliminary"),
+            ProviderMetadata = providerMetadata
+        };
+
+        if (providerExecuted != true
+            || !IsDownloadFileToolOutput(typedData?.ToolName, providerMetadata, providerId)
+            || !TryExtractDownloadFilePayload(output, out var url, out var mediaType, out var filename, out var fileId)
+            || string.IsNullOrWhiteSpace(url))
+        {
+            return false;
+        }
+
+        filePart = new FileUIPart
+        {
+            MediaType = mediaType ?? "application/octet-stream",
+            Url = url,
+            ProviderMetadata = EnsureDownloadFileProviderMetadata(providerMetadata, providerId, filename, mediaType, fileId)
+        };
+
+        return true;
+    }
+
+    private static bool IsDownloadFileToolOutput(
+        string? toolName,
+        Dictionary<string, Dictionary<string, object>?>? providerMetadata,
+        string providerId)
+    {
+        if (string.Equals(toolName, "download_file", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (providerMetadata is null || providerMetadata.Count == 0)
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(providerId)
+            && providerMetadata.TryGetValue(providerId, out var scoped)
+            && IsDownloadFileProviderMetadata(scoped))
+        {
+            return true;
+        }
+
+        return providerMetadata.Values.Any(IsDownloadFileProviderMetadata);
+    }
+
+    private static bool IsDownloadFileProviderMetadata(Dictionary<string, object>? metadata)
+        => metadata is not null
+           && (HasMetadataValue(metadata, "name", "download_file")
+               || HasMetadataValue(metadata, "tool_name", "download_file")
+               || HasMetadataValue(metadata, "download_tool", true));
+
+    private static bool TryExtractDownloadFilePayload(
+        object? output,
+        out string? url,
+        out string? mediaType,
+        out string? filename,
+        out string? fileId)
+    {
+        url = null;
+        mediaType = null;
+        filename = null;
+        fileId = null;
+
+        JsonElement payload;
+        if (TryGetCallToolResult(output, out var callToolResult)
+            && callToolResult.IsError != true
+            && callToolResult.StructuredContent is JsonElement structuredContent
+            && structuredContent.ValueKind == JsonValueKind.Object)
+        {
+            payload = structuredContent;
+        }
+        else
+        {
+            payload = output is null ? default : SerializeToJsonElement(output);
+            if (payload.ValueKind != JsonValueKind.Object)
+                return false;
+        }
+
+        url = GetJsonString(payload, "data_url")
+            ?? GetJsonString(payload, "dataUrl")
+            ?? GetJsonString(payload, "url");
+        mediaType = GetJsonString(payload, "media_type")
+            ?? GetJsonString(payload, "mediaType")
+            ?? "application/octet-stream";
+        filename = GetJsonString(payload, "filename")
+            ?? GetJsonString(payload, "file_name")
+            ?? GetJsonString(payload, "fileId")
+            ?? GetJsonString(payload, "file_id");
+        fileId = GetJsonString(payload, "file_id")
+            ?? GetJsonString(payload, "fileId");
+
+        return !string.IsNullOrWhiteSpace(url);
+    }
+
+    private static Dictionary<string, Dictionary<string, object>?>? EnsureDownloadFileProviderMetadata(
+        Dictionary<string, Dictionary<string, object>?>? providerMetadata,
+        string providerId,
+        string? filename,
+        string? mediaType,
+        string? fileId)
+    {
+        var normalized = providerMetadata is null
+            ? new Dictionary<string, Dictionary<string, object>?>(StringComparer.Ordinal)
+            : providerMetadata.ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value is null
+                    ? null
+                    : new Dictionary<string, object>(entry.Value, StringComparer.Ordinal),
+                StringComparer.Ordinal);
+
+        var targetProviderId = !string.IsNullOrWhiteSpace(providerId)
+            ? providerId
+            : normalized.Keys.FirstOrDefault(key => !string.IsNullOrWhiteSpace(key)) ?? "provider";
+
+        if (!normalized.TryGetValue(targetProviderId, out var scoped) || scoped is null)
+        {
+            scoped = new Dictionary<string, object>(StringComparer.Ordinal);
+            normalized[targetProviderId] = scoped;
+        }
+
+        if (!string.IsNullOrWhiteSpace(filename) && !scoped.ContainsKey("filename"))
+            scoped["filename"] = filename;
+
+        if (!string.IsNullOrWhiteSpace(mediaType) && !scoped.ContainsKey("media_type"))
+            scoped["media_type"] = mediaType;
+
+        if (!string.IsNullOrWhiteSpace(fileId) && !scoped.ContainsKey("file_id"))
+            scoped["file_id"] = fileId;
+
+        return normalized.Count == 0 ? null : normalized;
+    }
+
+    private static bool HasMetadataValue<T>(Dictionary<string, object> metadata, string key, T expected)
+    {
+        if (!metadata.TryGetValue(key, out var value) || value is null)
+            return false;
+
+        if (value is JsonElement json)
+        {
+            if (expected is string expectedText && json.ValueKind == JsonValueKind.String)
+                return string.Equals(json.GetString(), expectedText, StringComparison.OrdinalIgnoreCase);
+
+            if (expected is bool expectedBool && json.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                return json.GetBoolean() == expectedBool;
+        }
+
+        if (expected is string text)
+            return string.Equals(value.ToString(), text, StringComparison.OrdinalIgnoreCase);
+
+        return value.Equals(expected);
+    }
+
+    private static string? GetJsonString(JsonElement element, string propertyName)
+    {
+        if (element.ValueKind != JsonValueKind.Object
+            || !element.TryGetProperty(propertyName, out var value)
+            || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : value.ToString();
     }
 
     private static AIToolCallContentPart CreateUnifiedToolCallPart(

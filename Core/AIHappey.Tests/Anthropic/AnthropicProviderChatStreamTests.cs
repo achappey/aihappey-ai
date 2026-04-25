@@ -60,27 +60,21 @@ public class AnthropicProviderChatStreamTests
         FixtureAssertions.AssertContainsSubsequence(
             uiParts.Select(part => part.Type).ToList(),
             "tool-output-available",
-            "source-url",
+            "tool-input-start",
+            "tool-input-available",
+            "tool-output-available",
             "file");
 
-        var toolOutputPart = Assert.IsType<ToolOutputAvailablePart>(uiParts.Single(part => part.Type == "tool-output-available"));
+        var toolOutputPart = Assert.IsType<ToolOutputAvailablePart>(uiParts.OfType<ToolOutputAvailablePart>().First());
         Assert.Equal(toolUseId, toolOutputPart.ToolCallId);
         Assert.True(toolOutputPart.ProviderExecuted);
 
-        var sourcePart = Assert.IsType<SourceUIPart>(uiParts.Single(part => part.Type == "source-url"));
-        Assert.Equal($"https://api.anthropic.com/v1/files/{fileId}/content", sourcePart.Url);
-        Assert.Equal(filename, sourcePart.Title);
-
-        var sourceProviderMetadata = Assert.Contains("anthropic", sourcePart.ProviderMetadata ?? []);
-        Assert.Equal(fileId, Assert.IsType<string>(sourceProviderMetadata["file_id"]));
-        Assert.Equal(toolUseId, Assert.IsType<string>(sourceProviderMetadata["tool_use_id"]));
-        Assert.Equal(FilesApiBeta, Assert.IsType<string>(sourceProviderMetadata["anthropic_beta"]));
-        Assert.Equal(filename, Assert.IsType<string>(sourceProviderMetadata["filename"]));
+        Assert.DoesNotContain(uiParts, part => part.Type == "source-url");
 
         var filePart = Assert.IsType<FileUIPart>(uiParts.Single(part => part.Type == "file"));
         Assert.Equal(mediaType, filePart.MediaType);
         Assert.Null(filePart.Filename);
-        Assert.Equal(Convert.ToBase64String(fileBytes), filePart.Url);
+        Assert.Equal($"data:{mediaType};base64,{Convert.ToBase64String(fileBytes)}", filePart.Url);
 
         var fileProviderMetadata = Assert.Contains("anthropic", filePart.ProviderMetadata ?? []);
         Assert.Equal(fileId, Assert.IsType<string>(fileProviderMetadata!["file_id"]));
@@ -121,7 +115,7 @@ public class AnthropicProviderChatStreamTests
         var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(CreateChatRequest()));
 
         Assert.Contains(uiParts, part => part.Type == "tool-output-available");
-        Assert.Contains(uiParts, part => part.Type == "source-url");
+        Assert.DoesNotContain(uiParts, part => part.Type == "source-url");
         Assert.DoesNotContain(uiParts, part => part.Type == "file");
     }
 
