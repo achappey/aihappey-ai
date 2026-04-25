@@ -14,7 +14,7 @@ public partial class EdenAIProvider
             cacheKey,
             async ct =>
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, "models");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v3/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -83,6 +83,8 @@ public partial class EdenAIProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
+
+                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },

@@ -1,4 +1,5 @@
 
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Responses;
@@ -61,6 +62,10 @@ public class ResponseResult
 
     [JsonPropertyName("metadata")]
     public Dictionary<string, object?>? Metadata { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
 }
 
 public class ResponseResultError

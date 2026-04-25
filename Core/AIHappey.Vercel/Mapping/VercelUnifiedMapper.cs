@@ -1136,12 +1136,6 @@ public static class VercelUnifiedMapper
             ?? [];
 
         metadata["model"] = typedData?.Model ?? (metadata.TryGetValue("model", out var modelValue) ? modelValue : null);
-        // metadata["model"] = metadata.TryGetValue("model", out var modelValue) ? modelValue : null;
-
-        //    if (!metadata.ContainsKey("model"))
-        //       metadata["model"] = typedData?.Model ?? GetValue<object>(data, "model");
-
-        //  metadata["model"] = NormalizeFinishModel(metadata.TryGetValue("model", out var modelValue) ? modelValue : null, providerId);
         metadata["timestamp"] = ResolveFinishTimestamp(metadata.TryGetValue("timestamp", out var timestampValue) ? timestampValue : null, typedData?.CompletedAt ?? GetValue<object>(data, "completed_at"));
 
         var rawUsage = ResolveRawFinishUsage(typedData, metadata);
@@ -1159,7 +1153,6 @@ public static class VercelUnifiedMapper
 
         return FinishMessageMetadata.FromDictionary(
             ToNonNullableMetadataDictionary(metadata),
-            //fallbackModel: NormalizeFinishModel(typedData?.Model, providerId),
             fallbackTimestamp: ResolveFinishTimestamp(null, typedData?.CompletedAt));
     }
 

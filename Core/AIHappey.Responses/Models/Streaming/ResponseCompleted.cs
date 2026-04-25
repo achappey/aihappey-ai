@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Responses.Streaming;
@@ -12,6 +13,9 @@ public class ResponseCompleted : ResponseStreamPart
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "response.completed";
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 
 }
 

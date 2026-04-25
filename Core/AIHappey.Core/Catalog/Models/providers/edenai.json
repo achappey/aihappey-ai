@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "edenai/@edenai",
+      "object": "model",
+      "owned_by": "EdenAI",
+      "name": "Eden AI Smart routing",
+      "type": "language",
+      "description": "Let the Eden AI router automatically select the best available model."
+    }
+  ]
+}
