@@ -703,12 +703,13 @@ public static class SamplingUnifiedMapper
         };
 
     private static string ToSamplingStopReason(string? status)
-        => string.IsNullOrWhiteSpace(status) ? "stop" : status switch
+        => string.IsNullOrWhiteSpace(status) ? "stopSequence" : status switch
         {
-            "completed" => "stop",
+            "completed" => "endTurn",
             "incomplete" => "maxTokens",
             "failed" => "error",
-            "cancelled" => "cancelled",
+            "cancelled" => "stopSequence",
+            "active" => "endTurn",
             _ => status
         };
 

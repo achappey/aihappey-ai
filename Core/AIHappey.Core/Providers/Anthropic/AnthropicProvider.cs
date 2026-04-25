@@ -57,6 +57,18 @@ public partial class AnthropicProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
+        var standardModels = (await ListStandardModelsAsync(cancellationToken)).ToList();
+        var managedAgentModels = (await ListManagedAgentModelsSafeAsync(cancellationToken)).ToList();
+
+        return standardModels
+            .Concat(managedAgentModels)
+            .GroupBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderByDescending(model => model.Created ?? 0);
+    }
+
+    private async Task<IEnumerable<Model>> ListStandardModelsAsync(CancellationToken cancellationToken)
+    {
         var client = new ANT.AnthropicClient(GetKey());
 
         var models = await client.Models.ListModelsAsync(ctx: cancellationToken);
@@ -91,7 +103,6 @@ public partial class AnthropicProvider : IModelProvider
                 OwnedBy = nameof(Anthropic),
             };
         });
-
     }
 
     private readonly Dictionary<string, int> ContextSize = new() {
@@ -248,6 +259,14 @@ public partial class AnthropicProvider : IModelProvider
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (TryResolveManagedAgentTarget(request.Model, out _))
+        {
+            await foreach (var streamEvent in StreamManagedAgentUnifiedAsync(request, cancellationToken))
+                yield return streamEvent;
+
+            yield break;
+        }
+
         await foreach (var streamEvent in this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken))
         {
             yield return streamEvent;
@@ -385,7 +404,9 @@ public partial class AnthropicProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
+        => TryResolveManagedAgentTarget(request.Model, out _)
+            ? ExecuteManagedAgentUnifiedAsync(request, cancellationToken)
+            : this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
 
 }
 

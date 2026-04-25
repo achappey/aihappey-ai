@@ -228,7 +228,7 @@ public partial class MicrosoftProvider
         return new AIResponse
         {
             ProviderId = GetIdentifier(),
-            Model = request.Model ?? CopilotModelId,
+            Model = CopilotModelId,
             Status = ExtractString(response, "state") ?? "completed",
             Output = new AIOutput
             {
@@ -458,14 +458,18 @@ public partial class MicrosoftProvider
     }
 
     private static Dictionary<string, object?> CreateResponseMetadata(JsonElement response, string? model)
-        => new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["microsoft.raw"] = response.Clone(),
-            ["microsoft.conversationId"] = ExtractString(response, "id"),
-            ["microsoft.state"] = ExtractString(response, "state"),
-            ["microsoft.turnCount"] = ExtractInt(response, "turnCount"),
-            ["model"] = model ?? CopilotModelId
-        };
+     => new(StringComparer.OrdinalIgnoreCase)
+     {
+         ["microsoft"] = new Dictionary<string, object?>
+         {
+             ["conversation"] = new Dictionary<string, object?>
+             {
+                 ["id"] = ExtractString(response, "id"),
+                 ["state"] = ExtractString(response, "state"),
+                 ["turnCount"] = ExtractInt(response, "turnCount"),
+             }
+         }
+     };
 
     private static object CreateUsage(JsonElement response)
         => new Dictionary<string, object?>
