@@ -184,7 +184,7 @@ public static partial class MessagesUnifiedMapper
 
         foreach (var item in items)
         {
-            var itemRole = NormalizeRole(item.Role);
+            var itemRole = ResolveMessageRole(item);
 
             if (pendingBlocks.Count > 0 && !string.Equals(pendingRole, itemRole, StringComparison.Ordinal))
                 FlushPending();
@@ -229,6 +229,18 @@ public static partial class MessagesUnifiedMapper
 
         foreach (var message in yielded)
             yield return message;
+    }
+
+    private static string ResolveMessageRole(AIInputItem item)
+        => IsReasoningOnlyInputItem(item) ? "assistant" : NormalizeRole(item.Role);
+
+    private static bool IsReasoningOnlyInputItem(AIInputItem item)
+    {
+        if (string.Equals(item.Type?.Trim(), "reasoning", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return item.Content is { Count: > 0 }
+               && item.Content.All(static part => part is AIReasoningContentPart);
     }
 
     private static void AppendMessageBlock(List<MessageContentBlock> target, AIContentPart part, string providerId)

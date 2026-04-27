@@ -1,6 +1,8 @@
 using System.Text.Json;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
+using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
@@ -38,6 +40,51 @@ public sealed class MessagesUnifiedMapperRequestTests
             message => AssertTextMessage(message, "user", "First user message"),
             message => AssertTextMessage(message, "assistant", "Assistant reply"),
             message => AssertTextMessage(message, "user", "Follow-up question"));
+    }
+
+    [Fact]
+    public void Responses_reasoning_input_items_map_to_assistant_thinking_messages()
+    {
+        var responseRequest = new ResponseRequest
+        {
+            Model = "anthropic/test-model",
+            Input = new ResponseInput([
+                new ResponseInputMessage
+                {
+                    Role = ResponseRole.User,
+                    Content = new ResponseMessageContent("Continue from this reasoning state.")
+                },
+                new ResponseReasoningItem
+                {
+                    Id = "rs_response_reasoning_123",
+                    EncryptedContent = "opaque-anthropic-thinking-signature",
+                    Summary =
+                    [
+                        new ResponseReasoningSummaryTextPart
+                        {
+                            Text = "I should use the preserved reasoning state."
+                        }
+                    ]
+                }
+            ])
+        };
+
+        var messagesRequest = responseRequest
+            .ToUnifiedRequest("anthropic")
+            .ToMessagesRequest("anthropic");
+
+        Assert.Collection(
+            messagesRequest.Messages,
+            message => AssertTextMessage(message, "user", "Continue from this reasoning state."),
+            message =>
+            {
+                Assert.Equal("assistant", message.Role);
+
+                var thinkingBlock = Assert.Single(message.Content.Blocks!);
+                Assert.Equal("thinking", thinkingBlock.Type);
+                Assert.Equal("I should use the preserved reasoning state.", thinkingBlock.Thinking);
+                Assert.Equal("opaque-anthropic-thinking-signature", thinkingBlock.Signature);
+            });
     }
 
     [Fact]
