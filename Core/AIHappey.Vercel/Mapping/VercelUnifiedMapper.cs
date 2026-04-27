@@ -277,8 +277,6 @@ public static class VercelUnifiedMapper
                 Url = GetTypedData<AIFileEventData>(envelope)?.Url
                     ?? GetValue<string>(data, "url")
                     ?? string.Empty,
-                //  Filename = GetTypedData<AIFileEventData>(envelope)?.Filename
-                //     ?? GetValue<string>(data, "filename"),
                 ProviderMetadata = ToNullableNestedProviderMetadata(
                         GetTypedData<AIFileEventData>(envelope)?.ProviderMetadata)
                     ?? GetDoubleNestedProviderMetadata(data)
@@ -390,12 +388,6 @@ public static class VercelUnifiedMapper
                     Type = "reasoning",
                     Text = reasoning.Text,
                     Metadata = reasoningMetadata.Count == 0 ? null : reasoningMetadata
-                    /*   Metadata = new Dictionary<string, object?>
-                       {
-                           ["vercel.type"] = reasoning.Type,
-                          ["vercel.id"] = reasoning.Id,
-                          ["vercel.providerMetadata"] = reasoning.ProviderMetadata
-                      }*/
                 };
 
             case ToolInvocationPart invocation:
@@ -412,16 +404,6 @@ public static class VercelUnifiedMapper
         }
 
         return null;
-        /*return new AITextContentPart
-        {
-            Type = "text",
-            Text = JsonSerializer.Serialize(part, part.GetType(), Json),
-            Metadata = new Dictionary<string, object?>
-            {
-                ["vercel.type"] = part.Type,
-                ["vercel.unmapped"] = true
-            }
-        };*/
     }
 
     private static Dictionary<string, object?> ToDataDictionary(UIMessagePart part)
