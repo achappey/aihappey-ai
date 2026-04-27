@@ -380,6 +380,9 @@ public static partial class ChatCompletionsUnifiedMapper
                 yield return CreateUiEnvelope(chunk, "finish", new AIFinishEventData
                 {
                     FinishReason = finishReasonValue,
+                    MessageMetadata = AIFinishMessageMetadata.FromDictionary(
+                           ExtractValue<Dictionary<string, object>>(chunk, "metadata")
+                    ),
                     Model = ExtractValue<string>(chunk, "model"),
                     CompletedAt = ExtractValue<long?>(chunk, "created"),
                     InputTokens = inputTokens,

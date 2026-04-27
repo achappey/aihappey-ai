@@ -13,6 +13,7 @@ public static class ModelProviderChatCompletionsSamplingExtensions
     /// - Executes IModelProvider.CompleteChatAsync.
     /// - Returns CreateMessageResult with model/role/stop reason/text content.
     /// </summary>
+    [Obsolete("Use unified model")]
     public static async Task<CreateMessageResult> ChatCompletionsSamplingAsync(
         this IModelProvider modelProvider,
         CreateMessageRequestParams chatRequest,

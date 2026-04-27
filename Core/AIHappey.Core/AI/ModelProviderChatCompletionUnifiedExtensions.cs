@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Globalization;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
 using AIHappey.Unified.Models;
@@ -34,7 +35,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         this IModelProvider modelProvider,
         HttpClient client,
         ChatCompletionOptions options,
-        string relativeUrl = "v1/responses",
+        string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
         Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -402,6 +403,14 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         if (rawUsage is not null)
             metadata["usage"] = CloneUsageObject(rawUsage);
 
+        if (!HasGatewayCost(metadata) && TryGetUsageCost(rawUsage, out var usageCost))
+        {
+            metadata["gateway"] = new Dictionary<string, object?>
+            {
+                ["cost"] = usageCost
+            };
+        }
+
         if (inputTokens is not null)
             metadata["inputTokens"] = inputTokens;
 
@@ -421,6 +430,70 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             Dictionary<string, object?> dictionary => dictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
             _ => JsonSerializer.SerializeToElement(rawUsage, JsonSerializerOptions.Web)
         };
+
+    private static bool HasGatewayCost(Dictionary<string, object?> metadata)
+    {
+        if (!metadata.TryGetValue("gateway", out var gateway) || gateway is null)
+            return false;
+
+        var gatewayElement = gateway switch
+        {
+            JsonElement json => json,
+            _ => JsonSerializer.SerializeToElement(gateway, JsonSerializerOptions.Web)
+        };
+
+        return TryGetProperty(gatewayElement, "cost", out var costElement)
+            && TryGetDecimal(costElement, out _);
+    }
+
+    private static bool TryGetUsageCost(object? rawUsage, out decimal cost)
+    {
+        cost = 0m;
+
+        if (rawUsage is null)
+            return false;
+
+        var usageElement = rawUsage switch
+        {
+            JsonElement json => json,
+            _ => JsonSerializer.SerializeToElement(rawUsage, JsonSerializerOptions.Web)
+        };
+
+        if (!TryGetProperty(usageElement, "cost", out var costElement))
+            return false;
+
+        return TryGetDecimal(costElement, out cost);
+    }
+
+    private static bool TryGetDecimal(JsonElement element, out decimal value)
+    {
+        value = 0m;
+
+        return element.ValueKind switch
+        {
+            JsonValueKind.Number when element.TryGetDecimal(out var parsed) => (value = parsed) >= 0 || parsed < 0,
+            JsonValueKind.String when decimal.TryParse(element.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) => (value = parsed) >= 0 || parsed < 0,
+            _ => false
+        };
+    }
+
+    private static bool TryGetProperty(JsonElement element, string propertyName, out JsonElement value)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
+    }
 
     private static void CaptureStreamTail(
         ChatCompletionUpdate update,
