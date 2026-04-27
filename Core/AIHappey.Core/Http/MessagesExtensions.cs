@@ -29,6 +29,7 @@ public static class MessagesExtensions
 
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
+        payload.Tools = [.. payload.Tools?.DistinctBy(a => a.Name) ?? []];
 
         if (headers != null)
         {
@@ -66,6 +67,7 @@ public static class MessagesExtensions
     {
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
 
+        payload.Tools = [.. payload.Tools?.DistinctBy(a => a.Name) ?? []];
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };

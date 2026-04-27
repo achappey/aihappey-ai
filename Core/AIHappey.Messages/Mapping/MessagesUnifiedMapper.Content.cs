@@ -261,15 +261,18 @@ public static partial class MessagesUnifiedMapper
             yield break;
         }
 
-        yield return (
-            new MessageContentBlock
-            {
-                Type = "tool_use",
-                Id = toolPart.ToolCallId,
-                Name = toolPart.ToolName ?? toolPart.Title ?? "tool",
-                Input = SerializeToNullableElement(toolPart.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
-            },
-            null);
+        if (!IsToolOutputOnlyPart(toolPart))
+        {
+            yield return (
+                new MessageContentBlock
+                {
+                    Type = "tool_use",
+                    Id = toolPart.ToolCallId,
+                    Name = toolPart.ToolName ?? toolPart.Title ?? "tool",
+                    Input = SerializeToNullableElement(toolPart.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
+                },
+                null);
+        }
 
         if (!HasToolOutput(toolPart))
             yield break;
@@ -304,6 +307,9 @@ public static partial class MessagesUnifiedMapper
 
     private static bool HasToolOutput(AIToolCallContentPart toolPart)
         => toolPart.Output is not null;
+
+    private static bool IsToolOutputOnlyPart(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.Type, "function_call_output", StringComparison.OrdinalIgnoreCase);
 
     private static bool TryCreateProviderExecutedToolResultBlock(
         AIToolCallContentPart toolPart,

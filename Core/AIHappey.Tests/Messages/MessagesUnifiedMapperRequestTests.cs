@@ -88,6 +88,63 @@ public sealed class MessagesUnifiedMapperRequestTests
     }
 
     [Fact]
+    public void Responses_function_call_round_trip_maps_tool_use_id_only_on_user_tool_result()
+    {
+        var responseRequest = new ResponseRequest
+        {
+            Model = "anthropic/test-model",
+            Input = new ResponseInput([
+                new ResponseFunctionCallItem
+                {
+                    CallId = "call_response_tool_123",
+                    Name = "lookup_weather",
+                    Arguments = "{\"city\":\"Amsterdam\"}",
+                    Status = "completed"
+                },
+                new ResponseFunctionCallOutputItem
+                {
+                    CallId = "call_response_tool_123",
+                    Output = "{\"temperature\":\"18C\"}",
+                    Status = "completed"
+                }
+            ])
+        };
+
+        var messagesRequest = responseRequest
+            .ToUnifiedRequest("anthropic")
+            .ToMessagesRequest("anthropic");
+
+        Assert.Collection(
+            messagesRequest.Messages,
+            assistantMessage =>
+            {
+                Assert.Equal("assistant", assistantMessage.Role);
+                var toolUseBlock = Assert.Single(assistantMessage.Content.Blocks!);
+
+                Assert.Equal("tool_use", toolUseBlock.Type);
+                Assert.Equal("call_response_tool_123", toolUseBlock.Id);
+                Assert.Null(toolUseBlock.ToolUseId);
+
+                var serializedToolUseBlock = JsonSerializer.Serialize(toolUseBlock, JsonSerializerOptions.Web);
+                Assert.Contains("\"id\":\"call_response_tool_123\"", serializedToolUseBlock, StringComparison.Ordinal);
+                Assert.DoesNotContain("\"tool_use_id\":", serializedToolUseBlock, StringComparison.Ordinal);
+            },
+            userMessage =>
+            {
+                Assert.Equal("user", userMessage.Role);
+                var toolResultBlock = Assert.Single(userMessage.Content.Blocks!);
+
+                Assert.Equal("tool_result", toolResultBlock.Type);
+                Assert.Equal("call_response_tool_123", toolResultBlock.ToolUseId);
+                Assert.Null(toolResultBlock.Id);
+
+                var serializedToolResultBlock = JsonSerializer.Serialize(toolResultBlock, JsonSerializerOptions.Web);
+                Assert.Contains("\"tool_use_id\":\"call_response_tool_123\"", serializedToolResultBlock, StringComparison.Ordinal);
+                Assert.DoesNotContain("\"id\":", serializedToolResultBlock, StringComparison.Ordinal);
+            });
+    }
+
+    [Fact]
     public void Vercel_chat_request_with_provider_executed_tool_and_follow_up_maps_to_ordered_messages_request()
     {
         var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(ProviderToolsWithFollowUpFixturePath));
