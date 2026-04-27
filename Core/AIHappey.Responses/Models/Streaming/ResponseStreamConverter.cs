@@ -24,6 +24,8 @@ public class ResponseStreamConverter : JsonConverter<ResponseStreamPart>
         ["response.mcp_call_arguments.done"] = typeof(ResponseMcpCallArgumentsDone),
         ["response.reasoning_summary_part.added"] = typeof(ResponseReasoningSummaryPartAdded),
         ["response.reasoning_summary_part.done"] = typeof(ResponseReasoningSummaryPartDone),
+        ["response.reasoning_part.added"] = typeof(ResponseReasoningPartAdded),
+        ["response.reasoning_part.done"] = typeof(ResponseReasoningPartDone),
         ["response.reasoning_summary_text.delta"] = typeof(ResponseReasoningSummaryTextDelta),
         ["response.image_generation_call.partial_image"] = typeof(ResponseImageGenerationCallPartialImage),
         ["response.image_generation_call.in_progress"] = typeof(ResponseImageGenerationCallInProgress),

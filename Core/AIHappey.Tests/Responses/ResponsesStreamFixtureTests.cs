@@ -19,6 +19,7 @@ public sealed class ResponsesStreamFixtureTests
     private const string ProviderId = "fixture-provider";
     private const string ReasoningAndProviderToolsRawFixturePath = "Fixtures/responses/raw/openai-reasoning-and-provider-tools-response-stream.jsonl";
     private const string MultipleShellCallsWithStreamingOutputFixturePath = "Fixtures/responses/raw/openai-multiple-shell-calls-with-streaming-output.jsonl";
+    private const string ScalewayReasoningRawFixturePath = "Fixtures/responses/raw/scaleway-with-reasoning-streaming.jsonl";
 
     [Fact]
     public void Typed_and_raw_responses_fixtures_produce_the_same_stream_part_types()
@@ -157,6 +158,113 @@ public sealed class ResponsesStreamFixtureTests
         var uiProviderMetadata = Assert.Contains(reasoningProviderId, reasoningUiPart.ProviderMetadata ?? []);
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["id"]));
         Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["item_id"]));
+    }
+
+    [Fact]
+    public void Scaleway_reasoning_part_events_emit_reasoning_start_before_reasoning_deltas_for_vercel_ui_stream()
+    {
+        const string scalewayProviderId = "scaleway";
+        const string expectedReasoningItemId = "msg_9180b40d3608ba1a";
+
+        var parts = FixtureFileLoader.LoadResponseRawFixture(ScalewayReasoningRawFixturePath);
+
+        var unifiedReasoningEvents = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(scalewayProviderId))
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
+            .ToList();
+
+        Assert.NotEmpty(unifiedReasoningEvents);
+        Assert.Equal("reasoning-start", unifiedReasoningEvents[0].Event.Type);
+        Assert.Equal(expectedReasoningItemId, unifiedReasoningEvents[0].Event.Id);
+        Assert.All(
+            unifiedReasoningEvents.Where(streamEvent => streamEvent.Event.Type == "reasoning-delta"),
+            streamEvent => Assert.Equal(expectedReasoningItemId, streamEvent.Event.Id));
+
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedReasoningEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end");
+
+        var reasoningStartIndex = unifiedReasoningEvents.FindIndex(streamEvent => streamEvent.Event.Type == "reasoning-start");
+        var firstReasoningDeltaIndex = unifiedReasoningEvents.FindIndex(streamEvent => streamEvent.Event.Type == "reasoning-delta");
+        var reasoningEndIndex = unifiedReasoningEvents.FindIndex(streamEvent => streamEvent.Event.Type == "reasoning-end");
+
+        Assert.True(reasoningStartIndex >= 0);
+        Assert.True(firstReasoningDeltaIndex > reasoningStartIndex);
+        Assert.True(reasoningEndIndex > firstReasoningDeltaIndex);
+
+        var reasoningText = string.Concat(unifiedReasoningEvents
+            .Where(streamEvent => streamEvent.Event.Type == "reasoning-delta")
+            .Select(streamEvent => Assert.IsType<AIReasoningDeltaEventData>(streamEvent.Event.Data).Delta));
+
+        Assert.Equal(
+            "User says \"test\". Probably they just test system. Should respond politely, maybe ask how can help.",
+            reasoningText);
+
+        var uiReasoningParts = unifiedReasoningEvents
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(scalewayProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiReasoningParts);
+        Assert.Equal("reasoning-start", uiReasoningParts[0].Type);
+
+        var reasoningStartPart = Assert.IsType<ReasoningStartUIPart>(uiReasoningParts[0]);
+        Assert.Equal(expectedReasoningItemId, reasoningStartPart.Id);
+        var firstReasoningDeltaPart = Assert.IsType<ReasoningDeltaUIPart>(uiReasoningParts.First(part => part.Type == "reasoning-delta"));
+        Assert.Equal(expectedReasoningItemId, firstReasoningDeltaPart.Id);
+    }
+
+    [Fact]
+    public async Task Responses_unified_runtime_injects_missing_reasoning_start_before_orphan_reasoning_delta()
+    {
+        const string providerId = "scaleway";
+        const string expectedReasoningItemId = "msg_orphan_reasoning";
+
+        var provider = new FixtureResponseStreamModelProvider(
+            providerId,
+            [
+                new ResponseReasoningTextDelta
+                {
+                    ItemId = expectedReasoningItemId,
+                    Delta = "orphan reasoning delta",
+                    OutputIndex = 0,
+                    ContentIndex = 0,
+                    SequenceNumber = 1
+                }
+            ]);
+
+        var request = new AIRequest
+        {
+            ProviderId = providerId,
+            Model = "gpt-oss-120b",
+            Stream = true
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaResponsesAsync(request));
+        var reasoningEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta")
+            .ToList();
+
+        Assert.Collection(
+            reasoningEvents,
+            streamEvent =>
+            {
+                Assert.Equal("reasoning-start", streamEvent.Event.Type);
+                Assert.Equal(expectedReasoningItemId, streamEvent.Event.Id);
+            },
+            streamEvent =>
+            {
+                Assert.Equal("reasoning-delta", streamEvent.Event.Type);
+                Assert.Equal(expectedReasoningItemId, streamEvent.Event.Id);
+                Assert.Equal("orphan reasoning delta", Assert.IsType<AIReasoningDeltaEventData>(streamEvent.Event.Data).Delta);
+            });
+
+        var uiParts = reasoningEvents
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(providerId))
+            .ToList();
+
+        Assert.Equal(["reasoning-start", "reasoning-delta"], uiParts.Select(part => part.Type).ToList());
     }
 
     [Fact]

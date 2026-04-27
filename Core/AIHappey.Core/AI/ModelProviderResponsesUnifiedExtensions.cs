@@ -88,6 +88,7 @@ public static class ModelProviderResponsesUnifiedExtensions
         async IAsyncEnumerable<AIStreamEvent> StreamCore()
         {
             var seenPerplexitySearchSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var openReasoningIds = new HashSet<string>(StringComparer.Ordinal);
 
             await foreach (var update in modelProvider.ResponsesStreamingAsync(responseRequest, cancellationToken))
             {
@@ -96,12 +97,71 @@ public static class ModelProviderResponsesUnifiedExtensions
                     if (ShouldSkipDuplicatePerplexitySearchSourceUrl(modelProvider.GetIdentifier(), evt, seenPerplexitySearchSourceUrls))
                         continue;
 
+                    var eventType = NormalizeEventType(evt.Event.Type);
+                    var eventId = evt.Event.Id;
+
+                    if (eventType == "reasoning-delta" && !IsOpenReasoningId(openReasoningIds, eventId))
+                    {
+                        if (!string.IsNullOrWhiteSpace(eventId))
+                            openReasoningIds.Add(eventId);
+
+                        yield return CreateSyntheticStreamEvent(
+                            providerId: modelProvider.GetIdentifier(),
+                            type: "reasoning-start",
+                            id: eventId,
+                            timestamp: evt.Event.Timestamp,
+                            metadata: evt.Metadata);
+                    }
+
+                    if (eventType == "reasoning-start" && !string.IsNullOrWhiteSpace(eventId))
+                        openReasoningIds.Add(eventId);
+
+                    if (eventType == "reasoning-end" && !string.IsNullOrWhiteSpace(eventId))
+                        openReasoningIds.Remove(eventId);
+
                     yield return evt;
                 }
 
             }
         }
     }
+
+    private static string NormalizeEventType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+            return string.Empty;
+
+        return type.StartsWith("vercel.ui.", StringComparison.OrdinalIgnoreCase)
+            ? type["vercel.ui.".Length..]
+            : type;
+    }
+
+    private static bool IsOpenReasoningId(HashSet<string> openReasoningIds, string? eventId)
+        => !string.IsNullOrWhiteSpace(eventId) && openReasoningIds.Contains(eventId);
+
+    private static AIStreamEvent CreateSyntheticStreamEvent(
+        string providerId,
+        string type,
+        string? id,
+        DateTimeOffset? timestamp,
+        Dictionary<string, object?>? metadata)
+        => new()
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = type,
+                Id = id,
+                Timestamp = timestamp,
+                Data = type switch
+                {
+                    "reasoning-start" => new AIReasoningStartEventData(),
+                    "reasoning-end" => new AIReasoningEndEventData(),
+                    _ => new AIDataEventData { Data = string.Empty }
+                }
+            },
+            Metadata = metadata
+        };
 
     private static bool ShouldSkipDuplicatePerplexitySearchSourceUrl(
         string providerId,

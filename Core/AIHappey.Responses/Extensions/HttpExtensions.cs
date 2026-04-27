@@ -27,6 +27,8 @@ public static class HttpExtensions
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
+        options.CleanUnsafeReasoningReplay();
+
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
@@ -66,6 +68,8 @@ public static class HttpExtensions
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
+
+        options.CleanUnsafeReasoningReplay();
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
 
@@ -300,6 +304,42 @@ public static class HttpExtensions
 
         return JsonSerializer.SerializeToElement(merged, ResponseJson.Default);
     }
+
+
+    public static ResponseRequest CleanUnsafeReasoningReplay(this ResponseRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.Input is null || request.Input.IsText || request.Input.Items is null)
+            return request;
+
+        var cleaned = new List<ResponseInputItem>();
+
+        foreach (var item in request.Input.Items)
+        {
+            if (item is not ResponseReasoningItem reasoning)
+            {
+                cleaned.Add(item);
+                continue;
+            }
+
+            // Raw/summarized reasoning is observable output, not replayable provider state.
+            if (string.IsNullOrWhiteSpace(reasoning.EncryptedContent))
+                continue;
+
+            // Keep only opaque provider state. Do not replay summaries/content back as context.
+            cleaned.Add(new ResponseReasoningItem
+            {
+                Id = reasoning.Id,
+                EncryptedContent = reasoning.EncryptedContent,
+                Summary = []
+            });
+        }
+
+        request.Input = new ResponseInput(cleaned);
+        return request;
+    }
+
 }
 
 

@@ -231,6 +231,24 @@ public sealed class ResponseReasoningSummaryPartDone : ResponseStreamItemContent
     public override string Type { get; init; } = "response.reasoning_summary_part.done";
 }
 
+public sealed class ResponseReasoningPartAdded : ResponseStreamItemContentEvent
+{
+    [JsonPropertyName("part")]
+    public ResponseStreamContentPart Part { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_part.added";
+}
+
+public sealed class ResponseReasoningPartDone : ResponseStreamItemContentEvent
+{
+    [JsonPropertyName("part")]
+    public ResponseStreamContentPart Part { get; init; } = default!;
+
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.reasoning_part.done";
+}
+
 public abstract class ResponseToolCallArgumentsEvent : ResponseStreamIndexedPart
 {
     [JsonPropertyName("item_id")]

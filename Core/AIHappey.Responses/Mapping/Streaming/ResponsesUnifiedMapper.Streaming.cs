@@ -353,6 +353,20 @@ public static partial class ResponsesUnifiedMapper
                     done.Part);
                 yield break;
 
+            case ResponseReasoningPartAdded added:
+                yield return CreateReasoningStartEnvelope(
+                    providerId,
+                    added.ItemId ?? string.Empty,
+                    added.Part);
+                yield break;
+
+            case ResponseReasoningPartDone done:
+                yield return CreateReasoningEndEnvelope(
+                    providerId,
+                    done.ItemId ?? string.Empty,
+                    done.Part);
+                yield break;
+
             case ResponseReasoningTextDelta responseReasoningTextDelta:
                 yield return CreateReasoningDeltaEnvelope(responseReasoningTextDelta.ItemId, responseReasoningTextDelta.Delta);
                 yield break;

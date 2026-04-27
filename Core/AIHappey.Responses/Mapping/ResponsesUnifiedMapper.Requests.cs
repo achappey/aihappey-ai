@@ -61,7 +61,9 @@ public static partial class ResponsesUnifiedMapper
         if (input.IsText)
             return new AIInput { Text = input.Text };
 
-        var items = input.Items?.Select(item => ToUnifiedInputItem(item, providerId)).ToList();
+        List<AIInputItem>? items = input.Items?.Select(item => ToUnifiedInputItem(item, providerId))
+            .ToList();
+
         return new AIInput { Items = items };
     }
 
@@ -160,7 +162,6 @@ public static partial class ResponsesUnifiedMapper
 
                 MergeProviderScopedReasoningItemIdMetadata(reasoningMetadata, providerId, reasoning.Id);
                 MergeProviderScopedEncryptedContentMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
-                MergeProviderScopedReasoningSignatureMetadata(reasoningMetadata, providerId, reasoning.Signature);
 
                 return new AIInputItem
                 {
@@ -560,11 +561,6 @@ public static partial class ResponsesUnifiedMapper
             Id = reasoningItemId,
             Summary = summary,
             EncryptedContent = encryptedContent,
-            Signature = reasoningPart?.Signature
-                        ?? (reasoningMetadata is not null ? ExtractNestedValue<string>(reasoningMetadata, providerId, "signature") : null)
-                        ?? ExtractNestedValue<string>(metadata, providerId, "signature")
-                        ?? ExtractValue<string>(reasoningMetadata, "signature")
-                        ?? ExtractValue<string>(metadata, "signature")
         };
     }
 
@@ -573,13 +569,14 @@ public static partial class ResponsesUnifiedMapper
         Dictionary<string, object?> reasoningMetadata,
         string providerId)
     {
-        if (reasoning.Summary.Count == 0 && !string.IsNullOrWhiteSpace(reasoning.Signature))
+        if (reasoning.Summary.Count == 0
+            && !string.IsNullOrWhiteSpace(reasoning.EncryptedContent))
         {
             yield return new AIReasoningContentPart
             {
                 Type = "reasoning",
                 Text = string.Empty,
-                Signature = reasoning.Signature,
+                Signature = reasoning.EncryptedContent,
                 Metadata = reasoningMetadata
             };
             yield break;
@@ -589,14 +586,14 @@ public static partial class ResponsesUnifiedMapper
         {
             var metadata = new Dictionary<string, object?> { ["type"] = part.Type };
 
-            if (!string.IsNullOrWhiteSpace(reasoning.Signature))
-                MergeProviderScopedReasoningSignatureMetadata(metadata, providerId, reasoning.Signature);
+            if (!string.IsNullOrWhiteSpace(reasoning.EncryptedContent))
+                MergeProviderScopedReasoningSignatureMetadata(metadata, providerId, reasoning.EncryptedContent);
 
             yield return new AIReasoningContentPart
             {
                 Type = "reasoning",
                 Text = part.Text,
-                Signature = reasoning.Signature,
+                Signature = reasoning.EncryptedContent,
                 Metadata = metadata
             };
         }

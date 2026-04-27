@@ -33,7 +33,7 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
 
         Assert.Equal(ExpectedSamplingModel, samplingResult.Model);
         Assert.Equal(Role.Assistant, samplingResult.Role);
-        Assert.Equal("stop", samplingResult.StopReason);
+        Assert.Equal("endTurn", samplingResult.StopReason);
 
         var textBlock = Assert.IsType<TextContentBlock>(Assert.Single(samplingResult.Content));
         Assert.Equal(ExpectedText, textBlock.Text);
@@ -145,7 +145,7 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
 
         Assert.Equal("openai/gpt-5.4-mini-2026-03-17", samplingResult.Model);
         Assert.Equal(Role.Assistant, samplingResult.Role);
-        Assert.Equal("stop", samplingResult.StopReason);
+        Assert.Equal("endTurn", samplingResult.StopReason);
 
         var imageBlock = Assert.IsType<ImageContentBlock>(Assert.Single(samplingResult.Content));
         Assert.Equal("image/png", imageBlock.MimeType);
