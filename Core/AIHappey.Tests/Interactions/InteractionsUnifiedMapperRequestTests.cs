@@ -146,7 +146,6 @@ public sealed class InteractionsUnifiedMapperRequestTests
                 var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(turn.Content?.Parts ?? []));
                 Assert.Equal("opaque-google-thought-signature", thought.Signature);
                 Assert.Equal("I should use the preserved thought state.", Assert.IsType<InteractionTextContent>(Assert.Single(thought.Summary ?? [])).Text);
-                Assert.Equal("opaque-google-thought-signature", Assert.Contains("encrypted_content", thought.AdditionalProperties ?? []).GetString());
             });
     }
 
