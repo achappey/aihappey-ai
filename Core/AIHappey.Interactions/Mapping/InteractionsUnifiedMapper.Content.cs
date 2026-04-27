@@ -182,7 +182,8 @@ public static partial class InteractionsUnifiedMapper
                     var rawThought = ExtractObject<InteractionThoughtContent>(reasoning.Metadata, "interactions.raw");
                     var signature = reasoning.Signature
                                     ?? ExtractValue<string>(reasoning.Metadata, "interactions.signature")
-                                    ?? ExtractThoughtSignature(reasoning.Metadata, providerId);
+                                    ?? ExtractThoughtSignature(reasoning.Metadata, providerId)
+                                    ?? ExtractThoughtEncryptedContent(reasoning.Metadata, providerId);
                     var summary = ResolveThoughtSummary(reasoning, rawThought, providerId);
                     var additionalProperties = ResolveThoughtAdditionalProperties(reasoning.Metadata, rawThought, providerId);
 
@@ -308,6 +309,24 @@ public static partial class InteractionsUnifiedMapper
             && !string.IsNullOrWhiteSpace(rawSignature?.ToString()))
         {
             return rawSignature?.ToString();
+        }
+
+        return null;
+    }
+
+    private static string? ExtractThoughtEncryptedContent(Dictionary<string, object?>? metadata, string? providerId)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+            return null;
+
+        var scopedMetadata = GetProviderScopedMetadata(metadata, providerId);
+        if (scopedMetadata is null || scopedMetadata.Count == 0)
+            return null;
+
+        if (scopedMetadata.TryGetValue("encrypted_content", out var rawEncryptedContent)
+            && !string.IsNullOrWhiteSpace(rawEncryptedContent?.ToString()))
+        {
+            return rawEncryptedContent?.ToString();
         }
 
         return null;

@@ -183,9 +183,23 @@ public static partial class InteractionsUnifiedMapper
 
         return new InteractionTurn
         {
-            Role = NormalizeInteractionRole(item.Role),
+            Role = ResolveInteractionTurnRole(item),
             Content = turnContent
         };
+    }
+
+    private static string ResolveInteractionTurnRole(AIInputItem item)
+        => IsReasoningOnlyInputItem(item)
+            ? "model"
+            : NormalizeInteractionRole(item.Role);
+
+    private static bool IsReasoningOnlyInputItem(AIInputItem item)
+    {
+        if (string.Equals(item.Type?.Trim(), "reasoning", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return item.Content is { Count: > 0 }
+               && item.Content.All(static part => part is AIReasoningContentPart);
     }
 
     private static void MergeAdditionalProperties(InteractionContent target, InteractionContent source)

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using AIHappey.Interactions;
 using AIHappey.Interactions.Mapping;
+using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
@@ -96,6 +98,87 @@ public sealed class InteractionsUnifiedMapperRequestTests
         Assert.Equal("sig-123", thought.Signature);
         Assert.True(thought.Summary is null or { Count: 0 });
         Assert.Equal("sig-123", Assert.Contains("encrypted_content", thought.AdditionalProperties ?? []).GetString());
+    }
+
+    [Fact]
+    public void Responses_reasoning_input_items_map_to_model_thought_turns_with_signature_for_interactions()
+    {
+        var responseRequest = new ResponseRequest
+        {
+            Model = "google/gemini-flash-lite-latest",
+            Input = new ResponseInput(
+            [
+                new ResponseInputMessage
+                {
+                    Role = ResponseRole.User,
+                    Content = new ResponseMessageContent("Continue with the preserved reasoning state.")
+                },
+                new ResponseReasoningItem
+                {
+                    Id = "rs_response_reasoning_123",
+                    EncryptedContent = "opaque-google-thought-signature",
+                    Summary =
+                    [
+                        new ResponseReasoningSummaryTextPart
+                        {
+                            Text = "I should use the preserved thought state."
+                        }
+                    ]
+                }
+            ])
+        };
+
+        var interactionRequest = responseRequest
+            .ToUnifiedRequest("google")
+            .ToInteractionRequest("google");
+
+        var turns = Assert.IsAssignableFrom<IReadOnlyList<InteractionTurn>>(interactionRequest.Input?.Turns);
+        Assert.Collection(
+            turns,
+            turn =>
+            {
+                Assert.Equal("user", turn.Role);
+                Assert.Equal("Continue with the preserved reasoning state.", turn.Content?.Text);
+            },
+            turn =>
+            {
+                Assert.Equal("model", turn.Role);
+                var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(turn.Content?.Parts ?? []));
+                Assert.Equal("opaque-google-thought-signature", thought.Signature);
+                Assert.Equal("I should use the preserved thought state.", Assert.IsType<InteractionTextContent>(Assert.Single(thought.Summary ?? [])).Text);
+                Assert.Equal("opaque-google-thought-signature", Assert.Contains("encrypted_content", thought.AdditionalProperties ?? []).GetString());
+            });
+    }
+
+    [Fact]
+    public void Reasoning_only_unified_input_item_maps_to_model_turn_not_user_turn()
+    {
+        var request = new AIRequest
+        {
+            Model = "google/gemini-flash-lite-latest",
+            ProviderId = "google",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Type = "reasoning",
+                        Content =
+                        [
+                            CreateSignatureOnlyReasoningPart("sig-456")
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var interactionRequest = request.ToInteractionRequest("google");
+        var turn = Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionTurn>>(interactionRequest.Input?.Turns));
+
+        Assert.Equal("model", turn.Role);
+        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(turn.Content?.Parts ?? []));
+        Assert.Equal("sig-456", thought.Signature);
     }
 
     private static AIReasoningContentPart CreateSignatureOnlyReasoningPart(string signature)

@@ -162,6 +162,7 @@ public static partial class ResponsesUnifiedMapper
 
                 MergeProviderScopedReasoningItemIdMetadata(reasoningMetadata, providerId, reasoning.Id);
                 MergeProviderScopedEncryptedContentMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
+                MergeProviderScopedReasoningSignatureMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
 
                 return new AIInputItem
                 {
