@@ -92,6 +92,25 @@ public static partial class ResponsesUnifiedMapper
            },
        };
 
+    private static AIEventEnvelope CreateFileEnvelope(
+        string id,
+        string mediaType,
+        string url,
+        string? filename = null,
+        Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
+        => new()
+        {
+            Type = "file",
+            Id = id,
+            Data = new AIFileEventData
+            {
+                MediaType = mediaType,
+                Url = url,
+                Filename = filename,
+                ProviderMetadata = providerMetadata
+            }
+        };
+
     private static AIEventEnvelope CreateTextStartEnvelope(string id)
         => new()
         {

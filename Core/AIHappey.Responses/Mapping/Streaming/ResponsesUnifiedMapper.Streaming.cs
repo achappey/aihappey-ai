@@ -910,6 +910,9 @@ public static partial class ResponsesUnifiedMapper
                             toolCallResult,
                             providerExecuted: true
                         );
+
+                    foreach (var fileEnvelope in CreateCodeInterpreterOutputFileEnvelopes(providerId, done))
+                        yield return fileEnvelope;
                 }
 
                 else if (done.Item.Type == "image_generation_call")

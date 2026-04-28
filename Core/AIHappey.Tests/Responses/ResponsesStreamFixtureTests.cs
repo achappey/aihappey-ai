@@ -20,6 +20,7 @@ public sealed class ResponsesStreamFixtureTests
     private const string ReasoningAndProviderToolsRawFixturePath = "Fixtures/responses/raw/openai-reasoning-and-provider-tools-response-stream.jsonl";
     private const string MultipleShellCallsWithStreamingOutputFixturePath = "Fixtures/responses/raw/openai-multiple-shell-calls-with-streaming-output.jsonl";
     private const string ScalewayReasoningRawFixturePath = "Fixtures/responses/raw/scaleway-with-reasoning-streaming.jsonl";
+    private const string CodeInterpreterOutputFileRawFixturePath = "Fixtures/responses/raw/xai-with-code_interpreter-output-file-stream.jsonl";
 
     [Fact]
     public void Typed_and_raw_responses_fixtures_produce_the_same_stream_part_types()
@@ -344,6 +345,53 @@ public sealed class ResponsesStreamFixtureTests
         Assert.Equal(
             shellToolInputs.Select(streamEvent => streamEvent.ToolCallId).ToList(),
             shellFinalToolOutputs.Select(streamEvent => streamEvent.ToolCallId).ToList());
+    }
+
+    [Fact]
+    public void Code_interpreter_output_files_emit_unified_file_events_without_changing_tool_outputs()
+    {
+        const string providerId = "xai";
+
+        var unifiedEvents = FixtureFileLoader.LoadResponseRawFixture(CodeInterpreterOutputFileRawFixturePath)
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .ToList();
+
+        var codeInterpreterToolOutputs = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
+            .Select(streamEvent => new
+            {
+                streamEvent.Event.Id,
+                Data = Assert.IsType<AIToolOutputAvailableEventData>(streamEvent.Event.Data)
+            })
+            .Where(streamEvent => streamEvent.Id?.StartsWith("ci_", StringComparison.Ordinal) == true)
+            .ToList();
+
+        Assert.Equal(2, codeInterpreterToolOutputs.Count);
+        Assert.All(codeInterpreterToolOutputs, streamEvent => Assert.True(streamEvent.Data.ProviderExecuted));
+
+        var fileEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "file")
+            .Select(streamEvent => Assert.IsType<AIFileEventData>(streamEvent.Event.Data))
+            .ToList();
+
+        var fileEvent = Assert.Single(fileEvents);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileEvent.MediaType);
+        Assert.Equal("eenvoudig_document.docx", fileEvent.Filename);
+        Assert.StartsWith($"data:{fileEvent.MediaType};base64,UEsDB", fileEvent.Url, StringComparison.Ordinal);
+
+        var providerMetadata = Assert.Contains(providerId, fileEvent.ProviderMetadata ?? []);
+        Assert.Equal("code_interpreter", Assert.IsType<string>(providerMetadata["tool_name"]));
+        Assert.Equal("/home/workdir/eenvoudig_document.docx", Assert.IsType<string>(providerMetadata["file_path"]));
+        Assert.Equal(37047L, Convert.ToInt64(providerMetadata["size"]));
+
+        var uiFilePart = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "file")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(providerId))
+            .OfType<FileUIPart>()
+            .Single();
+
+        Assert.Equal(fileEvent.MediaType, uiFilePart.MediaType);
+        Assert.Equal(fileEvent.Url, uiFilePart.Url);
     }
 
     [Fact]
