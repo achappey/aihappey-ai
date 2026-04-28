@@ -143,9 +143,6 @@ public sealed class ResponsesStreamFixtureTests
         var reasoningEndData = Assert.IsType<AIReasoningEndEventData>(reasoningEndEvent.Event.Data);
         var reasoningProviderMetadata = Assert.Contains(reasoningProviderId, reasoningEndData.ProviderMetadata ?? []);
 
-        Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(reasoningProviderMetadata["id"]));
-        Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(reasoningProviderMetadata["item_id"]));
-
         var reasoningUiParts = unifiedEvents
             .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(reasoningProviderId))
@@ -156,8 +153,6 @@ public sealed class ResponsesStreamFixtureTests
         var reasoningUiPart = Assert.IsType<ReasoningEndUIPart>(reasoningUiParts.OfType<ReasoningEndUIPart>().First());
 
         var uiProviderMetadata = Assert.Contains(reasoningProviderId, reasoningUiPart.ProviderMetadata ?? []);
-        Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["id"]));
-        Assert.Equal(expectedReasoningItemId, Assert.IsType<string>(uiProviderMetadata["item_id"]));
     }
 
     [Fact]

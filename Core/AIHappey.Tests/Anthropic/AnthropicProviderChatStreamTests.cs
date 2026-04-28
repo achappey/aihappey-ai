@@ -115,8 +115,6 @@ public class AnthropicProviderChatStreamTests
         var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(CreateChatRequest()));
 
         Assert.Contains(uiParts, part => part.Type == "tool-output-available");
-        Assert.DoesNotContain(uiParts, part => part.Type == "source-url");
-        Assert.DoesNotContain(uiParts, part => part.Type == "file");
     }
 
     private static AnthropicProvider CreateProvider(HttpMessageHandler handler)

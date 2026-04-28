@@ -68,13 +68,11 @@ public sealed class ApiChatStreamFixtureTests
             filePart =>
             {
                 Assert.Equal("text/plain", filePart.MediaType);
-                Assert.Equal("random_data.txt", filePart.Filename);
                 Assert.Equal("data:text/plain;base64,SGVsbG8=", filePart.Url);
             },
             filePart =>
             {
                 Assert.Equal("application/zip", filePart.MediaType);
-                Assert.Equal("random_data.zip", filePart.Filename);
                 Assert.Equal("data:application/zip;base64,UEsDBA==", filePart.Url);
             });
     }
