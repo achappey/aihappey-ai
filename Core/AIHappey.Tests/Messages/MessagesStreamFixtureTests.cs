@@ -15,6 +15,7 @@ public sealed class MessagesStreamFixtureTests
     private const string RawFixturePath = "Fixtures/messages/raw/basic-messages-stream.jsonl";
     private const string ReasoningRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
     private const string ReasoningAndProviderToolCallsRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
+    private const string ShellWithFileOutputRawFixturePath = "Fixtures/messages/raw/shell-with-file-output-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string Model = "claude-haiku-4-5-20251001";
     private const string MessageId = "msg_017Kux9bNH5F1gph8C2FZhP1";
@@ -504,5 +505,63 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(19246, finishUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(789, finishUsage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(20035, finishUsage.GetProperty("total_tokens").GetInt32());
+    }
+
+    [Fact]
+    public void Messages_anthropic_server_tools_bridge_to_non_executable_custom_tool_calls_without_ending_response_stream_early()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(ShellWithFileOutputRawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+
+        var responseParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Select(streamEvent => streamEvent.ToResponseStreamPart())
+            .ToList();
+
+        Assert.DoesNotContain(responseParts, part => part.Type is "response.function_call_arguments.delta" or "response.function_call_arguments.done");
+
+        var providerToolStarts = responseParts
+            .OfType<ResponseOutputItemAdded>()
+            .Where(part => part.Item.Id?.StartsWith("srvtoolu_", StringComparison.Ordinal) == true)
+            .ToList();
+
+        Assert.Equal(4, providerToolStarts.Count);
+        Assert.All(providerToolStarts, part =>
+        {
+            Assert.Equal("custom_tool_call", part.Item.Type);
+            Assert.True(part.Item.AdditionalProperties?["provider_executed"].GetBoolean());
+        });
+
+        Assert.Equal(4, responseParts.Count(part => part.Type == "response.custom_tool_call_input.done"));
+
+        var providerToolOutputs = responseParts
+            .OfType<ResponseOutputItemDone>()
+            .Where(part => part.Item.Id?.StartsWith("srvtoolu_", StringComparison.Ordinal) == true)
+            .ToList();
+
+        Assert.Equal(4, providerToolOutputs.Count);
+        Assert.All(providerToolOutputs, part =>
+        {
+            Assert.Equal("custom_tool_call", part.Item.Type);
+            Assert.True(part.Item.AdditionalProperties?["provider_executed"].GetBoolean());
+        });
+
+        var lastProviderToolOutputIndex = responseParts.FindLastIndex(part =>
+            part is ResponseOutputItemDone done
+            && done.Item.Id?.StartsWith("srvtoolu_", StringComparison.Ordinal) == true);
+
+        Assert.True(lastProviderToolOutputIndex >= 0);
+        Assert.Contains(responseParts.Skip(lastProviderToolOutputIndex + 1), part => part.Type == "response.output_text.delta");
+
+        var trailingText = string.Concat(
+            responseParts
+                .Skip(lastProviderToolOutputIndex + 1)
+                .Where(part => part.Type == "response.output_text.delta")
+                .Select(part => Assert.IsType<ResponseOutputTextDelta>(part).Delta));
+
+        Assert.Contains("Ik heb een simpel Word document voor je gemaakt", trailingText);
+
+        var finishPart = Assert.IsType<ResponseCompleted>(responseParts[^1]);
+        Assert.Equal("completed", finishPart.Response.Status);
     }
 }

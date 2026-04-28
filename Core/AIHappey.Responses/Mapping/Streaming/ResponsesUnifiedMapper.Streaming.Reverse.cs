@@ -73,9 +73,27 @@ public static partial class ResponsesUnifiedMapper
             itemState.ProviderMetadata = providerMetadata;
     }
 
-    private static string ResolveToolItemType(AIToolInputStartEventData toolInputStart)
+    private static bool IsImplicitProviderExecutedToolId(string? eventId)
+        => !string.IsNullOrWhiteSpace(eventId)
+           && (eventId.StartsWith("srvtoolu_", StringComparison.OrdinalIgnoreCase)
+               || eventId.StartsWith("mcptoolu_", StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsProviderExecutedTool(
+        AIToolInputStartEventData toolInputStart,
+        string? eventId = null,
+        ResponseReverseItemState? itemState = null)
+        => toolInputStart.ProviderExecuted == true
+           || toolInputStart.ProviderMetadata is { Count: > 0 }
+           || itemState?.ProviderExecuted == true
+           || itemState?.ProviderMetadata is { Count: > 0 }
+           || IsImplicitProviderExecutedToolId(eventId);
+
+    private static string ResolveToolItemType(
+        AIToolInputStartEventData toolInputStart,
+        string? eventId = null,
+        ResponseReverseItemState? itemState = null)
     {
-        if (toolInputStart.ProviderExecuted != true)
+        if (!IsProviderExecutedTool(toolInputStart, eventId, itemState))
         {
             return string.Equals(toolInputStart.ToolName, "mcp_call", StringComparison.OrdinalIgnoreCase)
                 ? "mcp_call"
@@ -398,7 +416,7 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "tool-input-start" && envelope.Data is AIToolInputStartEventData toolInputStart)
         {
-            var itemType = ResolveToolItemType(toolInputStart);
+            var itemType = ResolveToolItemType(toolInputStart, envelope.Id);
             var itemState = GetOrCreateReverseItemState(envelope.Id, itemType);
             UpdateReverseItemState(
                 itemState,
@@ -461,17 +479,21 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "tool-input-available" && envelope.Data is AIToolInputAvailableEventData toolInputAvailable)
         {
-            var itemState = GetOrCreateReverseItemState(
-                envelope.Id,
-                ResolveToolItemType(new AIToolInputStartEventData
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "custom_tool_call");
+            var itemType = ResolveToolItemType(
+                new AIToolInputStartEventData
                 {
                     ToolName = toolInputAvailable.ToolName,
                     ProviderExecuted = toolInputAvailable.ProviderExecuted,
+                    ProviderMetadata = toolInputAvailable.ProviderMetadata,
                     Title = toolInputAvailable.Title
-                }));
+                },
+                envelope.Id,
+                itemState);
 
             UpdateReverseItemState(
                 itemState,
+                itemType: itemType,
                 toolName: toolInputAvailable.ToolName,
                 title: toolInputAvailable.Title,
                 providerExecuted: toolInputAvailable.ProviderExecuted,
