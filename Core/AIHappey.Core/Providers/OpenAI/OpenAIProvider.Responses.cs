@@ -1,3 +1,5 @@
+using System.ClientModel;
+using System.ClientModel.Primitives;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -133,6 +135,25 @@ public partial class OpenAIProvider
     {
         var parts = new List<ResponseStreamPart> { update };
 
+        CaptureResponseContainerId(update, state);
+
+        var generatedImageUpload = await TryUploadGeneratedImageToResponseContainerAsync(
+            update,
+            state,
+            cancellationToken);
+
+        if (generatedImageUpload is not null)
+        {
+            AddSyntheticCustomToolCallParts(
+                parts,
+                state,
+                generatedImageUpload.ToolCallId,
+                UploadGeneratedImageToolName,
+                generatedImageUpload.Input,
+                CreateGeneratedImageUploadToolCallResult(generatedImageUpload),
+                generatedImageUpload.ProviderMetadata);
+        }
+
         if (update is not ResponseOutputTextAnnotationAdded annotationAdded
             || !string.Equals(annotationAdded.Annotation.Type, "container_file_citation", StringComparison.OrdinalIgnoreCase))
         {
@@ -149,20 +170,45 @@ public partial class OpenAIProvider
 
         var syntheticOutputIndex = state.NextOutputIndex++;
 
+        AddSyntheticCustomToolCallParts(
+            parts,
+            state,
+            download.ToolCallId,
+            DownloadFileToolName,
+            download.Input,
+            CreateDownloadToolCallResult(download),
+            download.ProviderMetadata,
+            syntheticOutputIndex);
+
+        return parts;
+    }
+
+    private static void AddSyntheticCustomToolCallParts(
+        List<ResponseStreamPart> parts,
+        OpenAiResponseStreamEnrichmentState state,
+        string toolCallId,
+        string toolName,
+        JsonElement input,
+        CallToolResult output,
+        Dictionary<string, Dictionary<string, object>> providerMetadata,
+        int? outputIndex = null)
+    {
+        var syntheticOutputIndex = outputIndex ?? state.NextOutputIndex++;
+
         parts.Add(new ResponseOutputItemAdded
         {
             SequenceNumber = state.NextSequenceNumber++,
             OutputIndex = syntheticOutputIndex,
             Item = new ResponseStreamItem
             {
-                Id = download.ToolCallId,
+                Id = toolCallId,
                 Type = "custom_tool_call",
-                Name = DownloadFileToolName,
+                Name = toolName,
                 Status = "in_progress",
                 AdditionalProperties = ToJsonElementDictionary(new Dictionary<string, object?>
                 {
                     ["provider_executed"] = true,
-                    ["provider_metadata"] = download.ProviderMetadata
+                    ["provider_metadata"] = providerMetadata
                 })
             }
         });
@@ -174,12 +220,12 @@ public partial class OpenAIProvider
             Data = ToJsonElementDictionary(new Dictionary<string, object?>
             {
                 ["output_index"] = syntheticOutputIndex,
-                ["item_id"] = download.ToolCallId,
-                ["tool_name"] = DownloadFileToolName,
-                ["title"] = DownloadFileToolName,
+                ["item_id"] = toolCallId,
+                ["tool_name"] = toolName,
+                ["title"] = toolName,
                 ["provider_executed"] = true,
-                ["provider_metadata"] = download.ProviderMetadata,
-                ["input"] = download.Input
+                ["provider_metadata"] = providerMetadata,
+                ["input"] = input
             })
         });
 
@@ -190,11 +236,11 @@ public partial class OpenAIProvider
             Data = ToJsonElementDictionary(new Dictionary<string, object?>
             {
                 ["output_index"] = syntheticOutputIndex,
-                ["item_id"] = download.ToolCallId,
-                ["tool_name"] = DownloadFileToolName,
+                ["item_id"] = toolCallId,
+                ["tool_name"] = toolName,
                 ["provider_executed"] = true,
-                ["provider_metadata"] = download.ProviderMetadata,
-                ["output"] = CreateDownloadToolCallResult(download)
+                ["provider_metadata"] = providerMetadata,
+                ["output"] = output
             })
         });
 
@@ -204,21 +250,19 @@ public partial class OpenAIProvider
             OutputIndex = syntheticOutputIndex,
             Item = new ResponseStreamItem
             {
-                Id = download.ToolCallId,
+                Id = toolCallId,
                 Type = "custom_tool_call",
-                Name = DownloadFileToolName,
+                Name = toolName,
                 Status = "completed",
                 AdditionalProperties = ToJsonElementDictionary(new Dictionary<string, object?>
                 {
                     ["provider_executed"] = true,
-                    ["provider_metadata"] = download.ProviderMetadata,
-                    ["input"] = download.Input,
-                    ["output"] = CreateDownloadToolCallResult(download)
+                    ["provider_metadata"] = providerMetadata,
+                    ["input"] = input,
+                    ["output"] = output
                 })
             }
         });
-
-        return parts;
     }
 
     private async Task<List<object>> CreateResponseContainerFileArtifactsAsync(
@@ -365,6 +409,206 @@ public partial class OpenAIProvider
         }
     }
 
+    private void CaptureResponseContainerId(
+        ResponseStreamPart update,
+        OpenAiResponseStreamEnrichmentState state)
+    {
+        var response = update switch
+        {
+            ResponseCreated created => created.Response,
+            ResponseInProgress inProgress => inProgress.Response,
+            ResponseCompleted completed => completed.Response,
+            _ => null
+        };
+
+        if (response?.Tools is null)
+            return;
+
+        foreach (var tool in response.Tools)
+        {
+            var toolMap = TryGetJsonElementMap(tool);
+            if (toolMap is null)
+                continue;
+
+            var toolType = toolMap.TryGetString("type") ?? string.Empty;
+            if (!string.Equals(toolType, "shell", StringComparison.OrdinalIgnoreCase)
+                || !toolMap.TryGetValue("environment", out var environment)
+                || environment.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            var environmentType = environment.TryGetString("type") ?? string.Empty;
+            var containerId = environment.TryGetString("container_id");
+            if (string.Equals(environmentType, "container_reference", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(containerId))
+            {
+                state.ResponseContainerId = containerId;
+                return;
+            }
+        }
+    }
+
+    private async Task<OpenAiGeneratedImageUpload?> TryUploadGeneratedImageToResponseContainerAsync(
+        ResponseStreamPart update,
+        OpenAiResponseStreamEnrichmentState state,
+        CancellationToken cancellationToken)
+    {
+        if (update is not ResponseOutputItemDone done
+            || !string.Equals(done.Item.Type, "image_generation_call", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(done.Item.Id)
+            || string.IsNullOrWhiteSpace(state.ResponseContainerId)
+            || !state.UploadedGeneratedImageItemIds.Add(done.Item.Id))
+        {
+            return null;
+        }
+
+        var itemProperties = done.Item.AdditionalProperties;
+        if (itemProperties is null
+            || !itemProperties.TryGetValue("result", out var resultElement)
+            || resultElement.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        var base64Result = resultElement.GetString();
+        if (string.IsNullOrWhiteSpace(base64Result))
+            return null;
+
+        try
+        {
+            var imageBytes = Convert.FromBase64String(base64Result);
+            var outputFormat = itemProperties.TryGetValue("output_format", out var outputFormatElement)
+                && outputFormatElement.ValueKind == JsonValueKind.String
+                    ? outputFormatElement.GetString()
+                    : null;
+            var normalizedFormat = NormalizeImageOutputFormat(outputFormat);
+            var mediaType = $"image/{normalizedFormat}";
+            var filename = $"{done.Item.Id}.{normalizedFormat}";
+            var containerId = state.ResponseContainerId;
+
+            var containerClient = new ContainerClient(GetKey());
+            var uploadResult = await OpenAIModelExtensions.UploadBytesMultipartAsync(
+                containerClient,
+                containerId,
+                imageBytes,
+                mediaType,
+                options: new RequestOptions { CancellationToken = cancellationToken });
+
+            var uploadMetadata = ExtractContainerFileMetadata(
+                uploadResult,
+                containerId,
+                filename,
+                imageBytes.Length,
+                mediaType);
+
+            var canonicalOpenAiFileUrl = string.IsNullOrWhiteSpace(uploadMetadata.FileId)
+                ? $"https://api.openai.com/v1/containers/{containerId}/files"
+                : $"https://api.openai.com/v1/containers/{containerId}/files/{uploadMetadata.FileId}/content";
+
+            var providerMetadata = new Dictionary<string, Dictionary<string, object>>
+            {
+                [GetIdentifier()] = new Dictionary<string, object>
+                {
+                    ["type"] = "container_file_upload",
+                    ["tool_name"] = UploadGeneratedImageToolName,
+                    ["name"] = UploadGeneratedImageToolName,
+                    ["upload_tool"] = true,
+                    ["source_item_id"] = done.Item.Id,
+                    ["container_id"] = containerId,
+                    ["file_id"] = uploadMetadata.FileId,
+                    ["filename"] = filename,
+                    ["path"] = uploadMetadata.Path,
+                    ["bytes"] = uploadMetadata.Bytes,
+                    ["media_type"] = mediaType,
+                    ["openai_file_url"] = canonicalOpenAiFileUrl,
+                    ["raw"] = uploadMetadata.Raw
+                }
+            };
+
+            return new OpenAiGeneratedImageUpload
+            {
+                ToolCallId = Guid.NewGuid().ToString("n"),
+                SourceItemId = done.Item.Id,
+                ContainerId = containerId,
+                FileId = uploadMetadata.FileId,
+                Filename = filename,
+                Path = uploadMetadata.Path,
+                CanonicalUrl = canonicalOpenAiFileUrl,
+                MediaType = mediaType,
+                Bytes = imageBytes,
+                ProviderMetadata = providerMetadata,
+                Input = JsonSerializer.SerializeToElement(new
+                {
+                    source_item_id = done.Item.Id,
+                    file_name = filename,
+                    file_type = mediaType,
+                    container_id = containerId
+                }, JsonSerializerOptions.Web)
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static OpenAiContainerFileUploadMetadata ExtractContainerFileMetadata(
+        ClientResult uploadResult,
+        string fallbackContainerId,
+        string fallbackFilename,
+        int fallbackBytes,
+        string mediaType)
+    {
+        try
+        {
+            var rawContent = uploadResult.GetRawResponse().Content.ToString();
+            using var document = JsonDocument.Parse(rawContent);
+            var root = document.RootElement.Clone();
+            var fileId = root.TryGetString("id") ?? string.Empty;
+            var path = root.TryGetString("path");
+            var containerId = root.TryGetString("container_id") ?? fallbackContainerId;
+            var bytes = root.TryGetNumber("bytes") ?? fallbackBytes;
+
+            return new OpenAiContainerFileUploadMetadata(
+                fileId,
+                containerId,
+                string.IsNullOrWhiteSpace(path) ? $"/mnt/data/{fallbackFilename}" : path,
+                bytes,
+                root);
+        }
+        catch
+        {
+            return new OpenAiContainerFileUploadMetadata(
+                string.Empty,
+                fallbackContainerId,
+                $"/mnt/data/{fallbackFilename}",
+                fallbackBytes,
+                JsonSerializer.SerializeToElement(new
+                {
+                    container_id = fallbackContainerId,
+                    filename = fallbackFilename,
+                    bytes = fallbackBytes,
+                    media_type = mediaType
+                }, JsonSerializerOptions.Web));
+        }
+    }
+
+    private static string NormalizeImageOutputFormat(string? outputFormat)
+        => (outputFormat ?? "png").Trim().TrimStart('.').ToLowerInvariant() switch
+        {
+            "jpg" => "jpeg",
+            "jpeg" => "jpeg",
+            "webp" => "webp",
+            "gif" => "gif",
+            "png" => "png",
+            _ => "png"
+        };
+
     private static CallToolResult CreateDownloadToolCallResult(OpenAiContainerCitationDownload download)
     {
         var result = new CallToolResult
@@ -423,6 +667,30 @@ public partial class OpenAIProvider
         return result;
     }
 
+    private static CallToolResult CreateGeneratedImageUploadToolCallResult(OpenAiGeneratedImageUpload upload)
+        => new()
+        {
+            Content =
+            [
+                new TextContentBlock
+                {
+                    Text = string.IsNullOrWhiteSpace(upload.FileId)
+                        ? $"Uploaded generated image to OpenAI container {upload.ContainerId} at {upload.Path}."
+                        : $"Uploaded generated image to OpenAI container {upload.ContainerId} as {upload.FileId} at {upload.Path}."
+                }
+            ],
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                file_id = upload.FileId,
+                filename = upload.Filename,
+                media_type = upload.MediaType,
+                container_id = upload.ContainerId,
+                path = upload.Path,
+                url = upload.CanonicalUrl,
+                source_item_id = upload.SourceItemId
+            }, JsonSerializerOptions.Web)
+        };
+
     private static bool IsTextLikeMediaType(string? mediaType)
     {
         if (string.IsNullOrWhiteSpace(mediaType))
@@ -470,9 +738,45 @@ public partial class OpenAIProvider
         public Dictionary<string, Dictionary<string, object>> ProviderMetadata { get; init; } = [];
     }
 
+    private sealed class OpenAiGeneratedImageUpload
+    {
+        public string ToolCallId { get; init; } = string.Empty;
+
+        public string SourceItemId { get; init; } = string.Empty;
+
+        public string ContainerId { get; init; } = string.Empty;
+
+        public string FileId { get; init; } = string.Empty;
+
+        public string Filename { get; init; } = string.Empty;
+
+        public string Path { get; init; } = string.Empty;
+
+        public string CanonicalUrl { get; init; } = string.Empty;
+
+        public string MediaType { get; init; } = "application/octet-stream";
+
+        public byte[] Bytes { get; init; } = [];
+
+        public JsonElement Input { get; init; }
+
+        public Dictionary<string, Dictionary<string, object>> ProviderMetadata { get; init; } = [];
+    }
+
+    private sealed record OpenAiContainerFileUploadMetadata(
+        string FileId,
+        string ContainerId,
+        string Path,
+        int Bytes,
+        JsonElement Raw);
+
     private sealed class OpenAiResponseStreamEnrichmentState
     {
         public HashSet<string> SeenCitationKeys { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public HashSet<string> UploadedGeneratedImageItemIds { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public string? ResponseContainerId { get; set; }
 
         public int NextOutputIndex { get; set; } = 100_000;
 
@@ -480,4 +784,6 @@ public partial class OpenAIProvider
     }
 
     private const string DownloadFileToolName = "download_file";
+
+    private const string UploadGeneratedImageToolName = "upload_generated_image";
 }
