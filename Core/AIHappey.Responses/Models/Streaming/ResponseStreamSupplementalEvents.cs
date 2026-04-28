@@ -166,6 +166,9 @@ public sealed class ResponseReasoningSummaryTextDelta : ResponseStreamTextEvent
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "response.reasoning_summary_text.delta";
+
+    [JsonPropertyName("summary_index")]
+    public int SummaryIndex { get; init; } = default!;
 }
 
 public sealed class ResponseReasoningSummaryTextDone : ResponseStreamTextEvent
@@ -175,6 +178,9 @@ public sealed class ResponseReasoningSummaryTextDone : ResponseStreamTextEvent
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "response.reasoning_summary_text.done";
+
+    [JsonPropertyName("summary_index")]
+    public int SummaryIndex { get; init; } = default!;
 }
 
 public sealed class ResponseReasoningTextDelta : ResponseStreamTextEvent
@@ -220,6 +226,9 @@ public sealed class ResponseReasoningSummaryPartAdded : ResponseStreamItemConten
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "response.reasoning_summary_part.added";
+
+    [JsonPropertyName("summary_index")]
+    public int SummaryIndex { get; init; } = default!;
 }
 
 public sealed class ResponseReasoningSummaryPartDone : ResponseStreamItemContentEvent
@@ -229,6 +238,9 @@ public sealed class ResponseReasoningSummaryPartDone : ResponseStreamItemContent
 
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "response.reasoning_summary_part.done";
+
+    [JsonPropertyName("summary_index")]
+    public int SummaryIndex { get; init; } = default!;
 }
 
 public sealed class ResponseReasoningPartAdded : ResponseStreamItemContentEvent

@@ -77,7 +77,7 @@ public static partial class ResponsesUnifiedMapper
 
         var summaryVal = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "summary");
         var encrypted = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "encrypted_content");
-        //  var signature = GetAdditionalPropertyValue(responseStreamItem.AdditionalProperties, "signature")?.ToString();
+
         yield return new AIEventEnvelope
         {
             Type = "reasoning-start",

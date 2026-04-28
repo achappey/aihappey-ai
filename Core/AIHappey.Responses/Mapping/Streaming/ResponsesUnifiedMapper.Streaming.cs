@@ -342,14 +342,14 @@ public static partial class ResponsesUnifiedMapper
             case ResponseReasoningSummaryPartAdded added:
                 yield return CreateReasoningStartEnvelope(
                     providerId,
-                    added.ItemId ?? string.Empty,
+                    added.ItemId + added.SummaryIndex.ToString() ?? string.Empty,
                     added.Part);
                 yield break;
 
             case ResponseReasoningSummaryPartDone done:
                 yield return CreateReasoningEndEnvelope(
                     providerId,
-                    done.ItemId ?? string.Empty,
+                    done.ItemId + done.SummaryIndex.ToString() ?? string.Empty,
                     done.Part);
                 yield break;
 
@@ -376,7 +376,7 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseReasoningSummaryTextDelta delta:
-                yield return CreateReasoningDeltaEnvelope(delta.ItemId, delta.Delta);
+                yield return CreateReasoningDeltaEnvelope(delta.ItemId + delta.SummaryIndex.ToString(), delta.Delta);
                 yield break;
             case ResponseImageGenerationCallPartialImage responseImageGenerationCallPartialImage:
 
