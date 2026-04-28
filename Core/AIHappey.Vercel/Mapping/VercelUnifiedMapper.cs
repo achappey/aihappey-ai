@@ -626,6 +626,7 @@ public static class VercelUnifiedMapper
         filePart = new FileUIPart
         {
             MediaType = mediaType ?? "application/octet-stream",
+           // Filename = filename,
             Url = url,
             ProviderMetadata = EnsureDownloadFileProviderMetadata(providerMetadata, providerId, filename, mediaType, fileId)
         };
@@ -685,6 +686,12 @@ public static class VercelUnifiedMapper
             payload = output is null ? default : SerializeToJsonElement(output);
             if (payload.ValueKind != JsonValueKind.Object)
                 return false;
+
+            if (payload.TryGetProperty("structuredContent", out var wrappedStructuredContent)
+                && wrappedStructuredContent.ValueKind == JsonValueKind.Object)
+            {
+                payload = wrappedStructuredContent;
+            }
         }
 
         url = GetJsonString(payload, "data_url")

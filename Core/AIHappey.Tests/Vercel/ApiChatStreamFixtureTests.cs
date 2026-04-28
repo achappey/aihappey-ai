@@ -28,6 +28,58 @@ public sealed class ApiChatStreamFixtureTests
     private const string PerplexityProviderId = "perplexity";
 
     [Fact]
+    public void Download_file_tool_outputs_emit_file_ui_parts_when_payload_is_wrapped_under_structured_content()
+    {
+        var uiParts = Enumerable.Range(0, 2)
+            .SelectMany(index => new AIEventEnvelope
+            {
+                Type = "tool-output-available",
+                Id = $"download_{index + 1}",
+                Data = new AIToolOutputAvailableEventData
+                {
+                    ToolName = "download_file",
+                    ProviderExecuted = true,
+                    Output = CreateWrappedDownloadPayload(
+                        fileId: $"file_{index + 1}",
+                        filename: index == 0 ? "random_data.txt" : "random_data.zip",
+                        mediaType: index == 0 ? "text/plain" : "application/zip",
+                        dataUrl: index == 0
+                            ? "data:text/plain;base64,SGVsbG8="
+                            : "data:application/zip;base64,UEsDBA=="),
+                    ProviderMetadata = new Dictionary<string, Dictionary<string, object>>
+                    {
+                        [OpenAiProviderId] = new()
+                        {
+                            ["tool_name"] = "download_file",
+                            ["download_tool"] = true
+                        }
+                    }
+                }
+            }.ToUIMessagePart(OpenAiProviderId))
+            .ToList();
+
+        Assert.Equal(2, uiParts.OfType<ToolOutputAvailablePart>().Count());
+
+        var fileParts = uiParts.OfType<FileUIPart>().ToList();
+        Assert.Equal(2, fileParts.Count);
+
+        Assert.Collection(
+            fileParts,
+            filePart =>
+            {
+                Assert.Equal("text/plain", filePart.MediaType);
+                Assert.Equal("random_data.txt", filePart.Filename);
+                Assert.Equal("data:text/plain;base64,SGVsbG8=", filePart.Url);
+            },
+            filePart =>
+            {
+                Assert.Equal("application/zip", filePart.MediaType);
+                Assert.Equal("random_data.zip", filePart.Filename);
+                Assert.Equal("data:application/zip;base64,UEsDBA==", filePart.Url);
+            });
+    }
+
+    [Fact]
     public void Finish_event_backfills_token_counts_from_finish_event_data_when_message_metadata_only_has_gateway_cost()
     {
         var timestamp = DateTimeOffset.Parse("2026-04-15T15:34:57.263811+00:00");
@@ -508,6 +560,28 @@ public sealed class ApiChatStreamFixtureTests
     private static bool IsLiveShellOutputStreamingPart(ResponseStreamPart part)
         => part is ResponseOutputItemDone { Item.Type: "shell_call_output" }
             || part is ResponseUnknownEvent { Type: "response.shell_call_output_content.delta" or "response.shell_call_output_content.done" };
+
+    private static JsonElement CreateWrappedDownloadPayload(
+        string fileId,
+        string filename,
+        string mediaType,
+        string dataUrl)
+        => JsonSerializer.SerializeToElement(new
+        {
+            structuredContent = new
+            {
+                file_id = fileId,
+                filename,
+                media_type = mediaType,
+                url = $"https://api.openai.com/v1/files/{fileId}/content",
+                data_url = dataUrl
+            },
+            content = new
+            {
+                unsupported = true,
+                kind = "blob-resource"
+            }
+        }, JsonSerializerOptions.Web);
 
     private static bool IsShellToolOutput(ToolOutputAvailablePart part, string providerId)
         => part.ProviderMetadata?.TryGetValue(providerId, out var providerMetadata) == true
