@@ -503,7 +503,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | WiseRouter     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | World3         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Writer         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| xAI            | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
+| xAI            | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ➖          |
 | XiaomiMIMO     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Yollomi        | ✅        | ❌                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | YouCom         | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

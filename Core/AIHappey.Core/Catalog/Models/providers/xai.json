@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "xai/stt",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "Speech to text",
+      "type": "transcription"
+    }
+  ]
+}

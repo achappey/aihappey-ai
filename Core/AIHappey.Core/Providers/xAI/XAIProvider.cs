@@ -56,7 +56,7 @@ public partial class XAIProvider : IModelProvider
         => SpeechRequestInternal(imageRequest, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => TranscriptionRequestInternal(imageRequest, cancellationToken);
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {

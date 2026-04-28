@@ -87,6 +87,7 @@ public partial class XAIProvider
                 }
 
                 models.AddRange(BuildSpeechModels(voices));
+                models.AddRange(GetIdentifier().GetModels());
 
                 return [.. models
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
