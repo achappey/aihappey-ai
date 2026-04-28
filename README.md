@@ -465,7 +465,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | TikHubAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Tinfoil        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ToAPIs         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Together       | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
+| Together       | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
 | TokenFlux      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TrueFoundry    | ✅        | ✅                | ✅            | ❌            | ❌        | ❌                     | ❌                       | ❌               | ❌          | ➖          | ➖          |
 | TTSReader      | ✅        | ❌                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
