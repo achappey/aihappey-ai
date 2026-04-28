@@ -59,6 +59,79 @@ public sealed class MistralUnifiedExtensionsTests
     }
 
     [Fact]
+    public void Unified_conversation_inputs_do_not_duplicate_function_call_for_split_responses_replay()
+    {
+        var request = new AIRequest
+        {
+            ProviderId = "mistral",
+            Model = "mistral-large-latest",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Type = "function_call",
+                        Role = "assistant",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                ToolCallId = "call_123",
+                                Type = "function_call",
+                                ToolName = "lookup_weather",
+                                Input = new { city = "Amsterdam" },
+                                ProviderExecuted = false
+                            }
+                        ]
+                    },
+                    new AIInputItem
+                    {
+                        Type = "function_call_output",
+                        Role = "tool",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                ToolCallId = "call_123",
+                                Type = "function_call_output",
+                                Output = new { forecast = "sunny" },
+                                ProviderExecuted = false
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var inputs = request.BuildMistralUnifiedConversationInputs();
+
+        Assert.Equal(2, inputs.Count);
+
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(inputs, JsonSerializerOptions.Web));
+        var entries = json.RootElement.EnumerateArray().ToList();
+
+        Assert.Collection(
+            entries,
+            entry =>
+            {
+                Assert.Equal("function.call", entry.GetProperty("type").GetString());
+                Assert.Equal("call_123", entry.GetProperty("tool_call_id").GetString());
+                Assert.Equal("lookup_weather", entry.GetProperty("name").GetString());
+                Assert.Equal("{\"city\":\"Amsterdam\"}", entry.GetProperty("arguments").GetString());
+            },
+            entry =>
+            {
+                Assert.Equal("function.result", entry.GetProperty("type").GetString());
+                Assert.Equal("call_123", entry.GetProperty("tool_call_id").GetString());
+                Assert.Equal("{\"forecast\":\"sunny\"}", entry.GetProperty("result").GetString());
+            });
+
+        Assert.Single(entries, entry => entry.GetProperty("type").GetString() == "function.call");
+        Assert.Single(entries, entry => entry.GetProperty("type").GetString() == "function.result");
+    }
+
+    [Fact]
     public void Provider_capture_request_is_resolved_from_mistral_metadata()
     {
         var request = new AIRequest

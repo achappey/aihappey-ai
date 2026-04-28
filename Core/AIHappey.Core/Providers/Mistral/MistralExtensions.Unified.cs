@@ -150,13 +150,16 @@ public static partial class MistralExtensions
             if (toolPart.ProviderExecuted == true || string.IsNullOrWhiteSpace(toolPart.ToolCallId))
                 continue;
 
-            yield return new Dictionary<string, object?>
+            if (!IsOutputOnlyUnifiedToolPart(toolPart))
             {
-                ["type"] = "function.call",
-                ["tool_call_id"] = toolPart.ToolCallId,
-                ["name"] = toolPart.ToolName ?? "tool",
-                ["arguments"] = JsonSerializer.Serialize(toolPart.Input ?? new { }, UnifiedJson)
-            };
+                yield return new Dictionary<string, object?>
+                {
+                    ["type"] = "function.call",
+                    ["tool_call_id"] = toolPart.ToolCallId,
+                    ["name"] = toolPart.ToolName ?? "tool",
+                    ["arguments"] = JsonSerializer.Serialize(toolPart.Input ?? new { }, UnifiedJson)
+                };
+            }
 
             if (toolPart.Output is not null)
             {
@@ -330,6 +333,9 @@ public static partial class MistralExtensions
         => output is string text
             ? text
             : JsonSerializer.Serialize(output, UnifiedJson);
+
+    private static bool IsOutputOnlyUnifiedToolPart(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.Type, "function_call_output", StringComparison.OrdinalIgnoreCase);
 
     public static JsonNode? TryExtractRawMistralToolNode(Dictionary<string, object?>? metadata)
         => TryExtractRawMistralNode(metadata);
