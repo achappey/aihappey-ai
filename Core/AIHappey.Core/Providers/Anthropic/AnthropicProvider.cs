@@ -15,6 +15,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.Extensions;
+using System.Text;
 
 namespace AIHappey.Core.Providers.Anthropic;
 
@@ -187,6 +188,8 @@ public partial class AnthropicProvider : IModelProvider
 
         this.SetDefaultMessagesProperties(request);
 
+        await PrepareAnthropicCodeExecutionFileUploadsAsync(request, headers, cancellationToken);
+
         var response = await this.GetMessage(_client,
             request,
             headers: headers,
@@ -210,6 +213,8 @@ public partial class AnthropicProvider : IModelProvider
         headers.AppendOrAddHeader(betaKey, anthropicbeta);
 
         this.SetDefaultMessagesProperties(options);
+
+        await PrepareAnthropicCodeExecutionFileUploadsAsync(options, headers, cancellationToken);
 
         MessagesUsage? usage = null;
         string? responseModel = null;
@@ -407,6 +412,168 @@ public partial class AnthropicProvider : IModelProvider
         => TryResolveManagedAgentTarget(request.Model, out _)
             ? ExecuteManagedAgentUnifiedAsync(request, cancellationToken)
             : this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
+
+    private async Task PrepareAnthropicCodeExecutionFileUploadsAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken)
+    {
+        if (!HasAnthropicCodeExecutionTool(request))
+            return;
+
+        var uploadedAny = false;
+
+        foreach (var message in request.Messages)
+        {
+            if (message.Content is not { IsBlocks: true } content || content.Blocks is null || content.Blocks.Count == 0)
+                continue;
+
+            List<MessageContentBlock>? replacementBlocks = null;
+
+            for (var i = 0; i < content.Blocks.Count; i++)
+            {
+                var block = content.Blocks[i];
+                if (!TryCreateAnthropicUploadCandidate(block, out var bytes, out var filename, out var mediaType))
+                    continue;
+
+                var upload = await UploadAnthropicFileAsync(bytes, filename, mediaType, cancellationToken);
+                replacementBlocks ??= [.. content.Blocks];
+                replacementBlocks[i] = CreateAnthropicContainerUploadBlock(upload, block);
+                uploadedAny = true;
+            }
+
+            if (replacementBlocks is not null)
+                message.Content = new MessagesContent(replacementBlocks);
+        }
+
+        if (uploadedAny)
+            AddAnthropicBetaHeader(headers, FilesApiBeta);
+    }
+
+    private static bool HasAnthropicCodeExecutionTool(MessagesRequest request)
+        => request.Tools?.Any(tool =>
+            string.Equals(tool.Name, "code_execution", StringComparison.OrdinalIgnoreCase)
+            || IsAnthropicCodeExecutionToolType(tool.Type)) == true;
+
+    private static bool IsAnthropicCodeExecutionToolType(string? type)
+        => !string.IsNullOrWhiteSpace(type)
+           && type.StartsWith("code_execution_", StringComparison.OrdinalIgnoreCase);
+
+    private static MessageContentBlock CreateAnthropicContainerUploadBlock(
+        AnthropicUploadedFile upload,
+        MessageContentBlock originalBlock)
+    {
+        return new MessageContentBlock
+        {
+            Type = "container_upload",
+            FileId = upload.Id
+        };
+    }
+
+    private static bool TryCreateAnthropicUploadCandidate(
+        MessageContentBlock block,
+        out byte[] bytes,
+        out string filename,
+        out string mediaType)
+    {
+        bytes = [];
+        filename = string.Empty;
+        mediaType = string.Empty;
+
+        if (block.Type is not ("image" or "document") || block.Source is null)
+            return false;
+
+        var source = block.Source;
+        mediaType = string.IsNullOrWhiteSpace(source.MediaType)
+            ? "application/octet-stream"
+            : source.MediaType!;
+        filename = ResolveAnthropicUploadFilename(block, mediaType);
+
+        if (string.Equals(source.Type, "base64", StringComparison.OrdinalIgnoreCase)
+            && TryDecodeBase64Data(source.Data, out bytes))
+        {
+            return bytes.Length > 0;
+        }
+
+        if ((string.Equals(source.Type, "text", StringComparison.OrdinalIgnoreCase)
+             || string.IsNullOrWhiteSpace(source.Type))
+            && source.Data is not null)
+        {
+            if (source.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                && source.Data.Contains(";base64,", StringComparison.OrdinalIgnoreCase)
+                && TryDecodeBase64Data(source.Data, out bytes))
+            {
+                return bytes.Length > 0;
+            }
+
+            bytes = Encoding.UTF8.GetBytes(source.Data);
+            return bytes.Length > 0;
+        }
+
+        return false;
+    }
+
+    private static string ResolveAnthropicUploadFilename(MessageContentBlock block, string mediaType)
+    {
+        if (!string.IsNullOrWhiteSpace(block.Title))
+            return block.Title!;
+
+        if (!string.IsNullOrWhiteSpace(block.FileId) && IsLikelyFilename(block.FileId))
+            return block.FileId!;
+
+        var extension = mediaType.ToLowerInvariant() switch
+        {
+            "image/jpeg" => ".jpg",
+            "image/png" => ".png",
+            "image/gif" => ".gif",
+            "image/webp" => ".webp",
+            "application/pdf" => ".pdf",
+            "text/csv" => ".csv",
+            "text/markdown" => ".md",
+            "text/plain" => ".txt",
+            var value when value.Contains("json", StringComparison.OrdinalIgnoreCase) => ".json",
+            var value when value.Contains("xml", StringComparison.OrdinalIgnoreCase) => ".xml",
+            var value when value.Contains("spreadsheetml", StringComparison.OrdinalIgnoreCase) => ".xlsx",
+            var value when value.Contains("wordprocessingml", StringComparison.OrdinalIgnoreCase) => ".docx",
+            _ => ".bin"
+        };
+
+        return $"upload-{Guid.NewGuid():N}{extension}";
+    }
+
+    private static bool TryDecodeBase64Data(string? data, out byte[] bytes)
+    {
+        bytes = [];
+
+        if (string.IsNullOrWhiteSpace(data))
+            return false;
+
+        var base64 = data.Contains(',', StringComparison.Ordinal)
+            ? data[(data.IndexOf(',') + 1)..]
+            : data;
+
+        try
+        {
+            bytes = Convert.FromBase64String(base64);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private void AddAnthropicBetaHeader(Dictionary<string, string> headers, string beta)
+    {
+        if (headers.TryGetValue(betaKey, out var existing)
+            && existing.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Any(value => string.Equals(value, beta, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        headers.AppendOrAddHeader(betaKey, beta);
+    }
 
 }
 

@@ -15,6 +15,165 @@ public class AnthropicProviderChatStreamTests
     private const string FilesApiBeta = "files-api-2025-04-14";
 
     [Fact]
+    public async Task MessagesAsync_uploads_raw_file_blocks_as_container_uploads_when_code_execution_tool_is_present()
+    {
+        const string uploadedFileId = "file_uploaded_123";
+        const string originalBeta = "code-execution-2025-08-25";
+        var fileBytes = Encoding.UTF8.GetBytes("name,value\nfoo,1\n");
+        var expectedBase64 = Convert.ToBase64String(fileBytes);
+
+        string? uploadBetaHeader = null;
+        string? messageBetaHeader = null;
+        string? uploadedContentType = null;
+        string? uploadedFilenameDisposition = null;
+        string? messageBody = null;
+
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/files")
+            {
+                uploadBetaHeader = TryGetSingleHeaderValue(request, "anthropic-beta");
+                var multipart = Assert.IsType<MultipartFormDataContent>(request.Content);
+                var fileContent = Assert.Single(multipart);
+                uploadedContentType = fileContent.Headers.ContentType?.MediaType;
+                uploadedFilenameDisposition = fileContent.Headers.ContentDisposition?.FileName;
+                var uploadedBytes = fileContent.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+                Assert.Equal(fileBytes, uploadedBytes);
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new
+                    {
+                        id = uploadedFileId,
+                        filename = "data.csv",
+                        mime_type = "text/csv"
+                    }), Encoding.UTF8, "application/json")
+                };
+            }
+
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/messages")
+            {
+                messageBetaHeader = TryGetSingleHeaderValue(request, "anthropic-beta");
+                messageBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new
+                    {
+                        id = "msg_1",
+                        type = "message",
+                        role = "assistant",
+                        model = "claude-haiku-4-5-20251001",
+                        content = new[] { new { type = "text", text = "ok" } },
+                        stop_reason = "end_turn",
+                        usage = new { input_tokens = 1, output_tokens = 1 }
+                    }), Encoding.UTF8, "application/json")
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent($"Unhandled request: {request.Method} {request.RequestUri}")
+            };
+        });
+
+        var provider = CreateProvider(handler);
+        var request = CreateMessagesRequestWithFile(expectedBase64, includeCodeExecutionTool: true);
+
+        await provider.MessagesAsync(request, new Dictionary<string, string> { ["anthropic-beta"] = originalBeta });
+
+        Assert.Equal(FilesApiBeta, uploadBetaHeader);
+        Assert.Equal("text/csv", uploadedContentType);
+        Assert.Equal("\"data.csv\"", uploadedFilenameDisposition);
+        Assert.Contains(originalBeta, messageBetaHeader);
+        Assert.Contains(FilesApiBeta, messageBetaHeader);
+        Assert.NotNull(messageBody);
+
+        using var document = JsonDocument.Parse(messageBody!);
+        var content = document.RootElement.GetProperty("messages")[0].GetProperty("content");
+        var uploadBlock = content.EnumerateArray().Single(block => block.GetProperty("type").GetString() == "container_upload");
+        Assert.Equal(uploadedFileId, uploadBlock.GetProperty("file_id").GetString());
+        Assert.DoesNotContain(expectedBase64, messageBody);
+    }
+
+    [Fact]
+    public async Task MessagesAsync_keeps_raw_file_blocks_when_code_execution_tool_is_absent()
+    {
+        var fileBytes = Encoding.UTF8.GetBytes("name,value\nfoo,1\n");
+        var expectedBase64 = Convert.ToBase64String(fileBytes);
+        var fileUploadAttempted = false;
+        string? messageBody = null;
+
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/files")
+            {
+                fileUploadAttempted = true;
+                return new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            }
+
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/messages")
+            {
+                messageBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new
+                    {
+                        id = "msg_1",
+                        type = "message",
+                        role = "assistant",
+                        model = "claude-haiku-4-5-20251001",
+                        content = new[] { new { type = "text", text = "ok" } },
+                        stop_reason = "end_turn",
+                        usage = new { input_tokens = 1, output_tokens = 1 }
+                    }), Encoding.UTF8, "application/json")
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+
+        var provider = CreateProvider(handler);
+        var request = CreateMessagesRequestWithFile(expectedBase64, includeCodeExecutionTool: false);
+
+        await provider.MessagesAsync(request, []);
+
+        Assert.False(fileUploadAttempted);
+        Assert.NotNull(messageBody);
+        Assert.Contains(expectedBase64, messageBody);
+        Assert.DoesNotContain("container_upload", messageBody);
+    }
+
+    [Fact]
+    public async Task MessagesAsync_fails_when_anthropic_file_upload_fails()
+    {
+        var messageApiCalled = false;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/files")
+            {
+                return new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Content = new StringContent("upload failed")
+                };
+            }
+
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/messages")
+                messageApiCalled = true;
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+
+        var provider = CreateProvider(handler);
+        var request = CreateMessagesRequestWithFile(Convert.ToBase64String(Encoding.UTF8.GetBytes("bad")), includeCodeExecutionTool: true);
+
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() => provider.MessagesAsync(request, []));
+
+        Assert.Contains("400", exception.Message);
+        Assert.False(messageApiCalled);
+    }
+
+    [Fact]
     public async Task StreamAsync_emits_source_and_file_parts_for_provider_tool_file_outputs()
     {
         const string toolUseId = "srvtoolu_01T8zPpWxzTQyYEjcGh4kz1Q";
@@ -143,6 +302,55 @@ public class AnthropicProviderChatStreamTests
                 }
             ]
         };
+
+    private static MessagesRequest CreateMessagesRequestWithFile(string base64Data, bool includeCodeExecutionTool)
+    {
+        var request = new MessagesRequest
+        {
+            Model = "claude-haiku-4-5-20251001",
+            MaxTokens = 128,
+            Messages =
+            [
+                new MessageParam
+                {
+                    Role = "user",
+                    Content = new MessagesContent(
+                    [
+                        new MessageContentBlock
+                        {
+                            Type = "text",
+                            Text = "Analyze this CSV."
+                        },
+                        new MessageContentBlock
+                        {
+                            Type = "document",
+                            Title = "data.csv",
+                            Source = new MessageSource
+                            {
+                                Type = "base64",
+                                MediaType = "text/csv",
+                                Data = base64Data
+                            }
+                        }
+                    ])
+                }
+            ]
+        };
+
+        if (includeCodeExecutionTool)
+        {
+            request.Tools =
+            [
+                new MessageToolDefinition
+                {
+                    Type = "code_execution_20250825",
+                    Name = "code_execution"
+                }
+            ];
+        }
+
+        return request;
+    }
 
     private static HttpResponseMessage CreateStreamingResponse(string body)
     {

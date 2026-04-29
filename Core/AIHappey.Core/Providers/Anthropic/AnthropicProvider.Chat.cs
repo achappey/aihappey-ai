@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.StaticFiles;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
@@ -39,6 +40,12 @@ public partial class AnthropicProvider
         byte[] Bytes,
         string ContentType,
         string? Filename);
+
+    private sealed record AnthropicUploadedFile(
+        string Id,
+        string? Filename,
+        string? MimeType,
+        JsonElement Raw);
 
     private sealed record AnthropicFileMetadata(
         string? Id,
@@ -234,6 +241,45 @@ public partial class AnthropicProvider
             TryGetString(root, "mime_type"),
             TryGetLong(root, "size_bytes"),
             TryGetBool(root, "downloadable"),
+            root);
+    }
+
+    private async Task<AnthropicUploadedFile> UploadAnthropicFileAsync(
+        byte[] bytes,
+        string filename,
+        string mediaType,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "v1/files");
+        request.Headers.TryAddWithoutValidation(betaKey, FilesApiBeta);
+
+        using var content = new MultipartFormDataContent();
+        using var fileContent = new ByteArrayContent(bytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
+        content.Add(fileContent, "file", filename);
+        request.Content = content;
+
+        using var response = await _client.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        var root = document.RootElement.Clone();
+        var fileId = TryGetString(root, "id");
+
+        if (string.IsNullOrWhiteSpace(fileId))
+            throw new InvalidOperationException("Anthropic Files API upload response did not contain an id.");
+
+        return new AnthropicUploadedFile(
+            fileId,
+            TryGetString(root, "filename"),
+            TryGetString(root, "mime_type"),
             root);
     }
 
