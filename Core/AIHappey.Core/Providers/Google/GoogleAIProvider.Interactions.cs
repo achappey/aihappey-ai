@@ -14,10 +14,35 @@ public partial class GoogleAIProvider
 
         ApplyAuthHeader();
 
+        this.SetDefaultInteractionProperties(request);
+
+        if (TryNormalizeGoogleAgentRequest(request, out _, stream: true))
+        {
+            string? interactionId = null;
+
+            try
+            {
+                await foreach (var update in CreateGoogleAgentInteractionStream(request, cancellationToken))
+                {
+                    if (update is InteractionStartEvent { Interaction.Id: not null } start)
+                        interactionId = start.Interaction.Id;
+                    else if (update is InteractionCompleteEvent { Interaction.Id: not null } complete)
+                        interactionId ??= complete.Interaction.Id;
+
+                    yield return update;
+                }
+            }
+            finally
+            {
+                if (!string.IsNullOrWhiteSpace(interactionId))
+                    await DeleteGoogleAgentInteraction(interactionId, cancellationToken);
+            }
+
+            yield break;
+        }
+
         request.Stream = true;
         request.Store = false;
-
-        this.SetDefaultInteractionProperties(request);
 
         await foreach (var update in _client.GetInteractions(
                            request,
@@ -35,10 +60,30 @@ public partial class GoogleAIProvider
 
         ApplyAuthHeader();
 
+        this.SetDefaultInteractionProperties(request);
+
+        if (TryNormalizeGoogleAgentRequest(request, out _))
+        {
+            string? interactionId = null;
+            var initialInteraction = await CreateGoogleAgentInteraction(request, cancellationToken);
+            interactionId = initialInteraction.Id;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(interactionId))
+                    throw new InvalidOperationException("Google agent interaction create response did not include an id.");
+
+                return await PollGoogleAgentInteraction(interactionId, cancellationToken);
+            }
+            finally
+            {
+                if (!string.IsNullOrWhiteSpace(interactionId))
+                    await DeleteGoogleAgentInteraction(interactionId, cancellationToken);
+            }
+        }
+
         request.Stream = false;
         request.Store = false;
-
-        this.SetDefaultInteractionProperties(request);
 
         return await _client.GetInteraction(
                             request,

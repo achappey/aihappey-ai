@@ -36,6 +36,7 @@ public sealed class InteractionRequest
     public bool? Background { get; set; }
 
     [JsonPropertyName("generation_config")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public InteractionGenerationConfig? GenerationConfig { get; set; }
 
     [JsonPropertyName("agent_config")]
