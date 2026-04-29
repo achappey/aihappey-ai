@@ -125,7 +125,8 @@ public partial class AnthropicProvider
         return new AIResponse
         {
             ProviderId = GetIdentifier(),
-            Model = request.Model ?? target.LocalModelId.ToModelId(GetIdentifier()),
+            Model = request.Model?.ToModelId(GetIdentifier())
+                ?? target.LocalModelId.ToModelId(GetIdentifier()),
             Status = snapshot.Status,
             Output = outputItems.Count == 0 ? null : new AIOutput { Items = outputItems },
             Usage = TryGetObjectProperty(latestSession, "usage"),
@@ -195,7 +196,7 @@ public partial class AnthropicProvider
         var latestSession = await RetrieveManagedAgentSessionAsync(session.Id, cancellationToken);
         yield return CreateManagedAgentFinishEvent(
             session.Id,
-            request.Model ?? target.LocalModelId.ToModelId(GetIdentifier()),
+            request.Model?.ToModelId(GetIdentifier()) ?? target.LocalModelId.ToModelId(GetIdentifier()),
             latestSession,
             terminalEvent,
             errorEvent,
