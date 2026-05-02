@@ -60,23 +60,5 @@
       "input": "0.000001",
       "output": "0.000005"
     }
-  },
-  "anthropic/claude-haiku-3-5": {
-    "pricing": {
-      "input": "0.0000008",
-      "output": "0.000004"
-    }
-  },
-  "anthropic/claude-haiku-3": {
-    "pricing": {
-      "input": "0.00000025",
-      "output": "0.00000125"
-    }
-  },
-  "anthropic/claude-opus-3": {
-    "pricing": {
-      "input": "0.000015",
-      "output": "0.000075"
-    }
   }
 }
