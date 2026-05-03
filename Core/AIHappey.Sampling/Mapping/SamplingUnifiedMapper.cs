@@ -187,7 +187,7 @@ public static class SamplingUnifiedMapper
                 {
                     Type = "file",
                     MediaType = image.MimeType,
-                    Data = ToDataUrl(image.MimeType, NormalizeBinaryData(image.Data)),
+                    Data = ToDataUrl(image.MimeType, NormalizeBinaryData(image.DecodedData)),
                     Metadata = new Dictionary<string, object?>
                     {
                         ["sampling.content.type"] = "image"
