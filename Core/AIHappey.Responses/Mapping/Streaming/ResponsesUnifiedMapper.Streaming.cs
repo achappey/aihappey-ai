@@ -441,11 +441,39 @@ public static partial class ResponsesUnifiedMapper
 
                             if (!string.IsNullOrEmpty(url))
                             {
+                                JsonElement startIndexEl = default;
+                                JsonElement endIndexEl = default;
+
+                                var hasStart = env.AdditionalProperties != null &&
+                                               env.AdditionalProperties.TryGetValue("start_index", out startIndexEl);
+
+                                var hasEnd = env.AdditionalProperties != null &&
+                                             env.AdditionalProperties.TryGetValue("end_index", out endIndexEl);
+
+                                int startIndex = hasStart && startIndexEl.ValueKind == JsonValueKind.Number
+                                    ? startIndexEl.GetInt32()
+                                    : -1;
+
+                                int endIndex = hasEnd && endIndexEl.ValueKind == JsonValueKind.Number
+                                    ? endIndexEl.GetInt32()
+                                    : -1;
+
                                 yield return CreateSourceUrlEnvelope(
                                     responseContentPartDone.ItemId ?? string.Empty,
                                     url,
                                     title ?? responseContentPartDone.ItemId ?? url,
-                                    env.Type
+                                    env.Type,
+                                   providerMetadata: new Dictionary<string, Dictionary<string, object>>()
+                                    {
+                                        {
+                                            providerId,
+                                            new Dictionary<string, object>()
+                                            {
+                                                { "start_index", startIndex },
+                                                { "end_index", endIndex }
+                                            }
+                                        }
+                                    }
                                 );
                             }
                         }
@@ -500,6 +528,7 @@ public static partial class ResponsesUnifiedMapper
                         fileId
                     );
                 }
+
                 yield break;
             case ResponseFunctionCallArgumentsDelta responseFunctionCallArgumentsDelta:
                 yield return CreateToolInputDeltaEnvelope(
