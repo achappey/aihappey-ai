@@ -315,7 +315,12 @@ public static partial class InteractionsUnifiedMapper
                             Data = new AIToolOutputAvailableEventData
                             {
                                 ToolName = "code_execution",
-                                Output = CreateCodeExecutionToolResultPayload(resultText),
+                                Output = new CallToolResult()
+                                {
+                                    Content = [new TextContentBlock() {
+                                        Text = resultText
+                                    }]
+                                },
                                 ProviderExecuted = true,
                                 ProviderMetadata = CreateCodeExecutionToolOutputProviderMetadata(providerId, toolCallId, isError)
                             }
@@ -640,7 +645,7 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             default:
-             
+
                 yield break;
         }
     }
