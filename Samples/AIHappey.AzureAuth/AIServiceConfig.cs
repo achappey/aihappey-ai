@@ -284,7 +284,6 @@ public class AIServiceConfig
     public ProviderConfig? Lava { get; set; }
     public ProviderConfig? ApiAirforce { get; set; }
     public ProviderConfig? SmartAIPI { get; set; }
-    public ProviderConfig? MaximoAI { get; set; }
     public ProviderConfig? LLMPath { get; set; }
     public ProviderConfig? Rime { get; set; }
     public ProviderConfig? Noiz { get; set; }
@@ -507,6 +506,8 @@ public class AIServiceConfig
     public ProviderConfig? IGPT { get; set; }
     public ProviderConfig? BotVerse { get; set; }
     public ProviderConfig? VibeKit { get; set; }
+    public ProviderConfig? Brave { get; set; }
+
 
 }
 

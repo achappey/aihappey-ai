@@ -92,6 +92,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Bria           | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | BrowserUse     | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Brainiall      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Brave          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | BytePlus       | ✅        | ✅                | ✅            | ❌            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Bytez          | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | Cailos         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -279,7 +280,6 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | MaritacaAI     | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Martian        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MatterAI       | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| MaximoAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MegaLLM        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MegaNova       | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ❌          | ❌          | ➖          |
 | MemoryRouter   | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

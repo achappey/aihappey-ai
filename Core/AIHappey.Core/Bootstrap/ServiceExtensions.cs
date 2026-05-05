@@ -284,7 +284,6 @@ using AIHappey.Core.Providers.MultiverseAI;
 using AIHappey.Core.Providers.Lava;
 using AIHappey.Core.Providers.ApiAirforce;
 using AIHappey.Core.Providers.SmartAIPI;
-using AIHappey.Core.Providers.MaximoAI;
 using AIHappey.Core.Providers.Noiz;
 using AIHappey.Core.Providers.Rime;
 using AIHappey.Core.Providers.IonRouter;
@@ -506,6 +505,7 @@ using AIHappey.Core.Providers.IGPT;
 using AIHappey.Core.Providers.GrooveDev;
 using AIHappey.Core.Providers.BotVerse;
 using AIHappey.Core.Providers.VibeKit;
+using AIHappey.Core.Providers.Brave;
 
 namespace AIHappey.Core.AI;
 
@@ -812,7 +812,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LavaProvider>();
         services.AddSingleton<IModelProvider, ApiAirforceProvider>();
         services.AddSingleton<IModelProvider, SmartAIPIProvider>();
-        services.AddSingleton<IModelProvider, MaximoAIProvider>();
         services.AddSingleton<IModelProvider, NoizProvider>();
         services.AddSingleton<IModelProvider, GradiumProvider>();
         services.AddSingleton<IModelProvider, VoiceAIProvider>();
@@ -1034,6 +1033,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, IGPTProvider>();
         services.AddSingleton<IModelProvider, BotVerseProvider>();
         services.AddSingleton<IModelProvider, VibeKitProvider>();
+        services.AddSingleton<IModelProvider, BraveProvider>();
 
     }
 }

@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "brave/brave",
+      "object": "model",
+      "owned_by": "Brave",
+      "name": "Brave Answers",
+      "type": "language",
+      "description": "Provides state-of-the-art AI-generated answers backed by verifiable sources from the web."
+    },
+    {
+      "id": "brave/brave-pro",
+      "object": "model",
+      "owned_by": "Brave",
+      "name": "Brave Pro Answers",
+      "type": "language",
+      "description": "Provides state-of-the-art AI-generated answers backed by verifiable sources from the web."
+    }
+  ]
+}

@@ -1,7 +1,12 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Providers.Brave;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -9,6 +14,7 @@ using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Vercel;
 
@@ -26,6 +32,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string ProviderId = "fixture-provider";
     private const string GroqProviderId = "groq";
     private const string PerplexityProviderId = "perplexity";
+    private const string BraveProviderId = "brave";
 
     [Fact]
     public void Download_file_tool_outputs_emit_file_ui_parts_when_payload_is_wrapped_under_structured_content()
@@ -126,6 +133,167 @@ public sealed class ApiChatStreamFixtureTests
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(321, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(120, providerUsage.GetProperty("input_tokens_details").GetProperty("cached_tokens").GetInt32());
+    }
+
+    [Fact]
+    public async Task Brave_usage_tag_is_removed_from_text_and_forwarded_as_gateway_cost()
+    {
+        var parts = CreateBraveUsageTagFixture();
+        var filteredParts = new List<ChatCompletionUpdate>();
+
+        decimal? capturedCost = null;
+        foreach (var part in parts)
+        {
+            if (BraveProvider.TryCaptureUsageCost(part, out var cost))
+            {
+                capturedCost = cost;
+                continue;
+            }
+
+            if (capturedCost is not null)
+                ApplyGatewayCostForTest(part, capturedCost.Value);
+
+            filteredParts.Add(part);
+        }
+
+        var provider = new FixtureChatCompletionStreamModelProvider(BraveProviderId, filteredParts);
+        var request = new AIRequest
+        {
+            ProviderId = BraveProviderId,
+            Model = "brave-pro",
+            Stream = true
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaChatCompletionsAsync(request));
+        var text = string.Concat(unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "text-delta")
+            .Select(streamEvent => Assert.IsType<AITextDeltaEventData>(streamEvent.Event.Data).Delta));
+
+        Assert.Equal("gh", text);
+        Assert.DoesNotContain("<usage>", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("X-Request-Total-Cost", text, StringComparison.OrdinalIgnoreCase);
+
+        var finishData = Assert.IsType<AIFinishEventData>(unifiedEvents.Single(streamEvent => streamEvent.Event.Type == "finish").Event.Data);
+        Assert.Equal(8290, finishData.InputTokens);
+        Assert.Equal(316, finishData.OutputTokens);
+        Assert.Equal(8606, finishData.TotalTokens);
+        Assert.Equal(0.04703m, finishData.MessageMetadata?.Gateway?.Cost);
+    }
+
+    [Fact]
+    public async Task Brave_citation_tags_are_removed_from_text_and_emitted_as_source_url_ui_parts()
+    {
+        var provider = new TestBraveProvider(CreateBraveCitationTagFixture());
+        var request = new ChatRequest
+        {
+            Model = "brave-pro"
+        };
+
+        var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(request));
+
+        var text = string.Concat(uiParts.OfType<TextDeltaUIMessageStreamPart>().Select(part => part.Delta));
+        Assert.Equal("Before  after", text);
+        Assert.DoesNotContain("<citation>", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("</citation>", text, StringComparison.OrdinalIgnoreCase);
+
+        var sourcePart = Assert.Single(uiParts.OfType<SourceUIPart>());
+        Assert.Equal("brave-citation-1", sourcePart.SourceId);
+        Assert.Equal("https://nos.nl/liveblog/2612248-iran-stuurt-nieuw-vredesvoorstel-naar-vs-witte-huis-negeert-deadline-congres", sourcePart.Url);
+        Assert.Contains("Midden-Oosten", sourcePart.Title);
+
+        var braveMetadata = Assert.Contains(BraveProviderId, sourcePart.ProviderMetadata ?? []);
+        Assert.Equal(1, Assert.IsType<int>(braveMetadata["number"]));
+        Assert.Equal(186, Assert.IsType<int>(braveMetadata["start_index"]));
+        Assert.Equal(189, Assert.IsType<int>(braveMetadata["end_index"]));
+        Assert.Equal("Midden-Oosten NOS Nieuws", Assert.IsType<string>(braveMetadata["snippet"]));
+        Assert.Equal("https://imgs.search.brave.com/favicon", Assert.IsType<string>(braveMetadata["favicon"]));
+        Assert.IsType<JsonElement>(braveMetadata["raw"]);
+
+        Assert.Single(uiParts.OfType<FinishUIPart>());
+    }
+
+    [Fact]
+    public async Task Brave_enum_items_emit_original_tokens_entity_sources_citation_sources_and_downloaded_image_file_parts()
+    {
+        const string imageUrl = "https://imgs.search.brave.com/test-cover.png";
+        var imageBytes = Encoding.UTF8.GetBytes("brave-image-bytes");
+        var imageDownloads = 0;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsoluteUri == imageUrl)
+            {
+                imageDownloads++;
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(imageBytes)
+                };
+
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+                return response;
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent($"Unhandled request: {request.Method} {request.RequestUri}")
+            };
+        });
+
+        var provider = new TestBraveProvider(
+            CreateBraveEnumItemFixture(imageUrl),
+            new StaticHttpClientFactory(new HttpClient(handler)));
+        var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(new ChatRequest { Model = "brave-pro" }));
+
+        var text = string.Concat(uiParts.OfType<TextDeltaUIMessageStreamPart>().Select(part => part.Delta));
+        Assert.Equal("Intro * **The Fame (2008)**: Debuutalbum[1].\n outro", text);
+        Assert.DoesNotContain("<enum_start>", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<enum_item>", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<enum_end>", text, StringComparison.OrdinalIgnoreCase);
+
+        var sourceParts = uiParts.OfType<SourceUIPart>().ToList();
+        Assert.Equal(3, sourceParts.Count);
+        Assert.Equal(1, sourceParts.Count(part => part.SourceId == "brave-entity-entity-1"));
+        Assert.Equal(1, sourceParts.Count(part => part.SourceId == "brave-citation-1"));
+        Assert.Equal(1, sourceParts.Count(part => part.SourceId == "brave-citation-2"));
+
+        var entitySource = sourceParts.Single(part => part.SourceId == "brave-entity-entity-1");
+        Assert.Equal("https://en.wikipedia.org/wiki/The_Fame", entitySource.Url);
+        Assert.Equal("The Fame (2008)", entitySource.Title);
+        var entityMetadata = Assert.Contains(BraveProviderId, entitySource.ProviderMetadata ?? []);
+        Assert.Equal("entity", Assert.IsType<string>(entityMetadata["kind"]));
+        Assert.Equal("entity-1", Assert.IsType<string>(entityMetadata["uuid"]));
+        Assert.Equal("* **The Fame (2008)**: Debuutalbum[1].\n", Assert.IsType<string>(entityMetadata["original_tokens"]));
+        Assert.IsType<JsonElement>(entityMetadata["images"]);
+
+        var citationSource = sourceParts.Single(part => part.SourceId == "brave-citation-1");
+        Assert.Equal("https://albums.example/the-fame", citationSource.Url);
+        Assert.Equal("Albums source", citationSource.Title);
+        var citationMetadata = Assert.Contains(BraveProviderId, citationSource.ProviderMetadata ?? []);
+        Assert.Equal(1, Assert.IsType<int>(citationMetadata["number"]));
+
+        var filePart = Assert.Single(uiParts.OfType<FileUIPart>());
+        Assert.Equal("image/png", filePart.MediaType);
+        Assert.Equal(Convert.ToBase64String(imageBytes), filePart.Url);
+        Assert.Equal("test-cover.png", filePart.Filename);
+        var fileMetadata = Assert.Contains(BraveProviderId, filePart.ProviderMetadata ?? []);
+        Assert.NotNull(fileMetadata);
+        Assert.Equal("entity_image", Assert.IsType<string>(fileMetadata!["kind"]));
+        Assert.Equal(imageUrl, Assert.IsType<string>(fileMetadata["origin_url"]));
+        Assert.Equal(1, imageDownloads);
+    }
+
+    [Fact]
+    public async Task Brave_enum_items_without_href_skip_entity_source_but_keep_original_tokens_and_citations()
+    {
+        var provider = new TestBraveProvider(CreateBraveEnumItemWithoutHrefFixture());
+        var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(new ChatRequest { Model = "brave-pro" }));
+
+        var text = string.Concat(uiParts.OfType<TextDeltaUIMessageStreamPart>().Select(part => part.Delta));
+        Assert.Equal("* **MAYHEM (Reissue) (2025)**: Heruitgave[4].\n", text);
+
+        var sourcePart = Assert.Single(uiParts.OfType<SourceUIPart>());
+        Assert.Equal("brave-citation-4", sourcePart.SourceId);
+        Assert.Equal("https://genius.com/artists/Lady-gaga/albums", sourcePart.Url);
+        Assert.Empty(uiParts.OfType<FileUIPart>());
     }
 
     [Fact]
@@ -669,6 +837,238 @@ public sealed class ApiChatStreamFixtureTests
             .Where(line => line.Length > 0 && !string.Equals(line, "[DONE]", StringComparison.OrdinalIgnoreCase))
             .Select(payload => JsonSerializer.Deserialize<ChatCompletionUpdate>(payload, JsonSerializerOptions.Web)
                 ?? throw new InvalidOperationException($"Could not deserialize chat completion stream payload from [{relativePath}](Core/AIHappey.Tests/{relativePath})."))];
+    }
+
+    private static IReadOnlyList<ChatCompletionUpdate> CreateBraveUsageTagFixture()
+        =>
+        [
+            DeserializeChatCompletionUpdate("""
+            {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":"g"},"finish_reason":null}],"created":1777966764,"id":"15c21ebe-01f6-4050-891e-413186385f31","object":"chat.completion.chunk","usage":null}
+            """),
+            DeserializeChatCompletionUpdate("""
+            {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":"h"},"finish_reason":null}],"created":1777966764,"id":"15c21ebe-01f6-4050-891e-413186385f31","object":"chat.completion.chunk","usage":null}
+            """),
+            DeserializeChatCompletionUpdate("""
+            {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":"<usage>{\"X-Request-Requests\": 1, \"X-Request-Queries\": 1, \"X-Request-Tokens-In\": 8290, \"X-Request-Tokens-Out\": 316, \"X-Request-Requests-Cost\": 0.0, \"X-Request-Queries-Cost\": 0.004, \"X-Request-Tokens-In-Cost\": 0.04145, \"X-Request-Tokens-Out-Cost\": 0.00158, \"X-Request-Total-Cost\": 0.04703}</usage>"},"finish_reason":null}],"created":1777966764,"id":"15c21ebe-01f6-4050-891e-413186385f31","object":"chat.completion.chunk","usage":null}
+            """),
+            DeserializeChatCompletionUpdate("""
+            {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":""},"finish_reason":"stop"}],"created":1777966764,"id":"15c21ebe-01f6-4050-891e-413186385f31","object":"chat.completion.chunk","usage":{"completion_tokens":316,"prompt_tokens":8290,"total_tokens":8606,"completion_tokens_details":{"reasoning_tokens":0}}}
+            """)
+        ];
+
+    private sealed class TestBraveProvider : BraveProvider
+    {
+        private readonly IReadOnlyList<ChatCompletionUpdate> chatCompletionUpdates;
+
+        public TestBraveProvider(IReadOnlyList<ChatCompletionUpdate> chatCompletionUpdates)
+            : this(chatCompletionUpdates, new TestHttpClientFactory())
+        {
+        }
+
+        public TestBraveProvider(IReadOnlyList<ChatCompletionUpdate> chatCompletionUpdates, IHttpClientFactory httpClientFactory)
+            : base(new NullApiKeyResolver(), new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())), httpClientFactory)
+            => this.chatCompletionUpdates = chatCompletionUpdates;
+
+        public override IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+            ChatCompletionOptions options,
+            CancellationToken cancellationToken = default)
+            => ReplayAsync(cancellationToken);
+
+        private async IAsyncEnumerable<ChatCompletionUpdate> ReplayAsync(
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            foreach (var update in chatCompletionUpdates)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                yield return update;
+                await Task.Yield();
+            }
+        }
+    }
+
+    private sealed class NullApiKeyResolver : IApiKeyResolver
+    {
+        public string? Resolve(string provider) => "test-key";
+    }
+
+    private sealed class TestHttpClientFactory : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new();
+    }
+
+    private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name)
+            => httpClient;
+    }
+
+    private sealed class StaticResponseHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = responder(request);
+            response.RequestMessage = request;
+            return Task.FromResult(response);
+        }
+    }
+
+    private static IReadOnlyList<ChatCompletionUpdate> CreateBraveCitationTagFixture()
+    {
+        const string citation = """
+        <citation>{"start_index":186,"end_index":189,"number":1,"url":"https://nos.nl/liveblog/2612248-iran-stuurt-nieuw-vredesvoorstel-naar-vs-witte-huis-negeert-deadline-congres","favicon":"https://imgs.search.brave.com/favicon","snippet":"Midden-Oosten NOS Nieuws"}</citation>
+        """;
+
+        var chunks = new[] { "Before ", citation, " after" };
+
+        var updates = chunks
+            .Select(content => CreateBraveTextChunk(content))
+            .ToList();
+
+        updates.Add(DeserializeChatCompletionUpdate("""
+        {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":""},"finish_reason":"stop"}],"created":1777969142,"id":"efdfe159-2cca-47c6-b853-0e8466b7656d","object":"chat.completion.chunk","usage":{"completion_tokens":12,"prompt_tokens":34,"total_tokens":46}}
+        """));
+
+        return updates;
+    }
+
+    private static IReadOnlyList<ChatCompletionUpdate> CreateBraveEnumItemFixture(string imageUrl)
+    {
+        var entity = new Dictionary<string, object?>
+        {
+            ["uuid"] = "entity-1",
+            ["name"] = "The Fame (2008)",
+            ["href"] = "https://en.wikipedia.org/wiki/The_Fame",
+            ["extra_text"] = "Debuutalbum",
+            ["original_tokens"] = "* **The Fame (2008)**: Debuutalbum[1].\n",
+            ["instance_of"] = new[] { "Q482994" },
+            ["images"] = new[] { imageUrl, imageUrl },
+            ["citations"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["start_index"] = 10,
+                    ["end_index"] = 13,
+                    ["number"] = 1,
+                    ["url"] = "https://albums.example/the-fame",
+                    ["favicon"] = "https://imgs.search.brave.com/favicon-1",
+                    ["snippet"] = "Albums source"
+                },
+                new Dictionary<string, object?>
+                {
+                    ["start_index"] = 10,
+                    ["end_index"] = 13,
+                    ["number"] = 1,
+                    ["url"] = "https://albums.example/the-fame",
+                    ["favicon"] = "https://imgs.search.brave.com/favicon-1",
+                    ["snippet"] = "Albums source"
+                },
+                new Dictionary<string, object?>
+                {
+                    ["start_index"] = 13,
+                    ["end_index"] = 16,
+                    ["number"] = 2,
+                    ["url"] = "https://grokipedia.example/lady-gaga-discography",
+                    ["favicon"] = "https://imgs.search.brave.com/favicon-2",
+                    ["snippet"] = "Grokipedia source"
+                }
+            }
+        };
+
+        var chunks = new[]
+        {
+            "Intro ",
+            "<enum_start>{\"type\":\"ul\"}</enum_start>",
+            $"<enum_item>{JsonSerializer.Serialize(entity, JsonSerializerOptions.Web)}</enum_item>",
+            "<enum_end>{}</enum_end>",
+            " outro"
+        };
+
+        var updates = chunks
+            .Select(CreateBraveTextChunk)
+            .ToList();
+
+        updates.Add(DeserializeChatCompletionUpdate("""
+        {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":""},"finish_reason":"stop"}],"created":1777969142,"id":"efdfe159-2cca-47c6-b853-0e8466b7656d","object":"chat.completion.chunk","usage":{"completion_tokens":12,"prompt_tokens":34,"total_tokens":46}}
+        """));
+
+        return updates;
+    }
+
+    private static IReadOnlyList<ChatCompletionUpdate> CreateBraveEnumItemWithoutHrefFixture()
+    {
+        var entity = new Dictionary<string, object?>
+        {
+            ["uuid"] = "entity-no-href",
+            ["name"] = "MAYHEM (Reissue) (2025)",
+            ["href"] = null,
+            ["extra_text"] = "Heruitgave",
+            ["original_tokens"] = "* **MAYHEM (Reissue) (2025)**: Heruitgave[4].\n",
+            ["instance_of"] = Array.Empty<string>(),
+            ["images"] = Array.Empty<string>(),
+            ["citations"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["start_index"] = 20,
+                    ["end_index"] = 23,
+                    ["number"] = 4,
+                    ["url"] = "https://genius.com/artists/Lady-gaga/albums",
+                    ["favicon"] = "https://imgs.search.brave.com/genius-favicon",
+                    ["snippet"] = "Lady Gaga Albums"
+                }
+            }
+        };
+
+        var updates = new[]
+        {
+            CreateBraveTextChunk($"<enum_item>{JsonSerializer.Serialize(entity, JsonSerializerOptions.Web)}</enum_item>"),
+            DeserializeChatCompletionUpdate("""
+            {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":""},"finish_reason":"stop"}],"created":1777969142,"id":"efdfe159-2cca-47c6-b853-0e8466b7656d","object":"chat.completion.chunk","usage":{"completion_tokens":12,"prompt_tokens":34,"total_tokens":46}}
+            """)
+        };
+
+        return updates;
+    }
+
+    private static ChatCompletionUpdate CreateBraveTextChunk(string content)
+        => new()
+        {
+            Id = "efdfe159-2cca-47c6-b853-0e8466b7656d",
+            Object = "chat.completion.chunk",
+            Created = 1777969142,
+            Model = "brave-pro",
+            Choices =
+            [
+                JsonSerializer.SerializeToElement(new
+                {
+                    delta = new
+                    {
+                        role = "assistant",
+                        content
+                    },
+                    finish_reason = (string?)null
+                }, JsonSerializerOptions.Web)
+            ]
+        };
+
+    private static ChatCompletionUpdate DeserializeChatCompletionUpdate(string json)
+        => JsonSerializer.Deserialize<ChatCompletionUpdate>(json, JsonSerializerOptions.Web)
+            ?? throw new JsonException("Could not deserialize chat completion update fixture.");
+
+    private static void ApplyGatewayCostForTest(ChatCompletionUpdate update, decimal cost)
+    {
+        var json = JsonSerializer.SerializeToElement(update, JsonSerializerOptions.Web);
+        var metadata = json.TryGetProperty("metadata", out var existingMetadata) && existingMetadata.ValueKind == JsonValueKind.Object
+            ? JsonSerializer.Deserialize<Dictionary<string, object?>>(existingMetadata.GetRawText(), JsonSerializerOptions.Web) ?? []
+            : [];
+
+        metadata["gateway"] = new Dictionary<string, object?>
+        {
+            ["cost"] = cost
+        };
+
+        update.AdditionalProperties ??= [];
+        update.AdditionalProperties["metadata"] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web);
     }
 
     private static async Task<List<AIStreamEvent>> LoadChatCompletionUnifiedEventsAsync(

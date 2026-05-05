@@ -285,7 +285,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["lava"] = "X-Lava-Key",
             ["apiairforce"] = "X-ApiAirforce-Key",
             ["smartaipi"] = "X-SmartAIPI-Key",
-            ["maximoai"] = "X-MaximoAI-Key",
             ["llmpath"] = "X-LLMPath-Key",
             ["rime"] = "X-Rime-Key",
             ["noiz"] = "X-Noiz-Key",
@@ -509,6 +508,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["igpt"] = "X-IGPT-Key",
             ["botverse"] = "X-BotVerse-Key",
             ["vibekit"] = "X-VibeKit-Key",
+            ["brave"] = "X-Brave-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
