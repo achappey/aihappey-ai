@@ -345,7 +345,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | OpenGateway    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | OpenLimits     | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | OpenPipe       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| OpenRouter     | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ❌                       | ➖               | ➖          | ➖          | ➖          |
+| OpenRouter     | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ➖               | ➖          | ➖          | ➖          |
 | OpenSourceAIHub| ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | OpperAI        | ✅        | ✅                | ✅            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
 | OpusCode       | ✅        | ❌                | ❌            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
