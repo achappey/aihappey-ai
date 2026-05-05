@@ -175,23 +175,17 @@ public static class SamplingUnifiedMapper
                 return new AITextContentPart
                 {
                     Type = "text",
-                    Text = text.Text,
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["sampling.content.type"] = "text"
-                    }
+                    Text = text.Text
                 };
 
             case ImageContentBlock image:
+                var raw = image.DecodedData.ToArray();
+
                 return new AIFileContentPart
                 {
                     Type = "file",
                     MediaType = image.MimeType,
-                    Data = ToDataUrl(image.MimeType, NormalizeBinaryData(image.DecodedData)),
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["sampling.content.type"] = "image"
-                    }
+                    Data = ToDataUrl(image.MimeType, NormalizeBinaryData(raw))
                 };
 
             case AudioContentBlock audio:
@@ -199,11 +193,7 @@ public static class SamplingUnifiedMapper
                 {
                     Type = "file",
                     MediaType = audio.MimeType,
-                    Data = ToDataUrl(audio.MimeType, NormalizeBinaryData(audio.Data)),
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["sampling.content.type"] = "audio"
-                    }
+                    Data = ToDataUrl(audio.MimeType, NormalizeBinaryData(audio.DecodedData.ToArray()))
                 };
 
             case EmbeddedResourceBlock embedded:
@@ -213,12 +203,7 @@ public static class SamplingUnifiedMapper
                 return new AITextContentPart
                 {
                     Type = "text",
-                    Text = JsonSerializer.Serialize(block, block.GetType(), Json),
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["sampling.content.unmapped"] = true,
-                        ["sampling.content.clr"] = block.GetType().Name
-                    }
+                    Text = JsonSerializer.Serialize(block, block.GetType(), Json)
                 };
         }
     }
@@ -232,12 +217,7 @@ public static class SamplingUnifiedMapper
                 Type = "file",
                 MediaType = text.MimeType,
                 Filename = TryGetFileName(text.Uri),
-                Data = text.Text,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["sampling.content.type"] = "embedded_text",
-                    ["sampling.resource.uri"] = text.Uri
-                }
+                Data = text.Text
             };
         }
 
@@ -248,12 +228,7 @@ public static class SamplingUnifiedMapper
                 Type = "file",
                 MediaType = blob.MimeType,
                 Filename = TryGetFileName(blob.Uri),
-                Data = ToDataUrl(blob.MimeType, NormalizeBinaryData(blob.Blob)),
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["sampling.content.type"] = "embedded_blob",
-                    ["sampling.resource.uri"] = blob.Uri
-                }
+                Data = ToDataUrl(blob.MimeType, NormalizeBinaryData(blob.Blob.ToArray()))
             };
         }
 
