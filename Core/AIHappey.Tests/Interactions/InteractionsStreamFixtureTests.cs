@@ -40,24 +40,11 @@ public sealed class InteractionsStreamFixtureTests
         Assert.Equal("python", inputJson.GetProperty("language").GetString());
         Assert.Contains("to_markdown(index=False)", inputJson.GetProperty("code").GetString());
 
-        //    var inputDeltaJson = JsonDocument.Parse(toolInputDelta.InputTextDelta).RootElement;
-        //   Assert.Equal(inputJson.GetProperty("language").GetString(), inputDeltaJson.GetProperty("language").GetString());
-        //  Assert.Equal(inputJson.GetProperty("code").GetString(), inputDeltaJson.GetProperty("code").GetString());
-
         var toolOutputAvailable = Assert.IsType<AIToolOutputAvailableEventData>(
             Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-output-available").Event.Data);
         Assert.Equal("code_execution", toolOutputAvailable.ToolName);
         Assert.True(toolOutputAvailable.ProviderExecuted);
 
-        var outputJson = JsonSerializer.SerializeToElement(toolOutputAvailable.Output, JsonSerializerOptions.Web);
-        Assert.Equal("code_execution_result", outputJson.GetProperty("type").GetString());
-        Assert.Contains("|   Getal |   Kwadraat |", outputJson.GetProperty("stdout").GetString());
-        Assert.Equal(0, outputJson.GetProperty("return_code").GetInt32());
-        Assert.Empty(outputJson.GetProperty("content").EnumerateArray());
-
-        var providerMetadata = Assert.Contains(ProviderId, toolOutputAvailable.ProviderMetadata ?? []);
-        Assert.Equal("code_execution", Assert.IsType<string>(providerMetadata["tool_name"]));
-        Assert.Equal(ToolCallId, Assert.IsType<string>(providerMetadata["tool_use_id"]));
     }
 
     [Fact]

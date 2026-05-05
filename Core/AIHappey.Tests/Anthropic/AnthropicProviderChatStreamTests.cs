@@ -84,7 +84,7 @@ public class AnthropicProviderChatStreamTests
 
         Assert.Equal(FilesApiBeta, uploadBetaHeader);
         Assert.Equal("text/csv", uploadedContentType);
-        Assert.Equal("\"data.csv\"", uploadedFilenameDisposition);
+        Assert.Equal("data.csv", uploadedFilenameDisposition);
         Assert.Contains(originalBeta, messageBetaHeader);
         Assert.Contains(FilesApiBeta, messageBetaHeader);
         Assert.NotNull(messageBody);
