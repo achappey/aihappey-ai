@@ -15,7 +15,6 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Models;
-using Microsoft.Extensions.Options;
 
 namespace AIHappey.Core.Providers.Brave;
 

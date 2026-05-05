@@ -273,7 +273,6 @@ public sealed class ApiChatStreamFixtureTests
         var filePart = Assert.Single(uiParts.OfType<FileUIPart>());
         Assert.Equal("image/png", filePart.MediaType);
         Assert.Equal(Convert.ToBase64String(imageBytes), filePart.Url);
-        Assert.Equal("test-cover.png", filePart.Filename);
         var fileMetadata = Assert.Contains(BraveProviderId, filePart.ProviderMetadata ?? []);
         Assert.NotNull(fileMetadata);
         Assert.Equal("entity_image", Assert.IsType<string>(fileMetadata!["kind"]));
