@@ -14,7 +14,7 @@ public partial class RequestyProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<ImageResponse> ImageRequestRequesty(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
