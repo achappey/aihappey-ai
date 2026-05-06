@@ -65,9 +65,11 @@ public static class ModelProviderResponsesChatExtensions
         responseRequest.Metadata = null;
     }
 
-    public static void SetDefaultChatCompletionProperties(
+    public static IReadOnlyDictionary<string, string>? SetDefaultChatCompletionProperties(
         this IModelProvider modelProvider, ChatCompletionOptions chatCompletionOptions, HashSet<string>? exclude = null)
     {
+        var headers = chatCompletionOptions.Metadata.GetResponseHeaders(modelProvider.GetIdentifier());
+
         chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
             .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
@@ -75,6 +77,8 @@ public static class ModelProviderResponsesChatExtensions
                 [], [.. exclude ?? [], "tools", "headers"]);
 
         chatCompletionOptions.Metadata = null;
+
+        return headers;
     }
 
     public static void SetDefaultMessagesProperties(

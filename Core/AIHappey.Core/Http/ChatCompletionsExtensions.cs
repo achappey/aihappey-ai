@@ -21,13 +21,17 @@ public static class ChatCompletionsExtensions
         JsonElement payload,
         string providerId,
         string relativeUrl = "v1/chat/completions",
-        CancellationToken ct = default,
-        ProviderBackendCaptureRequest? capture = null)
+        ProviderBackendCaptureRequest? capture = null,
+        IReadOnlyDictionary<string, string>? headers = null,
+                CancellationToken ct = default
+)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
+
+        req.ApplyRequestHeaders(headers);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
 
@@ -49,6 +53,28 @@ public static class ChatCompletionsExtensions
         return result;
     }
 
+    private static void ApplyRequestHeaders(
+        this HttpRequestMessage request,
+        IReadOnlyDictionary<string, string>? headers)
+    {
+        if (headers is null || headers.Count == 0)
+            return;
+
+        foreach (var (name, value) in headers)
+        {
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(value))
+                continue;
+
+            if (name.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
+            {
+                request.Content?.Headers.TryAddWithoutValidation(name, value);
+                continue;
+            }
+
+            request.Headers.TryAddWithoutValidation(name, value);
+        }
+    }
+
     /// <summary>
     /// POST JSON and deserialize JSON response into T (non-stream).
     /// </summary>
@@ -57,10 +83,11 @@ public static class ChatCompletionsExtensions
         ChatCompletionOptions options,
         string providerId,
         string relativeUrl = "v1/chat/completions",
-        CancellationToken ct = default,
         JsonElement? extraRootProperties = null,
-        ProviderBackendCaptureRequest? capture = null)
-        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), providerId, relativeUrl, ct, capture);
+        ProviderBackendCaptureRequest? capture = null,
+        IReadOnlyDictionary<string, string>? headers = null,
+        CancellationToken ct = default)
+        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), providerId, relativeUrl, capture, headers, ct);
 
     /// <summary>
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
@@ -72,8 +99,9 @@ public static class ChatCompletionsExtensions
         string providerId,
         string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
-        [EnumeratorCancellation] CancellationToken ct = default,
-        ProviderBackendCaptureRequest? capture = null)
+        ProviderBackendCaptureRequest? capture = null,
+        IReadOnlyDictionary<string, string>? headers = null,
+        [EnumeratorCancellation] CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
@@ -82,6 +110,7 @@ public static class ChatCompletionsExtensions
         options.StreamOptions.IncludeUsage = true;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
+        req.ApplyRequestHeaders(headers);
 
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);

@@ -21,13 +21,14 @@ public static class ModelProviderChatCompletionUnifiedExtensions
          Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
          CancellationToken cancellationToken = default)
     {
-        modelProvider.SetDefaultChatCompletionProperties(options);
+        var headers = modelProvider.SetDefaultChatCompletionProperties(options);
 
         return await client.GetChatCompletion(options,
             modelProvider.GetIdentifier(),
             relativeUrl,
             extraRootProperties: extraRootProperties,
             capture: capture,
+            headers: headers,
             ct: cancellationToken);
     }
 
@@ -40,13 +41,14 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        modelProvider.SetDefaultChatCompletionProperties(options);
-        
+        var headers = modelProvider.SetDefaultChatCompletionProperties(options);
+
         await foreach (var update in client.GetChatCompletionUpdates(options,
             relativeUrl: relativeUrl,
             providerId: modelProvider.GetIdentifier(),
             extraRootProperties: extraRootProperties,
             capture: capture,
+            headers: headers,
             ct: cancellationToken))
             yield return update;
     }
