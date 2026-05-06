@@ -298,7 +298,8 @@ public static partial class ChatCompletionsUnifiedMapper
                     && roleEl.ValueKind == JsonValueKind.String
                     && string.Equals(roleEl.GetString(), "assistant", StringComparison.OrdinalIgnoreCase)
                     && !delta.TryGetProperty("content", out _)
-                    && !delta.TryGetProperty("reasoning", out _))
+                    && !delta.TryGetProperty("reasoning", out _)
+                    && !delta.TryGetProperty("reasoning_content", out _))
                 {
                     yield return CreateUiEnvelope(chunk, "text-start", new AITextStartEventData());
                 }
@@ -313,6 +314,13 @@ public static partial class ChatCompletionsUnifiedMapper
                     isReasoningDelta = true;
                 }
 
+                if (!isReasoningDelta
+                 && delta.TryGetProperty("reasoning_content", out var reasoningRootEl)
+                 && reasoningRootEl.ValueKind == JsonValueKind.String)
+                {
+                    isReasoningDelta = true;
+                }
+
                 if (isReasoningDelta)
                 {
                     var reasoningDelta = ExtractValue<string>(delta, "reasoning");
@@ -323,6 +331,14 @@ public static partial class ChatCompletionsUnifiedMapper
                         reasoningDelta = reasoningContentEl.ValueKind == JsonValueKind.String
                             ? reasoningContentEl.GetString()
                             : ChatMessageContentExtensions.ToText(reasoningContentEl);
+                    }
+
+                    if (string.IsNullOrEmpty(reasoningDelta)
+                       && delta.TryGetProperty("reasoning_content", out var reasContentEl))
+                    {
+                        reasoningDelta = reasContentEl.ValueKind == JsonValueKind.String
+                            ? reasContentEl.GetString()
+                            : ChatMessageContentExtensions.ToText(reasContentEl);
                     }
 
                     if (!string.IsNullOrEmpty(reasoningDelta))
