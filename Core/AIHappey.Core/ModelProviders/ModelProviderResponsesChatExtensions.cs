@@ -36,16 +36,20 @@ public static class ModelProviderResponsesChatExtensions
         }
     }
 
-    public static void SetDefaultResponseProperties(
+    public static IReadOnlyDictionary<string, string>? SetDefaultResponseProperties(
         this IModelProvider modelProvider, ResponseRequest responseRequest, HashSet<string>? exclude = null)
     {
+        var headers = responseRequest.Metadata.GetResponseHeaders(modelProvider.GetIdentifier());
+
         responseRequest.Tools = [.. responseRequest.Tools ?? [],
             .. responseRequest.Metadata.GetResponseToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
         modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
-                [], [.. exclude ?? [], "tools"]);
+                [], [.. exclude ?? [], "tools", "headers"]);
 
         responseRequest.Metadata = null;
+
+        return headers;
     }
 
     public static void SetDefaultInteractionProperties(
@@ -56,7 +60,7 @@ public static class ModelProviderResponsesChatExtensions
             .Where(p => responseRequest.Tools?.Any(e => e.Type == p.Type) != true) ?? []];
 
         modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
-                [], [.. exclude ?? [], "tools"]);
+                [], [.. exclude ?? [], "tools", "headers"]);
 
         responseRequest.Metadata = null;
     }
@@ -68,7 +72,7 @@ public static class ModelProviderResponsesChatExtensions
             .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
         modelProvider.ApplyProviderOptions(chatCompletionOptions.Metadata, chatCompletionOptions.AdditionalProperties ??=
-                [], [.. exclude ?? [], "tools"]);
+                [], [.. exclude ?? [], "tools", "headers"]);
 
         chatCompletionOptions.Metadata = null;
     }

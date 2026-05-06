@@ -673,6 +673,28 @@ public static partial class ResponsesUnifiedMapper
                 {
                     yield return CreateTextStartEnvelope(added.Item.Id ?? string.Empty);
                 }
+                else if (added.Item.Type.EndsWith(":image_generation"))
+                {
+                    yield return CreateToolInputEndEnvelope(
+                                                   added.Item.Id ?? string.Empty,
+                                                   "image_generation", new { },
+                                                   providerExecuted: true);
+                }
+                else if (added.Item.Type.EndsWith(":datetime"))
+                {
+                    yield return CreateToolInputEndEnvelope(
+                                                   added.Item.Id ?? string.Empty,
+                                                   "datetime", new { },
+                                                   providerExecuted: true);
+                }
+                else if (added.Item.Type.EndsWith(":web_fetch"))
+                {
+                    yield return CreateToolInputStartEnvelope(
+                           added.Item.Id ?? string.Empty,
+                           "web_fetch",
+                           "web_fetch",
+                           true);
+                }
                 else if (added.Item.Type == "shell_call")
                 {
                     RegisterShellCall(added.Item, added.OutputIndex);
@@ -769,305 +791,495 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseOutputItemDone done:
-                if (done.Item.Type == "message")
                 {
-                    yield return CreateTextEndEnvelope(done.Item.Id ?? string.Empty);
-                }
-                else if (done.Item.Type == "reasoning")
-                {
-                    foreach (var env in CreateReasoningEnvelope(providerId, done.Item.Id ?? string.Empty, done.Item))
-                        yield return env;
-                }
-                else if (done.Item.Type == "shell_call")
-                {
-                    foreach (var env in CreateShellToolInputAvailableEnvelopes(done.Item, done.OutputIndex))
-                        yield return env;
-                }
-                else if (done.Item.Type == "shell_call_output")
-                {
-                    foreach (var env in CreateShellToolOutputFinalEnvelopes(providerId, done.Item, done.OutputIndex))
-                        yield return env;
-                }
-                else if (done.Item.Type == "compaction")
-                {
-                    var encryptedContent = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "encrypted_content");
-
-                    yield return CreateToolOutputEnvelope(
-                        done.Item.Id ?? string.Empty,
-                        CreateCompactionToolOutput(encryptedContent),
-                        providerExecuted: true,
-                        providerMetadata: CreateProviderScopedEncryptedContentMetadata(providerId, encryptedContent));
-                }
-                else if (done.Item.Type == "mcp_call")
-                {
-                    var outputContent = done.Item.AdditionalProperties?.TryGetValue("output", out var output) == true ? output.ToString() : string.Empty;
-                    var toolCallResult = new CallToolResult()
+                    switch (done.Item.Type)
                     {
-                        Content = [new TextContentBlock() {
-                            Text = outputContent
-                        }]
-                    };
-
-                    yield return CreateToolOutputEnvelope(done.Item.Id ?? string.Empty,
-                        toolCallResult);
-                }
-                else if (done.Item.Type == "function_call")
-                {
-                    var argumentInput =
-                    !string.IsNullOrEmpty(done.Item.Arguments)
-                        ? JsonDocument.Parse(done.Item.Arguments).RootElement
-                        : JsonSerializer.SerializeToElement(new { });
-
-                    yield return CreateToolInputEndEnvelope(
-                            done.Item.Id ?? string.Empty,
-                            done.Item.Name ?? done.Item.Type,
-                             argumentInput,
-                             done.Item.Name,
-                              false
-                         );
-                }
-                else if (done.Item.Type == "file_search_call")
-                {
-                    var fileSearchInput = JsonSerializer.SerializeToElement(
-                        new Dictionary<string, object?>
-                        {
-                            ["queries"] = done.Item.AdditionalProperties?.TryGetValue("queries", out var queries) == true
-                                ? queries.Clone()
-                                : JsonSerializer.SerializeToElement(Array.Empty<object>(), JsonSerializerOptions.Web)
-                        },
-                        JsonSerializerOptions.Web);
-
-                    yield return CreateToolInputDeltaEnvelope(
-                        done.Item.Id ?? string.Empty,
-                        fileSearchInput.GetRawText());
-
-                    yield return CreateToolInputEndEnvelope(
-                        done.Item.Id ?? string.Empty,
-                        "file_search",
-                        fileSearchInput,
-                        providerExecuted: true
-                    );
-
-                    var fileSearchOutput = JsonSerializer.SerializeToElement(
-                        new CallToolResult
-                        {
-                            StructuredContent = JsonSerializer.SerializeToElement(
-                                new Dictionary<string, object?>
-                                {
-                                    ["result"] = done.Item.AdditionalProperties?.TryGetValue("results", out var results) == true
-                                        ? results.Clone()
-                                        : JsonSerializer.SerializeToElement(Array.Empty<object>(), JsonSerializerOptions.Web)
-                                },
-                                JsonSerializerOptions.Web)
-                        },
-                        JsonSerializerOptions.Web);
-
-                    yield return CreateToolOutputEnvelope(
-                        done.Item.Id ?? string.Empty,
-                        fileSearchOutput,
-                        providerExecuted: true
-                    );
-                }
-                else if (done.Item.Type == "search_results")
-                {
-                    var id = Guid.NewGuid().ToString();
-                    JsonElement? searchQueries = done.Item.AdditionalProperties?.TryGetValue("queries", out var queries) == true ? queries.Clone() : null;
-
-                    yield return CreateToolInputStartEnvelope(
-                                id,
-                                "web_search",
-                                 providerExecuted: true
-                            );
-
-                    yield return CreateToolInputDeltaEnvelope(
-                                id,
-                                JsonSerializer.Serialize(new
-                                {
-                                    queries = searchQueries
-                                })
-                            );
-
-                    yield return CreateToolInputEndEnvelope(
-                                 id,
-                                 "web_search",
-                                  new
-                                  {
-                                      queries = searchQueries
-                                  },
-                                  providerExecuted: true
-                             );
-
-                    JsonElement? searchResults = done.Item.AdditionalProperties?.TryGetValue("results", out var results) == true ? results.Clone() : null;
-
-                    yield return CreateToolOutputEnvelope(
-                            id,
-                            new CallToolResult()
+                        case "message":
                             {
-                                StructuredContent = JsonSerializer.SerializeToElement(new
+                                yield return CreateTextEndEnvelope(done.Item.Id ?? string.Empty);
+                                break;
+                            }
+
+                        case "reasoning":
+                            {
+                                foreach (var env in CreateReasoningEnvelope(providerId, done.Item.Id ?? string.Empty, done.Item))
+                                    yield return env;
+
+                                break;
+                            }
+
+                        case "shell_call":
+                            {
+                                foreach (var env in CreateShellToolInputAvailableEnvelopes(done.Item, done.OutputIndex))
+                                    yield return env;
+
+                                break;
+                            }
+
+                        case "shell_call_output":
+                            {
+                                foreach (var env in CreateShellToolOutputFinalEnvelopes(providerId, done.Item, done.OutputIndex))
+                                    yield return env;
+
+                                break;
+                            }
+
+                        case "compaction":
+                            {
+                                var encryptedContent = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "encrypted_content");
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    CreateCompactionToolOutput(encryptedContent),
+                                    providerExecuted: true,
+                                    providerMetadata: CreateProviderScopedEncryptedContentMetadata(providerId, encryptedContent));
+
+                                break;
+                            }
+
+                        case "mcp_call":
+                            {
+                                var outputContent = done.Item.AdditionalProperties?.TryGetValue("output", out var output) == true
+                                    ? output.ToString()
+                                    : string.Empty;
+
+                                var toolCallResult = new CallToolResult()
                                 {
-                                    results = searchResults
-                                })
-                            },
-                            providerExecuted: true
-                        );
+                                    Content =
+                                    [
+                                        new TextContentBlock()
+                                        {
+                                            Text = outputContent
+                                        }
+                                    ]
+                                };
 
-                    foreach (var envelope in CreateSourceUrlEnvelopesFromSearchResults(
-                                 providerId,
-                                 searchResults,
-                                 "search_results",
-                                 id))
-                    {
-                        yield return envelope;
+                                yield return CreateToolOutputEnvelope(done.Item.Id ?? string.Empty, toolCallResult);
+                                break;
+                            }
+
+                        case "function_call":
+                            {
+                                var argumentInput =
+                                    !string.IsNullOrEmpty(done.Item.Arguments)
+                                        ? JsonDocument.Parse(done.Item.Arguments).RootElement
+                                        : JsonSerializer.SerializeToElement(new { });
+
+                                yield return CreateToolInputEndEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    done.Item.Name ?? done.Item.Type,
+                                    argumentInput,
+                                    done.Item.Name,
+                                    false);
+
+                                break;
+                            }
+
+                        case "file_search_call":
+                            {
+                                var fileSearchInput = JsonSerializer.SerializeToElement(
+                                    new Dictionary<string, object?>
+                                    {
+                                        ["queries"] = done.Item.AdditionalProperties?.TryGetValue("queries", out var queries) == true
+                                            ? queries.Clone()
+                                            : JsonSerializer.SerializeToElement(Array.Empty<object>(), JsonSerializerOptions.Web)
+                                    },
+                                    JsonSerializerOptions.Web);
+
+                                yield return CreateToolInputDeltaEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    fileSearchInput.GetRawText());
+
+                                yield return CreateToolInputEndEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    "file_search",
+                                    fileSearchInput,
+                                    providerExecuted: true);
+
+                                var fileSearchOutput = JsonSerializer.SerializeToElement(
+                                    new CallToolResult
+                                    {
+                                        StructuredContent = JsonSerializer.SerializeToElement(
+                                            new Dictionary<string, object?>
+                                            {
+                                                ["result"] = done.Item.AdditionalProperties?.TryGetValue("results", out var results) == true
+                                                    ? results.Clone()
+                                                    : JsonSerializer.SerializeToElement(Array.Empty<object>(), JsonSerializerOptions.Web)
+                                            },
+                                            JsonSerializerOptions.Web)
+                                    },
+                                    JsonSerializerOptions.Web);
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    fileSearchOutput,
+                                    providerExecuted: true);
+
+                                break;
+                            }
+
+                        case "search_results":
+                            {
+                                var id = Guid.NewGuid().ToString();
+
+                                JsonElement? searchQueries = done.Item.AdditionalProperties?.TryGetValue("queries", out var queries) == true
+                                    ? queries.Clone()
+                                    : null;
+
+                                yield return CreateToolInputStartEnvelope(
+                                    id,
+                                    "web_search",
+                                    providerExecuted: true);
+
+                                yield return CreateToolInputDeltaEnvelope(
+                                    id,
+                                    JsonSerializer.Serialize(new
+                                    {
+                                        queries = searchQueries
+                                    }));
+
+                                yield return CreateToolInputEndEnvelope(
+                                    id,
+                                    "web_search",
+                                    new
+                                    {
+                                        queries = searchQueries
+                                    },
+                                    providerExecuted: true);
+
+                                JsonElement? searchResults = done.Item.AdditionalProperties?.TryGetValue("results", out var results) == true
+                                    ? results.Clone()
+                                    : null;
+
+                                yield return CreateToolOutputEnvelope(
+                                    id,
+                                    new CallToolResult()
+                                    {
+                                        StructuredContent = JsonSerializer.SerializeToElement(new
+                                        {
+                                            results = searchResults
+                                        })
+                                    },
+                                    providerExecuted: true);
+
+                                foreach (var envelope in CreateSourceUrlEnvelopesFromSearchResults(
+                                             providerId,
+                                             searchResults,
+                                             "search_results",
+                                             id))
+                                {
+                                    yield return envelope;
+                                }
+
+                                break;
+                            }
+
+                        case "code_interpreter_call":
+                            {
+                                JsonElement? ciOutput = done.Item.AdditionalProperties?.TryGetValue("outputs", out var output) == true
+                                    ? output.Clone()
+                                    : null;
+
+                                string? ciContainer = done.Item.AdditionalProperties?.TryGetValue("container_id", out var container_id) == true
+                                    ? container_id.ToString()
+                                    : string.Empty;
+
+                                var toolCallResult = new CallToolResult()
+                                {
+                                    StructuredContent = JsonSerializer.SerializeToElement(new
+                                    {
+                                        container_id = ciContainer,
+                                        outputs = ciOutput,
+                                    })
+                                };
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    toolCallResult,
+                                    providerExecuted: true);
+
+                                foreach (var fileEnvelope in CreateCodeInterpreterOutputFileEnvelopes(providerId, done))
+                                    yield return fileEnvelope;
+
+                                break;
+                            }
+
+                        case "image_generation_call":
+                        case var itemType when itemType is not null && itemType.EndsWith(":image_generation"):
+                            {
+                                var imgOutput = done.Item.AdditionalProperties?.TryGetValue("result", out var output) == true
+                                    ? output.ToString()
+                                    : string.Empty;
+
+                                var imgSize = done.Item.AdditionalProperties?.TryGetValue("size", out var size) == true
+                                    ? size.ToString()
+                                    : string.Empty;
+
+                                var revised_prompt = done.Item.AdditionalProperties?.TryGetValue("revised_prompt", out var prompt) == true
+                                    ? prompt.ToString()
+                                    : string.Empty;
+
+                                var quality = done.Item.AdditionalProperties?.TryGetValue("quality", out var q) == true
+                                    ? q.ToString()
+                                    : string.Empty;
+
+                                var background = done.Item.AdditionalProperties?.TryGetValue("background", out var bg) == true
+                                    ? bg.ToString()
+                                    : string.Empty;
+
+                                var action = done.Item.AdditionalProperties?.TryGetValue("action", out var act) == true
+                                    ? act.ToString()
+                                    : string.Empty;
+
+                                var imgOutputFormat = done.Item.AdditionalProperties?.TryGetValue("output_format", out var outputFormat) == true
+                                    ? outputFormat.ToString()
+                                    : string.Empty;
+
+                                var mediaType = string.IsNullOrWhiteSpace(imgOutputFormat)
+                                    ? "image/png"
+                                    : imgOutputFormat.Contains('/')
+                                        ? imgOutputFormat
+                                        : $"image/{imgOutputFormat.TrimStart('.').ToLowerInvariant()}";
+
+                                var base64 = imgOutput?.Trim() ?? string.Empty;
+
+                                if (base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var commaIndex = base64.IndexOf(',');
+
+                                    if (commaIndex >= 0)
+                                    {
+                                        var header = base64[5..commaIndex];
+                                        base64 = base64[(commaIndex + 1)..].Trim();
+
+                                        var semicolonIndex = header.IndexOf(';');
+                                        var dataUrlMediaType = semicolonIndex >= 0
+                                            ? header[..semicolonIndex]
+                                            : header;
+
+                                        if (dataUrlMediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            mediaType = dataUrlMediaType;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        base64 = string.Empty;
+                                    }
+                                }
+
+                                var imageGenResult = new CallToolResult()
+                                {
+                                    StructuredContent = JsonSerializer.SerializeToElement(new
+                                    {
+                                        size = imgSize,
+                                        revised_prompt,
+                                        quality,
+                                        background,
+                                        action
+                                    }, JsonSerializerOptions.Web),
+
+                                    Content = string.IsNullOrWhiteSpace(base64)
+                                        ? []
+                                        : [
+                                            ImageContentBlock.FromBytes(
+                                                Convert.FromBase64String(base64),
+                                                mediaType)
+                                        ]
+                                };
+
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    imageGenResult,
+                                    providerExecuted: true);
+
+                                break;
+                            }
+
+                        case "web_search_call":
+                        case var itemType when itemType is not null && itemType.EndsWith(":web_search"):
+                            {
+                                var action = done.Item.AdditionalProperties?
+                                    .TryGetValue("action", out var a) == true && a is JsonElement je
+                                        ? je
+                                        : (JsonElement?)null;
+
+                                if (action is null)
+                                    yield break;
+
+                                var act = action.Value;
+
+                                act.TryGetProperty("type", out var typeProp);
+                                var actionType = typeProp.GetString();
+
+                                JsonElement? queries = null;
+                                JsonElement? query = null;
+                                JsonElement? sources = null;
+                                JsonElement? url = null;
+                                JsonElement? pattern = null;
+
+                                if (actionType == "search")
+                                {
+                                    if (act.TryGetProperty("queries", out var q1))
+                                        queries = q1;
+
+                                    if (act.TryGetProperty("query", out var q2))
+                                        query = q2;
+
+                                    if (act.TryGetProperty("sources", out var s))
+                                        sources = s;
+                                }
+                                else if (actionType == "open_page")
+                                {
+                                    if (act.TryGetProperty("url", out var u))
+                                        url = u;
+                                }
+                                else if (actionType == "find_in_page")
+                                {
+                                    if (act.TryGetProperty("url", out var u))
+                                        url = u;
+
+                                    if (act.TryGetProperty("pattern", out var p))
+                                        pattern = p;
+                                }
+
+                                var inputContent = new Dictionary<string, object?>();
+
+                                if (queries is not null)
+                                    inputContent["queries"] = queries.Value;
+
+                                if (query is not null)
+                                    inputContent["query"] = query.Value;
+
+                                if (url is not null)
+                                    inputContent["url"] = url.Value;
+
+                                if (pattern is not null)
+                                    inputContent["pattern"] = pattern.Value;
+
+                                yield return CreateToolInputEndEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    done.Item.Name ?? done.Item.Type,
+                                    inputContent,
+                                    $"{done.Item.Name} {actionType}",
+                                    providerExecuted: true);
+
+                                Dictionary<string, object?>? outputContent = null;
+
+                                if (sources is not null)
+                                {
+                                    outputContent = new Dictionary<string, object?>
+                                    {
+                                        ["sources"] = sources.Value
+                                    };
+                                }
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    outputContent ?? [],
+                                    providerExecuted: true);
+
+                                break;
+                            }
+
+                        case var itemType when itemType is not null && itemType.EndsWith(":datetime"):
+                            {
+                                var datetime = string.Empty;
+                                var timezone = string.Empty;
+
+                                if (done.Item.AdditionalProperties?.TryGetValue("datetime", out var dt) == true &&
+                                    dt.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                                {
+                                    datetime = dt.ValueKind == JsonValueKind.String
+                                        ? dt.GetString() ?? string.Empty
+                                        : dt.ToString();
+                                }
+
+                                if (done.Item.AdditionalProperties?.TryGetValue("timezone", out var tz) == true &&
+                                    tz.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                                {
+                                    timezone = tz.ValueKind == JsonValueKind.String
+                                        ? tz.GetString() ?? string.Empty
+                                        : tz.ToString();
+                                }
+
+                                var outputContent = new Dictionary<string, object?>
+                                {
+                                    ["datetime"] = datetime,
+                                    ["timezone"] = timezone
+                                };
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    outputContent,
+                                    providerExecuted: true);
+
+                                break;
+                            }
+
+                        case var itemType when itemType is not null && itemType.EndsWith(":web_fetch"):
+                            {
+                                var url = string.Empty;
+                                var content = string.Empty;
+                                var title = string.Empty;
+
+                                if (done.Item.AdditionalProperties?.TryGetValue("url", out var dt) == true &&
+                                    dt.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                                {
+                                    url = dt.ValueKind == JsonValueKind.String
+                                        ? dt.GetString() ?? string.Empty
+                                        : dt.ToString();
+                                }
+
+                                if (done.Item.Content != null &&
+                                    done.Item.Content.HasValue)
+                                {
+                                    content = done.Item.Content.Value.ValueKind == JsonValueKind.String
+                                        ? done.Item.Content.Value.GetString() ?? string.Empty
+                                        : done.Item.Content.Value.ToString();
+                                }
+
+                                if (done.Item.AdditionalProperties?.TryGetValue("title", out var titleEl) == true &&
+                                    titleEl.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                                {
+                                    title = titleEl.ValueKind == JsonValueKind.String
+                                        ? titleEl.GetString() ?? string.Empty
+                                        : titleEl.ToString();
+                                }
+
+                                var outputContent = new Dictionary<string, object?>
+                                {
+                                    ["title"] = title,
+                                    ["content"] = content
+                                };
+
+                                yield return CreateToolInputEndEnvelope(
+                                        done.Item.Id ?? string.Empty,
+                                        "web_fetch",
+                                        new
+                                        {
+                                            url
+                                        },
+                                        providerExecuted: true);
+
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    outputContent,
+                                    providerExecuted: true);
+
+                                break;
+                            }
+
+                        default:
+                            {
+                                yield break;
+                            }
                     }
 
-                }
-                else if (done.Item.Type == "code_interpreter_call")
-                {
-                    JsonElement? ciOutput = done.Item.AdditionalProperties?.TryGetValue("outputs", out var output) == true ? output.Clone() : null;
-                    string? ciContainer = done.Item.AdditionalProperties?.TryGetValue("container_id", out var container_id) == true ? container_id.ToString() : string.Empty;
-                    var toolCallResult = new CallToolResult()
-                    {
-                        StructuredContent = JsonSerializer.SerializeToElement(new
-                        {
-                            container_id = ciContainer,
-                            outputs = ciOutput,
-                        })
-                    };
-
-                    yield return CreateToolOutputEnvelope(
-                            done.Item.Id ?? string.Empty,
-                            toolCallResult,
-                            providerExecuted: true
-                        );
-
-                    foreach (var fileEnvelope in CreateCodeInterpreterOutputFileEnvelopes(providerId, done))
-                        yield return fileEnvelope;
-                }
-
-                else if (done.Item.Type == "image_generation_call")
-                {
-                    var imgOutput = done.Item.AdditionalProperties?.TryGetValue("result", out var output) == true ? output.ToString() : string.Empty;
-                    var imgSize = done.Item.AdditionalProperties?.TryGetValue("size", out var size) == true ? size.ToString() : string.Empty;
-                    var revised_prompt = done.Item.AdditionalProperties?.TryGetValue("revised_prompt", out var prompt) == true ? prompt.ToString() : string.Empty;
-
-                    var quality = done.Item.AdditionalProperties?.TryGetValue("quality", out var q) == true ? q.ToString() : string.Empty;
-                    var background = done.Item.AdditionalProperties?.TryGetValue("background", out var bg) == true ? bg.ToString() : string.Empty;
-                    var action = done.Item.AdditionalProperties?.TryGetValue("action", out var act) == true ? act.ToString() : string.Empty;
-
-                    var imgOutputFormat = done.Item.AdditionalProperties?.TryGetValue("output_format", out var outputFormat) == true ? outputFormat.ToString() : string.Empty;
-                    var imageGenResult = new CallToolResult()
-                    {
-                        StructuredContent = JsonSerializer.SerializeToElement(new
-                        {
-                            size = imgSize,
-                            revised_prompt,
-                            quality,
-                            background,
-                            action
-                        }, JsonSerializerOptions.Web),
-                        Content = [ImageContentBlock.FromBytes(
-                                Convert.FromBase64String(imgOutput),
-                                $"image/{imgOutputFormat}"
-                            )]
-                    };
-
-                    yield return CreateToolOutputEnvelope(
-                             done.Item.Id ?? string.Empty,
-                             imageGenResult,
-                             providerExecuted: true
-                        );
-                }
-                else if (done.Item.Type == "web_search_call")
-                {
-                    var action = done.Item.AdditionalProperties?
-                        .TryGetValue("action", out var a) == true && a is JsonElement je
-                            ? je
-                            : (JsonElement?)null;
-
-                    if (action is null)
-                        yield break;
-
-                    var act = action.Value;
-
-                    act.TryGetProperty("type", out var typeProp);
-                    var actionType = typeProp.GetString();
-
-                    JsonElement? queries = null;
-                    JsonElement? query = null;
-                    JsonElement? sources = null;
-                    JsonElement? url = null;
-                    JsonElement? pattern = null;
-
-                    if (actionType == "search")
-                    {
-                        if (act.TryGetProperty("queries", out var q1))
-                            queries = q1;
-
-                        if (act.TryGetProperty("query", out var q2))
-                            query = q2;
-
-                        if (act.TryGetProperty("sources", out var s))
-                            sources = s;
-                    }
-                    else if (actionType == "open_page")
-                    {
-                        if (act.TryGetProperty("url", out var u))
-                            url = u;
-
-                    }
-                    else if (actionType == "find_in_page")
-                    {
-                        if (act.TryGetProperty("url", out var u))
-                            url = u;
-
-                        if (act.TryGetProperty("pattern", out var p))
-                            pattern = p;
-                    }
-
-                    var inputContent = new Dictionary<string, object?>();
-
-                    if (queries is not null)
-                        inputContent["queries"] = queries.Value;
-
-                    if (query is not null)
-                        inputContent["query"] = query.Value;
-
-                    if (url is not null)
-                        inputContent["url"] = url.Value;
-
-                    if (pattern is not null)
-                        inputContent["pattern"] = pattern.Value;
-
-                    yield return CreateToolInputEndEnvelope(
-                        done.Item.Id ?? string.Empty,
-                        done.Item.Name ?? done.Item.Type,
-                        inputContent,
-                        $"{done.Item.Name} {actionType}",
-                        providerExecuted: true
-                    );
-
-                    Dictionary<string, object?>? outputContent = null;
-
-                    if (sources is not null)
-                    {
-                        outputContent = new Dictionary<string, object?>
-                        {
-                            ["sources"] = sources.Value
-                        };
-                    }
-
-                    yield return CreateToolOutputEnvelope(
-                        done.Item.Id ?? string.Empty,
-                        outputContent ?? [],
-                        providerExecuted: true
-                    );
-                }
-                else
-                {
                     yield break;
                 }
-
-                yield break;
 
             case ResponseOutputTextDone done:
                 yield break;

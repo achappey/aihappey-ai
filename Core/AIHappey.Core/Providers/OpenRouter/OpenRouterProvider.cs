@@ -3,13 +3,13 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
-using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
 using AIHappey.Sampling.Mapping;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.OpenRouter;
 
@@ -45,16 +45,23 @@ public partial class OpenRouterProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+        var response = await this.GetChatCompletion(_client,
+              options, cancellationToken: cancellationToken);
+
+        return EnrichChatCompletionWithGatewayCost(response);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var update in this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken))
+        {
+            yield return EnrichChatCompletionUpdateWithGatewayCost(update);
+        }
     }
 
     public string GetIdentifier() => nameof(OpenRouter).ToLowerInvariant();
@@ -67,41 +74,36 @@ public partial class OpenRouterProvider : IModelProvider
         return result.ToSamplingResult();
     }
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => TranscriptionRequestOpenRouter(request, cancellationToken);
-
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
-        => SpeechRequestOpenRouter(request, cancellationToken);
-
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => RerankingRequestOpenRouter(request, cancellationToken);
-
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return await this.GetResponse(_client,
+        var response = await this.GetResponse(_client,
                    options, cancellationToken: cancellationToken);
+
+        return EnrichResponseWithGatewayCost(response);
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetResponses(_client,
+        await foreach (var update in this.GetResponses(_client,
            options,
-           cancellationToken: cancellationToken);
+           cancellationToken: cancellationToken))
+        {
+            if (update is Responses.Streaming.ResponseCompleted completed)
+                EnrichResponseWithGatewayCost(completed.Response);
+
+            yield return update;
+        }
     }
 
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => ImageRequestOpenRouter(request, cancellationToken);
-
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => VideoRequestOpenRouter(request, cancellationToken);
 
     public async Task<MessagesResponse> MessagesAsync(
        MessagesRequest request,

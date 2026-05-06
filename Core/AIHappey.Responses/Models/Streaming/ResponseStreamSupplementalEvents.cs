@@ -33,7 +33,8 @@ public class ResponseStreamItem
     public int? MaxOutputLength { get; init; }
 
     [JsonPropertyName("content")]
-    public IReadOnlyList<ResponseStreamContentPart>? Content { get; init; }
+    //public IReadOnlyList<ResponseStreamContentPart>? Content { get; init; }
+    public JsonElement? Content { get; init; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }

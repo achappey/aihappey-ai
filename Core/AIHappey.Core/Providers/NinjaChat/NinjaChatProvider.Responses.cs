@@ -143,15 +143,14 @@ public partial class NinjaChatProvider
                 Type = "message",
                 Status = "completed",
                 Role = "assistant",
-                Content =
-                [
-                    new ResponseStreamContentPart
-                    {
+                Content = JsonSerializer.SerializeToElement(
+                new List<ResponseStreamContentPart>(){
+                    new() {
                         Type = "output_text",
                         Text = execution.Text,
                         Annotations = annotations
                     }
-                ]
+                })
             }
         };
 

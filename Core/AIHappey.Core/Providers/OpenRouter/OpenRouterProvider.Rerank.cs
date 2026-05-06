@@ -13,7 +13,7 @@ public partial class OpenRouterProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<RerankingResponse> RerankingRequestOpenRouter(
+    public async Task<RerankingResponse> RerankingRequest(
         RerankingRequest request,
         CancellationToken cancellationToken = default)
     {

@@ -15,7 +15,7 @@ public partial class OpenRouterProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<TranscriptionResponse> TranscriptionRequestOpenRouter(
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {

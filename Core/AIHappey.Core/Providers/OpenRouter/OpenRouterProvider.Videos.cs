@@ -16,7 +16,7 @@ public partial class OpenRouterProvider
 
     private sealed record OpenRouterVideoPollResult(string Status, string Raw, JsonElement Root);
 
-    private async Task<VideoResponse> VideoRequestOpenRouter(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

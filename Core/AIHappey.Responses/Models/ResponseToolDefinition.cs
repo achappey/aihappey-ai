@@ -20,6 +20,96 @@ public sealed class ResponseToolDefinition
 public static class ProviderMetadataExtensions
 {
 
+    public static IReadOnlyDictionary<string, string>? GetResponseHeaders(
+        this Dictionary<string, object?>? metadata,
+        string providerId)
+    {
+        if (metadata is null)
+            return null;
+
+        if (!metadata.TryGetValue(providerId, out var providerObj) || providerObj is null)
+            return null;
+
+        JsonElement? headersEl = providerObj switch
+        {
+            // Already JsonElement
+            JsonElement je when je.ValueKind == JsonValueKind.Object &&
+                                je.TryGetProperty("headers", out var h) &&
+                                h.ValueKind == JsonValueKind.Object
+                => h,
+
+            // JsonNode world
+            System.Text.Json.Nodes.JsonObject jo
+                when jo["headers"] is System.Text.Json.Nodes.JsonObject headersObj
+                => ToJsonElement(headersObj),
+
+            // Dictionary<string, object?>
+            Dictionary<string, object?> dict
+                when dict.TryGetValue("headers", out var headersObj)
+                => ToJsonElement(headersObj),
+
+            // Fallback: serialize anything
+            _ => TryExtractHeaders(providerObj)
+        };
+
+        if (headersEl is null || headersEl.Value.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var prop in headersEl.Value.EnumerateObject())
+        {
+            var name = prop.Name?.Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+                continue;
+
+            var value = ReadHeaderValue(prop.Value);
+
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
+
+            result[name] = value;
+        }
+
+        return result.Count > 0 ? result : null;
+    }
+
+    private static JsonElement? TryExtractHeaders(object obj)
+    {
+        try
+        {
+            var el = JsonSerializer.SerializeToElement(obj, JsonSerializerOptions.Web);
+
+            if (el.ValueKind == JsonValueKind.Object &&
+                el.TryGetProperty("headers", out var headers) &&
+                headers.ValueKind == JsonValueKind.Object)
+            {
+                return headers;
+            }
+        }
+        catch
+        {
+            // passthrough safety
+        }
+
+        return null;
+    }
+
+    private static string? ReadHeaderValue(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.Number => value.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+
+            // Ignore null/object/array for headers.
+            _ => null
+        };
+    }
+
     public static List<ResponseToolDefinition>? GetResponseToolDefinitions(
     this Dictionary<string, object?>? metadata,
     string providerId)

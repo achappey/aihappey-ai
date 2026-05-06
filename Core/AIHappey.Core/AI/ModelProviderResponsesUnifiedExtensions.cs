@@ -17,13 +17,14 @@ public static class ModelProviderResponsesUnifiedExtensions
           Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
           CancellationToken cancellationToken = default)
     {
-        modelProvider.SetDefaultResponseProperties(options);
+        var headers = modelProvider.SetDefaultResponseProperties(options);
 
         return await client.GetResponses(options,
             modelProvider.GetIdentifier(),
             relativeUrl,
             extraRootProperties: extraRootProperties,
             capture: capture,
+            headers: headers,
             ct: cancellationToken);
 
     }
@@ -37,13 +38,14 @@ public static class ModelProviderResponsesUnifiedExtensions
         Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        modelProvider.SetDefaultResponseProperties(options);
+        var headers = modelProvider.SetDefaultResponseProperties(options);
 
         await foreach (var update in client.GetResponsesUpdates(options,
             relativeUrl: relativeUrl,
             providerId: modelProvider.GetIdentifier(),
             extraRootProperties: extraRootProperties,
             capture: capture,
+            headers: headers,
             ct: cancellationToken))
             yield return update;
 

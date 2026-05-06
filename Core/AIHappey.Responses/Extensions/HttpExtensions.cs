@@ -12,6 +12,28 @@ public static class HttpExtensions
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");
     private static readonly MediaTypeWithQualityHeaderValue AcceptSse = new("text/event-stream");
 
+    private static void ApplyRequestHeaders(
+        this HttpRequestMessage request,
+        IReadOnlyDictionary<string, string>? headers)
+    {
+        if (headers is null || headers.Count == 0)
+            return;
+
+        foreach (var (name, value) in headers)
+        {
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(value))
+                continue;
+
+            if (name.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
+            {
+                request.Content?.Headers.TryAddWithoutValidation(name, value);
+                continue;
+            }
+
+            request.Headers.TryAddWithoutValidation(name, value);
+        }
+    }
+
     /// <summary>
     /// POST JSON and deserialize JSON response into T (non-stream).
     /// </summary>
@@ -22,6 +44,7 @@ public static class HttpExtensions
         string relativeUrl = "v1/responses",
         JsonElement? extraRootProperties = null,
         ProviderBackendCaptureRequest? capture = null,
+        IReadOnlyDictionary<string, string>? headers = null,
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(client);
@@ -30,6 +53,7 @@ public static class HttpExtensions
         options.CleanUnsafeReasoningReplay();
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
+        req.ApplyRequestHeaders(headers);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
         var payload = BuildPayload(options, extraRootProperties);
@@ -63,6 +87,7 @@ public static class HttpExtensions
         string relativeUrl = "v1/responses",
         JsonElement? extraRootProperties = null,
         ProviderBackendCaptureRequest? capture = null,
+        IReadOnlyDictionary<string, string>? headers = null,
         [EnumeratorCancellation] CancellationToken ct = default
 )
     {
@@ -72,7 +97,7 @@ public static class HttpExtensions
         options.CleanUnsafeReasoningReplay();
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
-
+        req.ApplyRequestHeaders(headers);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };

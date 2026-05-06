@@ -13,7 +13,7 @@ public partial class OpenRouterProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<SpeechResponse> SpeechRequestOpenRouter(SpeechRequest request, CancellationToken cancellationToken = default)
+    public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

@@ -167,7 +167,9 @@ public static partial class ResponsesUnifiedMapper
             Arguments = itemState.ItemType is "function_call" or "mcp_call"
                 ? itemState.SerializedInput
                 : null,
-            Content = content,
+            Content = content is not null
+                ? JsonSerializer.SerializeToElement(content)
+                : null,
             AdditionalProperties = ToJsonElementDictionary(additionalProperties)
         };
     }
