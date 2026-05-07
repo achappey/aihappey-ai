@@ -1,0 +1,104 @@
+{
+  "greenpt/green-r": {
+    "pricing": {
+      "input": "0.00000035",
+      "output": "0.00000095"
+    }
+  },
+  "greenpt/green-r-raw": {
+    "pricing": {
+      "input": "0.00000035",
+      "output": "0.00000095"
+    }
+  },
+  "greenpt/green-l": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.0000008"
+    }
+  },
+  "greenpt/green-l-raw": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.0000008"
+    }
+  },
+  "greenpt/gemma4": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  },
+  "greenpt/mistral-small-3.2-24b-instruct-2506": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000035"
+    }
+  },
+  "greenpt/gpt-oss-120b": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000006"
+    }
+  },
+  "greenpt/gemma-3-27b-it": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.0000005"
+    }
+  },
+  "greenpt/qwen3-235b-a22b-instruct-2507": {
+    "pricing": {
+      "input": "0.00000075",
+      "output": "0.00000225"
+    }
+  },
+  "greenpt/qwen3-coder-30b-a3b-instruct": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000008"
+    }
+  },
+  "greenpt/qwen3.5-397b-a17b": {
+    "pricing": {
+      "input": "0.00000066",
+      "output": "0.00000396"
+    }
+  },
+  "greenpt/devstral-2-123b-instruct-2512": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.00000235"
+    }
+  },
+  "greenpt/llama-3.3-70b-instruct": {
+    "pricing": {
+      "input": "0.0000009",
+      "output": "0.0000009"
+    }
+  },
+  "greenpt/llama-3.1-8b-instruct": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000002"
+    }
+  },
+  "greenpt/mistral-nemo-instruct-2407": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000002"
+    }
+  },
+  "greenpt/deepseek-r1-distill-llama-70b": {
+    "pricing": {
+      "input": "0.0000009",
+      "output": "0.0000009"
+    }
+  },
+  "greenpt/voxtral-small-24b-2507": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.00000035"
+    }
+  }
+}
