@@ -1,6 +1,7 @@
-using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 using System.Text.Json;
 
 namespace AIHappey.Core.Providers.BLACKBOX;
@@ -20,10 +21,19 @@ public partial class BLACKBOXProvider
             yield break;
         }
 
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            url: "chat/completions",
-            cancellationToken: cancellationToken))
-            yield return update;
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
+
+        yield break;
     }
 
 

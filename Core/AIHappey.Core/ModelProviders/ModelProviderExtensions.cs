@@ -91,6 +91,12 @@ public static class ModelProviderExtensions
             if (modelResponse?.Data is null)
                 continue;
 
+            foreach (var m in modelResponse.Data)
+            {
+                if (string.IsNullOrWhiteSpace(m.Name))
+                    m.Name = m.Id;
+            }
+
             models.AddRange(modelResponse.Data);
         }
 
@@ -101,9 +107,9 @@ public static class ModelProviderExtensions
 
         foreach (var model in models)
         {
-            if (pricing.ContainsKey(model.Id))
+            if (pricing.TryGetValue(model.Id, out ModelPricing? value))
             {
-                model.Pricing = pricing[model.Id];
+                model.Pricing = value;
             }
         }
 

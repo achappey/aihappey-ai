@@ -6,10 +6,11 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Core.Models;
+using AIHappey.Sampling.Mapping;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.BLACKBOX;
 
@@ -19,9 +20,13 @@ public partial class BLACKBOXProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public BLACKBOXProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public BLACKBOXProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.blackbox.ai/");
     }
@@ -36,9 +41,6 @@ public partial class BLACKBOXProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -46,10 +48,10 @@ public partial class BLACKBOXProvider : IModelProvider
         if (IsNativeAgentModel(options.Model))
             return await CompleteNativeAgentChatAsync(options, cancellationToken);
 
-        return await _client.GetChatCompletion(
-             options,
-             relativeUrl: "chat/completions",
-             ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+           options,
+           relativeUrl: "chat/completions",
+           cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -59,17 +61,20 @@ public partial class BLACKBOXProvider : IModelProvider
         if (IsNativeAgentModel(options.Model))
             return CompleteNativeAgentChatStreamingAsync(options, cancellationToken);
 
-        return _client.GetChatCompletionUpdates(
+        return this.GetChatCompletions(_client,
                     options,
                     relativeUrl: "chat/completions",
-                    ct: cancellationToken);
+                    cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(BLACKBOX).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+             cancellationToken);
+
+        return result.ToSamplingResult();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -115,13 +120,40 @@ public partial class BLACKBOXProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+          MessagesRequest request,
+          Dictionary<string, string> headers,
+          CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await this.GetMessage(_client,
+            request,
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this.GetMessages(_client,
+            request,
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => request.Model?.Equals("blackbox-search") == true
+      ? this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+      : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+       => request.Model?.Equals("blackbox-search") == true
+        ? this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+        : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
 }
