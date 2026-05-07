@@ -1,0 +1,76 @@
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"type":"response.created","response":{"id":"gen-1778173500-mizpNiTAkWDAQSenxvoT","object":"response","created_at":1778173500,"model":"google/gemini-2.5-flash","status":"in_progress","completed_at":null,"output":[],"error":null,"incomplete_details":null,"tools":[],"tool_choice":"auto","parallel_tool_calls":true,"max_output_tokens":null,"temperature":1,"top_p":1,"presence_penalty":0,"frequency_penalty":0,"top_logprobs":0,"max_tool_calls":null,"metadata":{},"background":false,"previous_response_id":null,"service_tier":"auto","truncation":"disabled","store":false,"instructions":null,"text":{"format":{"type":"text"}},"reasoning":null,"safety_identifier":null,"prompt_cache_key":null,"usage":null},"sequence_number":0}
+
+data: {"type":"response.in_progress","response":{"id":"gen-1778173500-mizpNiTAkWDAQSenxvoT","object":"response","created_at":1778173500,"model":"google/gemini-2.5-flash","status":"in_progress","completed_at":null,"output":[],"error":null,"incomplete_details":null,"tools":[],"tool_choice":"auto","parallel_tool_calls":true,"max_output_tokens":null,"temperature":1,"top_p":1,"presence_penalty":0,"frequency_penalty":0,"top_logprobs":0,"max_tool_calls":null,"metadata":{},"background":false,"previous_response_id":null,"service_tier":"auto","truncation":"disabled","store":false,"instructions":null,"text":{"format":{"type":"text"}},"reasoning":null,"safety_identifier":null,"prompt_cache_key":null,"usage":null},"sequence_number":1}
+
+data: {"type":"response.output_item.added","output_index":0,"item":{"id":"st_tmp_usyta43h29","type":"openrouter:experimental__search_models","status":"in_progress"},"sequence_number":2}
+
+data: {"type":"response.output_item.done","output_index":0,"item":{"id":"st_tmp_usyta43h29","type":"openrouter:experimental__search_models","status":"completed","query":"latest gpt","arguments":"{\"query\":\"latest gpt\"}"},"sequence_number":3}
+
+data: {"type":"response.output_item.added","output_index":1,"item":{"id":"msg_tmp_0otbtwrdy1ai","type":"message","status":"in_progress","role":"assistant","content":[]},"sequence_number":4}
+
+data: {"type":"response.content_part.added","output_index":1,"item_id":"msg_tmp_0otbtwrdy1ai","content_index":0,"part":{"type":"output_text","text":"","annotations":[],"logprobs":[]},"sequence_number":5}
+
+data: {"type":"response.output_text.delta","output_index":1,"item_id":"msg_tmp_0otbtwrdy1ai","content_index":0,"delta":"{\"","logprobs":[],"sequence_number":6}
+
+data: {"type":"response.output_text.delta","output_index":1,"item_id":"msg_tmp_0otbtwrdy1ai","content_index":0,"delta":"requests\": [\n  {\n    \"model\": \"openai/gpt-4-turbo\",\n","logprobs":[],"sequence_number":7}
+
+data: {"type":"response.output_text.delta","output_index":1,"item_id":"msg_tmp_0otbtwrdy1ai","content_index":0,"delta":"    \"messages\": [\n      {\n        \"role\": \"user\",\n        ","logprobs":[],"sequence_number":8}
+
+data: {"type":"response.output_text.delta","output_index":1,"item_id":"msg_tmp_0otbtwrdy1ai","content_index":0,"delta":"\"content\": \"wat weet je over Woerden\"\n      }\n    ]\n  }\n]}","logprobs":[],"sequence_number":9}
+
+data: {"type":"response.output_text.done","output_index":1,"item_id":"msg_tmp_0otbtwrdy1ai","content_index":0,"text":"{\"requests\": [\n  {\n    \"model\": \"openai/gpt-4-turbo\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": \"wat weet je over Woerden\"\n      }\n    ]\n  }\n]}","logprobs":[],"sequence_number":10}
+
+data: {"type":"response.content_part.done","output_index":1,"item_id":"msg_tmp_0otbtwrdy1ai","content_index":0,"part":{"type":"output_text","text":"{\"requests\": [\n  {\n    \"model\": \"openai/gpt-4-turbo\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": \"wat weet je over Woerden\"\n      }\n    ]\n  }\n]}","annotations":[],"logprobs":[]},"sequence_number":11}
+
+data: {"type":"response.output_item.done","output_index":1,"item":{"id":"msg_tmp_0otbtwrdy1ai","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"{\"requests\": [\n  {\n    \"model\": \"openai/gpt-4-turbo\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": \"wat weet je over Woerden\"\n      }\n    ]\n  }\n]}","annotations":[],"logprobs":[]}]},"sequence_number":12}
+
+data: {"type":"response.completed","response":{"id":"gen-1778173500-mizpNiTAkWDAQSenxvoT","object":"response","created_at":1778173500,"model":"google/gemini-2.5-flash","status":"completed","completed_at":1778173510,"output":[{"type":"openrouter:experimental__search_models","id":"st_tmp_usyta43h29","status":"completed","query":"latest gpt","arguments":"{\"query\":\"latest gpt\"}"},{"id":"msg_tmp_0otbtwrdy1ai","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"{\"requests\": [\n  {\n    \"model\": \"openai/gpt-4-turbo\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": \"wat weet je over Woerden\"\n      }\n    ]\n  }\n]}","annotations":[],"logprobs":[]}]}],"error":null,"incomplete_details":null,"tools":[],"tool_choice":"auto","parallel_tool_calls":true,"max_output_tokens":null,"temperature":1,"top_p":1,"presence_penalty":0,"frequency_penalty":0,"top_logprobs":0,"max_tool_calls":null,"metadata":{},"background":false,"previous_response_id":null,"service_tier":"auto","truncation":"disabled","store":false,"instructions":null,"text":{"format":{"type":"text"}},"reasoning":null,"safety_identifier":null,"prompt_cache_key":null,"usage":{"input_tokens":1994,"input_tokens_details":{"cached_tokens":0},"output_tokens":74,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":2068,"cost":0.0007832}},"sequence_number":13}
+
+data: [DONE]
+
