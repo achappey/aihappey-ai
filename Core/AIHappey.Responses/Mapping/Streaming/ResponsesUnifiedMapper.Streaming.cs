@@ -695,6 +695,14 @@ public static partial class ResponsesUnifiedMapper
                            "web_fetch",
                            true);
                 }
+                else if (added.Item.Type.EndsWith(":experimental__search_models"))
+                {
+                    yield return CreateToolInputStartEnvelope(
+                           added.Item.Id ?? string.Empty,
+                           "search_models",
+                           "search_models",
+                           true);
+                }
                 else if (added.Item.Type == "shell_call")
                 {
                     RegisterShellCall(added.Item, added.OutputIndex);
@@ -1209,6 +1217,59 @@ public static partial class ResponsesUnifiedMapper
                                     ["datetime"] = datetime,
                                     ["timezone"] = timezone
                                 };
+
+                                yield return CreateToolOutputEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    outputContent,
+                                    providerExecuted: true);
+
+                                break;
+                            }
+
+                        case var itemType when itemType is not null && itemType.EndsWith(":experimental__search_models"):
+                            {
+                                var inputContent = new Dictionary<string, object?>();
+                                var outputContent = new Dictionary<string, object?>();
+
+                                if (done.Item.AdditionalProperties is not null)
+                                {
+                                    if (done.Item.AdditionalProperties.TryGetValue("query", out var queryEl) &&
+                                        queryEl.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                                    {
+                                        object? queryValue;
+
+                                        if (queryEl.ValueKind == JsonValueKind.String)
+                                            queryValue = queryEl.GetString();
+                                        else
+                                            queryValue = queryEl.Clone();
+
+                                        inputContent["query"] = queryValue;
+                                    }
+
+                                    if (done.Item.AdditionalProperties.TryGetValue("arguments", out var argsEl) &&
+                                        argsEl.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                                    {
+                                        string? argsJson;
+
+                                        if (argsEl.ValueKind == JsonValueKind.String)
+                                            argsJson = argsEl.GetString();
+                                        else
+                                            argsJson = argsEl.GetRawText();
+
+                                        if (!string.IsNullOrWhiteSpace(argsJson))
+                                        {
+                                            using var doc = JsonDocument.Parse(argsJson);
+                                            outputContent["arguments"] = doc.RootElement.Clone();
+                                        }
+                                    }
+                                }
+
+                                yield return CreateToolInputEndEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    "search_models",
+                                    inputContent,
+                                    done.Item.Name ?? done.Item.Type,
+                                    providerExecuted: true);
 
                                 yield return CreateToolOutputEnvelope(
                                     done.Item.Id ?? string.Empty,
