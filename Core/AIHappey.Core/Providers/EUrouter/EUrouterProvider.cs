@@ -20,11 +20,6 @@ public partial class EUrouterProvider : IModelProvider
     private readonly HttpClient _client;
     private readonly AsyncCacheHelper _memoryCache;
 
-    private static readonly JsonSerializerOptions EurouterJsonOptions = new(JsonSerializerOptions.Web)
-    {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
     public EUrouterProvider(IApiKeyResolver keyResolver,
         AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
