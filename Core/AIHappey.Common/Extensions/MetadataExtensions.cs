@@ -53,7 +53,7 @@ public static class MetadataExtensions
 
         return result;
     }
-    
+
     public static Dictionary<string, object?> ToObjectDictionary(this object obj)
     {
         var element = JsonSerializer.SerializeToElement(obj, JsonSerializerOptions.Web);
@@ -103,6 +103,9 @@ public static class MetadataExtensions
 
         if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
             return default;
+
+        if (typeof(T) == typeof(JsonElement))
+            return (T)(object)element;
 
         return element.Deserialize<T>(JsonSerializerOptions.Web);
     }
