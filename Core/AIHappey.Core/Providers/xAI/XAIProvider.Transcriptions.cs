@@ -26,7 +26,7 @@ public partial class XAIProvider
         "48000"
     };
 
-    private async Task<TranscriptionResponse> TranscriptionRequestInternal(
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {

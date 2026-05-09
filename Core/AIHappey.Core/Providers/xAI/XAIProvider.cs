@@ -10,6 +10,8 @@ using System.Text.Json;
 using System.Globalization;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Common.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.xAI;
 
@@ -55,18 +57,22 @@ public partial class XAIProvider : IModelProvider
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => SpeechRequestInternal(imageRequest, cancellationToken);
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => TranscriptionRequestInternal(imageRequest, cancellationToken);
-
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    public async Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
 
-   
+        var metadata = realtimeRequest.GetRealtimeProviderMetadata<JsonElement>(GetIdentifier());
+
+        var payload = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web);
+        return await _client.GetRealtimeResponse<RealtimeResponse>(payload,
+            ct: cancellationToken);
+    }
+
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),

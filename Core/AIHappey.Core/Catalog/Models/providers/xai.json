@@ -7,6 +7,14 @@
       "owned_by": "xAI",
       "name": "Speech to text",
       "type": "transcription"
+    },
+    {
+      "id": "xai/grok-voice-think-fast-1.0",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "Grok Voice Think Fast",
+      "type": "audio",
+      "description": "Our flagship voice model"
     }
   ]
 }
