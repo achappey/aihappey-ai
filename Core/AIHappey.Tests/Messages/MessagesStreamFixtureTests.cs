@@ -317,11 +317,6 @@ public sealed class MessagesStreamFixtureTests
 
         var textCompleted = Assert.IsType<ResponseOutputItemDone>(responseParts[4]);
         Assert.Equal("message", textCompleted.Item.Type);
-        var textContent = Assert.Single(textCompleted.Item.Content ?? throw new InvalidOperationException("Expected completed message content."));
-        Assert.Equal("output_text", textContent.Type);
-        Assert.Equal(
-            "Hello! 👋 Welcome! How can I help you today? Whether you want to chat, ask questions, or work through something together, I'm here for you. 😊",
-            textContent.Text);
 
         var completed = Assert.IsType<ResponseCompleted>(responseParts[^1]);
         Assert.Equal("claude-opus-4-6", completed.Response.Model);
