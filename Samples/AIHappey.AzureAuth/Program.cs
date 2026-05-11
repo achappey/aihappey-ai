@@ -67,6 +67,9 @@ builder.Services.Configure<ModalProviderOptions>(
 builder.Services.Configure<ModelListingStorageOptions>(
     builder.Configuration.GetSection("ModelListingStorage"));
 
+builder.Services.Configure<SkillProviderResolverOptions>(
+    builder.Configuration.GetSection("SkillProviderResolver"));
+
 var telemetryDb = builder.Configuration.GetSection("TelemetryDatabase").Get<string>();
 var kernelMemoryConfig = builder.Configuration.GetSection("AIServices:KernelMemory").Get<ProviderConfig>();
 var openAiConfig = builder.Configuration.GetSection("AIServices:OpenAI").Get<ProviderConfig>();

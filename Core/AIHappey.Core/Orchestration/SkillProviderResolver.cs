@@ -1,15 +1,18 @@
 using AIHappey.Common.Model.Skills;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
+using Microsoft.Extensions.Options;
 
 namespace AIHappey.Core.Orchestration;
 
 public class SkillProviderResolver(
     IApiKeyResolver apiKeyResolver,
-    IEnumerable<ISkillProvider> providers) : IAISkillProviderResolver
+    IEnumerable<ISkillProvider> providers,
+    IOptions<SkillProviderResolverOptions> options) : IAISkillProviderResolver
 {
     private readonly ISkillProvider[] _providers = providers as ISkillProvider[] ?? [.. providers];
-    private readonly string[] _freeProviders = ["groovedev", "terminalskills"];
+    private readonly SkillProviderResolverOptions _options = options.Value;
 
     public async Task<ISkillProvider> Resolve(string model, CancellationToken ct = default)
     {
@@ -41,8 +44,7 @@ public class SkillProviderResolver(
     }
 
     public ISkillProvider GetProvider()
-        => GetConfiguredProviders().FirstOrDefault()
-           ?? _providers.FirstOrDefault()
+        => GetAggregateProviders().FirstOrDefault()
            ?? throw new NotSupportedException("No skill providers found.");
 
     public async Task<DataList<Skill>> ResolveSkills(
@@ -121,20 +123,24 @@ public class SkillProviderResolver(
 
     private ISkillProvider? FindProviderByIdentifier(string providerId)
         => GetAggregateProviders().FirstOrDefault(p => string.Equals(p.GetIdentifier(), providerId, StringComparison.OrdinalIgnoreCase))
-           ?? _providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), providerId, StringComparison.OrdinalIgnoreCase));
+           ?? (!_options.DisableUnconfiguredSkillProviders
+               ? _providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), providerId, StringComparison.OrdinalIgnoreCase))
+               : null);
 
     private IEnumerable<ISkillProvider> GetConfiguredProviders()
-        => _providers.Where(a => HasConfiguredApiKey(a)
-            || _freeProviders.Contains(a.GetIdentifier()));
+        => _providers.Where(a => HasConfiguredApiKey(a) || HasConfiguredSkillSource(a));
 
     private IEnumerable<ISkillProvider> GetAggregateProviders()
-    {
-        var configured = GetConfiguredProviders().ToArray();
-        return configured.Length > 0 ? configured : _providers;
-    }
+        => _options.DisableUnconfiguredSkillProviders
+            ? GetConfiguredProviders()
+            : _providers;
 
     private bool HasConfiguredApiKey(ISkillProvider provider)
         => !string.IsNullOrWhiteSpace(apiKeyResolver.Resolve(provider.GetIdentifier()));
+
+    private static bool HasConfiguredSkillSource(ISkillProvider provider)
+        => provider is IConfiguredSkillProvider configuredProvider
+           && configuredProvider.HasConfiguredSkillSource;
 
     private static Skill NormalizeSkill(Skill skill, string providerId)
     {

@@ -16,7 +16,7 @@ namespace AIHappey.Core.Providers.Azure;
 public sealed partial class AzureProvider(
     IApiKeyResolver keyResolver,
     IOptions<AzureProviderOptions> options,
-    AsyncCacheHelper memoryCache) : IModelProvider, ISkillProvider
+    AsyncCacheHelper memoryCache) : IModelProvider, ISkillProvider, IConfiguredSkillProvider
 {
     private readonly IApiKeyResolver _keyResolver = keyResolver;
     private readonly AsyncCacheHelper _memoryCache = memoryCache;
@@ -24,6 +24,8 @@ public sealed partial class AzureProvider(
     private readonly BlobContainerClient? _skillsContainerClient = CreateSkillsContainerClient(options.Value.SkillsStorage);
 
     public string GetIdentifier() => "azure";
+
+    public bool HasConfiguredSkillSource => IsSkillsStorageEnabled();
 
     private string GetKey()
     {

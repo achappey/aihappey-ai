@@ -520,6 +520,7 @@ public static class ServiceExtensions
         services.AddMemoryCache();
         services.AddSingleton<AsyncCacheHelper>();
         services.AddOptions<ModelListingStorageOptions>();
+        services.AddOptions<SkillProviderResolverOptions>();
         services.TryAddSingleton<IModelListingSnapshotStore, NullModelListingSnapshotStore>();
         services.TryAddSingleton<IModelListingRefreshQueue, NullModelListingRefreshQueue>();
 
