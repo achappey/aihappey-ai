@@ -64,7 +64,8 @@ public partial class CohereProvider
                         Name = name!,
                         Tags = tags,
                         ContextWindow = contextLength,
-                        OwnedBy = nameof(Cohere)
+                        OwnedBy = nameof(Cohere),
+                        Type = ResolveModelType(name!, tags)
                     });
                 }
 
@@ -74,5 +75,21 @@ public partial class CohereProvider
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
 
+    }
+
+    private static string ResolveModelType(string name, IEnumerable<string>? tags)
+    {
+        if (name.Contains("transcribe", StringComparison.OrdinalIgnoreCase)
+            || tags?.Any(t => t.Contains("transcription", StringComparison.OrdinalIgnoreCase)
+                || t.Contains("speech-to-text", StringComparison.OrdinalIgnoreCase)
+                || t.Contains("audio-transcription", StringComparison.OrdinalIgnoreCase)) == true)
+        {
+            return "transcription";
+        }
+
+        if (tags?.Any(t => t.Contains("rerank", StringComparison.OrdinalIgnoreCase)) == true)
+            return "reranking";
+
+        return "chat";
     }
 }
