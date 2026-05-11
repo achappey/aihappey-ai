@@ -506,6 +506,7 @@ using AIHappey.Core.Providers.GrooveDev;
 using AIHappey.Core.Providers.BotVerse;
 using AIHappey.Core.Providers.VibeKit;
 using AIHappey.Core.Providers.Brave;
+using AIHappey.Core.Providers.TerminalSkills;
 
 namespace AIHappey.Core.AI;
 
@@ -1034,6 +1035,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, BotVerseProvider>();
         services.AddSingleton<IModelProvider, VibeKitProvider>();
         services.AddSingleton<IModelProvider, BraveProvider>();
+        services.AddSingleton<ISkillProvider, TerminalSkillsProvider>();
 
     }
 }

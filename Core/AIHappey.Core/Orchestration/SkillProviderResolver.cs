@@ -9,7 +9,7 @@ public class SkillProviderResolver(
     IEnumerable<ISkillProvider> providers) : IAISkillProviderResolver
 {
     private readonly ISkillProvider[] _providers = providers as ISkillProvider[] ?? [.. providers];
-    private readonly string[] _freeProviders = ["groovedev"];
+    private readonly string[] _freeProviders = ["groovedev", "terminalskills"];
 
     public async Task<ISkillProvider> Resolve(string model, CancellationToken ct = default)
     {
