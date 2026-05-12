@@ -1,46 +1,33 @@
 using System.Net.Http.Headers;
-using System.Net.Mime;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
+using System.Text.Json.Nodes;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Exa;
 
 public partial class ExaProvider
 {
-    private const string AnswerModelId = "exa";
-    private const string ResearchModelId = "exa-research";
-    private const string ResearchProModelId = "exa-research-pro";
-    private const string ResearchFastModelId = "exa-research-fast";
+    private const string AnswerModelId = "answer";
+    private const string DefaultSearchType = "auto";
+    private static readonly HashSet<string> SearchTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "auto",
+        "neural",
+        "fast",
+        "deep-lite",
+        "deep",
+        "deep-reasoning",
+        "instant"
+    };
 
     private static readonly JsonSerializerOptions JsonWeb = JsonSerializerOptions.Web;
 
-    private static bool IsAnswerModel(string? model)
-        => string.Equals(model, AnswerModelId, StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsResearchFastModel(string? model)
-        => string.Equals(model, ResearchFastModelId, StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsResearchModel(string? model)
-        => string.Equals(model, ResearchModelId, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, ResearchProModelId, StringComparison.OrdinalIgnoreCase);
-
-    private void ApplyChatAuthHeader()
-    {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Exa)} API key.");
-
-        _client.DefaultRequestHeaders.Remove("x-api-key");
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-    }
-
-    private void ApplyResearchAuthHeader()
+    private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
@@ -50,6 +37,60 @@ public partial class ExaProvider
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Remove("x-api-key");
         _client.DefaultRequestHeaders.Add("x-api-key", key);
+    }
+
+    private static bool IsAnswerModel(string? model)
+        => string.Equals(ResolveLocalModelIdStatic(model), AnswerModelId, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(ResolveLocalModelIdStatic(model), "exa", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsSearchModel(string? model)
+        => SearchTypes.Contains(ResolveSearchType(model));
+
+    private static ExaBackendTarget ResolveBackendTarget(string? model)
+    {
+        var local = ResolveLocalModelIdStatic(model);
+        if (string.IsNullOrWhiteSpace(local) || string.Equals(local, "exa", StringComparison.OrdinalIgnoreCase))
+            local = DefaultSearchType;
+
+        if (string.Equals(local, AnswerModelId, StringComparison.OrdinalIgnoreCase))
+            return new ExaBackendTarget("answer", AnswerModelId, "answer");
+
+        if (SearchTypes.Contains(local))
+            return new ExaBackendTarget("search", local, local);
+
+        throw new NotSupportedException($"Unsupported Exa model '{model}'. Supported models: exa/answer, {string.Join(", ", SearchTypes.Select(t => $"exa/{t}"))}.");
+    }
+
+    private static string ResolveSearchType(string? model)
+    {
+        var local = ResolveLocalModelIdStatic(model);
+        return string.IsNullOrWhiteSpace(local) || string.Equals(local, "exa", StringComparison.OrdinalIgnoreCase)
+            ? DefaultSearchType
+            : local;
+    }
+
+    private static string ResolveLocalModelIdStatic(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return string.Empty;
+
+        var trimmed = model.Trim();
+        const string providerPrefix = "exa/";
+        if (trimmed.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            return trimmed[providerPrefix.Length..];
+
+        return trimmed;
+    }
+
+    private static string ToProviderModelId(string? model)
+    {
+        var local = ResolveLocalModelIdStatic(model);
+        if (string.IsNullOrWhiteSpace(local))
+            local = DefaultSearchType;
+
+        return local.StartsWith("exa/", StringComparison.OrdinalIgnoreCase)
+            ? local
+            : $"exa/{local}";
     }
 
     private static string BuildPromptFromCompletionMessages(IEnumerable<ChatMessage> messages)
@@ -82,89 +123,6 @@ public partial class ExaProvider
 
         if (system.Count > 0)
             lines.Insert(0, $"system: {string.Join("\n\n", system)}");
-
-        return string.Join("\n\n", lines);
-    }
-
-    private static string BuildPromptFromUiMessages(IEnumerable<Vercel.Models.UIMessage> messages)
-    {
-        var all = messages?.ToList() ?? [];
-        if (all.Count == 0)
-            return string.Empty;
-
-        var lines = new List<string>();
-        foreach (var msg in all)
-        {
-            var text = string.Join("\n", msg.Parts
-                .OfType<Vercel.Models.TextUIPart>()
-                .Select(p => p.Text)
-                .Where(t => !string.IsNullOrWhiteSpace(t)));
-
-            if (!string.IsNullOrWhiteSpace(text))
-                lines.Add($"{msg.Role}: {text}");
-        }
-
-        return string.Join("\n\n", lines);
-    }
-
-    private static string BuildPromptFromResponseRequest(ResponseRequest request)
-    {
-        var prompt = BuildPromptFromResponseInput(request.Input);
-        if (string.IsNullOrWhiteSpace(prompt))
-            prompt = request.Instructions ?? string.Empty;
-
-        return prompt;
-    }
-
-    private static string BuildPromptFromResponseInput(ResponseInput? input)
-    {
-        if (input is null)
-            return string.Empty;
-
-        if (input.IsText)
-            return input.Text ?? string.Empty;
-
-        if (input.IsItems != true || input.Items is null)
-            return string.Empty;
-
-        var lines = new List<string>();
-        foreach (var item in input.Items)
-        {
-            if (item is not ResponseInputMessage message)
-                continue;
-
-            var role = message.Role.ToString().ToLowerInvariant();
-            var text = message.Content.IsText
-                ? message.Content.Text
-                : string.Join("\n", message.Content.Parts?.OfType<InputTextPart>().Select(p => p.Text) ?? []);
-
-            if (!string.IsNullOrWhiteSpace(text))
-                lines.Add($"{role}: {text}");
-        }
-
-        return string.Join("\n\n", lines);
-    }
-
-    private static string BuildPromptFromSamplingMessages(IEnumerable<ModelContextProtocol.Protocol.SamplingMessage> messages)
-    {
-        var all = messages?.ToList() ?? [];
-        if (all.Count == 0)
-            return string.Empty;
-
-        var lines = new List<string>();
-        foreach (var msg in all)
-        {
-            var role = msg.Role switch
-            {
-                ModelContextProtocol.Protocol.Role.Assistant => "assistant",
-                ModelContextProtocol.Protocol.Role.User => "user",
-                _ => "user"
-            };
-
-            var text = msg.ToText() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(text))
-                lines.Add($"{role}: {text}");
-        }
 
         return string.Join("\n\n", lines);
     }
@@ -220,9 +178,7 @@ public partial class ExaProvider
         {
             var element = schema.JsonSchema.Schema;
             if (element.ValueKind != JsonValueKind.Undefined && element.ValueKind != JsonValueKind.Null)
-            {
                 return JsonSerializer.Deserialize<object>(element.GetRawText(), JsonWeb);
-            }
         }
 
         try
@@ -261,369 +217,14 @@ public partial class ExaProvider
         if (content is string text)
             return text;
 
+        if (content is JsonElement el)
+        {
+            return el.ValueKind == JsonValueKind.String
+                ? el.GetString() ?? string.Empty
+                : el.GetRawText();
+        }
+
         return JsonSerializer.Serialize(content, JsonWeb);
-    }
-
-    private async Task<ExaResearchQueuedTask> QueueResearchTaskAsync(
-        string instructions,
-        string model,
-        object? outputSchema,
-        CancellationToken cancellationToken)
-    {
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = model,
-            ["instructions"] = instructions
-        };
-
-        if (outputSchema is not null)
-            payload["outputSchema"] = outputSchema;
-
-        var json = JsonSerializer.Serialize(payload, JsonWeb);
-        using var req = new HttpRequestMessage(HttpMethod.Post, "research/v1")
-        {
-            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"Exa research create failed ({(int)resp.StatusCode}): {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-        var root = doc.RootElement;
-
-        var id = root.TryGetProperty("researchId", out var idEl) && idEl.ValueKind == JsonValueKind.String
-            ? idEl.GetString()
-            : null;
-
-        if (string.IsNullOrWhiteSpace(id))
-            throw new InvalidOperationException("Exa research create response missing researchId.");
-
-        var status = root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String
-            ? statusEl.GetString() ?? "pending"
-            : "pending";
-
-        return new ExaResearchQueuedTask
-        {
-            ResearchId = id!,
-            Status = status
-        };
-    }
-
-    private async Task<ExaResearchCompletedTask> WaitForResearchCompletionAsync(
-        string researchId,
-        CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            using var req = new HttpRequestMessage(HttpMethod.Get, $"research/v1/{researchId}");
-            using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-
-            var text = await resp.Content.ReadAsStringAsync(cancellationToken);
-            if (!resp.IsSuccessStatusCode)
-                throw new HttpRequestException($"Exa research poll failed ({(int)resp.StatusCode}): {text}");
-
-            using var doc = JsonDocument.Parse(text);
-            var root = doc.RootElement;
-
-            var status = root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String
-                ? statusEl.GetString()
-                : null;
-
-            if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
-                return ToCompletedTask(root);
-
-            if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
-            {
-                var error = root.TryGetProperty("error", out var errEl) && errEl.ValueKind == JsonValueKind.String
-                    ? errEl.GetString()
-                    : "Exa research task failed.";
-                throw new InvalidOperationException(error);
-            }
-
-            if (string.Equals(status, "canceled", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Exa research task canceled.");
-
-            await Task.Delay(800, cancellationToken);
-        }
-
-        throw new OperationCanceledException(cancellationToken);
-    }
-
-    private async IAsyncEnumerable<ExaResearchStreamEvent> StreamResearchEventsAsync(
-        string instructions,
-        string model,
-        object? outputSchema,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var queued = await QueueResearchTaskAsync(instructions, model, outputSchema, cancellationToken);
-
-        using var req = new HttpRequestMessage(HttpMethod.Get, $"research/v1/{queued.ResearchId}?stream=true");
-        req.Headers.Accept.Clear();
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"Exa research stream failed ({(int)resp.StatusCode}): {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            var line = await reader.ReadLineAsync(cancellationToken);
-            if (line is null)
-                yield break;
-
-            if (line.Length == 0 || line.StartsWith(':'))
-                continue;
-
-            if (line.StartsWith("event:", StringComparison.OrdinalIgnoreCase))
-            {
-                var evtName = line["event:".Length..].Trim();
-                if (evtName.Equals("done", StringComparison.OrdinalIgnoreCase))
-                    yield break;
-                continue;
-            }
-
-            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var data = line["data:".Length..].Trim();
-            if (data.Length == 0 || data.Equals("[DONE]", StringComparison.OrdinalIgnoreCase))
-                yield break;
-
-            using var doc = JsonDocument.Parse(data);
-            var evt = ParseStreamEvent(doc.RootElement, queued.ResearchId);
-            if (evt is not null)
-            {
-                yield return evt;
-                if (evt.IsTerminal)
-                    yield break;
-            }
-        }
-    }
-
-    private static ExaResearchStreamEvent? ParseStreamEvent(JsonElement root, string fallbackId)
-    {
-        var researchId = root.TryGetProperty("researchId", out var idEl) && idEl.ValueKind == JsonValueKind.String
-            ? idEl.GetString()
-            : fallbackId;
-
-        var createdMs = root.TryGetProperty("createdAt", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number
-            ? createdEl.GetInt64()
-            : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-        var created = DateTimeOffset.FromUnixTimeMilliseconds(createdMs).ToUnixTimeSeconds();
-
-        if (root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String)
-        {
-            var status = statusEl.GetString();
-            if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
-            {
-                return ExtractOutputFromStatus(root, researchId!, created, isTerminal: true);
-            }
-
-            if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
-            {
-                var error = root.TryGetProperty("error", out var errEl) && errEl.ValueKind == JsonValueKind.String
-                    ? errEl.GetString()
-                    : "Exa research failed";
-
-                return new ExaResearchStreamEvent
-                {
-                    ResearchId = researchId!,
-                    Created = created,
-                    Error = error,
-                    IsTerminal = true
-                };
-            }
-        }
-
-        if (root.TryGetProperty("eventType", out var eventTypeEl)
-            && eventTypeEl.ValueKind == JsonValueKind.String)
-        {
-            var eventType = eventTypeEl.GetString() ?? string.Empty;
-            if (string.Equals(eventType, "research-output", StringComparison.OrdinalIgnoreCase))
-            {
-                return ExtractOutputFromEvent(root, researchId!, created, isTerminal: true);
-            }
-
-            if (string.Equals(eventType, "task-output", StringComparison.OrdinalIgnoreCase))
-            {
-                return ExtractTaskOutput(root, researchId!, created);
-            }
-        }
-
-        return null;
-    }
-
-    private static ExaResearchStreamEvent? ExtractOutputFromEvent(JsonElement root, string researchId, long created, bool isTerminal)
-    {
-        if (!root.TryGetProperty("output", out var outputEl) || outputEl.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (outputEl.TryGetProperty("content", out var contentEl))
-        {
-            if (contentEl.ValueKind == JsonValueKind.String)
-            {
-                return new ExaResearchStreamEvent
-                {
-                    ResearchId = researchId,
-                    Created = created,
-                    ContentText = contentEl.GetString(),
-                    IsTerminal = isTerminal
-                };
-            }
-
-            if (contentEl.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-            {
-                return new ExaResearchStreamEvent
-                {
-                    ResearchId = researchId,
-                    Created = created,
-                    ContentObject = contentEl.Clone(),
-                    IsTerminal = isTerminal
-                };
-            }
-        }
-
-        if (outputEl.TryGetProperty("parsed", out var parsedEl)
-            && parsedEl.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-        {
-            return new ExaResearchStreamEvent
-            {
-                ResearchId = researchId,
-                Created = created,
-                ContentObject = parsedEl.Clone(),
-                IsTerminal = isTerminal
-            };
-        }
-
-        return null;
-    }
-
-    private static ExaResearchStreamEvent? ExtractTaskOutput(JsonElement root, string researchId, long created)
-    {
-        if (!root.TryGetProperty("output", out var outputEl) || outputEl.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (outputEl.TryGetProperty("content", out var contentEl) && contentEl.ValueKind == JsonValueKind.String)
-        {
-            return new ExaResearchStreamEvent
-            {
-                ResearchId = researchId,
-                Created = created,
-                ContentText = contentEl.GetString(),
-                IsTerminal = false
-            };
-        }
-
-        return null;
-    }
-
-    private static ExaResearchStreamEvent ExtractOutputFromStatus(JsonElement root, string researchId, long created, bool isTerminal)
-    {
-        if (root.TryGetProperty("output", out var outputEl) && outputEl.ValueKind == JsonValueKind.Object)
-        {
-            if (outputEl.TryGetProperty("content", out var contentEl))
-            {
-                if (contentEl.ValueKind == JsonValueKind.String)
-                {
-                    return new ExaResearchStreamEvent
-                    {
-                        ResearchId = researchId,
-                        Created = created,
-                        ContentText = contentEl.GetString(),
-                        IsTerminal = isTerminal
-                    };
-                }
-
-                if (contentEl.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-                {
-                    return new ExaResearchStreamEvent
-                    {
-                        ResearchId = researchId,
-                        Created = created,
-                        ContentObject = contentEl.Clone(),
-                        IsTerminal = isTerminal
-                    };
-                }
-            }
-
-            if (outputEl.TryGetProperty("parsed", out var parsedEl)
-                && parsedEl.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-            {
-                return new ExaResearchStreamEvent
-                {
-                    ResearchId = researchId,
-                    Created = created,
-                    ContentObject = parsedEl.Clone(),
-                    IsTerminal = isTerminal
-                };
-            }
-        }
-
-        return new ExaResearchStreamEvent
-        {
-            ResearchId = researchId,
-            Created = created,
-            IsTerminal = isTerminal
-        };
-    }
-
-    private static ExaResearchCompletedTask ToCompletedTask(JsonElement root)
-    {
-        var researchId = root.TryGetProperty("researchId", out var idEl) && idEl.ValueKind == JsonValueKind.String
-            ? idEl.GetString() ?? Guid.NewGuid().ToString("n")
-            : Guid.NewGuid().ToString("n");
-
-        var createdAt = root.TryGetProperty("createdAt", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number
-            ? DateTimeOffset.FromUnixTimeMilliseconds(createdEl.GetInt64()).UtcDateTime
-            : DateTime.UtcNow;
-
-        var finishedAt = root.TryGetProperty("finishedAt", out var finishedEl) && finishedEl.ValueKind == JsonValueKind.Number
-            ? DateTimeOffset.FromUnixTimeMilliseconds(finishedEl.GetInt64()).UtcDateTime
-            : DateTime.UtcNow;
-
-        object content = string.Empty;
-        object? parsed = null;
-        if (root.TryGetProperty("output", out var outputEl) && outputEl.ValueKind == JsonValueKind.Object)
-        {
-            if (outputEl.TryGetProperty("content", out var contentEl))
-            {
-                content = contentEl.ValueKind == JsonValueKind.String
-                    ? contentEl.GetString() ?? string.Empty
-                    : JsonSerializer.Deserialize<object>(contentEl.GetRawText(), JsonWeb) ?? string.Empty;
-            }
-
-            if (outputEl.TryGetProperty("parsed", out var parsedEl)
-                && parsedEl.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-            {
-                parsed = JsonSerializer.Deserialize<object>(parsedEl.GetRawText(), JsonWeb);
-            }
-        }
-
-        var cost = root.TryGetProperty("costDollars", out var costEl) && costEl.ValueKind == JsonValueKind.Object
-            ? costEl.Clone()
-            : (JsonElement?)null;
-
-        return new ExaResearchCompletedTask
-        {
-            ResearchId = researchId,
-            CreatedAt = createdAt,
-            FinishedAt = finishedAt,
-            Content = content,
-            Parsed = parsed,
-            Cost = cost
-        };
     }
 
     private static ResponseInput BuildResponseInputFromSampling(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest)
@@ -662,40 +263,27 @@ public partial class ExaProvider
         return new ResponseInput(items);
     }
 
-    private sealed class ExaResearchQueuedTask
+    private static Dictionary<string, object?>? JsonElementObjectToDictionary(JsonElement element)
     {
-        public string ResearchId { get; init; } = default!;
+        if (element.ValueKind != JsonValueKind.Object)
+            return null;
 
-        public string Status { get; init; } = default!;
+        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var prop in element.EnumerateObject())
+            result[prop.Name] = JsonSerializer.Deserialize<object>(prop.Value.GetRawText(), JsonWeb);
+
+        return result;
     }
 
-    private sealed class ExaResearchCompletedTask
-    {
-        public string ResearchId { get; init; } = default!;
+    private static JsonObject? JsonElementObjectToJsonObject(JsonElement element)
+        => element.ValueKind == JsonValueKind.Object
+            ? JsonNode.Parse(element.GetRawText()) as JsonObject
+            : null;
 
-        public DateTime CreatedAt { get; init; }
+    private static JsonElement? CloneProperty(JsonElement element, string propertyName)
+        => element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out var property)
+            ? property.Clone()
+            : null;
 
-        public DateTime FinishedAt { get; init; }
-
-        public object Content { get; init; } = string.Empty;
-
-        public object? Parsed { get; init; }
-
-        public JsonElement? Cost { get; init; }
-    }
-
-    private sealed class ExaResearchStreamEvent
-    {
-        public string ResearchId { get; init; } = default!;
-
-        public long Created { get; init; }
-
-        public string? ContentText { get; init; }
-
-        public JsonElement? ContentObject { get; init; }
-
-        public string? Error { get; init; }
-
-        public bool IsTerminal { get; init; }
-    }
+    private sealed record ExaBackendTarget(string Backend, string LocalModel, string NativeType);
 }

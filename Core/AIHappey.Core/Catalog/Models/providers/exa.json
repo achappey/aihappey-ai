@@ -2,31 +2,59 @@
   "object": "list",
   "data": [
     {
-      "id": "exa/exa-research-fast",
+      "id": "exa/auto",
       "object": "model",
       "owned_by": "Exa",
-      "name": "exa-research-fast",
+      "name": "auto",
       "type": "language"
     },
     {
-      "id": "exa/exa-research",
+      "id": "exa/neural",
       "object": "model",
       "owned_by": "Exa",
-      "name": "exa-research",
+      "name": "neural",
       "type": "language"
     },
     {
-      "id": "exa/exa-research-pro",
+      "id": "exa/fast",
       "object": "model",
       "owned_by": "Exa",
-      "name": "exa-research-pro",
+      "name": "fast",
       "type": "language"
     },
     {
-      "id": "exa/exa",
+      "id": "exa/deep-lite",
       "object": "model",
       "owned_by": "Exa",
-      "name": "exa",
+      "name": "deep-lite",
+      "type": "language"
+    },
+    {
+      "id": "exa/deep",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "deep",
+      "type": "language"
+    },
+    {
+      "id": "exa/deep-reasoning",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "deep-reasoning",
+      "type": "language"
+    },
+    {
+      "id": "exa/instant",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "instant",
+      "type": "language"
+    },
+    {
+      "id": "exa/answer",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "answer",
       "type": "language"
     }
   ]
