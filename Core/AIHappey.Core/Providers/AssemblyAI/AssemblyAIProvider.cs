@@ -1,6 +1,4 @@
 using ModelContextProtocol.Protocol;
-using AIHappey.Responses.Streaming;
-using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;

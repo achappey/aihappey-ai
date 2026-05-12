@@ -1,11 +1,9 @@
-using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Vercel.Mapping;
-using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

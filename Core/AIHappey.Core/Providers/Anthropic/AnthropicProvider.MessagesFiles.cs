@@ -1,10 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Core.Extensions;
 using AIHappey.Messages;
 using AIHappey.Responses;
-using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 

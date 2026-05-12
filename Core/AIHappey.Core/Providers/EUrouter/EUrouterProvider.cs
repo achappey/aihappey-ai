@@ -2,7 +2,6 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
-using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
