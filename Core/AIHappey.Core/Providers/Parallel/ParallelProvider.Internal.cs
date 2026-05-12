@@ -1,13 +1,22 @@
-using System.Text;
 using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
-using AIHappey.Vercel.Models;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Parallel;
 
 public partial class ParallelProvider
 {
     private const string ChatCompletionsPath = "v1beta/chat/completions";
+    private const string TaskRunsPath = "v1/tasks/runs";
+    private const string ParallelInteractionToolName = "parallel_interaction_context";
+
+    private static readonly HashSet<string> ChatCompletionModels = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "speed",
+        "lite",
+        "base",
+        "core"
+    };
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerOptions.Web)
     {
@@ -117,133 +126,53 @@ public partial class ParallelProvider
             : content.GetRawText();
     }
 
-    private static string ExtractAssistantTextFromChoices(IEnumerable<object> choices)
+    private bool IsChatCompletionModel(string? model)
     {
-        var lines = new List<string>();
+        var processor = NormalizeParallelModel(model);
 
-        foreach (var choice in choices ?? [])
-        {
-            JsonElement root;
-            try
-            {
-                root = JsonSerializer.SerializeToElement(choice, Json);
-            }
-            catch
-            {
-                continue;
-            }
-
-            if (!root.TryGetProperty("message", out var message) || message.ValueKind != JsonValueKind.Object)
-                continue;
-
-            if (!message.TryGetProperty("content", out var content))
-                continue;
-
-            var text = content.ValueKind switch
-            {
-                JsonValueKind.String => content.GetString(),
-                JsonValueKind.Array => string.Join("\n", content.EnumerateArray()
-                    .Select(item =>
-                        item.ValueKind == JsonValueKind.Object
-                        && item.TryGetProperty("text", out var textEl)
-                        && textEl.ValueKind == JsonValueKind.String
-                            ? textEl.GetString()
-                            : item.GetRawText())
-                    .Where(s => !string.IsNullOrWhiteSpace(s))),
-                _ => content.GetRawText()
-            };
-
-            if (!string.IsNullOrWhiteSpace(text))
-                lines.Add(text);
-        }
-
-        return string.Join("\n", lines);
+        return !string.IsNullOrWhiteSpace(processor)
+               && ChatCompletionModels.Contains(processor);
     }
 
-    private ChatCompletionOptions BuildChatOptionsFromChatRequest(ChatRequest chatRequest, bool stream)
+    private string NormalizeParallelModel(string? model)
     {
-        var messages = new List<ChatMessage>();
+        if (string.IsNullOrWhiteSpace(model))
+            return string.Empty;
 
-        foreach (var message in chatRequest.Messages ?? [])
+        var trimmed = model.Trim();
+        var providerPrefix = GetIdentifier() + "/";
+
+        return trimmed.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)
+            ? trimmed[providerPrefix.Length..]
+            : trimmed;
+    }
+
+    private static AIStreamEvent CreateParallelStreamEvent(
+        string providerId,
+        string type,
+        string? id,
+        object data,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?>? metadata = null)
+        => new()
         {
-            var role = message.Role switch
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
             {
-                Role.system => "system",
-                Role.assistant => "assistant",
-                _ => "user"
-            };
-
-            var lines = new List<string>();
-            foreach (var part in message.Parts ?? [])
-            {
-                switch (part)
-                {
-                    case TextUIPart t when !string.IsNullOrWhiteSpace(t.Text):
-                        lines.Add(t.Text);
-                        break;
-                    case ReasoningUIPart reasoning when !string.IsNullOrWhiteSpace(reasoning.Text):
-                        lines.Add(reasoning.Text);
-                        break;
-                    case ToolInvocationPart tip:
-                        lines.Add($"tool:{tip.ToolCallId}:{tip.Title ?? tip.Type}:{JsonSerializer.Serialize(tip.Input, Json)}");
-                        if (tip.Output is not null)
-                            lines.Add($"tool_output:{tip.ToolCallId}:{JsonSerializer.Serialize(tip.Output, Json)}");
-                        break;
-                }
-            }
-
-            var content = string.Join("\n", lines.Where(a => !string.IsNullOrWhiteSpace(a)));
-            if (string.IsNullOrWhiteSpace(content))
-                continue;
-
-            messages.Add(new ChatMessage
-            {
-                Role = role,
-                Content = JsonSerializer.SerializeToElement(content, Json)
-            });
-        }
-
-        if (messages.Count == 0)
-        {
-            messages.Add(new ChatMessage
-            {
-                Role = "user",
-                Content = JsonSerializer.SerializeToElement(string.Empty, Json)
-            });
-        }
-
-        return new ChatCompletionOptions
-        {
-            Model = chatRequest.Model,
-            Temperature = chatRequest.Temperature,
-            Stream = stream,
-            Messages = messages,
-            Tools = [.. (chatRequest.Tools ?? [])
-                .Select(t => new
-                {
-                    type = "function",
-                    function = new
-                    {
-                        name = t.Name,
-                        description = t.Description,
-                        parameters = (object?)(t.InputSchema is null
-                            ? new { type = "object", properties = new { }, required = new string[0] }
-                            : t.InputSchema)
-                    }
-                })
-                .Cast<object>()],
-            ToolChoice = chatRequest.ToolChoice,
-            ResponseFormat = chatRequest.ResponseFormat
+                Type = type,
+                Id = id,
+                Timestamp = timestamp,
+                Data = data
+            },
+            Metadata = metadata
         };
-    }
 
-
-    private sealed class ToolBufferState(int index)
-    {
-        public int Index { get; } = index;
-        public string? ToolName { get; set; }
-        public StringBuilder Args { get; } = new();
-        public bool ProviderExecuted { get; set; }
-    }
+    private static Dictionary<string, Dictionary<string, object>> ToProviderMetadata(string providerId, Dictionary<string, object?> values)
+        => new()
+        {
+            [providerId] = values
+                .Where(static item => item.Value is not null)
+                .ToDictionary(static item => item.Key, static item => (object)item.Value!)
+        };
 }
 

@@ -7,10 +7,20 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
+using AIHappey.Responses.Streaming;
+using AIHappey.Sampling.Mapping;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Parallel;
 
-public partial class ParallelProvider : IModelProvider
+public partial class ParallelProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -43,20 +53,40 @@ public partial class ParallelProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await CompleteChatInternalAsync(options, cancellationToken);
+        if (IsChatCompletionModel(options.Model))
+            return await CompleteChatInternalAsync(options, cancellationToken);
+
+        var unified = await ExecuteParallelTaskUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        return unified.ToChatCompletion();
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return CompleteChatStreamingInternalAsync(options, cancellationToken);
+        if (IsChatCompletionModel(options.Model))
+        {
+            await foreach (var update in CompleteChatStreamingInternalAsync(options, cancellationToken))
+                yield return update;
+
+            yield break;
+        }
+
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        await foreach (var streamEvent in StreamParallelTaskUnifiedAsync(unifiedRequest, cancellationToken))
+            yield return streamEvent.ToChatCompletionUpdate();
     }
 
     public string GetIdentifier() => nameof(Parallel).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+    {
+        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+
+        return result.ToSamplingResult();
+    }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -78,13 +108,64 @@ public partial class ParallelProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+
+        return result.ToResponseResult();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
+            yield return part.ToResponseStreamPart();
     }
+
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+
+        return result.ToMessagesResponse();
+    }
+
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
+    }
+
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(
+        ChatRequest chatRequest,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                yield return uiPart;
+        }
+    }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => IsChatCompletionModel(request.Model)
+            ? this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+            : ExecuteParallelTaskUnifiedAsync(request, cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => IsChatCompletionModel(request.Model)
+            ? this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+            : StreamParallelTaskUnifiedAsync(request, cancellationToken);
 }
