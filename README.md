@@ -373,7 +373,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | PixIA          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Poe            | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Pollinations   | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Portkey        | ✅        | ✅                | ✅            | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
+| Portkey        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | PreAPI         | ❌        | ❌                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | Puter          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Prakasa        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -469,7 +469,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ToAPIs         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Together       | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
 | TokenFlux      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| TrueFoundry    | ✅        | ✅                | ✅            | ❌            | ❌        | ❌                     | ❌                       | ❌               | ❌          | ➖          | ➖          |
+| TrueFoundry    | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ❌          | ➖          | ➖          |
 | TTSReader      | ✅        | ❌                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Typecast       | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | UniAPI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
