@@ -95,9 +95,10 @@ public partial class ParallelProvider
                             GetIdentifier(),
                             "text-start",
                             textId,
-                            new AITextStartEventData { 
-//                                ProviderMetadata = CreateLooseProviderMetadata(evt) 
-                                },
+                            new AITextStartEventData
+                            {
+                                //                                ProviderMetadata = CreateLooseProviderMetadata(evt) 
+                            },
                             eventTimestamp);
                     }
 
@@ -108,7 +109,7 @@ public partial class ParallelProvider
                         new AITextDeltaEventData
                         {
                             Delta = message + Environment.NewLine,
-                        //    ProviderMetadata = CreateLooseProviderMetadata(evt)
+                            //    ProviderMetadata = CreateLooseProviderMetadata(evt)
                         },
                         eventTimestamp);
                     break;
@@ -192,7 +193,7 @@ public partial class ParallelProvider
             new AIFinishEventData
             {
                 FinishReason = errorEvent.HasValue ? "error" : ResolveParallelFinishReason(TryGetString(finalRun, "status")),
-                Model = request.Model ?? NormalizeParallelModel(request.Model).ToModelId(GetIdentifier()),
+                Model = request.Model?.ToModelId(GetIdentifier()) ?? NormalizeParallelModel(request.Model).ToModelId(GetIdentifier()),
                 CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 MessageMetadata = AIFinishMessageMetadata.Create(
                     request.Model ?? NormalizeParallelModel(request.Model).ToModelId(GetIdentifier()),
