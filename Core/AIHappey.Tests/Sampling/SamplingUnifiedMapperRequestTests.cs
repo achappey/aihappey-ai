@@ -13,7 +13,9 @@ namespace AIHappey.Tests.Sampling;
 public sealed class SamplingUnifiedMapperRequestTests
 {
     private const string SamplingRequestWithImageFixturePath = "Fixtures/sampling/raw/sampling-request-with-image.json";
+    private const string MessagesWithWebSearchFixturePath = "Fixtures/messages/typed/messages-with-websearch-non-streaming.json";
     private const string ProviderId = "openai";
+    private const string AnthropicProviderId = "anthropic";
     private const string ExpectedModelWithoutProviderPrefix = "gpt-5.4-mini";
     private const string ExpectedImageMimeType = "image/png";
     private const string ExpectedUserText = "What is in this image?";
@@ -112,6 +114,42 @@ public sealed class SamplingUnifiedMapperRequestTests
         Assert.Equal(ExpectedUserText, textBlock.Text);
     }
 
+    [Fact]
+    public void Messages_response_with_web_search_maps_to_single_sampling_text_block_with_markdown_sources()
+    {
+        var messagesResponse = LoadMessagesResponseFixture(MessagesWithWebSearchFixturePath);
+        var unifiedResponse = messagesResponse.ToUnifiedResponse(AnthropicProviderId);
+        Assert.True(unifiedResponse.Output?.Items?.Any(item => item.Type == "source-url") == true);
+
+        var samplingResult = unifiedResponse.ToSamplingResult();
+
+        Assert.Equal("claude-haiku-4-5-20251001", samplingResult.Model);
+        Assert.Equal(Role.Assistant, samplingResult.Role);
+        Assert.Equal("endTurn", samplingResult.StopReason);
+
+        var textBlock = Assert.IsType<TextContentBlock>(Assert.Single(samplingResult.Content));
+        var text = textBlock.Text.ReplaceLineEndings("\n");
+
+        Assert.StartsWith("Ik zal voor je zoeken naar het laatste nieuws over de oorlog.", text, StringComparison.Ordinal);
+        Assert.Contains("Hier is het laatste nieuws over de oorlog:", text, StringComparison.Ordinal);
+        Assert.Contains("## Huidige Situatie", text, StringComparison.Ordinal);
+        Assert.Contains("Gesprekken zullen waarschijnlijk geen aanzienlijke vooruitgang boeken", text, StringComparison.Ordinal);
+
+        Assert.Contains("[Iran war live: President Trump calls Iranian peace proposal ‘garbage’ | US-Israel war on Iran News | Al Jazeera](https://www.aljazeera.com/news/liveblog/2026/5/12/iran-war-live-trump-slams-iranian-proposal-as-ceasefire-hangs-by-a-thread)", text, StringComparison.Ordinal);
+        Assert.Contains("[Day 72 of Middle East conflict — Trump calls Iran response to US proposal ‘totally unacceptable’ | CNN](https://www.cnn.com/2026/05/10/world/live-news/iran-war-news)", text, StringComparison.Ordinal);
+        Assert.Contains("[Live updates: Trump says ceasefire with Iran on ‘massive life support’ after he rejects Tehran’s proposal | CNN](https://www.cnn.com/2026/05/11/world/live-news/iran-war-proposal-trump)", text, StringComparison.Ordinal);
+
+        Assert.Equal(1, CountOccurrences(text, "https://www.cnn.com/2026/05/10/world/live-news/iran-war-news"));
+        Assert.Equal(1, CountOccurrences(text, "https://www.cnn.com/2026/05/11/world/live-news/iran-war-proposal-trump"));
+        Assert.DoesNotContain("\nIran war live: President Trump calls Iranian peace proposal", text, StringComparison.Ordinal);
+
+        var meta = ToJsonElement(samplingResult.Meta);
+        var usage = meta.GetProperty("usage");
+        Assert.Equal(17541, usage.GetProperty("promptTokens").GetInt32());
+        Assert.Equal(568, usage.GetProperty("completionTokens").GetInt32());
+        Assert.Equal(18109, usage.GetProperty("totalTokens").GetInt32());
+    }
+
     private static (CreateMessageRequestParams Request, JsonElement Fixture) LoadSamplingRequestFixture()
     {
         var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(SamplingRequestWithImageFixturePath));
@@ -123,10 +161,35 @@ public sealed class SamplingUnifiedMapperRequestTests
         return (request, fixture);
     }
 
+    private static MessagesResponse LoadMessagesResponseFixture(string fixturePath)
+    {
+        var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(fixturePath));
+
+        return JsonSerializer.Deserialize<MessagesResponse>(json, JsonSerializerOptions.Web)
+            ?? throw new InvalidOperationException($"Could not deserialize messages fixture from [{fixturePath}](Core/AIHappey.Tests/{fixturePath}).");
+    }
+
     private static string GetExpectedImageBase64(JsonElement fixture)
         => fixture.GetProperty("messages")[0].GetProperty("content").GetProperty("data").GetString()
            ?? throw new InvalidOperationException($"Fixture [{SamplingRequestWithImageFixturePath}](Core/AIHappey.Tests/{SamplingRequestWithImageFixturePath}) does not contain an image payload.");
 
     private static string ToDataUrl(string mimeType, string base64)
         => $"data:{mimeType};base64,{base64}";
+
+    private static JsonElement ToJsonElement(object? value)
+        => JsonSerializer.SerializeToElement(value, JsonSerializerOptions.Web);
+
+    private static int CountOccurrences(string value, string search)
+    {
+        var count = 0;
+        var index = 0;
+
+        while ((index = value.IndexOf(search, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += search.Length;
+        }
+
+        return count;
+    }
 }

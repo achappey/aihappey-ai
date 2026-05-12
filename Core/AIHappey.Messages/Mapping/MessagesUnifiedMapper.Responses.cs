@@ -259,8 +259,11 @@ public static partial class MessagesUnifiedMapper
     {
         foreach (var citation in block.Citations ?? [])
         {
-            if (citation.Type != "web_search_result_location" || string.IsNullOrWhiteSpace(citation.Url))
+            if (!string.Equals(citation.Type, "web_search_result_location", StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(citation.Url))
+            {
                 continue;
+            }
 
             yield return new AIOutputItem
             {

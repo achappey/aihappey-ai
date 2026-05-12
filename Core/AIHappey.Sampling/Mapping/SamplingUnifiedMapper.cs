@@ -92,14 +92,11 @@ public static class SamplingUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        var firstOutput = response.Output?.Items?.FirstOrDefault();
+        var firstOutput = response.Output?.Items?.FirstOrDefault(a =>
+            string.Equals(a.Type, "message", StringComparison.OrdinalIgnoreCase))
+            ?? response.Output?.Items?.FirstOrDefault();
 
-        var content = response.Output?.Items?
-            .SelectMany(a => a.Content ?? [])
-            .Select(ToSamplingContentBlock)
-            .Where(a => a is not null)
-            .Select(a => a!)
-            .ToList() ?? [];
+        var content = ToSamplingContentBlocks(response.Output?.Items).ToList();
 
         if (content.Count == 0)
             content.Add(new TextContentBlock { Text = string.Empty });
@@ -113,6 +110,240 @@ public static class SamplingUnifiedMapper
             Meta = BuildSamplingResultMeta(response)
         };
     }
+
+    private static IEnumerable<ContentBlock> ToSamplingContentBlocks(IEnumerable<AIOutputItem>? items)
+    {
+        var text = new StringBuilder();
+        var blocks = new List<ContentBlock>();
+        var sources = new List<SamplingSource>();
+        var seenSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var outputItems = (items ?? []).ToList();
+
+        foreach (var item in outputItems)
+        {
+            foreach (var source in ReadTextPartSources(item))
+            {
+                if (seenSourceUrls.Add(source.Url))
+                    sources.Add(source);
+            }
+        }
+
+        foreach (var item in outputItems)
+        {
+            if (TryReadSourceUrl(item, out var source))
+            {
+                if (seenSourceUrls.Add(source.Url))
+                    sources.Add(source);
+
+                continue;
+            }
+
+            foreach (var part in item.Content ?? [])
+            {
+                if (part is AITextContentPart textPart)
+                {
+                    if (!string.IsNullOrEmpty(textPart.Text))
+                        text.Append(textPart.Text);
+
+                    continue;
+                }
+
+                var block = ToSamplingContentBlock(part);
+                if (block is not null)
+                    blocks.Add(block);
+            }
+        }
+
+        var textWithSources = AppendMarkdownSources(text.ToString(), sources);
+        if (!string.IsNullOrWhiteSpace(textWithSources))
+            yield return new TextContentBlock { Text = textWithSources };
+
+        foreach (var block in blocks)
+            yield return block;
+    }
+
+    private sealed record SamplingSource(string Url, string? Title);
+
+    private static IEnumerable<SamplingSource> ReadTextPartSources(AIOutputItem item)
+    {
+        if (!string.Equals(item.Type, "message", StringComparison.OrdinalIgnoreCase))
+            yield break;
+
+        foreach (var part in item.Content?.OfType<AITextContentPart>() ?? [])
+        {
+            foreach (var source in ReadCitationSources(part.Metadata))
+                yield return source;
+        }
+    }
+
+    private static IEnumerable<SamplingSource> ReadCitationSources(Dictionary<string, object?>? metadata)
+    {
+        foreach (var citation in EnumerateRawMetadataArrayObjects(metadata, "citations"))
+        {
+            var type = TryReadString(citation, "type");
+            var url = TryReadString(citation, "url");
+
+            if (!string.Equals(type, "web_search_result_location", StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(url)
+                || !Uri.TryCreate(url, UriKind.Absolute, out _))
+            {
+                continue;
+            }
+
+            yield return new SamplingSource(url, TryReadString(citation, "title"));
+        }
+    }
+
+    private static IEnumerable<JsonElement> EnumerateRawMetadataArrayObjects(Dictionary<string, object?>? metadata, string propertyName)
+    {
+        if (metadata is null)
+            yield break;
+
+        foreach (var (_, value) in metadata)
+        {
+            var json = SerializeToJsonElement(value);
+            if (json is not { ValueKind: JsonValueKind.Object }
+                || !json.Value.TryGetProperty(propertyName, out var array)
+                || array.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            foreach (var item in array.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                    yield return item;
+            }
+        }
+    }
+
+    private static string? TryReadString(JsonElement element, string propertyName)
+        => element.TryGetProperty(propertyName, out var property)
+           && property.ValueKind == JsonValueKind.String
+           && !string.IsNullOrWhiteSpace(property.GetString())
+            ? property.GetString()
+            : null;
+
+    private static bool TryReadSourceUrl(AIOutputItem item, out SamplingSource source)
+    {
+        source = default!;
+
+        if (!string.Equals(item.Type, "source-url", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var url = GetSourceString(item.Metadata, "url")
+            ?? GetSourceString(item.Metadata, "source.url")
+            ?? GetSourceString(item.Metadata, "messages.source.url")
+            ?? GetSourceString(item.Metadata, "chatcompletions.source.url");
+
+        var title = GetSourceString(item.Metadata, "title")
+            ?? GetSourceString(item.Metadata, "source.title")
+            ?? GetSourceString(item.Metadata, "messages.source.title")
+            ?? GetSourceString(item.Metadata, "chatcompletions.source.title")
+            ?? item.Content?.OfType<AITextContentPart>().Select(a => a.Text).FirstOrDefault(a => !string.IsNullOrWhiteSpace(a));
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            url = TryReadSourceStringFromRawMetadata(item.Metadata,
+                "url",
+                "origin_url",
+                "image_url",
+                "source_url",
+                "href");
+        }
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            title = TryReadSourceStringFromRawMetadata(item.Metadata,
+                "title",
+                "document_title",
+                "providerDisplayName");
+        }
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            url = item.Content?.OfType<AITextContentPart>()
+                .Select(a => a.Text)
+                .FirstOrDefault(a => Uri.TryCreate(a, UriKind.Absolute, out _));
+        }
+
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out _))
+            return false;
+
+        source = new SamplingSource(url, string.IsNullOrWhiteSpace(title) ? null : title);
+        return true;
+    }
+
+    private static string? GetSourceString(Dictionary<string, object?>? metadata, string key)
+    {
+        var value = GetString(metadata, key);
+
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : value;
+    }
+
+    private static string? TryReadSourceStringFromRawMetadata(Dictionary<string, object?>? metadata, params string[] names)
+    {
+        if (metadata is null)
+            return null;
+
+        foreach (var (_, value) in metadata)
+        {
+            var rawValue = TryReadStringFromRawValue(value, names);
+            if (!string.IsNullOrWhiteSpace(rawValue))
+                return rawValue;
+        }
+
+        return null;
+    }
+
+    private static string? TryReadStringFromRawValue(object? value, params string[] names)
+    {
+        var json = SerializeToJsonElement(value);
+        if (json is not { ValueKind: JsonValueKind.Object })
+            return null;
+
+        foreach (var name in names)
+        {
+            if (json.Value.TryGetProperty(name, out var property)
+                && property.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(property.GetString()))
+            {
+                return property.GetString();
+            }
+        }
+
+        return null;
+    }
+
+    private static string AppendMarkdownSources(string text, IReadOnlyList<SamplingSource> sources)
+    {
+        if (sources.Count == 0)
+            return text;
+
+        var builder = new StringBuilder(text.TrimEnd());
+        if (builder.Length > 0)
+            builder.AppendLine().AppendLine();
+
+        foreach (var source in sources)
+        {
+            var title = string.IsNullOrWhiteSpace(source.Title) ? source.Url : source.Title!;
+            builder.Append("[")
+                .Append(EscapeMarkdownLinkText(title))
+                .Append("](")
+                .Append(source.Url)
+                .AppendLine(")");
+        }
+
+        return builder.ToString().TrimEnd();
+    }
+
+    private static string EscapeMarkdownLinkText(string value)
+        => value.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("]", "\\]", StringComparison.Ordinal)
+            .Replace("[", "\\[", StringComparison.Ordinal);
 
     private static AIInputItem ToUnifiedInputItem(SamplingMessage message)
     {
