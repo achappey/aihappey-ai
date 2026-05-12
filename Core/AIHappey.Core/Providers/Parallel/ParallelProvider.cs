@@ -161,11 +161,11 @@ public partial class ParallelProvider : IModelProvider, IUnifiedModelProvider
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => IsChatCompletionModel(request.Model)
-            ? this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+            ? ExecuteParallelChatCompletionUnifiedAsync(request, cancellationToken)
             : ExecuteParallelTaskUnifiedAsync(request, cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => IsChatCompletionModel(request.Model)
-            ? this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+            ? StreamParallelChatCompletionUnifiedAsync(request, cancellationToken)
             : StreamParallelTaskUnifiedAsync(request, cancellationToken);
 }

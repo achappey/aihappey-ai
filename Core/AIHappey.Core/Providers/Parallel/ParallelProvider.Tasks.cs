@@ -95,7 +95,9 @@ public partial class ParallelProvider
                             GetIdentifier(),
                             "text-start",
                             textId,
-                            new AITextStartEventData { ProviderMetadata = CreateLooseProviderMetadata(evt) },
+                            new AITextStartEventData { 
+//                                ProviderMetadata = CreateLooseProviderMetadata(evt) 
+                                },
                             eventTimestamp);
                     }
 
@@ -106,7 +108,7 @@ public partial class ParallelProvider
                         new AITextDeltaEventData
                         {
                             Delta = message + Environment.NewLine,
-                            ProviderMetadata = CreateLooseProviderMetadata(evt)
+                        //    ProviderMetadata = CreateLooseProviderMetadata(evt)
                         },
                         eventTimestamp);
                     break;
@@ -725,6 +727,9 @@ public partial class ParallelProvider
 
         if (TryGetProperty(output, "content", out var content))
         {
+            if (TryUnwrapTaskOutputString(content, out var unwrapped))
+                return unwrapped;
+
             return content.ValueKind switch
             {
                 JsonValueKind.String => content.GetString(),
@@ -735,6 +740,25 @@ public partial class ParallelProvider
         }
 
         return output.GetRawText();
+    }
+
+    private static bool TryUnwrapTaskOutputString(JsonElement content, out string? text)
+    {
+        text = null;
+
+        if (content.ValueKind != JsonValueKind.Object)
+            return false;
+
+        foreach (var propertyName in new[] { "output", "answer", "result", "text" })
+        {
+            if (!TryGetProperty(content, propertyName, out var value) || value.ValueKind != JsonValueKind.String)
+                continue;
+
+            text = value.GetString();
+            return !string.IsNullOrWhiteSpace(text);
+        }
+
+        return false;
     }
 
     private static string ToUnifiedTaskStatus(string? status)
