@@ -64,7 +64,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ASIOne         | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AskARC         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AskCodi        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| AssemblyAI     | ✅        | ✅                | ❌            | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
+| AssemblyAI     | ✅        | ✅                | ✅            | ✅            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
 | Assisters      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Astica         | ✅        | ❌                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | AsyncAI        | ✅        | ❌                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |

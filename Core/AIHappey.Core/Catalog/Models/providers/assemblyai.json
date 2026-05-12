@@ -2,10 +2,27 @@
   "object": "list",
   "data": [
     {
+      "id": "assemblyai/agents",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "Voice Agent",
+      "type": "audio"
+    },
+    {
+      "id": "assemblyai/u3-rt-pro",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "Universal-3 Pro Streaming",
+      "type": "transcription",
+      "tags": [
+        "real-time"
+      ]
+    },
+    {
       "id": "assemblyai/universal-3-pro",
       "object": "model",
       "owned_by": "AssemblyAI",
-      "name": "universal-3-pro",
+      "name": "Universal-3 Pro",
       "type": "transcription"
     },
     {
@@ -36,101 +53,24 @@
       ]
     },
     {
-      "id": "assemblyai/claude-sonnet-4-5-20250929",
+      "id": "assemblyai/claude-opus-4-6",
       "object": "model",
       "owned_by": "AssemblyAI",
-      "name": "claude-sonnet-4-5-20250929",
+      "name": "claude-opus-4-6",
       "type": "language"
     },
     {
-      "id": "assemblyai/claude-sonnet-4-20250514",
+      "id": "assemblyai/claude-opus-4-7",
       "object": "model",
       "owned_by": "AssemblyAI",
-      "name": "claude-sonnet-4-20250514",
+      "name": "claude-opus-4-7",
       "type": "language"
     },
     {
-      "id": "assemblyai/claude-opus-4-20250514",
+      "id": "assemblyai/gpt-5.5",
       "object": "model",
       "owned_by": "AssemblyAI",
-      "name": "claude-opus-4-20250514",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/claude-haiku-4-5-20251001",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "claude-haiku-4-5-20251001",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/claude-3-haiku-20240307",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "claude-3-haiku-20240307",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-5.2",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-5.2",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-5.1",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-5.1",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-5",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-5",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-5-nano",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-5-nano",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-5-mini",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-5-mini",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-4.1",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-4.1",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-oss-120b",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-oss-120b",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gpt-oss-20b",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gpt-oss-20b",
-      "type": "language"
-    },
-    {
-      "id": "assemblyai/gemini-3-pro-preview",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "gemini-3-pro-preview",
+      "name": "gpt-5.5",
       "type": "language"
     },
     {
@@ -141,10 +81,80 @@
       "type": "language"
     },
     {
+      "id": "assemblyai/claude-opus-4-5-20251101",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "claude-opus-4-5-20251101",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "claude-sonnet-4-6",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/claude-sonnet-4-5-20250929",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "claude-sonnet-4-5-20250929",
+      "type": "language"
+    },
+    {
       "id": "assemblyai/gemini-2.5-pro",
       "object": "model",
       "owned_by": "AssemblyAI",
       "name": "gemini-2.5-pro",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-5.1",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-5.1",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gemini-3.1-flash-lite-preview",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gemini-3.1-flash-lite-preview",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-5.2",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-5.2",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-5",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-5",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/kimi-k2.5",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "kimi-k2.5",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-4.1",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-4.1",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/claude-opus-4-20250514",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "claude-opus-4-20250514",
       "type": "language"
     },
     {
@@ -155,12 +165,67 @@
       "type": "language"
     },
     {
+      "id": "assemblyai/claude-haiku-4-5-20251001",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "claude-haiku-4-5-20251001",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/qwen3-next-80b-a3b",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "qwen3-next-80b-a3b",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-5-mini",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-5-mini",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/claude-sonnet-4-20250514",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "claude-sonnet-4-20250514",
+      "type": "language"
+    },
+    {
       "id": "assemblyai/gemini-2.5-flash-lite",
       "object": "model",
       "owned_by": "AssemblyAI",
       "name": "gemini-2.5-flash-lite",
       "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-oss-120b",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/qwen3-32B",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "qwen3-32B",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-5-nano",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-5-nano",
+      "type": "language"
+    },
+    {
+      "id": "assemblyai/gpt-oss-20b",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "gpt-oss-20b",
+      "type": "language"
     }
   ]
 }
-
