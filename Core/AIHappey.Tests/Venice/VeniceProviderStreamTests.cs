@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Venice;
 using AIHappey.Tests.TestInfrastructure;

@@ -56,7 +56,7 @@ public partial class AICCProvider
             throw new InvalidOperationException($"AICC video create failed ({(int)createResp.StatusCode}): {createRaw}");
 
         using var createDoc = JsonDocument.Parse(createRaw);
-        var taskId = TryGetString(createDoc.RootElement, "id");
+        var taskId = createDoc.RootElement.TryGetString("id");
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("AICC video create response contained no task id.");
 
@@ -73,13 +73,13 @@ public partial class AICCProvider
                 using var pollDoc = JsonDocument.Parse(pollRaw);
                 return pollDoc.RootElement.Clone();
             },
-            root => IsTerminalStatus(TryGetString(root, "status")),
+            root => IsTerminalStatus(root.TryGetString("status")),
             interval: TimeSpan.FromSeconds(2),
             timeout: TimeSpan.FromMinutes(10),
             maxAttempts: null,
             cancellationToken: cancellationToken);
 
-        var finalStatus = TryGetString(completed, "status");
+        var finalStatus = completed.TryGetString("status");
         if (!IsSuccessStatus(finalStatus))
             throw new InvalidOperationException($"AICC video task failed with status '{finalStatus ?? "unknown"}'.");
 
@@ -169,18 +169,18 @@ public partial class AICCProvider
 
     private static string? TryGetVideoUrl(JsonElement root)
     {
-        if (TryGetString(root, "url") is { } direct && !string.IsNullOrWhiteSpace(direct))
+        if (root.TryGetString("url") is { } direct && !string.IsNullOrWhiteSpace(direct))
             return direct;
 
-        if (TryGetString(root, "video_url") is { } videoUrl && !string.IsNullOrWhiteSpace(videoUrl))
+        if (root.TryGetString("video_url") is { } videoUrl && !string.IsNullOrWhiteSpace(videoUrl))
             return videoUrl;
 
         if (root.TryGetProperty("metadata", out var metadata) && metadata.ValueKind == JsonValueKind.Object)
         {
-            if (TryGetString(metadata, "url") is { } metadataUrl && !string.IsNullOrWhiteSpace(metadataUrl))
+            if (metadata.TryGetString("url") is { } metadataUrl && !string.IsNullOrWhiteSpace(metadataUrl))
                 return metadataUrl;
 
-            if (TryGetString(metadata, "video_url") is { } metadataVideoUrl && !string.IsNullOrWhiteSpace(metadataVideoUrl))
+            if (metadata.TryGetString("video_url") is { } metadataVideoUrl && !string.IsNullOrWhiteSpace(metadataVideoUrl))
                 return metadataVideoUrl;
         }
 
@@ -189,7 +189,7 @@ public partial class AICCProvider
 
     private static string? ResolveMediaType(JsonElement root)
     {
-        if (TryGetString(root, "format") is { } format)
+        if (root.TryGetString("format") is { } format)
         {
             if (string.Equals(format, "mp4", StringComparison.OrdinalIgnoreCase))
                 return "video/mp4";

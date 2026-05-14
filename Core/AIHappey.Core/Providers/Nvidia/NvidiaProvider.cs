@@ -5,16 +5,15 @@ using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Sampling.Mapping;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Nvidia;
 
-/// <summary>
-/// NVIDIA NIM for LLMs (OpenAI-compatible Chat Completions endpoint).
-/// Default base URL: https://integrate.api.nvidia.com/
-/// Endpoint: POST /v1/chat/completions
-/// </summary>
 public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper asyncCacheHelper) : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
@@ -41,21 +40,29 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        // NVIDIA NIM for LLMs is OpenAI Chat Completions compatible.
-        // Default endpoint: POST https://integrate.api.nvidia.com/v1/chat/completions
-        await foreach (var update in _client.CompletionsStreamAsync(
-            chatRequest,
-            cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            yield return update;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
+
+        yield break;
     }
 
     // ChatCompletions endpoint is not used by the Vercel UI stream (`/api/chat`).
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+             cancellationToken);
+
+        return result.ToSamplingResult();
+    }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -97,14 +104,36 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
         throw new NotImplementedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+      MessagesRequest request,
+      Dictionary<string, string> headers,
+      CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await this.GetMessage(_client,
+            request,
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this.GetMessages(_client,
+            request,
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+     => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 }
 

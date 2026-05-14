@@ -38,35 +38,35 @@ public partial class AICCProvider
         switch (family)
         {
             case "openai":
-            {
-                var hasFiles = request.Files?.Any() == true;
-                endpoint = hasFiles ? "v1/images/edits" : "v1/images/generations";
-                response = hasFiles
-                    ? await SendOpenAiEditAsync(request, metadata, warnings, cancellationToken)
-                    : await SendOpenAiGenerationAsync(request, metadata, warnings, cancellationToken);
-                break;
-            }
+                {
+                    var hasFiles = request.Files?.Any() == true;
+                    endpoint = hasFiles ? "v1/images/edits" : "v1/images/generations";
+                    response = hasFiles
+                        ? await SendOpenAiEditAsync(request, metadata, warnings, cancellationToken)
+                        : await SendOpenAiGenerationAsync(request, metadata, warnings, cancellationToken);
+                    break;
+                }
             case "qwen":
-            {
-                var hasFiles = request.Files?.Any() == true;
-                endpoint = hasFiles ? "v1/images/edits" : "v1/images/generations";
-                response = hasFiles
-                    ? await SendQwenEditAsync(request, metadata, warnings, cancellationToken)
-                    : await SendQwenGenerationAsync(request, metadata, warnings, cancellationToken);
-                break;
-            }
+                {
+                    var hasFiles = request.Files?.Any() == true;
+                    endpoint = hasFiles ? "v1/images/edits" : "v1/images/generations";
+                    response = hasFiles
+                        ? await SendQwenEditAsync(request, metadata, warnings, cancellationToken)
+                        : await SendQwenGenerationAsync(request, metadata, warnings, cancellationToken);
+                    break;
+                }
             case "gemini":
-            {
-                endpoint = "v1beta/models/{model}:generateContent";
-                response = await SendGeminiGenerationAsync(request, metadata, warnings, cancellationToken);
-                break;
-            }
+                {
+                    endpoint = "v1beta/models/{model}:generateContent";
+                    response = await SendGeminiGenerationAsync(request, metadata, warnings, cancellationToken);
+                    break;
+                }
             case "volcengine":
-            {
-                endpoint = "v1/images/generations";
-                response = await SendVolcengineGenerationAsync(request, metadata, warnings, cancellationToken);
-                break;
-            }
+                {
+                    endpoint = "v1/images/generations";
+                    response = await SendVolcengineGenerationAsync(request, metadata, warnings, cancellationToken);
+                    break;
+                }
             default:
                 throw new NotSupportedException($"AICC image family '{family}' is not supported.");
         }
@@ -127,10 +127,10 @@ public partial class AICCProvider
             ["prompt"] = request.Prompt,
             ["n"] = request.N,
             ["size"] = request.Size,
-            ["response_format"] = TryGetString(metadata, "response_format") ?? "b64_json",
-            ["quality"] = TryGetString(metadata, "quality"),
-            ["output_format"] = TryGetString(metadata, "output_format"),
-            ["moderation"] = TryGetString(metadata, "moderation"),
+            ["response_format"] = metadata.TryGetString("response_format") ?? "b64_json",
+            ["quality"] = metadata.TryGetString("quality"),
+            ["output_format"] = metadata.TryGetString("output_format"),
+            ["moderation"] = metadata.TryGetString("moderation"),
             ["partial_images"] = TryGetInt(metadata, "partial_images")
         };
 
@@ -158,12 +158,12 @@ public partial class AICCProvider
         if (!string.IsNullOrWhiteSpace(request.Size))
             form.Add(new StringContent(request.Size), "size");
 
-        AddOptionalString(form, "quality", TryGetString(metadata, "quality"));
-        AddOptionalString(form, "output_format", TryGetString(metadata, "output_format"));
-        AddOptionalString(form, "response_format", TryGetString(metadata, "response_format") ?? "b64_json");
-        AddOptionalString(form, "moderation", TryGetString(metadata, "moderation"));
-        AddOptionalString(form, "background", TryGetString(metadata, "background"));
-        AddOptionalString(form, "input_fidelity", TryGetString(metadata, "input_fidelity"));
+        AddOptionalString(form, "quality", metadata.TryGetString("quality"));
+        AddOptionalString(form, "output_format", metadata.TryGetString("output_format"));
+        AddOptionalString(form, "response_format", metadata.TryGetString("response_format") ?? "b64_json");
+        AddOptionalString(form, "moderation", metadata.TryGetString("moderation"));
+        AddOptionalString(form, "background", metadata.TryGetString("background"));
+        AddOptionalString(form, "input_fidelity", metadata.TryGetString("input_fidelity"));
 
         var partialImages = TryGetInt(metadata, "partial_images");
         if (partialImages.HasValue)
@@ -247,8 +247,8 @@ public partial class AICCProvider
                 responseModalities,
                 imageConfig = new
                 {
-                    aspectRatio = request.AspectRatio ?? TryGetString(metadata, "aspectRatio"),
-                    imageSize = request.Size ?? TryGetString(metadata, "imageSize")
+                    aspectRatio = request.AspectRatio ?? metadata.TryGetString("aspectRatio"),
+                    imageSize = request.Size ?? metadata.TryGetString("imageSize")
                 }
             }
         };
@@ -295,9 +295,9 @@ public partial class AICCProvider
             ["model"] = request.Model,
             ["prompt"] = request.Prompt,
             ["image"] = imageInput,
-            ["size"] = request.Size ?? TryGetString(metadata, "size"),
+            ["size"] = request.Size ?? metadata.TryGetString("size"),
             ["seed"] = request.Seed ?? TryGetInt(metadata, "seed"),
-            ["response_format"] = TryGetString(metadata, "response_format") ?? "b64_json",
+            ["response_format"] = metadata.TryGetString("response_format") ?? "b64_json",
             ["watermark"] = TryGetBool(metadata, "watermark")
         };
 
@@ -349,10 +349,10 @@ public partial class AICCProvider
             },
             parameters = new
             {
-                negative_prompt = TryGetString(metadata, "negative_prompt"),
+                negative_prompt = metadata.TryGetString("negative_prompt"),
                 prompt_extend = TryGetBool(metadata, "prompt_extend"),
                 watermark = TryGetBool(metadata, "watermark"),
-                size = request.Size ?? TryGetString(metadata, "size")
+                size = request.Size ?? metadata.TryGetString("size")
             }
         };
 
@@ -406,10 +406,10 @@ public partial class AICCProvider
             parameters = new
             {
                 n = request.N,
-                negative_prompt = TryGetString(metadata, "negative_prompt"),
+                negative_prompt = metadata.TryGetString("negative_prompt"),
                 prompt_extend = TryGetBool(metadata, "prompt_extend"),
                 watermark = TryGetBool(metadata, "watermark"),
-                size = request.Size ?? TryGetString(metadata, "size")
+                size = request.Size ?? metadata.TryGetString("size")
             }
         };
 
@@ -461,22 +461,22 @@ public partial class AICCProvider
         switch (element.ValueKind)
         {
             case JsonValueKind.Object:
-            {
-                if (TryGetInlineDataUrl(element, out var inlineDataUrl))
-                    images.Add(inlineDataUrl);
+                {
+                    if (TryGetInlineDataUrl(element, out var inlineDataUrl))
+                        images.Add(inlineDataUrl);
 
-                foreach (var property in element.EnumerateObject())
-                    CollectGeminiImages(property.Value, images);
+                    foreach (var property in element.EnumerateObject())
+                        CollectGeminiImages(property.Value, images);
 
-                break;
-            }
+                    break;
+                }
             case JsonValueKind.Array:
-            {
-                foreach (var item in element.EnumerateArray())
-                    CollectGeminiImages(item, images);
+                {
+                    foreach (var item in element.EnumerateArray())
+                        CollectGeminiImages(item, images);
 
-                break;
-            }
+                    break;
+                }
         }
     }
 
@@ -606,7 +606,7 @@ public partial class AICCProvider
 
     private static string ResolveImageFamily(string model, bool hasFiles, JsonElement metadata)
     {
-        var explicitFamily = TryGetString(metadata, "family");
+        var explicitFamily = metadata.TryGetString("family");
         if (!string.IsNullOrWhiteSpace(explicitFamily))
             return explicitFamily.Trim().ToLowerInvariant();
 
@@ -709,13 +709,6 @@ public partial class AICCProvider
         return false;
     }
 
-    private static string? TryGetString(JsonElement root, string propertyName)
-    {
-        if (!TryGetPropertyIgnoreCase(root, propertyName, out var el) || el.ValueKind != JsonValueKind.String)
-            return null;
-
-        return el.GetString();
-    }
 
     private static int? TryGetInt(JsonElement root, string propertyName)
     {
