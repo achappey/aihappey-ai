@@ -509,6 +509,7 @@ using AIHappey.Core.Providers.Brave;
 using AIHappey.Core.Providers.TerminalSkills;
 using AIHappey.Core.Providers.ClawHub;
 using AIHappey.Core.Providers.Linkup;
+using AIHappey.Core.Providers.Merge;
 
 namespace AIHappey.Core.AI;
 
@@ -1041,6 +1042,7 @@ public static class ServiceExtensions
         services.AddSingleton<ISkillProvider, TerminalSkillsProvider>();
         services.AddSingleton<ISkillProvider, ClawHubProvider>();
         services.AddSingleton<IModelProvider, LinkupProvider>();
+        services.AddSingleton<IModelProvider, MergeProvider>();
 
     }
 }
