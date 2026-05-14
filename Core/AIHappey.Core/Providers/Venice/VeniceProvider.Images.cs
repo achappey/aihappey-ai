@@ -12,7 +12,7 @@ namespace AIHappey.Core.Providers.Venice;
 
 public partial class VeniceProvider
 {
-    private async Task<ImageResponse> ImageRequestVenice(ImageRequest request, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

@@ -17,7 +17,7 @@ public partial class VeniceProvider
         string? MediaType,
         JsonElement? JsonBody);
 
-    private async Task<VideoResponse> VeniceVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

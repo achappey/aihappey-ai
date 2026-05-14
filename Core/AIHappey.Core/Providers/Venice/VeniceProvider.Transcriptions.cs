@@ -11,7 +11,7 @@ namespace AIHappey.Core.Providers.Venice;
 
 public partial class VeniceProvider
 {
-    private async Task<TranscriptionResponse> VeniceTranscriptionRequest(
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {

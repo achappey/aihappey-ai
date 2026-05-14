@@ -10,7 +10,7 @@ namespace AIHappey.Core.Providers.Venice;
 
 public partial class VeniceProvider
 {
-    private async Task<SpeechResponse> VeniceSpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+    public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
