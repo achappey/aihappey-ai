@@ -509,6 +509,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["botverse"] = "X-BotVerse-Key",
             ["vibekit"] = "X-VibeKit-Key",
             ["brave"] = "X-Brave-Key",
+            ["linkup"] = "X-Linkup-Key",
+            ["merge"] = "X-Merge-Key",
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -507,6 +507,8 @@ public class AIServiceConfig
     public ProviderConfig? BotVerse { get; set; }
     public ProviderConfig? VibeKit { get; set; }
     public ProviderConfig? Brave { get; set; }
+    public ProviderConfig? Linkup { get; set; }
+    public ProviderConfig? Merge { get; set; }
 
 
 }
