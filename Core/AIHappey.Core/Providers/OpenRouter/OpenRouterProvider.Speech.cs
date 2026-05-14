@@ -25,6 +25,9 @@ public partial class OpenRouterProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
+        if (string.IsNullOrWhiteSpace(request.Voice))
+            throw new ArgumentException("Voice is required.", nameof(request));
+
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
