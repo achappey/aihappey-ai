@@ -1,26 +1,31 @@
-using AIHappey.Responses;
-using AIHappey.Responses.Extensions;
-using AIHappey.Core.AI;
+using AIHappey.Responses.Mapping;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Nvidia;
 
-public partial class NvidiaProvider 
+public partial class NvidiaProvider
 {
 
-    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+           cancellationToken);
 
-        return await this.GetResponse(_client,
-                   options, cancellationToken: cancellationToken);
+        return result.ToResponseResult();
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        return this.GetResponses(_client,
-           options,
-           cancellationToken: cancellationToken);
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            yield return part.ToResponseStreamPart();
+        }
+
+        yield break;
     }
 }
