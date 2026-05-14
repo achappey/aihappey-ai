@@ -1,6 +1,7 @@
-using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.UncloseAI;
 
@@ -9,14 +10,18 @@ public partial class UncloseAIProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        var route = ResolveRoute(chatRequest.Model);
-        var request = CloneRequestWithModel(chatRequest, route.UpstreamModelId);
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
 
-        await foreach (var update in _client.CompletionsStreamAsync(request,
-            url: BuildUrl(route.BaseUri, ChatCompletionsPath),
-            cancellationToken: cancellationToken))
-            yield return update;
+        yield break;
     }
 }
