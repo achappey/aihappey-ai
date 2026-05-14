@@ -112,7 +112,7 @@ public partial class OpenRouterProvider
         {
             ["model"] = request.Model,
             ["messages"] = BuildOpenRouterImageMessages(request),
-            ["modalities"] = new[] { "image", "text" },
+            ["modalities"] = new[] { "image" },
             ["stream"] = false
         };
 
