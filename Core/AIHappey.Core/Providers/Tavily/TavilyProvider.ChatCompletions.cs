@@ -1,48 +1,13 @@
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Tavily;
 
 public partial class TavilyProvider
 {
-    private async IAsyncEnumerable<ChatCompletionUpdate> CompleteResearchChatStreamingAsync(
-        ChatCompletionOptions options,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var model = options.Model;
-        var input = BuildPromptFromCompletionMessages(options.Messages);
-
-        if (string.IsNullOrWhiteSpace(input))
-            throw new InvalidOperationException("Tavily requires non-empty input derived from chat messages.");
-
-        var outputSchema = TryExtractOutputSchema(options.ResponseFormat);
-
-        await foreach (var evt in StreamResearchEventsAsync(input, model, outputSchema, cancellationToken))
-        {
-            var update = ToChatCompletionUpdate(evt, model);
-            if (update is not null)
-                yield return update;
-        }
-    }
-
-    private async Task<ChatCompletion> CompleteResearchChatAsync(
-       ChatCompletionOptions options,
-       CancellationToken cancellationToken)
-    {
-        var model = options.Model;
-        var input = BuildPromptFromCompletionMessages(options.Messages);
-
-        if (string.IsNullOrWhiteSpace(input))
-            throw new InvalidOperationException("Tavily requires non-empty input derived from chat messages.");
-
-        var outputSchema = TryExtractOutputSchema(options.ResponseFormat);
-
-        var queued = await QueueResearchTaskAsync(input, model, stream: false, outputSchema, cancellationToken);
-        var completed = await WaitForResearchCompletionAsync(queued.RequestId, cancellationToken);
-
-        return ToChatCompletion(completed, model);
-    }
+    private static ChatCompletion ToChatCompletion(AIResponse response, string fallbackModel)
+        => ToChatCompletion(ToCompletedTask(response), fallbackModel);
 
     private static ChatCompletion ToChatCompletion(TavilyCompletedTask completed, string model)
     {
@@ -78,31 +43,84 @@ public partial class TavilyProvider
         };
     }
 
-    private static ChatCompletionUpdate? ToChatCompletionUpdate(TavilyStreamEvent evt, string fallbackModel)
+    private static ChatCompletionUpdate? ToChatCompletionUpdate(
+        AIStreamEvent streamEvent,
+        string fallbackModel,
+        TavilyChatCompletionStreamingState state)
     {
         var delta = new Dictionary<string, object?>();
+        object? usage = null;
+        string? finishReason = null;
 
-        if (evt.Delta is not null)
+        switch (streamEvent.Event.Type)
         {
-            if (evt.Delta.Value.TryGetProperty("role", out var roleEl) && roleEl.ValueKind == JsonValueKind.String)
-                delta["role"] = roleEl.GetString();
+            case "text-start":
+                if (state.RoleEmitted)
+                    return null;
 
-            if (!string.IsNullOrWhiteSpace(evt.ContentText))
-                delta["content"] = evt.ContentText;
-            else if (evt.ContentObject is not null)
-                delta["content"] = JsonSerializer.Deserialize<object>(evt.ContentObject.Value.GetRawText(), JsonSerializerOptions.Web);
+                state.RoleEmitted = true;
+                delta["role"] = "assistant";
+                break;
 
-            if (evt.Delta.Value.TryGetProperty("tool_calls", out var toolCallsEl)
-                && toolCallsEl.ValueKind == JsonValueKind.Object)
-            {
-                delta["tool_calls"] = JsonSerializer.Deserialize<object>(toolCallsEl.GetRawText(), JsonSerializerOptions.Web);
-            }
+            case "text-delta":
+                if (!state.RoleEmitted)
+                {
+                    state.RoleEmitted = true;
+                    delta["role"] = "assistant";
+                }
 
-            if (evt.Sources.Count > 0)
-                delta["sources"] = evt.Sources.Select(ToSourceDto).ToList();
+                delta["content"] = (streamEvent.Event.Data as AITextDeltaEventData)?.Delta ?? string.Empty;
+                break;
+
+            case "source-url":
+                delta["sources"] = new List<object> { ToSourceDto(ToSource(streamEvent)) };
+                break;
+
+            case "tool-input-available":
+                if (!state.RoleEmitted)
+                {
+                    state.RoleEmitted = true;
+                    delta["role"] = "assistant";
+                }
+
+                delta["tool_calls"] = CreateToolCallDelta(streamEvent);
+                break;
+
+            case "tool-output-available":
+                if (!state.RoleEmitted)
+                {
+                    state.RoleEmitted = true;
+                    delta["role"] = "assistant";
+                }
+
+                delta["tool_calls"] = CreateToolResponseDelta(streamEvent);
+                break;
+
+            case "data-tavily.structured-output":
+                if (!state.RoleEmitted)
+                {
+                    state.RoleEmitted = true;
+                    delta["role"] = "assistant";
+                }
+
+                delta["content"] = (streamEvent.Event.Data as AIDataEventData)?.Data;
+                break;
+
+            case "finish":
+                var finishData = streamEvent.Event.Data as AIFinishEventData;
+                finishReason = finishData?.FinishReason ?? "stop";
+
+                if (finishData?.MessageMetadata?.Usage.ValueKind == JsonValueKind.Object)
+                {
+                    usage = JsonSerializer.Deserialize<object>(finishData.MessageMetadata.Usage.GetRawText(), JsonSerializerOptions.Web);
+                }
+                break;
+
+            default:
+                return null;
         }
 
-        if (delta.Count == 0 && evt.Usage is null)
+        if (delta.Count == 0 && finishReason is null && usage is null)
             return null;
 
         var choice = new Dictionary<string, object?>
@@ -111,21 +129,94 @@ public partial class TavilyProvider
             ["delta"] = delta
         };
 
-        if (!string.IsNullOrWhiteSpace(evt.FinishReason))
-            choice["finish_reason"] = evt.FinishReason;
+        if (!string.IsNullOrWhiteSpace(finishReason))
+            choice["finish_reason"] = finishReason;
 
         return new ChatCompletionUpdate
         {
-            Id = evt.Id ?? Guid.NewGuid().ToString("n"),
-            Created = evt.Created,
-            Model = string.IsNullOrWhiteSpace(evt.Model) ? fallbackModel : evt.Model!,
+            Id = streamEvent.Event.Id ?? Guid.NewGuid().ToString("n"),
+            Created = (streamEvent.Event.Timestamp ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds(),
+            Model = fallbackModel,
             Choices = [choice],
-            Usage = evt.Usage is null
-                ? null
-                : JsonSerializer.Deserialize<object>(evt.Usage.Value.GetRawText(), JsonSerializerOptions.Web)
+            Usage = usage
         };
     }
 
+    private static TavilySource ToSource(AIStreamEvent streamEvent)
+    {
+        var sourceData = streamEvent.Event.Data as AISourceUrlEventData;
+        var favicon = sourceData?.ProviderMetadata is not null
+            && sourceData.ProviderMetadata.TryGetValue(nameof(Tavily).ToLowerInvariant(), out var providerMetadata)
+            && providerMetadata.TryGetValue("favicon", out var faviconValue)
+                ? faviconValue?.ToString()
+                : null;
 
+        return new TavilySource
+        {
+            Url = sourceData?.Url ?? string.Empty,
+            Title = sourceData?.Title,
+            Favicon = favicon
+        };
+    }
+
+    private static object CreateToolCallDelta(AIStreamEvent streamEvent)
+    {
+        var data = streamEvent.Event.Data as AIToolInputAvailableEventData;
+        var input = JsonSerializer.SerializeToElement(data?.Input ?? new { }, JsonSerializerOptions.Web);
+
+        return new
+        {
+            type = "tool_call",
+            tool_call = new[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["name"] = data?.ToolName ?? "tool",
+                    ["id"] = streamEvent.Event.Id,
+                    ["arguments"] = input.TryGetProperty("arguments", out var argumentsEl) && argumentsEl.ValueKind == JsonValueKind.String
+                        ? argumentsEl.GetString()
+                        : null,
+                    ["queries"] = input.TryGetProperty("queries", out var queriesEl) && queriesEl.ValueKind == JsonValueKind.Array
+                        ? JsonSerializer.Deserialize<object>(queriesEl.GetRawText(), JsonSerializerOptions.Web)
+                        : null,
+                    ["parent_tool_call_id"] = input.TryGetProperty("parent_tool_call_id", out var parentToolCallIdEl) && parentToolCallIdEl.ValueKind == JsonValueKind.String
+                        ? parentToolCallIdEl.GetString()
+                        : null
+                }
+            }
+        };
+    }
+
+    private static object CreateToolResponseDelta(AIStreamEvent streamEvent)
+    {
+        var data = streamEvent.Event.Data as AIToolOutputAvailableEventData;
+        var output = JsonSerializer.SerializeToElement(data?.Output ?? new { }, JsonSerializerOptions.Web);
+
+        return new
+        {
+            type = "tool_response",
+            tool_response = new[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["name"] = data?.ToolName ?? "tool",
+                    ["id"] = streamEvent.Event.Id,
+                    ["arguments"] = output.TryGetProperty("arguments", out var argumentsEl) && argumentsEl.ValueKind == JsonValueKind.String
+                        ? argumentsEl.GetString()
+                        : null,
+                    ["sources"] = output.TryGetProperty("sources", out var sourcesEl) && sourcesEl.ValueKind == JsonValueKind.Array
+                        ? JsonSerializer.Deserialize<object>(sourcesEl.GetRawText(), JsonSerializerOptions.Web)
+                        : null,
+                    ["parent_tool_call_id"] = output.TryGetProperty("parent_tool_call_id", out var parentToolCallIdEl) && parentToolCallIdEl.ValueKind == JsonValueKind.String
+                        ? parentToolCallIdEl.GetString()
+                        : null
+                }
+            }
+        };
+    }
+
+    private sealed class TavilyChatCompletionStreamingState
+    {
+        public bool RoleEmitted { get; set; }
+    }
 }
-

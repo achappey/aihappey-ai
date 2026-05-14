@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
+using AIHappey.Common.Model.Providers.Tavily;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
@@ -16,17 +17,10 @@ public partial class TavilyProvider
         string model,
         bool stream,
         object? outputSchema,
+        TavilyProviderMetadata? providerMetadata,
         CancellationToken cancellationToken)
     {
-        var payload = new Dictionary<string, object?>
-        {
-            ["input"] = input,
-            ["model"] = model,
-            ["stream"] = stream
-        };
-
-        if (outputSchema is not null)
-            payload["output_schema"] = outputSchema;
+        var payload = CreateResearchPayload(input, model, stream, outputSchema, providerMetadata);
 
         var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
         using var req = new HttpRequestMessage(HttpMethod.Post, "research")
@@ -96,17 +90,10 @@ public partial class TavilyProvider
         string input,
         string model,
         object? outputSchema,
+        TavilyProviderMetadata? providerMetadata,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var payload = new Dictionary<string, object?>
-        {
-            ["input"] = input,
-            ["model"] = model,
-            ["stream"] = true
-        };
-
-        if (outputSchema is not null)
-            payload["output_schema"] = outputSchema;
+        var payload = CreateResearchPayload(input, model, stream: true, outputSchema, providerMetadata);
 
         var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
         using var req = new HttpRequestMessage(HttpMethod.Post, "research")
@@ -248,8 +235,43 @@ public partial class TavilyProvider
             Delta = deltaEl.Clone(),
             Usage = root.TryGetProperty("usage", out var usageEl) && usageEl.ValueKind == JsonValueKind.Object
                 ? usageEl.Clone()
-                : null
+                : null,
+            Raw = root.Clone()
         };
+    }
+
+    private static Dictionary<string, object?> CreateResearchPayload(
+        string input,
+        string model,
+        bool stream,
+        object? outputSchema,
+        TavilyProviderMetadata? providerMetadata)
+    {
+        var payload = new Dictionary<string, object?>
+        {
+            ["input"] = input,
+            ["model"] = model,
+            ["stream"] = stream
+        };
+
+        if (outputSchema is not null)
+            payload["output_schema"] = outputSchema;
+
+        if (!string.IsNullOrWhiteSpace(providerMetadata?.CitationFormat))
+            payload["citation_format"] = providerMetadata.CitationFormat;
+
+        if (providerMetadata?.AdditionalProperties is not null)
+        {
+            foreach (var property in providerMetadata.AdditionalProperties)
+            {
+                if (property.Key is "input" or "model" or "stream" or "output_schema" or "citation_format")
+                    continue;
+
+                payload[property.Key] = JsonSerializer.Deserialize<object>(property.Value.GetRawText(), JsonSerializerOptions.Web);
+            }
+        }
+
+        return payload;
     }
 
    
@@ -294,7 +316,8 @@ public partial class TavilyProvider
             CreatedAt = createdAt,
             Content = content,
             Sources = sources,
-            ResponseTime = responseTime
+            ResponseTime = responseTime,
+            RawResponse = root.Clone()
         };
     }
 
@@ -579,6 +602,8 @@ public partial class TavilyProvider
         public List<TavilySource> Sources { get; init; } = [];
 
         public double ResponseTime { get; init; }
+
+        public JsonElement? RawResponse { get; init; }
     }
 
     private sealed class TavilyStreamEvent
@@ -600,6 +625,8 @@ public partial class TavilyProvider
         public JsonElement? Delta { get; init; }
 
         public JsonElement? Usage { get; init; }
+
+        public JsonElement? Raw { get; init; }
     }
 
     private sealed class TavilySource

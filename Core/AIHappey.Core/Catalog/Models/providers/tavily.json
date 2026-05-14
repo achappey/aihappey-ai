@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "tavily/auto",
+      "object": "model",
+      "owned_by": "Tavily",
+      "name": "Tavily Research Auto",
+      "type": "language"
+    },
+    {
       "id": "tavily/mini",
       "object": "model",
       "owned_by": "Tavily",

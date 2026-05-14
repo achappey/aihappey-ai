@@ -1,149 +1,43 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
-using System.Text.Json;
 using AIHappey.Common.Extensions;
-using System.Text;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Tavily;
 
 public partial class TavilyProvider
 {
-    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(
+        ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        await foreach (var part in StreamResearchUiAsync(chatRequest, cancellationToken))
-            yield return part;
-    }
-
-    private async IAsyncEnumerable<UIMessagePart> StreamResearchUiAsync(
-        ChatRequest chatRequest,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var model = chatRequest.Model;
-        var input = BuildPromptFromUiMessages(chatRequest.Messages);
-
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            yield return "Tavily requires at least one text message.".ToErrorUIPart();
-            yield break;
-        }
-
-        var outputSchema = TryExtractOutputSchema(chatRequest.ResponseFormat);
-
-        var streamId = Guid.NewGuid().ToString("n");
-        var fullText = new StringBuilder();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
         object? structuredData = null;
-        bool textStarted = false;
-        string finishReason = "stop";
+        var schemaName = chatRequest.ResponseFormat?.GetJSONSchema()?.JsonSchema?.Name ?? "unknown";
 
-        int inputTokens = 0;
-        int outputTokens = 0;
-        int totalTokens = 0;
-
-        var seenSources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        await foreach (var evt in StreamResearchEventsAsync(input, model, outputSchema, cancellationToken))
+        await foreach (var streamEvent in StreamUnifiedAsync(unifiedRequest, cancellationToken))
         {
-            if (!string.IsNullOrWhiteSpace(evt.FinishReason))
-                finishReason = evt.FinishReason!;
-
-            if (evt.Usage is not null)
-                ExtractUsage(evt.Usage.Value, ref inputTokens, ref outputTokens, ref totalTokens);
-
-            foreach (var source in evt.Sources)
+            if (TryGetStructuredOutputData(streamEvent, out var nextStructuredData))
             {
-                if (string.IsNullOrWhiteSpace(source.Url) || !seenSources.Add(source.Url))
-                    continue;
-
-                yield return ToSourcePart(source);
+                structuredData = nextStructuredData;
+                continue;
             }
 
-            if (!string.IsNullOrWhiteSpace(evt.ContentText))
-            {
-                if (!textStarted)
-                {
-                    yield return streamId.ToTextStartUIMessageStreamPart();
-                    textStarted = true;
-                }
-
-                fullText.Append(evt.ContentText);
-                yield return new TextDeltaUIMessageStreamPart
-                {
-                    Id = streamId,
-                    Delta = evt.ContentText!
-                };
-            }
-
-            if (evt.ContentObject is not null)
-            {
-                structuredData = JsonSerializer.Deserialize<object>(evt.ContentObject.Value.GetRawText(), JsonSerializerOptions.Web);
-            }
-        }
-
-        if (textStarted)
-            yield return streamId.ToTextEndUIMessageStreamPart();
-
-        if (chatRequest.ResponseFormat is not null)
-        {
-            var schema = chatRequest.ResponseFormat.GetJSONSchema();
-            var data = structuredData;
-
-            if (data is null && fullText.Length > 0)
-            {
-                try
-                {
-                    data = JsonSerializer.Deserialize<object>(fullText.ToString(), JsonSerializerOptions.Web);
-                }
-                catch
-                {
-                    // Ignore malformed JSON in model text output for structured-mode UX.
-                }
-            }
-
-            if (data is not null)
+            if (string.Equals(streamEvent.Event.Type, "finish", StringComparison.OrdinalIgnoreCase)
+                && chatRequest.ResponseFormat is not null
+                && structuredData is not null)
             {
                 yield return new DataUIPart
                 {
-                    Type = $"data-{schema?.JsonSchema?.Name ?? "unknown"}",
-                    Data = data
+                    Type = $"data-{schemaName}",
+                    Data = structuredData
                 };
             }
+
+            foreach (var uiPart in streamEvent.Event.ToUIMessagePart(GetIdentifier()))
+                yield return uiPart;
         }
-
-        yield return finishReason.ToFinishUIPart(
-            model: chatRequest.Model,
-            outputTokens: outputTokens,
-            inputTokens: inputTokens,
-            totalTokens: totalTokens,
-            temperature: chatRequest.Temperature);
     }
-
-
-
-    private static SourceUIPart ToSourcePart(TavilySource source)
-        => new()
-        {
-            SourceId = source.Url,
-            Url = source.Url,
-            Title = source.Title,
-        };
-
-
-    private static void ExtractUsage(JsonElement usage, ref int inputTokens, ref int outputTokens, ref int totalTokens)
-    {
-        if (usage.TryGetProperty("prompt_tokens", out var inEl) && inEl.ValueKind == JsonValueKind.Number)
-            inputTokens = inEl.GetInt32();
-
-        if (usage.TryGetProperty("completion_tokens", out var outEl) && outEl.ValueKind == JsonValueKind.Number)
-            outputTokens = outEl.GetInt32();
-
-        if (usage.TryGetProperty("total_tokens", out var totalEl) && totalEl.ValueKind == JsonValueKind.Number)
-            totalTokens = totalEl.GetInt32();
-        else
-            totalTokens = inputTokens + outputTokens;
-    }
-
 }

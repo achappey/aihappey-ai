@@ -3,37 +3,32 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Tavily;
 
 public partial class TavilyProvider
 {
-    private async IAsyncEnumerable<ResponseStreamPart> CompleteResponsesStreamingAsync(
-            ResponseRequest options,
-            [EnumeratorCancellation] CancellationToken cancellationToken)
+    private async IAsyncEnumerable<ResponseStreamPart> StreamUnifiedResponsePartsAsync(
+        AIRequest unifiedRequest,
+        ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var model = options.Model;
-        var input = BuildPromptFromResponseRequest(options);
-
-        if (string.IsNullOrWhiteSpace(input))
-            throw new InvalidOperationException("Tavily requires non-empty input for responses.");
-
-        var outputSchema = TryExtractOutputSchema(options.Text);
-        var responseId = Guid.NewGuid().ToString("n");
+        var model = options.Model ?? NormalizeResearchModel(unifiedRequest.Model);
+        var responseId = unifiedRequest.Id ?? Guid.NewGuid().ToString("n");
         var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
         var sources = new Dictionary<string, TavilySource>(StringComparer.OrdinalIgnoreCase);
         var fullText = new StringBuilder();
         object? structured = null;
-
         var sequence = 1;
+
         var initial = new ResponseResult
         {
             Id = responseId,
             Object = "response",
             CreatedAt = createdAt,
             Status = "in_progress",
-            Model = model!,
+            Model = model,
             Temperature = options.Temperature,
             Metadata = options.Metadata,
             MaxOutputTokens = options.MaxOutputTokens,
@@ -56,35 +51,49 @@ public partial class TavilyProvider
             Response = initial
         };
 
-        await foreach (var evt in StreamResearchEventsAsync(input, model!, outputSchema, cancellationToken))
+        await foreach (var streamEvent in StreamUnifiedAsync(unifiedRequest, cancellationToken))
         {
-            if (!string.IsNullOrWhiteSpace(evt.Id))
-                responseId = evt.Id!;
-
-            if (evt.Created > 0)
-                createdAt = evt.Created;
-
-            foreach (var source in evt.Sources)
+            if (streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish" or "data-tavily.structured-output")
             {
+                if (!string.IsNullOrWhiteSpace(streamEvent.Event.Id))
+                    responseId = streamEvent.Event.Id!;
+
+                if (streamEvent.Event.Timestamp is { } timestamp)
+                    createdAt = timestamp.ToUnixTimeSeconds();
+            }
+
+            if (string.Equals(streamEvent.Event.Type, "source-url", StringComparison.OrdinalIgnoreCase))
+            {
+                var source = ToSource(streamEvent);
                 if (!string.IsNullOrWhiteSpace(source.Url))
                     sources[source.Url] = source;
+
+                continue;
             }
 
-            string? deltaText = null;
-            if (!string.IsNullOrWhiteSpace(evt.ContentText))
+            if (string.Equals(streamEvent.Event.Type, "text-delta", StringComparison.OrdinalIgnoreCase)
+                && streamEvent.Event.Data is AITextDeltaEventData textDelta)
             {
-                deltaText = evt.ContentText;
-                fullText.Append(deltaText);
-            }
-            else if (evt.ContentObject is not null)
-            {
-                structured = JsonSerializer.Deserialize<object>(evt.ContentObject.Value.GetRawText(), JsonSerializerOptions.Web);
-                deltaText = evt.ContentObject.Value.GetRawText();
-                fullText.Append(deltaText);
+                fullText.Append(textDelta.Delta);
+
+                yield return new ResponseOutputTextDelta
+                {
+                    SequenceNumber = sequence++,
+                    ItemId = $"msg_{responseId}",
+                    Outputindex = 0,
+                    ContentIndex = 0,
+                    Delta = textDelta.Delta
+                };
+
+                continue;
             }
 
-            if (!string.IsNullOrEmpty(deltaText))
+            if (TryGetStructuredOutputData(streamEvent, out var structuredData))
             {
+                structured = structuredData;
+                var deltaText = JsonSerializer.Serialize(structuredData, JsonSerializerOptions.Web);
+                fullText.Append(deltaText);
+
                 yield return new ResponseOutputTextDelta
                 {
                     SequenceNumber = sequence++,
@@ -109,7 +118,7 @@ public partial class TavilyProvider
             ResponseTime = 0
         };
 
-        var finalResult = ToResponseResult(completed, options, model!);
+        var finalResult = ToResponseResult(completed, options, model);
 
         yield return new ResponseOutputTextDone
         {
@@ -127,23 +136,9 @@ public partial class TavilyProvider
         };
     }
 
-    private async Task<ResponseResult> CompleteResponsesAsync(
-            ResponseRequest options,
-            CancellationToken cancellationToken)
-    {
-        var model = options.Model;
-        var input = BuildPromptFromResponseRequest(options);
+    private static ResponseResult ToResponseResult(AIResponse response, ResponseRequest request)
+        => ToResponseResult(ToCompletedTask(response), request, response.Model ?? request.Model ?? "auto");
 
-        if (string.IsNullOrWhiteSpace(input))
-            throw new InvalidOperationException("Tavily requires non-empty input for responses.");
-
-        var outputSchema = TryExtractOutputSchema(options.Text);
-
-        var queued = await QueueResearchTaskAsync(input, model!, stream: false, outputSchema, cancellationToken);
-        var completed = await WaitForResearchCompletionAsync(queued.RequestId, cancellationToken);
-
-        return ToResponseResult(completed, options, model!);
-    }
     private static ResponseResult ToResponseResult(TavilyCompletedTask completed, ResponseRequest request, string model)
     {
         var text = ToOutputText(completed.Content);
@@ -194,4 +189,3 @@ public partial class TavilyProvider
         };
     }
 }
-

@@ -1,16 +1,23 @@
-using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
-using System.Net.Http.Headers;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
-using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using AIHappey.Sampling.Mapping;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
+using ModelContextProtocol.Protocol;
+using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Tavily;
 
-public partial class TavilyProvider : IModelProvider
+public partial class TavilyProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -34,25 +41,30 @@ public partial class TavilyProvider : IModelProvider
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+        => ToChatCompletion(
+            await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken),
+            options.Model);
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        var state = new TavilyChatCompletionStreamingState();
 
-        return await CompleteResearchChatAsync(options, cancellationToken);
-    }
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return CompleteResearchChatStreamingAsync(options, cancellationToken);
+        await foreach (var streamEvent in StreamUnifiedAsync(unifiedRequest, cancellationToken))
+        {
+            var update = ToChatCompletionUpdate(streamEvent, options.Model, state);
+            if (update is not null)
+                yield return update;
+        }
     }
 
     public string GetIdentifier() => nameof(Tavily).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            .ToSamplingResult();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -63,18 +75,19 @@ public partial class TavilyProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+        => ToResponseResult(
+            await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken),
+            options);
+
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        return CompleteResponsesAsync(options, cancellationToken);
-    }
-
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return CompleteResponsesStreamingAsync(options, cancellationToken);
+        await foreach (var part in StreamUnifiedResponsePartsAsync(unifiedRequest, options, cancellationToken))
+            yield return part;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -91,13 +104,21 @@ public partial class TavilyProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            .ToMessagesResponse();
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
     }
 }
