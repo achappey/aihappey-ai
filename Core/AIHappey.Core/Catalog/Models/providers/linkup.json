@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "linkup/research",
+      "object": "model",
+      "owned_by": "Linkup",
+      "name": "Linkup Research",
+      "type": "language",
+      "description": "Performs comprehensive web research."
+    }
+  ]
+}
