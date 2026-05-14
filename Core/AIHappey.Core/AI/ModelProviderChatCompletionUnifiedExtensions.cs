@@ -74,6 +74,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         this IModelProvider modelProvider,
         AIRequest request,
         Func<AIRequest, CancellationToken, IAsyncEnumerable<AIStreamEvent>>? fallback = null,
+        Func<ChatCompletionUpdate, IEnumerable<AIStreamEvent>>? rawChunkMapper = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
@@ -224,6 +225,25 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                     }
 
                     yield return mapped;
+                }
+
+                if (rawChunkMapper is null)
+                    continue;
+
+                foreach (var extraEvent in rawChunkMapper(update))
+                {
+                    var extraEventId = extraEvent.Event.Id;
+                    if (!string.IsNullOrWhiteSpace(extraEventId))
+                        activeId = extraEventId;
+
+                    if (extraEvent.Event.Timestamp is not null
+                        && (update.Created > 0 || NormalizeEventType(extraEvent.Event.Type) != "error"))
+                    {
+                        lastTimestamp = extraEvent.Event.Timestamp;
+                    }
+
+                    lastMetadata = extraEvent.Metadata ?? lastMetadata;
+                    yield return extraEvent;
                 }
             }
 

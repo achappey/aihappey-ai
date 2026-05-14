@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
@@ -179,5 +180,36 @@ public static class UIMessagePartExtensions
         };
         return c;
     }
+
+
+    public static string? TryGetString(this JsonElement root, string propertyName)
+    {
+        if (!TryGetPropertyIgnoreCase(root, propertyName, out var el) || el.ValueKind != JsonValueKind.String)
+            return null;
+
+        return el.GetString();
+    }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement root, string propertyName, out JsonElement value)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            value = default;
+            return false;
+        }
+
+        foreach (var prop in root.EnumerateObject())
+        {
+            if (string.Equals(prop.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                value = prop.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
 
 }

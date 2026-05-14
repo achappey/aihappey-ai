@@ -10,6 +10,7 @@ using AIHappey.Sampling.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Messages.Mapping;
+using AIHappey.ChatCompletions.Mapping;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Venice;
@@ -49,7 +50,7 @@ public partial class VeniceProvider : IModelProvider
              options, cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public virtual IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -139,5 +140,5 @@ public partial class VeniceProvider : IModelProvider
         => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => StreamUnifiedWithVeniceCitationsAsync(request, cancellationToken);
 }
