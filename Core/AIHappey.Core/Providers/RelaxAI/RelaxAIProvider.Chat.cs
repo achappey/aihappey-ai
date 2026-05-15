@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,13 +17,16 @@ public partial class RelaxAIProvider
         if (IsDeepResearchModel(options.Model))
         {
             var payload = BuildDeepResearchPayload(options);
-            return await _client.GetChatCompletion(
-                 JsonSerializer.SerializeToElement(payload),
+            var json = JsonSerializer.Serialize(payload);
+            var model = JsonSerializer.Deserialize<ChatCompletionOptions>(json);
+
+            return await this.GetChatCompletion(_client,
+                 model!,
                  relativeUrl: "v1/deep-research",
-                 ct: cancellationToken);
+                 cancellationToken: cancellationToken);
         }
 
-        return await _client.GetChatCompletion(options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client, options, cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
@@ -32,7 +36,7 @@ public partial class RelaxAIProvider
 
         if (!IsDeepResearchModel(options.Model))
         {
-            await foreach (var update in _client.GetChatCompletionUpdates(options, ct: cancellationToken))
+            await foreach (var update in this.GetChatCompletions(_client, options, cancellationToken: cancellationToken))
                 yield return update;
 
             yield break;
@@ -123,50 +127,75 @@ public partial class RelaxAIProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        if (!IsDeepResearchModel(chatRequest.GetModelId()))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-                cancellationToken: cancellationToken))
-                yield return update;
-
-            yield break;
-        }
-
-        // RelaxAI deep-research endpoint is non-streaming.
-        // Simulate Vercel UI stream parts from one non-stream response.
-        var payload = BuildDeepResearchPayload(chatRequest);
-        var result = await _client.GetChatCompletion(
-            JsonSerializer.SerializeToElement(payload),
-            relativeUrl: "v1/deep-research",
-            ct: cancellationToken);
-
-        var id = string.IsNullOrWhiteSpace(result.Id)
-            ? Guid.NewGuid().ToString("n")
-            : result.Id;
-
-        var (content, finishReason) = ExtractFirstChoice(result);
-
-        if (!string.IsNullOrWhiteSpace(content))
-        {
-            yield return id.ToTextStartUIMessageStreamPart();
-            yield return new TextDeltaUIMessageStreamPart
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                Id = id,
-                Delta = content
-            };
-            yield return id.ToTextEndUIMessageStreamPart();
+                yield return uiPart;
+            }
         }
 
-        var (promptTokens, completionTokens, totalTokens) = ExtractUsage(result.Usage);
+        yield break;
 
-        yield return (finishReason ?? "stop").ToFinishUIPart(
-            model: chatRequest.Model,
-            outputTokens: completionTokens,
-            inputTokens: promptTokens,
-            totalTokens: totalTokens,
-            temperature: chatRequest.Temperature);
+        /*
+                if (!IsDeepResearchModel(chatRequest.GetModelId()))
+                {
+                    var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+                    await foreach (var part in this.StreamUnifiedAsync(
+                        unifiedRequest,
+                        cancellationToken))
+                    {
+                        foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                        {
+                            yield return uiPart;
+                        }
+                    }
+
+                    yield break;
+                }
+
+
+                ApplyAuthHeader();
+                // RelaxAI deep-research endpoint is non-streaming.
+                // Simulate Vercel UI stream parts from one non-stream response.
+                var payload = BuildDeepResearchPayload(chatRequest);
+                var json = JsonSerializer.Serialize(payload);
+                var model = JsonSerializer.Deserialize<ChatCompletionOptions>(json);
+                var result = await this.GetChatCompletion(_client,
+                    model!,
+                    relativeUrl: "v1/deep-research",
+                    cancellationToken: cancellationToken);
+
+                var id = string.IsNullOrWhiteSpace(result.Id)
+                    ? Guid.NewGuid().ToString("n")
+                    : result.Id;
+
+                var (content, finishReason) = ExtractFirstChoice(result);
+
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    yield return id.ToTextStartUIMessageStreamPart();
+                    yield return new TextDeltaUIMessageStreamPart
+                    {
+                        Id = id,
+                        Delta = content
+                    };
+                    yield return id.ToTextEndUIMessageStreamPart();
+                }
+
+                var (promptTokens, completionTokens, totalTokens) = ExtractUsage(result.Usage);
+
+                yield return (finishReason ?? "stop").ToFinishUIPart(
+                    model: chatRequest.Model,
+                    outputTokens: completionTokens,
+                    inputTokens: promptTokens,
+                    totalTokens: totalTokens,
+                    temperature: chatRequest.Temperature);*/
     }
 
     private static bool IsDeepResearchModel(string? model)
