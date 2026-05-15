@@ -30,7 +30,7 @@ public partial class OpperAIProvider
                 await using var stream = await resp.Content.ReadAsStreamAsync(ct);
                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
-                return [..ParseModels(doc.RootElement)];
+                return [.. ParseModels(doc.RootElement), .. GetIdentifier().GetModels()];
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,

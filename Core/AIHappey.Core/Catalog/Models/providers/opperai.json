@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "opperai/roundtable",
+      "object": "model",
+      "owned_by": "OpperAI",
+      "name": "Roundtable",
+      "type": "language",
+      "description": "Send a query to multiple models in parallel and combine results using a configurable resolution strategy (summary, fast, multiple_choice)."
+    }
+  ]
+}

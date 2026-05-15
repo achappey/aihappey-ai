@@ -144,10 +144,14 @@ public partial class OpperAIProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-     => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+     => IsRoundtableModel(request.Model)
+        ? ExecuteRoundtableUnifiedAsync(request, cancellationToken)
+        : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => IsRoundtableModel(request.Model)
+            ? StreamRoundtableUnifiedAsync(request, cancellationToken)
+            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
