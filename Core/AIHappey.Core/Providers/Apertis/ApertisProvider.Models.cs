@@ -55,7 +55,19 @@ public partial class ApertisProvider
                         model.OwnedBy = orgEl.GetString() ?? "";
 
                     if (!string.IsNullOrEmpty(model.Id))
+                    {
                         models.Add(model);
+
+                        if (!model.Id.EndsWith(":free"))
+                        {
+                            models.Add(new Model()
+                            {
+                                Id = $"{model.Id}:web",
+                                Name = $"{model.Name} Web Search",
+                                OwnedBy = model.OwnedBy
+                            });
+                        }
+                    }
                 }
 
                 return models;
