@@ -45,6 +45,9 @@ public partial class ZaiProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (IsAgentModel(options.Model))
+            return await CompleteAgentChatAsync(options, cancellationToken);
+
         return await this.GetChatCompletion(_client,
              options,
              relativeUrl: "v4/chat/completions",
@@ -54,6 +57,9 @@ public partial class ZaiProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        if (IsAgentModel(options.Model))
+            return CompleteAgentChatStreamingAsync(options, cancellationToken);
 
         return this.GetChatCompletions(_client,
                     options,

@@ -2,6 +2,30 @@
   "object": "list",
   "data": [
     {
+      "id": "zai/agents/general_translation",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "General Translation Agent",
+      "type": "language",
+      "description": "Provides large model-based multilingual translation services, including general translation, paraphrase translation, two-step translation, and three-pass translation strategies. It supports automatic language detection, glossary customization, translation suggestions, and streaming output."
+    },
+    {
+      "id": "zai/agents/vidu_template_agent",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "Popular Special Effects Video Agent",
+      "type": "language",
+      "description": "Popular special effects videos are intelligent templates launched based on trending features from pan-entertainment platforms, designed to precisely adapt to short video creative production needs. Currently, three effect templates are available: French Kiss, Body Shake Dance, and Sexy Me."
+    },
+    {
+      "id": "zai/agents/slides_glm_agent",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "GLM Slide/Poster Agent",
+      "type": "language",
+      "description": "An intelligent creation agent built for working people and creators. It goes beyond traditional engineering-style assembly tools—supporting one-click generation of slides or posters from natural language instructions. By natively integrating content generation with layout aesthetics and design conventions, it helps you quickly produce polished, professional-grade materials while lowering design barriers and boosting creative efficiency."
+    },
+    {
       "id": "zai/glm-5v-turbo",
       "object": "model",
       "owned_by": "z.ai",
