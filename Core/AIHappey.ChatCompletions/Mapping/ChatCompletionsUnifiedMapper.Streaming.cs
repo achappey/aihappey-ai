@@ -294,74 +294,22 @@ public static partial class ChatCompletionsUnifiedMapper
 
             if (choice.TryGetProperty("delta", out var delta) && delta.ValueKind == JsonValueKind.Object)
             {
-                if (delta.TryGetProperty("role", out var roleEl)
-                    && roleEl.ValueKind == JsonValueKind.String
-                    && string.Equals(roleEl.GetString(), "assistant", StringComparison.OrdinalIgnoreCase)
-                    && !delta.TryGetProperty("content", out _)
-                    && !delta.TryGetProperty("reasoning", out _)
-                    && !delta.TryGetProperty("reasoning_content", out _))
+                var reasoningDelta = ExtractReasoningDelta(delta);
+
+                if (!string.IsNullOrEmpty(reasoningDelta))
                 {
-                    yield return CreateUiEnvelope(chunk, "text-start", new AITextStartEventData());
+                    yield return CreateUiEnvelope(chunk, "reasoning-delta", new AIReasoningDeltaEventData
+                    {
+                        Delta = reasoningDelta
+                    });
                 }
 
-                var deltaType = ExtractValue<string>(delta, "type");
-                var isReasoningDelta = string.Equals(deltaType, "think", StringComparison.OrdinalIgnoreCase);
-
-                if (!isReasoningDelta
-                    && delta.TryGetProperty("reasoning", out var reasoningEl)
-                    && reasoningEl.ValueKind == JsonValueKind.String)
+                if (TryExtractTextDelta(delta, out var textDelta))
                 {
-                    isReasoningDelta = true;
-                }
-
-                if (!isReasoningDelta
-                 && delta.TryGetProperty("reasoning_content", out var reasoningRootEl)
-                 && reasoningRootEl.ValueKind == JsonValueKind.String)
-                {
-                    isReasoningDelta = true;
-                }
-
-                if (isReasoningDelta)
-                {
-                    var reasoningDelta = ExtractValue<string>(delta, "reasoning");
-
-                    if (string.IsNullOrEmpty(reasoningDelta)
-                        && delta.TryGetProperty("content", out var reasoningContentEl))
+                    yield return CreateUiEnvelope(chunk, "text-delta", new AITextDeltaEventData
                     {
-                        reasoningDelta = reasoningContentEl.ValueKind == JsonValueKind.String
-                            ? reasoningContentEl.GetString()
-                            : ChatMessageContentExtensions.ToText(reasoningContentEl);
-                    }
-
-                    if (string.IsNullOrEmpty(reasoningDelta)
-                       && delta.TryGetProperty("reasoning_content", out var reasContentEl))
-                    {
-                        reasoningDelta = reasContentEl.ValueKind == JsonValueKind.String
-                            ? reasContentEl.GetString()
-                            : ChatMessageContentExtensions.ToText(reasContentEl);
-                    }
-
-                    if (!string.IsNullOrEmpty(reasoningDelta))
-                    {
-                        yield return CreateUiEnvelope(chunk, "reasoning-delta", new AIReasoningDeltaEventData
-                        {
-                            Delta = reasoningDelta
-                        });
-                    }
-                }
-                else if (delta.TryGetProperty("content", out var contentEl))
-                {
-                    var textDelta = contentEl.ValueKind == JsonValueKind.String
-                        ? contentEl.GetString()
-                        : ChatMessageContentExtensions.ToText(contentEl);
-
-                    if (!string.IsNullOrEmpty(textDelta))
-                    {
-                        yield return CreateUiEnvelope(chunk, "text-delta", new AITextDeltaEventData
-                        {
-                            Delta = textDelta
-                        });
-                    }
+                        Delta = textDelta
+                    });
                 }
 
                 if (delta.TryGetProperty("tool_calls", out _))
@@ -407,6 +355,64 @@ public static partial class ChatCompletionsUnifiedMapper
                 });
             }
         }
+    }
+
+    private static string? ExtractReasoningDelta(JsonElement delta)
+    {
+        var deltaType = ExtractValue<string>(delta, "type");
+        var isReasoningDelta = string.Equals(deltaType, "think", StringComparison.OrdinalIgnoreCase);
+
+        if (!isReasoningDelta
+            && delta.TryGetProperty("reasoning", out var reasoningEl)
+            && reasoningEl.ValueKind == JsonValueKind.String)
+        {
+            isReasoningDelta = true;
+        }
+
+        if (!isReasoningDelta
+            && delta.TryGetProperty("reasoning_content", out var reasoningRootEl)
+            && reasoningRootEl.ValueKind == JsonValueKind.String)
+        {
+            isReasoningDelta = true;
+        }
+
+        if (!isReasoningDelta)
+            return null;
+
+        var reasoningDelta = ExtractValue<string>(delta, "reasoning");
+
+        if (string.IsNullOrEmpty(reasoningDelta)
+            && delta.TryGetProperty("reasoning_content", out var reasoningContentEl))
+        {
+            reasoningDelta = reasoningContentEl.ValueKind == JsonValueKind.String
+                ? reasoningContentEl.GetString()
+                : ChatMessageContentExtensions.ToText(reasoningContentEl);
+        }
+
+        if (string.IsNullOrEmpty(reasoningDelta)
+            && !delta.TryGetProperty("reasoning_content", out _)
+            && delta.TryGetProperty("content", out var contentEl))
+        {
+            reasoningDelta = contentEl.ValueKind == JsonValueKind.String
+                ? contentEl.GetString()
+                : ChatMessageContentExtensions.ToText(contentEl);
+        }
+
+        return reasoningDelta;
+    }
+
+    private static bool TryExtractTextDelta(JsonElement delta, out string? textDelta)
+    {
+        textDelta = null;
+
+        if (!delta.TryGetProperty("content", out var contentEl))
+            return false;
+
+        textDelta = contentEl.ValueKind == JsonValueKind.String
+            ? contentEl.GetString()
+            : ChatMessageContentExtensions.ToText(contentEl);
+
+        return !string.IsNullOrEmpty(textDelta);
     }
 
     private static AIEventEnvelope? TryMapUiEnvelope(JsonElement chunk)

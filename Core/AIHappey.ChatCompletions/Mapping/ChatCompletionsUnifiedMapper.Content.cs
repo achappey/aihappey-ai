@@ -436,6 +436,9 @@ public static partial class ChatCompletionsUnifiedMapper
             if (delta.TryGetProperty("tool_calls", out var toolCallsEl) && toolCallsEl.ValueKind == JsonValueKind.Array)
                 contentParts.AddRange(ParseToolCallParts(toolCallsEl));
 
+            if (contentParts.Count == 0 && !HasChunkOutputMetadata(choice))
+                continue;
+
             var role = ExtractValue<string>(delta, "role") ?? "assistant";
             var metadata = new Dictionary<string, object?>
             {
@@ -456,6 +459,9 @@ public static partial class ChatCompletionsUnifiedMapper
 
         return items.Count > 0 ? new AIOutput { Items = items } : null;
     }
+
+    private static bool HasChunkOutputMetadata(JsonElement choice)
+        => !string.IsNullOrWhiteSpace(ExtractValue<string>(choice, "finish_reason"));
 
     private static IEnumerable<AIToolCallContentPart> ParseToolCallParts(JsonElement toolCalls)
     {

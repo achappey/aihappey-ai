@@ -15,6 +15,7 @@ using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
+using static AIHappey.ChatCompletions.Mapping.ChatCompletionsUnifiedMapper;
 
 namespace AIHappey.Tests.Vercel;
 
@@ -24,6 +25,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string GroqErrorRawFixturePath = "Fixtures/chat-completions/raw/groq-error-completions-stream.jsonl";
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/chat-completions/raw/openai-web-search-chat-completions.jsonl";
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
+    private const string RelaxAiReasoningRawFixturePath = "Fixtures/chat-completions/raw/relaxai-with-reasoning-stream.jsonl";
     private const string GitHubProviderId = "github";
     private const string OpenAiProviderId = "openai";
     private const string ReasoningMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
@@ -32,6 +34,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string ProviderId = "fixture-provider";
     private const string GroqProviderId = "groq";
     private const string PerplexityProviderId = "perplexity";
+    private const string RelaxAiProviderId = "relaxai";
     private const string BraveProviderId = "brave";
 
     [Fact]
@@ -178,6 +181,85 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(316, finishData.OutputTokens);
         Assert.Equal(8606, finishData.TotalTokens);
         Assert.Equal(0.04703m, finishData.MessageMetadata?.Gateway?.Cost);
+    }
+
+    [Fact]
+    public async Task Relaxai_reasoning_stream_does_not_emit_empty_text_or_reasoning_ui_deltas()
+    {
+        var provider = new FixtureChatCompletionStreamModelProvider(
+            RelaxAiProviderId,
+            LoadChatCompletionRawFixture(RelaxAiReasoningRawFixturePath));
+
+        var request = new AIRequest
+        {
+            ProviderId = RelaxAiProviderId,
+            Model = "relaxai/GPT-OSS-120b",
+            Stream = true
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaChatCompletionsAsync(request));
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is
+                "reasoning-start" or
+                "reasoning-delta" or
+                "reasoning-end" or
+                "text-start" or
+                "text-delta" or
+                "text-end" or
+                "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(RelaxAiProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(
+            uiParts.Select(part => part.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "text-start",
+            "text-delta",
+            "text-end",
+            "finish");
+
+        var textDeltas = uiParts.OfType<TextDeltaUIMessageStreamPart>().Select(part => part.Delta).ToList();
+        var reasoningDeltas = uiParts.OfType<ReasoningDeltaUIPart>().Select(part => part.Delta).ToList();
+
+        Assert.All(textDeltas, delta => Assert.False(string.IsNullOrEmpty(delta)));
+        Assert.All(reasoningDeltas, delta => Assert.False(string.IsNullOrEmpty(delta)));
+
+        Assert.Equal(
+            "\n\nHey! Hoe kan ik je helpen? 😊  \nLaat het me weten als je vragen hebt over Fakton, ontwikkeling, of iets anders waar ik je mee kan ondersteunen.",
+            string.Concat(textDeltas));
+
+        Assert.Contains("Final decision: Respond in Dutch, ask how I can assist.", string.Concat(reasoningDeltas));
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts.Last(part => part.Type == "finish"));
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(538, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(487, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(1025, finishPart.MessageMetadata?.Usage.TotalTokens);
+    }
+
+    [Fact]
+    public void Chat_completions_delta_with_reasoning_and_content_emits_both_reasoning_and_text_ui_deltas()
+    {
+        var update = DeserializeChatCompletionUpdate("""
+        {"id":"chatcmpl-mixed-relaxai","object":"chat.completion.chunk","created":1778842613,"model":"GPT-OSS-120b","choices":[{"index":0,"delta":{"content":"\n\nhee bro! 😄 hoe","role":"assistant","reasoning_content":" but not overbearing.\n\n"},"finish_reason":null}],"system_fingerprint":""}
+        """);
+        var mappingState = new ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState();
+
+        var uiParts = update
+            .ToUnifiedStreamEvents(RelaxAiProviderId, mappingState)
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-delta" or "text-delta")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(RelaxAiProviderId))
+            .ToList();
+
+        Assert.Equal(["reasoning-delta", "text-delta"], uiParts.Select(part => part.Type).ToList());
+
+        var reasoningPart = Assert.IsType<ReasoningDeltaUIPart>(uiParts[0]);
+        var textPart = Assert.IsType<TextDeltaUIMessageStreamPart>(uiParts[1]);
+
+        Assert.Equal(" but not overbearing.\n\n", reasoningPart.Delta);
+        Assert.Equal("\n\nhee bro! 😄 hoe", textPart.Delta);
     }
 
     [Fact]
