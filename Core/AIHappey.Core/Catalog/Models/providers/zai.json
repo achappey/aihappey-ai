@@ -2,29 +2,44 @@
   "object": "list",
   "data": [
     {
+      "id": "zai/glm-5v-turbo",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-5v-turbo",
+      "type": "language",
+      "description": "A multimodal agent foundation model with native integration of vision and language capabilities. It delivers elegant visual programming, while excelling in long-term planning, complex programming, and action execution."
+    },
+    {
+      "id": "zai/glm-4.6v",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-4.6v",
+      "type": "language",
+      "description": "Z.ai’s multimodal model with a 128k training context window and SoTA visual understanding. It also introduces native Function Calling, linking visual perception with executable actions for real-world multimodal agents."
+    },
+    {
+      "id": "zai/glm-5.1",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-5.1",
+      "type": "language",
+      "description": "Z.ai's new flagship foundation model with significant gains on long-horizon tasks, support for 8-hour autonomous work, engineering-grade deliverables, and Claude Opus 4.6-level performance."
+    },
+    {
+      "id": "zai/glm-5.1",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-5.1",
+      "type": "language",
+      "description": "Z.ai's new flagship foundation model with significant gains on long-horizon tasks, support for 8-hour autonomous work, engineering-grade deliverables, and Claude Opus 4.6-level performance."
+    },
+    {
       "id": "zai/glm-5",
       "object": "model",
       "owned_by": "z.ai",
       "name": "glm-5",
       "type": "language",
-      "context_window": 200000,
-      "max_tokens": 128000
-    },
-    {
-      "id": "zai/glm-4.7-flash",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.7-flash",
-      "type": "language",
-      "context_window": 200000,
-      "max_tokens": 128000
-    },
-    {
-      "id": "zai/glm-4.7-flashx",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.7-flashx",
-      "type": "language",
+      "description": "Z.ai flagship reasoning model with stronger coding, more reliable multi-step reasoning and execution, improved complex agent task performance, more natural conversation, and better front-end generation quality.",
       "context_window": 200000,
       "max_tokens": 128000
     },
@@ -34,29 +49,17 @@
       "owned_by": "z.ai",
       "name": "glm-4.7",
       "type": "language",
-      "description": "Latest flagship GLM-4.7 model, a foundational model specifically designed for agent applications.",
+      "description": "GLM-4.7 series model with enhanced programming, stable multi-step reasoning and execution, better complex agent task performance, more natural dialogue, and improved front-end aesthetics.",
       "context_window": 200000,
       "max_tokens": 128000
     },
     {
-      "id": "zai/glm-4.6",
+      "id": "zai/glm-5-turbo",
       "object": "model",
       "owned_by": "z.ai",
-      "name": "glm-4.6",
+      "name": "glm-5-turbo",
       "type": "language",
-      "description": "Previous-generation GLM flagship model with strong general reasoning and agent capabilities.",
-      "context_window": 200000,
-      "max_tokens": 128000
-    },
-    {
-      "id": "zai/glm-4.5",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.5",
-      "type": "language",
-      "description": "GLM-4.5 base model offering balanced performance for general-purpose and agent workloads.",
-      "context_window": 128000,
-      "max_tokens": 96000
+      "description": "Base model deeply optimized for the OpenClaw scenario, delivering true executability in complex, dynamic, and long-chain tasks."
     },
     {
       "id": "zai/glm-4.5-air",
@@ -64,39 +67,19 @@
       "owned_by": "z.ai",
       "name": "glm-4.5-air",
       "type": "language",
-      "description": "Lightweight GLM-4.5 variant optimized for faster inference and lower latency.",
+      "description": "Lightweight GLM-4.5 model delivering strong cost-effectiveness and high performance.",
       "context_window": 128000,
       "max_tokens": 96000
     },
     {
-      "id": "zai/glm-4.5-x",
+      "id": "zai/glm-4.7-flash",
       "object": "model",
       "owned_by": "z.ai",
-      "name": "glm-4.5-x",
+      "name": "glm-4.7-flash",
       "type": "language",
-      "description": "Enhanced GLM-4.5 variant with stronger reasoning and extended capability depth.",
-      "context_window": 128000,
-      "max_tokens": 96000
-    },
-    {
-      "id": "zai/glm-4.5-airx",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.5-airx",
-      "type": "language",
-      "description": "Hybrid GLM-4.5 model combining efficiency of AIR with enhanced reasoning performance.",
-      "context_window": 128000,
-      "max_tokens": 96000
-    },
-    {
-      "id": "zai/glm-4.5-flash",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.5-flash",
-      "type": "language",
-      "description": "Ultra-fast GLM-4.5 variant optimized for low-latency, high-throughput workloads.",
-      "context_window": 128000,
-      "max_tokens": 96000
+      "description": "30B lightweight, efficient, high-performance GLM-4.7 model that outranks similar-scale open-source models on multiple leaderboards.",
+      "context_window": 200000,
+      "max_tokens": 128000
     },
     {
       "id": "zai/glm-4-32b-0414-128k",
@@ -104,33 +87,9 @@
       "owned_by": "z.ai",
       "name": "glm-4-32b-0414-128k",
       "type": "language",
-      "description": "GLM-4 32B model with a 128k context window, suited for long-context reasoning and document-heavy tasks.",
+      "description": "General-purpose, cost-efficient LLM for advanced Q&A, coding, search, and structured task automation across business and technical domains.",
       "context_window": 128000,
       "max_tokens": 16000
-    },
-    {
-      "id": "zai/glm-4.6v",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.6v",
-      "type": "language",
-      "context_window": 128000
-    },
-    {
-      "id": "zai/glm-4.6v-flashx",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.6v-flashx",
-      "type": "language",
-      "context_window": 128000
-    },
-    {
-      "id": "zai/glm-4.6v-flash",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.6v-flash",
-      "type": "language",
-      "context_window": 128000
     },
     {
       "id": "zai/cogview-4-250304",

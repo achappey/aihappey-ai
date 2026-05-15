@@ -1,0 +1,106 @@
+{
+  "zai/glm-5.1": {
+    "pricing": {
+      "input": "0.0000014",
+      "output": "0.0000044",
+      "input_cache_read": "0.00000026"
+    }
+  },
+  "zai/glm-5": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.0000032",
+      "input_cache_read": "0.0000002"
+    }
+  },
+  "zai/glm-5-turbo": {
+    "pricing": {
+      "input": "0.0000012",
+      "output": "0.000004",
+      "input_cache_read": "0.00000024"
+    }
+  },
+  "zai/glm-4.7": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.0000022",
+      "input_cache_read": "0.00000011"
+    }
+  },
+  "zai/glm-4.7-flashx": {
+    "pricing": {
+      "input": "0.00000007",
+      "output": "0.0000004",
+      "input_cache_read": "0.00000001"
+    }
+  },
+  "zai/glm-4.7-flash": {
+    "pricing": {
+      "input": "0",
+      "output": "0",
+      "input_cache_read": "0"
+    }
+  },
+  "zai/glm-4.6": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.0000022",
+      "input_cache_read": "0.00000011"
+    }
+  },
+  "zai/glm-4.5": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.0000022",
+      "input_cache_read": "0.00000011"
+    }
+  },
+  "zai/glm-4.5-x": {
+    "pricing": {
+      "input": "0.0000022",
+      "output": "0.0000089",
+      "input_cache_read": "0.00000045"
+    }
+  },
+  "zai/glm-4.5-air": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000011",
+      "input_cache_read": "0.00000003"
+    }
+  },
+  "zai/glm-4.5-airx": {
+    "pricing": {
+      "input": "0.0000011",
+      "output": "0.0000045",
+      "input_cache_read": "0.00000022"
+    }
+  },
+  "zai/glm-4.5-flash": {
+    "pricing": {
+      "input": "0",
+      "output": "0",
+      "input_cache_read": "0"
+    }
+  },
+  "zai/glm-4-32b-0414-128k": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.0000001"
+    }
+  },
+  "zai/glm-5v-turbo": {
+    "pricing": {
+      "input": "0.0000012",
+      "output": "0.000004",
+      "input_cache_read": "0.00000024"
+    }
+  },
+  "zai/glm-4.6v": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000009",
+      "input_cache_read": "0.00000005"
+    }
+  }
+}
