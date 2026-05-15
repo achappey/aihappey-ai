@@ -511,7 +511,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["brave"] = "X-Brave-Key",
             ["linkup"] = "X-Linkup-Key",
             ["merge"] = "X-Merge-Key",
-            ["bastiongpt"] = "X-BastionGPT-Key"
+            ["bastiongpt"] = "X-BastionGPT-Key",
+            ["shareai"] = "X-ShareAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

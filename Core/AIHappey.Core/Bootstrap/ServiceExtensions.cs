@@ -511,6 +511,7 @@ using AIHappey.Core.Providers.Linkup;
 using AIHappey.Core.Providers.Merge;
 using AIHappey.Core.Providers.LexiCo;
 using AIHappey.Core.Providers.BastionGPT;
+using AIHappey.Core.Providers.ShareAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1045,6 +1046,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LinkupProvider>();
         services.AddSingleton<IModelProvider, MergeProvider>();
         services.AddSingleton<IModelProvider, BastionGPTProvider>();
+        services.AddSingleton<IModelProvider, ShareAIProvider>();
 
     }
 }

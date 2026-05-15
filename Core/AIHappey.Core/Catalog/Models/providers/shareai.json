@@ -1,0 +1,84 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "shareai/llama4:17b-maverick-128e-instruct-fp16",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama4:17b-maverick-128e-instruct-fp16",
+      "type": "language",
+      "description": "Meta's latest collection of multimodal models.",
+      "context_window": 1000
+    },
+    {
+      "id": "shareai/llama4:17b-scout-16e-instruct-fp16",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama4:17b-scout-16e-instruct-fp16",
+      "type": "language",
+      "description": "Meta's latest collection of multimodal models.",
+      "context_window": 10000
+    },
+    {
+      "id": "shareai/gpt-oss:120b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-oss:120b",
+      "type": "language",
+      "description": "OpenAI’s open-weight models designed for powerful reasoning, agentic tasks, and versatile developer use cases.",
+      "context_window": 128000
+    },
+    {
+      "id": "shareai/kimi-k2-thinking",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "kimi-k2-thinking",
+      "type": "language",
+      "description": "Kimi K2 Thinking model."
+    },
+    {
+      "id": "shareai/DeepSeek-V3.2",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "DeepSeek-V3.2",
+      "type": "language",
+      "description": "DeepSeek-V3.2 is a large language model from DeepSeek."
+    },
+    {
+      "id": "shareai/gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o",
+      "type": "language",
+      "description": "GPT-4o is an omni model supporting text and image inputs with text outputs."
+    },
+    {
+      "id": "shareai/GPT-4.1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4.1",
+      "type": "language",
+      "description": "GPT-4.1 is a flagship large language model optimized for advanced instruction following, real-world software engineering, and long-context reasoning.",
+      "context_window": 1000000
+    },
+    {
+      "id": "shareai/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4",
+      "type": "language",
+      "description": "GPT-5.4 is a frontier model with support for text and advanced reasoning workloads.",
+      "context_window": 1050000,
+      "max_tokens": 128000
+    },
+    {
+      "id": "shareai/gpt-oss:120b-cloud",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-oss:120b-cloud",
+      "type": "language",
+      "description": "OpenAI’s open-weight models designed for powerful reasoning, agentic tasks, and versatile developer use cases.",
+      "context_window": 128000
+    }
+  ]
+}

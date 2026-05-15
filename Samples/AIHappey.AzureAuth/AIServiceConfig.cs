@@ -510,6 +510,7 @@ public class AIServiceConfig
     public ProviderConfig? Linkup { get; set; }
     public ProviderConfig? Merge { get; set; }
     public ProviderConfig? BastionGPT { get; set; }
+    public ProviderConfig? ShareAI { get; set; }
 
 }
 

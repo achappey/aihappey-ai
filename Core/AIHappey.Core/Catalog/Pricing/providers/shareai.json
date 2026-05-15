@@ -1,0 +1,56 @@
+{
+  "shareai/llama4:17b-maverick-128e-instruct-fp16": {
+    "pricing": {
+      "input": "0.00000018",
+      "output": "0.0000006"
+    }
+  },
+  "shareai/llama4:17b-scout-16e-instruct-fp16": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000005"
+    }
+  },
+  "shareai/gpt-oss:120b": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000008"
+    }
+  },
+  "shareai/kimi-k2-thinking": {
+    "pricing": {
+      "input": "0.00000065",
+      "output": "0.0000027"
+    }
+  },
+  "shareai/DeepSeek-V3.2": {
+    "pricing": {
+      "input": "0.00000065",
+      "output": "0.00000275"
+    }
+  },
+  "shareai/gpt-4o": {
+    "pricing": {
+      "input": "0.00000255",
+      "output": "0.00001"
+    }
+  },
+  "shareai/GPT-4.1": {
+    "pricing": {
+      "input": "0.0000021",
+      "output": "0.000008"
+    }
+  },
+  "shareai/gpt-5.4": {
+    "pricing": {
+      "input": "0.00000255",
+      "output": "0.000015"
+    }
+  },
+  "shareai/gpt-oss:120b-cloud": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.0000008"
+    }
+  }
+}
