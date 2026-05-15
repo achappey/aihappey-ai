@@ -319,7 +319,6 @@ using AIHappey.Core.Providers.KimiK2;
 using AIHappey.Core.Providers.Keyplex;
 using AIHappey.Core.Providers.LLMkiwi;
 using AIHappey.Core.Providers.CheapGrok;
-using AIHappey.Core.Providers.Lexi;
 using AIHappey.Core.Providers.Eliza;
 using AIHappey.Core.Providers.OpenLimits;
 using AIHappey.Core.Providers.ArkRoute;
@@ -510,6 +509,7 @@ using AIHappey.Core.Providers.TerminalSkills;
 using AIHappey.Core.Providers.ClawHub;
 using AIHappey.Core.Providers.Linkup;
 using AIHappey.Core.Providers.Merge;
+using AIHappey.Core.Providers.LexiCo;
 
 namespace AIHappey.Core.AI;
 
@@ -855,7 +855,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, KeyplexProvider>();
         services.AddSingleton<IModelProvider, LLMkiwiProvider>();
         services.AddSingleton<IModelProvider, CheapGrokProvider>();
-        services.AddSingleton<IModelProvider, LexiProvider>();
+        services.AddSingleton<IModelProvider, LexiCoProvider>();
         services.AddSingleton<IModelProvider, ElizaProvider>();
         services.AddSingleton<IModelProvider, OpenLimitsProvider>();
         services.AddSingleton<IModelProvider, ArkRouteProvider>();
