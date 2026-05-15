@@ -509,6 +509,7 @@ public class AIServiceConfig
     public ProviderConfig? Brave { get; set; }
     public ProviderConfig? Linkup { get; set; }
     public ProviderConfig? Merge { get; set; }
+    public ProviderConfig? BastionGPT { get; set; }
 
 }
 

@@ -510,7 +510,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["vibekit"] = "X-VibeKit-Key",
             ["brave"] = "X-Brave-Key",
             ["linkup"] = "X-Linkup-Key",
-            ["merge"] = "X-Merge-Key"
+            ["merge"] = "X-Merge-Key",
+            ["bastiongpt"] = "X-BastionGPT-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

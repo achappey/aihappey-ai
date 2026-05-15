@@ -1,0 +1,14 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "bastiongpt/bastiongpt",
+      "object": "model",
+      "owned_by": "BastionGPT",
+      "name": "BastionGPT",
+      "type": "language",
+      "description": "Outperforms GPT-5, GPT-4o, GPT-4.1, o3, and Gemini 3 Pro for healthcare applications while maintaining full HIPAA compliance. Purpose-built for therapy, clinical, and healthcare workflows.",
+      "context_window": 500000
+    }
+  ]
+}

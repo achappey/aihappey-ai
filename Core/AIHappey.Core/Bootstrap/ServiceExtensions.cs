@@ -510,6 +510,7 @@ using AIHappey.Core.Providers.ClawHub;
 using AIHappey.Core.Providers.Linkup;
 using AIHappey.Core.Providers.Merge;
 using AIHappey.Core.Providers.LexiCo;
+using AIHappey.Core.Providers.BastionGPT;
 
 namespace AIHappey.Core.AI;
 
@@ -1043,6 +1044,7 @@ public static class ServiceExtensions
         services.AddSingleton<ISkillProvider, ClawHubProvider>();
         services.AddSingleton<IModelProvider, LinkupProvider>();
         services.AddSingleton<IModelProvider, MergeProvider>();
+        services.AddSingleton<IModelProvider, BastionGPTProvider>();
 
     }
 }
