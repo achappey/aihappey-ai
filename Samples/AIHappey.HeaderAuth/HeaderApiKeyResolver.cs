@@ -514,7 +514,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["bastiongpt"] = "X-BastionGPT-Key",
             ["shareai"] = "X-ShareAI-Key",
             ["token360"] = "X-Token360-Key",
-            ["webcrawlerapi"] = "X-WebCrawlerAPI-Key"
+            ["webcrawlerapi"] = "X-WebCrawlerAPI-Key",
+            ["agentphone"] = "X-AgentPhone-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -513,6 +513,7 @@ public class AIServiceConfig
     public ProviderConfig? ShareAI { get; set; }
     public ProviderConfig? Token360 { get; set; }
     public ProviderConfig? WebCrawlerAPI { get; set; }
+    public ProviderConfig? AgentPhone { get; set; }
 
 }
 

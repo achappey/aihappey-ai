@@ -514,6 +514,7 @@ using AIHappey.Core.Providers.BastionGPT;
 using AIHappey.Core.Providers.ShareAI;
 using AIHappey.Core.Providers.Token360;
 using AIHappey.Core.Providers.WebCrawlerAPI;
+using AIHappey.Core.Providers.AgentPhone;
 
 namespace AIHappey.Core.AI;
 
@@ -1051,6 +1052,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ShareAIProvider>();
         services.AddSingleton<IModelProvider, Token360Provider>();
         services.AddSingleton<IModelProvider, WebCrawlerAPIProvider>();
+        services.AddSingleton<IModelProvider, AgentPhoneProvider>();
 
     }
 }
