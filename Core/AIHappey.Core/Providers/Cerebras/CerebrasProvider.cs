@@ -42,6 +42,8 @@ public partial class CerebrasProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        options.Store = null;
+
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
     }
@@ -49,6 +51,8 @@ public partial class CerebrasProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        options.Store = null;
 
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
