@@ -440,7 +440,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | StealthGPT     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | StepFun        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Straico        | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
-| StreamLake     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| StreamLake     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | SurferCloud    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | SudoRouter     | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | SunoAPI        | ✅        | ❌                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
