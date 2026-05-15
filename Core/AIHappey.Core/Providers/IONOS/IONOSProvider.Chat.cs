@@ -1,6 +1,8 @@
 using AIHappey.Core.AI;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.IONOS;
@@ -11,7 +13,7 @@ public partial class IONOSProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client, options, cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
@@ -19,21 +21,26 @@ public partial class IONOSProvider
     {
         ApplyAuthHeader();
 
-        await foreach (var update in _client.GetChatCompletionUpdates(options, ct: cancellationToken))
+        await foreach (var update in this.GetChatCompletions(_client, options, cancellationToken: cancellationToken))
             yield return update;
 
         yield break;
-
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-                 cancellationToken: cancellationToken))
-            yield return update;
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
 
         yield break;
     }
