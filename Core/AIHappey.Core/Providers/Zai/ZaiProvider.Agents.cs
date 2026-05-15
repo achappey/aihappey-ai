@@ -10,7 +10,7 @@ using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider 
+public partial class ZaiProvider
 {
     private const string AgentsEndpoint = "/api/v1/agents";
     private const string AgentModelPrefix = "agents/";
@@ -356,7 +356,11 @@ public partial class ZaiProvider
                 new
                 {
                     index = 0,
-                    delta = string.IsNullOrEmpty(content) ? new { } : new { role = "assistant", content },
+                    delta = new
+                    {
+                        role = "assistant",
+                        content = content ?? ""
+                    },
                     finish_reason = finishReason
                 }
             ],
