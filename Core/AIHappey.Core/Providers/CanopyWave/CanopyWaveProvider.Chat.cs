@@ -1,5 +1,6 @@
-using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.CanopyWave;
@@ -10,16 +11,19 @@ public partial class CanopyWaveProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        // CanopyWave is OpenAI-compatible; use the generic streaming implementation.
-        // POST https://inference.canopywave.io/v1/chat/completions
-        await foreach (var update in _client.CompletionsStreamAsync(
-            chatRequest,
-            cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            yield return update;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
+
+        yield break;
     }
 
 
