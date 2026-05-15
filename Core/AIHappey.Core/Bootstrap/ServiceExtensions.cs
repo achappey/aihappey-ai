@@ -513,6 +513,7 @@ using AIHappey.Core.Providers.LexiCo;
 using AIHappey.Core.Providers.BastionGPT;
 using AIHappey.Core.Providers.ShareAI;
 using AIHappey.Core.Providers.Token360;
+using AIHappey.Core.Providers.WebCrawlerAPI;
 
 namespace AIHappey.Core.AI;
 
@@ -1049,6 +1050,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, BastionGPTProvider>();
         services.AddSingleton<IModelProvider, ShareAIProvider>();
         services.AddSingleton<IModelProvider, Token360Provider>();
+        services.AddSingleton<IModelProvider, WebCrawlerAPIProvider>();
 
     }
 }

@@ -1,0 +1,54 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "webcrawlerapi/google/gemini-3.1-flash-lite-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3.1-flash-lite-preview",
+      "type": "language"
+    },
+    {
+      "id": "webcrawlerapi/google/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-flash-preview",
+      "type": "language"
+    },
+    {
+      "id": "webcrawlerapi/google/gemini-3.1-pro-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3.1-pro-preview",
+      "type": "language"
+    },
+    {
+      "id": "webcrawlerapi/openai/gpt-5.4-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4-mini",
+      "type": "language"
+    },
+    {
+      "id": "webcrawlerapi/openai/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4",
+      "type": "language"
+    },
+    {
+      "id": "webcrawlerapi/openai/gpt-5.5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.5",
+      "type": "language"
+    },
+    {
+      "id": "webcrawlerapi/anthropic/claude-sonnet-4.6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-sonnet-4.6",
+      "type": "language"
+    }
+  ]
+}

@@ -512,6 +512,7 @@ public class AIServiceConfig
     public ProviderConfig? BastionGPT { get; set; }
     public ProviderConfig? ShareAI { get; set; }
     public ProviderConfig? Token360 { get; set; }
+    public ProviderConfig? WebCrawlerAPI { get; set; }
 
 }
 
