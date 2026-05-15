@@ -511,6 +511,7 @@ public class AIServiceConfig
     public ProviderConfig? Merge { get; set; }
     public ProviderConfig? BastionGPT { get; set; }
     public ProviderConfig? ShareAI { get; set; }
+    public ProviderConfig? Token360 { get; set; }
 
 }
 

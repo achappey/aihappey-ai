@@ -512,7 +512,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["linkup"] = "X-Linkup-Key",
             ["merge"] = "X-Merge-Key",
             ["bastiongpt"] = "X-BastionGPT-Key",
-            ["shareai"] = "X-ShareAI-Key"
+            ["shareai"] = "X-ShareAI-Key",
+            ["token360"] = "X-Token360-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

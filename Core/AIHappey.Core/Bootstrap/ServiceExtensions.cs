@@ -512,6 +512,7 @@ using AIHappey.Core.Providers.Merge;
 using AIHappey.Core.Providers.LexiCo;
 using AIHappey.Core.Providers.BastionGPT;
 using AIHappey.Core.Providers.ShareAI;
+using AIHappey.Core.Providers.Token360;
 
 namespace AIHappey.Core.AI;
 
@@ -1047,6 +1048,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MergeProvider>();
         services.AddSingleton<IModelProvider, BastionGPTProvider>();
         services.AddSingleton<IModelProvider, ShareAIProvider>();
+        services.AddSingleton<IModelProvider, Token360Provider>();
 
     }
 }
