@@ -402,7 +402,6 @@ using AIHappey.Core.Providers.OXOAPI;
 using AIHappey.Core.Providers.Chutes;
 using AIHappey.Core.Providers.XiaomiMIMO;
 using AIHappey.Core.Providers.Ollama;
-using AIHappey.Core.Providers.SwitchpointAI;
 using AIHappey.Core.Providers.Vivgrid;
 using AIHappey.Core.Providers.Ambient;
 using AIHappey.Core.Providers.Relace;
@@ -942,7 +941,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ChutesProvider>();
         services.AddSingleton<IModelProvider, XiaomiMIMOProvider>();
         services.AddSingleton<IModelProvider, OllamaProvider>();
-        services.AddSingleton<IModelProvider, SwitchpointAIProvider>();
         services.AddSingleton<IModelProvider, VivgridProvider>();
         services.AddSingleton<IModelProvider, AmbientProvider>();
         services.AddSingleton<IModelProvider, RelaceProvider>();

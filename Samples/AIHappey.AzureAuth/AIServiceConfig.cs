@@ -404,7 +404,6 @@ public class AIServiceConfig
     public ProviderConfig? Chutes { get; set; }
     public ProviderConfig? XiaomiMIMO { get; set; }
     public ProviderConfig? Ambient { get; set; }
-    public ProviderConfig? SwitchpointAI { get; set; }
     public ProviderConfig? Ollama { get; set; }
     public ProviderConfig? Vivgrid { get; set; }
     public ProviderConfig? Relace { get; set; }

@@ -406,7 +406,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["chutes"] = "X-Chutes-Key",
             ["xiaomimimo"] = "X-XiaomiMIMO-Key",
             ["ambient"] = "X-Ambient-Key",
-            ["switchpointai"] = "X-SwitchpointAI-Key",
             ["ollama"] = "X-Ollama-Key",
             ["vivgrid"] = "X-Vivgrid-Key",
             ["relace"] = "X-Relace-Key",
