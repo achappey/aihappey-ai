@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.Lexi;
+namespace AIHappey.Core.Providers.LexiCo;
 
-public partial class LexiProvider
+public partial class LexiCoProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {

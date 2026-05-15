@@ -324,7 +324,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["keyplex"] = "X-Keyplex-Key",
             ["llmkiwi"] = "X-LLMkiwi-Key",
             ["cheapgrok"] = "X-CheapGrok-Key",
-            ["lexi"] = "X-Lexi-Key",
+            ["lexico"] = "X-LexiCo-Key",
             ["eliza"] = "X-Eliza-Key",
             ["openlimits"] = "X-OpenLimits-Key",
             ["arkroute"] = "X-ArkRoute-Key",
@@ -510,7 +510,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["vibekit"] = "X-VibeKit-Key",
             ["brave"] = "X-Brave-Key",
             ["linkup"] = "X-Linkup-Key",
-            ["merge"] = "X-Merge-Key",
+            ["merge"] = "X-Merge-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

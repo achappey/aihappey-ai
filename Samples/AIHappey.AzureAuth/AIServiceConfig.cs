@@ -322,7 +322,7 @@ public class AIServiceConfig
     public ProviderConfig? Keyplex { get; set; }
     public ProviderConfig? LLMkiwi { get; set; }
     public ProviderConfig? CheapGrok { get; set; }
-    public ProviderConfig? Lexi { get; set; }
+    public ProviderConfig? LexiCo { get; set; }
     public ProviderConfig? Eliza { get; set; }
     public ProviderConfig? OpenLimits { get; set; }
     public ProviderConfig? ArkRoute { get; set; }
@@ -509,7 +509,6 @@ public class AIServiceConfig
     public ProviderConfig? Brave { get; set; }
     public ProviderConfig? Linkup { get; set; }
     public ProviderConfig? Merge { get; set; }
-
 
 }
 
