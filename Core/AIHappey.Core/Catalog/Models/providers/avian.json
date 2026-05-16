@@ -2,6 +2,22 @@
   "object": "list",
   "data": [
     {
+      "id": "avian/deepseek/deepseek-v4-flash",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v4-flash",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
+      "id": "avian/deepseek/deepseek-v4-pro",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v4-pro",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
       "id": "avian/deepseek/deepseek-v3.2",
       "object": "model",
       "owned_by": "DeepSeek",
@@ -26,10 +42,26 @@
       "context_window": 205000
     },
     {
+      "id": "avian/z-ai/glm-5.1",
+      "object": "model",
+      "owned_by": "Z.AI",
+      "name": "glm-5.1",
+      "type": "language",
+      "context_window": 202000
+    },
+    {
       "id": "avian/moonshotai/kimi-k2.5",
       "object": "model",
       "owned_by": "Moonshot AI",
       "name": "kimi-k2.5",
+      "type": "language",
+      "context_window": 262000
+    },
+    {
+      "id": "avian/moonshotai/kimi-k2.6",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "kimi-k2.6",
       "type": "language",
       "context_window": 262000
     }
