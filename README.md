@@ -43,7 +43,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Alibaba        | ✅        | ✅                | ✅            | ❌            | ✅        | ✅                     | ✅                       | ➖               | ➖          | ✅          | ➖          |
 | AlphaNeural    | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AmazonBedrock  | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Ambient        | ✅        | ✅                | ❌            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Ambient        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Anannas        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Answira        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Anthropic      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
