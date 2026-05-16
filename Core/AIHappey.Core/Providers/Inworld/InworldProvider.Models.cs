@@ -12,54 +12,18 @@ public partial class InworldProvider
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-
         ApplyAuthHeader();
 
         var models = new List<Model>();
 
         // Hardcoded Inworld-native TTS models (docs)
-        models.AddRange(InworldModels);
+        models.AddRange(GetIdentifier().GetModels());
 
         // Routed provider models (Inworld -> upstream provider list)
         models.AddRange(await ListRoutedModels(cancellationToken));
 
         return models;
     }
-    public static IReadOnlyList<Model> InworldModels =>
-    [
-        new()
-        {
-            Id = "inworld/inworld-tts-1.5-max",
-            Name = "Llama Inworld TTS 1.5 Max",
-            Type = "speech",
-            OwnedBy = "Inworld AI",
-            Description = "Flagship model, best balance of quality and speed, with enhanced timestamps."
-        },
-        new()
-        {
-            Id = "inworld/inworld-tts-1.5-mini",
-            Name = "Llama Inworld TTS 1.5 Mini",
-            Type = "speech",
-            OwnedBy = "Inworld AI",
-            Description = "Ultra-fast, most cost-efficient model, with enhanced timestamps."
-        },
-        new()
-        {
-            Id = "inworld/inworld-tts-1-max",
-            Name = "Llama Inworld TTS Max",
-            Type = "speech",
-            OwnedBy = "Inworld AI",
-            Description = "Most powerful previous generation model, with basic timestamps support."
-        },
-        new()
-        {
-            Id = "inworld/inworld-tts-1",
-            Name = "Llama Inworld TTS",
-            Type = "speech",
-            OwnedBy = "Inworld AI",
-            Description = "Fast previous generation model, with basic timestamps support."
-        }
-    ];
 
     private static readonly IReadOnlyDictionary<string, string> InworldProviderIds =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

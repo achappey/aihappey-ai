@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "inworld/auto",
+      "object": "model",
+      "owned_by": "Inworld",
+      "name": "auto",
+      "type": "language",
+      "description": "Automatic model selection based on criteria like price, latency, or intelligence."
+    },
+    {
+      "id": "inworld/inworld-tts-2",
+      "object": "model",
+      "owned_by": "Inworld",
+      "name": "Llama Realtime TTS-2",
+      "type": "speech",
+      "description": "Our newest, most powerful model with natural language steering and stronger multilingual capabilities."
+    },
+    {
+      "id": "inworld/inworld-tts-1.5-max",
+      "object": "model",
+      "owned_by": "Inworld",
+      "name": "Llama Realtime TTS 1.5 Max",
+      "type": "speech",
+      "description": "#1 ranked model, best balance of quality and speed, with enhanced timestamps."
+    },
+    {
+      "id": "inworld/inworld-tts-1.5-mini",
+      "object": "model",
+      "owned_by": "Inworld",
+      "name": "Llama Realtime TTS 1.5 Mini",
+      "type": "speech",
+      "description": "Ultra-fast, most cost-efficient model, with enhanced timestamps."
+    }
+  ]
+}
