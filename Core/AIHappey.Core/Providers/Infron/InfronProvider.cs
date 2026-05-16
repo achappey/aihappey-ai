@@ -73,7 +73,7 @@ public partial class InfronProvider : IModelProvider
         => InfronSpeechRequest(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => InfronRerankingRequest(request, cancellationToken);
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -99,9 +99,7 @@ public partial class InfronProvider : IModelProvider
         => InfronImageRequest(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+        => InfronVideoRequest(request, cancellationToken);
 
     public async Task<MessagesResponse> MessagesAsync(
       MessagesRequest request,

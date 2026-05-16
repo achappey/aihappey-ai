@@ -225,7 +225,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Inflection     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Infomaniak     | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
 | Infraxa        | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Infron         | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ❌          | ❌          | ➖          |
+| Infron         | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
 | Inworld        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | IOnet          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | IONOS          | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
