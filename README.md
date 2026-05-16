@@ -227,7 +227,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Infomaniak     | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
 | Infraxa        | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Infron         | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
-| Inworld        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
+| Inworld        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ❌                       | ✅               | ➖          | ➖          | ➖          |
 | IOnet          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | IONOS          | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Ishi           | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -381,7 +381,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | PreAPI         | ❌        | ❌                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | Puter          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Prakasa        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| PrimeIntellect | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| PrimeIntellect | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Privatemode    | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
 | PublicAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ❌          | ➖          | ➖          |
 | Qiniu          | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
