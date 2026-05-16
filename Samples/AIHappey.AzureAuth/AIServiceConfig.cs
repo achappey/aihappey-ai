@@ -514,6 +514,8 @@ public class AIServiceConfig
     public ProviderConfig? AgentPhone { get; set; }
     public ProviderConfig? Tembo { get; set; }
     public ProviderConfig? AgnesAI { get; set; }
+    public ProviderConfig? Herma { get; set; }
+    public ProviderConfig? ByteSpace { get; set; }
 
 }
 

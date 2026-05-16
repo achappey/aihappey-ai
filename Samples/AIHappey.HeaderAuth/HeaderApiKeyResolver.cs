@@ -515,7 +515,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["webcrawlerapi"] = "X-WebCrawlerAPI-Key",
             ["agentphone"] = "X-AgentPhone-Key",
             ["tembo"] = "X-Tembo-Key",
-            ["agnesai"] = "X-AgnesAI-Key"
+            ["agnesai"] = "X-AgnesAI-Key",
+            ["herma"] = "X-Herma-Key",
+            ["bytespace"] = "X-ByteSpace-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
