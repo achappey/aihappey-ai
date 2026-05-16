@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "agentics/tts",
+      "object": "model",
+      "owned_by": "Agentics",
+      "name": "Text-to-Speech",
+      "type": "speech"
+    },
+    {
+      "id": "agentics/stt",
+      "object": "model",
+      "owned_by": "Agentics",
+      "name": "Speech-to-Text",
+      "type": "transcription"
+    }
+  ]
+}

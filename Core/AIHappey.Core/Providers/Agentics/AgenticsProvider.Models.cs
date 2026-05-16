@@ -16,58 +16,132 @@ public partial class AgenticsProvider
             async ct =>
             {
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-                using var resp = await _client.SendAsync(req, cancellationToken);
-
-                if (!resp.IsSuccessStatusCode)
-                {
-                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"Agentics API error: {err}");
-                }
-
-                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
                 var models = new List<Model>();
-                var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                        ? dataEl.EnumerateArray()
-                        : Enumerable.Empty<JsonElement>();
+                await AddChatModelsAsync(models, cancellationToken);
+                await AddImageModelsAsync(models, cancellationToken);
 
-                foreach (var el in arr)
-                {
-                    Model model = new();
+                models.AddRange(GetIdentifier().GetModels());
 
-                    if (el.TryGetProperty("id", out var idEl))
-                    {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
-                    }
-
-                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
-                        v.ValueKind == JsonValueKind.Number
-                            ? v.GetInt32()
-                            : null;
-
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
-
-
-                    if (el.TryGetProperty("display_name", out var nameEL))
-                        model.Name = nameEL.GetString() ?? model.Name;
-
-                    if (el.TryGetProperty("description", out var descriptionEl))
-                        model.Description = descriptionEl.GetString() ?? string.Empty;
-
-                    if (!string.IsNullOrEmpty(model.Id))
-                        models.Add(model);
-                }
-
-                return models;
+                return models.DistinctBy(model => model.Id).ToList();
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+    }
+
+    private async Task AddChatModelsAsync(List<Model> models, CancellationToken cancellationToken)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+        using var resp = await _client.SendAsync(req, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new Exception($"Agentics API error: {err}");
+        }
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        var root = doc.RootElement;
+
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                ? dataEl.EnumerateArray()
+                : Enumerable.Empty<JsonElement>();
+
+        foreach (var el in arr)
+        {
+            Model model = new();
+
+            if (el.TryGetProperty("id", out var idEl))
+            {
+                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
+                model.Name = idEl.GetString() ?? "";
+                model.Type = model.Name.GuessModelType();
+            }
+
+            model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                v.ValueKind == JsonValueKind.Number
+                    ? v.GetInt32()
+                    : null;
+
+            if (el.TryGetProperty("owned_by", out var orgEl))
+                model.OwnedBy = orgEl.GetString() ?? "";
+
+
+            if (el.TryGetProperty("display_name", out var nameEL))
+                model.Name = nameEL.GetString() ?? model.Name;
+
+            if (el.TryGetProperty("description", out var descriptionEl))
+                model.Description = descriptionEl.GetString() ?? string.Empty;
+
+            if (!string.IsNullOrEmpty(model.Id))
+                models.Add(model);
+        }
+    }
+
+    private async Task AddImageModelsAsync(List<Model> models, CancellationToken cancellationToken)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/images/models");
+        using var resp = await _client.SendAsync(req, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new Exception($"Agentics image models API error: {err}");
+        }
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        var root = doc.RootElement;
+
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                ? dataEl.EnumerateArray()
+                : Enumerable.Empty<JsonElement>();
+
+        foreach (var el in arr)
+        {
+            var name = el.TryGetProperty("name", out var nameEl)
+                ? nameEl.GetString()
+                : null;
+
+            if (string.IsNullOrWhiteSpace(name))
+                continue;
+
+            var category = el.TryGetProperty("category", out var categoryEl)
+                ? categoryEl.GetString()
+                : null;
+            var provider = el.TryGetProperty("provider", out var providerEl)
+                ? providerEl.GetString()
+                : null;
+
+            models.Add(new Model
+            {
+                Id = name.ToModelId(GetIdentifier()),
+                Name = name,
+                Type = "image",
+                OwnedBy = string.IsNullOrWhiteSpace(provider) ? nameof(Agentics) : provider,
+                Description = el.TryGetProperty("description", out var descriptionEl)
+                    ? descriptionEl.GetString() ?? string.Empty
+                    : string.Empty,
+                Tags = BuildImageModelTags(category, provider, el.TryGetProperty("internal", out var internalEl) && internalEl.ValueKind == JsonValueKind.True)
+            });
+        }
+    }
+
+    private static string[]? BuildImageModelTags(string? category, string? provider, bool isInternal)
+    {
+        var tags = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(category))
+            tags.Add(category);
+        if (!string.IsNullOrWhiteSpace(provider))
+            tags.Add(provider);
+        if (isInternal)
+            tags.Add("internal");
+
+        return tags.Count == 0 ? null : [.. tags];
     }
 }
