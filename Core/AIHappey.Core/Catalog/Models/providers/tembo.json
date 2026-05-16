@@ -1,0 +1,110 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tembo/claude-opus-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4-6",
+      "type": "language"
+    },
+    {
+      "id": "tembo/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-sonnet-4-6",
+      "type": "language"
+    },
+    {
+      "id": "tembo/claude-opus-4-5",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4-5",
+      "type": "language"
+    },
+    {
+      "id": "tembo/claude-4-5-haiku",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-4-5-haiku",
+      "type": "language"
+    },
+    {
+      "id": "tembo/gpt-5.4-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4-mini",
+      "type": "language"
+    },
+    {
+      "id": "tembo/gpt-5.4-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4-nano",
+      "type": "language"
+    },
+    {
+      "id": "tembo/gpt-5.3-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.3-codex",
+      "type": "language"
+    },
+    {
+      "id": "tembo/gpt-5.2-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.2-codex",
+      "type": "language"
+    },
+    {
+      "id": "tembo/glm-5p1",
+      "object": "model",
+      "owned_by": "Z.ai",
+      "name": "glm-5p1",
+      "type": "language"
+    },
+    {
+      "id": "tembo/gemini-3-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-pro",
+      "type": "language"
+    },
+    {
+      "id": "tembo/gemini-3.1-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3.1-pro",
+      "type": "language"
+    },
+    {
+      "id": "tembo/gemini-3-flash",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-flash",
+      "type": "language"
+    },
+    {
+      "id": "tembo/kimi-k2p5",
+      "object": "model",
+      "owned_by": "Fireworks",
+      "name": "kimi-k2p5",
+      "type": "language"
+    },
+    {
+      "id": "tembo/minimax-m2p5",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2p5",
+      "type": "language"
+    },
+    {
+      "id": "tembo/agent",
+      "object": "model",
+      "owned_by": "Tembo",
+      "name": "Agent",
+      "type": "language"
+    }
+  ]
+}

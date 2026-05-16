@@ -457,6 +457,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | TEAI           | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TeamDay        | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Telnyx         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
+| Tembo          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TencentHunyuan | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TensorBlock    | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Tensorix       | ✅        | ✅                | ❌            | ✅            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |

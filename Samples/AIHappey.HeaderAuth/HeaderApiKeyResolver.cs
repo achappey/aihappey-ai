@@ -513,7 +513,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["shareai"] = "X-ShareAI-Key",
             ["token360"] = "X-Token360-Key",
             ["webcrawlerapi"] = "X-WebCrawlerAPI-Key",
-            ["agentphone"] = "X-AgentPhone-Key"
+            ["agentphone"] = "X-AgentPhone-Key",
+            ["tembo"] = "X-Tembo-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
