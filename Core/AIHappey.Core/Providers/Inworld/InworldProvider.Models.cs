@@ -1,7 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using Microsoft.Extensions.DependencyInjection;
-using AIHappey.Core.Contracts;
+using System.Globalization;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Inworld;
 
@@ -9,20 +9,29 @@ public partial class InworldProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var models = new List<Model>();
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
 
-        // Hardcoded Inworld-native TTS models (docs)
-        models.AddRange(GetIdentifier().GetModels());
+                var models = new List<Model>();
+                models.AddRange(await ListApiModelsAsync(ct));
+                models.AddRange(GetIdentifier().GetModels());
+                models.AddRange(await ListRouterShortcutModelsAsync(ct));
 
-        // Routed provider models (Inworld -> upstream provider list)
-        models.AddRange(await ListRoutedModels(cancellationToken));
-
-        return models;
+                return DeduplicateModels(models);
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private static readonly IReadOnlyDictionary<string, string> InworldProviderIds =
@@ -40,179 +49,354 @@ public partial class InworldProvider
             { "xai", "SERVICE_PROVIDER_XAI" },
         };
 
-    private static readonly IReadOnlyDictionary<string, IReadOnlyList<Model>> InworldRoutedFallbackByProvider =
-        new Dictionary<string, IReadOnlyList<Model>>(StringComparer.OrdinalIgnoreCase)
+    private async Task<List<Model>> ListApiModelsAsync(CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "llm/v1alpha/models");
+        using var response = await _client.SendAsync(request, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
         {
-            {
-                "anthropic",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-opus-4-5", Name = "claude-opus-4-5", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-haiku-4-5", Name = "claude-haiku-4-5", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-sonnet-4-5", Name = "claude-sonnet-4-5", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-opus-4-1", Name = "claude-opus-4-1", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-opus-4-0", Name = "claude-opus-4-0", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-sonnet-4-0", Name = "claude-sonnet-4-0", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-3-7-sonnet-20250219", Name = "claude-3-7-sonnet-20250219", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-3-5-haiku-20241022", Name = "claude-3-5-haiku-20241022", Type = "language", OwnedBy = "Anthropic" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_ANTHROPIC/claude-3-5-haiku-latest", Name = "claude-3-5-haiku-latest", Type = "language", OwnedBy = "Anthropic" },
-                ]
-            },
-            {
-                "cerebras",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_CEREBRAS/llama3.1-8b", Name = "llama3.1-8b", Type = "language", OwnedBy = "Cerebras" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_CEREBRAS/llama-3.3-70b", Name = "llama-3.3-70b", Type = "language", OwnedBy = "Cerebras" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_CEREBRAS/gpt-oss-120b", Name = "gpt-oss-120b", Type = "language", OwnedBy = "Cerebras" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_CEREBRAS/qwen-3-32b", Name = "qwen-3-32b", Type = "language", OwnedBy = "Cerebras" },
-                ]
-            },
-            {
-                "deepinfra", [  .."deepinfra".GetModels()
-            .Where(a => a.Type == "language")
-            .Select(m => new Model
-            {
-                Id = NormalizeToInworldId(m.Id, "SERVICE_PROVIDER_DEEPINFRA"),
-                Name = m.Name,
-                Type = m.Type,
-                OwnedBy = m.OwnedBy ?? "DeepInfra",
-                ContextWindow = m.ContextWindow,
-                Created = m.Created
-            })]
-            },
-            {
-                "fireworks", [ .."fireworks".GetModels()
-                    .Where(a => a.Type == "language")
-                    .Select(m => new Model
-                    {
-                        Id = NormalizeToInworldId(m.Id, "SERVICE_PROVIDER_FIREWORKS"),
-                        Name = m.Name,
-                        Type = m.Type,
-                        OwnedBy = m.OwnedBy ?? "Fireworks",
-                        ContextWindow = m.ContextWindow,
-                        Created = m.Created
-                    })]
-            },
-            {
-                "google",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_GOOGLE/gemini-3-pro-preview", Name = "gemini-3-pro-preview", Type = "language", OwnedBy = "Google" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_GOOGLE/gemini-3-flash-preview", Name = "gemini-3-flash-preview", Type = "language", OwnedBy = "Google" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_GOOGLE/gemini-2.5-pro", Name = "gemini-2.5-pro", Type = "language", OwnedBy = "Google" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_GOOGLE/gemini-2.5-flash", Name = "gemini-2.5-flash", Type = "language", OwnedBy = "Google" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_GOOGLE/gemini-2.5-flash-lite", Name = "gemini-2.5-flash-lite", Type = "language", OwnedBy = "Google" },
-                ]
-            },
-            {
-                "groq",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_GROQ/llama-3.3-70b-versatile", Name = "llama-3.3-70b-versatile", Type = "language", OwnedBy = "Groq" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_GROQ/llama-3.1-8b-instant", Name = "llama-3.1-8b-instant", Type = "language", OwnedBy = "Groq" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_GROQ/openai/gpt-oss-20b", Name = "openai/gpt-oss-20b", Type = "language", OwnedBy = "Groq" },
-                ]
-            },
-            {
-                "mistral",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_MISTRAL/mistral-large-latest", Name = "mistral-large-latest", Type = "language", OwnedBy = "Mistral" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_MISTRAL/mistral-medium-latest", Name = "mistral-medium-latest", Type = "language", OwnedBy = "Mistral" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_MISTRAL/mistral-small-latest", Name = "mistral-small-latest", Type = "language", OwnedBy = "Mistral" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_MISTRAL/mistral-tiny-latest", Name = "mistral-tiny-latest", Type = "language", OwnedBy = "Mistral" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_MISTRAL/pixtral-12b-2409", Name = "pixtral-12b-2409", Type = "language", OwnedBy = "Mistral" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_MISTRAL/ministral-8b-latest", Name = "ministral-8b-latest", Type = "language", OwnedBy = "Mistral" },
-                ]
-            },
-            {
-                "openai",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/gpt-5.2", Name = "gpt-5.2", Type = "language", OwnedBy = "OpenAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/gpt-4o", Name = "gpt-4o", Type = "language", OwnedBy = "OpenAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/gpt-4o-2024-11-20", Name = "gpt-4o-2024-11-20", Type = "language", OwnedBy = "OpenAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/gpt-4o-mini", Name = "gpt-4o-mini", Type = "language", OwnedBy = "OpenAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/gpt-4-turbo", Name = "gpt-4-turbo", Type = "language", OwnedBy = "OpenAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/gpt-4.1", Name = "gpt-4.1", Type = "language", OwnedBy = "OpenAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/gpt-3.5-turbo", Name = "gpt-3.5-turbo", Type = "language", OwnedBy = "OpenAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_OPENAI/davinci-002", Name = "davinci-002", Type = "language", OwnedBy = "OpenAI" },
-                ]
-            },
-            {
-                "tenstorrent",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_TENSTORRENT/tenstorrent/Llama-3.3-70B-Instruct", Name = "tenstorrent/Llama-3.3-70B-Instruct", Type = "language", OwnedBy = "Tenstorrent" },
-                ]
-            },
-            {
-                "xai",
-                [
-                    new() { Id = "inworld/SERVICE_PROVIDER_XAI/grok-4-0709", Name = "grok-4-0709", Type = "language", OwnedBy = "XAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_XAI/grok-4", Name = "grok-4", Type = "language", OwnedBy = "XAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_XAI/grok-3", Name = "grok-3", Type = "language", OwnedBy = "XAI" },
-                    new() { Id = "inworld/SERVICE_PROVIDER_XAI/grok-3-mini", Name = "grok-3-mini", Type = "language", OwnedBy = "XAI" },
-                ]
-            },
-        };
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException($"Inworld models API failed ({(int)response.StatusCode}): {error}");
+        }
 
-    private static string NormalizeToInworldId(string fullId, string provider)
-    {
-        var split = fullId.SplitModelId();
-        return $"inworld/{provider}/{split.Model}";
-    }
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-    private async Task<IEnumerable<Model>> ListRoutedModels(CancellationToken cancellationToken)
-    {
+        if (!document.RootElement.TryGetProperty("models", out var modelsElement)
+            || modelsElement.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
         var models = new List<Model>();
 
-        var providers = _serviceProvider
-            .GetServices<IModelProvider>()
-            .Where(p => !string.Equals(p.GetIdentifier(), GetIdentifier(), StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-
-        foreach (var provider in providers)
+        foreach (var modelElement in modelsElement.EnumerateArray())
         {
-            if (string.Equals(provider.GetIdentifier(), GetIdentifier(), StringComparison.OrdinalIgnoreCase))
+            if (modelElement.ValueKind != JsonValueKind.Object)
                 continue;
 
-            if (!InworldProviderIds.ContainsKey(provider.GetIdentifier()))
+            var rawModel = ReadString(modelElement, "model");
+            var provider = ReadString(modelElement, "provider");
+
+            if (string.IsNullOrWhiteSpace(rawModel) || string.IsNullOrWhiteSpace(provider))
                 continue;
 
-            try
+            modelElement.TryGetProperty("spec", out var specElement);
+            modelElement.TryGetProperty("pricing", out var pricingElement);
+
+            models.Add(new Model
             {
-                var upstreamModels = await provider.ListModels(cancellationToken);
+                Id = BuildInworldProviderModelId(rawModel, provider),
+                Name = rawModel,
+                Description = BuildApiModelDescription(rawModel, provider, ReadString(modelElement, "modelCreator"), ReadBoolean(modelElement, "isSupported")),
+                Type = "language",
+                OwnedBy = ReadString(modelElement, "modelCreator") ?? provider,
+                ContextWindow = ReadInt32(specElement, "contextLength"),
+                MaxTokens = ReadInt32(specElement, "maxCompletionTokens"),
+                Pricing = BuildPricing(pricingElement),
+                Tags = BuildApiModelTags(provider, ReadString(modelElement, "modelCreator"), specElement, ReadBoolean(modelElement, "isSupported"))
+            });
+        }
 
-                foreach (var model in upstreamModels)
+        return models;
+    }
+
+    private async Task<List<Model>> ListRouterShortcutModelsAsync(CancellationToken cancellationToken)
+    {
+        var models = new List<Model>();
+        string? pageToken = null;
+
+        do
+        {
+            var path = string.IsNullOrWhiteSpace(pageToken)
+                ? "router/v1/routers?page_size=100"
+                : $"router/v1/routers?page_size=100&page_token={Uri.EscapeDataString(pageToken)}";
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, path);
+            using var response = await _client.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new InvalidOperationException($"Inworld routers API failed ({(int)response.StatusCode}): {error}");
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("routers", out var routersElement)
+                && routersElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var routerElement in routersElement.EnumerateArray())
                 {
-                    var mapped = new Model
+                    var routerName = ReadString(routerElement, "name");
+                    if (string.IsNullOrWhiteSpace(routerName))
+                        continue;
+
+                    var displayName = ReadString(routerElement, "displayName");
+                    models.Add(new Model
                     {
-                        Id = NormalizeToInworldId(model.Id, InworldProviderIds[provider.GetIdentifier()]),
-                        Name = model.Name,
-                        Description = model.Description,
-                        ContextWindow = model.ContextWindow,
-                        MaxTokens = model.MaxTokens,
-                        Pricing = model.Pricing,
-                        Created = model.Created,
-                        Tags = model.Tags,
-                        Type = model.Type,
-                        OwnedBy = model.OwnedBy
-                    };
-
-                    if (string.IsNullOrWhiteSpace(mapped.Type))
-                        mapped.Type = mapped.Id.GuessModelType();
-
-                    if (!string.IsNullOrWhiteSpace(mapped.Id))
-                        models.Add(mapped);
+                        Id = routerName.ToModelId(GetIdentifier()),
+                        Name = string.IsNullOrWhiteSpace(displayName) ? routerName : displayName,
+                        Type = "language",
+                        OwnedBy = "Inworld",
+                        Description = BuildRouterShortcutDescription(routerName, displayName, routerElement),
+                        Tags = BuildRouterShortcutTags(routerName, routerElement)
+                    });
                 }
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+
+            pageToken = ReadString(root, "next_page_token");
+        }
+        while (!string.IsNullOrWhiteSpace(pageToken));
+
+        return models;
+    }
+
+    private List<Model> DeduplicateModels(IEnumerable<Model> models)
+        => models
+            .Where(model => !string.IsNullOrWhiteSpace(model.Id))
+            .GroupBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
+
+    private string BuildInworldProviderModelId(string rawModel, string provider)
+        => $"{GetIdentifier()}/{NormalizeProviderSegment(provider)}/{rawModel.Trim()}";
+
+    private static string NormalizeProviderSegment(string provider)
+    {
+        var trimmed = provider.Trim();
+
+        if (trimmed.StartsWith("SERVICE_PROVIDER_", StringComparison.OrdinalIgnoreCase))
+            return trimmed.ToUpperInvariant();
+
+        return InworldProviderIds.TryGetValue(trimmed, out var knownProvider)
+            ? knownProvider
+            : trimmed;
+    }
+
+    private static string? BuildApiModelDescription(string model, string provider, string? modelCreator, bool? isSupported)
+    {
+        var parts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(modelCreator))
+            parts.Add($"Creator: {modelCreator}");
+
+        if (!string.IsNullOrWhiteSpace(provider)
+            && !string.Equals(provider, modelCreator, StringComparison.OrdinalIgnoreCase))
+        {
+            parts.Add($"Hosted by: {provider}");
+        }
+
+        if (isSupported is false)
+            parts.Add("Marked unsupported by Inworld");
+
+        if (parts.Count == 0)
+            return null;
+
+        return $"{model}. {string.Join(". ", parts)}.";
+    }
+
+    private static ModelPricing? BuildPricing(JsonElement pricingElement)
+    {
+        var input = ReadDecimal(pricingElement, "prompt");
+        var output = ReadDecimal(pricingElement, "completion");
+
+        if (input is null && output is null)
+            return null;
+
+        return new ModelPricing
+        {
+            Input = input ?? 0m,
+            Output = output ?? 0m
+        };
+    }
+
+    private static IEnumerable<string>? BuildApiModelTags(string provider, string? modelCreator, JsonElement specElement, bool? isSupported)
+    {
+        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            $"provider:{NormalizeTagValue(provider)}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(modelCreator))
+            tags.Add($"creator:{NormalizeTagValue(modelCreator)}");
+
+        foreach (var modality in ReadStringArray(specElement, "inputModalities"))
+            tags.Add($"input:{NormalizeTagValue(modality)}");
+
+        foreach (var modality in ReadStringArray(specElement, "outputModalities"))
+            tags.Add($"output:{NormalizeTagValue(modality)}");
+
+        foreach (var parameter in ReadStringArray(specElement, "supportedParameters"))
+            tags.Add($"parameter:{NormalizeTagValue(parameter)}");
+
+        if (TryGetProperty(specElement, "capabilities", out var capabilitiesElement))
+        {
+            if (ReadBoolean(capabilitiesElement, "functionCalling") == true)
             {
-                throw;
+                tags.Add("tools");
+                tags.Add("capability:function-calling");
             }
-            catch
+
+            if (ReadBoolean(capabilitiesElement, "webSearch") == true)
+                tags.Add("web-search");
+            if (ReadBoolean(capabilitiesElement, "reasoning") == true)
+                tags.Add("reasoning");
+            if (ReadBoolean(capabilitiesElement, "promptCaching") == true)
+                tags.Add("prompt-caching");
+            if (ReadBoolean(capabilitiesElement, "responseSchema") == true)
+                tags.Add("structured-outputs");
+            if (ReadBoolean(capabilitiesElement, "vision") == true)
+                tags.Add("vision");
+        }
+
+        tags.Add(isSupported is false ? "unsupported" : "supported");
+
+        return tags.Count == 0 ? null : [.. tags];
+    }
+
+    private static string BuildRouterShortcutDescription(string routerName, string? displayName, JsonElement routerElement)
+    {
+        var routeCount = 0;
+        if (TryGetProperty(routerElement, "routes", out var routesElement) && routesElement.ValueKind == JsonValueKind.Array)
+            routeCount = routesElement.GetArrayLength();
+
+        var hasDefaultRoute = TryGetProperty(routerElement, "defaultRoute", out var defaultRouteElement)
+            && defaultRouteElement.ValueKind == JsonValueKind.Object;
+
+        var label = string.IsNullOrWhiteSpace(displayName) ? routerName : displayName;
+        return $"Inworld router shortcut model for predefined route policy '{label}' (router id: {routerName}, conditional routes: {routeCount}, default route: {(hasDefaultRoute ? "yes" : "no")}).";
+    }
+
+    private static IEnumerable<string>? BuildRouterShortcutTags(string routerName, JsonElement routerElement)
+    {
+        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "router",
+            "shortcut",
+            "routing-policy",
+            $"router:{NormalizeTagValue(routerName)}"
+        };
+
+        if (TryGetProperty(routerElement, "routes", out var routesElement) && routesElement.ValueKind == JsonValueKind.Array)
+        {
+            if (routesElement.GetArrayLength() > 0)
+                tags.Add("conditional-routing");
+
+            foreach (var routeElement in routesElement.EnumerateArray())
             {
-                // If a provider fails, fall back to docs examples for that provider
-                if (InworldRoutedFallbackByProvider.TryGetValue(provider.GetIdentifier(), out var fallback))
-                    models.AddRange(fallback);
+                if (TryGetProperty(routeElement, "route", out var innerRoute)
+                    && TryGetProperty(innerRoute, "route_id", out var routeIdElement)
+                    && routeIdElement.ValueKind == JsonValueKind.String)
+                {
+                    var routeId = routeIdElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(routeId))
+                        tags.Add($"route:{NormalizeTagValue(routeId)}");
+                }
             }
         }
 
-        return models.Where(a => a.Type == "language");
+        if (TryGetProperty(routerElement, "defaultRoute", out var defaultRouteElement)
+            && defaultRouteElement.ValueKind == JsonValueKind.Object)
+        {
+            tags.Add("default-route");
+
+            if (TryGetProperty(defaultRouteElement, "route_id", out var routeIdElement)
+                && routeIdElement.ValueKind == JsonValueKind.String)
+            {
+                var routeId = routeIdElement.GetString();
+                if (!string.IsNullOrWhiteSpace(routeId))
+                    tags.Add($"route:{NormalizeTagValue(routeId)}");
+            }
+        }
+
+        return tags.Count == 0 ? null : [.. tags];
+    }
+
+    private static string NormalizeTagValue(string value)
+        => value.Trim().ToLowerInvariant().Replace(' ', '-').Replace('_', '-');
+
+    private static string? ReadString(JsonElement element, string propertyName)
+        => TryGetProperty(element, propertyName, out var property) && property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : null;
+
+    private static int? ReadInt32(JsonElement element, string propertyName)
+    {
+        if (!TryGetProperty(element, propertyName, out var property))
+            return null;
+
+        if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var number))
+            return number;
+
+        if (property.ValueKind == JsonValueKind.String
+            && int.TryParse(property.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
+        {
+            return number;
+        }
+
+        return null;
+    }
+
+    private static decimal? ReadDecimal(JsonElement element, string propertyName)
+    {
+        if (!TryGetProperty(element, propertyName, out var property))
+            return null;
+
+        if (property.ValueKind == JsonValueKind.Number)
+        {
+            if (property.TryGetDecimal(out var decimalValue))
+                return decimalValue;
+
+            return Convert.ToDecimal(property.GetDouble(), CultureInfo.InvariantCulture);
+        }
+
+        if (property.ValueKind == JsonValueKind.String
+            && decimal.TryParse(property.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+        {
+            return parsed;
+        }
+
+        return null;
+    }
+
+    private static bool? ReadBoolean(JsonElement element, string propertyName)
+    {
+        if (!TryGetProperty(element, propertyName, out var property))
+            return null;
+
+        return property.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.String when bool.TryParse(property.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static IEnumerable<string> ReadStringArray(JsonElement element, string propertyName)
+    {
+        if (!TryGetProperty(element, propertyName, out var property) || property.ValueKind != JsonValueKind.Array)
+            return [];
+
+        return property
+            .EnumerateArray()
+            .Where(item => item.ValueKind == JsonValueKind.String)
+            .Select(item => item.GetString())
+            .OfType<string>()
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .ToArray();
+    }
+
+    private static bool TryGetProperty(JsonElement element, string propertyName, out JsonElement value)
+    {
+        if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out value))
+            return true;
+
+        value = default;
+        return false;
     }
 }
