@@ -514,7 +514,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["token360"] = "X-Token360-Key",
             ["webcrawlerapi"] = "X-WebCrawlerAPI-Key",
             ["agentphone"] = "X-AgentPhone-Key",
-            ["tembo"] = "X-Tembo-Key"
+            ["tembo"] = "X-Tembo-Key",
+            ["agnesai"] = "X-AgnesAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -513,6 +513,7 @@ public class AIServiceConfig
     public ProviderConfig? WebCrawlerAPI { get; set; }
     public ProviderConfig? AgentPhone { get; set; }
     public ProviderConfig? Tembo { get; set; }
+    public ProviderConfig? AgnesAI { get; set; }
 
 }
 

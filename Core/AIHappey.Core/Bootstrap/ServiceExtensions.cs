@@ -514,6 +514,7 @@ using AIHappey.Core.Providers.Token360;
 using AIHappey.Core.Providers.WebCrawlerAPI;
 using AIHappey.Core.Providers.AgentPhone;
 using AIHappey.Core.Providers.Tembo;
+using AIHappey.Core.Providers.AgnesAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1051,6 +1052,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, WebCrawlerAPIProvider>();
         services.AddSingleton<IModelProvider, AgentPhoneProvider>();
         services.AddSingleton<IModelProvider, TemboProvider>();
+        services.AddSingleton<IModelProvider, AgnesAIProvider>();
 
     }
 }
