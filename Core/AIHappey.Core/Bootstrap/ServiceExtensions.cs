@@ -519,6 +519,7 @@ using AIHappey.Core.Providers.Herma;
 using AIHappey.Core.Providers.ByteSpace;
 using AIHappey.Core.Providers.Runcrate;
 using AIHappey.Core.Providers.MuleRouter;
+using AIHappey.Core.Providers.Mixlayer;
 
 namespace AIHappey.Core.AI;
 
@@ -1061,6 +1062,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ByteSpaceProvider>();
         services.AddSingleton<IModelProvider, RuncrateProvider>();
         services.AddSingleton<IModelProvider, MuleRouterProvider>();
+        services.AddSingleton<IModelProvider, MixlayerProvider>();
 
     }
 }

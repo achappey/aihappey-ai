@@ -518,6 +518,7 @@ public class AIServiceConfig
     public ProviderConfig? ByteSpace { get; set; }
     public ProviderConfig? Runcrate { get; set; }
     public ProviderConfig? MuleRouter { get; set; }
+    public ProviderConfig? Mixlayer { get; set; }
 
 }
 
