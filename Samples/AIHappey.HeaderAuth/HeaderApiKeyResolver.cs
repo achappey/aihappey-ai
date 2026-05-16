@@ -520,7 +520,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["bytespace"] = "X-ByteSpace-Key",
             ["runcrate"] = "X-Runcrate-Key",
             ["mulerouter"] = "X-MuleRouter-Key",
-            ["mixlayer"] = "X-Mixlayer-Key"
+            ["mixlayer"] = "X-Mixlayer-Key",
+            ["alltoken"] = "X-AllToken-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

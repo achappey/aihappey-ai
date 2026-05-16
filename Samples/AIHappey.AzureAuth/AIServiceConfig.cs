@@ -519,6 +519,7 @@ public class AIServiceConfig
     public ProviderConfig? Runcrate { get; set; }
     public ProviderConfig? MuleRouter { get; set; }
     public ProviderConfig? Mixlayer { get; set; }
+    public ProviderConfig? AllToken { get; set; }
 
 }
 
