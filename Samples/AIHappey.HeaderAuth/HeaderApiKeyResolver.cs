@@ -517,7 +517,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tembo"] = "X-Tembo-Key",
             ["agnesai"] = "X-AgnesAI-Key",
             ["herma"] = "X-Herma-Key",
-            ["bytespace"] = "X-ByteSpace-Key"
+            ["bytespace"] = "X-ByteSpace-Key",
+            ["runcrate"] = "X-Runcrate-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
