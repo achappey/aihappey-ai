@@ -1,0 +1,16 @@
+{
+  "stepfun/step-3.5-flash": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.0000003",
+      "input_cache_read": "0.00000002"
+    }
+  },
+  "stepfun/step-3.5-flash-2603": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.0000003",
+      "input_cache_read": "0.00000002"
+    }
+  }
+}

@@ -20,9 +20,13 @@ public partial class StepFunProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public StepFunProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public StepFunProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.stepfun.ai/");
     }
@@ -68,6 +72,11 @@ public partial class StepFunProvider : IModelProvider
                     chatRequest,
                     cancellationToken: cancellationToken);
 
+            case "image":
+                return await this.ImageSamplingAsync(
+                    chatRequest,
+                    cancellationToken: cancellationToken);
+
             case "language":
                 var result = await this.ExecuteUnifiedAsync(
                     chatRequest.ToUnifiedRequest(GetIdentifier()),
@@ -82,7 +91,7 @@ public partial class StepFunProvider : IModelProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -115,7 +124,7 @@ public partial class StepFunProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => ImageRequestStepFun(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
