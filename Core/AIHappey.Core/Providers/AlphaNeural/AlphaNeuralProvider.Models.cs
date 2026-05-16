@@ -1,6 +1,8 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Net.Http.Headers;
+using System.Net.Mime;
 
 namespace AIHappey.Core.Providers.AlphaNeural;
 
@@ -14,7 +16,11 @@ public partial class AlphaNeuralProvider
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
+
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
+
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -46,6 +52,8 @@ public partial class AlphaNeuralProvider
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
+                    model.Type = ReadAlphaNeuralModelType(el, model.Id);
+
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
@@ -55,5 +63,31 @@ public partial class AlphaNeuralProvider
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+    }
+
+    private static string ReadAlphaNeuralModelType(JsonElement modelElement, string modelId)
+    {
+        var explicitType = modelElement.TryGetString("type")
+            ?? modelElement.TryGetString("modalities")
+            ?? modelElement.TryGetString("capability")
+            ?? modelElement.TryGetString("capabilities");
+
+        if (!string.IsNullOrWhiteSpace(explicitType)
+            && explicitType.Contains("image", StringComparison.OrdinalIgnoreCase))
+        {
+            return "image";
+        }
+
+        if (modelElement.TryGetProperty("capabilities", out var capabilities)
+            && capabilities.ValueKind == JsonValueKind.Object
+            && capabilities.TryGetProperty("image", out var imageCapability)
+            && imageCapability.ValueKind == JsonValueKind.True)
+        {
+            return "image";
+        }
+
+        return IsAlphaNeuralImageModel(modelId)
+            ? "image"
+            : modelId.GuessModelType();
     }
 }
