@@ -2,12 +2,17 @@
   "object": "list",
   "data": [
     {
-      "id": "akashml/deepseek-ai/DeepSeek-V3.2",
+      "id": "akashml/deepseek-ai/DeepSeek-V4-Flash",
       "object": "model",
       "owned_by": "akashml"
     },
     {
-      "id": "akashml/Qwen/Qwen3-30B-A3B",
+      "id": "akashml/Qwen/Qwen3.6-35B-A3B",
+      "object": "model",
+      "owned_by": "akashml"
+    },
+    {
+      "id": "akashml/meta-llama/Llama-3.3-70B-Instruct",
       "object": "model",
       "owned_by": "akashml"
     },
@@ -17,7 +22,12 @@
       "owned_by": "akashml"
     },
     {
-      "id": "akashml/meta-llama/Llama-3.3-70B-Instruct",
+      "id": "akashml/Qwen/Qwen3.5-35B-A3B",
+      "object": "model",
+      "owned_by": "akashml"
+    },
+    {
+      "id": "akashml/moonshotai/Kimi-K2.6",
       "object": "model",
       "owned_by": "akashml"
     }
