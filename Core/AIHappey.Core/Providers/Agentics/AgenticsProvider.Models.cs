@@ -22,6 +22,7 @@ public partial class AgenticsProvider
                 await AddImageModelsAsync(models, cancellationToken);
 
                 models.AddRange(GetIdentifier().GetModels());
+                await AddSpeechVoiceModelsAsync(models, cancellationToken);
 
                 return models.DistinctBy(model => model.Id).ToList();
             },
@@ -141,6 +142,70 @@ public partial class AgenticsProvider
             tags.Add(provider);
         if (isInternal)
             tags.Add("internal");
+
+        return tags.Count == 0 ? null : [.. tags];
+    }
+
+    private async Task AddSpeechVoiceModelsAsync(List<Model> models, CancellationToken cancellationToken)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/audio/voices");
+        using var resp = await _client.SendAsync(req, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+            return;
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        var root = doc.RootElement;
+        if (!root.TryGetProperty("voices", out var voicesEl) || voicesEl.ValueKind != JsonValueKind.Array)
+            return;
+
+        var defaultVoice = root.TryGetProperty("defaultVoice", out var defaultVoiceEl) && defaultVoiceEl.ValueKind == JsonValueKind.String
+            ? defaultVoiceEl.GetString()
+            : null;
+
+        foreach (var voiceEl in voicesEl.EnumerateArray())
+        {
+            if (voiceEl.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var voiceId = voiceEl.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
+                ? idEl.GetString()
+                : null;
+
+            if (string.IsNullOrWhiteSpace(voiceId))
+                continue;
+
+            var name = voiceEl.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String
+                ? nameEl.GetString() ?? voiceId
+                : voiceId;
+            var gender = voiceEl.TryGetProperty("gender", out var genderEl) && genderEl.ValueKind == JsonValueKind.String
+                ? genderEl.GetString()
+                : null;
+
+            models.Add(new Model
+            {
+                Id = $"{GetIdentifier()}/{AgenticsSpeechBaseModel}/{voiceId}",
+                Name = $"{AgenticsSpeechBaseModel}/{voiceId}",
+                Type = "speech",
+                OwnedBy = nameof(Agentics),
+                Description = string.Equals(voiceId, defaultVoice, StringComparison.OrdinalIgnoreCase)
+                    ? $"Agentics text-to-speech shortcut model using the default {name} voice."
+                    : $"Agentics text-to-speech shortcut model using the {name} voice.",
+                Tags = BuildSpeechVoiceTags(gender, string.Equals(voiceId, defaultVoice, StringComparison.OrdinalIgnoreCase))
+            });
+        }
+    }
+
+    private static string[]? BuildSpeechVoiceTags(string? gender, bool isDefaultVoice)
+    {
+        var tags = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(gender))
+            tags.Add(gender);
+        if (isDefaultVoice)
+            tags.Add("default-voice");
 
         return tags.Count == 0 ? null : [.. tags];
     }

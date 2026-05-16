@@ -5,15 +5,25 @@
       "id": "agentics/tts",
       "object": "model",
       "owned_by": "Agentics",
-      "name": "Text-to-Speech",
-      "type": "speech"
+      "name": "tts",
+      "type": "speech",
+      "description": "Agentics text-to-speech."
     },
     {
       "id": "agentics/stt",
       "object": "model",
       "owned_by": "Agentics",
-      "name": "Speech-to-Text",
-      "type": "transcription"
+      "name": "stt",
+      "type": "transcription",
+      "description": "Agentics speech-to-text."
+    },
+    {
+      "id": "agentics/agent",
+      "object": "model",
+      "owned_by": "Agentics",
+      "name": "Agent",
+      "type": "language",
+      "description": "AI agent with tool execution, web search, and code execution capabilities."
     }
   ]
 }
