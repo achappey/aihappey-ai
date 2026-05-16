@@ -518,7 +518,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agnesai"] = "X-AgnesAI-Key",
             ["herma"] = "X-Herma-Key",
             ["bytespace"] = "X-ByteSpace-Key",
-            ["runcrate"] = "X-Runcrate-Key"
+            ["runcrate"] = "X-Runcrate-Key",
+            ["mulerouter"] = "X-MuleRouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

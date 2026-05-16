@@ -517,6 +517,7 @@ public class AIServiceConfig
     public ProviderConfig? Herma { get; set; }
     public ProviderConfig? ByteSpace { get; set; }
     public ProviderConfig? Runcrate { get; set; }
+    public ProviderConfig? MuleRouter { get; set; }
 
 }
 
