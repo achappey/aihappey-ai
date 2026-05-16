@@ -60,7 +60,7 @@ public partial class WebCrawlerAPIProvider
         WebCrawlerAPIAgentRun? terminal = null;
         Exception? pollingException = null;
 
-        await foreach (var polled in PollAgentRunUntilTerminalAsync(queued, providerMetadata, cancellationToken))
+        await foreach (var polled in PollAgentRunUntilTerminalAsync(queued, cancellationToken))
         {
             yield return CreateStreamEvent(
                 providerId,
@@ -196,19 +196,16 @@ public partial class WebCrawlerAPIProvider
         => await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
             poll: ct => GetAgentRunAsync(runId, ct),
             isTerminal: run => IsTerminalStatus(run.Status),
-            interval: ResolvePollInterval(metadata),
-            timeout: ResolvePollTimeout(metadata),
-            maxAttempts: metadata.PollMaxAttempts,
+            interval: DefaultPollInterval,
+            timeout: DefaultPollTimeout,
+            maxAttempts: null,
             cancellationToken: cancellationToken);
 
     private async IAsyncEnumerable<WebCrawlerAPIAgentRun> PollAgentRunUntilTerminalAsync(
         WebCrawlerAPIAgentRun queued,
-        WebCrawlerAPIProviderMetadata metadata,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var interval = ResolvePollInterval(metadata);
-        var timeout = ResolvePollTimeout(metadata);
-        var maxAttempts = metadata.PollMaxAttempts;
+        var interval = DefaultPollInterval;
         var started = DateTimeOffset.UtcNow;
         var attempts = 0;
         var lastStatus = queued.Status;
@@ -232,12 +229,6 @@ public partial class WebCrawlerAPIProvider
 
             if (IsTerminalStatus(current.Status))
                 yield break;
-
-            if (maxAttempts.HasValue && attempts >= maxAttempts.Value)
-                throw new TimeoutException($"WebCrawlerAPI agent polling exceeded max attempts ({maxAttempts}). RunId={queued.Id}");
-
-            if (timeout.HasValue && DateTimeOffset.UtcNow - started >= timeout.Value)
-                throw new TimeoutException($"WebCrawlerAPI agent polling exceeded timeout ({timeout}). RunId={queued.Id}");
         }
     }
 
@@ -289,7 +280,7 @@ public partial class WebCrawlerAPIProvider
 
     private WebCrawlerAPIProviderMetadata GetWebCrawlerAPIProviderMetadata(AIRequest request)
         => request.Metadata.GetProviderMetadata<WebCrawlerAPIProviderMetadata>(GetIdentifier())
-           ?? throw new InvalidOperationException("WebCrawlerAPI requires provider metadata with 'maxSpendUsd'.");
+           ?? throw new InvalidOperationException("WebCrawlerAPI requires provider metadata with 'max_spend_usd'.");
 
     private static string BuildAgentPrompt(AIRequest request)
     {
@@ -726,8 +717,15 @@ public partial class WebCrawlerAPIProvider
             && answer.ValueKind == JsonValueKind.String)
             return answer.GetString() ?? string.Empty;
 
-        return data.GetRawText();
+        var content = JsonSerializer.Serialize(data, PrettyPrint);
+
+        return $"```json\n{content}\n```";
     }
+
+    private static readonly JsonSerializerOptions PrettyPrint = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true
+    };
 
     private static string GetAgentRunErrorMessage(WebCrawlerAPIAgentRun run)
         => run.Error
@@ -769,16 +767,6 @@ public partial class WebCrawlerAPIProvider
             ? model[prefix.Length..]
             : model;
     }
-
-    private static TimeSpan ResolvePollInterval(WebCrawlerAPIProviderMetadata metadata)
-        => metadata.PollIntervalSeconds is > 0
-            ? TimeSpan.FromSeconds(metadata.PollIntervalSeconds.Value)
-            : DefaultPollInterval;
-
-    private static TimeSpan? ResolvePollTimeout(WebCrawlerAPIProviderMetadata metadata)
-        => metadata.PollTimeoutSeconds is > 0
-            ? TimeSpan.FromSeconds(metadata.PollTimeoutSeconds.Value)
-            : DefaultPollTimeout;
 
     private static bool IsReservedPayloadProperty(string key)
         => key is "prompt" or "max_spend_usd" or "maxSpendUsd" or "urls" or "seed_urls_only" or "seedUrlsOnly" or "output_schema" or "outputSchema" or "model" or "pollIntervalSeconds" or "pollTimeoutSeconds" or "pollMaxAttempts";
@@ -849,17 +837,14 @@ public partial class WebCrawlerAPIProvider
 
     private sealed class WebCrawlerAPIProviderMetadata
     {
+        [JsonPropertyName("max_spend_usd")]
         public decimal? MaxSpendUsd { get; init; }
 
+        [JsonPropertyName("urls")]
         public List<string>? Urls { get; init; }
 
+        [JsonPropertyName("seed_urls_only")]
         public bool? SeedUrlsOnly { get; init; }
-
-        public double? PollIntervalSeconds { get; init; }
-
-        public double? PollTimeoutSeconds { get; init; }
-
-        public int? PollMaxAttempts { get; init; }
 
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
