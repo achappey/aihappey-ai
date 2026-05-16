@@ -60,7 +60,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ARKLabs        | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | ArkRoute       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ArliAI         | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| ARWriter       | ✅        | ✅                | ❌            | ❌            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| ARWriter       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ASIOne         | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AskARC         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AskCodi        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
