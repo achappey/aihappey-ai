@@ -243,7 +243,7 @@ public partial class StepFunProvider
         if (metadata?.CfgScale is not null and (< 1.0 or > 10.0))
             throw new ArgumentOutOfRangeException(nameof(request), "StepFun cfg_scale must be in the range [1.0, 10.0].");
 
-        if (request.Seed is not null and (< 0 or > 2147483647))
+        if (request.Seed is < 0 or > 2147483647)
             throw new ArgumentOutOfRangeException(nameof(request), "StepFun seed must be in the range [0, 2147483647].");
     }
 
