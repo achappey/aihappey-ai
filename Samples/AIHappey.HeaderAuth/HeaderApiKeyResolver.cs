@@ -271,7 +271,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["litai"] = "X-LitAI-Key",
             ["pixcode"] = "X-PixCode-Key",
             ["anannas"] = "X-Anannas-Key",
-            ["answira"] = "X-Answira-Key",
             ["lemondata"] = "X-LemonData-Key",
             ["tokenflux"] = "X-TokenFlux-Key",
             ["apipod"] = "X-APIPod-Key",

@@ -270,7 +270,6 @@ public class AIServiceConfig
     public ProviderConfig? LitAI { get; set; }
     public ProviderConfig? PixCode { get; set; }
     public ProviderConfig? Anannas { get; set; }
-    public ProviderConfig? Answira { get; set; }
     public ProviderConfig? AiMo { get; set; }
     public ProviderConfig? LemonData { get; set; }
     public ProviderConfig? APIPod { get; set; }
