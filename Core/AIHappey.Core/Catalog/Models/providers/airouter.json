@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "airouter/auto",
+      "object": "model",
+      "owned_by": "AIRouter",
+      "name": "Auto",
+      "type": "language",
+      "description": "AI Router uses all available models to determine the most appropriate model for a request."
+    }
+  ]
+}
