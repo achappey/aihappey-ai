@@ -211,14 +211,14 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | HolySheepAI    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | HorayAI        | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | HuggingFace    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Hyperbolic     | ✅        | ✅                | 🟡            | ❌            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
+| Hyperbolic     | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Hyperstack     | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | iApp           | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Ideogram       | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | IGPT           | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ImageRouter    | ✅        | ❌                | 🟡            | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | InceptionLabs  | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Infercom       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Infercom       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ❌                       | ➖               | ➖          | ➖          | ➖          |
 | Inferencenet   | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Inferencesh    | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | InferLink      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

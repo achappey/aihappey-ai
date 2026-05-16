@@ -1,10 +1,12 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
-public partial class HyperbolicProvider 
+public partial class HyperbolicProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -30,8 +32,18 @@ public partial class HyperbolicProvider
             yield break;
         }
 
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            cancellationToken: cancellationToken))
-            yield return update;
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
+
+        yield break;
     }
 }
