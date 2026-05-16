@@ -63,7 +63,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ArliAI         | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ARWriter       | ✅        | ✅                | ❌            | ❌            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ASIOne         | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| AskARC         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| AskARC         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AskCodi        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AssemblyAI     | ✅        | ✅                | ✅            | ✅            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
 | Assisters      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
