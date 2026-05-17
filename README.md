@@ -291,7 +291,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | MancerAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MaritacaAI     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Martian        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| MatterAI       | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| MatterAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MegaLLM        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MegaNova       | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ❌          | ❌          | ➖          |
 | MemoryRouter   | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

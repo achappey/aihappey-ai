@@ -9,7 +9,7 @@ public partial class MatterAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+        using var req = new HttpRequestMessage(HttpMethod.Get, "https://api.matterai.so/v1/models");
         using var resp = await _client.SendAsync(req, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
