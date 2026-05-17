@@ -64,6 +64,7 @@ public partial class FreedomGPTProvider : IModelProvider
 
         return result.ToSamplingResult();
     }
+    
     public string GetIdentifier() => nameof(FreedomGPT).ToLowerInvariant();
     
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

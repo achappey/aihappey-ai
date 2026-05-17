@@ -184,11 +184,11 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Foureverland   | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Fred           | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Freepik        | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
-| FreedomGPT     | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| FreedomGPT     | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | Friendli       | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| FullAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| GateMind       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| GateRouter     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| FullAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| GateMind       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| GateRouter     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Gatewayz       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | GeekAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | GetGoAPI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
