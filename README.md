@@ -159,7 +159,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | EdenAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
 | Eliza          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EmberCloud     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| EmbraceableAI  | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| EmbraceableAI  | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ElectronHub    | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | ElkAPI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ElevenLabs     | ✅        | ❌                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
