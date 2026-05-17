@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "fastrouter/auto",
+      "object": "model",
+      "owned_by": "FastRouter",
+      "name": "Auto Router",
+      "type": "language",
+      "description": "Uses FastRouter's intelligent routing engine."
+    }
+  ]
+}
