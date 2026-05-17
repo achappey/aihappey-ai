@@ -322,7 +322,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | MultiverseAI   | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MumeAI         | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | MurfAI         | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
-| MyRouter       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| MyRouter       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ❌          | ❌          | ➖          |
 | NagaAI         | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | NavyAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
 | NanoGPT        | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
