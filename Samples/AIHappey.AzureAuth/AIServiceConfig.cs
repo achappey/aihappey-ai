@@ -531,6 +531,7 @@ public class AIServiceConfig
     public ProviderConfig? TokenHub { get; set; }
     public ProviderConfig? MyRouter { get; set; }
     public ProviderConfig? Osiris { get; set; }
+    public ProviderConfig? SovrGPT { get; set; }
 
 }
 

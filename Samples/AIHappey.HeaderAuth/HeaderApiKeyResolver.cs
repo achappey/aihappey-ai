@@ -532,7 +532,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["luminoai"] = "X-LuminoAI-Key",
             ["tokenhub"] = "X-TokenHub-Key",
             ["myrouter"] = "X-MyRouter-Key",
-            ["osiris"] = "X-Osiris-Key"
+            ["osiris"] = "X-Osiris-Key",
+            ["sovrgpt"] = "X-SovrGPT-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

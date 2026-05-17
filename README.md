@@ -451,6 +451,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | SmallestAI     | ✅        | 🟡                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | SmartAIPI      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Smooth         | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| SovrGPT        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Speechactors   | ✅        | ❌                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Speechify      | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Speechmatics   | ✅        | ❌                | ❌            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
