@@ -96,19 +96,7 @@ public partial class ApiAirforceProvider
 
         return property.GetString();
     }
-
-    private static string? TryGetNestedString(JsonElement element, params string[] path)
-    {
-        var current = element;
-
-        foreach (var segment in path)
-        {
-            if (!current.TryGetProperty(segment, out current))
-                return null;
-        }
-
-        return current.ValueKind == JsonValueKind.String ? current.GetString() : null;
-    }
+    
 
     private static JsonElement? TryGetProviderOptions(Dictionary<string, JsonElement>? providerOptions, string providerIdentifier)
     {

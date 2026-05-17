@@ -5,7 +5,7 @@ namespace AIHappey.Core.Providers.ApiAirforce;
 
 public partial class ApiAirforceProvider
 {
-    private async Task<SpeechResponse> SpeechRequestApiAirforce(SpeechRequest request, CancellationToken cancellationToken = default)
+    public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
