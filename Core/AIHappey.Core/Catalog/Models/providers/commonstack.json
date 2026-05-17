@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "commonstack/uncommon-route/auto",
+      "object": "model",
+      "owned_by": "UncommonRoute",
+      "name": "auto",
+      "type": "language",
+      "description": "Best quality-per-dollar, adapts with difficulty."
+    },
+    {
+      "id": "commonstack/uncommon-route/fast",
+      "object": "model",
+      "owned_by": "UncommonRoute",
+      "name": "fast",
+      "type": "language",
+      "description": "Cheapest acceptable model."
+    },
+    {
+      "id": "commonstack/uncommon-route/best",
+      "object": "model",
+      "owned_by": "UncommonRoute",
+      "name": "best",
+      "type": "language",
+      "description": "Highest quality, cost nearly ignored."
+    }
+  ]
+}
