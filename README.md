@@ -165,7 +165,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ElevenLabs     | ✅        | ❌                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | EmbyAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EuGPT          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Euqai          | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Euqai          | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EUrouter       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EzAI           | ✅        | ✅                | ✅            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EverypixelLabs | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |

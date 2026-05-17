@@ -9,13 +9,6 @@
             "type": "language"
         },
         {
-            "id": "euqai/euqai-fusion-code-v1",
-            "object": "model",
-            "owned_by": "Euqai",
-            "name": "Euqai Fusion Code v1",
-            "type": "language"
-        },
-        {
             "id": "euqai/qwen3-235b",
             "object": "model",
             "owned_by": "Euqai",
@@ -27,13 +20,6 @@
             "object": "model",
             "owned_by": "Euqai",
             "name": "Mistral Small 24b",
-            "type": "language"
-        },
-        {
-            "id": "euqai/qwen3-30b",
-            "object": "model",
-            "owned_by": "Euqai",
-            "name": "Qwen 3 30B",
             "type": "language"
         },
         {
