@@ -131,7 +131,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | CometAPI       | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Commonstack    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Concentrate    | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| ContextualAI   | ❌        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
+| ContextualAI   | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
 | Cortecs        | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
 | Cortex         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Crazyrouter    | ✅        | ✅                | ❌            | ✅            | ❌        | ❌                     | ❌                       | ❌               | ❌          | ❌          | ➖          |

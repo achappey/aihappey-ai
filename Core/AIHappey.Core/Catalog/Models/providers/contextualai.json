@@ -21,6 +21,20 @@
             "owned_by": "ContextualAI",
             "name": "ctxl-rerank-v1-instruct",
             "type": "reranking"
+        },
+        {
+            "id": "contextualai/v1",
+            "object": "model",
+            "owned_by": "ContextualAI",
+            "name": "v1",
+            "type": "language"
+        },
+        {
+            "id": "contextualai/v2",
+            "object": "model",
+            "owned_by": "ContextualAI",
+            "name": "v2",
+            "type": "language"
         }
     ]
 }
