@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Eliza;
 
@@ -41,6 +42,41 @@ public partial class ElizaProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
+    private void ApplyVoiceApiKeyHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException($"No {nameof(Eliza)} API key.");
+
+        _client.DefaultRequestHeaders.Authorization = null;
+        _client.DefaultRequestHeaders.Remove("X-API-Key");
+        _client.DefaultRequestHeaders.Add("X-API-Key", key);
+    }
+
+    private static Dictionary<string, JsonElement> BuildElizaProviderMetadata<T>(T value)
+        => new()
+        {
+            [nameof(Eliza).ToLowerInvariant()] = JsonSerializer.SerializeToElement(value, JsonSerializerOptions.Web)
+        };
+
+    private static double? TryGetElizaDouble(JsonElement element, string propertyName)
+    {
+        if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(propertyName, out var value))
+            return null;
+
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number))
+            return number;
+
+        if (value.ValueKind == JsonValueKind.String &&
+            double.TryParse(value.GetString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+        {
+            return parsed;
+        }
+
+        return null;
+    }
+
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -67,11 +103,8 @@ public partial class ElizaProvider : IModelProvider
         return result.ToSamplingResult();
     }
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -99,17 +132,8 @@ public partial class ElizaProvider : IModelProvider
         yield break;
     }
 
-
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {

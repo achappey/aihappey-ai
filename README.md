@@ -157,7 +157,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Edgee          | ✅        | ✅                | ❌            | ✅            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Echo           | ✅        | ❌                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EdenAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
-| Eliza          | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
+| Eliza          | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ➖          |
 | EmberCloud     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | EmbraceableAI  | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ElectronHub    | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |

@@ -18,6 +18,7 @@ public partial class ElizaProvider
 
                 models.AddRange(await this.ListLanguageModels(cancellationToken));
                 models.AddRange(await this.ListAgentModels(cancellationToken));
+                models.AddRange(ListVoiceModels());
 
                 return models;
             },
@@ -145,5 +146,58 @@ public partial class ElizaProvider
         }
 
         return models;
+    }
+
+    private IEnumerable<Model> ListVoiceModels()
+    {
+        yield return new Model
+        {
+            Id = "eleven_multilingual_v2".ToModelId(GetIdentifier()),
+            Name = "Eleven Multilingual v2",
+            Type = "speech",
+            OwnedBy = "Eliza",
+            Description = "Text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
+            Tags = ["tts", "voice", "speech"]
+        };
+
+        yield return new Model
+        {
+            Id = "eleven_turbo_v2_5".ToModelId(GetIdentifier()),
+            Name = "Eleven Turbo v2.5",
+            Type = "speech",
+            OwnedBy = "Eliza",
+            Description = "Fast text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
+            Tags = ["tts", "voice", "speech"]
+        };
+
+        yield return new Model
+        {
+            Id = "eleven_flash_v2_5".ToModelId(GetIdentifier()),
+            Name = "Eleven Flash v2.5",
+            Type = "speech",
+            OwnedBy = "Eliza",
+            Description = "Fast text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
+            Tags = ["tts", "voice", "speech"]
+        };
+
+        yield return new Model
+        {
+            Id = "eleven_v3".ToModelId(GetIdentifier()),
+            Name = "Eleven v3",
+            Type = "speech",
+            OwnedBy = "Eliza",
+            Description = "High quality text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
+            Tags = ["tts", "voice", "speech"]
+        };
+
+        yield return new Model
+        {
+            Id = "voice/stt".ToModelId(GetIdentifier()),
+            Name = "Eliza Voice STT",
+            Type = "transcription",
+            OwnedBy = "Eliza",
+            Description = "Speech-to-text via Eliza Voice API.",
+            Tags = ["stt", "voice", "transcription"]
+        };
     }
 }
