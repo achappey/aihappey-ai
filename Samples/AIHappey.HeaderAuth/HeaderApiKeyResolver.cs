@@ -526,7 +526,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["helyxai"] = "X-HelyxAI-Key",
             ["anyrouter"] = "X-AnyRouter-Key",
             ["fred"] = "X-Fred-Key",
-            ["pioneer"] = "X-Pioneer-Key"
+            ["pioneer"] = "X-Pioneer-Key",
+            ["llmbase"] = "X-LLMBase-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

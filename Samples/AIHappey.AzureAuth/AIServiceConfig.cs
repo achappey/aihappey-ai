@@ -525,6 +525,7 @@ public class AIServiceConfig
     public ProviderConfig? AnyRouter { get; set; }
     public ProviderConfig? Fred { get; set; }
     public ProviderConfig? Pioneer { get; set; }
+    public ProviderConfig? LLMBase { get; set; }
 
 }
 
