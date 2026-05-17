@@ -91,7 +91,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | BlackForestLabs| ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | BlazeRail      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Bleep          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Blink          | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
+| Blink          | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | BlockRun       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | BotVerse       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Bria           | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
