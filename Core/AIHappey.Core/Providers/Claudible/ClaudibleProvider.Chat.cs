@@ -1,12 +1,27 @@
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Claudible;
 
 public partial class ClaudibleProvider
 {
-    public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
-       CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
+       [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
+
+        yield break;
     }
 }
