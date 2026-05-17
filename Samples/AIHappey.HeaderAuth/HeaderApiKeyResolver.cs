@@ -527,7 +527,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["anyrouter"] = "X-AnyRouter-Key",
             ["fred"] = "X-Fred-Key",
             ["pioneer"] = "X-Pioneer-Key",
-            ["llmbase"] = "X-LLMBase-Key"
+            ["llmbase"] = "X-LLMBase-Key",
+            ["skypooltoken"] = "X-SkypoolToken-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

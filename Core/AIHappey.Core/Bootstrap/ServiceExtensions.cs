@@ -527,6 +527,7 @@ using AIHappey.Core.Providers.AnyRouter;
 using AIHappey.Core.Providers.Fred;
 using AIHappey.Core.Providers.Pioneer;
 using AIHappey.Core.Providers.LLMBase;
+using AIHappey.Core.Providers.SkypoolToken;
 
 namespace AIHappey.Core.AI;
 
@@ -1077,6 +1078,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FredProvider>();
         services.AddSingleton<IModelProvider, PioneerProvider>();
         services.AddSingleton<IModelProvider, LLMBaseProvider>();
+        services.AddSingleton<IModelProvider, SkypoolTokenProvider>();
 
     }
 }
