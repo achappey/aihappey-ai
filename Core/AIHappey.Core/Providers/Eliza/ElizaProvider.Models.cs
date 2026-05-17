@@ -90,7 +90,7 @@ public partial class ElizaProvider
 
         using var req = new HttpRequestMessage(
             HttpMethod.Get,
-            "api/my-agents/characters?limit=1000");
+            "my-agents/characters?limit=1000");
 
         ApplyAuthHeader();
 
