@@ -102,7 +102,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ByteSpace      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Bytez          | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | Cailos         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| CairoCoder     | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| CairoCoder     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | CAMBAI         | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | CanopyWave     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Cartesia       | ✅        | ❌                | ❌            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
