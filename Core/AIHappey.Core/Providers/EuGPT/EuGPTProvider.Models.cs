@@ -36,7 +36,7 @@ public partial class EuGPTProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr =  root.TryGetProperty("models", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -44,16 +44,15 @@ public partial class EuGPTProvider
                 {
                     Model model = new();
 
-                    if (el.TryGetProperty("model", out var idEl))
+                    if (el.TryGetProperty("id", out var idEl))
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
                     }
-              
-                    if (el.TryGetProperty("name", out var orgEl))
-                        model.Name = orgEl.GetString() ?? model.Name;
 
-                 
+                    if (el.TryGetProperty("owned_by", out var orgEl))
+                        model.OwnedBy = orgEl.GetString() ?? string.Empty;
+
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
