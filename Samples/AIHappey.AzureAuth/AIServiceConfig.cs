@@ -524,6 +524,7 @@ public class AIServiceConfig
     public ProviderConfig? HelyxAI { get; set; }
     public ProviderConfig? AnyRouter { get; set; }
     public ProviderConfig? Fred { get; set; }
+    public ProviderConfig? Pioneer { get; set; }
 
 }
 

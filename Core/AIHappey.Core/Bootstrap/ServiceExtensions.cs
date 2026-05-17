@@ -525,6 +525,7 @@ using AIHappey.Core.Providers.AnLinkAI;
 using AIHappey.Core.Providers.HelyxAI;
 using AIHappey.Core.Providers.AnyRouter;
 using AIHappey.Core.Providers.Fred;
+using AIHappey.Core.Providers.Pioneer;
 
 namespace AIHappey.Core.AI;
 
@@ -1073,6 +1074,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HelyxAIProvider>();
         services.AddSingleton<IModelProvider, AnyRouterProvider>();
         services.AddSingleton<IModelProvider, FredProvider>();
+        services.AddSingleton<IModelProvider, PioneerProvider>();
 
     }
 }
