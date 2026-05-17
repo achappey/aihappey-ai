@@ -6,7 +6,6 @@ using AIHappey.Messages;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Messages.Mapping;
-using AIHappey.Unified.Models;
 
 
 namespace AIHappey.Core.Providers.Exa;

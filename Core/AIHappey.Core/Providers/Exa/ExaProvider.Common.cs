@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -6,7 +5,6 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
-using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Exa;
 

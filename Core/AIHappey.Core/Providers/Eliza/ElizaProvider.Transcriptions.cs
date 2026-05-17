@@ -1,9 +1,7 @@
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Eliza;
 

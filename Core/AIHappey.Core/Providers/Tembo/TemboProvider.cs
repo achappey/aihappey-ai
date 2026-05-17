@@ -10,7 +10,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.ChatCompletions.Mapping;
-using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Models;

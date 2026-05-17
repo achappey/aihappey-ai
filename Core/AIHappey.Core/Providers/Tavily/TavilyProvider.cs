@@ -8,7 +8,6 @@ using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
-using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
