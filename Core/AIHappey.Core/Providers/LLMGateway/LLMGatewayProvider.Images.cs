@@ -13,7 +13,7 @@ public partial class LLMGatewayProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<ImageResponse> ImageRequestLLMGateway(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
