@@ -89,7 +89,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Bineric        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | BLACKBOX       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | BlackForestLabs| ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| BlazeRail      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| BlazeRail      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Bleep          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Blink          | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | BlockRun       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
