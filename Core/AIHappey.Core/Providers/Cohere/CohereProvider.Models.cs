@@ -58,15 +58,18 @@ public partial class CohereProvider
                     .Where(s => !string.IsNullOrWhiteSpace(s))];
                     }
 
-                    result.Add(new Model
-                    {
-                        Id = name!.ToModelId(GetIdentifier()),
-                        Name = name!,
-                        Tags = tags,
-                        ContextWindow = contextLength,
-                        OwnedBy = nameof(Cohere),
-                        Type = ResolveModelType(name!, tags)
-                    });
+                    var modelType = ResolveModelType(name!, tags);
+
+                    if (!string.IsNullOrEmpty(modelType))
+                        result.Add(new Model
+                        {
+                            Id = name!.ToModelId(GetIdentifier()),
+                            Name = name!,
+                            Tags = tags,
+                            ContextWindow = contextLength,
+                            OwnedBy = nameof(Cohere),
+                            Type = modelType
+                        });
                 }
 
                 return result.WithPricing(GetIdentifier());
@@ -77,7 +80,7 @@ public partial class CohereProvider
 
     }
 
-    private static string ResolveModelType(string name, IEnumerable<string>? tags)
+    private static string? ResolveModelType(string name, IEnumerable<string>? tags)
     {
         if (name.Contains("transcribe", StringComparison.OrdinalIgnoreCase)
             || tags?.Any(t => t.Contains("transcription", StringComparison.OrdinalIgnoreCase)
@@ -87,9 +90,12 @@ public partial class CohereProvider
             return "transcription";
         }
 
-        if (tags?.Any(t => t.Contains("rerank", StringComparison.OrdinalIgnoreCase)) == true)
+        if (name?.Contains("rerank", StringComparison.OrdinalIgnoreCase) == true)
             return "reranking";
 
-        return "chat";
+        if (name?.Contains("embed", StringComparison.OrdinalIgnoreCase) == true)
+            return null;
+
+        return "language";
     }
 }
