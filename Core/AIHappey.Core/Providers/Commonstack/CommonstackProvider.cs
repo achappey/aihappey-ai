@@ -6,6 +6,7 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Responses;
 using System.Runtime.CompilerServices;
@@ -57,9 +58,12 @@ public partial class CommonstackProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Commonstack).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+           cancellationToken);
+
+        return result.ToSamplingResult();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
