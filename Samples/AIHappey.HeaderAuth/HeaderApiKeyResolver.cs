@@ -530,7 +530,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["llmbase"] = "X-LLMBase-Key",
             ["skypooltoken"] = "X-SkypoolToken-Key",
             ["luminoai"] = "X-LuminoAI-Key",
-            ["tokenhub"] = "X-TokenHub-Key"
+            ["tokenhub"] = "X-TokenHub-Key",
+            ["myrouter"] = "X-MyRouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

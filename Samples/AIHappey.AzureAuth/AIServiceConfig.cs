@@ -529,6 +529,7 @@ public class AIServiceConfig
     public ProviderConfig? SkypoolToken { get; set; }
     public ProviderConfig? LuminoAI { get; set; }
     public ProviderConfig? TokenHub { get; set; }
+    public ProviderConfig? MyRouter { get; set; }
 
 }
 
