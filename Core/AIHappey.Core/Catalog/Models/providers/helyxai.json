@@ -1,0 +1,100 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "helyxai/helyx-3.5-pro",
+      "object": "model",
+      "owned_by": "HelyxAI",
+      "name": "helyx-3.5-pro",
+      "type": "language",
+      "context_window": 4000
+    },
+    {
+      "id": "helyxai/chatgpt-5.5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "chatgpt-5.5",
+      "type": "language",
+      "context_window": 60000
+    },
+    {
+      "id": "helyxai/claude-4.7-opus",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-4.7-opus",
+      "type": "language",
+      "context_window": 100000
+    },
+    {
+      "id": "helyxai/grok-4.3",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4.3",
+      "type": "language",
+      "context_window": 60000
+    },
+    {
+      "id": "helyxai/grok-4.1-fast",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4.1-fast",
+      "type": "language",
+      "context_window": 50000
+    },
+    {
+      "id": "helyxai/perplexity-sonar",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "perplexity-sonar",
+      "type": "language",
+      "context_window": 12000
+    },
+    {
+      "id": "helyxai/kimi-k2.6-pro",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "kimi-k2.6-pro",
+      "type": "language",
+      "context_window": 60000
+    },
+    {
+      "id": "helyxai/qwen-3.6-plus",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen-3.6-plus",
+      "type": "language",
+      "context_window": 50000
+    },
+    {
+      "id": "helyxai/glm-5.1",
+      "object": "model",
+      "owned_by": "Zhipu AI",
+      "name": "glm-5.1",
+      "type": "language",
+      "context_window": 60000
+    },
+    {
+      "id": "helyxai/minimax-m2.7",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.7",
+      "type": "language",
+      "context_window": 50000
+    },
+    {
+      "id": "helyxai/llama-3.1-8b",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama-3.1-8b",
+      "type": "language",
+      "context_window": 4000
+    },
+    {
+      "id": "helyxai/gpt-image-2",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-image-2",
+      "type": "image"
+    }
+  ]
+}

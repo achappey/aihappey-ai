@@ -521,6 +521,7 @@ public class AIServiceConfig
     public ProviderConfig? Mixlayer { get; set; }
     public ProviderConfig? AllToken { get; set; }
     public ProviderConfig? AnLinkAI { get; set; }
+    public ProviderConfig? HelyxAI { get; set; }
 
 }
 

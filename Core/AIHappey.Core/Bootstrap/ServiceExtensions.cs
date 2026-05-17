@@ -522,6 +522,7 @@ using AIHappey.Core.Providers.MuleRouter;
 using AIHappey.Core.Providers.Mixlayer;
 using AIHappey.Core.Providers.AllToken;
 using AIHappey.Core.Providers.AnLinkAI;
+using AIHappey.Core.Providers.HelyxAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1067,6 +1068,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MixlayerProvider>();
         services.AddSingleton<IModelProvider, AllTokenProvider>();
         services.AddSingleton<IModelProvider, AnLinkAIProvider>();
+        services.AddSingleton<IModelProvider, HelyxAIProvider>();
 
     }
 }
