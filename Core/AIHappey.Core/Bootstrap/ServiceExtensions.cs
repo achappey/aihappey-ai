@@ -531,6 +531,7 @@ using AIHappey.Core.Providers.SkypoolToken;
 using AIHappey.Core.Providers.LuminoAI;
 using AIHappey.Core.Providers.TokenHub;
 using AIHappey.Core.Providers.MyRouter;
+using AIHappey.Core.Providers.Osiris;
 
 namespace AIHappey.Core.AI;
 
@@ -1085,6 +1086,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SkypoolTokenProvider>();
         services.AddSingleton<IModelProvider, TokenHubProvider>();
         services.AddSingleton<IModelProvider, MyRouterProvider>();
+        services.AddSingleton<IModelProvider, OsirisProvider>();
 
     }
 }

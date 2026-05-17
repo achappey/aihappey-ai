@@ -530,6 +530,7 @@ public class AIServiceConfig
     public ProviderConfig? LuminoAI { get; set; }
     public ProviderConfig? TokenHub { get; set; }
     public ProviderConfig? MyRouter { get; set; }
+    public ProviderConfig? Osiris { get; set; }
 
 }
 
