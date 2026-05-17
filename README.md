@@ -489,6 +489,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Together       | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
 | Token360       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ➖               | ➖          | ❌          | ➖          |
 | TokenFlux      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| TokenHub       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TrueFoundry    | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ❌          | ➖          | ➖          |
 | TTSReader      | ✅        | ❌                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Typecast       | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |

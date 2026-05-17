@@ -529,7 +529,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["pioneer"] = "X-Pioneer-Key",
             ["llmbase"] = "X-LLMBase-Key",
             ["skypooltoken"] = "X-SkypoolToken-Key",
-            ["luminoai"] = "X-LuminoAI-Key"
+            ["luminoai"] = "X-LuminoAI-Key",
+            ["tokenhub"] = "X-TokenHub-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
