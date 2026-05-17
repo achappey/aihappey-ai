@@ -527,6 +527,7 @@ public class AIServiceConfig
     public ProviderConfig? Pioneer { get; set; }
     public ProviderConfig? LLMBase { get; set; }
     public ProviderConfig? SkypoolToken { get; set; }
+    public ProviderConfig? LuminoAI { get; set; }
 
 }
 

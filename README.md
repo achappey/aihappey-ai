@@ -285,6 +285,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LumaAI         | ✅        | ❌                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Lumecoder      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Lumenfall      | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
+| LuminoAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Lunos          | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LXG2IT         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Magisterium    | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

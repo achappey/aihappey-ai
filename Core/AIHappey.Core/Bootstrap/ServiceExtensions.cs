@@ -528,6 +528,7 @@ using AIHappey.Core.Providers.Fred;
 using AIHappey.Core.Providers.Pioneer;
 using AIHappey.Core.Providers.LLMBase;
 using AIHappey.Core.Providers.SkypoolToken;
+using AIHappey.Core.Providers.LuminoAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1078,7 +1079,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FredProvider>();
         services.AddSingleton<IModelProvider, PioneerProvider>();
         services.AddSingleton<IModelProvider, LLMBaseProvider>();
+        services.AddSingleton<IModelProvider, LuminoAIProvider>();
         services.AddSingleton<IModelProvider, SkypoolTokenProvider>();
 
     }
 }
+
