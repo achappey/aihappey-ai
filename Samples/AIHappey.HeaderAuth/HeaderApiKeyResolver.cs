@@ -523,7 +523,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mixlayer"] = "X-Mixlayer-Key",
             ["alltoken"] = "X-AllToken-Key",
             ["anlinkai"] = "X-AnLinkAI-Key",
-            ["helyxai"] = "X-HelyxAI-Key"
+            ["helyxai"] = "X-HelyxAI-Key",
+            ["anyrouter"] = "X-AnyRouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
