@@ -521,7 +521,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["runcrate"] = "X-Runcrate-Key",
             ["mulerouter"] = "X-MuleRouter-Key",
             ["mixlayer"] = "X-Mixlayer-Key",
-            ["alltoken"] = "X-AllToken-Key"
+            ["alltoken"] = "X-AllToken-Key",
+            ["anlinkai"] = "X-AnLinkAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
