@@ -280,7 +280,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LLMWise        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LMRouter       | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | LogicosLLMHub  | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| LongCat        | ✅        | ✅                | ❌            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| LongCat        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LOVO           | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | LumaAI         | ✅        | ❌                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Lumecoder      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
