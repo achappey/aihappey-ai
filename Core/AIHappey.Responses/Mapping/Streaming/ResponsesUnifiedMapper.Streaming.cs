@@ -673,6 +673,16 @@ public static partial class ResponsesUnifiedMapper
                 {
                     yield return CreateTextStartEnvelope(added.Item.Id ?? string.Empty);
                 }
+                else if (IsPerplexityFinanceResultsItem(providerId, added.Item))
+                {
+                    yield return CreateToolInputStartEnvelope(
+                        CreatePerplexityFinanceSearchToolCallId(added.Item, added.OutputIndex),
+                        PerplexityFinanceSearchToolName,
+                        "Finance search",
+                        providerExecuted: true);
+
+                    yield break;
+                }
                 else if (added.Item.Type.EndsWith(":image_generation"))
                 {
                     yield return CreateToolInputEndEnvelope(
@@ -1366,6 +1376,19 @@ public static partial class ResponsesUnifiedMapper
                 {
                     yield return envelope;
                 }
+
+                yield break;
+
+            case ResponseUnknownEvent unknown
+                when IsPerplexityFinanceSearchQueriesEvent(providerId, unknown):
+                foreach (var envelope in CreatePerplexityFinanceSearchInputEnvelopes(unknown))
+                    yield return envelope;
+
+                yield break;
+
+            case ResponseUnknownEvent unknown
+                when IsPerplexityFinanceSearchResultsEvent(providerId, unknown):
+                yield return CreatePerplexityFinanceSearchOutputEnvelope(unknown);
 
                 yield break;
 

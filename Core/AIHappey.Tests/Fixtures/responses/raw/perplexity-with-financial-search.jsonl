@@ -1,0 +1,1167 @@
+event: response.created
+data: {"response":{"background":false,"completed_at":null,"created_at":1779014251,"error":null,"frequency_penalty":0,"id":"resp_641a81e3-7d34-4510-9b9b-a16a44d1664f","incomplete_details":null,"instructions":null,"max_output_tokens":2048,"max_tool_calls":null,"metadata":{},"model":"openai/gpt-5.4-mini","object":"response","output":[],"parallel_tool_calls":true,"presence_penalty":0,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":"low","summary":null},"safety_identifier":null,"service_tier":"default","status":"in_progress","store":true,"temperature":1,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"finance_search"}],"top_logprobs":0,"top_p":1,"truncation":"disabled","usage":null,"user":null},"sequence_number":0,"type":"response.created"}
+
+event: response.in_progress
+data: {"response":{"background":false,"completed_at":null,"created_at":1779014251,"error":null,"frequency_penalty":0,"id":"resp_641a81e3-7d34-4510-9b9b-a16a44d1664f","incomplete_details":null,"instructions":null,"max_output_tokens":2048,"max_tool_calls":null,"metadata":{},"model":"openai/gpt-5.4-mini","object":"response","output":[],"parallel_tool_calls":true,"presence_penalty":0,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":"low","summary":null},"safety_identifier":null,"service_tier":"default","status":"in_progress","store":true,"temperature":1,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"finance_search"}],"top_logprobs":0,"top_p":1,"truncation":"disabled","usage":null,"user":null},"sequence_number":1,"type":"response.in_progress"}
+
+event: response.output_item.added
+data: {"item":{"categories":[],"results":[],"tickers":null,"type":"finance_results"},"output_index":0,"sequence_number":2,"type":"response.output_item.added"}
+
+event: response.reasoning.finance_search_queries
+data: {"categories":["quote","profile"],"sequence_number":3,"thought":"Fetching financial data...","tickers":["AAPL","GOOG"],"type":"response.reasoning.finance_search_queries"}
+
+event: response.reasoning.finance_search_results
+data: {"results":[{"category":"quote","content":"## AAPL Quote\nQuote field guide: `price` is the latest quote/current price. Use `price` for latest price, current price, latest quote, or latest close/closing price unless the user explicitly asks for previous close. `previousClose` is the prior session close. Use `dayLow`, `dayHigh`, or `open` only when the user asks for low, high, or open. Volume fields are raw share counts (crypto: token units).\n| symbol | name | timestamp | fetched_at | market_status | price | currency | change | changesPercentage | marketCap | pe | eps | volume | avgVolume | dayLow | dayHigh | yearLow | yearHigh | previousClose | open | dividendYieldTTM | afterHoursPrice | afterHoursChange | afterHoursPercentChange |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| AAPL | Apple Inc. | 2026-05-15 20:00:01 UTC | 2026-05-17 10:37:33 UTC | after_hours | 300.23 | USD | 2.02 | 0.68 | 4,409,584,891,880 | 36.26 | 8.28 | 54,675,423 | 43,553,490 | 296.52 | 303.20 | 193.46 | 303.20 | 298.21 | 297.75 | 0.00 | 299.85 | -0.38 | -0.13 |\n\nData available in: `AAPL_GOOG_quotes_a42a19.csv` (row key column: symbol)\n\n## GOOG Quote\nQuote field guide: `price` is the latest quote/current price. Use `price` for latest price, current price, latest quote, or latest close/closing price unless the user explicitly asks for previous close. `previousClose` is the prior session close. Use `dayLow`, `dayHigh`, or `open` only when the user asks for low, high, or open. Volume fields are raw share counts (crypto: token units).\n| symbol | name | timestamp | fetched_at | market_status | price | currency | change | changesPercentage | marketCap | pe | eps | volume | avgVolume | dayLow | dayHigh | yearLow | yearHigh | previousClose | open | dividendYieldTTM | afterHoursPrice | afterHoursChange | afterHoursPercentChange |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| GOOG | Alphabet Inc. | 2026-05-15 20:00:01 UTC | 2026-05-17 10:37:33 UTC | after_hours | 393.32 | USD | -3.85 | -0.97 | 4,757,154,383,643 | 30.02 | 13.10 | 15,735,231 | 19,203,933 | 389.76 | 395.88 | 163.33 | 399.93 | 397.17 | 393.21 | 0.00 | 392.06 | -1.26 | -0.32 |\n\nData available in: `AAPL_GOOG_quotes_a42a19.csv` (row key column: symbol)","sources":["https://www.perplexity.ai/finance/AAPL/historical-data?cited_at=1778889584","https://www.perplexity.ai/finance/AAPL?cited_at=1778889584","https://www.perplexity.ai/finance/GOOG/historical-data?cited_at=1778889591","https://www.perplexity.ai/finance/GOOG?cited_at=1778889591"],"tickers":["AAPL","GOOG"]},{"category":"profile","content":"**AAPL - Apple Inc.**\n\n- **Sector:** Technology\n- **Industry:** Consumer Electronics\n- **CEO:** Timothy D. Cook\n- **Employees:** 164000\n- **Country:** US\n- **Website:** https://www.apple.com\n- **IPO Date:** 1980-12-12\n\n\n**Description:**\nApple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; and wearables, home, and accessories comprising AirPods, Apple TV, Apple Watch, Beats products, and HomePod. It also provides AppleCare support and cloud services; and operates various platforms, including the App Store that allow customers to discover and download applications and digital content, such as books, music, video, games, and podcasts, as well as advertising services include third-party licensing arrangements and its own advertising platforms. In addition, the company offers various subscription-based services, such as Apple Arcade, a game subscription service; Apple Fitness+, a personalized fitness service; Apple Music, which offers users a curated listening experience with on-demand radio stations; Apple News+, a subscription news and magazine service; Apple TV+, which offers exclusive original content; Apple Card, a co-branded credit card; and Apple Pay, a cashless payment service, as well as licenses its intellectual property. The company serves consumers, and small and mid-sized businesses; and the education, enterprise, and government markets. It distributes third-party applications for its products through the App Store. The company also sells its products through its retail and online stores, and direct sales force; and third-party cellular network carriers, wholesalers, retailers, and resellers. Apple Inc. was founded in 1976 and is headquartered in Cupertino, California.\n\n---\n\n**GOOG - Alphabet Inc.**\n\n- **Sector:** Communication Services\n- **Industry:** Internet Content \u0026 Information\n- **CEO:** Sundar Pichai\n- **Employees:** 185719\n- **Country:** US\n- **Website:** https://abc.xyz\n- **IPO Date:** 2004-08-19\n\n\n**Description:**\nAlphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America. It operates through Google Services, Google Cloud, and Other Bets segments. The Google Services segment provides products and services, including ads, Android, Chrome, devices, Gmail, Google Drive, Google Maps, Google Photos, Google Play, Search, and YouTube. It is also involved in the sale of apps and in-app purchases and digital content in the Google Play and YouTube; and devices, as well as in the provision of YouTube consumer subscription services. The Google Cloud segment offers infrastructure, cybersecurity, databases, analytics, AI, and other services; Google Workspace that include cloud-based communication and collaboration tools for enterprises, such as Gmail, Docs, Drive, Calendar, and Meet; and other services for enterprise customers. The Other Bets segment sells healthcare-related and internet services. The company was incorporated in 1998 and is headquartered in Mountain View, California.","sources":["https://www.perplexity.ai/finance/AAPL","https://www.perplexity.ai/finance/GOOG"],"tickers":["AAPL","GOOG"]}],"sequence_number":4,"thought":"Fetched 2 finance results","type":"response.reasoning.finance_search_results"}
+
+event: response.output_item.done
+data: {"item":{"categories":["quote","profile"],"results":[{"category":"quote","content":"## AAPL Quote\nQuote field guide: `price` is the latest quote/current price. Use `price` for latest price, current price, latest quote, or latest close/closing price unless the user explicitly asks for previous close. `previousClose` is the prior session close. Use `dayLow`, `dayHigh`, or `open` only when the user asks for low, high, or open. Volume fields are raw share counts (crypto: token units).\n| symbol | name | timestamp | fetched_at | market_status | price | currency | change | changesPercentage | marketCap | pe | eps | volume | avgVolume | dayLow | dayHigh | yearLow | yearHigh | previousClose | open | dividendYieldTTM | afterHoursPrice | afterHoursChange | afterHoursPercentChange |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| AAPL | Apple Inc. | 2026-05-15 20:00:01 UTC | 2026-05-17 10:37:33 UTC | after_hours | 300.23 | USD | 2.02 | 0.68 | 4,409,584,891,880 | 36.26 | 8.28 | 54,675,423 | 43,553,490 | 296.52 | 303.20 | 193.46 | 303.20 | 298.21 | 297.75 | 0.00 | 299.85 | -0.38 | -0.13 |\n\nData available in: `AAPL_GOOG_quotes_a42a19.csv` (row key column: symbol)\n\n## GOOG Quote\nQuote field guide: `price` is the latest quote/current price. Use `price` for latest price, current price, latest quote, or latest close/closing price unless the user explicitly asks for previous close. `previousClose` is the prior session close. Use `dayLow`, `dayHigh`, or `open` only when the user asks for low, high, or open. Volume fields are raw share counts (crypto: token units).\n| symbol | name | timestamp | fetched_at | market_status | price | currency | change | changesPercentage | marketCap | pe | eps | volume | avgVolume | dayLow | dayHigh | yearLow | yearHigh | previousClose | open | dividendYieldTTM | afterHoursPrice | afterHoursChange | afterHoursPercentChange |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| GOOG | Alphabet Inc. | 2026-05-15 20:00:01 UTC | 2026-05-17 10:37:33 UTC | after_hours | 393.32 | USD | -3.85 | -0.97 | 4,757,154,383,643 | 30.02 | 13.10 | 15,735,231 | 19,203,933 | 389.76 | 395.88 | 163.33 | 399.93 | 397.17 | 393.21 | 0.00 | 392.06 | -1.26 | -0.32 |\n\nData available in: `AAPL_GOOG_quotes_a42a19.csv` (row key column: symbol)","sources":["https://www.perplexity.ai/finance/AAPL/historical-data?cited_at=1778889584","https://www.perplexity.ai/finance/AAPL?cited_at=1778889584","https://www.perplexity.ai/finance/GOOG/historical-data?cited_at=1778889591","https://www.perplexity.ai/finance/GOOG?cited_at=1778889591"],"tickers":["AAPL","GOOG"]},{"category":"profile","content":"**AAPL - Apple Inc.**\n\n- **Sector:** Technology\n- **Industry:** Consumer Electronics\n- **CEO:** Timothy D. Cook\n- **Employees:** 164000\n- **Country:** US\n- **Website:** https://www.apple.com\n- **IPO Date:** 1980-12-12\n\n\n**Description:**\nApple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; and wearables, home, and accessories comprising AirPods, Apple TV, Apple Watch, Beats products, and HomePod. It also provides AppleCare support and cloud services; and operates various platforms, including the App Store that allow customers to discover and download applications and digital content, such as books, music, video, games, and podcasts, as well as advertising services include third-party licensing arrangements and its own advertising platforms. In addition, the company offers various subscription-based services, such as Apple Arcade, a game subscription service; Apple Fitness+, a personalized fitness service; Apple Music, which offers users a curated listening experience with on-demand radio stations; Apple News+, a subscription news and magazine service; Apple TV+, which offers exclusive original content; Apple Card, a co-branded credit card; and Apple Pay, a cashless payment service, as well as licenses its intellectual property. The company serves consumers, and small and mid-sized businesses; and the education, enterprise, and government markets. It distributes third-party applications for its products through the App Store. The company also sells its products through its retail and online stores, and direct sales force; and third-party cellular network carriers, wholesalers, retailers, and resellers. Apple Inc. was founded in 1976 and is headquartered in Cupertino, California.\n\n---\n\n**GOOG - Alphabet Inc.**\n\n- **Sector:** Communication Services\n- **Industry:** Internet Content \u0026 Information\n- **CEO:** Sundar Pichai\n- **Employees:** 185719\n- **Country:** US\n- **Website:** https://abc.xyz\n- **IPO Date:** 2004-08-19\n\n\n**Description:**\nAlphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America. It operates through Google Services, Google Cloud, and Other Bets segments. The Google Services segment provides products and services, including ads, Android, Chrome, devices, Gmail, Google Drive, Google Maps, Google Photos, Google Play, Search, and YouTube. It is also involved in the sale of apps and in-app purchases and digital content in the Google Play and YouTube; and devices, as well as in the provision of YouTube consumer subscription services. The Google Cloud segment offers infrastructure, cybersecurity, databases, analytics, AI, and other services; Google Workspace that include cloud-based communication and collaboration tools for enterprises, such as Gmail, Docs, Drive, Calendar, and Meet; and other services for enterprise customers. The Other Bets segment sells healthcare-related and internet services. The company was incorporated in 1998 and is headquartered in Mountain View, California.","sources":["https://www.perplexity.ai/finance/AAPL","https://www.perplexity.ai/finance/GOOG"],"tickers":["AAPL","GOOG"]}],"tickers":["AAPL","GOOG"],"type":"finance_results"},"output_index":0,"sequence_number":5,"type":"response.output_item.done"}
+
+event: response.output_item.added
+data: {"item":{"content":null,"id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","role":"assistant","status":"completed","type":"message"},"output_index":1,"sequence_number":6,"type":"response.output_item.added"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Hier","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":7,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" is","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":8,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" een","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":9,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" snelle","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":10,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" update","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":11,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" van","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":12,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":13,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":14,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" (","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":15,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"A","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":16,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"APL","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":17,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":")**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":18,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" en","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":19,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":20,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Alphabet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":21,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"/","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":22,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Google","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":23,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" (","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":24,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"GO","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":25,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"OG","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":26,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":")**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":27,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":\n\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":28,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"##","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":29,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Ko","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":30,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ers","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":31,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"prest","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":32,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"atie","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":33,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":34,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":35,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" A","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":36,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"andeel","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":37,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":38,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Laat","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":39,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ste","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":40,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" koers","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":41,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":42,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" D","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":43,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"agt","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":44,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ota","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":45,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"al","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":46,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":47,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Market","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":48,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" cap","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":49,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":50,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" P","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":51,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"/E","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":52,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":53,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":54,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"---","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":55,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":56,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"---","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":57,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":58,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":59,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"---","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":60,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":61,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":62,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"---","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":63,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":64,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":65,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"---","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":66,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":67,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":68,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":69,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":70,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":71,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" (","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":72,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"A","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":73,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"APL","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":74,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":")**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":75,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":76,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":77,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"$","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":78,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"300","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":79,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":80,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"23","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":81,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":82,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":83,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":84,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"+","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":85,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"0","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":86,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":87,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"68","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":88,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"%","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":89,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":90,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":91,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":92,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"$","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":93,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"4","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":94,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":95,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"41","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":96,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" bl","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":97,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":98,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":99,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":100,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":101,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"36","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":102,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":103,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"26","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":104,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":105,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":106,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"|","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":107,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":108,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Alphabet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":109,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" (","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":110,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"GO","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":111,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"OG","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":112,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":")**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":113,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":114,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":115,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"$","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":116,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"393","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":117,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":118,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"32","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":119,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":120,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":121,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":122,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":123,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"0","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":124,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":125,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"97","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":126,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"%","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":127,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":128,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":129,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":130,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"$","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":131,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"4","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":132,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":133,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"76","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":134,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" bl","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":135,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":136,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":137,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":138,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":139,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"30","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":140,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":141,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"02","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":142,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":143,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" |\n\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":144,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"##","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":145,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" In","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":146,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" het","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":147,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" kort","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":148,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":149,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":150,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":151,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":152,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":153,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" staat","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":154,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" er","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":155,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" stevig","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":156,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" voor","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":157,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" en","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":158,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" note","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":159,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ert","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":160,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" weer","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":161,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" rond","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":162,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":163,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"$","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":164,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"300","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":165,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":166,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":167,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Het","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":168,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" aandeel","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":169,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" is","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":170,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" vandaag","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":171,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":172,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"licht","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":173,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" in","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":174,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" de","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":175,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" plus","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":176,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":177,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":178,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":179,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":180,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Alphabet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":181,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":182,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" is","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":183,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" qua","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":184,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" waard","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":185,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ering","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":186,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" iets","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":187,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":188,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"goed","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":189,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"koper","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":190,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":191,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" dan","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":192,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":193,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" op","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":194,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" basis","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":195,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" van","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":196,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" P","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":197,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"/E","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":198,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":199,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" maar","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":200,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" het","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":201,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" aandeel","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":202,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" staat","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":203,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" vandaag","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":204,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":205,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"licht","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":206,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" in","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":207,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" de","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":208,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" min","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":209,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":210,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":211,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":212,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Beide","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":213,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" zijn","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":214,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" nog","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":215,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" altijd","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":216,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":217,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"meg","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":218,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ac","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":219,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"aps","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":220,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":221,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" met","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":222,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" een","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":223,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" enorme","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":224,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" markt","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":225,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"waarde","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":226,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":227,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" ","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":228,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" -","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":229,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":230,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":231,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":232,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"$","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":233,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"4","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":234,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":235,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"41","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":236,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" bil","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":237,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"joen","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":238,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":239,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" ","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":240,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" -","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":241,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Alphabet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":242,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":243,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":244,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"$","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":245,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"4","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":246,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":247,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"76","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":248,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" bil","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":249,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"joen","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":250,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**\n\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":251,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"##","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":252,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Bed","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":253,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"rij","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":254,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"fs","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":255,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"prof","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":256,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"iel","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":257,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":258,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":259,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":260,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":261,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":262,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":263,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" consument","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":264,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ene","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":265,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"le","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":266,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ktr","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":267,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"onica","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":268,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":269,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" met","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":270,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" i","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":271,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Phone","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":272,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":273,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Mac","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":274,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":275,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" i","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":276,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Pad","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":277,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" en","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":278,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" diensten","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":279,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" zoals","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":280,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" App","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":281,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Store","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":282,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":283,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":284,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Music","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":285,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" en","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":286,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":287,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Pay","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":288,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":289,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":290,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":291,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Alphabet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":292,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":293,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":294,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" vooral","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":295,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" online","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":296,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" advert","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":297,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"entie","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":298,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":299,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ink","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":300,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"om","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":301,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"sten","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":302,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":303,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Search","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":304,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":305,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" You","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":306,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Tube","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":307,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":308,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Cloud","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":309,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" en","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":310,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" andere","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":311,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" “","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":312,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Google","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":313,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"”-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":314,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"producten","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":315,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".\n\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":316,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"##","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":317,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" E","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":318,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"envoud","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":319,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ige","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":320,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" conclusie","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":321,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":322,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":323,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":324,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":325,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":326,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":327,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" sterker","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":328,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" momentum","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":329,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" vandaag","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":330,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":331,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" maar","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":332,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" wel","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":333,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" duur","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":334,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"der","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":335,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" gewa","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":336,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"arde","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":337,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"erd","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":338,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":339,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"-","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":340,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":341,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Alphabet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":342,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":343,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":":","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":344,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" iets","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":345,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" zw","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":346,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"akker","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":347,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" vandaag","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":348,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":349,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" maar","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":350,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" relatief","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":351,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" iets","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":352,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" goedkoper","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":353,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" ge","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":354,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"prijs","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":355,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"d","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":356,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".\n\n","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":357,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"Als","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":358,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" je","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":359,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" wilt","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":360,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":361,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" kan","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":362,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" ik","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":363,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" ook","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":364,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" een","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":365,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" **","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":366,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"verg","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":367,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"elijk","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":368,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ing","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":369,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" maken","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":370,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" op","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":371,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" omzet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":372,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":373,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" winst","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":374,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":",","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":375,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" groei","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":376,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" en","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":377,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" waard","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":378,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"ering","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":379,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":"**","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":380,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" tussen","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":381,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Apple","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":382,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" en","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":383,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":" Alphabet","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":384,"type":"response.output_text.delta"}
+
+event: response.output_text.delta
+data: {"content_index":0,"delta":".","item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":385,"type":"response.output_text.delta"}
+
+event: response.output_text.done
+data: {"content_index":0,"item_id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","logprobs":[],"output_index":1,"sequence_number":386,"text":"Hier is een snelle update van **Apple (AAPL)** en **Alphabet/Google (GOOG)**:\n\n## Koersprestatie\n| Aandeel | Laatste koers | Dagtotaal | Market cap | P/E |\n|---|---:|---:|---:|---:|\n| **Apple (AAPL)** | **$300,23** | **+0,68%** | **$4,41 bln** | **36,26** |\n| **Alphabet (GOOG)** | **$393,32** | **-0,97%** | **$4,76 bln** | **30,02** |\n\n## In het kort\n- **Apple** staat er stevig voor en noteert weer rond **$300**. Het aandeel is vandaag **licht in de plus**.\n- **Alphabet** is qua waardering iets **goedkoper** dan Apple op basis van P/E, maar het aandeel staat vandaag **licht in de min**.\n- Beide zijn nog altijd **megacaps** met een enorme marktwaarde:\n  - Apple: **$4,41 biljoen**\n  - Alphabet: **$4,76 biljoen**\n\n## Bedrijfsprofiel\n- **Apple**: consumentenelektronica, met iPhone, Mac, iPad en diensten zoals App Store, Apple Music en Apple Pay.\n- **Alphabet**: vooral online advertentie-inkomsten, Search, YouTube, Cloud en andere “Google”-producten.\n\n## Eenvoudige conclusie\n- **Apple**: sterker momentum vandaag, maar wel duurder gewaardeerd.\n- **Alphabet**: iets zwakker vandaag, maar relatief iets goedkoper geprijsd.\n\nAls je wilt, kan ik ook een **vergelijking maken op omzet, winst, groei en waardering** tussen Apple en Alphabet.","type":"response.output_text.done"}
+
+event: response.output_item.done
+data: {"item":{"content":[{"annotations":[],"logprobs":[],"text":"Hier is een snelle update van **Apple (AAPL)** en **Alphabet/Google (GOOG)**:\n\n## Koersprestatie\n| Aandeel | Laatste koers | Dagtotaal | Market cap | P/E |\n|---|---:|---:|---:|---:|\n| **Apple (AAPL)** | **$300,23** | **+0,68%** | **$4,41 bln** | **36,26** |\n| **Alphabet (GOOG)** | **$393,32** | **-0,97%** | **$4,76 bln** | **30,02** |\n\n## In het kort\n- **Apple** staat er stevig voor en noteert weer rond **$300**. Het aandeel is vandaag **licht in de plus**.\n- **Alphabet** is qua waardering iets **goedkoper** dan Apple op basis van P/E, maar het aandeel staat vandaag **licht in de min**.\n- Beide zijn nog altijd **megacaps** met een enorme marktwaarde:\n  - Apple: **$4,41 biljoen**\n  - Alphabet: **$4,76 biljoen**\n\n## Bedrijfsprofiel\n- **Apple**: consumentenelektronica, met iPhone, Mac, iPad en diensten zoals App Store, Apple Music en Apple Pay.\n- **Alphabet**: vooral online advertentie-inkomsten, Search, YouTube, Cloud en andere “Google”-producten.\n\n## Eenvoudige conclusie\n- **Apple**: sterker momentum vandaag, maar wel duurder gewaardeerd.\n- **Alphabet**: iets zwakker vandaag, maar relatief iets goedkoper geprijsd.\n\nAls je wilt, kan ik ook een **vergelijking maken op omzet, winst, groei en waardering** tussen Apple en Alphabet.","type":"output_text"}],"id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","role":"assistant","status":"completed","type":"message"},"output_index":1,"sequence_number":387,"type":"response.output_item.done"}
+
+event: response.completed
+data: {"response":{"background":false,"completed_at":1779014251,"created_at":1779014251,"error":null,"frequency_penalty":0,"id":"resp_641a81e3-7d34-4510-9b9b-a16a44d1664f","incomplete_details":null,"instructions":null,"max_output_tokens":2048,"max_tool_calls":null,"metadata":{},"model":"openai/gpt-5.4-mini","object":"response","output":[{"categories":["quote","profile"],"results":[{"category":"quote","content":"## AAPL Quote\nQuote field guide: `price` is the latest quote/current price. Use `price` for latest price, current price, latest quote, or latest close/closing price unless the user explicitly asks for previous close. `previousClose` is the prior session close. Use `dayLow`, `dayHigh`, or `open` only when the user asks for low, high, or open. Volume fields are raw share counts (crypto: token units).\n| symbol | name | timestamp | fetched_at | market_status | price | currency | change | changesPercentage | marketCap | pe | eps | volume | avgVolume | dayLow | dayHigh | yearLow | yearHigh | previousClose | open | dividendYieldTTM | afterHoursPrice | afterHoursChange | afterHoursPercentChange |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| AAPL | Apple Inc. | 2026-05-15 20:00:01 UTC | 2026-05-17 10:37:33 UTC | after_hours | 300.23 | USD | 2.02 | 0.68 | 4,409,584,891,880 | 36.26 | 8.28 | 54,675,423 | 43,553,490 | 296.52 | 303.20 | 193.46 | 303.20 | 298.21 | 297.75 | 0.00 | 299.85 | -0.38 | -0.13 |\n\nData available in: `AAPL_GOOG_quotes_a42a19.csv` (row key column: symbol)\n\n## GOOG Quote\nQuote field guide: `price` is the latest quote/current price. Use `price` for latest price, current price, latest quote, or latest close/closing price unless the user explicitly asks for previous close. `previousClose` is the prior session close. Use `dayLow`, `dayHigh`, or `open` only when the user asks for low, high, or open. Volume fields are raw share counts (crypto: token units).\n| symbol | name | timestamp | fetched_at | market_status | price | currency | change | changesPercentage | marketCap | pe | eps | volume | avgVolume | dayLow | dayHigh | yearLow | yearHigh | previousClose | open | dividendYieldTTM | afterHoursPrice | afterHoursChange | afterHoursPercentChange |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| GOOG | Alphabet Inc. | 2026-05-15 20:00:01 UTC | 2026-05-17 10:37:33 UTC | after_hours | 393.32 | USD | -3.85 | -0.97 | 4,757,154,383,643 | 30.02 | 13.10 | 15,735,231 | 19,203,933 | 389.76 | 395.88 | 163.33 | 399.93 | 397.17 | 393.21 | 0.00 | 392.06 | -1.26 | -0.32 |\n\nData available in: `AAPL_GOOG_quotes_a42a19.csv` (row key column: symbol)","sources":["https://www.perplexity.ai/finance/AAPL/historical-data?cited_at=1778889584","https://www.perplexity.ai/finance/AAPL?cited_at=1778889584","https://www.perplexity.ai/finance/GOOG/historical-data?cited_at=1778889591","https://www.perplexity.ai/finance/GOOG?cited_at=1778889591"],"tickers":["AAPL","GOOG"]},{"category":"profile","content":"**AAPL - Apple Inc.**\n\n- **Sector:** Technology\n- **Industry:** Consumer Electronics\n- **CEO:** Timothy D. Cook\n- **Employees:** 164000\n- **Country:** US\n- **Website:** https://www.apple.com\n- **IPO Date:** 1980-12-12\n\n\n**Description:**\nApple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; and wearables, home, and accessories comprising AirPods, Apple TV, Apple Watch, Beats products, and HomePod. It also provides AppleCare support and cloud services; and operates various platforms, including the App Store that allow customers to discover and download applications and digital content, such as books, music, video, games, and podcasts, as well as advertising services include third-party licensing arrangements and its own advertising platforms. In addition, the company offers various subscription-based services, such as Apple Arcade, a game subscription service; Apple Fitness+, a personalized fitness service; Apple Music, which offers users a curated listening experience with on-demand radio stations; Apple News+, a subscription news and magazine service; Apple TV+, which offers exclusive original content; Apple Card, a co-branded credit card; and Apple Pay, a cashless payment service, as well as licenses its intellectual property. The company serves consumers, and small and mid-sized businesses; and the education, enterprise, and government markets. It distributes third-party applications for its products through the App Store. The company also sells its products through its retail and online stores, and direct sales force; and third-party cellular network carriers, wholesalers, retailers, and resellers. Apple Inc. was founded in 1976 and is headquartered in Cupertino, California.\n\n---\n\n**GOOG - Alphabet Inc.**\n\n- **Sector:** Communication Services\n- **Industry:** Internet Content \u0026 Information\n- **CEO:** Sundar Pichai\n- **Employees:** 185719\n- **Country:** US\n- **Website:** https://abc.xyz\n- **IPO Date:** 2004-08-19\n\n\n**Description:**\nAlphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America. It operates through Google Services, Google Cloud, and Other Bets segments. The Google Services segment provides products and services, including ads, Android, Chrome, devices, Gmail, Google Drive, Google Maps, Google Photos, Google Play, Search, and YouTube. It is also involved in the sale of apps and in-app purchases and digital content in the Google Play and YouTube; and devices, as well as in the provision of YouTube consumer subscription services. The Google Cloud segment offers infrastructure, cybersecurity, databases, analytics, AI, and other services; Google Workspace that include cloud-based communication and collaboration tools for enterprises, such as Gmail, Docs, Drive, Calendar, and Meet; and other services for enterprise customers. The Other Bets segment sells healthcare-related and internet services. The company was incorporated in 1998 and is headquartered in Mountain View, California.","sources":["https://www.perplexity.ai/finance/AAPL","https://www.perplexity.ai/finance/GOOG"],"tickers":["AAPL","GOOG"]}],"tickers":["AAPL","GOOG"],"type":"finance_results"},{"content":[{"annotations":[],"logprobs":[],"text":"Hier is een snelle update van **Apple (AAPL)** en **Alphabet/Google (GOOG)**:\n\n## Koersprestatie\n| Aandeel | Laatste koers | Dagtotaal | Market cap | P/E |\n|---|---:|---:|---:|---:|\n| **Apple (AAPL)** | **$300,23** | **+0,68%** | **$4,41 bln** | **36,26** |\n| **Alphabet (GOOG)** | **$393,32** | **-0,97%** | **$4,76 bln** | **30,02** |\n\n## In het kort\n- **Apple** staat er stevig voor en noteert weer rond **$300**. Het aandeel is vandaag **licht in de plus**.\n- **Alphabet** is qua waardering iets **goedkoper** dan Apple op basis van P/E, maar het aandeel staat vandaag **licht in de min**.\n- Beide zijn nog altijd **megacaps** met een enorme marktwaarde:\n  - Apple: **$4,41 biljoen**\n  - Alphabet: **$4,76 biljoen**\n\n## Bedrijfsprofiel\n- **Apple**: consumentenelektronica, met iPhone, Mac, iPad en diensten zoals App Store, Apple Music en Apple Pay.\n- **Alphabet**: vooral online advertentie-inkomsten, Search, YouTube, Cloud en andere “Google”-producten.\n\n## Eenvoudige conclusie\n- **Apple**: sterker momentum vandaag, maar wel duurder gewaardeerd.\n- **Alphabet**: iets zwakker vandaag, maar relatief iets goedkoper geprijsd.\n\nAls je wilt, kan ik ook een **vergelijking maken op omzet, winst, groei en waardering** tussen Apple en Alphabet.","type":"output_text"}],"id":"msg_eced145c-c343-4a1b-9ecf-abf22cbaa10e","role":"assistant","status":"completed","type":"message"}],"parallel_tool_calls":true,"presence_penalty":0,"previous_response_id":null,"prompt_cache_key":null,"reasoning":{"effort":"low","summary":null},"safety_identifier":null,"service_tier":"default","status":"completed","store":true,"temperature":1,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"finance_search"}],"top_logprobs":0,"top_p":1,"truncation":"disabled","usage":{"cost":{"currency":"USD","input_cost":0.00716,"output_cost":0.00243,"tool_calls_cost":0.005,"total_cost":0.01459},"input_tokens":9549,"input_tokens_details":{"cached_tokens":0},"output_tokens":540,"output_tokens_details":{"reasoning_tokens":93},"tool_calls_details":{"finance_search":{"invocation":1}},"total_tokens":10089},"user":null},"sequence_number":388,"type":"response.completed"}
+

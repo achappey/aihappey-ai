@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using AIHappey.Responses.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses.Mapping;
@@ -21,6 +22,7 @@ public sealed class ResponsesStreamFixtureTests
     private const string MultipleShellCallsWithStreamingOutputFixturePath = "Fixtures/responses/raw/openai-multiple-shell-calls-with-streaming-output.jsonl";
     private const string ScalewayReasoningRawFixturePath = "Fixtures/responses/raw/scaleway-with-reasoning-streaming.jsonl";
     private const string CodeInterpreterOutputFileRawFixturePath = "Fixtures/responses/raw/xai-with-code_interpreter-output-file-stream.jsonl";
+    private const string PerplexityFinancialSearchRawFixturePath = "Fixtures/responses/raw/perplexity-with-financial-search.jsonl";
 
     [Fact]
     public void Typed_and_raw_responses_fixtures_produce_the_same_stream_part_types()
@@ -392,6 +394,58 @@ public sealed class ResponsesStreamFixtureTests
 
         Assert.Equal(fileEvent.MediaType, uiFilePart.MediaType);
         Assert.Equal(fileEvent.Url, uiFilePart.Url);
+    }
+
+    [Fact]
+    public void Perplexity_finance_search_reasoning_events_emit_provider_executed_tool_input_and_output_events()
+    {
+        const string providerId = "perplexity";
+
+        var unifiedEvents = FixtureFileLoader.LoadResponseRawFixture(PerplexityFinancialSearchRawFixturePath)
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .Where(streamEvent => streamEvent.Event.Type is "tool-input-start" or "tool-input-available" or "tool-output-available")
+            .ToList();
+
+        var financeToolEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Id?.StartsWith("perplexity-finance-search:", StringComparison.Ordinal) == true)
+            .ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(
+            financeToolEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "tool-input-start",
+            "tool-input-available",
+            "tool-output-available");
+
+        var inputStart = Assert.IsType<AIToolInputStartEventData>(financeToolEvents.First(streamEvent => streamEvent.Event.Type == "tool-input-start").Event.Data);
+        Assert.Equal("finance_search", inputStart.ToolName);
+        Assert.True(inputStart.ProviderExecuted);
+
+        var inputAvailableEvent = financeToolEvents.First(streamEvent => streamEvent.Event.Type == "tool-input-available");
+        var inputAvailable = Assert.IsType<AIToolInputAvailableEventData>(inputAvailableEvent.Event.Data);
+        Assert.Equal("finance_search", inputAvailable.ToolName);
+        Assert.True(inputAvailable.ProviderExecuted);
+
+        var input = Assert.IsType<JsonElement>(inputAvailable.Input);
+        Assert.Equal("AAPL", input.GetProperty("tickers")[0].GetString());
+        Assert.Equal("GOOG", input.GetProperty("tickers")[1].GetString());
+        Assert.Equal("quote", input.GetProperty("categories")[0].GetString());
+        Assert.Equal("profile", input.GetProperty("categories")[1].GetString());
+
+        var outputAvailableEvent = financeToolEvents.First(streamEvent => streamEvent.Event.Type == "tool-output-available");
+        Assert.Equal(inputAvailableEvent.Event.Id, outputAvailableEvent.Event.Id);
+
+        var outputAvailable = Assert.IsType<AIToolOutputAvailableEventData>(outputAvailableEvent.Event.Data);
+        Assert.Equal("finance_search", outputAvailable.ToolName);
+        Assert.True(outputAvailable.ProviderExecuted);
+
+        var output = JsonSerializer.SerializeToElement(outputAvailable.Output, JsonSerializerOptions.Web);
+        var structuredContent = output.GetProperty("structuredContent");
+        var results = structuredContent.GetProperty("results");
+
+        Assert.Equal(2, results.GetArrayLength());
+        Assert.Equal("quote", results[0].GetProperty("category").GetString());
+        Assert.Equal("profile", results[1].GetProperty("category").GetString());
+        Assert.Contains("AAPL Quote", results[0].GetProperty("content").GetString());
     }
 
     [Fact]
