@@ -403,11 +403,11 @@ public sealed class ResponsesStreamFixtureTests
 
         var unifiedEvents = FixtureFileLoader.LoadResponseRawFixture(PerplexityFinancialSearchRawFixturePath)
             .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
-            .Where(streamEvent => streamEvent.Event.Type is "tool-input-start" or "tool-input-available" or "tool-output-available")
             .ToList();
 
         var financeToolEvents = unifiedEvents
-            .Where(streamEvent => streamEvent.Event.Id?.StartsWith("perplexity-finance-search:", StringComparison.Ordinal) == true)
+            .Where(streamEvent => streamEvent.Event.Type is "tool-input-start" or "tool-input-available" or "tool-output-available")
+            .Where(streamEvent => string.Equals(streamEvent.Event.Id, "perplexity-finance-search", StringComparison.Ordinal))
             .ToList();
 
         FixtureAssertions.AssertContainsSubsequence(
@@ -430,9 +430,11 @@ public sealed class ResponsesStreamFixtureTests
         Assert.Equal("GOOG", input.GetProperty("tickers")[1].GetString());
         Assert.Equal("quote", input.GetProperty("categories")[0].GetString());
         Assert.Equal("profile", input.GetProperty("categories")[1].GetString());
+        Assert.False(input.TryGetProperty("thought", out _));
 
         var outputAvailableEvent = financeToolEvents.First(streamEvent => streamEvent.Event.Type == "tool-output-available");
         Assert.Equal(inputAvailableEvent.Event.Id, outputAvailableEvent.Event.Id);
+        Assert.All(financeToolEvents, streamEvent => Assert.Equal("perplexity-finance-search", streamEvent.Event.Id));
 
         var outputAvailable = Assert.IsType<AIToolOutputAvailableEventData>(outputAvailableEvent.Event.Data);
         Assert.Equal("finance_search", outputAvailable.ToolName);
@@ -446,6 +448,31 @@ public sealed class ResponsesStreamFixtureTests
         Assert.Equal("quote", results[0].GetProperty("category").GetString());
         Assert.Equal("profile", results[1].GetProperty("category").GetString());
         Assert.Contains("AAPL Quote", results[0].GetProperty("content").GetString());
+        Assert.False(structuredContent.TryGetProperty("thought", out _));
+
+        var financeReasoningEvents = unifiedEvents
+            .Where(streamEvent => string.Equals(streamEvent.Event.Id, "perplexity-finance-search:reasoning", StringComparison.Ordinal))
+            .ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(
+            financeReasoningEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end");
+
+        Assert.Contains(
+            financeReasoningEvents,
+            streamEvent => streamEvent.Event.Data is AIReasoningDeltaEventData data
+                           && data.Delta == "Fetched 2 finance results");
+
+        var sourceEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "source-url")
+            .Select(streamEvent => Assert.IsType<AISourceUrlEventData>(streamEvent.Event.Data))
+            .ToList();
+
+        Assert.Equal(6, sourceEvents.Count);
+        Assert.Contains(sourceEvents, source => source.Url == "https://www.perplexity.ai/finance/AAPL");
+        Assert.All(sourceEvents, source => Assert.Equal("finance_search", source.Type));
     }
 
     [Fact]

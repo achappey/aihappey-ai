@@ -25,7 +25,7 @@ public static partial class ResponsesUnifiedMapper
 
     private static IEnumerable<AIEventEnvelope> CreatePerplexityFinanceSearchInputEnvelopes(ResponseUnknownEvent unknown)
     {
-        var toolCallId = CreatePerplexityFinanceSearchToolCallId(unknown);
+        var toolCallId = CreatePerplexityFinanceSearchToolCallId();
         var input = CreatePerplexityFinanceSearchInput(unknown);
 
         yield return CreateToolInputStartEnvelope(
@@ -42,35 +42,33 @@ public static partial class ResponsesUnifiedMapper
             providerExecuted: true);
     }
 
-    private static AIEventEnvelope CreatePerplexityFinanceSearchOutputEnvelope(ResponseUnknownEvent unknown)
+    private static IEnumerable<AIEventEnvelope> CreatePerplexityFinanceSearchOutputEnvelopes(string providerId, ResponseUnknownEvent unknown)
     {
-        var toolCallId = CreatePerplexityFinanceSearchToolCallId(unknown);
+        var toolCallId = CreatePerplexityFinanceSearchToolCallId();
 
         var results = TryGetUnknownEventProperty(unknown, "results", out var resultsElement)
             ? resultsElement.Clone()
             : JsonSerializer.SerializeToElement(Array.Empty<object>(), JsonSerializerOptions.Web);
 
-        var structuredContent = new Dictionary<string, object?>
-        {
-            ["results"] = results
-        };
-
-        if (TryGetUnknownEventProperty(unknown, "thought", out var thoughtElement)
-            && thoughtElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-        {
-            structuredContent["thought"] = thoughtElement.ValueKind == JsonValueKind.String
-                ? thoughtElement.GetString()
-                : thoughtElement.Clone();
-        }
-
-        return CreateToolOutputEnvelope(
+        yield return CreateToolOutputEnvelope(
             toolCallId,
             new ModelContextProtocol.Protocol.CallToolResult
             {
-                StructuredContent = JsonSerializer.SerializeToElement(structuredContent, JsonSerializerOptions.Web)
+                StructuredContent = JsonSerializer.SerializeToElement(
+                    new Dictionary<string, object?>
+                    {
+                        ["results"] = results
+                    },
+                    JsonSerializerOptions.Web)
             },
             toolName: PerplexityFinanceSearchToolName,
             providerExecuted: true);
+
+        foreach (var envelope in CreatePerplexityFinanceSearchReasoningEnvelopes(unknown))
+            yield return envelope;
+
+        foreach (var envelope in CreatePerplexityFinanceSearchSourceUrlEnvelopes(providerId, results, toolCallId))
+            yield return envelope;
     }
 
     private static JsonElement CreatePerplexityFinanceSearchInput(ResponseUnknownEvent unknown)
@@ -83,107 +81,99 @@ public static partial class ResponsesUnifiedMapper
         if (TryGetUnknownEventProperty(unknown, "categories", out var categories))
             input["categories"] = categories.Clone();
 
-        if (TryGetUnknownEventProperty(unknown, "thought", out var thought)
-            && thought.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-        {
-            input["thought"] = thought.ValueKind == JsonValueKind.String
-                ? thought.GetString()
-                : thought.Clone();
-        }
-
         return JsonSerializer.SerializeToElement(input, JsonSerializerOptions.Web);
     }
 
-    private static string CreatePerplexityFinanceSearchToolCallId(ResponseUnknownEvent unknown)
+    private static IEnumerable<AIEventEnvelope> CreatePerplexityFinanceSearchReasoningEnvelopes(ResponseUnknownEvent unknown)
     {
-        JsonElement? categories = TryGetUnknownEventProperty(unknown, "categories", out var categoriesElement)
-            ? categoriesElement
-            : null;
-
-        JsonElement? tickers = TryGetUnknownEventProperty(unknown, "tickers", out var tickersElement)
-            ? tickersElement
-            : null;
-
-        if (TryGetUnknownEventProperty(unknown, "results", out var resultsElement))
+        if (!TryGetUnknownEventProperty(unknown, "thought", out var thoughtElement)
+            || thoughtElement.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
         {
-            categories ??= ExtractFinanceResultCategories(resultsElement);
-            tickers ??= ExtractFinanceResultTickers(resultsElement);
+            yield break;
         }
 
-        return CreatePerplexityFinanceSearchToolCallId(categories, tickers, unknown.SequenceNumber);
+        var thought = thoughtElement.ValueKind == JsonValueKind.String
+            ? thoughtElement.GetString()
+            : thoughtElement.ToString();
+
+        if (string.IsNullOrWhiteSpace(thought))
+            yield break;
+
+        var reasoningId = $"{CreatePerplexityFinanceSearchToolCallId()}:reasoning";
+
+        yield return new AIEventEnvelope
+        {
+            Type = "reasoning-start",
+            Id = reasoningId,
+            Data = new AIReasoningStartEventData()
+        };
+
+        yield return CreateReasoningDeltaEnvelope(reasoningId, thought!);
+
+        yield return new AIEventEnvelope
+        {
+            Type = "reasoning-end",
+            Id = reasoningId,
+            Data = new AIReasoningEndEventData()
+        };
     }
 
-    private static string CreatePerplexityFinanceSearchToolCallId(ResponseStreamItem item, int outputIndex)
-    {
-        JsonElement? categories = item.AdditionalProperties?.TryGetValue("categories", out var categoriesElement) == true
-            ? categoriesElement
-            : null;
-
-        JsonElement? tickers = item.AdditionalProperties?.TryGetValue("tickers", out var tickersElement) == true
-            ? tickersElement
-            : null;
-
-        return CreatePerplexityFinanceSearchToolCallId(categories, tickers, outputIndex);
-    }
-
-    private static string CreatePerplexityFinanceSearchToolCallId(JsonElement? categories, JsonElement? tickers, int? fallback)
-    {
-        var tickerKey = CreateJsonArrayKey(tickers);
-        var categoryKey = CreateJsonArrayKey(categories);
-
-        if (!string.IsNullOrWhiteSpace(tickerKey) || !string.IsNullOrWhiteSpace(categoryKey))
-            return $"perplexity-finance-search:{tickerKey}:{categoryKey}";
-
-        return $"perplexity-finance-search:{fallback ?? 0}";
-    }
-
-    private static JsonElement? ExtractFinanceResultCategories(JsonElement results)
-    {
-        if (results.ValueKind != JsonValueKind.Array)
-            return null;
-
-        var categories = results.EnumerateArray()
-            .Select(result => result.TryGetProperty("category", out var category) && category.ValueKind == JsonValueKind.String
-                ? category.GetString()
-                : null)
-            .Where(category => !string.IsNullOrWhiteSpace(category))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        return categories.Length == 0
-            ? null
-            : JsonSerializer.SerializeToElement(categories, JsonSerializerOptions.Web);
-    }
-
-    private static JsonElement? ExtractFinanceResultTickers(JsonElement results)
+    private static IEnumerable<AIEventEnvelope> CreatePerplexityFinanceSearchSourceUrlEnvelopes(
+        string providerId,
+        JsonElement results,
+        string toolCallId)
     {
         if (results.ValueKind != JsonValueKind.Array)
-            return null;
+            yield break;
 
-        var tickers = results.EnumerateArray()
-            .Where(result => result.TryGetProperty("tickers", out var tickersElement)
-                             && tickersElement.ValueKind == JsonValueKind.Array)
-            .SelectMany(result => result.GetProperty("tickers").EnumerateArray())
-            .Select(ticker => ticker.ValueKind == JsonValueKind.String ? ticker.GetString() : null)
-            .Where(ticker => !string.IsNullOrWhiteSpace(ticker))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        var sourceIndex = 0;
 
-        return tickers.Length == 0
-            ? null
-            : JsonSerializer.SerializeToElement(tickers, JsonSerializerOptions.Web);
+        foreach (var result in results.EnumerateArray())
+        {
+            if (!result.TryGetProperty("sources", out var sources)
+                || sources.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            var category = result.TryGetProperty("category", out var categoryElement)
+                           && categoryElement.ValueKind == JsonValueKind.String
+                ? categoryElement.GetString()
+                : null;
+
+            foreach (var source in sources.EnumerateArray())
+            {
+                var url = source.ValueKind == JsonValueKind.String
+                    ? source.GetString()
+                    : source.ToString();
+
+                if (string.IsNullOrWhiteSpace(url))
+                    continue;
+
+                sourceIndex++;
+
+                var providerMetadata = new Dictionary<string, Dictionary<string, object>>
+                {
+                    [providerId] = new Dictionary<string, object>
+                    {
+                        ["source_type"] = "finance_search",
+                        ["tool_call_id"] = toolCallId
+                    }
+                };
+
+                if (!string.IsNullOrWhiteSpace(category))
+                    providerMetadata[providerId]["category"] = category;
+
+                yield return CreateSourceUrlEnvelope(
+                    $"{toolCallId}:source:{sourceIndex}",
+                    url,
+                    url,
+                    "finance_search",
+                    providerMetadata: providerMetadata);
+            }
+        }
     }
 
-    private static string CreateJsonArrayKey(JsonElement? value)
-    {
-        if (value is not { ValueKind: JsonValueKind.Array })
-            return string.Empty;
-
-        return string.Join(
-            '_',
-            value.Value.EnumerateArray()
-                .Select(element => element.ValueKind == JsonValueKind.String ? element.GetString() : element.ToString())
-                .Where(text => !string.IsNullOrWhiteSpace(text))
-                .Select(text => text!.Trim()));
-    }
+    private static string CreatePerplexityFinanceSearchToolCallId()
+        => "perplexity-finance-search";
 }
