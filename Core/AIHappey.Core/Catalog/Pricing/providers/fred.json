@@ -1,0 +1,16 @@
+{
+  "fred/deepseek-v4-flash": {
+    "pricing": {
+      "input": "0.00000035",
+      "output": "0.00000070",
+      "input_cache_read": "0.000000007"
+    }
+  },
+  "fred/deepseek-v4-pro": {
+    "pricing": {
+      "input": "0.00000435",
+      "output": "0.00000870",
+      "input_cache_read": "0.0000000363"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "fred/deepseek-v4-flash",
+      "object": "model",
+      "owned_by": "Fred",
+      "name": "deepseek-v4-flash",
+      "type": "language",
+      "description": "Fast, cheap, surprisingly capable. This is what every session starts on, and it's the right choice for the overwhelming majority of coding work — refactors, file edits, search, test scaffolding, lint fixes, anything where the bottleneck is \"look at the code and apply the obvious change\"."
+    },
+    {
+      "id": "fred/deepseek-v4-pro",
+      "object": "model",
+      "owned_by": "Fred",
+      "name": "deepseek-v4-pro",
+      "type": "language",
+      "description": "The reasoning SKU. Slower, much more expensive, and noticeably smarter on hard problems. Worth it for: hairy debugging where the bug spans files, architectural design from a blank page, math/algorithms work, or anytime flash gets stuck in a loop and you can feel it guessing."
+    }
+  ]
+}

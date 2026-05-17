@@ -523,6 +523,7 @@ public class AIServiceConfig
     public ProviderConfig? AnLinkAI { get; set; }
     public ProviderConfig? HelyxAI { get; set; }
     public ProviderConfig? AnyRouter { get; set; }
+    public ProviderConfig? Fred { get; set; }
 
 }
 

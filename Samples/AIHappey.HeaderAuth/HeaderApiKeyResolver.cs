@@ -524,7 +524,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["alltoken"] = "X-AllToken-Key",
             ["anlinkai"] = "X-AnLinkAI-Key",
             ["helyxai"] = "X-HelyxAI-Key",
-            ["anyrouter"] = "X-AnyRouter-Key"
+            ["anyrouter"] = "X-AnyRouter-Key",
+            ["fred"] = "X-Fred-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
