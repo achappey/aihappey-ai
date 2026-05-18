@@ -172,7 +172,6 @@ public class AIServiceConfig
     public ProviderConfig? OrqRouter { get; set; }
     public ProviderConfig? Typecast { get; set; }
     public ProviderConfig? UnrealSpeech { get; set; }
-    public ProviderConfig? Kugu { get; set; }
     public ProviderConfig? EverypixelLabs { get; set; }
     public ProviderConfig? Supertone { get; set; }
     public ProviderConfig? UVoiceAI { get; set; }

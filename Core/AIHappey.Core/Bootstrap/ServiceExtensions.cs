@@ -83,7 +83,6 @@ using AIHappey.Core.Providers.JSON2Video;
 using AIHappey.Core.Providers.GreenPT;
 using AIHappey.Core.Providers.RelaxAI;
 using AIHappey.Core.Providers.RegoloAI;
-using AIHappey.Core.Providers.Kugu;
 using AIHappey.Core.Providers.ARKLabs;
 using AIHappey.Core.Providers.IONOS;
 using AIHappey.Core.Providers.BergetAI;
@@ -642,7 +641,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GreenPTProvider>();
         services.AddSingleton<IModelProvider, RelaxAIProvider>();
         services.AddSingleton<IModelProvider, RegoloAIProvider>();
-        services.AddSingleton<IModelProvider, KuguProvider>();
         services.AddSingleton<IModelProvider, ARKLabsProvider>();
         services.AddSingleton<IModelProvider, IONOSProvider>();
         services.AddSingleton<IModelProvider, BergetAIProvider>();
