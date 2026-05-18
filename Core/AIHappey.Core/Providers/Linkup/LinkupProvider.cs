@@ -69,7 +69,7 @@ public partial class LinkupProvider : IModelProvider
         yield break;
     }
 
-    public string GetIdentifier() => nameof(PublicAI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Linkup).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
