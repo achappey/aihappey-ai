@@ -279,7 +279,6 @@ using AIHappey.Core.Providers.LLMWise;
 using AIHappey.Core.Providers.CaseDev;
 using AIHappey.Core.Providers.ModelRouter;
 using AIHappey.Core.Providers.MultiverseAI;
-using AIHappey.Core.Providers.Lava;
 using AIHappey.Core.Providers.ApiAirforce;
 using AIHappey.Core.Providers.SmartAIPI;
 using AIHappey.Core.Providers.Noiz;
@@ -835,7 +834,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
         services.AddSingleton<IModelProvider, ModelRouterProvider>();
         services.AddSingleton<IModelProvider, MultiverseAIProvider>();
-        services.AddSingleton<IModelProvider, LavaProvider>();
         services.AddSingleton<IModelProvider, ApiAirforceProvider>();
         services.AddSingleton<IModelProvider, SmartAIPIProvider>();
         services.AddSingleton<IModelProvider, NoizProvider>();
