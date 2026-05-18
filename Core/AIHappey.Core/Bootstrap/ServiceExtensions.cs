@@ -533,6 +533,7 @@ using AIHappey.Core.Providers.TokenHub;
 using AIHappey.Core.Providers.MyRouter;
 using AIHappey.Core.Providers.Osiris;
 using AIHappey.Core.Providers.SovrGPT;
+using AIHappey.Core.Providers.Doubleword;
 
 namespace AIHappey.Core.AI;
 
@@ -1089,6 +1090,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MyRouterProvider>();
         services.AddSingleton<IModelProvider, OsirisProvider>();
         services.AddSingleton<IModelProvider, SovrGPTProvider>();
+        services.AddSingleton<IModelProvider, DoublewordProvider>();
 
     }
 }

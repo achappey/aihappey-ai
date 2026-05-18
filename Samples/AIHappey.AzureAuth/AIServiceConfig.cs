@@ -532,6 +532,7 @@ public class AIServiceConfig
     public ProviderConfig? MyRouter { get; set; }
     public ProviderConfig? Osiris { get; set; }
     public ProviderConfig? SovrGPT { get; set; }
+    public ProviderConfig? Doubleword { get; set; }
 
 }
 
