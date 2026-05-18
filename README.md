@@ -426,7 +426,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Runtimo        | ✅        | ❌                | ❌            | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Runware        | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | Runway         | ✅        | ❌                | ❌            | ❌            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
-| SambaNova      | ✅        | ✅                | ❌            | ❌            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
+| SambaNova      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
 | Sapiom         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Sargalay       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Sarvam         | ✅        | ✅                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |

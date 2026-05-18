@@ -1,8 +1,8 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.SambaNova;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
@@ -25,30 +25,18 @@ public partial class SambaNovaProvider
             yield break;
         }
 
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        var metadata = chatRequest.GetProviderMetadata<SambaNovaProviderMetadata>(GetIdentifier());
-
-        Dictionary<string, object?> payload = [];
-
-        if (!string.IsNullOrEmpty(metadata?.ReasoningEffort))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            payload["reasoning_effort"] = metadata?.ReasoningEffort;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
 
-        if (metadata?.ParallelToolCalls.HasValue == true)
-        {
-            payload["parallel_tool_calls"] = metadata?.ParallelToolCalls;
-        }
-
-        if (metadata?.ChatTemplateKwargs != null)
-        {
-            payload["chat_template_kwargs"] = metadata?.ChatTemplateKwargs;
-        }
-
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            payload,
-            cancellationToken: cancellationToken))
-            yield return update;
+        yield break;
     }
 }

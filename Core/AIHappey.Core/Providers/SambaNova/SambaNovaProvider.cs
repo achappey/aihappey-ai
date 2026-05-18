@@ -8,6 +8,10 @@ using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
+using AIHappey.Sampling.Mapping;
+using AIHappey.Unified.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
@@ -65,7 +69,10 @@ public partial class SambaNovaProvider : IModelProvider
             throw new NotImplementedException();
         }
 
-        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
+           cancellationToken);
+
+        return result.ToSamplingResult();
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
@@ -84,28 +91,66 @@ public partial class SambaNovaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
+
+        return response;
     }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        await foreach (var update in this.GetResponses(_client,
+           options,
+           cancellationToken: cancellationToken))
+        {
+
+            yield return update;
+        }
     }
+
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
+
+        yield break;
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 }
