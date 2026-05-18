@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.VLMRun;
 
-public partial class VLMRunProvider : IModelProvider
+public partial class VLMRunProvider : IModelProvider, ISkillProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -140,4 +140,6 @@ public partial class VLMRunProvider : IModelProvider
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+  
 }

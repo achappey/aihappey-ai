@@ -920,7 +920,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LLMCloudProvider>();
         services.AddSingleton<IModelProvider, RailwailProvider>();
         services.AddSingleton<IModelProvider, KnoxChatProvider>();
-        services.AddSingleton<IModelProvider, VLMRunProvider>();
+        services.AddSingleton<VLMRunProvider>();
+        services.AddSingleton<ISkillProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
+        services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
         services.AddSingleton<IModelProvider, VogentProvider>();
         services.AddSingleton<IModelProvider, TikHubAIProvider>();
         services.AddSingleton<IModelProvider, YouGetAIProvider>();
