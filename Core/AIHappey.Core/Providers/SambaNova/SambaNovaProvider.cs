@@ -149,8 +149,12 @@ public partial class SambaNovaProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => IsSambaNovaAgentModel(request.Model)
+            ? ExecuteAgentUnifiedAsync(request, cancellationToken)
+            : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => IsSambaNovaAgentModel(request.Model)
+            ? StreamAgentUnifiedAsync(request, cancellationToken)
+            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 }

@@ -1,0 +1,45 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "sambanova/agent/mainagent",
+      "object": "model",
+      "owned_by": "SambaNova",
+      "name": "Main Agent",
+      "type": "language",
+      "description": "General-purpose SambaNova agent that coordinates specialized coding, financial analysis, deep research, and data science subagents. Uses the non-interactive endpoint by default and switches to the interactive endpoint when resume or thread metadata is supplied."
+    },
+    {
+      "id": "sambanova/agent/coding",
+      "object": "model",
+      "owned_by": "SambaNova",
+      "name": "Coding Agent",
+      "type": "language",
+      "description": "SambaNova coding agent for sandboxed Python execution, debugging, and iterative code development. Provide agent-specific code in SambaNova provider metadata."
+    },
+    {
+      "id": "sambanova/agent/datascience",
+      "object": "model",
+      "owned_by": "SambaNova",
+      "name": "Data Science Agent",
+      "type": "language",
+      "description": "SambaNova data science agent for dataset analysis, visualizations, and comprehensive HTML reports. Accepts uploaded file content parts and supports interactive resume metadata."
+    },
+    {
+      "id": "sambanova/agent/deepresearch",
+      "object": "model",
+      "owned_by": "SambaNova",
+      "name": "Deep Research Agent",
+      "type": "language",
+      "description": "SambaNova deep research agent for multi-iteration research workflows and comprehensive reports, including interactive approval/resume flows through thread metadata."
+    },
+    {
+      "id": "sambanova/agent/financialanalysis",
+      "object": "model",
+      "owned_by": "SambaNova",
+      "name": "Financial Analysis Agent",
+      "type": "language",
+      "description": "SambaNova financial analysis agent for stock analysis, company research, financial metrics, and market data workflows."
+    }
+  ]
+}

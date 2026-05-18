@@ -91,6 +91,8 @@ public partial class SambaNovaProvider
                     }
                 }
 
+                models.AddRange(GetIdentifier().GetModels());
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
