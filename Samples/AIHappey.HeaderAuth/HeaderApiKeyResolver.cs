@@ -532,7 +532,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["myrouter"] = "X-MyRouter-Key",
             ["osiris"] = "X-Osiris-Key",
             ["sovrgpt"] = "X-SovrGPT-Key",
-            ["doubleword"] = "X-Doubleword-Key"
+            ["doubleword"] = "X-Doubleword-Key",
+            ["openhands"] = "X-OpenHands-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

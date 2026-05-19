@@ -531,6 +531,7 @@ public class AIServiceConfig
     public ProviderConfig? Osiris { get; set; }
     public ProviderConfig? SovrGPT { get; set; }
     public ProviderConfig? Doubleword { get; set; }
+    public ProviderConfig? OpenHands { get; set; }
 
 }
 
