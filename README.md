@@ -136,7 +136,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Cortex         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Crazyrouter    | ✅        | ✅                | ❌            | ✅            | ❌        | ❌                     | ❌                       | ❌               | ❌          | ❌          | ➖          |
 | Daglo          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
-| Dandolo        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Dandolo        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Databricks     | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | DataForSEO     | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | DreamGen       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
