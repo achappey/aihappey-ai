@@ -113,7 +113,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | CheapestInf... | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | CheapGrok      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Chutes         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Cirrascale     | ✅        | ✅                | 🟡            | ❌            | 🟡        | ✅                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
+| Cirrascale     | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ❌                       | ➖               | ✅          | ➖          | ➖          |
 | Citadelis      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Clankie        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ClawHub        | ➖        | ➖                | ➖            | ➖            | ➖        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ✅          |
