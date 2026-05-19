@@ -533,7 +533,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | XiaomiMIMO     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Yollomi        | ✅        | ❌                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | YouCom         | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| YouGetAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| YouGetAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | YourVoic       | ✅        | ❌                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | YYClaw         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Zai            | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ➖               | ➖          | ✅          | ➖          |
