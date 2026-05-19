@@ -530,7 +530,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | World3         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Writer         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | xAI            | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ➖          |
-| XiaomiMIMO     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| XiaomiMIMO     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ❌               | ➖          | ➖          | ➖          |
 | Yollomi        | ✅        | ❌                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | YouCom         | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | YouGetAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
