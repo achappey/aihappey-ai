@@ -532,6 +532,7 @@ public class AIServiceConfig
     public ProviderConfig? SovrGPT { get; set; }
     public ProviderConfig? Doubleword { get; set; }
     public ProviderConfig? OpenHands { get; set; }
+    public ProviderConfig? Poolside { get; set; }
 
 }
 
