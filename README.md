@@ -435,6 +435,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | SawtIA         | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Scaleway       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
 | SchatziAI      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| SEALION        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | SelinaAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Setapp         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Shakespeare    | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -445,7 +446,6 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | SiliconFlow    | ✅        | ✅                | 🟡            | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
 | SimpleLLM      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Simplismart    | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ❌                       | ➖               | ➖          | ➖          | ➖          |
-| SEALION        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Segmind        | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | SkillBoss      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | SkypoolToken   | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
