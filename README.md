@@ -23,7 +23,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AgentPhone     | ➖        | ➖                | ➖            | ➖            | ➖        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AgnesAI        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | AI21           | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| AiApiWorld     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| AiApiWorld     | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIBadgr        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AIBramha       | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AICC           | ✅        | ✅                | ✅            | ✅            | ❌        | ✅                     | ➖                       | ❌               | ➖          | ✅          | ➖          |
