@@ -22,7 +22,7 @@ public partial class AzerionProvider
 
     private sealed record SeedanceTaskResult(string? Id, string? Status, JsonElement Root);
 
-    public async Task<VideoResponse> VideoRequestAzerion(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
