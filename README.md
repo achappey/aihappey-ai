@@ -18,7 +18,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Abliberation   | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Aether         | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ❌               | ➖          | ➖          | ➖          |
 | Agabeyogluai   | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| AgentAIGateway | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| AgentAIGateway | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Agentics       | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | AgentPhone     | ➖        | ➖                | ➖            | ➖            | ➖        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AgnesAI        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
