@@ -142,7 +142,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | DreamGen       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | DeAPI          | ✅        | ❌                | ❌            | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ➖          |
 | Decart         | ✅        | ❌                | ❌            | ❌            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
-| DedalusLabs    | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
+| DedalusLabs    | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | Deepbricks     | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | DeepInfra      | ✅        | ✅                | 🟡            | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ✅          | ➖          | ➖          |
 | DeepL          | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
