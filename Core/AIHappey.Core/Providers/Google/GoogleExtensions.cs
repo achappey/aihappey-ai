@@ -6,7 +6,7 @@ using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Google;
 
-public static class GoogleExtensions
+public static partial class GoogleExtensions
 {
     public static Part? ToImagePart(
        this ImageFile imageContentBlock) =>

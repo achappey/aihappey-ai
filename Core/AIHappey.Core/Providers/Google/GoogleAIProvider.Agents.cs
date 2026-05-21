@@ -1,3 +1,4 @@
+using AIHappey.Abstractions.Http;
 using AIHappey.Interactions;
 using Microsoft.Extensions.Logging;
 using System.Runtime.CompilerServices;
@@ -119,7 +120,8 @@ public partial class GoogleAIProvider
 
     private async Task<Interaction> CreateGoogleAgentInteraction(
         InteractionRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
@@ -132,13 +134,16 @@ public partial class GoogleAIProvider
         await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        await ProviderBackendCapture.CaptureJsonAsync("interactions", response, body, capture, cancellationToken);
+
         return JsonSerializer.Deserialize<Interaction>(body, GoogleAgentJsonOptions)
                ?? throw new InvalidOperationException("Empty JSON response for Google agent interaction create.");
     }
 
     private async IAsyncEnumerable<InteractionStreamEventPart> CreateGoogleAgentInteractionStream(
         InteractionRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default,
+        ProviderBackendCaptureRequest? capture = null)
     {
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
@@ -154,11 +159,15 @@ public partial class GoogleAIProvider
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("interactions", response, capture);
 
         string? line;
         while (!cancellationToken.IsCancellationRequested
                && (line = await reader.ReadLineAsync(cancellationToken)) is not null)
         {
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, cancellationToken);
+
             if (line.Length == 0)
                 continue;
 
@@ -256,107 +265,107 @@ public partial class GoogleAIProvider
         return current ?? throw new OperationCanceledException(cancellationToken);
     }
 
-    private async IAsyncEnumerable<InteractionStreamEventPart> PollGoogleAgentInteractionAsStream(
-        string interactionId,
-        Interaction initialInteraction,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        NormalizeGoogleAgentInteraction(initialInteraction);
+    /*  private async IAsyncEnumerable<InteractionStreamEventPart> PollGoogleAgentInteractionAsStream(
+          string interactionId,
+          Interaction initialInteraction,
+          [EnumeratorCancellation] CancellationToken cancellationToken = default)
+      {
+          NormalizeGoogleAgentInteraction(initialInteraction);
 
-        yield return new InteractionCreatedEvent
-        {
-            EventId = CreateGoogleAgentEventId(),
-            Interaction = initialInteraction
-        };
+          yield return new InteractionCreatedEvent
+          {
+              EventId = CreateGoogleAgentEventId(),
+              Interaction = initialInteraction
+          };
 
-        string? lastStatus = initialInteraction.Status;
+          string? lastStatus = initialInteraction.Status;
 
-        if (!string.IsNullOrWhiteSpace(lastStatus))
-        {
-            yield return new InteractionStatusEvent
-            {
-                EventType = "interaction.in_progress",
-                EventId = CreateGoogleAgentEventId(),
-                InteractionId = interactionId,
-                Status = lastStatus
-            };
-        }
+          if (!string.IsNullOrWhiteSpace(lastStatus))
+          {
+              yield return new InteractionStatusEvent
+              {
+                  EventType = "interaction.in_progress",
+                  EventId = CreateGoogleAgentEventId(),
+                  InteractionId = interactionId,
+                  Status = lastStatus
+              };
+          }
 
-        Interaction current = initialInteraction;
-        while (!IsTerminalInteractionStatus(current.Status))
-        {
-            await Task.Delay(GoogleAgentPollingInterval, cancellationToken);
+          Interaction current = initialInteraction;
+          while (!IsTerminalInteractionStatus(current.Status))
+          {
+              await Task.Delay(GoogleAgentPollingInterval, cancellationToken);
 
-            current = await GetGoogleAgentInteraction(interactionId, cancellationToken);
-            NormalizeGoogleAgentInteraction(current);
+              current = await GetGoogleAgentInteraction(interactionId, cancellationToken);
+              NormalizeGoogleAgentInteraction(current);
 
-            if (!string.Equals(lastStatus, current.Status, StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(current.Status))
-            {
-                lastStatus = current.Status;
-                yield return new InteractionStatusEvent
-                {
-                    EventType = string.Equals(current.Status, "requires_action", StringComparison.OrdinalIgnoreCase)
-                        ? "interaction.requires_action"
-                        : "interaction.in_progress",
-                    EventId = CreateGoogleAgentEventId(),
-                    InteractionId = interactionId,
-                    Status = current.Status
-                };
-            }
-        }
+              if (!string.Equals(lastStatus, current.Status, StringComparison.OrdinalIgnoreCase)
+                  && !string.IsNullOrWhiteSpace(current.Status))
+              {
+                  lastStatus = current.Status;
+                  yield return new InteractionStatusEvent
+                  {
+                      EventType = string.Equals(current.Status, "requires_action", StringComparison.OrdinalIgnoreCase)
+                          ? "interaction.requires_action"
+                          : "interaction.in_progress",
+                      EventId = CreateGoogleAgentEventId(),
+                      InteractionId = interactionId,
+                      Status = current.Status
+                  };
+              }
+          }
 
-        if (string.Equals(current.Status, "completed", StringComparison.OrdinalIgnoreCase))
-        {
-            var index = 0;
-            foreach (var step in current.Steps ?? [])
-            {
-                yield return new InteractionStepStartEvent
-                {
-                    EventId = CreateGoogleAgentEventId(),
-                    Index = index,
-                    Step = CreateGoogleAgentStreamStartStep(step)
-                };
+          if (string.Equals(current.Status, "completed", StringComparison.OrdinalIgnoreCase))
+          {
+              var index = 0;
+              foreach (var step in current.Steps ?? [])
+              {
+                  yield return new InteractionStepStartEvent
+                  {
+                      EventId = CreateGoogleAgentEventId(),
+                      Index = index,
+                      Step = CreateGoogleAgentStreamStartStep(step)
+                  };
 
-                foreach (var delta in CreateGoogleAgentStreamDeltas(step))
-                {
-                    yield return new InteractionStepDeltaEvent
-                    {
-                        EventId = CreateGoogleAgentEventId(),
-                        Index = index,
-                        Delta = delta
-                    };
-                }
+                  foreach (var delta in CreateGoogleAgentStreamDeltas(step))
+                  {
+                      yield return new InteractionStepDeltaEvent
+                      {
+                          EventId = CreateGoogleAgentEventId(),
+                          Index = index,
+                          Delta = delta
+                      };
+                  }
 
-                yield return new InteractionStepStopEvent
-                {
-                    EventId = CreateGoogleAgentEventId(),
-                    Index = index,
-                    Status = "done"
-                };
+                  yield return new InteractionStepStopEvent
+                  {
+                      EventId = CreateGoogleAgentEventId(),
+                      Index = index,
+                      Status = "done"
+                  };
 
-                index++;
-            }
-        }
-        else
-        {
-            yield return new InteractionErrorEvent
-            {
-                EventId = CreateGoogleAgentEventId(),
-                Error = new InteractionErrorInfo
-                {
-                    Code = current.Status,
-                    Message = $"Google agent interaction '{interactionId}' ended with status '{current.Status}'."
-                }
-            };
-        }
+                  index++;
+              }
+          }
+          else
+          {
+              yield return new InteractionErrorEvent
+              {
+                  EventId = CreateGoogleAgentEventId(),
+                  Error = new InteractionErrorInfo
+                  {
+                      Code = current.Status,
+                      Message = $"Google agent interaction '{interactionId}' ended with status '{current.Status}'."
+                  }
+              };
+          }
 
-        yield return new InteractionCompletedEvent
-        {
-            EventId = CreateGoogleAgentEventId(),
-            Interaction = current
-        };
-    }
+          yield return new InteractionCompletedEvent
+          {
+              EventId = CreateGoogleAgentEventId(),
+              Interaction = current
+          };
+      }
 
     private static InteractionStep CreateGoogleAgentStreamStartStep(InteractionStep step)
         => step switch
@@ -390,15 +399,15 @@ public partial class GoogleAIProvider
             InteractionModelOutputStep => new InteractionModelOutputStep { Content = [] },
             _ => step
         };
-
+*/
     private static IEnumerable<InteractionContentDeltaData> CreateGoogleAgentStreamDeltas(InteractionStep output)
     {
         switch (output)
         {
             case InteractionModelOutputStep modelOutput:
                 foreach (var content in modelOutput.Content ?? [])
-                foreach (var delta in CreateGoogleAgentStreamDeltas(content))
-                    yield return delta;
+                    foreach (var delta in CreateGoogleAgentStreamDeltas(content))
+                        yield return delta;
                 break;
 
             case InteractionTextContent text:

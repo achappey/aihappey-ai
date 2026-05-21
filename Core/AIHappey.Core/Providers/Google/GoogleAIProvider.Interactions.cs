@@ -15,6 +15,7 @@ public partial class GoogleAIProvider
         ApplyAuthHeader();
 
         this.SetDefaultInteractionProperties(request);
+        capture ??= request.GetGoogleBackendCapture(GetIdentifier());
 
         if (TryNormalizeGoogleAgentRequest(request, out _, stream: true))
         {
@@ -22,7 +23,7 @@ public partial class GoogleAIProvider
 
             try
             {
-                await foreach (var update in CreateGoogleAgentInteractionStream(request, cancellationToken))
+                await foreach (var update in CreateGoogleAgentInteractionStream(request, cancellationToken, capture))
                 {
                     if (update is InteractionCreatedEvent { Interaction.Id: not null } start)
                         interactionId = start.Interaction.Id;
@@ -47,6 +48,7 @@ public partial class GoogleAIProvider
         await foreach (var update in _client.GetInteractions(
                            request,
                            GetIdentifier(),
+                           capture: capture,
                            ct: cancellationToken))
         {
             yield return update;
@@ -55,17 +57,19 @@ public partial class GoogleAIProvider
     }
 
     public async Task<Interaction> GetInteraction(InteractionRequest request,
-           CancellationToken cancellationToken = default)
+           CancellationToken cancellationToken = default,
+           ProviderBackendCaptureRequest? capture = null)
     {
 
         ApplyAuthHeader();
 
         this.SetDefaultInteractionProperties(request);
+        capture ??= request.GetGoogleBackendCapture(GetIdentifier());
 
         if (TryNormalizeGoogleAgentRequest(request, out _))
         {
             string? interactionId = null;
-            var initialInteraction = await CreateGoogleAgentInteraction(request, cancellationToken);
+            var initialInteraction = await CreateGoogleAgentInteraction(request, cancellationToken, capture);
             interactionId = initialInteraction.Id;
 
             try
@@ -88,6 +92,7 @@ public partial class GoogleAIProvider
         return await _client.GetInteraction(
                             request,
                             GetIdentifier(),
+                            capture: capture,
                             ct: cancellationToken);
 
     }

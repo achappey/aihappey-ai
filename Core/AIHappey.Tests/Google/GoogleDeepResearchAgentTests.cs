@@ -1,6 +1,7 @@
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Google;
@@ -200,6 +201,89 @@ public sealed class GoogleDeepResearchAgentTests
     }
 
     [Fact]
+    public async Task NonStreamingDeepResearchCapturesCreateResponseFromGoogleMetadataOnly()
+    {
+        var captureRoot = CreateTempCaptureRoot();
+        var previousCaptureOptions = ProviderBackendCapture.Current;
+
+        try
+        {
+            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
+            {
+                Enabled = true,
+                DevelopmentOnly = false,
+                RootDirectory = captureRoot
+            });
+
+            var handler = new RecordingHandler([
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent(new
+                    {
+                        id = "interaction-capture-1",
+                        agent = "deep-research-preview-04-2026",
+                        status = "in_progress"
+                    })
+                },
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent(new
+                    {
+                        id = "interaction-capture-1",
+                        agent = "deep-research-preview-04-2026",
+                        status = "completed",
+                        steps = new[]
+                        {
+                            new
+                            {
+                                type = "model_output",
+                                content = new[] { new { type = "text", text = "final report" } }
+                            }
+                        }
+                    })
+                },
+                new HttpResponseMessage(HttpStatusCode.OK)
+            ]);
+
+            var provider = CreateProvider(handler);
+            var result = await provider.GetInteraction(new InteractionRequest
+            {
+                Model = "deep-research-preview-04-2026",
+                Input = new InteractionsInput("research this"),
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["google"] = new Dictionary<string, object?>
+                    {
+                        ["capture"] = ProviderBackendCaptureRequest.Create(
+                            "google-agent-capture",
+                            "deep-research-create")
+                    }
+                }
+            });
+
+            Assert.Equal("completed", result.Status);
+            Assert.Collection(handler.Requests,
+                create => Assert.Equal(HttpMethod.Post, create.Method),
+                get => Assert.Equal(HttpMethod.Get, get.Method),
+                delete => Assert.Equal(HttpMethod.Delete, delete.Method));
+
+            var captureFiles = Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories);
+            var captureFile = Assert.Single(captureFiles);
+            Assert.EndsWith(Path.Combine("google-agent-capture", "deep-research-create.json"), captureFile);
+
+            var captured = await File.ReadAllTextAsync(captureFile);
+            using var doc = JsonDocument.Parse(captured);
+            Assert.Equal("interaction-capture-1", doc.RootElement.GetProperty("id").GetString());
+            Assert.Equal("in_progress", doc.RootElement.GetProperty("status").GetString());
+        }
+        finally
+        {
+            ProviderBackendCapture.Configure(previousCaptureOptions);
+            TryDeleteDirectory(captureRoot);
+        }
+    }
+
+    [Fact]
     public async Task StreamingDeepResearchUsesNativeStreamAndDeletesStoredInteraction()
     {
         var handler = new RecordingHandler([
@@ -299,6 +383,106 @@ public sealed class GoogleDeepResearchAgentTests
         Assert.Contains("finish", unifiedTypes);
 
         Assert.Contains(handler.Requests, request => request.Method == HttpMethod.Delete);
+    }
+
+    [Fact]
+    public async Task StreamingDeepResearchCapturesRawSseFromGoogleBackendCaptureMetadataOnly()
+    {
+        var captureRoot = CreateTempCaptureRoot();
+        var previousCaptureOptions = ProviderBackendCapture.Current;
+
+        try
+        {
+            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
+            {
+                Enabled = true,
+                DevelopmentOnly = false,
+                RootDirectory = captureRoot
+            });
+
+            var handler = new RecordingHandler([
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = SseContent(
+                        new
+                        {
+                            event_type = "interaction.created",
+                            event_id = "event-1",
+                            interaction = new
+                            {
+                                id = "interaction-stream-capture-1",
+                                agent = "deep-research-preview-04-2026",
+                                status = "in_progress"
+                            }
+                        },
+                        new
+                        {
+                            event_type = "step.delta",
+                            event_id = "event-2",
+                            index = 0,
+                            delta = new
+                            {
+                                type = "text",
+                                text = "streamed final report"
+                            }
+                        },
+                        new
+                        {
+                            event_type = "interaction.completed",
+                            event_id = "event-3",
+                            interaction = new
+                            {
+                                id = "interaction-stream-capture-1",
+                                agent = "deep-research-preview-04-2026",
+                                status = "completed"
+                            }
+                        })
+                },
+                new HttpResponseMessage(HttpStatusCode.OK)
+            ]);
+
+            var provider = CreateProvider(handler);
+            var parts = new List<InteractionStreamEventPart>();
+            await foreach (var part in provider.GetInteractions(new InteractionRequest
+                           {
+                               Model = "deep-research-preview-04-2026",
+                               Input = new InteractionsInput("research this"),
+                               Metadata = new Dictionary<string, object?>
+                               {
+                                   ["google"] = new Dictionary<string, object?>
+                                   {
+                                       ["backend_capture"] = ProviderBackendCaptureRequest.Create(
+                                           "google-agent-stream-capture",
+                                           "deep-research-stream")
+                                   }
+                               }
+                           }))
+            {
+                parts.Add(part);
+            }
+
+            Assert.Contains(parts, part => part is InteractionCreatedEvent);
+            Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta.Text: "streamed final report" });
+            Assert.Contains(parts, part => part is InteractionCompletedEvent);
+            Assert.Collection(handler.Requests,
+                create => Assert.Equal(HttpMethod.Post, create.Method),
+                delete => Assert.Equal(HttpMethod.Delete, delete.Method));
+
+            var captureFiles = Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories);
+            var captureFile = Assert.Single(captureFiles);
+            Assert.EndsWith(Path.Combine("google-agent-stream-capture", "deep-research-stream.jsonl"), captureFile);
+
+            var captured = await File.ReadAllTextAsync(captureFile);
+            Assert.Contains("data:", captured);
+            Assert.Contains("interaction.created", captured);
+            Assert.Contains("streamed final report", captured);
+            Assert.Contains("data: [DONE]", captured);
+        }
+        finally
+        {
+            ProviderBackendCapture.Configure(previousCaptureOptions);
+            TryDeleteDirectory(captureRoot);
+        }
     }
 
     [Fact]
@@ -537,6 +721,21 @@ public sealed class GoogleDeepResearchAgentTests
             .Append("data: [DONE]");
 
         return new StringContent(string.Join("\n\n", lines), System.Text.Encoding.UTF8, "text/event-stream");
+    }
+
+    private static string CreateTempCaptureRoot()
+        => Path.Combine(Path.GetTempPath(), "aihappey-google-agent-capture-tests", Guid.NewGuid().ToString("N"));
+
+    private static void TryDeleteDirectory(string directory)
+    {
+        try
+        {
+            if (Directory.Exists(directory))
+                Directory.Delete(directory, recursive: true);
+        }
+        catch
+        {
+        }
     }
 
     private sealed class FixedApiKeyResolver : IApiKeyResolver
