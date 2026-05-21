@@ -43,7 +43,7 @@ public partial class MergeProvider
 
         do
         {
-            var url = "models?limit=100";
+            var url = "v1/models?limit=100";
             if (!string.IsNullOrWhiteSpace(cursor))
                 url += "&cursor=" + Uri.EscapeDataString(cursor);
 
@@ -94,7 +94,7 @@ public partial class MergeProvider
 
     private async Task<IEnumerable<Model>> ListRoutingPolicyModelsAsync(CancellationToken cancellationToken)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "routing/policies");
+        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/routing/policies");
         using var resp = await _client.SendAsync(req, cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
