@@ -51,13 +51,24 @@ public static class RequestExtensions
         ArgumentNullException.ThrowIfNull(request);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
 
-        var inputItems = request.Messages?.Select(a => a.ToUnifiedInputItem()).ToList() ?? [];
+        var inputItems = request.Messages?
+            .Where(static message => message.Role != Role.system)
+            .Select(a => a.ToUnifiedInputItem())
+            .ToList() ?? [];
+        var instructions = request.Messages is null
+            ? null
+            : string.Join("\n\n", request.Messages
+                .Where(static message => message.Role == Role.system)
+                .SelectMany(static message => message.Parts.OfType<TextUIPart>())
+                .Select(static part => part.Text)
+                .Where(static text => !string.IsNullOrWhiteSpace(text)));
 
         return new AIRequest
         {
             ProviderId = providerId,
             Model = request.Model,
             Id = request.Id,
+            Instructions = string.IsNullOrWhiteSpace(instructions) ? null : instructions,
             ResponseFormat = request.ResponseFormat,
             Input = new AIInput
             {

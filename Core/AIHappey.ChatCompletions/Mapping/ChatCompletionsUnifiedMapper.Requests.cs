@@ -71,6 +71,22 @@ public static partial class ChatCompletionsUnifiedMapper
         IEnumerable<object> tools = [.. ToChatTools(request.Tools).ToList() ?? [],
             .. request.Metadata.GetChatCompletionToolDefinitions(providerId) ?? []];
 
+        var messages = ToChatMessages(request.Input).ToList();
+
+        if (!string.IsNullOrWhiteSpace(request.Instructions))
+            messages.Insert(0, new ChatMessage()
+            {
+                Role = "system",
+                Content = JsonSerializer.SerializeToElement(new[]
+                {
+                    new
+                    {
+                        type = "text",
+                        text = request.Instructions
+                    }
+                })
+            });
+
         var options = new ChatCompletionOptions
         {
             Model = request.Model ?? string.Empty,
