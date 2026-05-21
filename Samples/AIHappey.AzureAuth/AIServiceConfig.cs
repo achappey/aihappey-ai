@@ -493,7 +493,6 @@ public class AIServiceConfig
     public ProviderConfig? ZyloAPI { get; set; }
     public ProviderConfig? Augure { get; set; }
     public ProviderConfig? Sapiom { get; set; }
-    public ProviderConfig? ForgeByLANA { get; set; }
     public ProviderConfig? TheOldAPI { get; set; }
     public ProviderConfig? Radiance { get; set; }
     public ProviderConfig? OneInfer { get; set; }

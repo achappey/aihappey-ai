@@ -490,7 +490,6 @@ using AIHappey.Core.Providers.HolySheepAI;
 using AIHappey.Core.Providers.ZyloAPI;
 using AIHappey.Core.Providers.Augure;
 using AIHappey.Core.Providers.Sapiom;
-using AIHappey.Core.Providers.ForgeByLANA;
 using AIHappey.Core.Providers.TheOldAPI;
 using AIHappey.Core.Providers.UncloseAI;
 using AIHappey.Core.Providers.Radiance;
@@ -1053,7 +1052,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ZyloAPIProvider>();
         services.AddSingleton<IModelProvider, AugureProvider>();
         services.AddSingleton<IModelProvider, SapiomProvider>();
-        services.AddSingleton<IModelProvider, ForgeByLANAProvider>();
         services.AddSingleton<IModelProvider, TheOldAPIProvider>();
         services.AddSingleton<IModelProvider, UncloseAIProvider>();
         services.AddSingleton<IModelProvider, RadianceProvider>();

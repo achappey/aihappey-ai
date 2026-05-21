@@ -495,7 +495,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["zyloapi"] = "X-ZyloAPI-Key",
             ["augure"] = "X-Augure-Key",
             ["sapiom"] = "X-Sapiom-Key",
-            ["forgebylana"] = "X-ForgeByLANA-Key",
             ["theoldapi"] = "X-TheOldAPI-Key",
             ["radiance"] = "X-Radiance-Key",
             ["oneinfer"] = "X-OneInfer-Key",
