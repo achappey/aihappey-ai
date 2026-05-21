@@ -277,7 +277,7 @@ public class AIServiceConfig
     public ProviderConfig? LLMWise { get; set; }
     public ProviderConfig? CaseDev { get; set; }
     public ProviderConfig? ModelRouter { get; set; }
-    public ProviderConfig? MultiverseAI { get; set; }  
+    public ProviderConfig? MultiverseAI { get; set; }
     public ProviderConfig? ApiAirforce { get; set; }
     public ProviderConfig? SmartAIPI { get; set; }
     public ProviderConfig? LLMPath { get; set; }
@@ -534,6 +534,7 @@ public class AIServiceConfig
     public ProviderConfig? Cloister { get; set; }
     public ProviderConfig? Antbase { get; set; }
     public ProviderConfig? Slancha { get; set; }
+    public ProviderConfig? CodingPlanX { get; set; }
 
 }
 
