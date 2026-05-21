@@ -51,6 +51,10 @@ public partial class OpenAIProvider
             response.Metadata,
             pricing);
 
+        response.Metadata = AddOpenAIWebSearchCallCost(
+            response.Metadata,
+            CountCompletedWebSearchCalls(response.Output));
+
         return response;
     }
 
@@ -76,6 +80,8 @@ public partial class OpenAIProvider
 
             foreach (var enrichedUpdate in enrichedUpdates)
             {
+                CaptureCompletedWebSearchCall(enrichedUpdate, enrichmentState);
+
                 if (enrichedUpdate is ResponseCompleted completed)
                 {
                     var effectiveModelId = string.IsNullOrWhiteSpace(completed.Response.Model)
@@ -93,11 +99,109 @@ public partial class OpenAIProvider
                         completed.Response.Usage,
                         completed.Response.Metadata,
                         pricing);
+
+                    completed.Response.Metadata = AddOpenAIWebSearchCallCost(
+                        completed.Response.Metadata,
+                        Math.Max(
+                            enrichmentState.CompletedWebSearchCallCount,
+                            CountCompletedWebSearchCalls(completed.Response.Output)));
                 }
 
                 yield return enrichedUpdate;
             }
         }
+    }
+
+    private static void CaptureCompletedWebSearchCall(
+        ResponseStreamPart update,
+        OpenAiResponseStreamEnrichmentState state)
+    {
+        if (update is not ResponseOutputItemDone done
+            || !IsCompletedWebSearchCall(done.Item))
+        {
+            return;
+        }
+
+        var itemId = string.IsNullOrWhiteSpace(done.Item.Id)
+            ? $"output_index:{done.OutputIndex}"
+            : done.Item.Id;
+
+        state.CompletedWebSearchCallIds.Add(itemId);
+    }
+
+    private static int CountCompletedWebSearchCalls(IEnumerable<object>? output)
+    {
+        if (output is null)
+            return 0;
+
+        var count = 0;
+        var seenItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var outputItem in output)
+        {
+            var map = TryGetJsonElementMap(outputItem);
+            if (map is null)
+                continue;
+
+            var itemType = map.TryGetString("type") ?? string.Empty;
+            var itemStatus = map.TryGetString("status") ?? string.Empty;
+            if (!string.Equals(itemType, "web_search_call", StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(itemStatus, "completed", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var itemId = map.TryGetString("id");
+            if (string.IsNullOrWhiteSpace(itemId))
+            {
+                count++;
+                continue;
+            }
+
+            if (seenItemIds.Add(itemId))
+                count++;
+        }
+
+        return count;
+    }
+
+    private static bool IsCompletedWebSearchCall(ResponseStreamItem? item)
+        => item is not null
+           && string.Equals(item.Type, "web_search_call", StringComparison.OrdinalIgnoreCase)
+           && string.Equals(item.Status, "completed", StringComparison.OrdinalIgnoreCase);
+
+   
+
+    private static Dictionary<string, object?>? TryConvertGatewayMetadata(object? gatewayObj)
+    {
+        if (gatewayObj is null)
+            return null;
+
+        try
+        {
+            return JsonSerializer.SerializeToElement(gatewayObj, JsonSerializerOptions.Web)
+                .Deserialize<Dictionary<string, object?>>(JsonSerializerOptions.Web);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static decimal? TryGetDecimal(object? value)
+    {
+        return value switch
+        {
+            decimal decimalValue => decimalValue,
+            double doubleValue => (decimal)doubleValue,
+            float floatValue => (decimal)floatValue,
+            int intValue => intValue,
+            long longValue => longValue,
+            JsonElement { ValueKind: JsonValueKind.Number } jsonNumber when jsonNumber.TryGetDecimal(out var decimalValue) => decimalValue,
+            JsonElement { ValueKind: JsonValueKind.String } jsonString when decimal.TryParse(jsonString.GetString(), out var decimalValue) => decimalValue,
+            string stringValue when decimal.TryParse(stringValue, out var decimalValue) => decimalValue,
+            _ => null
+        };
     }
 
     private async Task<ResponseResult> EnrichResponseResultWithContainerFilesAsync(
@@ -776,6 +880,10 @@ public partial class OpenAIProvider
 
         public HashSet<string> UploadedGeneratedImageItemIds { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+        public HashSet<string> CompletedWebSearchCallIds { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public int CompletedWebSearchCallCount => CompletedWebSearchCallIds.Count;
+
         public string? ResponseContainerId { get; set; }
 
         public int NextOutputIndex { get; set; } = 100_000;
@@ -786,4 +894,6 @@ public partial class OpenAIProvider
     private const string DownloadFileToolName = "download_file";
 
     private const string UploadGeneratedImageToolName = "upload_generated_image";
+
+   
 }

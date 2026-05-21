@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Responses.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses.Mapping;
@@ -23,6 +24,7 @@ public sealed class ResponsesStreamFixtureTests
     private const string ScalewayReasoningRawFixturePath = "Fixtures/responses/raw/scaleway-with-reasoning-streaming.jsonl";
     private const string CodeInterpreterOutputFileRawFixturePath = "Fixtures/responses/raw/xai-with-code_interpreter-output-file-stream.jsonl";
     private const string PerplexityFinancialSearchRawFixturePath = "Fixtures/responses/raw/perplexity-with-financial-search.jsonl";
+    private const string OpenAiWebSearchRawFixturePath = "Fixtures/responses/raw/openai-with-websearch-stream.jsonl";
 
     [Fact]
     public void Typed_and_raw_responses_fixtures_produce_the_same_stream_part_types()
@@ -473,6 +475,19 @@ public sealed class ResponsesStreamFixtureTests
         Assert.Equal(6, sourceEvents.Count);
         Assert.Contains(sourceEvents, source => source.Url == "https://www.perplexity.ai/finance/AAPL");
         Assert.All(sourceEvents, source => Assert.Equal("finance_search", source.Type));
+    }
+
+    [Fact]
+    public void OpenAI_web_search_call_items_are_included_in_completed_response_gateway_cost()
+    {
+        var parts = FixtureFileLoader.LoadResponseRawFixture(OpenAiWebSearchRawFixturePath);
+        var completed = Assert.IsType<ResponseCompleted>(parts.Last(part => part is ResponseCompleted));
+
+        OpenAIProvider.EnrichResponseWithOpenAIGatewayCostForTests(completed.Response, parts);
+
+        var gateway = Assert.IsType<Dictionary<string, object?>>(completed.Response.Metadata?["gateway"]);
+
+        Assert.Equal(0.25812175m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
     [Fact]
