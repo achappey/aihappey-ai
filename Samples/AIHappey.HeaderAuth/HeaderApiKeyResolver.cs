@@ -173,7 +173,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["smallestai"] = "X-SmallestAI-Key",
             ["orqrouter"] = "X-OrqRouter-Key",
             ["typecast"] = "X-Typecast-Key",
-            ["unrealspeech"] = "X-UnrealSpeech-Key",        
+            ["unrealspeech"] = "X-UnrealSpeech-Key",
             ["everypixellabs"] = "X-EverypixelLabs-Key",
             ["supertone"] = "X-Supertone-Key",
             ["uvoiceai"] = "X-UVoiceAI-Key",
@@ -278,7 +278,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["llmwise"] = "X-LLMWise-Key",
             ["casedev"] = "X-CaseDev-Key",
             ["modelrouter"] = "X-ModelRouter-Key",
-            ["multiverseai"] = "X-MultiverseAI-Key",       
+            ["multiverseai"] = "X-MultiverseAI-Key",
             ["apiairforce"] = "X-ApiAirforce-Key",
             ["smartaipi"] = "X-SmartAIPI-Key",
             ["llmpath"] = "X-LLMPath-Key",
@@ -534,7 +534,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["doubleword"] = "X-Doubleword-Key",
             ["openhands"] = "X-OpenHands-Key",
             ["poolside"] = "X-Poolside-Key",
-            ["cloister"] = "X-Cloister-Key"
+            ["cloister"] = "X-Cloister-Key",
+            ["antbase"] = "X-Antbase-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

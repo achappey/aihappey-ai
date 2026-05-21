@@ -48,6 +48,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Ambient        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Anannas        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AnLinkAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Antbase        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Anthropic      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AnyRouter      | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Apertis        | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ❌               | ❌          | ❌          | ➖          |
