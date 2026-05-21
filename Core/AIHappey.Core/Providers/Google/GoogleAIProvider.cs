@@ -90,7 +90,7 @@ public partial class GoogleAIProvider
         {
             foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
             {
-                yield return item.ToChatCompletionUpdate();
+                yield return MarkGoogleAgentUnifiedToolEventProviderExecuted(item).ToChatCompletionUpdate();
             }
         }
     }
@@ -117,7 +117,7 @@ public partial class GoogleAIProvider
         {
             foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
             {
-                yield return item.ToResponseStreamPart();
+                yield return MarkGoogleAgentUnifiedToolEventProviderExecuted(item).ToResponseStreamPart();
             }
         }
     }
@@ -150,7 +150,8 @@ public partial class GoogleAIProvider
         {
             foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
             {
-                foreach (var part in item.ToMessageStreamParts())
+                var mappedItem = MarkGoogleAgentUnifiedToolEventProviderExecuted(item);
+                foreach (var part in mappedItem.ToMessageStreamParts())
                     yield return part;
             }
         }

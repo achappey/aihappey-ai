@@ -761,9 +761,9 @@ public static partial class InteractionsUnifiedMapper
     private sealed record InteractionStreamFunctionCallState
     {
         public string ToolCallId { get; init; } = string.Empty;
- 
+  
         public string Name { get; init; } = "function";
- 
+  
         public string? ArgumentsJson { get; init; }
     }
 

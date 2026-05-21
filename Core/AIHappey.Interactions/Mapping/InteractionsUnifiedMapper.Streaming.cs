@@ -164,6 +164,9 @@ public static partial class InteractionsUnifiedMapper
 
                     switch (start.Step)
                     {
+                        case InteractionFunctionResultContent functionResult:
+                            RememberStreamToolStep(providerId, start.Index, functionResult.CallId, functionResult.Signature);
+                            break;
                         case InteractionGoogleSearchCallContent googleSearchCall:
                             RememberStreamToolStep(providerId, start.Index, googleSearchCall.Id, googleSearchCall.Signature);
                             break;
@@ -358,6 +361,44 @@ public static partial class InteractionsUnifiedMapper
                         delta.Index);
                 }
                 yield break;
+
+            case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "function_result", StringComparison.OrdinalIgnoreCase):
+                {
+                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var toolCallId = GetDeltaAdditionalString(delta, "call_id")
+                                      ?? GetDeltaAdditionalString(delta, "id")
+                                      ?? rememberedToolStep?.ToolCallId
+                                      ?? BuildContentEventId(delta.Index);
+                    var toolName = GetDeltaAdditionalString(delta, "name") ?? "function";
+                    object resultPayload = GetDeltaAdditionalObject(delta, "result")
+                                           ?? (object?)delta.Delta?.Text
+                                           ?? JsonSerializer.SerializeToElement(new { }, Json);
+                    var providerMetadata = CreateFunctionToolOutputProviderMetadata(
+                        providerId,
+                        toolCallId,
+                        toolName,
+                        GetDeltaAdditionalString(delta, "signature") ?? rememberedToolStep?.Signature,
+                        GetDeltaAdditionalBool(delta, "is_error"));
+
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-output-available",
+                            Id = toolCallId,
+                            Data = new AIToolOutputAvailableEventData
+                            {
+                                ToolName = toolName,
+                                Output = CloneIfJsonElement(resultPayload) ?? resultPayload,
+                                ProviderExecuted = true,
+                                ProviderMetadata = providerMetadata
+                            }
+                        },
+                        part,
+                        delta.Index);
+
+                    yield break;
+                }
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_call", StringComparison.OrdinalIgnoreCase):
                 {
@@ -1183,6 +1224,28 @@ public static partial class InteractionsUnifiedMapper
 
         if (isError is not null)
             metadata["is_error"] = isError.Value;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = metadata
+        };
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateFunctionToolOutputProviderMetadata(
+        string providerId,
+        string toolCallId,
+        string toolName,
+        string? signature = null,
+        bool? isError = null)
+    {
+        var metadata = CreateToolProviderMetadata(signature, isError)
+            .Where(a => a.Value is not null)
+            .ToDictionary(a => a.Key, a => ConvertProviderMetadataValue(a.Value)!);
+
+        metadata["type"] = "tool_result";
+        metadata["tool_name"] = toolName;
+        metadata["title"] = toolName;
+        metadata["tool_use_id"] = toolCallId;
 
         return new Dictionary<string, Dictionary<string, object>>
         {

@@ -395,6 +395,7 @@ public sealed class InteractionFunctionCallContent : InteractionContent
 
     [JsonPropertyName("signature")]
     public string? Signature { get; set; }
+
 }
 
 public sealed class InteractionCodeExecutionCallContent : InteractionContent
@@ -526,6 +527,7 @@ public sealed class InteractionFunctionResultContent : InteractionContent
 
     [JsonPropertyName("result")]
     public object? Result { get; set; }
+
 }
 
 public sealed class InteractionCodeExecutionResultContent : InteractionContent

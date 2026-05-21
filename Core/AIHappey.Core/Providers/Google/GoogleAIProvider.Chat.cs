@@ -52,7 +52,8 @@ public partial class GoogleAIProvider
         {
             foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
             {
-                foreach (var result in item.Event.ToUIMessagePart(GetIdentifier()))
+                var mappedItem = MarkGoogleAgentUnifiedToolEventProviderExecuted(item);
+                foreach (var result in mappedItem.Event.ToUIMessagePart(GetIdentifier()))
                     yield return result;
             }
         }

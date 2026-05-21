@@ -1,6 +1,8 @@
 using AIHappey.Abstractions.Http;
 using AIHappey.Interactions;
+using AIHappey.Unified.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.StaticFiles;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -14,7 +16,10 @@ public partial class GoogleAIProvider
     private const string GoogleAgentEnvironmentPropertyName = "environment";
     private const string GoogleAgentDefaultEnvironment = "remote";
     private const string InteractionsRelativeUrl = "v1beta/interactions";
+    private const string GoogleAgentDownloadFileToolName = "download_file";
+    private const string GoogleAgentEnvironmentFilesUrlPrefix = "https://generativelanguage.googleapis.com/v1beta/files/environment-";
     private static readonly TimeSpan GoogleAgentPollingInterval = TimeSpan.FromSeconds(10);
+    private static readonly FileExtensionContentTypeProvider GoogleAgentFileContentTypeProvider = new();
     private static readonly HashSet<string> TerminalInteractionStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
         "completed",
@@ -161,6 +166,9 @@ public partial class GoogleAIProvider
         using var reader = new StreamReader(stream);
         await using var captureSink = ProviderBackendCapture.BeginStreamCapture("interactions", response, capture);
 
+        string? environmentId = null;
+        var downloadEventsEmitted = false;
+
         string? line;
         while (!cancellationToken.IsCancellationRequested
                && (line = await reader.ReadLineAsync(cancellationToken)) is not null)
@@ -193,8 +201,24 @@ public partial class GoogleAIProvider
 
             NormalizeGoogleAgentStreamEvent(evt);
 
+            environmentId ??= ExtractGoogleAgentEnvironmentId(evt);
+
             if (evt is not null)
+            {
                 yield return evt;
+
+                if (evt is InteractionCompletedEvent && !downloadEventsEmitted)
+                {
+                    downloadEventsEmitted = true;
+
+                    await foreach (var downloadEvent in CreateGoogleAgentEnvironmentDownloadEventsAsync(
+                                       environmentId,
+                                       cancellationToken))
+                    {
+                        yield return downloadEvent;
+                    }
+                }
+            }
         }
     }
 
@@ -369,6 +393,87 @@ public partial class GoogleAIProvider
         }
     }
 
+    private static Dictionary<string, Dictionary<string, object>> CreateGoogleAgentProviderExecutedToolProviderMetadata(
+        string? toolName,
+        bool? isError = null)
+    {
+        var resolvedToolName = string.IsNullOrWhiteSpace(toolName) ? "function" : toolName;
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "google_agent_provider_executed_tool",
+            ["tool_name"] = resolvedToolName,
+            ["name"] = resolvedToolName
+        };
+
+        if (isError is not null)
+            metadata["is_error"] = isError.Value;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [GoogleExtensions.Identifier()] = metadata
+        };
+    }
+
+    private AIStreamEvent MarkGoogleAgentUnifiedToolEventProviderExecuted(AIStreamEvent streamEvent)
+    {
+        object? data = streamEvent.Event.Data switch
+        {
+            AIToolInputStartEventData source when source.ProviderExecuted != true => new AIToolInputStartEventData
+            {
+                ToolName = source.ToolName,
+                ProviderExecuted = true,
+                Title = source.Title,
+                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName)
+            },
+            AIToolInputAvailableEventData source when source.ProviderExecuted != true => new AIToolInputAvailableEventData
+            {
+                ToolName = source.ToolName,
+                Input = source.Input,
+                ProviderExecuted = true,
+                Title = source.Title,
+                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName)
+            },
+            AIToolOutputAvailableEventData source when source.ProviderExecuted != true => new AIToolOutputAvailableEventData
+            {
+                ToolName = source.ToolName,
+                Output = source.Output,
+                ProviderExecuted = true,
+                Dynamic = source.Dynamic,
+                Preliminary = source.Preliminary,
+                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName)
+            },
+            AIToolOutputErrorEventData source when source.ProviderExecuted != true => new AIToolOutputErrorEventData
+            {
+                ToolCallId = source.ToolCallId,
+                ErrorText = source.ErrorText,
+                ProviderExecuted = true,
+                Dynamic = source.Dynamic,
+                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolCallId, true)
+            },
+            _ => streamEvent.Event.Data
+        };
+
+        if (ReferenceEquals(data, streamEvent.Event.Data))
+            return streamEvent;
+
+        return new AIStreamEvent
+        {
+            ProviderId = streamEvent.ProviderId,
+            Metadata = streamEvent.Metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = streamEvent.Event.Type,
+                Id = streamEvent.Event.Id,
+                Timestamp = streamEvent.Event.Timestamp,
+                Input = streamEvent.Event.Input,
+                Output = streamEvent.Event.Output,
+                Data = data,
+                Metadata = streamEvent.Event.Metadata
+            }
+        };
+    }
+
+   
     private static async Task ThrowGoogleAgentApiIfNotSuccess(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode)

@@ -11,6 +11,7 @@ namespace AIHappey.Tests.Interactions;
 public sealed class InteractionsStreamFixtureTests
 {
     private const string RawFixturePath = "Fixtures/interactions/raw/interactions-with-tools.jsonl";
+    private const string AntigravityRawFixturePath = "Fixtures/interactions/raw/interactions-antigravity-agent-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string ToolCallId = "986aolc5";
 
@@ -77,6 +78,77 @@ public sealed class InteractionsStreamFixtureTests
         var toolInput = JsonSerializer.SerializeToElement(toolCallPart.Input, JsonSerializerOptions.Web);
         Assert.Equal("PL", toolInput.GetProperty("cca").GetString());
        
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts.Single(part => part.Type == "finish"));
+        Assert.Equal("stop", finishPart.FinishReason);
+    }
+
+    [Fact]
+    public void Interactions_provider_executed_function_result_fixture_maps_to_unified_tool_input_and_output_events()
+    {
+        const string toolCallId = "nlufjglg";
+
+        var unifiedEvents = LoadUnifiedEvents(AntigravityRawFixturePath);
+
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "tool-input-start",
+            "tool-input-delta",
+            "tool-input-available",
+            "tool-output-available",
+            "finish");
+
+        var toolInputEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-input-available");
+        Assert.Equal(toolCallId, toolInputEvent.Event.Id);
+
+        var toolInput = Assert.IsType<AIToolInputAvailableEventData>(toolInputEvent.Event.Data);
+        Assert.Equal("write_file", toolInput.ToolName);
+        var inputJson = JsonSerializer.SerializeToElement(toolInput.Input, JsonSerializerOptions.Web);
+        Assert.Equal("geocities.html", inputJson.GetProperty("path").GetString());
+
+        var toolOutputEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-output-available");
+        Assert.Equal(toolCallId, toolOutputEvent.Event.Id);
+
+        var toolOutput = Assert.IsType<AIToolOutputAvailableEventData>(toolOutputEvent.Event.Data);
+        Assert.True(toolOutput.ProviderExecuted);
+        Assert.Equal("write_file", toolOutput.ToolName);
+
+        var outputJson = JsonSerializer.SerializeToElement(toolOutput.Output, JsonSerializerOptions.Web);
+        Assert.Equal("{\"success\":true}", outputJson[0].GetProperty("text").GetString());
+    }
+
+    [Fact]
+    public void Interactions_provider_executed_function_result_fixture_maps_to_expected_vercel_ui_stream_parts()
+    {
+        const string toolCallId = "nlufjglg";
+
+        var uiParts = LoadUnifiedEvents(AntigravityRawFixturePath)
+            .Where(streamEvent => streamEvent.Event.Type is
+                "tool-input-start" or
+                "tool-input-delta" or
+                "tool-input-available" or
+                "tool-output-available" or
+                "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(
+            uiParts.Select(part => part.Type).ToList(),
+            "tool-input-start",
+            "tool-input-delta",
+            "tool-input-available",
+            "tool-output-available",
+            "finish");
+
+        var toolCallPart = Assert.IsType<ToolCallPart>(uiParts.Single(part => part.Type == "tool-input-available"));
+        Assert.Equal(toolCallId, toolCallPart.ToolCallId);
+
+        var toolOutputPart = Assert.IsType<ToolOutputAvailablePart>(uiParts.Single(part => part.Type == "tool-output-available"));
+        Assert.Equal(toolCallId, toolOutputPart.ToolCallId);
+        Assert.True(toolOutputPart.ProviderExecuted);
+
+        var outputJson = JsonSerializer.SerializeToElement(toolOutputPart.Output, JsonSerializerOptions.Web);
+        Assert.Equal("{\"success\":true}", outputJson.GetProperty("structuredContent")[0].GetProperty("text").GetString());
+
         var finishPart = Assert.IsType<FinishUIPart>(uiParts.Single(part => part.Type == "finish"));
         Assert.Equal("stop", finishPart.FinishReason);
     }
@@ -347,8 +419,8 @@ public sealed class InteractionsStreamFixtureTests
     }
 
 
-    private static List<AIStreamEvent> LoadUnifiedEvents()
-        => FixtureFileLoader.LoadInteractionRawFixture(RawFixturePath)
+    private static List<AIStreamEvent> LoadUnifiedEvents(string rawFixturePath = RawFixturePath)
+        => FixtureFileLoader.LoadInteractionRawFixture(rawFixturePath)
             .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
             .ToList();
 }
