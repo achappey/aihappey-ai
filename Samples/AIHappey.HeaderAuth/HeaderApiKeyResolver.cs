@@ -535,7 +535,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["openhands"] = "X-OpenHands-Key",
             ["poolside"] = "X-Poolside-Key",
             ["cloister"] = "X-Cloister-Key",
-            ["antbase"] = "X-Antbase-Key"
+            ["antbase"] = "X-Antbase-Key",
+            ["slancha"] = "X-Slancha-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

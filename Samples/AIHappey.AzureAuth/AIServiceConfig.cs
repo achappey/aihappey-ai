@@ -534,6 +534,7 @@ public class AIServiceConfig
     public ProviderConfig? Poolside { get; set; }
     public ProviderConfig? Cloister { get; set; }
     public ProviderConfig? Antbase { get; set; }
+    public ProviderConfig? Slancha { get; set; }
 
 }
 

@@ -535,6 +535,7 @@ using AIHappey.Core.Providers.Doubleword;
 using AIHappey.Core.Providers.Poolside;
 using AIHappey.Core.Providers.Cloister;
 using AIHappey.Core.Providers.Antbase;
+using AIHappey.Core.Providers.Slancha;
 
 namespace AIHappey.Core.AI;
 
@@ -1095,6 +1096,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PoolsideProvider>();
         services.AddSingleton<IModelProvider, CloisterProvider>();
         services.AddSingleton<IModelProvider, AntbaseProvider>();
+        services.AddSingleton<IModelProvider, SlanchaProvider>();
 
     }
 }
