@@ -23,9 +23,6 @@ public sealed class InteractionRequest
     [JsonPropertyName("response_format")]
     public object? ResponseFormat { get; set; }
 
-    [JsonPropertyName("response_mime_type")]
-    public string? ResponseMimeType { get; set; }
-
     [JsonPropertyName("stream")]
     public bool? Stream { get; set; }
 
@@ -79,11 +76,8 @@ public sealed class Interaction
     [JsonPropertyName("updated")]
     public string? Updated { get; set; }
 
-    [JsonPropertyName("role")]
-    public string? Role { get; set; }
-
-    [JsonPropertyName("outputs")]
-    public List<InteractionContent>? Outputs { get; set; }
+    [JsonPropertyName("steps")]
+    public List<InteractionStep>? Steps { get; set; }
 
     [JsonPropertyName("system_instruction")]
     public string? SystemInstruction { get; set; }
@@ -99,9 +93,6 @@ public sealed class Interaction
 
     [JsonPropertyName("response_format")]
     public object? ResponseFormat { get; set; }
-
-    [JsonPropertyName("response_mime_type")]
-    public string? ResponseMimeType { get; set; }
 
     [JsonPropertyName("previous_interaction_id")]
     public string? PreviousInteractionId { get; set; }
@@ -144,6 +135,11 @@ public sealed class InteractionsInput
     {
         Content = content;
     }
+ 
+    public InteractionsInput(List<InteractionStep> steps, bool useSteps, string? _ = null)
+    {
+        Steps = steps;
+    }
 
     public InteractionsInput(List<InteractionTurn> turns, bool useTurns)
     {
@@ -165,6 +161,8 @@ public sealed class InteractionsInput
     public InteractionContent? SingleContent { get; init; }
 
     public List<InteractionContent>? Content { get; init; }
+ 
+    public List<InteractionStep>? Steps { get; init; }
 
     public List<InteractionTurn>? Turns { get; init; }
 
@@ -175,6 +173,8 @@ public sealed class InteractionsInput
     public bool IsSingleContent => SingleContent is not null;
 
     public bool IsContent => Content is not null;
+ 
+    public bool IsSteps => Steps is not null;
 
     public bool IsTurns => Turns is not null;
 
@@ -228,14 +228,45 @@ public sealed class InteractionTurnContent
     public bool IsRaw => Raw is not null && Raw.Value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined;
 }
 
-[JsonConverter(typeof(InteractionContentJsonConverter))]
-public abstract class InteractionContent
+[JsonConverter(typeof(InteractionStepJsonConverter))]
+public abstract class InteractionStep
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = default!;
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+ 
+public sealed class InteractionUserInputStep : InteractionStep
+{
+    public InteractionUserInputStep()
+    {
+        Type = "user_input";
+    }
+ 
+    [JsonPropertyName("content")]
+    public List<InteractionContent>? Content { get; set; }
+}
+ 
+public sealed class InteractionModelOutputStep : InteractionStep
+{
+    public InteractionModelOutputStep()
+    {
+        Type = "model_output";
+    }
+ 
+    [JsonPropertyName("content")]
+    public List<InteractionContent>? Content { get; set; }
+}
+ 
+public sealed class InteractionUnknownStep : InteractionStep
+{
+}
+ 
+[JsonConverter(typeof(InteractionContentJsonConverter))]
+public abstract class InteractionContent : InteractionStep
+{
 }
 
 public sealed class InteractionTextContent : InteractionContent
@@ -1110,11 +1141,11 @@ public abstract class InteractionStreamEventPart
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
-public sealed class InteractionStartEvent : InteractionStreamEventPart
+public sealed class InteractionCreatedEvent : InteractionStreamEventPart
 {
-    public InteractionStartEvent()
+    public InteractionCreatedEvent()
     {
-        EventType = "interaction.start";
+        EventType = "interaction.created";
     }
 
     [JsonPropertyName("interaction")]
@@ -1124,11 +1155,11 @@ public sealed class InteractionStartEvent : InteractionStreamEventPart
     public string? EventId { get; set; }
 }
 
-public sealed class InteractionCompleteEvent : InteractionStreamEventPart
+public sealed class InteractionCompletedEvent : InteractionStreamEventPart
 {
-    public InteractionCompleteEvent()
+    public InteractionCompletedEvent()
     {
-        EventType = "interaction.complete";
+        EventType = "interaction.completed";
     }
 
     [JsonPropertyName("interaction")]
@@ -1138,11 +1169,10 @@ public sealed class InteractionCompleteEvent : InteractionStreamEventPart
     public string? EventId { get; set; }
 }
 
-public sealed class InteractionStatusUpdateEvent : InteractionStreamEventPart
+public sealed class InteractionStatusEvent : InteractionStreamEventPart
 {
-    public InteractionStatusUpdateEvent()
+    public InteractionStatusEvent()
     {
-        EventType = "interaction.status_update";
     }
 
     [JsonPropertyName("interaction_id")]
@@ -1155,28 +1185,28 @@ public sealed class InteractionStatusUpdateEvent : InteractionStreamEventPart
     public string? EventId { get; set; }
 }
 
-public sealed class InteractionContentStartEvent : InteractionStreamEventPart
+public sealed class InteractionStepStartEvent : InteractionStreamEventPart
 {
-    public InteractionContentStartEvent()
+    public InteractionStepStartEvent()
     {
-        EventType = "content.start";
+        EventType = "step.start";
     }
 
     [JsonPropertyName("index")]
     public int Index { get; set; }
 
-    [JsonPropertyName("content")]
-    public InteractionContent? Content { get; set; }
+    [JsonPropertyName("step")]
+    public InteractionStep? Step { get; set; }
 
     [JsonPropertyName("event_id")]
     public string? EventId { get; set; }
 }
 
-public sealed class InteractionContentDeltaEvent : InteractionStreamEventPart
+public sealed class InteractionStepDeltaEvent : InteractionStreamEventPart
 {
-    public InteractionContentDeltaEvent()
+    public InteractionStepDeltaEvent()
     {
-        EventType = "content.delta";
+        EventType = "step.delta";
     }
 
     [JsonPropertyName("index")]
@@ -1189,11 +1219,11 @@ public sealed class InteractionContentDeltaEvent : InteractionStreamEventPart
     public string? EventId { get; set; }
 }
 
-public sealed class InteractionContentStopEvent : InteractionStreamEventPart
+public sealed class InteractionStepStopEvent : InteractionStreamEventPart
 {
-    public InteractionContentStopEvent()
+    public InteractionStepStopEvent()
     {
-        EventType = "content.stop";
+        EventType = "step.stop";
     }
 
     [JsonPropertyName("index")]
@@ -1201,6 +1231,9 @@ public sealed class InteractionContentStopEvent : InteractionStreamEventPart
 
     [JsonPropertyName("event_id")]
     public string? EventId { get; set; }
+ 
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
 }
 
 public sealed class InteractionErrorEvent : InteractionStreamEventPart
@@ -1283,6 +1316,12 @@ public sealed class InteractionsInputJsonConverter : JsonConverter<InteractionsI
             JsonSerializer.Serialize(writer, value.Content, options);
             return;
         }
+ 
+        if (value.IsSteps)
+        {
+            JsonSerializer.Serialize(writer, value.Steps, options);
+            return;
+        }
 
         if (value.IsTurns)
         {
@@ -1301,17 +1340,23 @@ public sealed class InteractionsInputJsonConverter : JsonConverter<InteractionsI
 
     private static InteractionsInput ParseArray(JsonElement root, JsonSerializerOptions options)
     {
+        var isSteps = true;
         var isTurns = true;
         foreach (var item in root.EnumerateArray())
         {
-            if (item.ValueKind != JsonValueKind.Object
-                || !item.TryGetProperty("role", out _)
-                || !item.TryGetProperty("content", out _))
+            if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("type", out _))
+            {
+                isSteps = false;
+            }
+ 
+            if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("role", out _) || !item.TryGetProperty("content", out _))
             {
                 isTurns = false;
-                break;
             }
         }
+ 
+        if (isSteps)
+            return new InteractionsInput(root.Deserialize<List<InteractionStep>>(options) ?? [], true);
 
         if (isTurns)
             return new InteractionsInput(root.Deserialize<List<InteractionTurn>>(options) ?? [], true);
@@ -1404,6 +1449,53 @@ public sealed class InteractionContentJsonConverter : JsonConverter<InteractionC
     public override void Write(Utf8JsonWriter writer, InteractionContent value, JsonSerializerOptions options)
         => JsonSerializer.Serialize(writer, value, value.GetType(), options);
 }
+ 
+public sealed class InteractionStepJsonConverter : JsonConverter<InteractionStep>
+{
+    private static readonly Dictionary<string, Type> StepTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["user_input"] = typeof(InteractionUserInputStep),
+        ["model_output"] = typeof(InteractionModelOutputStep),
+        ["text"] = typeof(InteractionTextContent),
+        ["image"] = typeof(InteractionImageContent),
+        ["audio"] = typeof(InteractionAudioContent),
+        ["document"] = typeof(InteractionDocumentContent),
+        ["video"] = typeof(InteractionVideoContent),
+        ["thought"] = typeof(InteractionThoughtContent),
+        ["function_call"] = typeof(InteractionFunctionCallContent),
+        ["code_execution_call"] = typeof(InteractionCodeExecutionCallContent),
+        ["url_context_call"] = typeof(InteractionUrlContextCallContent),
+        ["mcp_server_tool_call"] = typeof(InteractionMcpServerToolCallContent),
+        ["google_search_call"] = typeof(InteractionGoogleSearchCallContent),
+        ["file_search_call"] = typeof(InteractionFileSearchCallContent),
+        ["google_maps_call"] = typeof(InteractionGoogleMapsCallContent),
+        ["function_result"] = typeof(InteractionFunctionResultContent),
+        ["code_execution_result"] = typeof(InteractionCodeExecutionResultContent),
+        ["url_context_result"] = typeof(InteractionUrlContextResultContent),
+        ["google_search_result"] = typeof(InteractionGoogleSearchResultContent),
+        ["mcp_server_tool_result"] = typeof(InteractionMcpServerToolResultContent),
+        ["file_search_result"] = typeof(InteractionFileSearchResultContent),
+        ["google_maps_result"] = typeof(InteractionGoogleMapsResultContent)
+    };
+ 
+    public override InteractionStep? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        using var doc = JsonDocument.ParseValue(ref reader);
+        var root = doc.RootElement;
+ 
+        if (root.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Interaction step must be an object.");
+ 
+        var type = root.TryGetProperty("type", out var typeProp) ? typeProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(type) || !StepTypes.TryGetValue(type, out var targetType))
+            targetType = typeof(InteractionUnknownStep);
+ 
+        return JsonSerializer.Deserialize(root.GetRawText(), targetType, options) as InteractionStep;
+    }
+ 
+    public override void Write(Utf8JsonWriter writer, InteractionStep value, JsonSerializerOptions options)
+        => JsonSerializer.Serialize(writer, value, value.GetType(), options);
+}
 
 public sealed class InteractionToolJsonConverter : JsonConverter<InteractionTool>
 {
@@ -1465,12 +1557,13 @@ public sealed class InteractionStreamEventJsonConverter : JsonConverter<Interact
 {
     private static readonly Dictionary<string, Type> EventTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["interaction.start"] = typeof(InteractionStartEvent),
-        ["interaction.complete"] = typeof(InteractionCompleteEvent),
-        ["interaction.status_update"] = typeof(InteractionStatusUpdateEvent),
-        ["content.start"] = typeof(InteractionContentStartEvent),
-        ["content.delta"] = typeof(InteractionContentDeltaEvent),
-        ["content.stop"] = typeof(InteractionContentStopEvent),
+        ["interaction.created"] = typeof(InteractionCreatedEvent),
+        ["interaction.completed"] = typeof(InteractionCompletedEvent),
+        ["interaction.in_progress"] = typeof(InteractionStatusEvent),
+        ["interaction.requires_action"] = typeof(InteractionStatusEvent),
+        ["step.start"] = typeof(InteractionStepStartEvent),
+        ["step.delta"] = typeof(InteractionStepDeltaEvent),
+        ["step.stop"] = typeof(InteractionStepStopEvent),
         ["error"] = typeof(InteractionErrorEvent)
     };
 
@@ -1482,7 +1575,11 @@ public sealed class InteractionStreamEventJsonConverter : JsonConverter<Interact
         if (root.ValueKind != JsonValueKind.Object)
             throw new JsonException("Interaction stream event must be an object.");
 
-        var eventType = root.TryGetProperty("event_type", out var typeProp) ? typeProp.GetString() : null;
+        var eventType = root.TryGetProperty("event_type", out var typeProp)
+            ? typeProp.GetString()
+            : root.TryGetProperty("type", out var altTypeProp)
+                ? altTypeProp.GetString()
+                : null;
         if (string.IsNullOrWhiteSpace(eventType) || !EventTypes.TryGetValue(eventType, out var targetType))
             targetType = typeof(InteractionUnknownStreamEvent);
 
@@ -1503,6 +1600,7 @@ public static class InteractionJson
         {
             new InteractionsInputJsonConverter(),
             new InteractionTurnContentJsonConverter(),
+            new InteractionStepJsonConverter(),
             new InteractionContentJsonConverter(),
             new InteractionToolJsonConverter(),
             new InteractionAgentConfigJsonConverter(),

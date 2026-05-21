@@ -24,9 +24,9 @@ public partial class GoogleAIProvider
             {
                 await foreach (var update in CreateGoogleAgentInteractionStream(request, cancellationToken))
                 {
-                    if (update is InteractionStartEvent { Interaction.Id: not null } start)
+                    if (update is InteractionCreatedEvent { Interaction.Id: not null } start)
                         interactionId = start.Interaction.Id;
-                    else if (update is InteractionCompleteEvent { Interaction.Id: not null } complete)
+                    else if (update is InteractionCompletedEvent { Interaction.Id: not null } complete)
                         interactionId ??= complete.Interaction.Id;
 
                     yield return update;

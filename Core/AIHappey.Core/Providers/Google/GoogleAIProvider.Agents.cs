@@ -82,6 +82,7 @@ public partial class GoogleAIProvider
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
         httpRequest.Headers.Accept.ParseAdd("application/json");
+        httpRequest.Headers.TryAddWithoutValidation("Api-Revision", "2026-05-20");
         var payload = JsonSerializer.SerializeToElement(request, GoogleAgentJsonOptions);
         httpRequest.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
@@ -100,6 +101,7 @@ public partial class GoogleAIProvider
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
         httpRequest.Headers.Accept.ParseAdd("text/event-stream");
+        httpRequest.Headers.TryAddWithoutValidation("Api-Revision", "2026-05-20");
         httpRequest.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true };
 
         var payload = JsonSerializer.SerializeToElement(request, GoogleAgentJsonOptions);
@@ -152,6 +154,7 @@ public partial class GoogleAIProvider
         using var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{InteractionsRelativeUrl}/{Uri.EscapeDataString(interactionId)}");
         httpRequest.Headers.Accept.Clear();
         httpRequest.Headers.Accept.ParseAdd("application/json");
+        httpRequest.Headers.TryAddWithoutValidation("Api-Revision", "2026-05-20");
 
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
@@ -218,7 +221,7 @@ public partial class GoogleAIProvider
     {
         NormalizeGoogleAgentInteraction(initialInteraction);
 
-        yield return new InteractionStartEvent
+        yield return new InteractionCreatedEvent
         {
             EventId = CreateGoogleAgentEventId(),
             Interaction = initialInteraction
@@ -228,8 +231,9 @@ public partial class GoogleAIProvider
 
         if (!string.IsNullOrWhiteSpace(lastStatus))
         {
-            yield return new InteractionStatusUpdateEvent
+            yield return new InteractionStatusEvent
             {
+                EventType = "interaction.in_progress",
                 EventId = CreateGoogleAgentEventId(),
                 InteractionId = interactionId,
                 Status = lastStatus
@@ -248,8 +252,11 @@ public partial class GoogleAIProvider
                 && !string.IsNullOrWhiteSpace(current.Status))
             {
                 lastStatus = current.Status;
-                yield return new InteractionStatusUpdateEvent
+                yield return new InteractionStatusEvent
                 {
+                    EventType = string.Equals(current.Status, "requires_action", StringComparison.OrdinalIgnoreCase)
+                        ? "interaction.requires_action"
+                        : "interaction.in_progress",
                     EventId = CreateGoogleAgentEventId(),
                     InteractionId = interactionId,
                     Status = current.Status
@@ -260,18 +267,18 @@ public partial class GoogleAIProvider
         if (string.Equals(current.Status, "completed", StringComparison.OrdinalIgnoreCase))
         {
             var index = 0;
-            foreach (var output in current.Outputs ?? [])
+            foreach (var step in current.Steps ?? [])
             {
-                yield return new InteractionContentStartEvent
+                yield return new InteractionStepStartEvent
                 {
                     EventId = CreateGoogleAgentEventId(),
                     Index = index,
-                    Content = CreateGoogleAgentStreamStartContent(output)
+                    Step = CreateGoogleAgentStreamStartStep(step)
                 };
 
-                foreach (var delta in CreateGoogleAgentStreamDeltas(output))
+                foreach (var delta in CreateGoogleAgentStreamDeltas(step))
                 {
-                    yield return new InteractionContentDeltaEvent
+                    yield return new InteractionStepDeltaEvent
                     {
                         EventId = CreateGoogleAgentEventId(),
                         Index = index,
@@ -279,10 +286,11 @@ public partial class GoogleAIProvider
                     };
                 }
 
-                yield return new InteractionContentStopEvent
+                yield return new InteractionStepStopEvent
                 {
                     EventId = CreateGoogleAgentEventId(),
-                    Index = index
+                    Index = index,
+                    Status = "done"
                 };
 
                 index++;
@@ -301,15 +309,15 @@ public partial class GoogleAIProvider
             };
         }
 
-        yield return new InteractionCompleteEvent
+        yield return new InteractionCompletedEvent
         {
             EventId = CreateGoogleAgentEventId(),
             Interaction = current
         };
     }
 
-    private static InteractionContent CreateGoogleAgentStreamStartContent(InteractionContent output)
-        => output switch
+    private static InteractionStep CreateGoogleAgentStreamStartStep(InteractionStep step)
+        => step switch
         {
             InteractionTextContent => new InteractionTextContent(),
             InteractionThoughtContent thought => new InteractionThoughtContent
@@ -337,13 +345,20 @@ public partial class GoogleAIProvider
                 MimeType = video.MimeType,
                 Resolution = video.Resolution
             },
-            _ => output
+            InteractionModelOutputStep => new InteractionModelOutputStep { Content = [] },
+            _ => step
         };
 
-    private static IEnumerable<InteractionContentDeltaData> CreateGoogleAgentStreamDeltas(InteractionContent output)
+    private static IEnumerable<InteractionContentDeltaData> CreateGoogleAgentStreamDeltas(InteractionStep output)
     {
         switch (output)
         {
+            case InteractionModelOutputStep modelOutput:
+                foreach (var content in modelOutput.Content ?? [])
+                foreach (var delta in CreateGoogleAgentStreamDeltas(content))
+                    yield return delta;
+                break;
+
             case InteractionTextContent text:
                 yield return new InteractionContentDeltaData
                 {
@@ -428,10 +443,10 @@ public partial class GoogleAIProvider
     {
         switch (evt)
         {
-            case InteractionStartEvent { Interaction: not null } start:
+            case InteractionCreatedEvent { Interaction: not null } start:
                 NormalizeGoogleAgentInteraction(start.Interaction);
                 break;
-            case InteractionCompleteEvent { Interaction: not null } complete:
+            case InteractionCompletedEvent { Interaction: not null } complete:
                 NormalizeGoogleAgentInteraction(complete.Interaction);
                 break;
         }

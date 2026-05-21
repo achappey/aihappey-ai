@@ -33,6 +33,7 @@ public static class HttpExtensions
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
+        req.Headers.TryAddWithoutValidation("Api-Revision", "2026-05-20");
         var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
@@ -68,6 +69,7 @@ public static class HttpExtensions
 
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
+        req.Headers.TryAddWithoutValidation("Api-Revision", "2026-05-20");
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
         var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
 
@@ -109,12 +111,12 @@ public static class HttpExtensions
                 throw new InvalidOperationException($"Failed to parse SSE json event: {data}", ex);
             }
 
-            if (evt is InteractionCompleteEvent interactionCompleteEvent)
+            if (evt is InteractionCompletedEvent interactionCompleteEvent)
             {
                 interactionCompleteEvent.Interaction?.Model = $"{providerId}/{interactionCompleteEvent.Interaction?.Model}";
             }
 
-            if (evt is InteractionStartEvent interactionStartEvent)
+            if (evt is InteractionCreatedEvent interactionStartEvent)
             {
                 interactionStartEvent.Interaction?.Model = $"{providerId}/{interactionStartEvent.Interaction?.Model}";
             }

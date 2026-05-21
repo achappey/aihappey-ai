@@ -308,12 +308,39 @@ public static partial class InteractionsUnifiedMapper
             string text => text,
             _ => JsonSerializer.Serialize(value, Json)
         };
+ 
+    private static string? ToJsonString(object? value, string? fallback = null)
+        => value switch
+        {
+            null => fallback,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString() ?? fallback,
+            JsonElement json => json.GetRawText(),
+            string text => text,
+            _ => value.ToString() ?? fallback
+        };
 
     private static JsonElement? CloneJsonElement(JsonElement? value)
         => value is null ? null : value.Value.Clone();
 
     private static object? CloneIfJsonElement(object? value)
         => value is JsonElement json ? json.Clone() : value;
+ 
+    private static bool IsReasoningOrToolStep(InteractionContent content)
+        => content is InteractionThoughtContent
+            or InteractionFunctionCallContent
+            or InteractionCodeExecutionCallContent
+            or InteractionUrlContextCallContent
+            or InteractionMcpServerToolCallContent
+            or InteractionGoogleSearchCallContent
+            or InteractionFileSearchCallContent
+            or InteractionGoogleMapsCallContent
+            or InteractionFunctionResultContent
+            or InteractionCodeExecutionResultContent
+            or InteractionUrlContextResultContent
+            or InteractionGoogleSearchResultContent
+            or InteractionMcpServerToolResultContent
+            or InteractionFileSearchResultContent
+            or InteractionGoogleMapsResultContent;
 
     private static bool HasMeaningfulValue(object? value)
         => value switch
@@ -530,7 +557,7 @@ public static partial class InteractionsUnifiedMapper
         return signature;
     }
 
-    private static string? GetThoughtSignature(InteractionContentDeltaEvent delta)
+    private static string? GetThoughtSignature(InteractionStepDeltaEvent delta)
     {
         if (delta.Delta?.AdditionalProperties is null)
             return null;

@@ -43,6 +43,10 @@ public static partial class InteractionsUnifiedMapper
         generationConfig.TopP = request.TopP ?? generationConfig.TopP;
         generationConfig.MaxOutputTokens = request.MaxOutputTokens ?? generationConfig.MaxOutputTokens;
         generationConfig.ToolChoice = CloneIfJsonElement(request.ToolChoice) ?? generationConfig.ToolChoice;
+        var responseFormat = NormalizeInteractionResponseFormat(
+            CloneIfJsonElement(request.ResponseFormat) ?? ExtractObject<object>(metadata, "interactions.request.response_format"),
+            ExtractValue<string>(metadata, "interactions.request.response_mime_type"),
+            generationConfig);
 
         return new InteractionRequest
         {
@@ -54,8 +58,7 @@ public static partial class InteractionsUnifiedMapper
             Input = request.Input is null ? null : ToInteractionInput(request.Input, providerId),
             SystemInstruction = request.Instructions,
             Tools = request.Tools?.Select(ToInteractionTool).ToList(),
-            ResponseFormat = CloneIfJsonElement(request.ResponseFormat) ?? ExtractObject<object>(metadata, "interactions.request.response_format"),
-            ResponseMimeType = ExtractValue<string>(metadata, "interactions.request.response_mime_type"),
+            ResponseFormat = responseFormat,
             Stream = request.Stream,
             Store = false,
             Background = ExtractValue<bool?>(metadata, "interactions.request.background"),
@@ -74,6 +77,19 @@ public static partial class InteractionsUnifiedMapper
     {
         if (input.IsText)
             return new AIInput { Text = input.Text };
+ 
+        if (input.IsSteps)
+        {
+            return new AIInput
+            {
+                Items = [.. ToUnifiedInputItems(input.Steps, providerId)],
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["interactions.input.shape"] = "steps",
+                    ["interactions.steps.raw"] = JsonSerializer.SerializeToElement(input.Steps, Json)
+                }
+            };
+        }
 
         if (input.IsTurns)
         {
@@ -139,15 +155,80 @@ public static partial class InteractionsUnifiedMapper
         var items = input.Items ?? [];
         if (items.Count == 0)
             return new InteractionsInput();
+ 
+        var rawSteps = ExtractObject<List<InteractionStep>>(input.Metadata, "interactions.steps.raw");
+        if (rawSteps is not null)
+            return new InteractionsInput(rawSteps, true);
 
-        var turns = items
-            .Select(item => ToInteractionTurn(item, providerId))
-            .Where(a =>
-                a.Content?.IsParts != true || (a.Content?.Parts?.Count ?? 0) > 0
-            )
+        var steps = items
+            .SelectMany(item => ToInteractionSteps(item, providerId))
             .ToList();
             
-        return new InteractionsInput(turns, true);
+        return new InteractionsInput(steps, true);
+    }
+ 
+    private static IEnumerable<InteractionStep> ToInteractionSteps(AIInputItem item, string providerId)
+    {
+        var content = new List<InteractionContent>();
+        foreach (var part in item.Content ?? [])
+        {
+            var mapped = ToInteractionContent(part, item.Role, providerId);
+            if (mapped is not null)
+                content.Add(mapped);
+        }
+ 
+        if (content.Count == 0)
+            yield break;
+ 
+        if (NormalizeUnifiedRole(item.Role) == "user")
+        {
+            yield return new InteractionUserInputStep { Content = content };
+            yield break;
+        }
+ 
+        var modelOutput = content.Where(c => !IsReasoningOrToolStep(c)).ToList();
+        if (modelOutput.Count > 0)
+            yield return new InteractionModelOutputStep { Content = modelOutput };
+ 
+        foreach (var step in content.Where(IsReasoningOrToolStep))
+            yield return step;
+    }
+
+    private static IEnumerable<AIInputItem> ToUnifiedInputItems(IEnumerable<InteractionStep>? steps, string providerId)
+    {
+        foreach (var step in steps ?? [])
+        {
+            switch (step)
+            {
+                case InteractionUserInputStep userInput:
+                    yield return new AIInputItem
+                    {
+                        Type = "message",
+                        Role = "user",
+                        Content = [.. ToUnifiedContentParts(userInput.Content, providerId)],
+                        Metadata = new Dictionary<string, object?> { ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json) }
+                    };
+                    break;
+                case InteractionModelOutputStep modelOutput:
+                    yield return new AIInputItem
+                    {
+                        Type = "message",
+                        Role = "assistant",
+                        Content = [.. ToUnifiedContentParts(modelOutput.Content, providerId)],
+                        Metadata = new Dictionary<string, object?> { ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json) }
+                    };
+                    break;
+                case InteractionContent content:
+                    yield return new AIInputItem
+                    {
+                        Type = IsReasoningOrToolStep(content) ? content.Type : "message",
+                        Role = NormalizeUnifiedRole(content is InteractionFunctionCallContent or InteractionFunctionResultContent ? "model" : "model"),
+                        Content = [.. ToUnifiedContentParts([content], providerId)],
+                        Metadata = new Dictionary<string, object?> { ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json) }
+                    };
+                    break;
+            }
+        }
     }
 
     private static InteractionTurn ToInteractionTurn(AIInputItem item, string providerId)

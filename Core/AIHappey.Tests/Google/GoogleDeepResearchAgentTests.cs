@@ -87,12 +87,15 @@ public sealed class GoogleDeepResearchAgentTests
                     id = "interaction-1",
                     agent = "deep-research-preview-04-2026",
                     status = "completed",
-                    outputs = new[]
+                    steps = new[]
                     {
                         new
                         {
-                            type = "text",
-                            text = "final report"
+                            type = "model_output",
+                            content = new[]
+                            {
+                                new { type = "text", text = "final report" }
+                            }
                         }
                     }
                 })
@@ -143,7 +146,7 @@ public sealed class GoogleDeepResearchAgentTests
                 Content = SseContent(
                     new
                     {
-                        event_type = "interaction.start",
+                        event_type = "interaction.created",
                         event_id = "event-1",
                         interaction = new
                         {
@@ -154,17 +157,18 @@ public sealed class GoogleDeepResearchAgentTests
                     },
                     new
                     {
-                        event_type = "content.start",
+                        event_type = "step.start",
                         event_id = "event-2",
                         index = 0,
-                        content = new
+                        step = new
                         {
-                            type = "text"
+                            type = "model_output",
+                            content = new[] { new { type = "text", text = "" } }
                         }
                     },
                     new
                     {
-                        event_type = "content.delta",
+                        event_type = "step.delta",
                         event_id = "event-3",
                         index = 0,
                         delta = new
@@ -175,13 +179,14 @@ public sealed class GoogleDeepResearchAgentTests
                     },
                     new
                     {
-                        event_type = "content.stop",
+                        event_type = "step.stop",
                         event_id = "event-4",
-                        index = 0
+                        index = 0,
+                        status = "done"
                     },
                     new
                     {
-                        event_type = "interaction.complete",
+                        event_type = "interaction.completed",
                         event_id = "event-5",
                         interaction = new
                         {
@@ -206,11 +211,11 @@ public sealed class GoogleDeepResearchAgentTests
             parts.Add(part);
         }
 
-        Assert.Contains(parts, part => part is InteractionStartEvent);
-        Assert.Contains(parts, part => part is InteractionContentStartEvent { Content: InteractionTextContent });
-        Assert.Contains(parts, part => part is InteractionContentDeltaEvent { Delta.Type: "text", Delta.Text: "streamed final report" });
-        Assert.Contains(parts, part => part is InteractionContentStopEvent);
-        Assert.Contains(parts, part => part is InteractionCompleteEvent { Interaction.Status: "completed" });
+        Assert.Contains(parts, part => part is InteractionCreatedEvent);
+        Assert.Contains(parts, part => part is InteractionStepStartEvent { Step: InteractionModelOutputStep });
+        Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta.Type: "text", Delta.Text: "streamed final report" });
+        Assert.Contains(parts, part => part is InteractionStepStopEvent);
+        Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Status: "completed" });
 
         Assert.Collection(handler.Requests,
             create =>
@@ -243,7 +248,7 @@ public sealed class GoogleDeepResearchAgentTests
                 Content = SseContent(
                     new
                     {
-                        event_type = "interaction.start",
+                        event_type = "interaction.created",
                         event_id = "event-1",
                         interaction = new
                         {

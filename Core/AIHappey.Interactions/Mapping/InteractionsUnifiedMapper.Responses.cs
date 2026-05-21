@@ -39,14 +39,12 @@ public static partial class InteractionsUnifiedMapper
             Status = response.Status,
             Created = ExtractValue<string>(metadata, "interactions.response.created"),
             Updated = ExtractValue<string>(metadata, "interactions.response.updated"),
-            Role = ExtractValue<string>(metadata, "interactions.response.role") ?? "model",
-            Outputs = outputParts.Count == 0 ? null : outputParts,
+            Steps = outputParts.Count == 0 ? null : [new InteractionModelOutputStep { Content = outputParts }],
             Usage = DeserializeFromObject<InteractionUsage>(response.Usage),
             SystemInstruction = ExtractValue<string>(metadata, "interactions.response.system_instruction"),
             Tools = ExtractObject<List<InteractionTool>>(metadata, "interactions.response.tools"),
             ResponseModalities = ExtractObject<List<string>>(metadata, "interactions.response.response_modalities"),
             ResponseFormat = ExtractObject<object>(metadata, "interactions.response.response_format"),
-            ResponseMimeType = ExtractValue<string>(metadata, "interactions.response.response_mime_type"),
             PreviousInteractionId = ExtractValue<string>(metadata, "interactions.response.previous_interaction_id"),
             ServiceTier = ExtractValue<string>(metadata, "interactions.response.service_tier"),
             Input = ExtractObject<InteractionsInput>(metadata, "interactions.response.input"),
@@ -58,21 +56,46 @@ public static partial class InteractionsUnifiedMapper
 
     private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(Interaction response, string providerId)
     {
-        var parts = ToUnifiedContentParts(response.Outputs, providerId).ToList();
-        if (parts.Count == 0)
-            yield break;
-
-        yield return new AIOutputItem
+        foreach (var step in response.Steps ?? [])
         {
-            Type = "message",
-            Role = NormalizeUnifiedRole(response.Role),
-            Content = parts,
-            Metadata = new Dictionary<string, object?>
+            switch (step)
             {
-                ["interactions.outputs.raw"] = JsonSerializer.SerializeToElement(response.Outputs, Json),
-                ["interactions.role.raw"] = response.Role
+                case InteractionModelOutputStep modelOutput:
+                    var parts = ToUnifiedContentParts(modelOutput.Content, providerId).ToList();
+                    if (parts.Count != 0)
+                    {
+                        yield return new AIOutputItem
+                        {
+                            Type = "message",
+                            Role = "assistant",
+                            Content = parts,
+                            Metadata = new Dictionary<string, object?>
+                            {
+                                ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json),
+                                ["interactions.steps.raw"] = JsonSerializer.SerializeToElement(response.Steps, Json)
+                            }
+                        };
+                    }
+                    break;
+                case InteractionContent content:
+                    var stepParts = ToUnifiedContentParts([content], providerId).ToList();
+                    if (stepParts.Count != 0)
+                    {
+                        yield return new AIOutputItem
+                        {
+                            Type = IsReasoningOrToolStep(content) ? content.Type : "message",
+                            Role = "assistant",
+                            Content = stepParts,
+                            Metadata = new Dictionary<string, object?>
+                            {
+                                ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json),
+                                ["interactions.steps.raw"] = JsonSerializer.SerializeToElement(response.Steps, Json)
+                            }
+                        };
+                    }
+                    break;
             }
-        };
+        }
     }
 
     private static IEnumerable<InteractionContent> ToInteractionOutputContent(AIOutput? output)
