@@ -268,6 +268,84 @@ public sealed class InteractionsStreamFixtureTests
             toolOutputAvailable.ProviderMetadata?[ProviderId]["signature"].ToString());
     }
 
+    [Fact]
+    public void Interactions_code_execution_result_uses_original_tool_call_id()
+    {
+        const string codeCallId = "08ae9l71";
+
+        var parts = new List<InteractionStreamEventPart>
+        {
+            new InteractionStepStartEvent
+            {
+                Index = 1,
+                Step = new InteractionCodeExecutionCallContent
+                {
+                    Id = codeCallId
+                }
+            },
+            new InteractionStepDeltaEvent
+            {
+                Index = 1,
+                Delta = new InteractionContentDeltaData
+                {
+                    Type = "code_execution_call",
+                    AdditionalProperties = new Dictionary<string, JsonElement>
+                    {
+                        ["arguments"] = JsonSerializer.SerializeToElement(new InteractionCodeExecutionCallArguments
+                        {
+                            Language = "python",
+                            Code = "print('hello')"
+                        })
+                    }
+                }
+            },
+            new InteractionStepStopEvent
+            {
+                Index = 1
+            },
+            new InteractionStepStartEvent
+            {
+                Index = 2,
+                Step = new InteractionCodeExecutionResultContent
+                {
+                    CallId = codeCallId
+                }
+            },
+            new InteractionStepDeltaEvent
+            {
+                Index = 2,
+                Delta = new InteractionContentDeltaData
+                {
+                    Type = "code_execution_result",
+                    AdditionalProperties = new Dictionary<string, JsonElement>
+                    {
+                        ["result"] = JsonSerializer.SerializeToElement("hello\n"),
+                        ["is_error"] = JsonSerializer.SerializeToElement(false)
+                    }
+                }
+            },
+            new InteractionStepStopEvent
+            {
+                Index = 2
+            }
+        };
+
+        var unifiedEvents = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToList();
+
+        var toolInputEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-input-available");
+        Assert.Equal(codeCallId, toolInputEvent.Event.Id);
+
+        var toolOutputEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-output-available");
+        Assert.Equal(codeCallId, toolOutputEvent.Event.Id);
+
+        var toolOutputAvailable = Assert.IsType<AIToolOutputAvailableEventData>(toolOutputEvent.Event.Data);
+        Assert.Equal(
+            codeCallId,
+            toolOutputAvailable.ProviderMetadata?[ProviderId]["tool_use_id"].ToString());
+    }
+
 
     private static List<AIStreamEvent> LoadUnifiedEvents()
         => FixtureFileLoader.LoadInteractionRawFixture(RawFixturePath)

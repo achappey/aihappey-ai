@@ -361,9 +361,11 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_call", StringComparison.OrdinalIgnoreCase):
                 {
+                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
                     var toolCallId = GetDeltaAdditionalString(delta, "id")
-                                     ?? GetDeltaAdditionalString(delta, "call_id")
-                                     ?? BuildContentEventId(delta.Index);
+                                      ?? GetDeltaAdditionalString(delta, "call_id")
+                                      ?? rememberedToolStep?.ToolCallId
+                                      ?? BuildContentEventId(delta.Index);
                     var toolName = "code_execution";
                     var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
 
@@ -389,9 +391,11 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_result", StringComparison.OrdinalIgnoreCase):
                 {
+                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
                     var toolCallId = GetDeltaAdditionalString(delta, "call_id")
-                                     ?? GetDeltaAdditionalString(delta, "id")
-                                     ?? BuildContentEventId(delta.Index);
+                                      ?? GetDeltaAdditionalString(delta, "id")
+                                      ?? rememberedToolStep?.ToolCallId
+                                      ?? BuildContentEventId(delta.Index);
                     var resultText = GetDeltaAdditionalString(delta, "result") ?? delta.Delta?.Text ?? string.Empty;
                     var isError = GetDeltaAdditionalBool(delta, "is_error");
 
