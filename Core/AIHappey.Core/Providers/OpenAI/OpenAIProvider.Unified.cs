@@ -6,8 +6,12 @@ namespace AIHappey.Core.Providers.OpenAI;
 public partial class OpenAIProvider
 {
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => request.Model?.Contains("search-preview") == true
+         ? this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+        : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => request.Model?.Contains("search-preview") == true
+         ? this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+         : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 }

@@ -22,11 +22,6 @@ public partial class OpenAIProvider
                     cancellationToken: cancellationToken);
         }
 
-        if (model?.Contains("search-preview") == true)
-        {
-            return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
-        }
-
         var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 
