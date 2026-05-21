@@ -95,7 +95,6 @@ public partial class MergeProvider : IModelProvider
 
         var response = await this.GetResponse(_client,
                    options,
-                   relativeUrl: "responses",
                    cancellationToken: cancellationToken);
 
         return response;
@@ -110,7 +109,6 @@ public partial class MergeProvider : IModelProvider
 
         await foreach (var update in this.GetResponses(_client,
            options,
-           relativeUrl: "responses",
            cancellationToken: cancellationToken))
         {
 
