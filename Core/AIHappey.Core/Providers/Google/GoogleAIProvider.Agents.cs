@@ -9,6 +9,9 @@ namespace AIHappey.Core.Providers.Google;
 public partial class GoogleAIProvider
 {
     private const string DeepResearchAgentPrefix = "deep-research";
+    private const string AntigravityAgentPrefix = "antigravity";
+    private const string GoogleAgentEnvironmentPropertyName = "environment";
+    private const string GoogleAgentDefaultEnvironment = "remote";
     private const string InteractionsRelativeUrl = "v1beta/interactions";
     private static readonly TimeSpan GoogleAgentPollingInterval = TimeSpan.FromSeconds(10);
     private static readonly HashSet<string> TerminalInteractionStatuses = new(StringComparer.OrdinalIgnoreCase)
@@ -33,9 +36,23 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(agent))
             agent = NormalizeGoogleModelOrAgentId(request.Model);
 
-        if (!IsDeepResearchAgent(agent))
-            return false;
+        if (IsDeepResearchAgent(agent))
+        {
+            NormalizeDeepResearchAgentRequest(request, agent, stream);
+            return true;
+        }
 
+        if (IsAntigravityAgent(agent))
+        {
+            NormalizeAntigravityAgentRequest(request, agent, stream);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void NormalizeDeepResearchAgentRequest(InteractionRequest request, string agent, bool stream)
+    {
         request.Agent = agent;
         request.Model = null;
         request.Background = true;
@@ -51,12 +68,37 @@ public partial class GoogleAIProvider
                 ThinkingSummaries = "auto"
             };
         }
+    }
 
-        return true;
+    private static void NormalizeAntigravityAgentRequest(InteractionRequest request, string agent, bool stream)
+    {
+        request.Agent = agent;
+        request.Model = null;
+        request.Background = null;
+        request.Store = true;
+        request.Stream = stream ? true : null;
+        request.GenerationConfig = null;
+        request.AdditionalProperties?.Remove("generation_config");
+        request.AdditionalProperties?.Remove("background");
+
+        if (!HasGoogleAgentAdditionalProperty(request, GoogleAgentEnvironmentPropertyName))
+            (request.AdditionalProperties ??= [])[GoogleAgentEnvironmentPropertyName] =
+                JsonSerializer.SerializeToElement(GoogleAgentDefaultEnvironment, GoogleAgentJsonOptions);
+    }
+
+    private static bool HasGoogleAgentAdditionalProperty(InteractionRequest request, string propertyName)
+    {
+        if (request.AdditionalProperties is null)
+            return false;
+
+        return request.AdditionalProperties.Keys.Any(key => string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool IsDeepResearchAgent(string? value)
         => NormalizeGoogleModelOrAgentId(value).StartsWith(DeepResearchAgentPrefix, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAntigravityAgent(string? value)
+        => NormalizeGoogleModelOrAgentId(value).StartsWith(AntigravityAgentPrefix, StringComparison.OrdinalIgnoreCase);
 
     private static string NormalizeGoogleModelOrAgentId(string? value)
     {

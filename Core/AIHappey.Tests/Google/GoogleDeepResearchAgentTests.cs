@@ -68,6 +68,68 @@ public sealed class GoogleDeepResearchAgentTests
     }
 
     [Fact]
+    public void AntigravityModelIsNormalizedToAgentRequestWithDefaultEnvironment()
+    {
+        var request = new InteractionRequest
+        {
+            Model = "google/antigravity-preview-05-2026",
+            Stream = true,
+            Store = false,
+            Background = true,
+            GenerationConfig = new InteractionGenerationConfig
+            {
+                Temperature = 0.2f
+            },
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["generation_config"] = JsonSerializer.SerializeToElement(new { temperature = 0.2f }, JsonSerializerOptions.Web),
+                ["background"] = JsonSerializer.SerializeToElement(true, JsonSerializerOptions.Web)
+            }
+        };
+
+        var normalized = InvokeNormalize(request, out var agent);
+
+        Assert.True(normalized);
+        Assert.Equal("antigravity-preview-05-2026", agent);
+        Assert.Null(request.Model);
+        Assert.Equal("antigravity-preview-05-2026", request.Agent);
+        Assert.Null(request.Background);
+        Assert.True(request.Store);
+        Assert.Null(request.Stream);
+        Assert.Null(request.GenerationConfig);
+        Assert.Null(request.AgentConfig);
+        Assert.Equal("remote", request.AdditionalProperties!["environment"].GetString());
+        Assert.False(request.AdditionalProperties.TryGetValue("generation_config", out _));
+        Assert.False(request.AdditionalProperties.TryGetValue("background", out _));
+    }
+
+    [Fact]
+    public void AntigravityModelPreservesExplicitEnvironmentOverrideAndSupportsNativeStreaming()
+    {
+        var request = new InteractionRequest
+        {
+            Model = "models/antigravity-preview-05-2026",
+            Stream = false,
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["environment"] = JsonSerializer.SerializeToElement("env_abc123", JsonSerializerOptions.Web)
+            }
+        };
+
+        var normalized = InvokeNormalize(request, out var agent, stream: true);
+
+        Assert.True(normalized);
+        Assert.Equal("antigravity-preview-05-2026", agent);
+        Assert.Null(request.Model);
+        Assert.Equal("antigravity-preview-05-2026", request.Agent);
+        Assert.Null(request.Background);
+        Assert.True(request.Store);
+        Assert.True(request.Stream);
+        Assert.Null(request.AgentConfig);
+        Assert.Equal("env_abc123", request.AdditionalProperties!["environment"].GetString());
+    }
+
+    [Fact]
     public async Task NonStreamingDeepResearchPollsAndDeletesStoredInteraction()
     {
         var handler = new RecordingHandler([
@@ -284,6 +346,163 @@ public sealed class GoogleDeepResearchAgentTests
 
         var error = Assert.Single(parts.OfType<InteractionErrorEvent>());
         Assert.Equal("failed", error.Error?.Code);
+        Assert.Contains(handler.Requests, request => request.Method == HttpMethod.Delete);
+    }
+
+    [Fact]
+    public async Task NonStreamingAntigravityPollsAndDeletesStoredInteraction()
+    {
+        var handler = new RecordingHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent(new
+                {
+                    id = "interaction-antigravity-1",
+                    agent = "antigravity-preview-05-2026",
+                    status = "in_progress"
+                })
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent(new
+                {
+                    id = "interaction-antigravity-1",
+                    agent = "antigravity-preview-05-2026",
+                    status = "completed",
+                    steps = new[]
+                    {
+                        new
+                        {
+                            type = "model_output",
+                            content = new[]
+                            {
+                                new { type = "text", text = "agent output" }
+                            }
+                        }
+                    }
+                })
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+        ]);
+
+        var provider = CreateProvider(handler);
+        var result = await provider.GetInteraction(new InteractionRequest
+        {
+            Model = "antigravity-preview-05-2026",
+            Input = new InteractionsInput("work in the sandbox"),
+            Background = true,
+            GenerationConfig = new InteractionGenerationConfig
+            {
+                Temperature = 0.7f
+            }
+        });
+
+        Assert.Equal("completed", result.Status);
+        Assert.Equal("antigravity-preview-05-2026", result.Agent);
+        Assert.Collection(handler.Requests,
+            create =>
+            {
+                Assert.Equal(HttpMethod.Post, create.Method);
+                Assert.EndsWith("/v1beta/interactions", create.RequestUri!.ToString());
+                using var doc = JsonDocument.Parse(create.Body!);
+                Assert.False(doc.RootElement.TryGetProperty("model", out _));
+                Assert.Equal("antigravity-preview-05-2026", doc.RootElement.GetProperty("agent").GetString());
+                Assert.Equal("remote", doc.RootElement.GetProperty("environment").GetString());
+                Assert.True(doc.RootElement.GetProperty("store").GetBoolean());
+                Assert.False(doc.RootElement.TryGetProperty("background", out _));
+                Assert.False(doc.RootElement.TryGetProperty("stream", out _));
+                Assert.False(doc.RootElement.TryGetProperty("generation_config", out _));
+                Assert.False(doc.RootElement.TryGetProperty("agent_config", out _));
+            },
+            get =>
+            {
+                Assert.Equal(HttpMethod.Get, get.Method);
+                Assert.EndsWith("/v1beta/interactions/interaction-antigravity-1", get.RequestUri!.ToString());
+            },
+            delete =>
+            {
+                Assert.Equal(HttpMethod.Delete, delete.Method);
+                Assert.EndsWith("/v1beta/interactions/interaction-antigravity-1", delete.RequestUri!.ToString());
+            });
+    }
+
+    [Fact]
+    public async Task StreamingAntigravityUsesNativeStreamAndDeletesStoredInteraction()
+    {
+        var handler = new RecordingHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = SseContent(
+                    new
+                    {
+                        event_type = "interaction.created",
+                        event_id = "event-1",
+                        interaction = new
+                        {
+                            id = "interaction-antigravity-stream-1",
+                            agent = "antigravity-preview-05-2026",
+                            status = "in_progress"
+                        }
+                    },
+                    new
+                    {
+                        event_type = "step.delta",
+                        event_id = "event-2",
+                        index = 0,
+                        delta = new
+                        {
+                            type = "text",
+                            text = "sandbox result"
+                        }
+                    },
+                    new
+                    {
+                        event_type = "interaction.completed",
+                        event_id = "event-3",
+                        interaction = new
+                        {
+                            id = "interaction-antigravity-stream-1",
+                            agent = "antigravity-preview-05-2026",
+                            status = "completed"
+                        }
+                    })
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+        ]);
+
+        var provider = CreateProvider(handler);
+        var parts = new List<InteractionStreamEventPart>();
+        await foreach (var part in provider.GetInteractions(new InteractionRequest
+                       {
+                           Model = "google/antigravity-preview-05-2026",
+                           Input = new InteractionsInput("work in the sandbox"),
+                           AdditionalProperties = new Dictionary<string, JsonElement>
+                           {
+                               ["environment"] = JsonSerializer.SerializeToElement("env_abc123", JsonSerializerOptions.Web)
+                           }
+                       }))
+        {
+            parts.Add(part);
+        }
+
+        Assert.Contains(parts, part => part is InteractionCreatedEvent { Interaction.Agent: "antigravity-preview-05-2026" });
+        Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta.Type: "text", Delta.Text: "sandbox result" });
+        Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Status: "completed" });
+
+        Assert.Collection(handler.Requests,
+            create =>
+            {
+                Assert.Equal(HttpMethod.Post, create.Method);
+                using var doc = JsonDocument.Parse(create.Body!);
+                Assert.Equal("antigravity-preview-05-2026", doc.RootElement.GetProperty("agent").GetString());
+                Assert.Equal("env_abc123", doc.RootElement.GetProperty("environment").GetString());
+                Assert.True(doc.RootElement.GetProperty("stream").GetBoolean());
+                Assert.True(doc.RootElement.GetProperty("store").GetBoolean());
+                Assert.False(doc.RootElement.TryGetProperty("background", out _));
+                Assert.False(doc.RootElement.TryGetProperty("agent_config", out _));
+            },
+            delete => Assert.Equal(HttpMethod.Delete, delete.Method));
+
         Assert.Contains(handler.Requests, request => request.Method == HttpMethod.Delete);
     }
 
