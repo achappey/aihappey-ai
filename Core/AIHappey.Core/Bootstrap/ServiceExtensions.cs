@@ -234,7 +234,6 @@ using AIHappey.Core.Providers.NEARAI;
 using AIHappey.Core.Providers.Parallel;
 using AIHappey.Core.Providers.NanoGPT;
 using AIHappey.Core.Providers.AIBramha;
-using AIHappey.Core.Providers.Ghostbot;
 using AIHappey.Core.Providers.Routmy;
 using AIHappey.Core.Providers.Poe;
 using AIHappey.Core.Providers.AskARC;
@@ -789,7 +788,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ParallelProvider>();
         services.AddSingleton<IModelProvider, NanoGPTProvider>();
         services.AddSingleton<IModelProvider, AIBramhaProvider>();
-        services.AddSingleton<IModelProvider, GhostbotProvider>();
         services.AddSingleton<IModelProvider, RoutmyProvider>();
         services.AddSingleton<IModelProvider, PoeProvider>();
         services.AddSingleton<IModelProvider, AskARCProvider>();

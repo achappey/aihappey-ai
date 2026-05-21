@@ -232,7 +232,6 @@ public class AIServiceConfig
     public ProviderConfig? Parallel { get; set; }
     public ProviderConfig? NanoGPT { get; set; }
     public ProviderConfig? AIBramha { get; set; }
-    public ProviderConfig? Ghostbot { get; set; }
     public ProviderConfig? Routmy { get; set; }
     public ProviderConfig? Poe { get; set; }
     public ProviderConfig? AskARC { get; set; }

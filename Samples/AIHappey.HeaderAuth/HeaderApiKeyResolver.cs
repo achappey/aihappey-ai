@@ -233,7 +233,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["parallel"] = "X-Parallel-Key",
             ["nanogpt"] = "X-NanoGPT-Key",
             ["aibramha"] = "X-AIBramha-Key",
-            ["ghostbot"] = "X-Ghostbot-Key",
             ["routmy"] = "X-Routmy-Key",
             ["poe"] = "X-Poe-Key",
             ["askarc"] = "X-AskARC-Key",
