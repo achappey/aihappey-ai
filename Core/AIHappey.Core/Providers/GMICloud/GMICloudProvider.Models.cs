@@ -52,6 +52,7 @@ public partial class GMICloudProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                        model.Type = model.Name.GuessModelType();
                     }
 
                     model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
@@ -86,10 +87,51 @@ public partial class GMICloudProvider
                         models.Add(model);
                 }
 
+                foreach (var videoModel in await ListVideoModels(cancellationToken))
+                {
+                    if (!models.Any(m => m.Id.Equals(videoModel.Id, StringComparison.OrdinalIgnoreCase)))
+                        models.Add(videoModel);
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+    }
+
+    private async Task<IEnumerable<Model>> ListVideoModels(CancellationToken cancellationToken = default)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "https://console.gmicloud.ai/api/v1/ie/requestqueue/apikey/models");
+        using var resp = await _client.SendAsync(req, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new Exception($"GMICloud video models API error: {err}");
+        }
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        var root = doc.RootElement;
+        var arr = root.TryGetProperty("model_ids", out var modelsEl) && modelsEl.ValueKind == JsonValueKind.Array
+            ? modelsEl.EnumerateArray()
+            : root.ValueKind == JsonValueKind.Array
+                ? root.EnumerateArray()
+                : Enumerable.Empty<JsonElement>();
+
+        return arr
+            .Where(el => el.ValueKind == JsonValueKind.String)
+            .Select(el => el.GetString())
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => new Model
+            {
+                Id = id!.ToModelId(GetIdentifier()),
+                Name = id!,
+                Type = "video",
+                OwnedBy = nameof(GMICloud)
+            })
+            .ToList();
     }
 }
