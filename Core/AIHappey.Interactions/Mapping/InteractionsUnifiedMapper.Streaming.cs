@@ -162,6 +162,28 @@ public static partial class InteractionsUnifiedMapper
                         yield break;
                     }
 
+                    switch (start.Step)
+                    {
+                        case InteractionGoogleSearchCallContent googleSearchCall:
+                            RememberStreamToolStep(providerId, start.Index, googleSearchCall.Id, googleSearchCall.Signature);
+                            break;
+                        case InteractionGoogleSearchResultContent googleSearchResult:
+                            RememberStreamToolStep(providerId, start.Index, googleSearchResult.CallId, googleSearchResult.Signature);
+                            break;
+                        case InteractionGoogleMapsCallContent googleMapsCall:
+                            RememberStreamToolStep(providerId, start.Index, googleMapsCall.Id, googleMapsCall.Signature);
+                            break;
+                        case InteractionGoogleMapsResultContent googleMapsResult:
+                            RememberStreamToolStep(providerId, start.Index, googleMapsResult.CallId, googleMapsResult.Signature);
+                            break;
+                        case InteractionCodeExecutionCallContent codeExecutionCall:
+                            RememberStreamToolStep(providerId, start.Index, codeExecutionCall.Id, codeExecutionCall.Signature);
+                            break;
+                        case InteractionCodeExecutionResultContent codeExecutionResult:
+                            RememberStreamToolStep(providerId, start.Index, codeExecutionResult.CallId, codeExecutionResult.Signature);
+                            break;
+                    }
+
                     var unifiedContent = start.Step is InteractionContent content
                         ? ToUnifiedContentParts([content], providerId).OfType<AIToolCallContentPart>().FirstOrDefault()
                         : null;
@@ -269,8 +291,7 @@ public static partial class InteractionsUnifiedMapper
                     yield break;
                 }
 
-            case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_signature", StringComparison.OrdinalIgnoreCase)
-                                                       || !string.IsNullOrWhiteSpace(GetThoughtSignature(delta)):
+            case InteractionStepDeltaEvent delta when IsThoughtSignatureDelta(delta):
                 {
                     var signature = GetThoughtSignature(delta);
 
@@ -401,13 +422,17 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_call", StringComparison.OrdinalIgnoreCase):
                 {
+                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var signature = GetThoughtSignature(delta) ?? rememberedToolStep?.Signature;
                     var toolCallId = GetDeltaAdditionalString(delta, "id")
-                                     ?? GetDeltaAdditionalString(delta, "call_id")
-                                     ?? BuildContentEventId(delta.Index);
+                                      ?? GetDeltaAdditionalString(delta, "call_id")
+                                      ?? rememberedToolStep?.ToolCallId
+                                      ?? BuildContentEventId(delta.Index);
                     var toolName = "google_search";
                     var input = GetDeltaAdditionalObject(delta, "arguments") ?? JsonSerializer.SerializeToElement(new { }, Json);
                     var providerMetadata = CreateGoogleSearchToolProviderMetadata(
                         providerId,
+                        signature,
                         searchType: GetDeltaAdditionalString(delta, "search_type"));
 
                     yield return CreateStreamEvent(
@@ -433,9 +458,12 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_result", StringComparison.OrdinalIgnoreCase):
                 {
+                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var signature = GetThoughtSignature(delta) ?? rememberedToolStep?.Signature;
                     var toolCallId = GetDeltaAdditionalString(delta, "call_id")
-                                     ?? GetDeltaAdditionalString(delta, "id")
-                                     ?? BuildContentEventId(delta.Index);
+                                      ?? GetDeltaAdditionalString(delta, "id")
+                                      ?? rememberedToolStep?.ToolCallId
+                                      ?? BuildContentEventId(delta.Index);
                     var resultPayload = GetDeltaAdditionalObject(delta, "result")
                                         ?? JsonSerializer.SerializeToElement(Array.Empty<InteractionGoogleSearchResult>(), Json);
                     var structuredContent = JsonSerializer.SerializeToElement(new
@@ -445,8 +473,8 @@ public static partial class InteractionsUnifiedMapper
                     }, Json);
                     var providerMetadata = CreateGoogleSearchToolProviderMetadata(
                         providerId,
+                        signature,
                         toolCallId,
-                        "google_search_result",
                         isError: GetDeltaAdditionalBool(delta, "is_error"));
 
                     yield return CreateStreamEvent(
@@ -580,6 +608,7 @@ public static partial class InteractionsUnifiedMapper
                     var rememberedSignature = GetStreamThoughtSignature(providerId, stop.Index);
                     var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
                     var rememberedImage = ForgetStreamImage(providerId, stop.Index);
+                    ForgetStreamToolStep(providerId, stop.Index);
 
                     if (ForgetStreamFunctionCall(providerId, stop.Index) is { } functionCall)
                     {
@@ -1100,6 +1129,17 @@ public static partial class InteractionsUnifiedMapper
         }
 
         return delta.Delta?.Text;
+    }
+
+    private static bool IsThoughtSignatureDelta(InteractionStepDeltaEvent delta)
+    {
+        if (string.Equals(delta.Delta?.Type, "thought_signature", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(delta.Delta?.Type))
+            return false;
+
+        return !string.IsNullOrWhiteSpace(GetThoughtSignature(delta));
     }
 
     private static Dictionary<string, Dictionary<string, object>>? CreateGoogleSearchToolProviderMetadata(

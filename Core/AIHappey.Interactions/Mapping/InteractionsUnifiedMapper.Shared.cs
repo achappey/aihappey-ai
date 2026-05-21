@@ -13,6 +13,7 @@ public static partial class InteractionsUnifiedMapper
     private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamFunctionCallState> StreamFunctionCalls = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, InteractionStreamToolStepState> StreamToolSteps = new(StringComparer.Ordinal);
 
 
     public static Dictionary<string, object?>? ToDictionary(this object? obj)
@@ -482,6 +483,37 @@ public static partial class InteractionsUnifiedMapper
     private static bool HasStreamFunctionCall(string providerId, int index)
         => StreamFunctionCalls.ContainsKey(BuildStreamContentKey(providerId, index));
 
+    private static void RememberStreamToolStep(string providerId, int index, string? toolCallId, string? signature = null)
+    {
+        if (string.IsNullOrWhiteSpace(toolCallId) && string.IsNullOrWhiteSpace(signature))
+            return;
+
+        StreamToolSteps.AddOrUpdate(
+            BuildStreamContentKey(providerId, index),
+            _ => new InteractionStreamToolStepState
+            {
+                ToolCallId = toolCallId,
+                Signature = signature
+            },
+            (_, existing) => existing with
+            {
+                ToolCallId = toolCallId ?? existing.ToolCallId,
+                Signature = signature ?? existing.Signature
+            });
+    }
+
+    private static InteractionStreamToolStepState? GetStreamToolStep(string providerId, int index)
+    {
+        StreamToolSteps.TryGetValue(BuildStreamContentKey(providerId, index), out var state);
+        return state;
+    }
+
+    private static InteractionStreamToolStepState? ForgetStreamToolStep(string providerId, int index)
+    {
+        StreamToolSteps.TryRemove(BuildStreamContentKey(providerId, index), out var state);
+        return state;
+    }
+
     private static void RememberStreamImageStart(string providerId, int index, string? mimeType)
     {
         var key = BuildStreamContentKey(providerId, index);
@@ -733,5 +765,12 @@ public static partial class InteractionsUnifiedMapper
         public string Name { get; init; } = "function";
  
         public string? ArgumentsJson { get; init; }
+    }
+
+    private sealed record InteractionStreamToolStepState
+    {
+        public string? ToolCallId { get; init; }
+
+        public string? Signature { get; init; }
     }
 }

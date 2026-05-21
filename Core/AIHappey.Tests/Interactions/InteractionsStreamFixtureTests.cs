@@ -141,6 +141,133 @@ public sealed class InteractionsStreamFixtureTests
             "tool-input-available");
     }
 
+    [Fact]
+    public void Interactions_google_search_signature_deltas_do_not_emit_unmatched_reasoning_end()
+    {
+        const string searchCallId = "dfqp0d01";
+
+        var parts = new List<InteractionStreamEventPart>
+        {
+            new InteractionStepStartEvent
+            {
+                Index = 0,
+                Step = new InteractionThoughtContent()
+            },
+            new InteractionStepDeltaEvent
+            {
+                Index = 0,
+                Delta = new InteractionContentDeltaData
+                {
+                    Type = "thought_summary",
+                    AdditionalProperties = new Dictionary<string, JsonElement>
+                    {
+                        ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent
+                        {
+                            Text = "Thinking about search terms."
+                        })
+                    }
+                }
+            },
+            new InteractionStepStopEvent
+            {
+                Index = 0
+            },
+            new InteractionStepStartEvent
+            {
+                Index = 1,
+                Step = new InteractionGoogleSearchCallContent
+                {
+                    Id = searchCallId
+                }
+            },
+            new InteractionStepDeltaEvent
+            {
+                Index = 1,
+                Delta = new InteractionContentDeltaData
+                {
+                    Type = "google_search_call",
+                    AdditionalProperties = new Dictionary<string, JsonElement>
+                    {
+                        ["signature"] = JsonSerializer.SerializeToElement("google-search-call-signature"),
+                        ["arguments"] = JsonSerializer.SerializeToElement(new
+                        {
+                            queries = new[] { "latest war news" }
+                        })
+                    }
+                }
+            },
+            new InteractionStepStopEvent
+            {
+                Index = 1
+            },
+            new InteractionStepStartEvent
+            {
+                Index = 2,
+                Step = new InteractionGoogleSearchResultContent
+                {
+                    CallId = searchCallId
+                }
+            },
+            new InteractionStepDeltaEvent
+            {
+                Index = 2,
+                Delta = new InteractionContentDeltaData
+                {
+                    Type = "google_search_result",
+                    AdditionalProperties = new Dictionary<string, JsonElement>
+                    {
+                        ["signature"] = JsonSerializer.SerializeToElement("google-search-result-signature"),
+                        ["result"] = JsonSerializer.SerializeToElement(new[]
+                        {
+                            new InteractionGoogleSearchResult
+                            {
+                                SearchSuggestions = "latest war news"
+                            }
+                        }),
+                        ["is_error"] = JsonSerializer.SerializeToElement(false)
+                    }
+                }
+            },
+            new InteractionStepStopEvent
+            {
+                Index = 2
+            }
+        };
+
+        var unifiedEvents = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToList();
+
+        Assert.DoesNotContain(unifiedEvents, streamEvent =>
+            streamEvent.Event.Type == "reasoning-end"
+            && string.Equals(streamEvent.Event.Id, "interactions-content-1", StringComparison.Ordinal));
+
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "tool-input-available",
+            "tool-output-available");
+
+        var toolInputAvailable = Assert.IsType<AIToolInputAvailableEventData>(
+            Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-input-available").Event.Data);
+        Assert.Equal("google_search", toolInputAvailable.ToolName);
+        Assert.True(toolInputAvailable.ProviderExecuted);
+        Assert.Equal(searchCallId, Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-input-available").Event.Id);
+        Assert.Equal(
+            "google-search-call-signature",
+            toolInputAvailable.ProviderMetadata?[ProviderId]["signature"].ToString());
+
+        var toolOutputAvailable = Assert.IsType<AIToolOutputAvailableEventData>(
+            Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-output-available").Event.Data);
+        Assert.True(toolOutputAvailable.ProviderExecuted);
+        Assert.Equal(searchCallId, Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-output-available").Event.Id);
+        Assert.Equal(
+            "google-search-result-signature",
+            toolOutputAvailable.ProviderMetadata?[ProviderId]["signature"].ToString());
+    }
+
 
     private static List<AIStreamEvent> LoadUnifiedEvents()
         => FixtureFileLoader.LoadInteractionRawFixture(RawFixturePath)
