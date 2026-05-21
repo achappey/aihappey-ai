@@ -172,7 +172,33 @@ public static partial class InteractionsUnifiedMapper
         var content = new List<InteractionContent>();
         foreach (var part in item.Content ?? [])
         {
+            if (part is AIToolCallContentPart tool
+                && !tool.IsProviderToolCall
+                && HasToolOutput(tool)
+                && HasMeaningfulValue(tool.Input)
+                && !IsSyntheticInteractionImageTool(tool))
+            {
+                content.Add(ToInteractionFunctionCallContent(tool));
+                content.Add(ToInteractionToolContent(tool));
+                continue;
+            }
+
             var mapped = ToInteractionContent(part, item.Role, providerId);
+            if (mapped is InteractionThoughtContent thought
+                && string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary))
+                && !string.IsNullOrWhiteSpace(thought.Signature))
+            {
+                var previousThought = content.OfType<InteractionThoughtContent>().LastOrDefault();
+                if (previousThought is not null
+                    && (string.IsNullOrWhiteSpace(previousThought.Signature)
+                        || string.Equals(previousThought.Signature, thought.Signature, StringComparison.Ordinal)))
+                {
+                    previousThought.Signature ??= thought.Signature;
+                    MergeAdditionalProperties(previousThought, thought);
+                    continue;
+                }
+            }
+
             if (mapped is not null)
                 content.Add(mapped);
         }
@@ -180,7 +206,7 @@ public static partial class InteractionsUnifiedMapper
         if (content.Count == 0)
             yield break;
  
-        if (NormalizeUnifiedRole(item.Role) == "user")
+        if (NormalizeUnifiedRole(item.Role) == "user" && !IsReasoningOnlyInputItem(item))
         {
             yield return new InteractionUserInputStep { Content = content };
             yield break;

@@ -12,6 +12,7 @@ public static partial class InteractionsUnifiedMapper
     private static readonly ConcurrentDictionary<string, bool> StreamThoughtHasText = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, InteractionStreamFunctionCallState> StreamFunctionCalls = new(StringComparer.Ordinal);
 
 
     public static Dictionary<string, object?>? ToDictionary(this object? obj)
@@ -440,6 +441,46 @@ public static partial class InteractionsUnifiedMapper
 
     private static string BuildImageToolCallId(int index)
         => $"interactions-image-{index}";
+ 
+    private static void RememberStreamFunctionCallStart(string providerId, int index, InteractionFunctionCallContent call)
+    {
+        StreamFunctionCalls[BuildStreamContentKey(providerId, index)] = new InteractionStreamFunctionCallState
+        {
+            ToolCallId = call.Id ?? BuildContentEventId(index),
+            Name = call.Name ?? "function",
+            ArgumentsJson = HasMeaningfulValue(call.Arguments) ? SerializePayload(call.Arguments, string.Empty) : string.Empty
+        };
+    }
+ 
+    private static InteractionStreamFunctionCallState RememberStreamFunctionCallArgumentsDelta(string providerId, int index, string? argumentsDelta)
+        => StreamFunctionCalls.AddOrUpdate(
+            BuildStreamContentKey(providerId, index),
+            _ => new InteractionStreamFunctionCallState
+            {
+                ToolCallId = BuildContentEventId(index),
+                Name = "function",
+                ArgumentsJson = argumentsDelta ?? string.Empty
+            },
+            (_, existing) => existing with
+            {
+                ArgumentsJson = ShouldReplaceInitialStreamingArguments(existing.ArgumentsJson, argumentsDelta)
+                    ? argumentsDelta ?? string.Empty
+                    : (existing.ArgumentsJson ?? string.Empty) + (argumentsDelta ?? string.Empty)
+            });
+ 
+    private static bool ShouldReplaceInitialStreamingArguments(string? existingArgumentsJson, string? argumentsDelta)
+        => string.Equals(existingArgumentsJson?.Trim(), "{}", StringComparison.Ordinal)
+           && !string.IsNullOrWhiteSpace(argumentsDelta)
+           && argumentsDelta.TrimStart().StartsWith('{');
+ 
+    private static InteractionStreamFunctionCallState? ForgetStreamFunctionCall(string providerId, int index)
+    {
+        StreamFunctionCalls.TryRemove(BuildStreamContentKey(providerId, index), out var state);
+        return state;
+    }
+
+    private static bool HasStreamFunctionCall(string providerId, int index)
+        => StreamFunctionCalls.ContainsKey(BuildStreamContentKey(providerId, index));
 
     private static void RememberStreamImageStart(string providerId, int index, string? mimeType)
     {
@@ -683,5 +724,14 @@ public static partial class InteractionsUnifiedMapper
         public string? MimeType { get; init; }
 
         public string? Data { get; init; }
+    }
+ 
+    private sealed record InteractionStreamFunctionCallState
+    {
+        public string ToolCallId { get; init; } = string.Empty;
+ 
+        public string Name { get; init; } = "function";
+ 
+        public string? ArgumentsJson { get; init; }
     }
 }

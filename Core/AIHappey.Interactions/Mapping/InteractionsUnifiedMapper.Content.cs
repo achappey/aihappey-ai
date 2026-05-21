@@ -474,7 +474,7 @@ public static partial class InteractionsUnifiedMapper
                 Name = tool.ToolName,
                 Signature = signature,
                 IsError = isError,
-                Result = CloneIfJsonElement(tool.Output)
+                Result = ToFunctionResultContentBlocks(tool.Output)
             },
             "code_execution_result" => new InteractionCodeExecutionResultContent
             {
@@ -522,17 +522,151 @@ public static partial class InteractionsUnifiedMapper
                 CallId = tool.ToolCallId,
                 Name = tool.ToolName,
                 Signature = signature,
-                Result = CloneIfJsonElement(tool.Output),
+                Result = ToFunctionResultContentBlocks(tool.Output),
                 IsError = isError
             },
-            _ => new InteractionFunctionCallContent
-            {
-                Id = tool.ToolCallId,
-                Name = tool.ToolName,
-                Signature = signature,
-                Arguments = CloneIfJsonElement(tool.Input)
-            }
+            _ => ToInteractionFunctionCallContent(tool, signature)
         };
+    }
+
+    internal static InteractionFunctionCallContent ToInteractionFunctionCallContent(AIToolCallContentPart tool, string? signature = null)
+        => new()
+        {
+            Id = tool.ToolCallId,
+            Name = tool.ToolName,
+            Signature = signature
+                        ?? ExtractProviderScopedValue<string>(tool.Metadata, "signature")
+                        ?? ExtractValue<string>(tool.Metadata, "interactions.signature"),
+            Arguments = CloneIfJsonElement(tool.Input)
+        };
+
+    private static List<InteractionContent> ToFunctionResultContentBlocks(object? output)
+    {
+        var text = ExtractFunctionResultText(output);
+
+        return
+        [
+            new InteractionTextContent
+            {
+                Text = string.IsNullOrWhiteSpace(text) ? "{}" : text
+            }
+        ];
+    }
+
+    private static string? ExtractFunctionResultText(object? output)
+    {
+        if (output is null)
+            return null;
+
+        if (output is string text)
+            return text;
+
+        if (output is JsonElement json)
+            return ExtractFunctionResultText(json);
+
+        try
+        {
+            return ExtractFunctionResultText(JsonSerializer.SerializeToElement(output, Json));
+        }
+        catch
+        {
+            return output.ToString();
+        }
+    }
+
+    private static string? ExtractFunctionResultText(JsonElement output)
+    {
+        switch (output.ValueKind)
+        {
+            case JsonValueKind.String:
+                return output.GetString();
+            case JsonValueKind.Object:
+                if (TryGetJsonProperty(output, "structuredContent", out var structuredContent)
+                    || TryGetJsonProperty(output, "structured_content", out structuredContent))
+                {
+                    if (structuredContent.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                        return SerializePayload(structuredContent, "{}");
+                }
+
+                if (TryGetJsonProperty(output, "content", out var content)
+                    && content.ValueKind == JsonValueKind.Array)
+                {
+                    var contentText = ExtractFunctionResultContentArrayText(content);
+                    if (!string.IsNullOrWhiteSpace(contentText))
+                        return contentText;
+                }
+
+                if (TryGetJsonProperty(output, "result", out var result)
+                    && result.ValueKind == JsonValueKind.Array)
+                {
+                    var resultText = ExtractFunctionResultContentArrayText(result);
+                    if (!string.IsNullOrWhiteSpace(resultText))
+                        return resultText;
+                }
+
+                if (TryGetJsonProperty(output, "text", out var textProperty))
+                    return textProperty.ValueKind == JsonValueKind.String ? textProperty.GetString() : textProperty.ToString();
+
+                return output.GetRawText();
+            case JsonValueKind.Array:
+                var arrayText = ExtractFunctionResultContentArrayText(output);
+                return string.IsNullOrWhiteSpace(arrayText) ? output.GetRawText() : arrayText;
+            case JsonValueKind.Null:
+            case JsonValueKind.Undefined:
+                return null;
+            default:
+                return output.GetRawText();
+        }
+    }
+
+    private static string ExtractFunctionResultContentArrayText(JsonElement content)
+    {
+        var parts = new List<string>();
+
+        foreach (var item in content.EnumerateArray())
+        {
+            var text = ExtractFunctionResultContentItemText(item);
+            if (!string.IsNullOrWhiteSpace(text))
+                parts.Add(text!);
+        }
+
+        return string.Join("\n", parts);
+    }
+
+    private static string? ExtractFunctionResultContentItemText(JsonElement item)
+    {
+        if (item.ValueKind == JsonValueKind.String)
+            return item.GetString();
+
+        if (item.ValueKind != JsonValueKind.Object)
+            return item.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined ? null : item.GetRawText();
+
+        if (TryGetJsonProperty(item, "text", out var text))
+            return text.ValueKind == JsonValueKind.String ? text.GetString() : text.ToString();
+
+        if (TryGetJsonProperty(item, "resource", out var resource)
+            && resource.ValueKind == JsonValueKind.Object
+            && TryGetJsonProperty(resource, "text", out var resourceText))
+        {
+            return resourceText.ValueKind == JsonValueKind.String ? resourceText.GetString() : resourceText.ToString();
+        }
+
+        if (TryGetJsonProperty(item, "content", out var nestedContent)
+            && nestedContent.ValueKind == JsonValueKind.Array)
+        {
+            return ExtractFunctionResultContentArrayText(nestedContent);
+        }
+
+        return item.GetRawText();
+    }
+
+    private static bool TryGetJsonProperty(JsonElement element, string propertyName, out JsonElement value)
+    {
+        if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out value))
+            return true;
+
+        value = default;
+        return false;
     }
 
     private static bool IsSyntheticInteractionImageTool(AIToolCallContentPart tool)

@@ -141,6 +141,27 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepStartEvent start:
                 {
+                    if (start.Step is InteractionFunctionCallContent functionCall)
+                    {
+                        RememberStreamFunctionCallStart(providerId, start.Index, functionCall);
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "tool-input-start",
+                                Id = functionCall.Id ?? BuildContentEventId(start.Index),
+                                Data = new AIToolInputStartEventData
+                                {
+                                    ToolName = functionCall.Name ?? "function",
+                                    ProviderExecuted = false,
+                                    Title = functionCall.Name ?? "function"
+                                }
+                            },
+                            part,
+                            start.Index);
+                        yield break;
+                    }
+
                     var unifiedContent = start.Step is InteractionContent content
                         ? ToUnifiedContentParts([content], providerId).OfType<AIToolCallContentPart>().FirstOrDefault()
                         : null;
@@ -252,6 +273,10 @@ public static partial class InteractionsUnifiedMapper
                                                        || !string.IsNullOrWhiteSpace(GetThoughtSignature(delta)):
                 {
                     var signature = GetThoughtSignature(delta);
+
+                    if (HasStreamFunctionCall(providerId, delta.Index))
+                        yield break;
+
                     var targetIndex = GetStreamThoughtHasText(providerId, delta.Index) || GetOpenThoughtAnchor(providerId) is not { } anchorIndex || anchorIndex == delta.Index
                         ? delta.Index
                         : anchorIndex;
@@ -291,6 +316,26 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought", StringComparison.OrdinalIgnoreCase):
                 RememberStreamContentType(providerId, delta.Index, "thought");
+                yield break;
+ 
+            case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "arguments_delta", StringComparison.OrdinalIgnoreCase):
+                {
+                    var argumentsDelta = GetDeltaAdditionalString(delta, "arguments") ?? delta.Delta?.Text ?? string.Empty;
+                    var state = RememberStreamFunctionCallArgumentsDelta(providerId, delta.Index, argumentsDelta);
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
+                        {
+                            Type = "tool-input-delta",
+                            Id = state.ToolCallId,
+                            Data = new AIToolInputDeltaEventData
+                            {
+                                InputTextDelta = argumentsDelta
+                            }
+                        },
+                        part,
+                        delta.Index);
+                }
                 yield break;
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_call", StringComparison.OrdinalIgnoreCase):
@@ -536,6 +581,29 @@ public static partial class InteractionsUnifiedMapper
                     var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
                     var rememberedImage = ForgetStreamImage(providerId, stop.Index);
 
+                    if (ForgetStreamFunctionCall(providerId, stop.Index) is { } functionCall)
+                    {
+                        ForgetStreamThoughtSignature(providerId, stop.Index);
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "tool-input-available",
+                                Id = functionCall.ToolCallId,
+                                Data = new AIToolInputAvailableEventData
+                                {
+                                    ToolName = functionCall.Name,
+                                    Input = ParseStreamingArguments(functionCall.ArgumentsJson),
+                                    ProviderExecuted = false,
+                                    Title = functionCall.Name
+                                }
+                            },
+                            part,
+                            stop.Index);
+
+                        yield break;
+                    }
+
                     if (string.Equals(rememberedType, "text", StringComparison.OrdinalIgnoreCase))
                     {
                         yield return CreateStreamEvent(
@@ -614,7 +682,7 @@ public static partial class InteractionsUnifiedMapper
 
                         yield break;
                     }
-
+ 
                     yield break;
                 }
 
@@ -1365,6 +1433,21 @@ public static partial class InteractionsUnifiedMapper
 
     private static string ToInteractionImageDataUrl(string? mimeType, string? data)
         => $"data:{(string.IsNullOrWhiteSpace(mimeType) ? "image/png" : mimeType)};base64,{(data ?? string.Empty).StripBase64Prefix()}";
+ 
+    private static object ParseStreamingArguments(string? argumentsJson)
+    {
+        if (string.IsNullOrWhiteSpace(argumentsJson))
+            return new { };
+ 
+        try
+        {
+            return JsonSerializer.Deserialize<JsonElement>(argumentsJson).Clone();
+        }
+        catch
+        {
+            return argumentsJson;
+        }
+    }
 
     private static string? GetDeltaAdditionalString(InteractionStepDeltaEvent delta, string key)
     {

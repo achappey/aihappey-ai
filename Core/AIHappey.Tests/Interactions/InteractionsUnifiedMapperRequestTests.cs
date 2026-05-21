@@ -25,8 +25,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
         var interactionRequest = chatRequest.ToUnifiedRequest("google").ToInteractionRequest("google");
 
         var thoughtParts = Assert.IsAssignableFrom<IReadOnlyList<InteractionThoughtContent>>(
-            interactionRequest.Input?.Turns
-                ?.SelectMany(turn => turn.Content?.Parts ?? [])
+            interactionRequest.Input?.Steps
                 .OfType<InteractionThoughtContent>()
                 .ToList());
 
@@ -54,8 +53,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
 
         var interactionRequest = chatRequest.ToUnifiedRequest("google").ToInteractionRequest("xai");
 
-        var thoughtParts = interactionRequest.Input?.Turns
-            ?.SelectMany(turn => turn.Content?.Parts ?? [])
+        var thoughtParts = interactionRequest.Input?.Steps
             .OfType<InteractionThoughtContent>()
             .ToList();
 
@@ -92,8 +90,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
         };
 
         var interactionRequest = request.ToInteractionRequest("google");
-        var turn = Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionTurn>>(interactionRequest.Input?.Turns));
-        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(turn.Content?.Parts ?? []));
+        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps)));
 
         Assert.Equal("sig-123", thought.Signature);
         Assert.True(thought.Summary is null or { Count: 0 });
@@ -132,18 +129,17 @@ public sealed class InteractionsUnifiedMapperRequestTests
             .ToUnifiedRequest("google")
             .ToInteractionRequest("google");
 
-        var turns = Assert.IsAssignableFrom<IReadOnlyList<InteractionTurn>>(interactionRequest.Input?.Turns);
+        var steps = Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps);
         Assert.Collection(
-            turns,
-            turn =>
+            steps,
+            step =>
             {
-                Assert.Equal("user", turn.Role);
-                Assert.Equal("Continue with the preserved reasoning state.", turn.Content?.Text);
+                var userInput = Assert.IsType<InteractionUserInputStep>(step);
+                Assert.Equal("Continue with the preserved reasoning state.", Assert.IsType<InteractionTextContent>(Assert.Single(userInput.Content ?? [])).Text);
             },
-            turn =>
+            step =>
             {
-                Assert.Equal("model", turn.Role);
-                var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(turn.Content?.Parts ?? []));
+                var thought = Assert.IsType<InteractionThoughtContent>(step);
                 Assert.Equal("opaque-google-thought-signature", thought.Signature);
                 Assert.Equal("I should use the preserved thought state.", Assert.IsType<InteractionTextContent>(Assert.Single(thought.Summary ?? [])).Text);
             });
@@ -173,11 +169,116 @@ public sealed class InteractionsUnifiedMapperRequestTests
         };
 
         var interactionRequest = request.ToInteractionRequest("google");
-        var turn = Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionTurn>>(interactionRequest.Input?.Turns));
 
-        Assert.Equal("model", turn.Role);
-        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(turn.Content?.Parts ?? []));
+        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps)));
         Assert.Equal("sig-456", thought.Signature);
+    }
+
+    [Fact]
+    public void Client_tool_output_maps_to_function_call_and_strict_function_result_steps_for_interactions()
+    {
+        var output = JsonSerializer.Deserialize<JsonElement>("""
+        {
+          "content": [
+            {
+              "type": "resource",
+              "resource": {
+                "uri": "https://github.com/egbakou/RESTCountries.NET",
+                "mimeType": "application/json",
+                "text": "[{\"common\":\"Poland\",\"official\":\"Republic of Poland\",\"cca2\":\"PL\"}]"
+              }
+            }
+          ]
+        }
+        """);
+
+        var request = new AIRequest
+        {
+            Model = "google/gemini-flash-lite-latest",
+            ProviderId = "google",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Type = "message",
+                        Role = "user",
+                        Content =
+                        [
+                            new AITextContentPart
+                            {
+                                Type = "text",
+                                Text = "kan je alles over poland opzoeken"
+                            }
+                        ]
+                    },
+                    new AIInputItem
+                    {
+                        Type = "message",
+                        Role = "assistant",
+                        Content =
+                        [
+                            CreateSignatureOnlyReasoningPart("google-thought-signature"),
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-github_rest_countries_search_codes",
+                                ToolCallId = "4p0taqyw",
+                                ToolName = "github_rest_countries_search_codes",
+                                Title = "github_rest_countries_search_codes",
+                                State = "approval-responded",
+                                Input = JsonSerializer.Deserialize<JsonElement>("{\"name\":\"Poland\"}"),
+                                Output = output,
+                                ProviderExecuted = false,
+                                Approval = new AIToolCallApproval
+                                {
+                                    Id = "4p0taqyw",
+                                    Approved = true,
+                                    Reason = "BRRR"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var interactionRequest = request.ToInteractionRequest("google");
+        var steps = Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps);
+
+        Assert.Collection(
+            steps,
+            step => Assert.IsType<InteractionUserInputStep>(step),
+            step => Assert.IsType<InteractionThoughtContent>(step),
+            step =>
+            {
+                var call = Assert.IsType<InteractionFunctionCallContent>(step);
+                Assert.Equal("4p0taqyw", call.Id);
+                Assert.Equal("github_rest_countries_search_codes", call.Name);
+                Assert.Equal("Poland", Assert.Contains("name", JsonSerializer.Deserialize<Dictionary<string, string>>(JsonSerializer.Serialize(call.Arguments, InteractionJson.Default)) ?? []));
+            },
+            step =>
+            {
+                var result = Assert.IsType<InteractionFunctionResultContent>(step);
+                Assert.Equal("4p0taqyw", result.CallId);
+                Assert.Equal("github_rest_countries_search_codes", result.Name);
+
+                var resultContent = Assert.IsAssignableFrom<IReadOnlyList<InteractionContent>>(result.Result);
+                var text = Assert.IsType<InteractionTextContent>(Assert.Single(resultContent));
+                Assert.Equal("[{\"common\":\"Poland\",\"official\":\"Republic of Poland\",\"cca2\":\"PL\"}]", text.Text);
+            });
+
+        var serialized = JsonSerializer.Serialize(interactionRequest, InteractionJson.Default);
+        Assert.Contains("\"type\":\"function_result\"", serialized, StringComparison.Ordinal);
+        using var serializedDocument = JsonDocument.Parse(serialized);
+        var serializedResult = serializedDocument.RootElement
+            .GetProperty("input")
+            .EnumerateArray()
+            .Single(step => step.GetProperty("type").GetString() == "function_result")
+            .GetProperty("result");
+        Assert.Equal(JsonValueKind.Array, serializedResult.ValueKind);
+        Assert.Equal("text", serializedResult[0].GetProperty("type").GetString());
+        Assert.DoesNotContain("\"resource\"", serialized, StringComparison.Ordinal);
     }
 
     private static AIReasoningContentPart CreateSignatureOnlyReasoningPart(string signature)
