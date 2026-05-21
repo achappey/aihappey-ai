@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using AIHappey.Abstractions.Http;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 
@@ -52,6 +53,7 @@ public partial class ZaiProvider
         if (!TryResolveAgentId(options.Model, out var agentId))
             throw new NotSupportedException($"Unsupported Z.AI agent model '{options.Model}'.");
 
+        var capture = options.GetZaiBackendCapture(GetIdentifier());
         var headers = this.SetDefaultChatCompletionProperties(options, ["tools"]);
         var payload = BuildAgentPayload(options, agentId, stream: false);
         using var req = CreateAgentHttpRequest(payload, accept: MediaTypeNames.Application.Json, headers);
@@ -60,6 +62,8 @@ public partial class ZaiProvider
         var body = await resp.Content.ReadAsStringAsync(cancellationToken);
         if (!resp.IsSuccessStatusCode)
             throw new HttpRequestException($"Z.AI agent request failed ({(int)resp.StatusCode}): {body}");
+
+        await ProviderBackendCapture.CaptureJsonAsync("agents", resp, body, capture, cancellationToken);
 
         using var doc = JsonDocument.Parse(body);
         return NormalizeAgentResponse(doc.RootElement, options.Model, agentId);
@@ -75,6 +79,7 @@ public partial class ZaiProvider
         if (agentId == ViduTemplateAgentId)
             throw new NotSupportedException("Z.AI vidu_template_agent creates asynchronous video tasks and is not supported on streaming chat completions.");
 
+        var capture = options.GetZaiBackendCapture(GetIdentifier());
         var headers = this.SetDefaultChatCompletionProperties(options, ["tools"]);
         var payload = BuildAgentPayload(options, agentId, stream: true);
         using var req = CreateAgentHttpRequest(payload, accept: "text/event-stream", headers);
@@ -89,6 +94,7 @@ public partial class ZaiProvider
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("agents", resp, capture);
         var completionId = Guid.NewGuid().ToString("n");
         var emittedAnyContent = false;
         var emittedTerminalChunk = false;
@@ -97,6 +103,9 @@ public partial class ZaiProvider
         while (!cancellationToken.IsCancellationRequested
                && (line = await reader.ReadLineAsync(cancellationToken)) is not null)
         {
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, cancellationToken);
+
             if (line.Length == 0 || !line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
                 continue;
 
