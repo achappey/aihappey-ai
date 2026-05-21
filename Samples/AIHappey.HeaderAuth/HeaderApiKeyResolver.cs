@@ -533,7 +533,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sovrgpt"] = "X-SovrGPT-Key",
             ["doubleword"] = "X-Doubleword-Key",
             ["openhands"] = "X-OpenHands-Key",
-            ["poolside"] = "X-Poolside-Key"
+            ["poolside"] = "X-Poolside-Key",
+            ["cloister"] = "X-Cloister-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

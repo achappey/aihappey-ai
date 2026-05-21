@@ -533,6 +533,7 @@ using AIHappey.Core.Providers.Osiris;
 using AIHappey.Core.Providers.SovrGPT;
 using AIHappey.Core.Providers.Doubleword;
 using AIHappey.Core.Providers.Poolside;
+using AIHappey.Core.Providers.Cloister;
 
 namespace AIHappey.Core.AI;
 
@@ -1091,6 +1092,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SovrGPTProvider>();
         services.AddSingleton<IModelProvider, DoublewordProvider>();
         services.AddSingleton<IModelProvider, PoolsideProvider>();
+        services.AddSingleton<IModelProvider, CloisterProvider>();
 
     }
 }
