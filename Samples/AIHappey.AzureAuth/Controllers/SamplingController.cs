@@ -16,57 +16,85 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
 
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Post([FromBody] CreateMessageRequestParams requestDto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Post(
+        [FromBody] CreateMessageRequestParams requestDto,
+        CancellationToken cancellationToken)
     {
-        var models = requestDto.ModelPreferences?.Hints?.Select(a => a.Name).OfType<string>() ?? [];
-        IModelProvider? provider = null;
+        var modelHints = requestDto.ModelPreferences?.Hints?
+            .Select(a => a.Name)
+            .OfType<string>()
+            .ToList() ?? [];
 
-        if (!models.Any())
+        if (!modelHints.Any())
             return BadRequest("Sampling requires at least one model hint.");
 
-        foreach (var model in models)
+        Exception? lastException = null;
+        CreateMessageResult? result = null;
+        IModelProvider? provider = null;
+
+        foreach (var model in modelHints)
         {
             try
             {
                 provider = await _resolver.Resolve(model, cancellationToken);
 
-                if (provider != null)
-                    break;
+                if (provider == null)
+                    continue;
+
+                result = await provider.SamplingAsync(
+                    requestDto,
+                    cancellationToken);
+
+                break;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                lastException = ex;
             }
         }
 
-        provider ??= _resolver.GetProvider();
+        if (result == null)
+        {
+            provider ??= _resolver.GetProvider();
+
+            try
+            {
+                result = await provider.SamplingAsync(
+                    requestDto,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw lastException ?? ex;
+            }
+        }
 
         var startedAt = DateTime.UtcNow;
-        var modelHint = requestDto.ModelPreferences?.Hints?.FirstOrDefault(a => a.Name?.StartsWith(provider.GetIdentifier()) == true);
-      /*  requestDto.ModelPreferences?.Hints = [ new ModelHint()
-            {
-                Name = modelHint?.Name?.SplitModelId().Model
-            }];*/
-
-        var result = await provider.SamplingAsync(requestDto, cancellationToken);
-
         var endedAt = DateTime.UtcNow;
-        var usageNode = (result?.Meta)?["usage"];
 
-        int inputTokens = usageNode?["promptTokens"]?.GetValue<int>() ?? 0;
-        int totalTokens = usageNode?["totalTokens"]?.GetValue<int>() ?? 0;
+        var usageNode = result?.Meta?["usage"];
 
-        await chatTelemetryService.TrackChatRequestAsync(new Vercel.Models.ChatRequest()
-        {
-            Model = result?.Model!.SplitModelId().Model!,
-            Temperature = requestDto.Temperature ?? 1,
-        },
+        int inputTokens =
+            usageNode?["promptTokens"]?.GetValue<int>() ?? 0;
+
+        int totalTokens =
+            usageNode?["totalTokens"]?.GetValue<int>() ?? 0;
+
+        await chatTelemetryService.TrackChatRequestAsync(
+            new Vercel.Models.ChatRequest
+            {
+                Model = result?.Model!.SplitModelId().Model!,
+                Temperature = requestDto.Temperature ?? 1,
+            },
             HttpContext.GetUserOid()!,
             HttpContext.GetUserUpn()!,
             inputTokens,
             totalTokens,
-            provider.GetIdentifier(),
+            provider!.GetIdentifier(),
             Telemetry.Models.RequestType.Sampling,
-        startedAt, endedAt, cancellationToken);
+            startedAt,
+            endedAt,
+            cancellationToken);
 
         return Ok(result);
     }

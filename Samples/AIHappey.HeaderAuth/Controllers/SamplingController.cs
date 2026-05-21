@@ -11,42 +11,57 @@ public class SamplingController(IAIModelProviderResolver resolver) : ControllerB
     private readonly IAIModelProviderResolver _resolver = resolver;
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] CreateMessageRequestParams requestDto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Post(
+     [FromBody] CreateMessageRequestParams requestDto,
+     CancellationToken cancellationToken)
     {
-        var models = requestDto.ModelPreferences?.Hints?.Select(a => a.Name).OfType<string>() ?? [];
-        IModelProvider? provider = null;
+        var modelHints = requestDto.ModelPreferences?.Hints?
+            .Select(a => a.Name)
+            .OfType<string>()
+            .ToList() ?? [];
 
-        if (!models.Any())
+        if (modelHints.Count == 0)
             return BadRequest("Sampling requires at least one model hint.");
 
-        foreach (var model in models)
+        Exception? lastException = null;
+        IModelProvider? provider = null;
+        CreateMessageResult? result = null;
+
+        foreach (var model in modelHints)
         {
             try
             {
                 HeaderAuthModelContext.SetActiveProvider(HttpContext, model);
+
                 provider = await _resolver.Resolve(model, cancellationToken);
 
-                if (provider != null)
-                    break;
+                if (provider == null)
+                    continue;
+
+                result = await provider.SamplingAsync(requestDto, cancellationToken);
+                break;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                lastException = ex;
             }
         }
 
-        if (provider == null)
+        if (result == null)
+        {
             HeaderAuthModelContext.ClearActiveProvider(HttpContext);
 
-        provider ??= _resolver.GetProvider();
+            provider = _resolver.GetProvider();
 
-        var modelHint = requestDto.ModelPreferences?.Hints?.FirstOrDefault(a => a.Name?.StartsWith(provider.GetIdentifier()) == true);
-        /*      requestDto.ModelPreferences?.Hints = [ new ModelHint()
-                  {
-                      Name = modelHint?.Name?.SplitModelId().Model
-                  }];*/
-
-
-        var result = await provider.SamplingAsync(requestDto, cancellationToken);
+            try
+            {
+                result = await provider.SamplingAsync(requestDto, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw lastException ?? ex;
+            }
+        }
 
         return Ok(result);
     }
