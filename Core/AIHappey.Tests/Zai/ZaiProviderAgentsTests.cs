@@ -232,6 +232,88 @@ public sealed class ZaiProviderAgentsTests
     }
 
     [Fact]
+    public async Task CompleteChatStreamingAsync_does_not_mark_each_text_delta_as_finished()
+    {
+        var provider = CreateProvider(_ => StreamingResponse("""
+            data: {"id":"stream-2","agent_id":"general_translation","choices":[{"index":0,"messages":{"role":"assistant","content":{"type":"text","text":"Hal"}}}]}
+
+            data: {"id":"stream-2","agent_id":"general_translation","choices":[{"index":0,"messages":{"role":"assistant","content":{"type":"text","text":"lo"}}}]}
+
+            data: [DONE]
+
+            """));
+
+        var updates = new List<ChatCompletionUpdate>();
+        await foreach (var update in provider.CompleteChatStreamingAsync(new ChatCompletionOptions
+        {
+            Model = "zai/agents/general_translation",
+            Messages =
+            [
+                new ChatMessage
+                {
+                    Role = "user",
+                    Content = JsonSerializer.SerializeToElement("Hello")
+                }
+            ]
+        }))
+        {
+            updates.Add(update);
+        }
+
+        Assert.Equal(3, updates.Count);
+
+        var firstChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[0].Choices), JsonSerializerOptions.Web);
+        Assert.Equal("Hal", firstChoice.GetProperty("delta").GetProperty("content").GetString());
+        Assert.Equal(JsonValueKind.Null, firstChoice.GetProperty("finish_reason").ValueKind);
+
+        var secondChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[1].Choices), JsonSerializerOptions.Web);
+        Assert.Equal("lo", secondChoice.GetProperty("delta").GetProperty("content").GetString());
+        Assert.Equal(JsonValueKind.Null, secondChoice.GetProperty("finish_reason").ValueKind);
+
+        var finalChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[2].Choices), JsonSerializerOptions.Web);
+        Assert.Equal("stop", finalChoice.GetProperty("finish_reason").GetString());
+    }
+
+    [Fact]
+    public async Task CompleteChatStreamingAsync_does_not_emit_duplicate_tail_finish_when_provider_sends_terminal_chunk()
+    {
+        var provider = CreateProvider(_ => StreamingResponse("""
+            data: {"id":"stream-3","agent_id":"general_translation","choices":[{"index":0,"messages":{"role":"assistant","content":{"type":"text","text":"Hallo"}}}]}
+
+            data: {"id":"stream-3","agent_id":"general_translation","choices":[{"index":0,"finish_reason":"stop"}]}
+
+            data: [DONE]
+
+            """));
+
+        var updates = new List<ChatCompletionUpdate>();
+        await foreach (var update in provider.CompleteChatStreamingAsync(new ChatCompletionOptions
+        {
+            Model = "zai/agents/general_translation",
+            Messages =
+            [
+                new ChatMessage
+                {
+                    Role = "user",
+                    Content = JsonSerializer.SerializeToElement("Hello")
+                }
+            ]
+        }))
+        {
+            updates.Add(update);
+        }
+
+        Assert.Equal(2, updates.Count);
+
+        var firstChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[0].Choices), JsonSerializerOptions.Web);
+        Assert.Equal("Hallo", firstChoice.GetProperty("delta").GetProperty("content").GetString());
+        Assert.Equal(JsonValueKind.Null, firstChoice.GetProperty("finish_reason").ValueKind);
+
+        var finalChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[1].Choices), JsonSerializerOptions.Web);
+        Assert.Equal("stop", finalChoice.GetProperty("finish_reason").GetString());
+    }
+
+    [Fact]
     public async Task CompleteChatStreamingAsync_rejects_vidu_template_agent()
     {
         var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));

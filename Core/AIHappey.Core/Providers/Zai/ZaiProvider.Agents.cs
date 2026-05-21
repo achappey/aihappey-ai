@@ -91,6 +91,7 @@ public partial class ZaiProvider
         using var reader = new StreamReader(stream);
         var completionId = Guid.NewGuid().ToString("n");
         var emittedAnyContent = false;
+        var emittedTerminalChunk = false;
 
         string? line;
         while (!cancellationToken.IsCancellationRequested
@@ -110,7 +111,13 @@ public partial class ZaiProvider
             try
             {
                 evtDoc = JsonDocument.Parse(data);
-                var update = NormalizeAgentStreamResponse(evtDoc.RootElement, options.Model, agentId, ref completionId, ref emittedAnyContent);
+                var update = NormalizeAgentStreamResponse(
+                    evtDoc.RootElement,
+                    options.Model,
+                    agentId,
+                    ref completionId,
+                    ref emittedAnyContent,
+                    ref emittedTerminalChunk);
                 if (update is not null)
                     yield return update;
             }
@@ -120,21 +127,24 @@ public partial class ZaiProvider
             }
         }
 
-        yield return new ChatCompletionUpdate
+        if (!emittedTerminalChunk)
         {
-            Id = completionId,
-            Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Model = options.Model,
-            Choices =
-            [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = emittedAnyContent ? "stop" : "network_error"
-                }
-            ]
-        };
+            yield return new ChatCompletionUpdate
+            {
+                Id = completionId,
+                Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                Model = options.Model,
+                Choices =
+                [
+                    new
+                    {
+                        index = 0,
+                        delta = new { },
+                        finish_reason = emittedAnyContent ? "stop" : "network_error"
+                    }
+                ]
+            };
+        }
     }
 
     private HttpRequestMessage CreateAgentHttpRequest(
@@ -333,19 +343,21 @@ public partial class ZaiProvider
         string model,
         string agentId,
         ref string completionId,
-        ref bool emittedAnyContent)
+        ref bool emittedAnyContent,
+        ref bool emittedTerminalChunk)
     {
         if (TryGetString(root, "id") is { Length: > 0 } id)
             completionId = id;
 
         var (content, finishReason) = agentId == SlidesGlmAgentId
-            ? ExtractSlideContent(root)
-            : ExtractTranslationContent(root);
+            ? ExtractSlideContent(root, defaultFinishReason: null)
+            : ExtractTranslationContent(root, defaultFinishReason: null);
 
         if (string.IsNullOrEmpty(content) && string.IsNullOrEmpty(finishReason))
             return null;
 
         emittedAnyContent |= !string.IsNullOrEmpty(content);
+        emittedTerminalChunk |= !string.IsNullOrEmpty(finishReason);
         return new ChatCompletionUpdate
         {
             Id = completionId,
@@ -376,7 +388,9 @@ public partial class ZaiProvider
             ["zai_agent"] = root.Clone()
         };
 
-    private static (string Content, string? FinishReason) ExtractTranslationContent(JsonElement root)
+    private static (string Content, string? FinishReason) ExtractTranslationContent(
+        JsonElement root,
+        string? defaultFinishReason = "stop")
     {
         var chunks = new List<string>();
         string? finishReason = null;
@@ -391,10 +405,12 @@ public partial class ZaiProvider
                 ExtractTextFromMessages(chunks, message);
         }
 
-        return (string.Join("\n", chunks.Where(static s => !string.IsNullOrWhiteSpace(s))), finishReason ?? "stop");
+        return (string.Join("\n", chunks.Where(static s => !string.IsNullOrWhiteSpace(s))), finishReason ?? defaultFinishReason);
     }
 
-    private static (string Content, string? FinishReason) ExtractSlideContent(JsonElement root)
+    private static (string Content, string? FinishReason) ExtractSlideContent(
+        JsonElement root,
+        string? defaultFinishReason = "stop")
     {
         var chunks = new List<string>();
         string? finishReason = null;
@@ -409,7 +425,7 @@ public partial class ZaiProvider
                 ExtractSlideTextFromMessage(chunks, messages);
         }
 
-        return (string.Join("\n", chunks.Where(static s => !string.IsNullOrWhiteSpace(s))), finishReason ?? "stop");
+        return (string.Join("\n", chunks.Where(static s => !string.IsNullOrWhiteSpace(s))), finishReason ?? defaultFinishReason);
     }
 
     private static (string Content, string? FinishReason) ExtractViduContent(JsonElement root)
