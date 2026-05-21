@@ -142,7 +142,7 @@ public partial class ZaiProvider
             {
                 Id = completionId,
                 Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                Model = options.Model,
+                Model = options.Model.ToModelId("zai"),
                 Choices =
                 [
                     new
@@ -328,7 +328,7 @@ public partial class ZaiProvider
             Id = id,
             Object = "chat.completion",
             Created = created,
-            Model = model,
+            Model = model.ToModelId("zai"),
             Choices =
             [
                 new
@@ -371,7 +371,7 @@ public partial class ZaiProvider
         {
             Id = completionId,
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Model = model,
+            Model = model.ToModelId("zai"),
             Choices =
             [
                 new

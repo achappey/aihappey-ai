@@ -44,18 +44,26 @@ public partial class CerebrasProvider : IModelProvider
 
         options.Store = null;
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return EnrichChatCompletionWithGatewayCost(response, options.Model);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
         options.Store = null;
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var update in this.GetChatCompletions(_client,
+                           options,
+                           cancellationToken: cancellationToken))
+        {
+            yield return EnrichChatCompletionUpdateWithGatewayCost(update, options.Model);
+        }
     }
 
     public string GetIdentifier() => nameof(Cerebras).ToLowerInvariant();
