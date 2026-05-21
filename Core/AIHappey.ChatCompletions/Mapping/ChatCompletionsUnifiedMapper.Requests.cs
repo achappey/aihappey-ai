@@ -93,7 +93,7 @@ public static partial class ChatCompletionsUnifiedMapper
             Temperature = request.Temperature,
             ParallelToolCalls = request.ParallelToolCalls,
             Stream = request.Stream,
-            Messages = ToChatMessages(request.Input).ToList(),
+            Messages = messages,
             Tools = tools,
             ToolChoice = normalizedToolChoice,
             StreamOptions = new StreamOptions()
