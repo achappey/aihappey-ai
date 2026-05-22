@@ -536,7 +536,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["cloister"] = "X-Cloister-Key",
             ["antbase"] = "X-Antbase-Key",
             ["slancha"] = "X-Slancha-Key",
-            ["codingplanx"] = "X-CodingPlanX-Key"
+            ["codingplanx"] = "X-CodingPlanX-Key",
+            ["nodion"] = "X-Nodion-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

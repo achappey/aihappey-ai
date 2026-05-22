@@ -535,6 +535,7 @@ public class AIServiceConfig
     public ProviderConfig? Antbase { get; set; }
     public ProviderConfig? Slancha { get; set; }
     public ProviderConfig? CodingPlanX { get; set; }
+    public ProviderConfig? Nodion { get; set; }
 
 }
 
