@@ -537,6 +537,7 @@ using AIHappey.Core.Providers.Antbase;
 using AIHappey.Core.Providers.Slancha;
 using AIHappey.Core.Providers.CodingPlanX;
 using AIHappey.Core.Providers.Nodion;
+using AIHappey.Core.Providers.GeneralCompute;
 
 namespace AIHappey.Core.AI;
 
@@ -1099,6 +1100,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SlanchaProvider>();
         services.AddSingleton<IModelProvider, CodingPlanXProvider>();
         services.AddSingleton<IModelProvider, NodionProvider>();
+        services.AddSingleton<IModelProvider, GeneralComputeProvider>();
 
     }
 }

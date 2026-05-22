@@ -537,7 +537,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["antbase"] = "X-Antbase-Key",
             ["slancha"] = "X-Slancha-Key",
             ["codingplanx"] = "X-CodingPlanX-Key",
-            ["nodion"] = "X-Nodion-Key"
+            ["nodion"] = "X-Nodion-Key",
+            ["generalcompute"] = "X-GeneralCompute-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
