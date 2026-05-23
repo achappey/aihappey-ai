@@ -23,10 +23,12 @@ public sealed class ApiChatStreamFixtureTests
 {
     private const string GitHubRawFixturePath = "Fixtures/chat-completions/raw/github-chat-completions-stream.jsonl";
     private const string GroqErrorRawFixturePath = "Fixtures/chat-completions/raw/groq-error-completions-stream.jsonl";
+    private const string NinjaChatSimpleRawFixturePath = "Fixtures/chat-completions/raw/ninjachat-simple-stream.jsonl";
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/chat-completions/raw/openai-web-search-chat-completions.jsonl";
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
     private const string RelaxAiReasoningRawFixturePath = "Fixtures/chat-completions/raw/relaxai-with-reasoning-stream.jsonl";
     private const string GitHubProviderId = "github";
+    private const string NinjaChatProviderId = "ninjachat";
     private const string OpenAiProviderId = "openai";
     private const string ReasoningMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
     private const string ReasoningAndProviderToolCallsMessagesRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
@@ -622,6 +624,53 @@ public sealed class ApiChatStreamFixtureTests
     }
 
     [Fact]
+    public async Task NinjaChat_chat_completions_fixture_with_changing_chunk_ids_pins_text_span_ids_for_unified_ui_streaming()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            NinjaChatSimpleRawFixturePath,
+            NinjaChatProviderId,
+            "gemini-3-flash");
+
+        var textEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end")
+            .ToList();
+
+        Assert.Equal(
+            ["text-start", "text-delta", "text-delta", "text-delta", "text-end"],
+            textEvents.Select(streamEvent => streamEvent.Event.Type).ToArray());
+
+        var textSpanId = Assert.Single(textEvents
+            .Select(streamEvent => streamEvent.Event.Id)
+            .Distinct(StringComparer.Ordinal));
+
+        Assert.False(string.IsNullOrWhiteSpace(textSpanId));
+        Assert.Equal(
+            "Hoi Arthur! Hoe kan ik je vandaag helpen? Wil je ergens een berekening voor maken, een grafiek laten genereren of heb je een andere vraag? Laat het me weten!",
+            string.Concat(textEvents
+                .Where(streamEvent => streamEvent.Event.Type == "text-delta")
+                .Select(streamEvent => Assert.IsType<AITextDeltaEventData>(streamEvent.Event.Data).Delta)));
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(NinjaChatProviderId))
+            .ToList();
+
+        Assert.Equal(
+            ["text-start", "text-delta", "text-delta", "text-delta", "text-end", "finish"],
+            uiParts.Select(part => part.Type).ToArray());
+
+        Assert.All(uiParts.OfType<TextStartUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextDeltaUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextEndUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts[^1]);
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(503, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(256, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(759, finishPart.MessageMetadata?.Usage.TotalTokens);
+    }
+
+    [Fact]
     public async Task Openai_chat_completions_fixture_with_usage_only_tail_emits_single_terminal_finish_with_usage_metadata()
     {
         var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
@@ -648,6 +697,98 @@ public sealed class ApiChatStreamFixtureTests
         var providerMetadata = Assert.Contains(OpenAiProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(1408, providerUsage.GetProperty("prompt_tokens_details").GetProperty("cached_tokens").GetInt32());
+    }
+
+    [Fact]
+    public async Task Chat_completions_unified_stream_pins_reasoning_and_text_span_ids_when_chunk_ids_change_between_chunks()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            [
+                DeserializeChatCompletionUpdate("""
+                {"id":"chatcmpl-reason-1","object":"chat.completion.chunk","created":1779546791,"model":"fixture-model","choices":[{"index":0,"delta":{"reasoning_content":"thinking-1 "},"finish_reason":null}]}
+                """),
+                DeserializeChatCompletionUpdate("""
+                {"id":"chatcmpl-reason-2","object":"chat.completion.chunk","created":1779546792,"model":"fixture-model","choices":[{"index":0,"delta":{"reasoning_content":"thinking-2"},"finish_reason":null}]}
+                """),
+                DeserializeChatCompletionUpdate("""
+                {"id":"chatcmpl-text-1","object":"chat.completion.chunk","created":1779546793,"model":"fixture-model","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+                """),
+                DeserializeChatCompletionUpdate("""
+                {"id":"chatcmpl-text-2","object":"chat.completion.chunk","created":1779546794,"model":"fixture-model","choices":[{"index":0,"delta":{"content":" world"},"finish_reason":null}]}
+                """),
+                DeserializeChatCompletionUpdate("""
+                {"id":"chatcmpl-finish-1","object":"chat.completion.chunk","created":1779546795,"model":"fixture-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":11,"completion_tokens":7,"total_tokens":18}}
+                """)
+            ],
+            ProviderId,
+            "fixture-model");
+
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-delta",
+            "reasoning-end",
+            "text-start",
+            "text-delta",
+            "text-delta",
+            "text-end",
+            "finish");
+
+        var reasoningEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
+            .ToList();
+
+        var reasoningSpanId = Assert.Single(reasoningEvents
+            .Select(streamEvent => streamEvent.Event.Id)
+            .Distinct(StringComparer.Ordinal));
+
+        Assert.Equal("chatcmpl-reason-1", reasoningSpanId);
+        Assert.Equal(
+            "thinking-1 thinking-2",
+            string.Concat(reasoningEvents
+                .Where(streamEvent => streamEvent.Event.Type == "reasoning-delta")
+                .Select(streamEvent => Assert.IsType<AIReasoningDeltaEventData>(streamEvent.Event.Data).Delta)));
+
+        var textEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end")
+            .ToList();
+
+        var textSpanId = Assert.Single(textEvents
+            .Select(streamEvent => streamEvent.Event.Id)
+            .Distinct(StringComparer.Ordinal));
+
+        Assert.Equal("chatcmpl-text-1", textSpanId);
+        Assert.Equal(
+            "Hello world",
+            string.Concat(textEvents
+                .Where(streamEvent => streamEvent.Event.Type == "text-delta")
+                .Select(streamEvent => Assert.IsType<AITextDeltaEventData>(streamEvent.Event.Data).Delta)));
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is
+                "reasoning-start" or
+                "reasoning-delta" or
+                "reasoning-end" or
+                "text-start" or
+                "text-delta" or
+                "text-end" or
+                "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        Assert.All(uiParts.OfType<ReasoningStartUIPart>(), part => Assert.Equal(reasoningSpanId, part.Id));
+        Assert.All(uiParts.OfType<ReasoningDeltaUIPart>(), part => Assert.Equal(reasoningSpanId, part.Id));
+        Assert.All(uiParts.OfType<ReasoningEndUIPart>(), part => Assert.Equal(reasoningSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextStartUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextDeltaUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextEndUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts[^1]);
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(11, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(7, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(18, finishPart.MessageMetadata?.Usage.TotalTokens);
     }
 
     [Fact]
@@ -1156,8 +1297,14 @@ public sealed class ApiChatStreamFixtureTests
         string relativePath,
         string providerId,
         string model)
+        => await LoadChatCompletionUnifiedEventsAsync(LoadChatCompletionRawFixture(relativePath), providerId, model);
+
+    private static async Task<List<AIStreamEvent>> LoadChatCompletionUnifiedEventsAsync(
+        IReadOnlyList<ChatCompletionUpdate> updates,
+        string providerId,
+        string model)
     {
-        var provider = new FixtureChatCompletionStreamModelProvider(providerId, LoadChatCompletionRawFixture(relativePath));
+        var provider = new FixtureChatCompletionStreamModelProvider(providerId, updates);
         var request = new AIRequest
         {
             ProviderId = providerId,

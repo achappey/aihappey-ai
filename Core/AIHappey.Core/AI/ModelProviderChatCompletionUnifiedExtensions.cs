@@ -95,6 +95,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             var reasoningStarted = false;
             var finishObserved = false;
             string? activeId = null;
+            string? activeTextSpanId = null;
+            string? activeReasoningSpanId = null;
             string? activeModel = null;
             DateTimeOffset? lastTimestamp = null;
             Dictionary<string, object?>? lastMetadata = null;
@@ -121,110 +123,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                 foreach (var mapped in update.ToUnifiedStreamEvents(modelProvider.GetIdentifier(), mappingState))
                 {
-                    var normalizedType = NormalizeEventType(mapped.Event.Type);
-                    var eventId = mapped.Event.Id ?? update.Id;
-
-                    if (!string.IsNullOrWhiteSpace(eventId))
-                        activeId = eventId;
-
-                    if (!string.IsNullOrWhiteSpace(update.Model))
-                        activeModel = update.Model;
-
-                    if (mapped.Event.Timestamp is not null
-                        && (update.Created > 0 || normalizedType != "error"))
-                    {
-                        lastTimestamp = mapped.Event.Timestamp;
-                    }
-
-                    lastMetadata = mapped.Metadata ?? lastMetadata;
-
-                    if (normalizedType == "reasoning-start")
-                        reasoningStarted = true;
-
-                    if (normalizedType == "reasoning-end")
-                        reasoningStarted = false;
-
-                    if (normalizedType == "text-start")
-                        textStarted = true;
-
-                    if (normalizedType == "text-end")
-                        textStarted = false;
-
-                    if (normalizedType == "reasoning-delta" && !reasoningStarted)
-                    {
-                        if (textStarted)
-                        {
-                            textStarted = false;
-                            yield return CreateSyntheticStreamEvent(
-                                providerId: modelProvider.GetIdentifier(),
-                                type: "text-end",
-                                id: activeId,
-                                timestamp: mapped.Event.Timestamp,
-                                metadata: mapped.Metadata);
-                        }
-
-                        reasoningStarted = true;
-                        yield return CreateSyntheticStreamEvent(
-                            providerId: modelProvider.GetIdentifier(),
-                            type: "reasoning-start",
-                            id: activeId,
-                            timestamp: mapped.Event.Timestamp,
-                            metadata: mapped.Metadata);
-                    }
-
-                    if (normalizedType == "text-delta" && !textStarted)
-                    {
-                        if (reasoningStarted)
-                        {
-                            reasoningStarted = false;
-                            yield return CreateSyntheticStreamEvent(
-                                providerId: modelProvider.GetIdentifier(),
-                                type: "reasoning-end",
-                                id: activeId,
-                                timestamp: mapped.Event.Timestamp,
-                                metadata: mapped.Metadata);
-                        }
-
-                        textStarted = true;
-                        yield return CreateSyntheticStreamEvent(
-                            providerId: modelProvider.GetIdentifier(),
-                            type: "text-start",
-                            id: activeId,
-                            timestamp: mapped.Event.Timestamp,
-                            metadata: mapped.Metadata);
-                    }
-
-                    if (normalizedType == "finish")
-                    {
-                        finishObserved = true;
-
-                        if (reasoningStarted)
-                        {
-                            reasoningStarted = false;
-                            yield return CreateSyntheticStreamEvent(
-                                providerId: modelProvider.GetIdentifier(),
-                                type: "reasoning-end",
-                                id: activeId,
-                                timestamp: mapped.Event.Timestamp,
-                                metadata: mapped.Metadata);
-                        }
-
-                        if (textStarted)
-                        {
-                            textStarted = false;
-                            yield return CreateSyntheticStreamEvent(
-                                providerId: modelProvider.GetIdentifier(),
-                                type: "text-end",
-                                id: activeId,
-                                timestamp: mapped.Event.Timestamp,
-                                metadata: mapped.Metadata);
-                        }
-
-                        pendingFinish = mapped;
-                        continue;
-                    }
-
-                    yield return mapped;
+                    foreach (var streamEvent in ProcessStreamEvent(mapped, update))
+                        yield return streamEvent;
                 }
 
                 if (rawChunkMapper is null)
@@ -232,18 +132,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
                 foreach (var extraEvent in rawChunkMapper(update))
                 {
-                    var extraEventId = extraEvent.Event.Id;
-                    if (!string.IsNullOrWhiteSpace(extraEventId))
-                        activeId = extraEventId;
-
-                    if (extraEvent.Event.Timestamp is not null
-                        && (update.Created > 0 || NormalizeEventType(extraEvent.Event.Type) != "error"))
-                    {
-                        lastTimestamp = extraEvent.Event.Timestamp;
-                    }
-
-                    lastMetadata = extraEvent.Metadata ?? lastMetadata;
-                    yield return extraEvent;
+                    foreach (var streamEvent in ProcessStreamEvent(extraEvent, update))
+                        yield return streamEvent;
                 }
             }
 
@@ -284,10 +174,12 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                 if (reasoningStarted)
                 {
                     reasoningStarted = false;
+                    var reasoningEndId = activeReasoningSpanId ?? activeId;
+                    activeReasoningSpanId = null;
                     yield return CreateSyntheticStreamEvent(
                         providerId: modelProvider.GetIdentifier(),
                         type: "reasoning-end",
-                        id: activeId,
+                        id: reasoningEndId,
                         timestamp: finishTimestamp,
                         metadata: lastMetadata);
                 }
@@ -295,10 +187,12 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                 if (textStarted)
                 {
                     textStarted = false;
+                    var textEndId = activeTextSpanId ?? activeId;
+                    activeTextSpanId = null;
                     yield return CreateSyntheticStreamEvent(
                         providerId: modelProvider.GetIdentifier(),
                         type: "text-end",
-                        id: activeId,
+                        id: textEndId,
                         timestamp: finishTimestamp,
                         metadata: lastMetadata);
                 }
@@ -315,6 +209,136 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                     totalTokens: totalTokens,
                     rawUsage: rawUsage);
             }
+
+            IEnumerable<AIStreamEvent> ProcessStreamEvent(AIStreamEvent streamEvent, ChatCompletionUpdate update)
+            {
+                var normalizedType = NormalizeEventType(streamEvent.Event.Type);
+                var providerEventId = streamEvent.Event.Id ?? update.Id;
+
+                if (!string.IsNullOrWhiteSpace(providerEventId))
+                    activeId = providerEventId;
+
+                if (!string.IsNullOrWhiteSpace(update.Model))
+                    activeModel = update.Model;
+
+                if (streamEvent.Event.Timestamp is not null
+                    && (update.Created > 0 || normalizedType != "error"))
+                {
+                    lastTimestamp = streamEvent.Event.Timestamp;
+                }
+
+                lastMetadata = streamEvent.Metadata ?? lastMetadata;
+
+                var stabilizedEvent = PinActiveSpanEventId(
+                    streamEvent,
+                    normalizedType,
+                    providerEventId,
+                    ref activeTextSpanId,
+                    ref activeReasoningSpanId,
+                    fallbackId: activeId);
+
+                if (normalizedType == "reasoning-delta" && !reasoningStarted)
+                {
+                    if (textStarted)
+                    {
+                        textStarted = false;
+                        var textEndId = activeTextSpanId ?? providerEventId ?? activeId;
+                        activeTextSpanId = null;
+                        yield return CreateSyntheticStreamEvent(
+                            providerId: modelProvider.GetIdentifier(),
+                            type: "text-end",
+                            id: textEndId,
+                            timestamp: stabilizedEvent.Event.Timestamp,
+                            metadata: stabilizedEvent.Metadata);
+                    }
+
+                    reasoningStarted = true;
+                    yield return CreateSyntheticStreamEvent(
+                        providerId: modelProvider.GetIdentifier(),
+                        type: "reasoning-start",
+                        id: activeReasoningSpanId,
+                        timestamp: stabilizedEvent.Event.Timestamp,
+                        metadata: stabilizedEvent.Metadata);
+                }
+
+                if (normalizedType == "text-delta" && !textStarted)
+                {
+                    if (reasoningStarted)
+                    {
+                        reasoningStarted = false;
+                        var reasoningEndId = activeReasoningSpanId ?? providerEventId ?? activeId;
+                        activeReasoningSpanId = null;
+                        yield return CreateSyntheticStreamEvent(
+                            providerId: modelProvider.GetIdentifier(),
+                            type: "reasoning-end",
+                            id: reasoningEndId,
+                            timestamp: stabilizedEvent.Event.Timestamp,
+                            metadata: stabilizedEvent.Metadata);
+                    }
+
+                    textStarted = true;
+                    yield return CreateSyntheticStreamEvent(
+                        providerId: modelProvider.GetIdentifier(),
+                        type: "text-start",
+                        id: activeTextSpanId,
+                        timestamp: stabilizedEvent.Event.Timestamp,
+                        metadata: stabilizedEvent.Metadata);
+                }
+
+                if (normalizedType == "reasoning-start")
+                    reasoningStarted = true;
+
+                if (normalizedType == "reasoning-end")
+                {
+                    reasoningStarted = false;
+                    activeReasoningSpanId = null;
+                }
+
+                if (normalizedType == "text-start")
+                    textStarted = true;
+
+                if (normalizedType == "text-end")
+                {
+                    textStarted = false;
+                    activeTextSpanId = null;
+                }
+
+                if (normalizedType == "finish")
+                {
+                    finishObserved = true;
+
+                    if (reasoningStarted)
+                    {
+                        reasoningStarted = false;
+                        var reasoningEndId = activeReasoningSpanId ?? providerEventId ?? activeId;
+                        activeReasoningSpanId = null;
+                        yield return CreateSyntheticStreamEvent(
+                            providerId: modelProvider.GetIdentifier(),
+                            type: "reasoning-end",
+                            id: reasoningEndId,
+                            timestamp: stabilizedEvent.Event.Timestamp,
+                            metadata: stabilizedEvent.Metadata);
+                    }
+
+                    if (textStarted)
+                    {
+                        textStarted = false;
+                        var textEndId = activeTextSpanId ?? providerEventId ?? activeId;
+                        activeTextSpanId = null;
+                        yield return CreateSyntheticStreamEvent(
+                            providerId: modelProvider.GetIdentifier(),
+                            type: "text-end",
+                            id: textEndId,
+                            timestamp: stabilizedEvent.Event.Timestamp,
+                            metadata: stabilizedEvent.Metadata);
+                    }
+
+                    pendingFinish = stabilizedEvent;
+                    yield break;
+                }
+
+                yield return stabilizedEvent;
+            }
         }
     }
 
@@ -326,6 +350,87 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         return type.StartsWith("vercel.ui.", StringComparison.OrdinalIgnoreCase)
             ? type["vercel.ui.".Length..]
             : type;
+    }
+
+    private static AIStreamEvent PinActiveSpanEventId(
+        AIStreamEvent streamEvent,
+        string normalizedType,
+        string? providerEventId,
+        ref string? activeTextSpanId,
+        ref string? activeReasoningSpanId,
+        string? fallbackId)
+    {
+        if (IsTextSpanEventType(normalizedType))
+        {
+            var pinnedId = ResolvePinnedSpanEventId(
+                normalizedType,
+                providerEventId,
+                fallbackId,
+                ref activeTextSpanId);
+
+            return RewriteStreamEventId(streamEvent, pinnedId);
+        }
+
+        if (IsReasoningSpanEventType(normalizedType))
+        {
+            var pinnedId = ResolvePinnedSpanEventId(
+                normalizedType,
+                providerEventId,
+                fallbackId,
+                ref activeReasoningSpanId);
+
+            return RewriteStreamEventId(streamEvent, pinnedId);
+        }
+
+        return streamEvent;
+    }
+
+    private static string? ResolvePinnedSpanEventId(
+        string normalizedType,
+        string? providerEventId,
+        string? fallbackId,
+        ref string? activeSpanId)
+    {
+        if (normalizedType is "text-start" or "text-delta" or "reasoning-start" or "reasoning-delta")
+            return EnsureActiveSpanId(ref activeSpanId, providerEventId, fallbackId);
+
+        return activeSpanId ?? providerEventId ?? fallbackId;
+    }
+
+    private static string? EnsureActiveSpanId(ref string? activeSpanId, string? providerEventId, string? fallbackId)
+    {
+        if (string.IsNullOrWhiteSpace(activeSpanId))
+            activeSpanId = !string.IsNullOrWhiteSpace(providerEventId) ? providerEventId : fallbackId;
+
+        return activeSpanId;
+    }
+
+    private static bool IsTextSpanEventType(string normalizedType)
+        => normalizedType is "text-start" or "text-delta" or "text-end";
+
+    private static bool IsReasoningSpanEventType(string normalizedType)
+        => normalizedType is "reasoning-start" or "reasoning-delta" or "reasoning-end";
+
+    private static AIStreamEvent RewriteStreamEventId(AIStreamEvent streamEvent, string? id)
+    {
+        if (string.Equals(streamEvent.Event.Id, id, StringComparison.Ordinal))
+            return streamEvent;
+
+        return new AIStreamEvent
+        {
+            ProviderId = streamEvent.ProviderId,
+            Metadata = streamEvent.Metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = streamEvent.Event.Type,
+                Id = id,
+                Timestamp = streamEvent.Event.Timestamp,
+                Input = streamEvent.Event.Input,
+                Output = streamEvent.Event.Output,
+                Data = streamEvent.Event.Data,
+                Metadata = streamEvent.Event.Metadata
+            }
+        };
     }
 
     private static AIStreamEvent CreateSyntheticStreamEvent(

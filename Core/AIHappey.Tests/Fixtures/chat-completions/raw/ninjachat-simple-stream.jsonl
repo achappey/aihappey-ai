@@ -1,0 +1,11 @@
+data: {"id":"chatcmpl-1779546791553","object":"chat.completion.chunk","model":"gemini-3-flash","routing":{"requested":"auto-fast","resolved":"gemini-3-flash","task_type":"quick","reasoning":"Regex-detected task: quick","classified_by":"regex"},"choices":[{"index":0,"delta":{},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-1779546793607","object":"chat.completion.chunk","model":"gemini-3-flash","choices":[{"index":0,"delta":{"content":"Hoi Arthur!"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-1779546793760","object":"chat.completion.chunk","model":"gemini-3-flash","choices":[{"index":0,"delta":{"content":" Hoe kan ik je vandaag helpen? Wil je ergens een berekening voor maken, een grafiek laten genereren of heb je een andere"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-1779546793784","object":"chat.completion.chunk","model":"gemini-3-flash","choices":[{"index":0,"delta":{"content":" vraag? Laat het me weten!"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-1779546793792","object":"chat.completion.chunk","model":"gemini-3-flash","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":503,"completion_tokens":256,"total_tokens":759},"cost":{"this_request":"$0.003"}}
+
+data: [DONE]
