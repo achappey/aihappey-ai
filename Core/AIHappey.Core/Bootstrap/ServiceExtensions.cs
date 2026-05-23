@@ -370,7 +370,7 @@ using AIHappey.Core.Providers.ElkAPI;
 using AIHappey.Core.Providers.Vultr;
 using AIHappey.Core.Providers.OfoxAI;
 using AIHappey.Core.Providers.DedalusLabs;
-using AIHappey.Core.Providers.World3;
+using AIHappey.Core.Providers.RouterLink;
 using AIHappey.Core.Providers.VoidAI;
 using AIHappey.Core.Providers.ModelMax;
 using AIHappey.Core.Providers.Yollomi;
@@ -932,7 +932,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, VultrProvider>();
         services.AddSingleton<IModelProvider, OfoxAIProvider>();
         services.AddSingleton<IModelProvider, DedalusLabsProvider>();
-        services.AddSingleton<IModelProvider, World3Provider>();
+        services.AddSingleton<IModelProvider, RouterLinkProvider>();
         services.AddSingleton<IModelProvider, VoidAIProvider>();
         services.AddSingleton<IModelProvider, ModelMaxProvider>();
         services.AddSingleton<IModelProvider, YollomiProvider>();

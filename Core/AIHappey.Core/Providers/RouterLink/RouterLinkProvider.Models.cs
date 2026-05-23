@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.World3;
+namespace AIHappey.Core.Providers.RouterLink;
 
-public partial class World3Provider
+public partial class RouterLinkProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -15,15 +15,13 @@ public partial class World3Provider
             cacheKey,
             async ct =>
             {
-
-
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?page_size=100");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"World3 API error: {err}");
+                    throw new Exception($"RouterLink API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
