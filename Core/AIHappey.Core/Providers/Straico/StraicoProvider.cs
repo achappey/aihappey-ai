@@ -133,8 +133,16 @@ public partial class StraicoProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+      => IsStraicoAgentModel(request.Model)
+            ? ExecuteStraicoAgentUnifiedAsync(request, cancellationToken)
+            : IsStraicoRagModel(request.Model)
+                ? ExecuteStraicoRagUnifiedAsync(request, cancellationToken)
+                : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => IsStraicoAgentModel(request.Model)
+            ? StreamStraicoAgentUnifiedAsync(request, cancellationToken)
+            : IsStraicoRagModel(request.Model)
+                ? StreamStraicoRagUnifiedAsync(request, cancellationToken)
+                : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }
