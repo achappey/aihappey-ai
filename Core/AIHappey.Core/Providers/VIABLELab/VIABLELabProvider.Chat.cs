@@ -1,6 +1,7 @@
-using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.VIABLELab;
 
@@ -9,15 +10,18 @@ public partial class VIABLELabProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (chatRequest.Model.EndsWith("/vetting", StringComparison.OrdinalIgnoreCase))
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            throw new NotSupportedException("VIABLELab vetting endpoint does not support streaming.");
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
 
-        ApplyAuthHeader();
-
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            cancellationToken: cancellationToken))
-            yield return update;
+        yield break;
     }
 }

@@ -513,7 +513,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Venice         | ✅        | ✅                | ✅            | ✅            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ➖          |
 | Verbatik       | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Verda          | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
-| VIABLELab      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| VIABLELab      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | VLMRun         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ✅          |
 | VibeKit        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Vidu           | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
