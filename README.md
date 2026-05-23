@@ -491,7 +491,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | TextSynth      | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | TigerCity      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TikHubAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Tinfoil        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Tinfoil        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ToAPIs         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Together       | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ✅          | ✅          | ➖          |
 | Token360       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ➖               | ➖          | ❌          | ➖          |
