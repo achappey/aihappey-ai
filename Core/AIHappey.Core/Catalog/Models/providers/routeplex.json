@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "routeplex/routeplex-ai",
+      "object": "model",
+      "owned_by": "RoutePlex",
+      "name": "RoutePlex AI Mode",
+      "type": "language",
+      "description": "Let our intelligent router select the optimal model automatically. By default, RoutePlex analyzes your prompt — detecting intent, complexity, and domain — to pick the best model for each request. This mode provides automatic fallbacks and cost optimization."
+    }
+  ]
+}
