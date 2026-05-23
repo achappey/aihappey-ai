@@ -14,10 +14,10 @@ public partial class NinjaChatProvider
         if (IsNativeSearchModel(options.Model))
             return await ExecuteNativeSearchChatCompletionAsync(options, cancellationToken);
 
-        return await _client.GetChatCompletion(
+        return await this.GetChatCompletion(_client,
              options,
              relativeUrl: "v1/chat",
-             ct: cancellationToken);
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -27,10 +27,10 @@ public partial class NinjaChatProvider
         if (IsNativeSearchModel(options.Model))
             return ExecuteNativeSearchChatCompletionStreamingAsync(options, cancellationToken);
 
-        return _client.GetChatCompletionUpdates(
+        return this.GetChatCompletions(_client,
                     options,
                     relativeUrl: "v1/chat",
-                    ct: cancellationToken);
+                    cancellationToken: cancellationToken);
     }
 
     private NinjaChatSearchRequest BuildNativeSearchRequest(ChatCompletionOptions options)

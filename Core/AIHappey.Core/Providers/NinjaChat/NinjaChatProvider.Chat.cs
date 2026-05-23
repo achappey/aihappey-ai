@@ -4,6 +4,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Common.Extensions;
 using System.Text.Json;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.NinjaChat;
@@ -13,20 +14,19 @@ public partial class NinjaChatProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        if (IsNativeSearchModel(chatRequest.Model))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            await foreach (var part in ExecuteNativeSearchUiStreamAsync(chatRequest, cancellationToken))
-                yield return part;
-
-            yield break;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
 
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            url: "v1/chat",
-            cancellationToken: cancellationToken))
-            yield return update;
+        yield break;
     }
 
     private Dictionary<string, object?>? GetRawProviderPassthroughFromChatRequest(ChatRequest request)
