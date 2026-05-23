@@ -62,6 +62,17 @@ public static class ProviderBackendCapture
         return new ProviderBackendCaptureSink(path, CreateWriter(path));
     }
 
+    public static ProviderBackendCaptureJsonArraySink? BeginJsonArrayCapture(
+        string endpointFamily,
+        HttpResponseMessage response,
+        ProviderBackendCaptureRequest? request = null)
+    {
+        if (!TryResolvePath(endpointFamily, response, request, isStream: false, out var path))
+            return null;
+
+        return new ProviderBackendCaptureJsonArraySink(path, CreateWriter(path));
+    }
+
     public static async Task<string?> CaptureJsonAsync(
         string endpointFamily,
         HttpResponseMessage response,
@@ -213,4 +224,47 @@ public sealed class ProviderBackendCaptureSink(string filePath, StreamWriter wri
 
     public ValueTask DisposeAsync()
         => writer.DisposeAsync();
+}
+
+public sealed class ProviderBackendCaptureJsonArraySink(string filePath, StreamWriter writer) : IAsyncDisposable
+{
+    private bool _hasEntries;
+    private bool _disposed;
+
+    public string FilePath { get; } = filePath;
+
+    public async ValueTask WriteRawJsonEntryAsync(string json, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(ProviderBackendCaptureJsonArraySink));
+
+        if (!_hasEntries)
+        {
+            await writer.WriteLineAsync("[".AsMemory(), cancellationToken);
+            _hasEntries = true;
+        }
+        else
+        {
+            await writer.WriteLineAsync(",".AsMemory(), cancellationToken);
+        }
+
+        await writer.WriteAsync(json.AsMemory(), cancellationToken);
+        await writer.FlushAsync(cancellationToken);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+
+        if (!_hasEntries)
+            await writer.WriteLineAsync("[]".AsMemory());
+        else
+            await writer.WriteLineAsync("\n]".AsMemory());
+
+        _disposed = true;
+        await writer.DisposeAsync();
+    }
 }

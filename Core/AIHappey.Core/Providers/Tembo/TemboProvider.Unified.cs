@@ -1,7 +1,11 @@
+using System.Net;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Abstractions.Http;
+using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
@@ -24,7 +28,8 @@ public partial class TemboProvider
 
         var prompt = BuildPrompt(request);
         var providerOptions = GetProviderOptions(request.Metadata);
-        var execution = await ExecuteTemboAsync(request, prompt, providerOptions, cancellationToken);
+        var capture = GetTemboBackendCapture(request, GetIdentifier());
+        var execution = await ExecuteTemboAsync(request, prompt, providerOptions, capture, cancellationToken);
         return CreateUnifiedResponse(request, execution);
     }
 
@@ -41,6 +46,7 @@ public partial class TemboProvider
         var eventId = request.Id ?? Guid.NewGuid().ToString("N");
         var prompt = BuildPrompt(request);
         var providerOptions = GetProviderOptions(request.Metadata);
+        var capture = GetTemboBackendCapture(request, providerId);
         var plan = CreateExecutionPlan(request, prompt, providerOptions, eventId);
         var timestamp = DateTimeOffset.UtcNow;
         var submittedPayloadJson = JsonSerializer.Serialize(plan.Payload, JsonOptions);
@@ -86,7 +92,8 @@ public partial class TemboProvider
             timestamp,
             null);
 
-        var execution = await SubmitTemboAsync(plan, cancellationToken);
+        await using var captureSink = await BeginTemboTaskCaptureAsync(plan, capture, cancellationToken);
+        var execution = await SubmitTemboAsync(plan, captureSink, cancellationToken);
 
         yield return CreateStreamEvent(
             providerId,
@@ -96,31 +103,41 @@ public partial class TemboProvider
             DateTimeOffset.UtcNow,
             null);
 
-        var latestStatusText = GetStreamingStatusText(execution);
-        var textStarted = false;
+        var titleText = BuildTaskTitleText(execution);
+        var titleMessageEmitted = false;
 
-        if (!string.IsNullOrWhiteSpace(latestStatusText) && ShouldPoll(execution))
+        if (!string.IsNullOrWhiteSpace(titleText))
         {
+            var titleEventId = $"{eventId}_title";
+
             yield return CreateStreamEvent(
                 providerId,
-                eventId,
+                titleEventId,
                 "text-start",
                 new AITextStartEventData(),
                 DateTimeOffset.UtcNow,
                 null);
 
-            textStarted = true;
+            yield return CreateStreamEvent(
+                providerId,
+                titleEventId,
+                "text-delta",
+                new AITextDeltaEventData { Delta = titleText },
+                DateTimeOffset.UtcNow,
+                null);
 
             yield return CreateStreamEvent(
                 providerId,
-                eventId,
-                "text-delta",
-                new AITextDeltaEventData { Delta = latestStatusText },
+                titleEventId,
+                "text-end",
+                new AITextEndEventData(),
                 DateTimeOffset.UtcNow,
                 null);
+
+            titleMessageEmitted = true;
         }
 
-        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, cancellationToken))
+        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, captureSink, cancellationToken))
         {
             execution = updatedExecution;
 
@@ -132,40 +149,16 @@ public partial class TemboProvider
                 DateTimeOffset.UtcNow,
                 null);
 
-            var statusText = GetStreamingStatusText(execution);
-            if (!string.IsNullOrWhiteSpace(statusText)
-                && !string.Equals(statusText, latestStatusText, StringComparison.Ordinal))
-            {
-                if (!textStarted)
-                {
-                    yield return CreateStreamEvent(
-                        providerId,
-                        eventId,
-                        "text-start",
-                        new AITextStartEventData(),
-                        DateTimeOffset.UtcNow,
-                        null);
-
-                    textStarted = true;
-                }
-
-                latestStatusText = statusText;
-
-                yield return CreateStreamEvent(
-                    providerId,
-                    eventId,
-                    "text-delta",
-                    new AITextDeltaEventData { Delta = "\n\n" + statusText },
-                    DateTimeOffset.UtcNow,
-                    null);
-            }
+            // Polling is intentionally silent for end users. The stream emits the
+            // generated task title once, then emits a pull request summary when
+            // Tembo has created pull requests.
         }
 
         EnsureSuccessfulExecution(execution);
 
         var response = CreateUnifiedResponse(request, execution);
         var metadata = response.Metadata;
-        var completionText = BuildCompletionText(execution);
+        var pullRequestText = BuildPullRequestSummaryText(execution);
 
         if (!string.IsNullOrWhiteSpace(execution.HtmlUrl))
         {
@@ -193,34 +186,64 @@ public partial class TemboProvider
                 metadata);
         }
 
-        if (!textStarted)
+        if (!string.IsNullOrWhiteSpace(pullRequestText))
         {
+            var pullRequestEventId = $"{eventId}_pull_requests";
+
             yield return CreateStreamEvent(
                 providerId,
-                eventId,
+                pullRequestEventId,
                 "text-start",
                 new AITextStartEventData(),
                 DateTimeOffset.UtcNow,
                 metadata);
 
-            textStarted = true;
+            yield return CreateStreamEvent(
+                providerId,
+                pullRequestEventId,
+                "text-delta",
+                new AITextDeltaEventData { Delta = pullRequestText },
+                DateTimeOffset.UtcNow,
+                metadata);
+
+            yield return CreateStreamEvent(
+                providerId,
+                pullRequestEventId,
+                "text-end",
+                new AITextEndEventData(),
+                DateTimeOffset.UtcNow,
+                metadata);
         }
+        else if (!titleMessageEmitted)
+        {
+            var fallbackText = BuildCompletionText(execution);
+            if (!string.IsNullOrWhiteSpace(fallbackText))
+            {
+                yield return CreateStreamEvent(
+                    providerId,
+                    eventId,
+                    "text-start",
+                    new AITextStartEventData(),
+                    DateTimeOffset.UtcNow,
+                    metadata);
 
-        yield return CreateStreamEvent(
-            providerId,
-            eventId,
-            "text-delta",
-            new AITextDeltaEventData { Delta = textStarted && !string.IsNullOrWhiteSpace(latestStatusText) ? "\n\n" + completionText : completionText },
-            DateTimeOffset.UtcNow,
-            metadata);
+                yield return CreateStreamEvent(
+                    providerId,
+                    eventId,
+                    "text-delta",
+                    new AITextDeltaEventData { Delta = fallbackText },
+                    DateTimeOffset.UtcNow,
+                    metadata);
 
-        yield return CreateStreamEvent(
-            providerId,
-            eventId,
-            "text-end",
-            new AITextEndEventData(),
-            DateTimeOffset.UtcNow,
-            metadata);
+                yield return CreateStreamEvent(
+                    providerId,
+                    eventId,
+                    "text-end",
+                    new AITextEndEventData(),
+                    DateTimeOffset.UtcNow,
+                    metadata);
+            }
+        }
 
         yield return new AIStreamEvent
         {
@@ -250,12 +273,14 @@ public partial class TemboProvider
         AIRequest request,
         string prompt,
         JsonElement? providerOptions,
+        ProviderBackendCaptureRequest? capture,
         CancellationToken cancellationToken)
     {
         var plan = CreateExecutionPlan(request, prompt, providerOptions, request.Id ?? Guid.NewGuid().ToString("N"));
-        var execution = await SubmitTemboAsync(plan, cancellationToken);
+        await using var captureSink = await BeginTemboTaskCaptureAsync(plan, capture, cancellationToken);
+        var execution = await SubmitTemboAsync(plan, captureSink, cancellationToken);
 
-        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, cancellationToken))
+        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, captureSink, cancellationToken))
             execution = updatedExecution;
 
         EnsureSuccessfulExecution(execution);
@@ -264,7 +289,7 @@ public partial class TemboProvider
 
     private TemboExecutionPlan CreateExecutionPlan(AIRequest request, string prompt, JsonElement? providerOptions, string eventId)
     {
-        var localModel = NormalizeModel(request.Model);
+        var localModel = request.Model;
         var keyOrId = providerOptions is JsonElement options ? TryReadString(options, "keyOrId") : null;
         var isAutomation = string.Equals(localModel, "agent", StringComparison.OrdinalIgnoreCase);
 
@@ -291,34 +316,103 @@ public partial class TemboProvider
             CreateSessionPayload(request, prompt, localModel, providerOptions));
     }
 
-    private async Task<TemboExecutionResult> SubmitTemboAsync(TemboExecutionPlan plan, CancellationToken cancellationToken)
+    private async Task<TemboExecutionResult> SubmitTemboAsync(
+        TemboExecutionPlan plan,
+        TemboTaskCaptureSink? captureSink,
+        CancellationToken cancellationToken)
         => plan.Kind switch
         {
-            TemboExecutionKind.AutomationTrigger => await TriggerAutomationAsync(plan, cancellationToken),
-            _ => await CreateSessionAsync(plan, cancellationToken)
+            TemboExecutionKind.AutomationTrigger => await TriggerAutomationAsync(plan, captureSink, cancellationToken),
+            _ => await CreateSessionAsync(plan, captureSink, cancellationToken)
         };
 
-    private async Task<TemboExecutionResult> CreateSessionAsync(TemboExecutionPlan plan, CancellationToken cancellationToken)
+
+    private async Task<TemboExecutionResult> CreateSessionAsync(
+        TemboExecutionPlan plan,
+        TemboTaskCaptureSink? captureSink,
+        CancellationToken cancellationToken)
     {
         var submittedPayloadJson = JsonSerializer.Serialize(plan.Payload, JsonOptions);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "session/create")
+        var key = _keyResolver.Resolve(GetIdentifier());
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "https://api.tembo.io/task/create")
         {
-            Content = new StringContent(submittedPayloadJson, Encoding.UTF8, "application/json")
+            Version = HttpVersion.Version11,
+            VersionPolicy = HttpVersionPolicy.RequestVersionExact,
+            Content = new StringContent(submittedPayloadJson, Encoding.UTF8)
+        };
+
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", key);
+
+        request.Headers.Accept.ParseAdd("*/*");
+
+        // mimic Postman first, because Postman works
+        request.Headers.TryAddWithoutValidation("User-Agent", "PostmanRuntime/7.43.0");
+        request.Headers.TryAddWithoutValidation("Cache-Control", "no-cache");
+
+        using var response = await _client.SendAsync(
+            request,
+            HttpCompletionOption.ResponseContentRead,
+            cancellationToken);
+
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        await CaptureTemboRawJsonAsync(captureSink, raw, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"""
+        Tembo task/create error
+        URL: {request.RequestUri}
+        HTTP version: {request.Version}
+        Status: {(int)response.StatusCode} {response.ReasonPhrase}
+        Content-Type: {request.Content.Headers.ContentType}
+        User-Agent: {string.Join(" ", request.Headers.UserAgent)}
+        Payload: {submittedPayloadJson}
+        Response: {raw}
+        """);
+        }
+
+        var task = JsonSerializer.Deserialize<TemboSession>(raw, JsonOptions)
+            ?? throw new InvalidOperationException("Tembo returned an empty task/create response.");
+
+        return TemboExecutionResult.ForSession(
+            plan,
+            submittedPayloadJson,
+            raw,
+            task with { RawJson = raw });
+    }
+
+    private async Task<TemboExecutionResult> CreateSessionAsync2(TemboExecutionPlan plan, CancellationToken cancellationToken)
+    {
+        var submittedPayloadJson = JsonSerializer.Serialize(plan.Payload, JsonOptions);
+        var content = new StringContent(submittedPayloadJson, Encoding.UTF8);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "task/create")
+        {
+            Content = content
         };
 
         using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)
-            throw new HttpRequestException($"Tembo session/create error: {(int)response.StatusCode} {response.ReasonPhrase}: {ExtractErrorMessage(raw)}");
+            throw new HttpRequestException($"Tembo task/create error: {(int)response.StatusCode} {response.ReasonPhrase}: {ExtractErrorMessage(raw)}");
 
         var session = JsonSerializer.Deserialize<TemboSession>(raw, JsonOptions)
-            ?? throw new InvalidOperationException("Tembo returned an empty session/create response.");
+            ?? throw new InvalidOperationException("Tembo returned an empty task/create response.");
 
         return TemboExecutionResult.ForSession(plan, submittedPayloadJson, raw, session with { RawJson = raw });
     }
 
-    private async Task<TemboExecutionResult> TriggerAutomationAsync(TemboExecutionPlan plan, CancellationToken cancellationToken)
+    private async Task<TemboExecutionResult> TriggerAutomationAsync(
+        TemboExecutionPlan plan,
+        TemboTaskCaptureSink? captureSink,
+        CancellationToken cancellationToken)
     {
         var submittedPayloadJson = JsonSerializer.Serialize(plan.Payload, JsonOptions);
         var keyOrId = Uri.EscapeDataString(plan.KeyOrId ?? throw new InvalidOperationException("Tembo automation keyOrId is missing."));
@@ -329,6 +423,7 @@ public partial class TemboProvider
 
         using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        await CaptureTemboRawJsonAsync(captureSink, raw, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Tembo automation trigger error: {(int)response.StatusCode} {response.ReasonPhrase}: {ExtractErrorMessage(raw)}");
@@ -342,6 +437,7 @@ public partial class TemboProvider
     private async IAsyncEnumerable<TemboExecutionResult> PollTemboStreamAsync(
         TemboExecutionResult execution,
         JsonElement? providerOptions,
+        TemboTaskCaptureSink? captureSink,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (!ShouldPoll(execution))
@@ -351,6 +447,7 @@ public partial class TemboProvider
         var timeout = ResolvePollTimeout(providerOptions);
         var startedAt = DateTimeOffset.UtcNow;
         TemboSession? trackedSession = execution.Session;
+        var pollAttempt = execution.PollAttempt;
 
         while (true)
         {
@@ -361,18 +458,31 @@ public partial class TemboProvider
 
             await Task.Delay(interval, cancellationToken);
 
+            pollAttempt++;
             var list = await ListSessionsAsync(cancellationToken);
             var nextSession = ResolveTrackedSession(execution, trackedSession, list.Issues);
 
             if (nextSession is null)
+            {
+                yield return execution with
+                {
+                    PollAttempt = pollAttempt,
+                    LastPollRawJson = list.RawJson
+                };
+
                 continue;
+            }
+
+            await CaptureTemboRawJsonAsync(captureSink, nextSession.RawJson, cancellationToken);
 
             trackedSession = nextSession;
             execution = execution with
             {
                 Session = nextSession,
                 FinalRawJson = nextSession.RawJson,
-                FinalRaw = TryParseJsonElement(nextSession.RawJson)
+                FinalRaw = TryParseJsonElement(nextSession.RawJson),
+                PollAttempt = pollAttempt,
+                LastPollRawJson = list.RawJson
             };
 
             yield return execution;
@@ -380,18 +490,51 @@ public partial class TemboProvider
             if (!ShouldPoll(execution))
                 yield break;
         }
+
     }
 
-    private async Task<TemboSessionListResponse> ListSessionsAsync(CancellationToken cancellationToken)
+    private async Task<TemboSessionListResponse> ListSessionsAsync(
+        CancellationToken cancellationToken)
     {
-        using var response = await _client.GetAsync("session/list?limit=100&page=1", cancellationToken);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "https://api.tembo.io/task/list?limit=100&page=1")
+        {
+            Version = HttpVersion.Version11,
+            VersionPolicy = HttpVersionPolicy.RequestVersionExact
+        };
+        
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", key);
+
+        request.Headers.Accept.ParseAdd("*/*");
+        request.Headers.TryAddWithoutValidation("User-Agent", "PostmanRuntime/7.43.0");
+        request.Headers.TryAddWithoutValidation("Cache-Control", "no-cache");
+
+        using var response = await _client.SendAsync(
+            request,
+            HttpCompletionOption.ResponseContentRead,
+            cancellationToken);
+
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)
-            throw new HttpRequestException($"Tembo session/list error: {(int)response.StatusCode} {response.ReasonPhrase}: {ExtractErrorMessage(raw)}");
+        {
+            throw new HttpRequestException($"""
+        Tembo task/list error
+        URL: {request.RequestUri}
+        HTTP version: {request.Version}
+        Status: {(int)response.StatusCode} {response.ReasonPhrase}
+        User-Agent: {string.Join(" ", request.Headers.UserAgent)}
+        Response: {ExtractErrorMessage(raw)}
+        Raw response: {raw}
+        """);
+        }
 
-        var list = JsonSerializer.Deserialize<TemboSessionListResponse>(raw, JsonOptions)
-            ?? throw new InvalidOperationException("Tembo returned an empty session/list response.");
+        var list = DeserializeSessionList(raw)
+            ?? throw new InvalidOperationException("Tembo returned an empty task/list response.");
 
         list.RawJson = raw;
 
@@ -399,6 +542,98 @@ public partial class TemboProvider
             issue.RawJson = JsonSerializer.Serialize(issue, JsonOptions);
 
         return list;
+    }
+
+    private static ValueTask<TemboTaskCaptureSink?> BeginTemboTaskCaptureAsync(
+        TemboExecutionPlan plan,
+        ProviderBackendCaptureRequest? capture,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            plan.Kind == TemboExecutionKind.AutomationTrigger
+                ? $"https://api.tembo.io/automation/{Uri.EscapeDataString(plan.KeyOrId ?? "unknown")}/trigger"
+                : "https://api.tembo.io/task/create");
+        using var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            RequestMessage = request
+        };
+
+        var sink = ProviderBackendCapture.BeginJsonArrayCapture("tembo-task", response, capture);
+        return ValueTask.FromResult(sink is null ? null : new TemboTaskCaptureSink(sink));
+    }
+
+    private static async ValueTask CaptureTemboRawJsonAsync(
+        TemboTaskCaptureSink? captureSink,
+        string raw,
+        CancellationToken cancellationToken)
+    {
+        if (captureSink is null)
+            return;
+
+        await captureSink.WriteRawJsonAsync(raw, cancellationToken);
+    }
+
+    private static ProviderBackendCaptureRequest? GetTemboBackendCapture(AIRequest request, string providerId)
+    {
+        if (request.Metadata is null)
+            return null;
+
+        return request.Metadata.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "capture")
+            ?? request.Metadata.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "backend_capture");
+    }
+
+    private static TemboSessionListResponse? DeserializeSessionList(string raw)
+    {
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement;
+        var issues = new List<TemboSession>();
+        JsonElement? meta = null;
+
+        if (root.ValueKind == JsonValueKind.Array)
+        {
+            issues.AddRange(DeserializeSessionArray(root));
+        }
+        else if (root.ValueKind == JsonValueKind.Object)
+        {
+            if (root.TryGetProperty("meta", out var metaElement))
+                meta = metaElement.Clone();
+
+            foreach (var propertyName in new[] { "issues", "data", "tasks", "items", "results", "sessions" })
+            {
+                if (root.TryGetProperty(propertyName, out var arrayElement)
+                    && arrayElement.ValueKind == JsonValueKind.Array)
+                {
+                    issues.AddRange(DeserializeSessionArray(arrayElement));
+                    break;
+                }
+            }
+
+            if (issues.Count == 0 && root.TryGetProperty("id", out _))
+            {
+                var session = root.Deserialize<TemboSession>(JsonOptions);
+                if (session is not null)
+                    issues.Add(session);
+            }
+        }
+
+        return new TemboSessionListResponse
+        {
+            Issues = issues,
+            Meta = meta
+        };
+    }
+
+    private static IEnumerable<TemboSession> DeserializeSessionArray(JsonElement arrayElement)
+    {
+        foreach (var item in arrayElement.EnumerateArray())
+        {
+            var session = item.Deserialize<TemboSession>(JsonOptions);
+            if (session is not null)
+                yield return session;
+        }
     }
 
     private static TemboSession? ResolveTrackedSession(
@@ -415,6 +650,31 @@ public partial class TemboProvider
             var match = issues.FirstOrDefault(issue => string.Equals(issue.Id, existingId, StringComparison.OrdinalIgnoreCase));
             if (match is not null)
                 return match;
+
+            match = issues.FirstOrDefault(issue => EndsWithSessionId(issue.HtmlUrl, existingId));
+            if (match is not null)
+                return match;
+        }
+
+        var existingHash = trackedSession?.Hash ?? execution.Session?.Hash;
+        if (!string.IsNullOrWhiteSpace(existingHash))
+        {
+            var hashMatch = issues.FirstOrDefault(issue => string.Equals(issue.Hash, existingHash, StringComparison.OrdinalIgnoreCase));
+            if (hashMatch is not null)
+                return hashMatch;
+        }
+
+        var submittedPrompt = TryReadSubmittedPrompt(execution.SubmittedPayload);
+        if (!string.IsNullOrWhiteSpace(submittedPrompt))
+        {
+            var promptMatch = issues
+                .Where(issue => string.Equals(issue.Prompt, submittedPrompt, StringComparison.Ordinal)
+                                || string.Equals(issue.Description, submittedPrompt, StringComparison.Ordinal))
+                .OrderByDescending(issue => issue.CreatedAt)
+                .FirstOrDefault();
+
+            if (promptMatch is not null)
+                return promptMatch;
         }
 
         if (execution.AutomationJob is not null)
@@ -438,11 +698,64 @@ public partial class TemboProvider
         return null;
     }
 
+    private static bool EndsWithSessionId(string? htmlUrl, string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(htmlUrl))
+            return false;
+
+        return htmlUrl.TrimEnd('/').EndsWith(sessionId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? TryReadSubmittedPrompt(JsonElement submittedPayload)
+    {
+        if (submittedPayload.ValueKind != JsonValueKind.Object)
+            return null;
+
+        foreach (var propertyName in new[] { "prompt", "description" })
+        {
+            if (submittedPayload.TryGetProperty(propertyName, out var value)
+                && value.ValueKind == JsonValueKind.String)
+            {
+                return value.GetString();
+            }
+        }
+
+        return null;
+    }
+
     private AIResponse CreateUnifiedResponse(AIRequest request, TemboExecutionResult execution)
     {
         var metadata = CreateResponseMetadata(request, execution);
-        var text = BuildCompletionText(execution);
         var model = request.Model?.ToModelId(GetIdentifier()) ?? GetIdentifier();
+        var outputItems = new List<AIOutputItem>
+        {
+            new()
+            {
+                Type = "tool-call",
+                Content =
+                [
+                    new AIToolCallContentPart
+                    {
+                        Type = "tool-call",
+                        ToolCallId = execution.ToolCallId,
+                        ToolName = execution.ToolName,
+                        Title = execution.ToolTitle,
+                        Input = execution.SubmittedPayload,
+                        Output = CreateToolCallResult(execution),
+                        State = "output-available",
+                        ProviderExecuted = true,
+                        Metadata = new Dictionary<string, object?>
+                        {
+                            [$"{GetIdentifier()}.tool_name"] = execution.ToolName,
+                            [$"{GetIdentifier()}.session_id"] = execution.SessionId,
+                            [$"{GetIdentifier()}.automation_job_id"] = execution.AutomationJob?.Id
+                        }
+                    }
+                ]
+            }
+        };
+
+        outputItems.AddRange(CreateResponseMessageItems(execution));
 
         return new AIResponse
         {
@@ -451,46 +764,7 @@ public partial class TemboProvider
             Status = IsSuccessfulExecution(execution) ? "completed" : "failed",
             Output = new AIOutput
             {
-                Items =
-                [
-                    new AIOutputItem
-                    {
-                        Type = "tool-call",
-                        Content =
-                        [
-                            new AIToolCallContentPart
-                            {
-                                Type = "tool-call",
-                                ToolCallId = execution.ToolCallId,
-                                ToolName = execution.ToolName,
-                                Title = execution.ToolTitle,
-                                Input = execution.SubmittedPayload,
-                                Output = CreateToolCallResult(execution),
-                                State = "output-available",
-                                ProviderExecuted = true,
-                                Metadata = new Dictionary<string, object?>
-                                {
-                                    [$"{GetIdentifier()}.tool_name"] = execution.ToolName,
-                                    [$"{GetIdentifier()}.session_id"] = execution.SessionId,
-                                    [$"{GetIdentifier()}.automation_job_id"] = execution.AutomationJob?.Id
-                                }
-                            }
-                        ]
-                    },
-                    new AIOutputItem
-                    {
-                        Type = "message",
-                        Role = "assistant",
-                        Content =
-                        [
-                            new AITextContentPart
-                            {
-                                Type = "text",
-                                Text = text
-                            }
-                        ]
-                    }
-                ]
+                Items = outputItems
             },
             Metadata = metadata
         };
@@ -505,14 +779,29 @@ public partial class TemboProvider
             ["tembo.tool_call_id"] = execution.ToolCallId,
             ["tembo.session_id"] = execution.SessionId,
             ["tembo.session_status"] = execution.SessionStatus,
+            ["tembo.session_effective_status"] = execution.SessionEffectiveStatus,
             ["tembo.session_title"] = execution.SessionTitle,
             ["tembo.session_url"] = execution.HtmlUrl,
+            ["tembo.pull_request_count"] = GetPullRequests(execution.Session).Count,
+            ["tembo.pull_requests"] = JsonSerializer.SerializeToElement(
+                GetPullRequests(execution.Session).Select(pr => new
+                {
+                    pr.Id,
+                    pr.Url,
+                    pr.Title,
+                    pr.Status,
+                    pr.MergedAt,
+                    pr.IsDraft
+                }),
+                JsonOptions),
             ["tembo.automation_job_id"] = execution.AutomationJob?.Id,
             ["tembo.automation_job_status"] = execution.AutomationJob?.Status,
             ["tembo.automation_job_task"] = execution.AutomationJob?.Task,
             ["tembo.submitted_payload"] = execution.SubmittedPayload,
             ["tembo.initial.raw"] = execution.InitialRaw,
-            ["tembo.final.raw"] = execution.FinalRaw
+            ["tembo.final.raw"] = execution.FinalRaw,
+            ["tembo.poll_attempt"] = execution.PollAttempt,
+            ["tembo.last_poll.raw"] = TryParseJsonElement(execution.LastPollRawJson)
         };
 
         if (!string.IsNullOrWhiteSpace(request.Model))
@@ -537,9 +826,6 @@ public partial class TemboProvider
 
         if (!payload.ContainsKey("queueRightAway"))
             payload["queueRightAway"] = true;
-
-        if (!string.IsNullOrWhiteSpace(request.Instructions) && !payload.ContainsKey("description"))
-            payload["description"] = request.Instructions;
 
         return payload;
     }
@@ -600,109 +886,25 @@ public partial class TemboProvider
 
     private static string BuildPrompt(AIRequest request)
     {
-        var instructionSections = new List<string>();
-        var conversationSections = new List<string>();
 
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
-            instructionSections.Add(request.Instructions.Trim());
+        var lastUserMessage =
+            string.Join(
+                "\n",
+                request.Input?.Items?
+                    .Where(x => x.Role == "user")
+                    .LastOrDefault()?
+                    .Content?
+                    .OfType<AITextContentPart>()
+                    .Select(x => x.Text)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                ?? []
+            );
 
-        if (!string.IsNullOrWhiteSpace(request.Input?.Text))
-            conversationSections.Add(FormatConversationBlock("user", request.Input.Text!));
+        lastUserMessage = string.IsNullOrWhiteSpace(lastUserMessage)
+            ? request.Input?.Text
+            : lastUserMessage;
 
-        if (request.Input?.Items is not null)
-        {
-            foreach (var item in request.Input.Items)
-            {
-                ValidateInputItem(item);
-
-                var text = ExtractSupportedText(item.Content);
-                if (string.IsNullOrWhiteSpace(text))
-                    continue;
-
-                var role = (item.Role ?? "user").Trim().ToLowerInvariant();
-                switch (role)
-                {
-                    case "system":
-                        instructionSections.Add(text);
-                        break;
-                    case "user":
-                    case "assistant":
-                        conversationSections.Add(FormatConversationBlock(role, text));
-                        break;
-                    default:
-                        throw new NotSupportedException($"Tembo unified mode only supports system, user, and assistant message roles. Role '{item.Role}' is not supported.");
-                }
-            }
-        }
-
-        var sections = new List<string>();
-
-        if (instructionSections.Count > 0)
-            sections.Add("instructions:\n" + string.Join("\n\n", instructionSections));
-
-        sections.AddRange(conversationSections);
-
-        var prompt = string.Join("\n\n", sections.Where(section => !string.IsNullOrWhiteSpace(section))).Trim();
-
-        if (string.IsNullOrWhiteSpace(prompt))
-            throw new InvalidOperationException("Tembo unified mode requires text input.");
-
-        return prompt;
-    }
-
-    private static void ValidateInputItem(AIInputItem item)
-    {
-        if (!string.IsNullOrWhiteSpace(item.Type)
-            && !string.Equals(item.Type, "message", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new NotSupportedException($"Tembo unified mode only supports message input items. Item type '{item.Type}' is not supported.");
-        }
-    }
-
-    private static string ExtractSupportedText(List<AIContentPart>? content)
-    {
-        if (content is null || content.Count == 0)
-            return string.Empty;
-
-        var textParts = new List<string>();
-
-        foreach (var part in content)
-        {
-            switch (part)
-            {
-                case AITextContentPart textPart when !string.IsNullOrWhiteSpace(textPart.Text):
-                    textParts.Add(textPart.Text.Trim());
-                    break;
-                case AIReasoningContentPart:
-                    break;
-                case AIFileContentPart:
-                    throw new NotSupportedException("Tembo unified mode does not support file or image content parts.");
-                case AIToolCallContentPart:
-                    throw new NotSupportedException("Tembo unified mode does not support inbound tool call content parts.");
-                case null:
-                    break;
-                default:
-                    throw new NotSupportedException($"Tembo unified mode does not support content part type '{part.Type}'.");
-            }
-        }
-
-        return string.Join("\n\n", textParts);
-    }
-
-    private static string FormatConversationBlock(string role, string text)
-        => $"{role}: {text.Trim()}";
-
-    private static string NormalizeModel(string? model)
-    {
-        if (string.IsNullOrWhiteSpace(model))
-            return string.Empty;
-
-        var trimmed = model.Trim();
-        if (!trimmed.Contains('/', StringComparison.Ordinal))
-            return trimmed;
-
-        var split = trimmed.SplitModelId();
-        return split.Model;
+        return lastUserMessage!;
     }
 
     private static JsonElement? GetProviderOptions(Dictionary<string, object?>? metadata)
@@ -769,10 +971,16 @@ public partial class TemboProvider
     private static bool ShouldPoll(TemboExecutionResult execution)
     {
         if (execution.Session is not null)
-            return !IsTerminalStatus(execution.Session.Status);
+        {
+            if (HasPullRequests(execution.Session))
+                return false;
+
+            return !IsTerminalStatus(execution.Session.EffectiveStatus);
+        }
 
         if (execution.AutomationJob is not null)
-            return !IsTerminalStatus(execution.AutomationJob.Status);
+            return string.IsNullOrWhiteSpace(execution.AutomationJob.Status)
+                || !IsTerminalStatus(execution.AutomationJob.Status);
 
         return false;
     }
@@ -788,6 +996,7 @@ public partial class TemboProvider
                || status.Equals("finished", StringComparison.OrdinalIgnoreCase)
                || status.Equals("success", StringComparison.OrdinalIgnoreCase)
                || status.Equals("succeeded", StringComparison.OrdinalIgnoreCase)
+               || status.Equals("pull_request_created", StringComparison.OrdinalIgnoreCase)
                || status.Equals("closed", StringComparison.OrdinalIgnoreCase)
                || status.Equals("merged", StringComparison.OrdinalIgnoreCase));
 
@@ -802,7 +1011,7 @@ public partial class TemboProvider
     private static bool IsSuccessfulExecution(TemboExecutionResult execution)
     {
         if (execution.Session is not null)
-            return IsSuccessfulStatus(execution.Session.Status);
+            return HasSuccessfulPullRequestResult(execution.Session) || IsSuccessfulStatus(execution.Session.EffectiveStatus);
 
         if (execution.AutomationJob is not null)
             return IsSuccessfulStatus(execution.AutomationJob.Status);
@@ -815,31 +1024,24 @@ public partial class TemboProvider
         if (IsSuccessfulExecution(execution))
             return;
 
-        var status = execution.SessionStatus ?? execution.AutomationJob?.Status ?? "unknown";
+        var status = execution.SessionEffectiveStatus ?? execution.AutomationJob?.Status ?? "unknown";
         if (IsFailureStatus(status))
             throw new InvalidOperationException($"Tembo execution failed with status '{status}'. Body: {execution.FinalRawJson ?? execution.InitialRawJson}");
     }
 
-    private static string? GetStreamingStatusText(TemboExecutionResult execution)
-    {
-        var status = execution.SessionStatus ?? execution.AutomationJob?.Status;
-        if (string.IsNullOrWhiteSpace(status) || IsTerminalStatus(status))
-            return null;
-
-        return execution.SessionTitle is { Length: > 0 } title
-            ? $"Tembo session '{title}' is {status}."
-            : $"Tembo execution is {status}.";
-    }
-
     private static string BuildCompletionText(TemboExecutionResult execution)
     {
+        var messages = CreateResponseMessageTexts(execution).ToList();
+        if (messages.Count > 0)
+            return string.Join("\n\n", messages);
+
         if (execution.Session is { } session)
         {
             var lines = new List<string>
             {
                 !string.IsNullOrWhiteSpace(session.Title)
-                    ? $"Tembo session '{session.Title}' finished with status '{session.Status}'."
-                    : $"Tembo session finished with status '{session.Status}'."
+                    ? $"Tembo session '{session.Title}' finished with status '{session.EffectiveStatus ?? "unknown"}'."
+                    : $"Tembo session finished with status '{session.EffectiveStatus ?? "unknown"}'."
             };
 
             if (!string.IsNullOrWhiteSpace(session.Description))
@@ -857,6 +1059,87 @@ public partial class TemboProvider
         return "Tembo execution completed.";
     }
 
+    private static IEnumerable<AIOutputItem> CreateResponseMessageItems(TemboExecutionResult execution)
+        => CreateResponseMessageTexts(execution)
+            .Select(text => new AIOutputItem
+            {
+                Type = "message",
+                Role = "assistant",
+                Content =
+                [
+                    new AITextContentPart
+                    {
+                        Type = "text",
+                        Text = text
+                    }
+                ]
+            });
+
+    private static IEnumerable<string> CreateResponseMessageTexts(TemboExecutionResult execution)
+    {
+        var titleText = BuildTaskTitleText(execution);
+        if (!string.IsNullOrWhiteSpace(titleText))
+            yield return titleText;
+
+        var pullRequestText = BuildPullRequestSummaryText(execution);
+        if (!string.IsNullOrWhiteSpace(pullRequestText))
+            yield return pullRequestText;
+    }
+
+    private static string? BuildTaskTitleText(TemboExecutionResult execution)
+    {
+        if (execution.Session is { } session)
+            return !string.IsNullOrWhiteSpace(session.Title)
+                ? session.Title
+                : !string.IsNullOrWhiteSpace(session.Id)
+                    ? "Tembo task"
+                    : null;
+
+        return null;
+    }
+
+    private static string? BuildPullRequestSummaryText(TemboExecutionResult execution)
+    {
+        var pullRequests = GetPullRequests(execution.Session);
+        if (pullRequests.Count == 0)
+            return null;
+
+        var heading = pullRequests.Count == 1
+            ? "Pull request created:"
+            : "Pull requests created:";
+
+        var lines = pullRequests.Select(pr =>
+        {
+            var title = !string.IsNullOrWhiteSpace(pr.Title)
+                ? pr.Title!
+                : !string.IsNullOrWhiteSpace(pr.Id)
+                    ? pr.Id!
+                    : "Pull request";
+
+            return !string.IsNullOrWhiteSpace(pr.Url)
+                ? $"- [{title}]({pr.Url})"
+                : $"- {title}";
+        });
+
+        return heading + "\n\n" + string.Join("\n", lines);
+    }
+
+    private static List<TemboPullRequest> GetPullRequests(TemboSession? session)
+        => session?.Artifacts?
+            .SelectMany(artifact => artifact.PullRequest ?? [])
+            .DistinctBy(pr => !string.IsNullOrWhiteSpace(pr.Url) ? pr.Url : pr.Id)
+            .ToList()
+           ?? [];
+
+    private static bool HasPullRequests(TemboSession session)
+        => GetPullRequests(session).Count > 0;
+
+    private static bool HasSuccessfulPullRequestResult(TemboSession session)
+    {
+        var pullRequests = GetPullRequests(session);
+        return pullRequests.Count > 0 && pullRequests.Any(pr => !pr.IsFailure);
+    }
+
     private static AIToolOutputAvailableEventData CreateToolOutputEventData(string providerId, TemboExecutionResult execution, bool preliminary)
         => new()
         {
@@ -872,7 +1155,9 @@ public partial class TemboProvider
         var raw = execution.FinalRawJson ?? execution.InitialRawJson;
         var structuredContent = JsonSerializer.SerializeToElement(new
         {
-            content = execution.FinalRaw ?? execution.InitialRaw
+            content = execution.FinalRaw ?? execution.InitialRaw,
+            pollAttempt = execution.PollAttempt,
+            lastPoll = TryParseJsonElement(execution.LastPollRawJson)
         }, JsonOptions);
 
         return new CallToolResult
@@ -932,6 +1217,22 @@ public partial class TemboProvider
         catch
         {
             return JsonSerializer.SerializeToElement(new { raw = rawJson }, JsonOptions);
+        }
+    }
+
+    private static string NormalizeCaptureJson(string? rawJson)
+    {
+        if (string.IsNullOrWhiteSpace(rawJson))
+            return "{}";
+
+        try
+        {
+            using var document = JsonDocument.Parse(rawJson);
+            return document.RootElement.GetRawText();
+        }
+        catch
+        {
+            return JsonSerializer.Serialize(new { raw = rawJson }, JsonOptions);
         }
     }
 
@@ -1002,12 +1303,16 @@ public partial class TemboProvider
         string InitialRawJson,
         JsonElement? FinalRaw,
         string? FinalRawJson,
+        int PollAttempt,
+        string? LastPollRawJson,
         TemboSession? Session,
         TemboAutomationJob? AutomationJob)
     {
         public string? SessionId => Session?.Id;
 
         public string? SessionStatus => Session?.Status;
+
+        public string? SessionEffectiveStatus => Session?.EffectiveStatus;
 
         public string? SessionTitle => Session?.Title;
 
@@ -1025,6 +1330,8 @@ public partial class TemboProvider
                 raw,
                 TryParseJsonElement(raw),
                 raw,
+                0,
+                null,
                 session,
                 null);
 
@@ -1040,6 +1347,8 @@ public partial class TemboProvider
                 raw,
                 TryParseJsonElement(raw),
                 raw,
+                0,
+                null,
                 null,
                 job);
     }
@@ -1055,8 +1364,26 @@ public partial class TemboProvider
         [JsonPropertyName("description")]
         public string? Description { get; init; }
 
+        [JsonPropertyName("prompt")]
+        public string? Prompt { get; init; }
+
+        [JsonPropertyName("hash")]
+        public string? Hash { get; init; }
+
         [JsonPropertyName("status")]
         public string? Status { get; init; }
+
+        [JsonPropertyName("state")]
+        public string? State { get; init; }
+
+        [JsonPropertyName("lastQueuedAt")]
+        public DateTimeOffset? LastQueuedAt { get; init; }
+
+        [JsonPropertyName("lastQueuedBy")]
+        public string? LastQueuedBy { get; init; }
+
+        [JsonPropertyName("lastSeenAt")]
+        public DateTimeOffset? LastSeenAt { get; init; }
 
         [JsonPropertyName("createdAt")]
         public DateTimeOffset? CreatedAt { get; init; }
@@ -1070,8 +1397,101 @@ public partial class TemboProvider
         [JsonPropertyName("htmlUrl")]
         public string? HtmlUrl { get; init; }
 
+        [JsonPropertyName("artifacts")]
+        public List<TemboArtifact>? Artifacts { get; init; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtensionData { get; init; }
+
+        [JsonIgnore]
+        public string? EffectiveStatus => ResolveEffectiveStatus();
+
         [JsonIgnore]
         public string RawJson { get; set; } = string.Empty;
+
+        private string? ResolveEffectiveStatus()
+        {
+            if (!string.IsNullOrWhiteSpace(Status))
+                return Status;
+
+            if (!string.IsNullOrWhiteSpace(State))
+                return State;
+
+            var pullRequests = Artifacts?
+                .SelectMany(artifact => artifact.PullRequest ?? [])
+                .ToList();
+
+            if (pullRequests is { Count: > 0 })
+            {
+                if (pullRequests.All(pr => pr.IsFailure))
+                    return "failed";
+
+                return "pull_request_created";
+            }
+
+            if (Artifacts is { Count: > 0 })
+                return "running";
+
+            if (LastQueuedAt is not null || !string.IsNullOrWhiteSpace(LastQueuedBy))
+                return "running";
+
+            if (Id is not null)
+                return "created";
+
+            return null;
+        }
+    }
+
+    private sealed record TemboArtifact
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; init; }
+
+        [JsonPropertyName("type")]
+        public string? Type { get; init; }
+
+        [JsonPropertyName("jobId")]
+        public string? JobId { get; init; }
+
+        [JsonPropertyName("pullRequest")]
+        public List<TemboPullRequest>? PullRequest { get; init; }
+    }
+
+    private sealed record TemboPullRequest
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; init; }
+
+        [JsonPropertyName("url")]
+        public string? Url { get; init; }
+
+        [JsonPropertyName("title")]
+        public string? Title { get; init; }
+
+        [JsonPropertyName("status")]
+        public string? Status { get; init; }
+
+        [JsonPropertyName("mergedAt")]
+        public DateTimeOffset? MergedAt { get; init; }
+
+        [JsonPropertyName("isDraft")]
+        public bool? IsDraft { get; init; }
+
+        [JsonIgnore]
+        public bool IsMerged => MergedAt is not null || string.Equals(Status, "merged", StringComparison.OrdinalIgnoreCase);
+
+        [JsonIgnore]
+        public bool IsFailure => Status is not null
+                                 && (Status.Equals("closed", StringComparison.OrdinalIgnoreCase)
+                                     || Status.Equals("failed", StringComparison.OrdinalIgnoreCase)
+                                     || Status.Equals("error", StringComparison.OrdinalIgnoreCase));
+
+        [JsonIgnore]
+        public bool IsOpen => Status is null
+                              || Status.Equals("open", StringComparison.OrdinalIgnoreCase)
+                              || Status.Equals("draft", StringComparison.OrdinalIgnoreCase)
+                              || Status.Equals("pending", StringComparison.OrdinalIgnoreCase)
+                              || Status.Equals("running", StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class TemboSessionListResponse
@@ -1084,6 +1504,17 @@ public partial class TemboProvider
 
         [JsonIgnore]
         public string RawJson { get; set; } = string.Empty;
+    }
+
+    private sealed class TemboTaskCaptureSink(ProviderBackendCaptureJsonArraySink inner) : IAsyncDisposable
+    {
+        public string FilePath => inner.FilePath;
+
+        public async ValueTask WriteRawJsonAsync(string rawJson, CancellationToken cancellationToken)
+            => await inner.WriteRawJsonEntryAsync(NormalizeCaptureJson(rawJson), cancellationToken);
+
+        public ValueTask DisposeAsync()
+            => inner.DisposeAsync();
     }
 
     private sealed record TemboAutomationJob
