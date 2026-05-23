@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Straico;
 
@@ -41,9 +42,29 @@ public partial class StraicoProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
+    private static readonly HashSet<string> RouterPreferenceModels =
+           [
+               "quality",
+                "balance",
+                "budget"
+           ];
+
+    private static void ApplyRouterPreference(ChatCompletionOptions options)
+    {
+        if (!RouterPreferenceModels.Contains(options.Model))
+            return;
+
+        options.AdditionalProperties ??= [];
+        options.AdditionalProperties["smart_llm_selector"] =
+            JsonSerializer.SerializeToElement(options.Model);
+
+        options.Model = null!;
+    }
+
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        ApplyRouterPreference(options);
 
         return await this.GetChatCompletion(_client,
              options,
@@ -54,6 +75,7 @@ public partial class StraicoProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        ApplyRouterPreference(options);
 
         return this.GetChatCompletions(_client,
                     options,

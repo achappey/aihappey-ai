@@ -90,21 +90,10 @@ public partial class StraicoProvider
                                            || string.Equals(model.Type, "language", StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                try
-                {
-                    models.AddRange(await ListStraicoAgentModelsAsync(cancellationToken));
-                }
-                catch
-                {
-                }
 
-                try
-                {
-                    models.AddRange(await ListStraicoRagModelsAsync(languageModels, cancellationToken));
-                }
-                catch
-                {
-                }
+                models.AddRange(await ListStraicoAgentModelsAsync(cancellationToken));
+                models.AddRange(await ListStraicoRagModelsAsync(languageModels, cancellationToken));
+                models.AddRange(GetIdentifier().GetModels());
 
                 return [.. models.DistinctBy(model => model.Id)];
 
