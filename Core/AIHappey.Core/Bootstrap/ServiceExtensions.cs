@@ -304,7 +304,6 @@ using AIHappey.Core.Providers.Agabeyogluai;
 using AIHappey.Core.Providers.AIRouter;
 using AIHappey.Core.Providers.Agentics;
 using AIHappey.Core.Providers.Gatewayz;
-using AIHappey.Core.Providers.UplinkAPI;
 using AIHappey.Core.Providers.NRPNautilus;
 using AIHappey.Core.Providers.EAGM;
 using AIHappey.Core.Providers.Edgee;
@@ -866,7 +865,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AIRouterProvider>();
         services.AddSingleton<IModelProvider, AgenticsProvider>();
         services.AddSingleton<IModelProvider, GatewayzProvider>();
-        services.AddSingleton<IModelProvider, UplinkAPIProvider>();
         //services.AddSingleton<IModelProvider, SovereignAPIProvider>();
         services.AddSingleton<IModelProvider, NRPNautilusProvider>();
         services.AddSingleton<IModelProvider, EAGMProvider>();
