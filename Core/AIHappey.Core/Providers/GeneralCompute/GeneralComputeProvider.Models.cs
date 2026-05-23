@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using System.Globalization;
 
 namespace AIHappey.Core.Providers.GeneralCompute;
 
@@ -9,20 +8,13 @@ public partial class GeneralComputeProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
-
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/public/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -52,8 +44,8 @@ public partial class GeneralComputeProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
