@@ -264,7 +264,6 @@ public class AIServiceConfig
     public ProviderConfig? OCRSkill { get; set; }
     public ProviderConfig? SkillBoss { get; set; }
     public ProviderConfig? Nexusify { get; set; }
-    public ProviderConfig? Jatevo { get; set; }
     public ProviderConfig? LitAI { get; set; }
     public ProviderConfig? PixCode { get; set; }
     public ProviderConfig? Anannas { get; set; }
@@ -469,7 +468,6 @@ public class AIServiceConfig
     public ProviderConfig? AIHorde { get; set; }
     public ProviderConfig? WiseRouter { get; set; }
     public ProviderConfig? Pellet { get; set; }
-    public ProviderConfig? Bleep { get; set; }
     public ProviderConfig? Commonstack { get; set; }
     public ProviderConfig? Llama { get; set; }
     public ProviderConfig? NinjaChat { get; set; }
