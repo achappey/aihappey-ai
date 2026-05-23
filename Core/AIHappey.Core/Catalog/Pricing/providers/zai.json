@@ -1,4 +1,16 @@
 {
+  "zai/agents/general_translation": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000003"
+    }
+  },
+  "zai/agents/slides_glm_agent": {
+    "pricing": {
+      "input": "0.0000007",
+      "output": "0.0000007"
+    }
+  },
   "zai/glm-5.1": {
     "pricing": {
       "input": "0.0000014",
