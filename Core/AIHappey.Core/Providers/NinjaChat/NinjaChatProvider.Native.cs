@@ -120,7 +120,17 @@ public partial class NinjaChatProvider
         public long CreatedAt { get; init; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public NinjaChatSearchRequest Request { get; init; } = default!;
         public NinjaChatSearchResponse Response { get; init; } = default!;
+        public List<NinjaChatDownloadedImage> DownloadedImages { get; init; } = [];
         public string Text { get; init; } = string.Empty;
+    }
+
+    private sealed class NinjaChatDownloadedImage
+    {
+        public required string DataUrl { get; init; }
+        public required string MediaType { get; init; }
+        public required string Filename { get; init; }
+        public required string OriginUrl { get; init; }
+        public string? Description { get; init; }
     }
 
     private static bool IsNativeSearchModel(string? model)
@@ -173,13 +183,112 @@ public partial class NinjaChatProvider
             throw new HttpRequestException($"NinjaChat search failed ({(int)response.StatusCode}): {body}");
 
         var result = JsonSerializer.Deserialize<NinjaChatSearchResponse>(body, NinjaChatJson) ?? new NinjaChatSearchResponse();
+        var downloadedImages = await DownloadNativeSearchImagesAsync(result, cancellationToken);
 
         return new NinjaChatSearchExecutionResult
         {
             Request = request,
             Response = result,
+            DownloadedImages = downloadedImages,
             Text = BuildNativeSearchDisplayText(result)
         };
+    }
+
+    private async Task<List<NinjaChatDownloadedImage>> DownloadNativeSearchImagesAsync(
+        NinjaChatSearchResponse response,
+        CancellationToken cancellationToken)
+    {
+        var list = new List<NinjaChatDownloadedImage>();
+        if (response.Images.Count == 0)
+            return list;
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var image in response.Images)
+        {
+            if (string.IsNullOrWhiteSpace(image.Url) || !seen.Add(image.Url))
+                continue;
+
+            var downloaded = await TryDownloadNativeSearchImageAsync(image, cancellationToken);
+            if (downloaded is not null)
+                list.Add(downloaded);
+        }
+
+        return list;
+    }
+
+    private async Task<NinjaChatDownloadedImage?> TryDownloadNativeSearchImageAsync(
+        NinjaChatSearchImage image,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(image.Url))
+            return null;
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, image.Url);
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (bytes.Length == 0)
+                return null;
+
+            var mediaType = response.Content.Headers.ContentType?.MediaType
+                            ?? GuessNativeSearchImageMediaType(image.Url)
+                            ?? MediaTypeNames.Image.Png;
+
+            return new NinjaChatDownloadedImage
+            {
+                DataUrl = $"data:{mediaType};base64,{Convert.ToBase64String(bytes)}",
+                MediaType = mediaType,
+                Filename = BuildNativeSearchImageFilename(image.Description, mediaType),
+                OriginUrl = image.Url,
+                Description = image.Description
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string BuildNativeSearchImageFilename(string? description, string mediaType)
+    {
+        var ext = mediaType.ToLowerInvariant() switch
+        {
+            "image/png" => "png",
+            "image/jpeg" => "jpg",
+            "image/jpg" => "jpg",
+            "image/webp" => "webp",
+            "image/gif" => "gif",
+            "image/svg+xml" => "svg",
+            _ => "bin"
+        };
+
+        var safeName = string.IsNullOrWhiteSpace(description)
+            ? "ninjachat-image"
+            : string.Concat(description.Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')).Trim('-');
+
+        if (string.IsNullOrWhiteSpace(safeName))
+            safeName = "ninjachat-image";
+
+        return $"{safeName}.{ext}";
+    }
+
+    private static string? GuessNativeSearchImageMediaType(string url)
+    {
+        var lower = url.ToLowerInvariant();
+
+        if (lower.Contains(".png")) return MediaTypeNames.Image.Png;
+        if (lower.Contains(".jpg") || lower.Contains(".jpeg")) return MediaTypeNames.Image.Jpeg;
+        if (lower.Contains(".webp")) return "image/webp";
+        if (lower.Contains(".gif")) return MediaTypeNames.Image.Gif;
+        if (lower.Contains(".svg")) return "image/svg+xml";
+
+        return null;
     }
 
     private NinjaChatSearchRequest BuildNativeSearchRequest(JsonElement request)
@@ -214,7 +323,7 @@ public partial class NinjaChatProvider
             MaxResults = TryGetInt32(passthrough, "max_results"),
             SearchDepth = TryGetString(passthrough, "search_depth"),
             Topic = TryGetString(passthrough, "topic"),
-            IncludeAnswer = TryGetBoolean(passthrough, "include_answer") ?? true,
+            IncludeAnswer = true,
             IncludeImages = TryGetBoolean(passthrough, "include_images")
         };
     }
@@ -225,39 +334,6 @@ public partial class NinjaChatProvider
 
         if (!string.IsNullOrWhiteSpace(response.Answer))
             sections.Add(response.Answer!.Trim());
-
-        if (response.Sources.Count > 0)
-        {
-            var sourceLines = response.Sources
-                .Where(s => !string.IsNullOrWhiteSpace(s.Url) || !string.IsNullOrWhiteSpace(s.Title))
-                .Select((source, index) =>
-                {
-                    var title = string.IsNullOrWhiteSpace(source.Title) ? $"Source {index + 1}" : source.Title!;
-                    var line = $"- {title}";
-                    if (!string.IsNullOrWhiteSpace(source.Url))
-                        line += $"\n  {source.Url}";
-                    if (!string.IsNullOrWhiteSpace(source.Content))
-                        line += $"\n  {source.Content}";
-                    return line;
-                })
-                .ToArray();
-
-            if (sourceLines.Length > 0)
-                sections.Add($"Sources:\n{string.Join("\n", sourceLines)}");
-        }
-
-        if (response.Images.Count > 0)
-        {
-            var imageLines = response.Images
-                .Where(i => !string.IsNullOrWhiteSpace(i.Url))
-                .Select((image, index) => string.IsNullOrWhiteSpace(image.Description)
-                    ? $"- Image {index + 1}: {image.Url}"
-                    : $"- {image.Description}: {image.Url}")
-                .ToArray();
-
-            if (imageLines.Length > 0)
-                sections.Add($"Images:\n{string.Join("\n", imageLines)}");
-        }
 
         if (response.FollowUpQuestions.Count > 0)
         {
@@ -273,7 +349,7 @@ public partial class NinjaChatProvider
         return string.Join("\n\n", sections.Where(s => !string.IsNullOrWhiteSpace(s)));
     }
 
-   
+
     private static IEnumerable<object> BuildNativeSearchAnnotationObjects(NinjaChatSearchResponse response)
         => response.Sources
             .Where(s => !string.IsNullOrWhiteSpace(s.Url))
@@ -510,7 +586,7 @@ public partial class NinjaChatProvider
             : content.GetRawText();
     }
 
-   
+
 
     private Dictionary<string, object?>? GetRawProviderPassthroughFromResponseRequest(ResponseRequest request)
     {

@@ -454,6 +454,29 @@ public partial class NinjaChatProvider
             };
         }
 
+        foreach (var downloadedImage in execution.DownloadedImages)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return new AIStreamEvent
+            {
+                ProviderId = GetIdentifier(),
+                Metadata = metadata,
+                Event = new AIEventEnvelope
+                {
+                    Type = "file",
+                    Id = streamId,
+                    Timestamp = timestamp,
+                    Data = new AIFileEventData
+                    {
+                        MediaType = downloadedImage.MediaType,
+                        Url = downloadedImage.DataUrl,
+                        Filename = downloadedImage.Filename,
+                        ProviderMetadata = CreateNativeSearchImageProviderMetadata(downloadedImage)
+                    }
+                }
+            };
+        }
+
         if (execution.Response.FollowUpQuestions.Count > 0)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -537,7 +560,7 @@ public partial class NinjaChatProvider
                         outputTokens: 0,
                         totalTokens: 0,
                         temperature: request.Temperature,
-                        additionalProperties: BuildNativeSearchFinishAdditionalProperties(execution.Response))
+                        additionalProperties: BuildNativeSearchFinishAdditionalProperties(execution))
                 }
             }
         };
@@ -562,7 +585,7 @@ public partial class NinjaChatProvider
             Output = new AIOutput
             {
                 Items = items,
-                Metadata = BuildNativeSearchOutputMetadata(execution.Response)
+                Metadata = BuildNativeSearchOutputMetadata(execution)
             },
             Metadata = BuildNativeSearchUnifiedMetadata(execution, request, model)
         };
@@ -637,23 +660,27 @@ public partial class NinjaChatProvider
             Citations = citations.Count > 0 ? citations : null
         };
 
+        var content = new List<AIContentPart>
+        {
+            new AITextContentPart
+            {
+                Type = "text",
+                Text = execution.Text,
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["messages.block.raw"] = JsonSerializer.SerializeToElement(rawBlock, NinjaChatJson),
+                    ["responses.type"] = "output_text"
+                }
+            }
+        };
+
+        content.AddRange(execution.DownloadedImages.Select(CreateNativeSearchImageContentPart));
+
         return new AIOutputItem
         {
             Type = "message",
             Role = "assistant",
-            Content =
-            [
-                new AITextContentPart
-                {
-                    Type = "text",
-                    Text = execution.Text,
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["messages.block.raw"] = JsonSerializer.SerializeToElement(rawBlock, NinjaChatJson),
-                        ["responses.type"] = "output_text"
-                    }
-                }
-            ],
+            Content = content,
             Metadata = new Dictionary<string, object?>
             {
                 ["chatcompletions.message.sources"] = BuildNativeSearchSourceDtos(execution.Response).ToList(),
@@ -661,10 +688,25 @@ public partial class NinjaChatProvider
                 ["ninjachat.query"] = execution.Response.Query,
                 ["ninjachat.answer"] = execution.Response.Answer,
                 ["ninjachat.images"] = JsonSerializer.SerializeToElement(execution.Response.Images, NinjaChatJson),
+                ["ninjachat.downloaded_images"] = BuildNativeSearchDownloadedImageDtos(execution).ToList(),
                 ["ninjachat.follow_up_questions"] = JsonSerializer.SerializeToElement(execution.Response.FollowUpQuestions, NinjaChatJson)
             }
         };
     }
+
+    private static AIFileContentPart CreateNativeSearchImageContentPart(NinjaChatDownloadedImage image)
+        => new()
+        {
+            Type = "file",
+            MediaType = image.MediaType,
+            Filename = image.Filename,
+            Data = image.DataUrl,
+            Metadata = new Dictionary<string, object?>
+            {
+                ["ninjachat.image.origin_url"] = image.OriginUrl,
+                ["ninjachat.image.description"] = image.Description
+            }
+        };
 
     private static AIOutputItem CreateNativeSearchSourceOutputItem(NinjaChatSearchSource source)
         => new()
@@ -724,6 +766,16 @@ public partial class NinjaChatProvider
                 ["description"] = image.Description
             });
 
+    private static IEnumerable<object> BuildNativeSearchDownloadedImageDtos(NinjaChatSearchExecutionResult execution)
+        => execution.DownloadedImages.Select(image => new Dictionary<string, object?>
+        {
+            ["data_url"] = image.DataUrl,
+            ["media_type"] = image.MediaType,
+            ["filename"] = image.Filename,
+            ["origin_url"] = image.OriginUrl,
+            ["description"] = image.Description
+        });
+
     private Dictionary<string, object?> BuildNativeSearchUnifiedMetadata(
         NinjaChatSearchExecutionResult execution,
         AIRequest request,
@@ -738,6 +790,7 @@ public partial class NinjaChatProvider
         metadata["ninjachat.answer"] = execution.Response.Answer;
         metadata["ninjachat.sources"] = JsonSerializer.SerializeToElement(execution.Response.Sources, NinjaChatJson);
         metadata["ninjachat.images"] = JsonSerializer.SerializeToElement(execution.Response.Images, NinjaChatJson);
+        metadata["ninjachat.downloaded_images"] = JsonSerializer.SerializeToElement(BuildNativeSearchDownloadedImageDtos(execution).ToList(), NinjaChatJson);
         metadata["ninjachat.follow_up_questions"] = JsonSerializer.SerializeToElement(execution.Response.FollowUpQuestions, NinjaChatJson);
         metadata["ninjachat.cost"] = execution.Response.Cost is null ? null : JsonSerializer.SerializeToElement(execution.Response.Cost, NinjaChatJson);
         metadata["ninjachat.search_metadata"] = execution.Response.Metadata is null ? null : JsonSerializer.SerializeToElement(execution.Response.Metadata, NinjaChatJson);
@@ -778,13 +831,25 @@ public partial class NinjaChatProvider
         return metadata;
     }
 
-    private static Dictionary<string, object?> BuildNativeSearchOutputMetadata(NinjaChatSearchResponse response)
+    private static Dictionary<string, object?> BuildNativeSearchOutputMetadata(NinjaChatSearchExecutionResult execution)
         => new(StringComparer.OrdinalIgnoreCase)
         {
-            ["ninjachat.query"] = response.Query,
-            ["ninjachat.images"] = JsonSerializer.SerializeToElement(response.Images, NinjaChatJson),
-            ["ninjachat.follow_up_questions"] = JsonSerializer.SerializeToElement(response.FollowUpQuestions, NinjaChatJson),
-            ["ninjachat.search_metadata"] = response.Metadata is null ? null : JsonSerializer.SerializeToElement(response.Metadata, NinjaChatJson)
+            ["ninjachat.query"] = execution.Response.Query,
+            ["ninjachat.images"] = JsonSerializer.SerializeToElement(execution.Response.Images, NinjaChatJson),
+            ["ninjachat.downloaded_images"] = JsonSerializer.SerializeToElement(BuildNativeSearchDownloadedImageDtos(execution).ToList(), NinjaChatJson),
+            ["ninjachat.follow_up_questions"] = JsonSerializer.SerializeToElement(execution.Response.FollowUpQuestions, NinjaChatJson),
+            ["ninjachat.search_metadata"] = execution.Response.Metadata is null ? null : JsonSerializer.SerializeToElement(execution.Response.Metadata, NinjaChatJson)
+        };
+
+    private Dictionary<string, Dictionary<string, object>> CreateNativeSearchImageProviderMetadata(NinjaChatDownloadedImage image)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            [GetIdentifier()] = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["origin_url"] = image.OriginUrl,
+                ["description"] = image.Description ?? string.Empty,
+                ["filename"] = image.Filename
+            }
         };
 
     private static Dictionary<string, object?> BuildNativeSearchUsage(NinjaChatSearchResponse response)
@@ -820,18 +885,19 @@ public partial class NinjaChatProvider
             };
     }
 
-    private static Dictionary<string, object?> BuildNativeSearchFinishAdditionalProperties(NinjaChatSearchResponse response)
+    private static Dictionary<string, object?> BuildNativeSearchFinishAdditionalProperties(NinjaChatSearchExecutionResult execution)
         => new(StringComparer.OrdinalIgnoreCase)
         {
             [nameof(NinjaChat).ToLowerInvariant()] = new Dictionary<string, object?>
             {
-                ["query"] = response.Query,
-                ["answer"] = response.Answer,
-                ["sources"] = JsonSerializer.SerializeToElement(response.Sources, NinjaChatJson),
-                ["images"] = JsonSerializer.SerializeToElement(response.Images, NinjaChatJson),
-                ["follow_up_questions"] = JsonSerializer.SerializeToElement(response.FollowUpQuestions, NinjaChatJson),
-                ["cost"] = response.Cost is null ? null : JsonSerializer.SerializeToElement(response.Cost, NinjaChatJson),
-                ["search_metadata"] = response.Metadata is null ? null : JsonSerializer.SerializeToElement(response.Metadata, NinjaChatJson)
+                ["query"] = execution.Response.Query,
+                ["answer"] = execution.Response.Answer,
+                ["sources"] = JsonSerializer.SerializeToElement(execution.Response.Sources, NinjaChatJson),
+                ["images"] = JsonSerializer.SerializeToElement(execution.Response.Images, NinjaChatJson),
+                ["downloaded_images"] = JsonSerializer.SerializeToElement(BuildNativeSearchDownloadedImageDtos(execution).ToList(), NinjaChatJson),
+                ["follow_up_questions"] = JsonSerializer.SerializeToElement(execution.Response.FollowUpQuestions, NinjaChatJson),
+                ["cost"] = execution.Response.Cost is null ? null : JsonSerializer.SerializeToElement(execution.Response.Cost, NinjaChatJson),
+                ["search_metadata"] = execution.Response.Metadata is null ? null : JsonSerializer.SerializeToElement(execution.Response.Metadata, NinjaChatJson)
             }
         };
 

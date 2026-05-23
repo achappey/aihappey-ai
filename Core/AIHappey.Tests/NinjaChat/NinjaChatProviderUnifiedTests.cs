@@ -36,10 +36,16 @@ public class NinjaChatProviderUnifiedTests
 
         Assert.NotNull(response.Output);
         var outputItems = Assert.IsAssignableFrom<List<AIOutputItem>>(response.Output!.Items);
-        var messageItem = Assert.Single(outputItems.Where(item => item.Type == "message"));
-        var textPart = Assert.IsType<AITextContentPart>(Assert.Single(messageItem.Content!));
+        var messageItem = Assert.Single(outputItems, item => item.Type == "message");
+        var textPart = Assert.Single(messageItem.Content!.OfType<AITextContentPart>());
         Assert.Contains("Recent developments in AI safety include", textPart.Text);
         Assert.Contains("Sources:", textPart.Text);
+
+        var filePart = Assert.Single(messageItem.Content!.OfType<AIFileContentPart>());
+        Assert.Equal("image/png", filePart.MediaType);
+        Assert.Equal("Safety-diagram.png", filePart.Filename);
+        Assert.StartsWith("data:image/png;base64,", Assert.IsType<string>(filePart.Data));
+        Assert.Equal("https://example.com/safety-diagram.png", filePart.Metadata!["ninjachat.image.origin_url"]?.ToString());
 
         var sourceItems = outputItems.Where(item => item.Type == "source-url").ToList();
         Assert.Equal(2, sourceItems.Count);
@@ -47,6 +53,35 @@ public class NinjaChatProviderUnifiedTests
         Assert.Equal("AI Safety Progress in 2026", sourceItems[0].Metadata!["chatcompletions.source.title"]?.ToString());
 
         Assert.Equal("latest developments in AI safety", response.Metadata!["ninjachat.query"]?.ToString());
+        Assert.Contains("ninjachat.downloaded_images", response.Metadata.Keys);
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_SearchModel_EmitsDownloadedImageFileEvent()
+    {
+        var requests = new List<HttpRequestMessage>();
+        var factory = new StaticHttpClientFactory(() => new HttpClient(new StaticResponseHttpMessageHandler(request =>
+        {
+            requests.Add(request);
+            return request.RequestUri?.AbsoluteUri == "https://example.com/safety-diagram.png"
+                ? BinaryResponse([1, 2, 3], "image/png")
+                : JsonResponse(CreateSearchResponseJson());
+        })));
+
+        var provider = CreateProvider(factory);
+
+        var events = await CollectAsync(provider.StreamUnifiedAsync(CreateSearchRequest()));
+
+        Assert.True(factory.CreateCount >= 2);
+        Assert.Contains(requests, request => request.RequestUri?.AbsolutePath == "/api/v1/search");
+        Assert.Contains(requests, request => request.RequestUri?.AbsoluteUri == "https://example.com/safety-diagram.png");
+
+        var fileEvent = Assert.Single(events, e => e.Event.Type == "file");
+        var fileData = Assert.IsType<AIFileEventData>(fileEvent.Event.Data);
+        Assert.Equal("image/png", fileData.MediaType);
+        Assert.Equal("Safety-diagram.png", fileData.Filename);
+        Assert.StartsWith("data:image/png;base64,", fileData.Url);
+        Assert.Equal("https://example.com/safety-diagram.png", fileData.ProviderMetadata!["ninjachat"]["origin_url"]?.ToString());
     }
 
     [Fact]
@@ -135,15 +170,27 @@ public class NinjaChatProviderUnifiedTests
         };
 
     private static NinjaChatProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
+        => CreateProvider(new StaticHttpClientFactory(() => new HttpClient(new StaticResponseHttpMessageHandler(responder))));
+
+    private static NinjaChatProvider CreateProvider(IHttpClientFactory httpClientFactory)
         => new(
             new StaticApiKeyResolver(),
             new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
-            new StaticHttpClientFactory(new HttpClient(new StaticResponseHttpMessageHandler(responder))));
+            httpClientFactory);
 
     private static HttpResponseMessage JsonResponse(string json)
         => new(HttpStatusCode.OK)
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+
+    private static HttpResponseMessage BinaryResponse(byte[] bytes, string mediaType)
+        => new(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(bytes)
+            {
+                Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mediaType) }
+            }
         };
 
     private static string CreateSearchResponseJson()
@@ -248,9 +295,15 @@ public class NinjaChatProviderUnifiedTests
         public string Resolve(string apiProviderName) => "test-key";
     }
 
-    private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
+    private sealed class StaticHttpClientFactory(Func<HttpClient> createClient) : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name = "") => httpClient;
+        public int CreateCount { get; private set; }
+
+        public HttpClient CreateClient(string name = "")
+        {
+            CreateCount++;
+            return createClient();
+        }
     }
 
     private sealed class StaticResponseHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler

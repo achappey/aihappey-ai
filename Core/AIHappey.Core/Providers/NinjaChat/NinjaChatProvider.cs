@@ -16,6 +16,8 @@ public partial class NinjaChatProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly IHttpClientFactory _httpClientFactory;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public NinjaChatProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
@@ -23,6 +25,7 @@ public partial class NinjaChatProvider : IModelProvider
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
+        _httpClientFactory = httpClientFactory;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://www.ninjachat.ai/api/");
     }
