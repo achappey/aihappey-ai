@@ -464,7 +464,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["aichixia"] = "X-Aichixia-Key",
             ["eugpt"] = "X-EuGPT-Key",
             ["teai"] = "X-TEAI-Key",
-            ["api1sbs"] = "X-API1SBS-Key",
             ["paul"] = "X-Paul-Key",
             ["radient"] = "X-Radient-Key",
             ["aihorde"] = "X-AIHorde-Key",

@@ -462,7 +462,6 @@ public class AIServiceConfig
     public ProviderConfig? Aichixia { get; set; }
     public ProviderConfig? EuGPT { get; set; }
     public ProviderConfig? TEAI { get; set; }
-    public ProviderConfig? API1SBS { get; set; }
     public ProviderConfig? Paul { get; set; }
     public ProviderConfig? Radient { get; set; }
     public ProviderConfig? AIHorde { get; set; }

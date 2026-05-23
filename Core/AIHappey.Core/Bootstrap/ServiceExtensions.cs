@@ -460,7 +460,6 @@ using AIHappey.Core.Providers.Moltkey;
 using AIHappey.Core.Providers.Aichixia;
 using AIHappey.Core.Providers.EuGPT;
 using AIHappey.Core.Providers.TEAI;
-using AIHappey.Core.Providers.API1SBS;
 using AIHappey.Core.Providers.Paul;
 using AIHappey.Core.Providers.Radient;
 using AIHappey.Core.Providers.AIHorde;
@@ -1025,7 +1024,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AichixiaProvider>();
         services.AddSingleton<IModelProvider, EuGPTProvider>();
         services.AddSingleton<IModelProvider, TEAIProvider>();
-        services.AddSingleton<IModelProvider, API1SBSProvider>();
         services.AddSingleton<IModelProvider, PaulProvider>();
         services.AddSingleton<IModelProvider, RadientProvider>();
         services.AddSingleton<IModelProvider, AIHordeProvider>();
