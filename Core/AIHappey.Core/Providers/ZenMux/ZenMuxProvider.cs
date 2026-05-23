@@ -98,11 +98,11 @@ public partial class ZenMuxProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
+        throw new NotImplementedException();
     }
 
     public async Task<MessagesResponse> MessagesAsync(
