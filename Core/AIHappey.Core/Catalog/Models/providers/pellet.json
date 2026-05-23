@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "pellet/auto",
+      "object": "model",
+      "owned_by": "Pellet",
+      "name": "Pellet Auto",
+      "type": "language",
+      "description": "Balanced — picks the best model for the task type and complexity. Uses smaller models for simple tasks, larger ones for complex tasks."
+    },
+    {
+      "id": "pellet/fastest",
+      "object": "model",
+      "owned_by": "Pellet",
+      "name": "Pellet Fastest",
+      "type": "language",
+      "description": "Minimum latency — prioritizes the smallest, fastest models. Great for real-time apps and simple tasks."
+    },
+    {
+      "id": "pellet/cheapest",
+      "object": "model",
+      "owned_by": "Pellet",
+      "name": "Pellet Cheapest",
+      "type": "language",
+      "description": "Lowest cost — selects the most cost-effective model that can handle the task."
+    },
+    {
+      "id": "pellet/quality",
+      "object": "model",
+      "owned_by": "Pellet",
+      "name": "Pellet Quality",
+      "type": "language",
+      "description": "Best output — selects the largest, most capable model. Use for complex reasoning, long-form content, or critical tasks."
+    }
+  ]
+}

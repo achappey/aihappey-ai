@@ -41,7 +41,7 @@ public partial class PelletProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
-                    }                 
+                    }
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
@@ -49,6 +49,8 @@ public partial class PelletProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
+
+                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },
