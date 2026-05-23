@@ -5,6 +5,7 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.NinjaChat;
@@ -63,40 +64,64 @@ public partial class NinjaChatProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        if (request.Model == "search")
-            throw new NotImplementedException();
-        // return ExecuteNativeSearchMessagesAsync(request, cancellationToken);
+        if (IsNativeSearchModel(request.Model))
+        {
+            var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+            return result.ToMessagesResponse();
+        }
 
-        return this.GetMessage(
+        return await this.GetMessage(
             _client,
             request,
             headers: headers,
             cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        if (request.Model == "search")
-            throw new NotImplementedException();
-        //return ExecuteNativeSearchMessagesStreamingAsync(JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web), cancellationToken);
+        if (IsNativeSearchModel(request.Model))
+        {
+            await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            {
+                foreach (var item in part.ToMessageStreamParts())
+                    yield return item;
+            }
 
-        return this.GetMessages(_client,
+            yield break;
+        }
+
+        await foreach (var part in this.GetMessages(_client,
             request,
             headers: headers,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken))
+        {
+            yield return part;
+        }
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    {
+        ApplyAuthHeader();
+
+        return IsNativeSearchModel(request.Model)
+            ? ExecuteUnifiedSearchAsync(request, cancellationToken)
+            : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => IsEnsembleModel(request.Model)
+    {
+        ApplyAuthHeader();
+
+        return IsNativeSearchModel(request.Model)
+            ? StreamUnifiedSearchAsync(request, cancellationToken)
+            : IsEnsembleModel(request.Model)
             ? StreamUnifiedEnsembleAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
 }

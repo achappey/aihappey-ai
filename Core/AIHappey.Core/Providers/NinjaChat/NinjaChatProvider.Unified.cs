@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.AI;
+using AIHappey.Messages;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.NinjaChat;
@@ -365,4 +366,477 @@ public partial class NinjaChatProvider
 
         return null;
     }
+
+    private async Task<AIResponse> ExecuteUnifiedSearchAsync(
+        AIRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var execution = await ExecuteNativeSearchAsync(BuildNativeSearchRequest(request), cancellationToken);
+        return ToUnifiedSearchResponse(execution, request);
+    }
+
+    private async IAsyncEnumerable<AIStreamEvent> StreamUnifiedSearchAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var execution = await ExecuteNativeSearchAsync(BuildNativeSearchRequest(request), cancellationToken);
+        var model = ResolveNativeSearchModel(request.Model);
+        var timestamp = DateTimeOffset.FromUnixTimeSeconds(execution.CreatedAt);
+        var streamId = execution.Id;
+        var usage = BuildNativeSearchUsage(execution.Response);
+        var response = ToUnifiedSearchResponse(execution, request);
+        var metadata = BuildNativeSearchStreamMetadata(execution, request, model);
+        var rawResponse = JsonSerializer.SerializeToElement(execution.Response, NinjaChatJson);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        yield return new AIStreamEvent
+        {
+            ProviderId = GetIdentifier(),
+            Metadata = metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = "text-start",
+                Id = streamId,
+                Timestamp = timestamp,
+                Data = new AITextStartEventData()
+            }
+        };
+
+        foreach (var source in execution.Response.Sources)
+        {
+            if (string.IsNullOrWhiteSpace(source.Url))
+                continue;
+
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return new AIStreamEvent
+            {
+                ProviderId = GetIdentifier(),
+                Metadata = metadata,
+                Event = new AIEventEnvelope
+                {
+                    Type = "source-url",
+                    Id = streamId,
+                    Timestamp = timestamp,
+                    Data = new AISourceUrlEventData
+                    {
+                        SourceId = source.Url,
+                        Url = source.Url,
+                        Title = string.IsNullOrWhiteSpace(source.Title) ? source.Url : source.Title,
+                        Type = "web_search_result_location",
+                        ProviderMetadata = CreateNativeSearchSourceProviderMetadata(source)
+                    }
+                }
+            };
+        }
+
+        if (execution.Response.Images.Count > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return new AIStreamEvent
+            {
+                ProviderId = GetIdentifier(),
+                Metadata = metadata,
+                Event = new AIEventEnvelope
+                {
+                    Type = "data-ninjachat.images",
+                    Id = streamId,
+                    Timestamp = timestamp,
+                    Data = new AIDataEventData
+                    {
+                        Id = streamId,
+                        Data = BuildNativeSearchImageDtos(execution.Response).ToList()
+                    }
+                }
+            };
+        }
+
+        if (execution.Response.FollowUpQuestions.Count > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return new AIStreamEvent
+            {
+                ProviderId = GetIdentifier(),
+                Metadata = metadata,
+                Event = new AIEventEnvelope
+                {
+                    Type = "data-ninjachat.follow-up-questions",
+                    Id = streamId,
+                    Timestamp = timestamp,
+                    Data = new AIDataEventData
+                    {
+                        Id = streamId,
+                        Data = execution.Response.FollowUpQuestions.ToList()
+                    }
+                }
+            };
+        }
+
+        foreach (var chunk in ChunkText(execution.Text))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return new AIStreamEvent
+            {
+                ProviderId = GetIdentifier(),
+                Metadata = metadata,
+                Event = new AIEventEnvelope
+                {
+                    Type = "text-delta",
+                    Id = streamId,
+                    Timestamp = timestamp,
+                    Data = new AITextDeltaEventData
+                    {
+                        Delta = chunk
+                    }
+                }
+            };
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        yield return new AIStreamEvent
+        {
+            ProviderId = GetIdentifier(),
+            Metadata = metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = "text-end",
+                Id = streamId,
+                Timestamp = timestamp,
+                Data = new AITextEndEventData()
+            }
+        };
+
+        cancellationToken.ThrowIfCancellationRequested();
+        yield return new AIStreamEvent
+        {
+            ProviderId = GetIdentifier(),
+            Metadata = metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = "finish",
+                Id = streamId,
+                Timestamp = timestamp,
+                Output = response.Output,
+                Data = new AIFinishEventData
+                {
+                    FinishReason = "stop",
+                    Model = model.ToModelId(GetIdentifier()),
+                    CompletedAt = execution.CreatedAt,
+                    InputTokens = 0,
+                    OutputTokens = 0,
+                    TotalTokens = 0,
+                    Response = rawResponse,
+                    MessageMetadata = AIFinishMessageMetadata.Create(
+                        model,
+                        timestamp,
+                        usage: usage,
+                        inputTokens: 0,
+                        outputTokens: 0,
+                        totalTokens: 0,
+                        temperature: request.Temperature,
+                        additionalProperties: BuildNativeSearchFinishAdditionalProperties(execution.Response))
+                }
+            }
+        };
+    }
+
+    private AIResponse ToUnifiedSearchResponse(NinjaChatSearchExecutionResult execution, AIRequest request)
+    {
+        var model = ResolveNativeSearchModel(request.Model);
+        var items = new List<AIOutputItem>
+        {
+            CreateNativeSearchMessageOutputItem(execution)
+        };
+
+        items.AddRange(execution.Response.Sources.Select(CreateNativeSearchSourceOutputItem));
+
+        return new AIResponse
+        {
+            ProviderId = GetIdentifier(),
+            Model = model,
+            Status = "completed",
+            Usage = BuildNativeSearchUsage(execution.Response),
+            Output = new AIOutput
+            {
+                Items = items,
+                Metadata = BuildNativeSearchOutputMetadata(execution.Response)
+            },
+            Metadata = BuildNativeSearchUnifiedMetadata(execution, request, model)
+        };
+    }
+
+    private NinjaChatSearchRequest BuildNativeSearchRequest(AIRequest request)
+        => BuildNativeSearchRequest(
+            query: BuildPromptFromUnifiedRequest(request),
+            passthrough: GetRawProviderPassthroughFromUnifiedRequest(request));
+
+    private Dictionary<string, object?>? GetRawProviderPassthroughFromUnifiedRequest(AIRequest request)
+    {
+        var raw = request.Metadata.GetProviderMetadata<JsonElement>(GetIdentifier());
+        return raw.ValueKind == JsonValueKind.Object
+            ? JsonElementObjectToDictionary(raw)
+            : null;
+    }
+
+    private static string BuildPromptFromUnifiedRequest(AIRequest request)
+    {
+        if (!string.IsNullOrWhiteSpace(request.Input?.Text))
+            return request.Input.Text!;
+
+        var items = request.Input?.Items?.ToList() ?? [];
+        if (items.Count == 0)
+            return request.Instructions ?? string.Empty;
+
+        var system = new List<string>();
+        var lines = new List<string>();
+
+        foreach (var item in items)
+        {
+            var role = (item.Role ?? string.Empty).Trim().ToLowerInvariant();
+            var text = string.Join(
+                "\n",
+                (item.Content ?? [])
+                    .OfType<AITextContentPart>()
+                    .Select(part => part.Text)
+                    .Where(value => !string.IsNullOrWhiteSpace(value)));
+
+            if (string.IsNullOrWhiteSpace(text))
+                continue;
+
+            if (role == "system")
+            {
+                system.Add(text);
+                continue;
+            }
+
+            if (role is not ("user" or "assistant"))
+                continue;
+
+            lines.Add($"{role}: {text}");
+        }
+
+        if (system.Count > 0)
+            lines.Insert(0, $"system: {string.Join("\n\n", system)}");
+
+        var prompt = string.Join("\n\n", lines);
+        return string.IsNullOrWhiteSpace(prompt)
+            ? request.Instructions ?? string.Empty
+            : prompt;
+    }
+
+    private AIOutputItem CreateNativeSearchMessageOutputItem(NinjaChatSearchExecutionResult execution)
+    {
+        var citations = BuildNativeSearchMessageCitations(execution.Response).ToList();
+        var rawBlock = new MessageContentBlock
+        {
+            Type = "text",
+            Text = execution.Text,
+            Citations = citations.Count > 0 ? citations : null
+        };
+
+        return new AIOutputItem
+        {
+            Type = "message",
+            Role = "assistant",
+            Content =
+            [
+                new AITextContentPart
+                {
+                    Type = "text",
+                    Text = execution.Text,
+                    Metadata = new Dictionary<string, object?>
+                    {
+                        ["messages.block.raw"] = JsonSerializer.SerializeToElement(rawBlock, NinjaChatJson),
+                        ["responses.type"] = "output_text"
+                    }
+                }
+            ],
+            Metadata = new Dictionary<string, object?>
+            {
+                ["chatcompletions.message.sources"] = BuildNativeSearchSourceDtos(execution.Response).ToList(),
+                ["chatcompletions.choice.finish_reason"] = "stop",
+                ["ninjachat.query"] = execution.Response.Query,
+                ["ninjachat.answer"] = execution.Response.Answer,
+                ["ninjachat.images"] = JsonSerializer.SerializeToElement(execution.Response.Images, NinjaChatJson),
+                ["ninjachat.follow_up_questions"] = JsonSerializer.SerializeToElement(execution.Response.FollowUpQuestions, NinjaChatJson)
+            }
+        };
+    }
+
+    private static AIOutputItem CreateNativeSearchSourceOutputItem(NinjaChatSearchSource source)
+        => new()
+        {
+            Type = "source-url",
+            Content =
+            [
+                new AITextContentPart
+                {
+                    Type = "text",
+                    Text = string.IsNullOrWhiteSpace(source.Title) ? source.Url ?? string.Empty : source.Title
+                }
+            ],
+            Metadata = new Dictionary<string, object?>
+            {
+                ["chatcompletions.source.url"] = source.Url,
+                ["chatcompletions.source.title"] = source.Title,
+                ["messages.source.url"] = source.Url,
+                ["messages.source.title"] = source.Title,
+                ["messages.source.type"] = "web_search_result_location",
+                ["ninjachat.source.content"] = source.Content,
+                ["ninjachat.source.published_date"] = source.PublishedDate,
+                ["ninjachat.source.raw"] = JsonSerializer.SerializeToElement(source, NinjaChatJson)
+            }
+        };
+
+    private static IEnumerable<MessageCitation> BuildNativeSearchMessageCitations(NinjaChatSearchResponse response)
+        => response.Sources
+            .Where(source => !string.IsNullOrWhiteSpace(source.Url))
+            .Select((source, index) => new MessageCitation
+            {
+                Type = "web_search_result_location",
+                Url = source.Url,
+                Title = source.Title,
+                EncryptedIndex = source.Url,
+                SearchResultIndex = index,
+                Source = "ninjachat.search"
+            });
+
+    private static IEnumerable<object> BuildNativeSearchSourceDtos(NinjaChatSearchResponse response)
+        => response.Sources
+            .Where(source => !string.IsNullOrWhiteSpace(source.Url))
+            .Select(source => new Dictionary<string, object?>
+            {
+                ["url"] = source.Url,
+                ["title"] = source.Title,
+                ["content"] = source.Content,
+                ["published_date"] = source.PublishedDate
+            });
+
+    private static IEnumerable<object> BuildNativeSearchImageDtos(NinjaChatSearchResponse response)
+        => response.Images
+            .Where(image => !string.IsNullOrWhiteSpace(image.Url))
+            .Select(image => new Dictionary<string, object?>
+            {
+                ["url"] = image.Url,
+                ["description"] = image.Description
+            });
+
+    private Dictionary<string, object?> BuildNativeSearchUnifiedMetadata(
+        NinjaChatSearchExecutionResult execution,
+        AIRequest request,
+        string model)
+    {
+        var metadata = request.Metadata is null
+            ? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, object?>(request.Metadata, StringComparer.OrdinalIgnoreCase);
+
+        metadata["ninjachat.request.query"] = execution.Request.Query;
+        metadata["ninjachat.query"] = execution.Response.Query ?? execution.Request.Query;
+        metadata["ninjachat.answer"] = execution.Response.Answer;
+        metadata["ninjachat.sources"] = JsonSerializer.SerializeToElement(execution.Response.Sources, NinjaChatJson);
+        metadata["ninjachat.images"] = JsonSerializer.SerializeToElement(execution.Response.Images, NinjaChatJson);
+        metadata["ninjachat.follow_up_questions"] = JsonSerializer.SerializeToElement(execution.Response.FollowUpQuestions, NinjaChatJson);
+        metadata["ninjachat.cost"] = execution.Response.Cost is null ? null : JsonSerializer.SerializeToElement(execution.Response.Cost, NinjaChatJson);
+        metadata["ninjachat.search_metadata"] = execution.Response.Metadata is null ? null : JsonSerializer.SerializeToElement(execution.Response.Metadata, NinjaChatJson);
+        metadata["ninjachat.response.raw"] = JsonSerializer.SerializeToElement(execution.Response, NinjaChatJson);
+
+        metadata["messages.response.id"] = execution.Id;
+        metadata["messages.response.model"] = model;
+        metadata["messages.response.role"] = "assistant";
+        metadata["messages.response.type"] = "message";
+        metadata["messages.response.stop_reason"] = "end_turn";
+
+        metadata["chatcompletions.response.id"] = execution.Id;
+        metadata["chatcompletions.response.object"] = "chat.completion";
+        metadata["chatcompletions.response.created"] = execution.CreatedAt;
+        metadata["chatcompletions.response.model"] = model;
+
+        metadata["responses.id"] = execution.Id;
+        metadata["responses.object"] = "response";
+        metadata["responses.created_at"] = execution.CreatedAt;
+        metadata["responses.completed_at"] = execution.CreatedAt;
+        metadata["responses.model"] = model;
+
+        return metadata;
+    }
+
+    private Dictionary<string, object?> BuildNativeSearchStreamMetadata(
+        NinjaChatSearchExecutionResult execution,
+        AIRequest request,
+        string model)
+    {
+        var metadata = BuildNativeSearchUnifiedMetadata(execution, request, model);
+        metadata["chatcompletions.stream.id"] = execution.Id;
+        metadata["chatcompletions.stream.object"] = "chat.completion.chunk";
+        metadata["chatcompletions.stream.created"] = execution.CreatedAt;
+        metadata["chatcompletions.stream.model"] = model;
+        metadata["responses.response.id"] = execution.Id;
+        metadata["responses.response.model"] = model;
+        return metadata;
+    }
+
+    private static Dictionary<string, object?> BuildNativeSearchOutputMetadata(NinjaChatSearchResponse response)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ninjachat.query"] = response.Query,
+            ["ninjachat.images"] = JsonSerializer.SerializeToElement(response.Images, NinjaChatJson),
+            ["ninjachat.follow_up_questions"] = JsonSerializer.SerializeToElement(response.FollowUpQuestions, NinjaChatJson),
+            ["ninjachat.search_metadata"] = response.Metadata is null ? null : JsonSerializer.SerializeToElement(response.Metadata, NinjaChatJson)
+        };
+
+    private static Dictionary<string, object?> BuildNativeSearchUsage(NinjaChatSearchResponse response)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["prompt_tokens"] = 0,
+            ["completion_tokens"] = 0,
+            ["total_tokens"] = 0,
+            ["input_tokens"] = 0,
+            ["output_tokens"] = 0,
+            ["cost"] = response.Cost?.ThisRequest,
+            ["results_count"] = response.Metadata?.ResultsCount,
+            ["latency_ms"] = response.Metadata?.LatencyMs,
+            ["group"] = response.Metadata?.Group,
+            ["search_depth"] = response.Metadata?.SearchDepth
+        };
+
+    private Dictionary<string, Dictionary<string, object>>? CreateNativeSearchSourceProviderMetadata(NinjaChatSearchSource source)
+    {
+        var scoped = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+        if (!string.IsNullOrWhiteSpace(source.Content))
+            scoped["content"] = source.Content!;
+
+        if (!string.IsNullOrWhiteSpace(source.PublishedDate))
+            scoped["published_date"] = source.PublishedDate!;
+
+        return scoped.Count == 0
+            ? null
+            : new Dictionary<string, Dictionary<string, object>>(StringComparer.OrdinalIgnoreCase)
+            {
+                [GetIdentifier()] = scoped
+            };
+    }
+
+    private static Dictionary<string, object?> BuildNativeSearchFinishAdditionalProperties(NinjaChatSearchResponse response)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            [nameof(NinjaChat).ToLowerInvariant()] = new Dictionary<string, object?>
+            {
+                ["query"] = response.Query,
+                ["answer"] = response.Answer,
+                ["sources"] = JsonSerializer.SerializeToElement(response.Sources, NinjaChatJson),
+                ["images"] = JsonSerializer.SerializeToElement(response.Images, NinjaChatJson),
+                ["follow_up_questions"] = JsonSerializer.SerializeToElement(response.FollowUpQuestions, NinjaChatJson),
+                ["cost"] = response.Cost is null ? null : JsonSerializer.SerializeToElement(response.Cost, NinjaChatJson),
+                ["search_metadata"] = response.Metadata is null ? null : JsonSerializer.SerializeToElement(response.Metadata, NinjaChatJson)
+            }
+        };
+
+    private static string ResolveNativeSearchModel(string? model)
+        => string.IsNullOrWhiteSpace(model)
+            ? NativeSearchModelId
+            : model.Trim();
 }

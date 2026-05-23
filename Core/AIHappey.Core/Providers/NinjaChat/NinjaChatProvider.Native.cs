@@ -182,34 +182,6 @@ public partial class NinjaChatProvider
         };
     }
 
-
-    private async Task<JsonElement> ExecuteNativeSearchMessagesAsync(
-        JsonElement request,
-        CancellationToken cancellationToken)
-    {
-        var execution = await ExecuteNativeSearchAsync(BuildNativeSearchRequest(request), cancellationToken);
-
-        return JsonSerializer.SerializeToElement(new
-        {
-            id = execution.Id,
-            model = ExtractModelFromMessagesRequest(request),
-            role = "assistant",
-            content = execution.Text,
-            ui_parts = BuildNativeSearchUiParts(execution),
-            metadata = BuildNativeSearchMessageMetadata(execution.Response)
-        }, NinjaChatJson);
-    }
-
-    private async IAsyncEnumerable<UIMessagePart> ExecuteNativeSearchMessagesStreamingAsync(
-        JsonElement request,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var chatRequest = BuildNativeSearchChatRequest(request);
-
-        await foreach (var part in ExecuteNativeSearchUiStreamAsync(chatRequest, cancellationToken))
-            yield return part;
-    }
-
     private NinjaChatSearchRequest BuildNativeSearchRequest(JsonElement request)
     {
         var passthrough = JsonElementObjectToDictionary(request);
