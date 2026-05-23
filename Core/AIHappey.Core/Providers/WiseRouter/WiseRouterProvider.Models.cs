@@ -8,14 +8,14 @@ public partial class WiseRouterProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-      
+
         var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-              
+
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
@@ -32,7 +32,7 @@ public partial class WiseRouterProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-             
+
                 var arr = root.TryGetProperty("models", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
@@ -45,7 +45,7 @@ public partial class WiseRouterProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
-                    }              
+                    }
 
                     if (el.TryGetProperty("creator", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
@@ -56,6 +56,8 @@ public partial class WiseRouterProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
+
+                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },

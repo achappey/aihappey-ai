@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "wiserouter/balanced",
+      "object": "model",
+      "owned_by": "WiseRouter",
+      "name": "WiseRouter Balanced",
+      "type": "language",
+      "description": "Optimal balance between powerful and efficient."
+    },
+    {
+      "id": "wiserouter/powerful",
+      "object": "model",
+      "owned_by": "WiseRouter",
+      "name": "WiseRouter Powerful",
+      "type": "language",
+      "description": "Favors more powerful models for best results but uses more credits."
+    },
+    {
+      "id": "wiserouter/efficient",
+      "object": "model",
+      "owned_by": "WiseRouter",
+      "name": "WiseRouter Efficient",
+      "type": "language",
+      "description": "Prioritizes lighter models when possible to minimize credit usage."
+    }
+  ]
+}
