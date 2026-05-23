@@ -7,6 +7,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Brave;
+using AIHappey.Core.Providers.NinjaChat;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -23,6 +24,7 @@ public sealed class ApiChatStreamFixtureTests
 {
     private const string GitHubRawFixturePath = "Fixtures/chat-completions/raw/github-chat-completions-stream.jsonl";
     private const string GroqErrorRawFixturePath = "Fixtures/chat-completions/raw/groq-error-completions-stream.jsonl";
+    private const string NinjaChatEnsembleRawFixturePath = "Fixtures/chat-completions/raw/ninjachat-ensemble-response.jsonl";
     private const string NinjaChatSimpleRawFixturePath = "Fixtures/chat-completions/raw/ninjachat-simple-stream.jsonl";
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/chat-completions/raw/openai-web-search-chat-completions.jsonl";
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
@@ -668,6 +670,91 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(503, finishPart.MessageMetadata?.Usage.PromptTokens);
         Assert.Equal(256, finishPart.MessageMetadata?.Usage.CompletionTokens);
         Assert.Equal(759, finishPart.MessageMetadata?.Usage.TotalTokens);
+    }
+
+    [Fact]
+    public async Task NinjaChat_ensemble_non_stream_completion_is_synthesized_into_unified_streaming_events()
+    {
+        var fixtureJson = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(NinjaChatEnsembleRawFixturePath)).Trim();
+        using var httpClient = new HttpClient(new StaticResponseHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(fixtureJson, Encoding.UTF8, "application/json")
+        }));
+
+        var provider = new NinjaChatProvider(
+            new NullApiKeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new StaticHttpClientFactory(httpClient));
+
+        var request = new AIRequest
+        {
+            ProviderId = NinjaChatProviderId,
+            Model = $"{NinjaChatProviderId}/ensemble",
+            Stream = true
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(request));
+
+        Assert.Equal(
+            ["text-start", "text-delta", "text-end", "finish"],
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToArray());
+
+        var textEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end")
+            .ToList();
+
+        var textSpanId = Assert.Single(textEvents
+            .Select(streamEvent => streamEvent.Event.Id)
+            .Distinct(StringComparer.Ordinal));
+
+        Assert.False(string.IsNullOrWhiteSpace(textSpanId));
+        Assert.Equal(
+            "Hey Arthur! Hoe kan ik je vandaag helpen?",
+            string.Concat(textEvents
+                .Where(streamEvent => streamEvent.Event.Type == "text-delta")
+                .Select(streamEvent => Assert.IsType<AITextDeltaEventData>(streamEvent.Event.Data).Delta)));
+
+        var finishEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "finish");
+        var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
+
+        Assert.Equal("stop", finishData.FinishReason);
+        Assert.Equal("ninjachat/ensemble", finishData.Model);
+        Assert.Equal(0, finishData.InputTokens);
+        Assert.Equal(0, finishData.OutputTokens);
+        Assert.Equal(0, finishData.TotalTokens);
+
+        var finishProviderMetadata = Assert.Contains(NinjaChatProviderId, finishData.MessageMetadata?.AdditionalProperties ?? []);
+        Assert.Equal("req_mpihd7d3p6kr", finishProviderMetadata.GetProperty("request_id").GetString());
+        Assert.Equal(6375, finishProviderMetadata.GetProperty("metadata").GetProperty("latency_ms").GetInt32());
+        Assert.Equal("single-winner", finishProviderMetadata.GetProperty("ensemble").GetProperty("synthesis_strategy").GetString());
+        Assert.Equal("$0.040", finishProviderMetadata.GetProperty("cost").GetProperty("this_request").GetString());
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(NinjaChatProviderId))
+            .ToList();
+
+        Assert.Equal(
+            ["text-start", "text-delta", "text-end", "finish"],
+            uiParts.Select(part => part.Type).ToArray());
+
+        Assert.All(uiParts.OfType<TextStartUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextDeltaUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextEndUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts[^1]);
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(0, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(0, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(0, finishPart.MessageMetadata?.Usage.TotalTokens);
+
+        var roundTrippedChunk = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "text-delta")
+            .ToChatCompletionUpdate();
+        Assert.Equal("chat.completion.chunk", roundTrippedChunk.Object);
+        Assert.Equal("ninjachat/ensemble", roundTrippedChunk.Model);
+        Assert.NotNull(roundTrippedChunk.AdditionalProperties);
+        Assert.Equal("single-winner", roundTrippedChunk.AdditionalProperties!["ensemble"].GetProperty("synthesis_strategy").GetString());
+        Assert.Equal("req_mpihd7d3p6kr", roundTrippedChunk.AdditionalProperties["request_id"].GetString());
     }
 
     [Fact]

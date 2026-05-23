@@ -140,6 +140,23 @@ public partial class NinjaChatProvider
             && string.Equals(split.Model, NativeSearchModelId, StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool IsEnsembleModel(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return false;
+
+        var trimmed = model.Trim();
+        if (trimmed.StartsWith("ensemble", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (!trimmed.Contains('/', StringComparison.Ordinal))
+            return false;
+
+        var split = trimmed.SplitModelId();
+        return string.Equals(split.Provider, nameof(NinjaChat).ToLowerInvariant(), StringComparison.OrdinalIgnoreCase)
+            && split.Model.StartsWith("ensemble", StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task<NinjaChatSearchExecutionResult> ExecuteNativeSearchAsync(
         NinjaChatSearchRequest request,
         CancellationToken cancellationToken)
