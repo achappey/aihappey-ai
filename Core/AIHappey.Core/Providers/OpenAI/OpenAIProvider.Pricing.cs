@@ -1,16 +1,6 @@
-using System.ClientModel;
-using System.ClientModel.Primitives;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.StaticFiles;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
-using AIHappey.Responses.Extensions;
 using AIHappey.Responses.Streaming;
-using ModelContextProtocol.Protocol;
-using OpenAI.Containers;
 
 namespace AIHappey.Core.Providers.OpenAI;
 

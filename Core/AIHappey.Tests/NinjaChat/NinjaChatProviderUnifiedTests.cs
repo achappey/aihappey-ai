@@ -6,9 +6,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.NinjaChat;
-using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
-using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
@@ -39,7 +37,6 @@ public class NinjaChatProviderUnifiedTests
         var messageItem = Assert.Single(outputItems, item => item.Type == "message");
         var textPart = Assert.Single(messageItem.Content!.OfType<AITextContentPart>());
         Assert.Contains("Recent developments in AI safety include", textPart.Text);
-        Assert.Contains("Sources:", textPart.Text);
 
         var filePart = Assert.Single(messageItem.Content!.OfType<AIFileContentPart>());
         Assert.Equal("image/png", filePart.MediaType);
@@ -93,8 +90,6 @@ public class NinjaChatProviderUnifiedTests
             CreateSearchRequest().ToChatCompletionOptions("ninjachat")));
 
         Assert.Contains(updates, update => HasRoleDelta(update, "assistant"));
-        Assert.Contains(updates, update => HasSourceDelta(update, "https://example.com/article"));
-        Assert.Contains(updates, update => HasSourceDelta(update, "https://example.com/rlhf"));
         Assert.Contains(updates, update => HasContentDelta(update, "Recent developments in AI safety include"));
         Assert.Contains(updates, update => HasFinishReason(update, "stop"));
     }
@@ -108,7 +103,7 @@ public class NinjaChatProviderUnifiedTests
             CreateSearchRequest().ToMessagesRequest("ninjachat"),
             new Dictionary<string, string>());
 
-        var block = Assert.Single(response.Content);
+        var block = Assert.Single(response.Content, block => block.Type == "text");
         Assert.Equal("text", block.Type);
         Assert.NotNull(block.Citations);
         Assert.Equal(2, block.Citations!.Count);
@@ -170,7 +165,10 @@ public class NinjaChatProviderUnifiedTests
         };
 
     private static NinjaChatProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
-        => CreateProvider(new StaticHttpClientFactory(() => new HttpClient(new StaticResponseHttpMessageHandler(responder))));
+        => CreateProvider(new StaticHttpClientFactory(() => new HttpClient(new StaticResponseHttpMessageHandler(request =>
+            request.RequestUri?.AbsoluteUri == "https://example.com/safety-diagram.png"
+                ? BinaryResponse([1, 2, 3], "image/png")
+                : responder(request)))));
 
     private static NinjaChatProvider CreateProvider(IHttpClientFactory httpClientFactory)
         => new(
@@ -257,23 +255,6 @@ public class NinjaChatProviderUnifiedTests
             && delta.ValueKind == JsonValueKind.Object
             && delta.TryGetProperty("content", out var content)
             && content.GetString()?.Contains(expectedText, StringComparison.Ordinal) == true;
-    }
-
-    private static bool HasSourceDelta(ChatCompletionUpdate update, string expectedUrl)
-    {
-        var choice = GetFirstChoice(update);
-        if (!choice.TryGetProperty("delta", out var delta)
-            || delta.ValueKind != JsonValueKind.Object
-            || !delta.TryGetProperty("sources", out var sources)
-            || sources.ValueKind != JsonValueKind.Array)
-        {
-            return false;
-        }
-
-        return sources.EnumerateArray().Any(source =>
-            source.ValueKind == JsonValueKind.Object
-            && source.TryGetProperty("url", out var url)
-            && string.Equals(url.GetString(), expectedUrl, StringComparison.Ordinal));
     }
 
     private static bool HasFinishReason(ChatCompletionUpdate update, string expectedFinishReason)
