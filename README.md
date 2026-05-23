@@ -485,7 +485,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Tensorix       | ✅        | ✅                | ❌            | ✅            | ❌        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | TerminalSkills | ➖        | ➖                | ➖            | ➖            | ➖        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ✅          |
 | Tetrate        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Thaura         | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Thaura         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TheRouterAI    | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | TheOldAPI      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TextSynth      | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
