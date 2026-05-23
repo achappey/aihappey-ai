@@ -22,7 +22,7 @@ public partial class StraicoProvider
         "variations"
     ];
 
-    private async Task<ImageResponse> ImageRequestCore(ImageRequest request, CancellationToken cancellationToken)
+    public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
 

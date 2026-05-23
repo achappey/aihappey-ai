@@ -15,7 +15,7 @@ public partial class StraicoProvider
         "language-code"
     ];
 
-    private async Task<SpeechResponse> SpeechRequestInternal(
+    public async Task<SpeechResponse> SpeechRequest(
         SpeechRequest request,
         CancellationToken cancellationToken = default)
     {
