@@ -28,6 +28,7 @@ public partial class StealthGPTProvider : IModelProvider, IUnifiedModelProvider
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://stealthgpt.ai/api/");
+        _client.Timeout = TimeSpan.FromMinutes(10);
     }
 
     private void ApplyAuthHeader()

@@ -6,7 +6,8 @@
       "object": "model",
       "owned_by": "Thaura",
       "name": "thaura",
-      "type": "language"
+      "type": "language",
+      "description": "Thaura is built on GLM-4.5 Air from Z.ai, a 100 billion parameter open-source model with a 12 billion parameter mixture of experts (MoE) approach."
     }
   ]
 }

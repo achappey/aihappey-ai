@@ -16,6 +16,38 @@
       "name": "Blog Writer",
       "type": "language",
       "description": "Generates complete, undetectable blog articles with relevant, high-quality images in markdown format, optimized for SEO."
+    },
+    {
+      "id": "stealthgpt/agent/academic",
+      "object": "model",
+      "owned_by": "StealthGPT",
+      "name": "Stealth Academic Agent",
+      "type": "language",
+      "description": "Use for: essays, literature reviews, study-guide style explainers, research-paper drafts."
+    },
+    {
+      "id": "stealthgpt/agent/seo",
+      "object": "model",
+      "owned_by": "StealthGPT",
+      "name": "Stealth SEO Agent",
+      "type": "language",
+      "description": "Use for: long-form blog posts, evergreen guides, comparison articles, programmatic-SEO landing pages."
+    },
+    {
+      "id": "stealthgpt/agent/social/linkedin",
+      "object": "model",
+      "owned_by": "StealthGPT",
+      "name": "Stealth LinkedIn Agent",
+      "type": "language",
+      "description": "Use for: LinkedIn thought-leadership posts."
+    },
+    {
+      "id": "stealthgpt/agent/social/medium",
+      "object": "model",
+      "owned_by": "StealthGPT",
+      "name": "Stealth Medium Agent",
+      "type": "language",
+      "description": "Use for: Medium articles."
     }
   ]
 }

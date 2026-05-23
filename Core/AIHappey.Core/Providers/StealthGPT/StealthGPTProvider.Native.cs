@@ -12,6 +12,8 @@ public partial class StealthGPTProvider
 {
     private static readonly JsonSerializerOptions StealthGptJson = JsonSerializerOptions.Web;
 
+    private const string StealthGptAgentEndpoint = "stealthify/agent";
+
     private static string BuildPromptFromUnifiedRequest(AIRequest request)
     {
         var instructionSections = new List<string>();
@@ -61,6 +63,29 @@ public partial class StealthGPTProvider
     private static string FormatConversationBlock(string role, string text)
         => $"{role}: {text.Trim()}";
 
+    private static string BuildLastUserPromptFromUnifiedRequest(AIRequest request)
+    {
+        var items = request.Input?.Items;
+        if (items is not null)
+        {
+            for (var i = items.Count - 1; i >= 0; i--)
+            {
+                var item = items[i];
+                var role = (item.Role ?? "user").Trim().ToLowerInvariant();
+                if (!string.Equals(role, "user", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                ValidateSupportedInputItem(item);
+
+                var text = ExtractSupportedText(item.Content);
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text.Trim();
+            }
+        }
+
+        return request.Input?.Text?.Trim() ?? string.Empty;
+    }
+
     private static void ValidateSupportedInputItem(AIInputItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.Type)
@@ -101,7 +126,35 @@ public partial class StealthGPTProvider
     }
 
     private static bool IsArticlesModel(string model)
-        => model.Trim().EndsWith("/articles", StringComparison.OrdinalIgnoreCase);
+        => NormalizeStealthGptModel(model).EndsWith("/articles", StringComparison.OrdinalIgnoreCase);
+
+    private static string NormalizeStealthGptModel(string model)
+    {
+        var local = model.Trim();
+        var providerPrefix = $"{nameof(StealthGPT).ToLowerInvariant()}/";
+
+        if (local.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            local = local[providerPrefix.Length..];
+
+        return local.Trim('/');
+    }
+
+    private static bool IsAgentModel(string model)
+        => NormalizeStealthGptModel(model).StartsWith("agent/", StringComparison.OrdinalIgnoreCase);
+
+    private static (string Preset, string? Platform) ResolveAgentModel(string model)
+    {
+        var local = NormalizeStealthGptModel(model);
+
+        return local.ToLowerInvariant() switch
+        {
+            "agent/academic" => ("academic", null),
+            "agent/seo" => ("seo", null),
+            "agent/social/linkedin" => ("social", "linkedin"),
+            "agent/social/medium" => ("social", "medium"),
+            _ => throw new NotSupportedException($"Unsupported StealthGPT agent model '{model}'. Expected 'stealthgpt/agent/academic', 'stealthgpt/agent/seo', 'stealthgpt/agent/social/linkedin', or 'stealthgpt/agent/social/medium'.")
+        };
+    }
 
     private static StealthGptProviderMetadata? TryExtractProviderMetadata(Dictionary<string, object?>? metadata)
     {
@@ -208,15 +261,44 @@ public partial class StealthGPTProvider
         ApplyAuthHeader();
 
         var providerMetadata = TryExtractProviderMetadata(metadata);
+        var isAgent = IsAgentModel(model);
         var isArticles = IsArticlesModel(model);
 
-        var endpoint = isArticles ? "stealthify/articles" : "stealthify";
+        var endpoint = isAgent ? StealthGptAgentEndpoint : isArticles ? "stealthify/articles" : "stealthify";
         object requestBody;
         object responseBody;
         string output;
         Dictionary<string, object?> usage;
 
-        if (isArticles)
+        if (isAgent)
+        {
+            var (preset, platform) = ResolveAgentModel(model);
+            var request = new StealthGptAgentRequest
+            {
+                Preset = preset,
+                Prompt = prompt,
+                Platform = platform,
+                EnableFactCheck = providerMetadata?.EnableFactCheck ?? false,
+                EnableImageGeneration = providerMetadata?.EnableImageGeneration ?? false
+            };
+
+            requestBody = request;
+            var response = await PostAsJsonAsync<StealthGptAgentRequest, StealthGptAgentResponse>(endpoint, request, cancellationToken);
+            responseBody = response;
+            output = response.Result ?? string.Empty;
+            usage = new Dictionary<string, object?>
+            {
+                ["run_id"] = response.RunId,
+                ["document_id"] = response.DocumentId,
+                ["preset"] = response.Preset,
+                ["output_words"] = response.OutputWords,
+                ["credits_spent"] = response.CreditsSpent,
+                ["remaining_credits"] = response.RemainingCredits,
+                ["billing_mode"] = response.BillingMode,
+                ["metered_charged_credits"] = response.MeteredChargedCredits
+            };
+        }
+        else if (isArticles)
         {
             var request = new StealthGptArticlesRequest
             {
@@ -309,7 +391,9 @@ public partial class StealthGPTProvider
         var modelId = request.Model;
         ArgumentException.ThrowIfNullOrWhiteSpace(modelId);
 
-        var prompt = BuildPromptFromUnifiedRequest(request);
+        var prompt = IsAgentModel(modelId)
+            ? BuildLastUserPromptFromUnifiedRequest(request)
+            : BuildPromptFromUnifiedRequest(request);
         if (string.IsNullOrWhiteSpace(prompt))
             throw new ArgumentException("No prompt provided.", nameof(request));
 

@@ -38,6 +38,12 @@ public partial class StealthGPTProvider
 
         [JsonPropertyName("size")]
         public string? Size { get; set; }
+
+        [JsonPropertyName("enableFactCheck")]
+        public bool? EnableFactCheck { get; set; }
+
+        [JsonPropertyName("enableImageGeneration")]
+        public bool? EnableImageGeneration { get; set; }
     }
 
     private sealed class StealthGptStealthifyRequest
@@ -99,6 +105,25 @@ public partial class StealthGPTProvider
         public string? OutputFormat { get; set; }
     }
 
+    private sealed class StealthGptAgentRequest
+    {
+        [JsonPropertyName("preset")]
+        public string Preset { get; set; } = string.Empty;
+
+        [JsonPropertyName("prompt")]
+        public string Prompt { get; set; } = string.Empty;
+
+        [JsonPropertyName("enableFactCheck")]
+        public bool EnableFactCheck { get; set; }
+
+        [JsonPropertyName("enableImageGeneration")]
+        public bool EnableImageGeneration { get; set; }
+
+        [JsonPropertyName("platform")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Platform { get; set; }
+    }
+
     private sealed class StealthGptStealthifyResponse
     {
         [JsonPropertyName("result")]
@@ -136,6 +161,36 @@ public partial class StealthGPTProvider
 
         [JsonPropertyName("remainingCredits")]
         public int? RemainingCredits { get; set; }
+    }
+
+    private sealed class StealthGptAgentResponse
+    {
+        [JsonPropertyName("runId")]
+        public string? RunId { get; set; }
+
+        [JsonPropertyName("documentId")]
+        public string? DocumentId { get; set; }
+
+        [JsonPropertyName("preset")]
+        public string? Preset { get; set; }
+
+        [JsonPropertyName("result")]
+        public string? Result { get; set; }
+
+        [JsonPropertyName("outputWords")]
+        public int? OutputWords { get; set; }
+
+        [JsonPropertyName("creditsSpent")]
+        public int? CreditsSpent { get; set; }
+
+        [JsonPropertyName("remainingCredits")]
+        public int? RemainingCredits { get; set; }
+
+        [JsonPropertyName("billingMode")]
+        public string? BillingMode { get; set; }
+
+        [JsonPropertyName("meteredChargedCredits")]
+        public int? MeteredChargedCredits { get; set; }
     }
 
     private sealed class StealthGptNativeResult
