@@ -952,8 +952,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CailosProvider>();
         services.AddSingleton<IModelProvider, CodexForMeProvider>();
         services.AddSingleton<IModelProvider, RunAPIProvider>();
-        services.AddSingleton<IModelProvider, BaseAPIProvider>();
-        services.AddSingleton<IModelProvider, YYClawProvider>();
+        services.AddSingleton<IModelProvider, BaseAPIProvider>();      
         services.AddSingleton<IModelProvider, GateRouterProvider>();
         services.AddSingleton<IModelProvider, TeamDayProvider>();
         services.AddSingleton<IModelProvider, OXOAPIProvider>();

@@ -390,8 +390,7 @@ public class AIServiceConfig
     public ProviderConfig? Cailos { get; set; }
     public ProviderConfig? CodexForMe { get; set; }
     public ProviderConfig? RunAPI { get; set; }
-    public ProviderConfig? BaseAPI { get; set; }
-    public ProviderConfig? YYClaw { get; set; }
+    public ProviderConfig? BaseAPI { get; set; }    
     public ProviderConfig? GateRouter { get; set; }
     public ProviderConfig? TeamDay { get; set; }
     public ProviderConfig? OXOAPI { get; set; }
