@@ -240,7 +240,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | IOnet          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | IONOS          | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Ishi           | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| IonRouter      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| IonRouter      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | JassieAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | JiekouAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ❌          | ❌          | ➖          |
 | JigsawStack    | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -262,7 +262,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LectoAI        | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LEAPERone      | ✅        | ✅                | ✅            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LemonData      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| LibertAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| LibertAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Lingvanex      | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
 | Linkup         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | LitAI          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -505,7 +505,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | UncensoredChat | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | UncloseAI      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ❌               | ➖          | ➖          | ➖          |
 | UnrealSpeech   | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
-| Unbound        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Unbound        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Upstage        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | UplinkAPI      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | UVoiceAI       | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
