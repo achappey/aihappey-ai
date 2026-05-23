@@ -7,15 +7,15 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 
-namespace AIHappey.Core.Providers.WisdomGate;
+namespace AIHappey.Core.Providers.WisGate;
 
-public partial class WisdomGateProvider : IModelProvider
+public partial class WisGateProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-    public WisdomGateProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public WisGateProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
@@ -27,7 +27,7 @@ public partial class WisdomGateProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(WisdomGate)} API key.");
+            throw new InvalidOperationException($"No {nameof(WisGate)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -48,7 +48,7 @@ public partial class WisdomGateProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(WisdomGate).ToLowerInvariant();
+    public string GetIdentifier() => nameof(WisGate).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

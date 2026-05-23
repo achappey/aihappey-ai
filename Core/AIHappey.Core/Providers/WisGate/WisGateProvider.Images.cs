@@ -6,9 +6,9 @@ using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.WisdomGate;
+namespace AIHappey.Core.Providers.WisGate;
 
-public partial class WisdomGateProvider
+public partial class WisGateProvider
 {
     private static readonly JsonSerializerOptions WisdomGateImageJson = new(JsonSerializerDefaults.Web)
     {
@@ -25,7 +25,7 @@ public partial class WisdomGateProvider
 
         var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(WisdomGate)} API key.");
+            throw new InvalidOperationException($"No {nameof(WisGate)} API key.");
 
         var now = DateTime.UtcNow;
         List<object> warnings = [];

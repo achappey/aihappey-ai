@@ -7,9 +7,9 @@ using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.WisdomGate;
+namespace AIHappey.Core.Providers.WisGate;
 
-public partial class WisdomGateProvider
+public partial class WisGateProvider
 {
     private sealed record WisdomGateVideoStatus(string Status, JsonElement Root);
 

@@ -214,7 +214,7 @@ using AIHappey.Core.Providers.UniAPI;
 using AIHappey.Core.Providers.AIForHire;
 using AIHappey.Core.Providers.Apekey;
 using AIHappey.Core.Providers.Apertis;
-using AIHappey.Core.Providers.WisdomGate;
+using AIHappey.Core.Providers.WisGate;
 using AIHappey.Core.Providers.Smooth;
 using AIHappey.Core.Providers.Speechactors;
 using AIHappey.Core.Providers.GPTProto;
@@ -774,7 +774,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AIForHireProvider>();
         services.AddSingleton<IModelProvider, ApekeyProvider>();
         services.AddSingleton<IModelProvider, ApertisProvider>();
-        services.AddSingleton<IModelProvider, WisdomGateProvider>();
+        services.AddSingleton<IModelProvider, WisGateProvider>();
         services.AddSingleton<IModelProvider, SmoothProvider>();
         services.AddSingleton<IModelProvider, SpeechactorsProvider>();
         services.AddSingleton<IModelProvider, GPTProtoProvider>();

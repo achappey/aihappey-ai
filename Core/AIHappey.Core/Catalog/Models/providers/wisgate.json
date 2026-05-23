@@ -2,39 +2,39 @@
   "object": "list",
   "data": [
     {
-      "id": "wisdomgate/gemini-3-pro-image-preview",
+      "id": "wisgate/gemini-3-pro-image-preview",
       "object": "model",
-      "owned_by": "WisdomGate",
+      "owned_by": "WisGate",
       "name": "gemini-3-pro-image-preview",
       "type": "image",
       "description": "Supports up to 4K resolution, multiple aspect ratios."
     },
     {
-      "id": "wisdomgate/gemini-2.5-flash-image",
+      "id": "wisgate/gemini-2.5-flash-image",
       "object": "model",
-      "owned_by": "WisdomGate",
+      "owned_by": "WisGate",
       "name": "gemini-2.5-flash-image",
       "type": "image",
       "description": "Supports 1K and 2K resolutions, flexible aspect ratios."
     },
     {
-      "id": "wisdomgate/sora-2",
+      "id": "wisgate/sora-2",
       "object": "model",
-      "owned_by": "WisdomGate",
+      "owned_by": "WisGate",
       "name": "sora-2",
       "type": "video"
     },
     {
-      "id": "wisdomgate/sora-2-pro",
+      "id": "wisgate/sora-2-pro",
       "object": "model",
-      "owned_by": "WisdomGate",
+      "owned_by": "WisGate",
       "name": "sora-2-pro",
       "type": "video"
     },
     {
-      "id": "wisdomgate/veo-3.1",
+      "id": "wisgate/veo-3.1",
       "object": "model",
-      "owned_by": "WisdomGate",
+      "owned_by": "WisGate",
       "name": "veo-3.1",
       "type": "video"
     }

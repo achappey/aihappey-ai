@@ -215,7 +215,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["openaihk"] = "X-OpenAIHK-Key",
             ["apekey"] = "X-Apekey-Key",
             ["apertis"] = "X-Apertis-Key",
-            ["wisdomgate"] = "X-WisdomGate-Key",
+            ["wisgate"] = "X-WisGate-Key",
             ["smooth"] = "X-Smooth-Key",
             ["speechactors"] = "X-Speechactors-Key",
             ["gptproto"] = "X-GPTProto-Key",
@@ -537,7 +537,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["nodion"] = "X-Nodion-Key",
             ["generalcompute"] = "X-GeneralCompute-Key",
             ["libertai"] = "X-LibertAI-Key",
-            ["jules"] = "X-Jules-Key"
+            ["jules"] = "X-Jules-Key",
+            ["geodd"] = "X-Geodd-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

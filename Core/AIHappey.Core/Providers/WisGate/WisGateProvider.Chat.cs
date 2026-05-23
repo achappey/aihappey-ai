@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.WisdomGate;
+namespace AIHappey.Core.Providers.WisGate;
 
-public partial class WisdomGateProvider
+public partial class WisGateProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

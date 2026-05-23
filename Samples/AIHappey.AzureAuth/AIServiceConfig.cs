@@ -213,7 +213,7 @@ public class AIServiceConfig
     public ProviderConfig? OpenAIHK { get; set; }
     public ProviderConfig? Apekey { get; set; }
     public ProviderConfig? Apertis { get; set; }
-    public ProviderConfig? WisdomGate { get; set; }
+    public ProviderConfig? WisGate { get; set; }
     public ProviderConfig? Smooth { get; set; }
     public ProviderConfig? Speechactors { get; set; }
     public ProviderConfig? GPTProto { get; set; }
@@ -536,6 +536,7 @@ public class AIServiceConfig
     public ProviderConfig? GeneralCompute { get; set; }
     public ProviderConfig? LibertAI { get; set; }
     public ProviderConfig? Jules { get; set; }
+    public ProviderConfig? Geodd { get; set; }
 
 }
 

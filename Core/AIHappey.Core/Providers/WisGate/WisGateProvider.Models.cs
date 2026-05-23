@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.WisdomGate;
+namespace AIHappey.Core.Providers.WisGate;
 
-public partial class WisdomGateProvider
+public partial class WisGateProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
