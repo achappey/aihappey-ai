@@ -5,11 +5,18 @@ using AIHappey.Abstractions.Http;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Zai;
+using AIHappey.Tests.TestInfrastructure;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Tests.Zai;
 
 public sealed class ZaiProviderAgentsTests
 {
+    private const string ProviderId = "zai";
+    private const string ComplexSlideAgentStreamFixturePath = "Fixtures/zai/raw/complex-zai-glm-slide-poster-agent-stream.jsonl";
+
     [Fact]
     public async Task CompleteChatAsync_routes_agent_model_to_agents_endpoint_and_forwards_custom_variables()
     {
@@ -483,6 +490,143 @@ public sealed class ZaiProviderAgentsTests
         Assert.Contains("vidu_template_agent", ex.Message);
     }
 
+    [Fact]
+    public async Task StreamUnifiedAsync_for_complex_slide_fixture_emits_final_provider_executed_tool_output_and_embedded_html_file()
+    {
+        var fixture = FixtureFileLoader.ResolveFixturePath(ComplexSlideAgentStreamFixturePath);
+        var provider = CreateProvider(_ => StreamingResponse(File.ReadAllText(fixture)));
+
+        var events = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(new AIRequest
+        {
+            ProviderId = ProviderId,
+            Id = "zai-test-run",
+            Model = "zai/agents/slides_glm_agent",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "user",
+                        Content =
+                        [
+                            new AITextContentPart
+                            {
+                                Type = "text",
+                                Text = "Maak een buurtbarbecueposter."
+                            }
+                        ]
+                    }
+                ]
+            }
+        }));
+
+        var toolOutputEvents = events.Where(streamEvent =>
+            string.Equals(streamEvent.Event.Type, "tool-output-available", StringComparison.Ordinal)
+            && streamEvent.Event.Data is AIToolOutputAvailableEventData
+            {
+                ToolName: "add_slide",
+                ProviderExecuted: true
+            }).ToList();
+        Assert.NotEmpty(toolOutputEvents);
+
+        var finalToolOutputEvent = toolOutputEvents[^1];
+
+        var finalToolOutput = Assert.IsType<AIToolOutputAvailableEventData>(finalToolOutputEvent.Event.Data);
+
+        var toolResultJson = JsonSerializer.SerializeToElement(finalToolOutput.Output, JsonSerializerOptions.Web);
+        var structuredContent = toolResultJson.GetProperty("structuredContent");
+        Assert.Equal("text/html", structuredContent.GetProperty("media_type").GetString());
+        Assert.StartsWith("data:text/html", structuredContent.GetProperty("url").GetString(), StringComparison.OrdinalIgnoreCase);
+
+        var htmlFromStructuredContent = structuredContent.GetProperty("html").GetString();
+        Assert.NotNull(htmlFromStructuredContent);
+        Assert.Contains("<html", htmlFromStructuredContent!, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("</html>", htmlFromStructuredContent!, StringComparison.OrdinalIgnoreCase);
+
+        var fileEvents = events.Where(streamEvent =>
+            string.Equals(streamEvent.Event.Type, "file", StringComparison.Ordinal)
+            && string.Equals(streamEvent.Event.Id, finalToolOutputEvent.Event.Id, StringComparison.Ordinal)).ToList();
+        Assert.NotEmpty(fileEvents);
+
+        var fileEvent = fileEvents[^1];
+
+        var fileData = Assert.IsType<AIFileEventData>(fileEvent.Event.Data);
+        Assert.Equal("text/html", fileData.MediaType);
+        Assert.StartsWith("data:text/html", fileData.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("zai://", fileData.Url, StringComparison.OrdinalIgnoreCase);
+
+        var decodedHtml = DecodeDataUrl(fileData.Url);
+        Assert.Contains("<html", decodedHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("</html>", decodedHtml, StringComparison.OrdinalIgnoreCase);
+
+        var uiParts = events
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        var outputPart = uiParts.OfType<ToolOutputAvailablePart>().Last(part =>
+            string.Equals(part.ToolCallId, finalToolOutputEvent.Event.Id, StringComparison.Ordinal)
+            && part.ProviderExecuted == true);
+        Assert.True(outputPart.ProviderExecuted);
+
+        var filePart = uiParts.OfType<FileUIPart>().Last();
+        Assert.Equal("text/html", filePart.MediaType);
+        Assert.StartsWith("data:text/html", filePart.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("zai://", filePart.Url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_emits_tool_input_available_before_tool_output_available_for_provider_executed_slide_tools()
+    {
+        var provider = CreateProvider(_ => StreamingResponse("""
+            data: {"id":"slide-order-1","agent_id":"slides_glm_agent","conversation_id":"conversation-1","choices":[{"index":0,"messages":[{"role":"assistant","phase":"tool","content":[{"type":"object","object":{"tool_name":"search","input":"[\"poster\"]","output":[]},"tag_en":"Search"}]}]}]}
+
+            data: {"id":"slide-order-1","agent_id":"slides_glm_agent","conversation_id":"conversation-1","choices":[{"index":0,"finish_reason":"stop"}]}
+
+            data: [DONE]
+
+            """));
+
+        var events = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(new AIRequest
+        {
+            ProviderId = ProviderId,
+            Id = "zai-tool-order-run",
+            Model = "zai/agents/slides_glm_agent",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "user",
+                        Content =
+                        [
+                            new AITextContentPart
+                            {
+                                Type = "text",
+                                Text = "Maak een poster."
+                            }
+                        ]
+                    }
+                ]
+            }
+        }));
+
+        var toolInputEvent = Assert.Single(events, streamEvent =>
+            string.Equals(streamEvent.Event.Type, "tool-input-available", StringComparison.Ordinal)
+            && streamEvent.Event.Data is AIToolInputAvailableEventData { ToolName: "search", ProviderExecuted: true });
+
+        var toolOutputEvents = events.Where(streamEvent =>
+            string.Equals(streamEvent.Event.Type, "tool-output-available", StringComparison.Ordinal)
+            && string.Equals(streamEvent.Event.Id, toolInputEvent.Event.Id, StringComparison.Ordinal)
+            && streamEvent.Event.Data is AIToolOutputAvailableEventData { ToolName: "search", ProviderExecuted: true }).ToList();
+        Assert.NotEmpty(toolOutputEvents);
+
+        var firstToolOutputEvent = toolOutputEvents[0];
+
+        Assert.True(events.IndexOf(toolInputEvent) < events.IndexOf(firstToolOutputEvent));
+    }
+
     private static ZaiProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => new(new StaticApiKeyResolver(), new StaticHttpClientFactory(new HttpClient(new StaticResponseHttpMessageHandler(responder))));
 
@@ -497,6 +641,19 @@ public sealed class ZaiProviderAgentsTests
         {
             Content = new StringContent(body, Encoding.UTF8, "text/event-stream")
         };
+
+    private static string DecodeDataUrl(string dataUrl)
+    {
+        var commaIndex = dataUrl.IndexOf(',');
+        Assert.True(commaIndex >= 0, $"Expected a valid data URL but found '{dataUrl}'.");
+
+        var metadata = dataUrl[..commaIndex];
+        var payload = dataUrl[(commaIndex + 1)..];
+
+        return metadata.Contains(";base64", StringComparison.OrdinalIgnoreCase)
+            ? Encoding.UTF8.GetString(Convert.FromBase64String(payload))
+            : Uri.UnescapeDataString(payload);
+    }
 
     private static string CreateTempCaptureRoot()
         => Path.Combine(Path.GetTempPath(), "aihappey-zai-agent-capture-tests", Guid.NewGuid().ToString("N"));
