@@ -327,7 +327,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NavyAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
 | NanoGPT        | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | Nataris        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| NEARAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| NEARAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ➖               | ❌          | ➖          | ➖          |
 | NLPCloud       | ✅        | 🟡                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | NRPNautilus    | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Nscale         | ✅        | ✅                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
