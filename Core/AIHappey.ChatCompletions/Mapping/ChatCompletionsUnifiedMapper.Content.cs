@@ -323,12 +323,6 @@ public static partial class ChatCompletionsUnifiedMapper
 
         foreach (var part in list)
         {
-            /*if (part.Metadata is not null && part.Metadata.TryGetValue("chatcompletions.part.raw", out var rawPart) && rawPart is not null)
-            {
-                mapped.Add(rawPart);
-                continue;
-            }*/
-
             if (part is AITextContentPart text)
             {
                 mapped.Add(new { type = "text", text = text.Text });
@@ -365,7 +359,7 @@ public static partial class ChatCompletionsUnifiedMapper
                         type = "input_audio",
                         input_audio = new
                         {
-                            format = format,
+                            format,
                             data = file.Data
                         }
                     });

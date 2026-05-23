@@ -38,6 +38,9 @@ public static partial class ChatCompletionsUnifiedMapper
 
             foreach (var toolEvent in MapToolCallEvents(chunk, providerId, timestamp, metadata, state))
                 yield return toolEvent;
+
+            foreach (var toolOutputEvent in MapProviderExecutedToolOutputEvents(chunk, providerId, timestamp, metadata, state))
+                yield return toolOutputEvent;
         }
 
         var emittedUiEnvelope = false;
@@ -272,6 +275,7 @@ public static partial class ChatCompletionsUnifiedMapper
                 },
                 Metadata = metadata
             };
+
         }
     }
 
@@ -308,7 +312,7 @@ public static partial class ChatCompletionsUnifiedMapper
                 {
                     yield return CreateUiEnvelope(chunk, "text-delta", new AITextDeltaEventData
                     {
-                        Delta = textDelta
+                        Delta = textDelta ?? string.Empty
                     });
                 }
 
@@ -743,11 +747,13 @@ public static partial class ChatCompletionsUnifiedMapper
 
                     acc.Id ??= ExtractValue<string>(toolCall, "id") ?? $"call_{Guid.NewGuid():N}";
                     acc.Type ??= ExtractValue<string>(toolCall, "type") ?? "function";
+                    acc.ProviderExecuted ??= ExtractValue<bool?>(toolCall, "provider_executed") ?? ExtractValue<bool?>(toolCall, "providerExecuted");
 
                     if (toolCall.TryGetProperty("function", out var functionEl) && functionEl.ValueKind == JsonValueKind.Object)
                     {
                         acc.Name ??= ExtractValue<string>(functionEl, "name") ?? "unknown_tool";
                         var argsDelta = ExtractValue<string>(functionEl, "arguments");
+                        acc.ProviderExecuted ??= ExtractValue<bool?>(functionEl, "provider_executed") ?? ExtractValue<bool?>(functionEl, "providerExecuted");
 
                         if (!acc.Started)
                         {
@@ -765,6 +771,7 @@ public static partial class ChatCompletionsUnifiedMapper
                     {
                         acc.Name ??= ExtractValue<string>(customEl, "name") ?? "custom_tool";
                         var inputDelta = ExtractValue<string>(customEl, "input");
+                        acc.ProviderExecuted ??= ExtractValue<bool?>(customEl, "provider_executed") ?? ExtractValue<bool?>(customEl, "providerExecuted");
 
                         if (!acc.Started)
                         {
@@ -817,16 +824,206 @@ public static partial class ChatCompletionsUnifiedMapper
                     Timestamp = timestamp,
                     Data = new AIToolInputAvailableEventData
                     {
-                        ProviderExecuted = false,
+                        ProviderExecuted = acc.ProviderExecuted ?? false,
                         ToolName = acc.Name ?? "unknown_tool",
                         Input = ParseToolInput(acc.Arguments)
                     }
                 },
                 Metadata = metadata
             };
+
+            if (acc.ProviderExecuted == true && acc.EmittedOutputKeys.Count == 0)
+            {
+                yield return new AIStreamEvent
+                {
+                    ProviderId = providerId,
+                    Event = new AIEventEnvelope
+                    {
+                        Type = "tool-output-available",
+                        Id = acc.Id,
+                        Timestamp = timestamp,
+                        Data = new AIToolOutputAvailableEventData
+                        {
+                            ToolName = acc.Name ?? "unknown_tool",
+                            Output = new { tool_name = acc.Name, status = "completed" },
+                            ProviderExecuted = true,
+                            Preliminary = false
+                        }
+                    },
+                    Metadata = metadata
+                };
+            }
         }
 
         state.PendingToolCalls.Clear();
+    }
+
+    private static IEnumerable<AIStreamEvent> MapProviderExecutedToolOutputEvents(
+        JsonElement chunk,
+        string providerId,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?> metadata,
+        ChatCompletionsStreamMappingState state)
+    {
+        if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            yield break;
+
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.ValueKind != JsonValueKind.Object
+                || !choice.TryGetProperty("delta", out var delta)
+                || delta.ValueKind != JsonValueKind.Object
+                || !delta.TryGetProperty("tool_calls", out var toolCalls)
+                || toolCalls.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            foreach (var toolCall in toolCalls.EnumerateArray())
+            {
+                if (toolCall.ValueKind != JsonValueKind.Object)
+                    continue;
+
+                var index = ExtractValue<int?>(toolCall, "index") ?? 0;
+                if (!state.PendingToolCalls.TryGetValue(index, out var acc))
+                    continue;
+
+                if (!TryExtractToolCallOutput(toolCall, out var output))
+                    continue;
+
+                var outputKey = JsonSerializer.Serialize(output, Json);
+                if (!acc.EmittedOutputKeys.Add(outputKey))
+                    continue;
+
+                if (!acc.EmittedAvailable)
+                {
+                    acc.EmittedAvailable = true;
+
+                    yield return new AIStreamEvent
+                    {
+                        ProviderId = providerId,
+                        Event = new AIEventEnvelope
+                        {
+                            Type = "tool-input-available",
+                            Id = acc.Id,
+                            Timestamp = timestamp,
+                            Data = new AIToolInputAvailableEventData
+                            {
+                                ProviderExecuted = acc.ProviderExecuted ?? true,
+                                ToolName = acc.Name ?? "unknown_tool",
+                                Input = ParseToolInput(acc.Arguments)
+                            }
+                        },
+                        Metadata = metadata
+                    };
+                }
+
+                yield return new AIStreamEvent
+                {
+                    ProviderId = providerId,
+                    Event = new AIEventEnvelope
+                    {
+                        Type = "tool-output-available",
+                        Id = acc.Id,
+                        Timestamp = timestamp,
+                        Data = new AIToolOutputAvailableEventData
+                        {
+                            ToolName = acc.Name ?? "unknown_tool",
+                            Output = output,
+                            ProviderExecuted = acc.ProviderExecuted ?? true,
+                            Dynamic = true,
+                            Preliminary = true
+                        }
+                    },
+                    Metadata = metadata
+                };
+
+            }
+        }
+    }
+
+    private static bool TryExtractToolCallOutput(JsonElement toolCall, out JsonElement output)
+    {
+        output = default;
+
+        if (toolCall.TryGetProperty("function", out var functionEl)
+            && functionEl.ValueKind == JsonValueKind.Object
+            && functionEl.TryGetProperty("output", out output)
+            && output.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        {
+            output = output.Clone();
+            return true;
+        }
+
+        if (toolCall.TryGetProperty("custom", out var customEl)
+            && customEl.ValueKind == JsonValueKind.Object
+            && customEl.TryGetProperty("output", out output)
+            && output.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        {
+            output = output.Clone();
+            return true;
+        }
+
+        return false;
+    }
+
+    private static IEnumerable<AIStreamEvent> CreateHtmlFileEvents(
+        string providerId,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?> metadata,
+        ToolCallAccumulator acc,
+        JsonElement output)
+    {
+        if (!TryExtractHtmlFilePayload(output, out var url, out var filename))
+            yield break;
+
+        yield return new AIStreamEvent
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = "file",
+                Id = acc.Id,
+                Timestamp = timestamp,
+                Data = new AIFileEventData
+                {
+                    MediaType = "text/html",
+                    Url = url,
+                    Filename = filename
+                }
+            },
+            Metadata = metadata
+        };
+    }
+
+    private static bool TryExtractHtmlFilePayload(JsonElement output, out string url, out string? filename)
+    {
+        url = string.Empty;
+        filename = null;
+
+        if (output.ValueKind != JsonValueKind.Object)
+            return false;
+
+        if (output.TryGetProperty("structuredContent", out var structured)
+            || output.TryGetProperty("structured_content", out structured)
+            || output.TryGetProperty("StructuredContent", out structured))
+        {
+            if (structured.ValueKind == JsonValueKind.Object)
+            {
+                var mediaType = ExtractValue<string>(structured, "media_type") ?? ExtractValue<string>(structured, "mediaType");
+                if (!string.Equals(mediaType, "text/html", StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                url = ExtractValue<string>(structured, "url")
+                      ?? ExtractValue<string>(structured, "resource_uri")
+                      ?? ExtractValue<string>(structured, "resourceUri")
+                      ?? string.Empty;
+                filename = ExtractValue<string>(structured, "filename");
+                return !string.IsNullOrWhiteSpace(url);
+            }
+        }
+
+        return false;
     }
 
     private static AIStreamEvent CreateToolInputStartEvent(
@@ -844,7 +1041,7 @@ public static partial class ChatCompletionsUnifiedMapper
                 Timestamp = timestamp,
                 Data = new AIToolInputStartEventData
                 {
-                    ProviderExecuted = false,
+                    ProviderExecuted = acc.ProviderExecuted ?? false,
                     ToolName = acc.Name ?? "unknown_tool"
                 }
             },
@@ -962,8 +1159,10 @@ public static partial class ChatCompletionsUnifiedMapper
         public string? Id { get; set; }
         public string? Name { get; set; }
         public string? Type { get; set; }
+        public bool? ProviderExecuted { get; set; }
         public bool Started { get; set; }
         public bool EmittedAvailable { get; set; }
+        public HashSet<string> EmittedOutputKeys { get; } = [];
         public string Arguments { get; set; } = string.Empty;
     }
 
