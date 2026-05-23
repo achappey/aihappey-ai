@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "therouterai/therouter/auto",
+      "object": "model",
+      "owned_by": "TheRouterAI",
+      "name": "Auto Router",
+      "type": "language",
+      "description": "Automatic model selection based on prompt intent."
+    },
+    {
+      "id": "therouterai/therouter/free",
+      "object": "model",
+      "owned_by": "TheRouterAI",
+      "name": "Free Models Router",
+      "type": "language",
+      "description": "Zero-cost routing with therouter/free."
+    },
+    {
+      "id": "therouterai/therouter/bodybuilder",
+      "object": "model",
+      "owned_by": "TheRouterAI",
+      "name": "Body Builder",
+      "type": "language",
+      "description": "Generate parallel request bodies from plain-language instructions."
+    }
+  ]
+}

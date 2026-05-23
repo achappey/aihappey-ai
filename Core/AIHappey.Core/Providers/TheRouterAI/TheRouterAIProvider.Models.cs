@@ -68,6 +68,8 @@ public partial class TheRouterAIProvider
                         models.Add(model);
                 }
 
+                models.AddRange(GetIdentifier().GetModels());
+                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
