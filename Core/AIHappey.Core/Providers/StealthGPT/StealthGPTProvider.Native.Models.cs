@@ -18,6 +18,9 @@ public partial class StealthGPTProvider
         [JsonPropertyName("qualityMode")]
         public string? QualityMode { get; set; }
 
+        [JsonPropertyName("model")]
+        public string? Model { get; set; }
+
         [JsonPropertyName("business")]
         public bool? Business { get; set; }
 
@@ -56,6 +59,10 @@ public partial class StealthGPTProvider
         [JsonPropertyName("qualityMode")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? QualityMode { get; set; }
+
+        [JsonPropertyName("model")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Model { get; set; }
 
         [JsonPropertyName("business")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
