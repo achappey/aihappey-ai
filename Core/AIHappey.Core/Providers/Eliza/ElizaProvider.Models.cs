@@ -139,7 +139,7 @@ public partial class ElizaProvider
             {
                 Id = id.ToModelId(GetIdentifier()),
                 Name = name ?? id,
-                Type = "agent",
+                Type = "language",
                 OwnedBy = "Eliza",
                 Description = description
             });
