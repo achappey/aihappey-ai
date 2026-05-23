@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using Anthropic.SDK.Models;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -59,6 +60,8 @@ public partial class AIMLProvider
                             type?.Contains("anthropic") == true ? "language" :
                             type?.Contains("optical-character-recognition") == true ? "language" :
                             type?.Contains("text-to-speech") == true ? "speech" :
+                            type?.Contains("embeddings") == true ? "embedding" :
+                            type?.Contains("video-generations") == true ? "video" :
                             type?.Contains("image-") == true ? "image" :
                              type?.Contains("speech-to-text") == true ? "transcription"
                             : type?.Contains("audio-generations") == true
@@ -78,7 +81,8 @@ public partial class AIMLProvider
                             model.OwnedBy = devEl.GetString() ?? "";
                     }
 
-                    models.Add(model);
+                    if (model.Type != "embedding")
+                        models.Add(model);
                 }
 
                 return models.Where(a => a.Type != "document"
