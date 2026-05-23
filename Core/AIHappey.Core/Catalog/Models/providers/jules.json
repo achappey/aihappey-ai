@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "jules/jules",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Google Jules",
+      "type": "language",
+      "description": "An Autonomous Coding Agent."
+    }
+  ]
+}

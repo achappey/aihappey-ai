@@ -245,8 +245,9 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | JiekouAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ❌          | ❌          | ➖          |
 | JigsawStack    | ✅        | ✅                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Jina           | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ✅          | ➖          | ➖          |
-| JSON2Video     | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | JKAIHub        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| JSON2Video     | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
+| Jules          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Kilo           | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Key4U          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Keyplex        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |

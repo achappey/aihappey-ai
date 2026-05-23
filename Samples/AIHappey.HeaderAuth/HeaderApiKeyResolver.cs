@@ -264,7 +264,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["docsrouter"] = "X-DocsRouter-Key",
             ["ocrskill"] = "X-OCRSkill-Key",
             ["skillboss"] = "X-SkillBoss-Key",
-            ["nexusify"] = "X-Nexusify-Key",    
+            ["nexusify"] = "X-Nexusify-Key",
             ["litai"] = "X-LitAI-Key",
             ["pixcode"] = "X-PixCode-Key",
             ["anannas"] = "X-Anannas-Key",
@@ -469,7 +469,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["radient"] = "X-Radient-Key",
             ["aihorde"] = "X-AIHorde-Key",
             ["wiserouter"] = "X-WiseRouter-Key",
-            ["pellet"] = "X-Pellet-Key",        
+            ["pellet"] = "X-Pellet-Key",
             ["commonstack"] = "X-Commonstack-Key",
             ["llama"] = "X-Llama-Key",
             ["ninjachat"] = "X-NinjaChat-Key",
@@ -537,7 +537,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["codingplanx"] = "X-CodingPlanX-Key",
             ["nodion"] = "X-Nodion-Key",
             ["generalcompute"] = "X-GeneralCompute-Key",
-            ["libertai"] = "X-LibertAI-Key"
+            ["libertai"] = "X-LibertAI-Key",
+            ["jules"] = "X-Jules-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

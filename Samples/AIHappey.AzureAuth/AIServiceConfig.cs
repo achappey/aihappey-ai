@@ -536,6 +536,7 @@ public class AIServiceConfig
     public ProviderConfig? Nodion { get; set; }
     public ProviderConfig? GeneralCompute { get; set; }
     public ProviderConfig? LibertAI { get; set; }
+    public ProviderConfig? Jules { get; set; }
 
 }
 
