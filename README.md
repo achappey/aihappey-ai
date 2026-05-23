@@ -502,7 +502,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Typecast       | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | UniAPI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | UltraSafe      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| UncensoredChat | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| UncensoredChat | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | UncloseAI      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ❌               | ➖          | ➖          | ➖          |
 | UnrealSpeech   | ✅        | ❌                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Unbound        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
