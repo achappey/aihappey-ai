@@ -325,7 +325,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | MyRouter       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ❌          | ❌          | ➖          |
 | NagaAI         | ✅        | ✅                | ✅            | ✅            | ❌        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | NavyAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ❌          | ➖          |
-| NanoGPT        | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| NanoGPT        | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | Nataris        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | NEARAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | NLPCloud       | ✅        | 🟡                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
