@@ -530,8 +530,8 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | WebCrawlerAPI  | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | WesenAI        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | WidnAI         | ✅        | ✅                | 🟡            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| WiseRouter     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | WisGate        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
-| WiseRouter     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | World3         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Writer         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | xAI            | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ✅               | ➖          | ✅          | ➖          |
