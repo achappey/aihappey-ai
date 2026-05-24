@@ -90,6 +90,8 @@ public sealed class ZaiProviderAgentsTests
         var choice = Assert.Single(response.Choices);
         var choiceJson = JsonSerializer.SerializeToElement(choice, JsonSerializerOptions.Web);
         Assert.Equal("Hallo wereld", choiceJson.GetProperty("message").GetProperty("content").GetString());
+        var gateway = response.AdditionalProperties?["metadata"].GetProperty("gateway");
+        Assert.Equal(0.000015m, gateway?.GetProperty("cost").GetDecimal());
     }
 
     [Fact]
@@ -311,6 +313,42 @@ public sealed class ZaiProviderAgentsTests
         Assert.Equal("Hallo", firstChoice.GetProperty("delta").GetProperty("content").GetString());
         var finalChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[1].Choices), JsonSerializerOptions.Web);
         Assert.Equal("stop", finalChoice.GetProperty("finish_reason").GetString());
+    }
+
+    [Fact]
+    public async Task CompleteChatStreamingAsync_enriches_terminal_agent_usage_with_gateway_cost()
+    {
+        var provider = CreateProvider(_ => StreamingResponse("""
+            data: {"id":"slide-stream-usage","agent_id":"slides_glm_agent","conversation_id":"conversation-1","choices":[{"index":0,"messages":[{"role":"assistant","content":{"type":"text","text":"🌭"},"phase":"answer"}]}]}
+
+            data: {"id":"slide-stream-usage","agent_id":"slides_glm_agent","conversation_id":"conversation-1","choices":[{"finish_reason":"stop"}],"usage":{"prompt_tokens":88197,"completion_tokens":6051,"total_tokens":94248}}
+
+            data: [DONE]
+
+            """));
+
+        var updates = new List<ChatCompletionUpdate>();
+        await foreach (var update in provider.CompleteChatStreamingAsync(new ChatCompletionOptions
+        {
+            Model = "zai/agents/slides_glm_agent",
+            Messages =
+            [
+                new ChatMessage
+                {
+                    Role = "user",
+                    Content = JsonSerializer.SerializeToElement("Create slides")
+                }
+            ]
+        }))
+        {
+            updates.Add(update);
+        }
+
+        Assert.Equal(2, updates.Count);
+        Assert.False(updates[0].AdditionalProperties?.ContainsKey("metadata") == true);
+
+        var gateway = updates[1].AdditionalProperties?["metadata"].GetProperty("gateway");
+        Assert.Equal(0.0659736m, gateway?.GetProperty("cost").GetDecimal());
     }
 
     [Fact]

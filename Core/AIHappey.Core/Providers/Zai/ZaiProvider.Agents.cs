@@ -71,7 +71,9 @@ public partial class ZaiProvider
         await ProviderBackendCapture.CaptureJsonAsync("agents", resp, body, capture, cancellationToken);
 
         using var doc = JsonDocument.Parse(body);
-        return NormalizeAgentResponse(doc.RootElement, options.Model, agentId);
+        return EnrichAgentChatCompletionWithGatewayCost(
+            NormalizeAgentResponse(doc.RootElement, options.Model, agentId),
+            options.Model);
     }
 
     private async IAsyncEnumerable<ChatCompletionUpdate> CompleteAgentChatStreamingAsync(
@@ -140,7 +142,7 @@ public partial class ZaiProvider
                     ref activeSlideToolName,
                     ref slideToolOrdinal);
                 if (update is not null)
-                    yield return update;
+                    yield return EnrichAgentChatCompletionUpdateWithGatewayCost(update, options.Model);
             }
             finally
             {
