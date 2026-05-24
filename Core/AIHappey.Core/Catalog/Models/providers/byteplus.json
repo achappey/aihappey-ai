@@ -2,6 +2,69 @@
   "object": "list",
   "data": [
     {
+      "id": "byteplus/seed-2-0-lite-260428",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-2.0-lite",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-2-0-mini-260428",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-2.0-mini",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-2-0-pro-260328",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-2.0-pro",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-2-0-code-preview-260328",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-2.0-code-preview",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-2-0-lite-260228",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-2.0-lite",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-2-0-mini-260215",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-2.0-mini",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/deepseek-v3-2-251201",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "DeepSeek-V3.2",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-1-6-250615",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-1.6",
+      "type": "language"
+    },
+    {
+      "id": "byteplus/seed-1-6-flash-250615",
+      "object": "model",
+      "owned_by": "ByteDance",
+      "name": "ByteDance-Seed-1.6-flash",
+      "type": "language"
+    },
+    {
       "id": "byteplus/glm-4-7-251222",
       "object": "model",
       "owned_by": "Z.AI",
@@ -10,7 +73,7 @@
       "description": "GLM-4.7 is Z.AI’s flagship model, with stronger coding, more reliable multi-step reasoning, and improved agentic performance, conversation quality, and front-end output."
     },
     {
-      "id": "byteplus/seed-1.8-251228",
+      "id": "byteplus/seed-1-8-251228",
       "object": "model",
       "owned_by": "ByteDance",
       "name": "ByteDance-Seed-1.8",
@@ -24,21 +87,21 @@
       "type": "language"
     },
     {
-      "id": "byteplus/seed-1.6-250915",
+      "id": "byteplus/seed-1-6-250915",
       "object": "model",
       "owned_by": "ByteDance",
       "name": "ByteDance-Seed-1.6",
       "type": "language"
     },
     {
-      "id": "byteplus/seed-1.6-flash-250715",
+      "id": "byteplus/seed-1-6-flash-250715",
       "object": "model",
       "owned_by": "ByteDance",
       "name": "ByteDance-Seed-1.6-flash",
       "type": "language"
     },
     {
-      "id": "byteplus/seedance-1.0-pro-250528",
+      "id": "byteplus/seedance-1-0-pro-250528",
       "object": "model",
       "owned_by": "ByteDance",
       "name": "ByteDance-Seedance-1.0-pro",
