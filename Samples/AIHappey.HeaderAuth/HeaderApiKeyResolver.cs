@@ -536,7 +536,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["libertai"] = "X-LibertAI-Key",
             ["jules"] = "X-Jules-Key",
             ["geodd"] = "X-Geodd-Key",
-            ["aigateway"] = "X-AIgateway-Key"
+            ["aigateway"] = "X-AIgateway-Key",
+            ["miapi"] = "X-MIAPI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "miapi/miapi-grounded",
+      "object": "model",
+      "owned_by": "MIAPI",
+      "name": "miapi-grounded",
+      "type": "language"
+    }
+  ]
+}

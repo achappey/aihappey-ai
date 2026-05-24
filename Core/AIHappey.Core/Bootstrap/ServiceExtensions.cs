@@ -534,6 +534,7 @@ using AIHappey.Core.Providers.GeneralCompute;
 using AIHappey.Core.Providers.LibertAI;
 using AIHappey.Core.Providers.Jules;
 using AIHappey.Core.Providers.AIgateway;
+using AIHappey.Core.Providers.MIAPI;
 
 namespace AIHappey.Core.AI;
 
@@ -948,7 +949,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ImageRouterProvider>();
         services.AddSingleton<IModelProvider, CailosProvider>();
         services.AddSingleton<IModelProvider, RunAPIProvider>();
-        services.AddSingleton<IModelProvider, BaseAPIProvider>();      
+        services.AddSingleton<IModelProvider, BaseAPIProvider>();
         services.AddSingleton<IModelProvider, GateRouterProvider>();
         services.AddSingleton<IModelProvider, TeamDayProvider>();
         services.AddSingleton<IModelProvider, OXOAPIProvider>();
@@ -1093,6 +1094,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LibertAIProvider>();
         services.AddSingleton<IModelProvider, JulesProvider>();
         services.AddSingleton<IModelProvider, AIgatewayProvider>();
+        services.AddSingleton<IModelProvider, MIAPIProvider>();
 
     }
 }
