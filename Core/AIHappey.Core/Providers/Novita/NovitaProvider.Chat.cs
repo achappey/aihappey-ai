@@ -1,8 +1,8 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Novita;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -42,20 +42,19 @@ public partial class NovitaProvider
             }
         }
 
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        var metadata = chatRequest.GetProviderMetadata<NovitaProviderMetadata>(GetIdentifier());
-
-        Dictionary<string, object?> payload = new()
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            ["enable_thinking"] = metadata?.EnableThinking,
-            ["separate_reasoning"] = metadata?.SeparateReasoning
-        };
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
 
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            payload,
-            cancellationToken: cancellationToken))
-            yield return update;
+        yield break;
     }
 
 }
