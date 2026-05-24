@@ -57,7 +57,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | APIFree        | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | APIpie         | ✅        | ✅                | ❌            | ❌            | 🟡        | ✅                     | ✅                       | ✅               | ➖          | ❌          | ➖          |
 | APIPod         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| APIyi          | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ❌                       | ❌               | ❌          | ❌          | ➖          |
+| APIyi          | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ❌          | ❌          | ➖          |
 | Apekey         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AppLingo       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ArceeAI        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
@@ -65,7 +65,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ArkRoute       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ❌          | ➖          |
 | ArliAI         | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | ARWriter       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| ASIOne         | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| ASIOne         | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AskARC         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AskCodi        | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | AssemblyAI     | ✅        | ✅                | ✅            | ✅            | 🟡        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
