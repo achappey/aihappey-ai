@@ -74,7 +74,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AsyncAI        | ✅        | ❌                | ✅            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | AtlasCloud     | ✅        | ✅                | ❌            | ❌            | 🟡        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | ATXP           | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Augure         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Augure         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Audixa         | ✅        | ❌                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Avian          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Azerion        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
