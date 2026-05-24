@@ -432,7 +432,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Runway         | ✅        | ❌                | ❌            | ❌            | 🟡        | ✅                     | ➖                       | ✅               | ➖          | ✅          | ➖          |
 | SambaNova      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |
 | Sapiom         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| Sargalay       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Sargalay       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Sarvam         | ✅        | ✅                | 🟡            | ❌            | 🟡        | ➖                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | SawtIA         | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | Scaleway       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
