@@ -211,7 +211,6 @@ using AIHappey.Core.Providers.EvoLinkAI;
 using AIHappey.Core.Providers.Zenlayer;
 using AIHappey.Core.Providers.AIHubMix;
 using AIHappey.Core.Providers.UniAPI;
-using AIHappey.Core.Providers.AIForHire;
 using AIHappey.Core.Providers.Apekey;
 using AIHappey.Core.Providers.Apertis;
 using AIHappey.Core.Providers.WisGate;
@@ -769,7 +768,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ZenlayerProvider>();
         services.AddSingleton<IModelProvider, AIHubMixProvider>();
         services.AddSingleton<IModelProvider, UniAPIProvider>();
-        services.AddSingleton<IModelProvider, AIForHireProvider>();
         services.AddSingleton<IModelProvider, ApekeyProvider>();
         services.AddSingleton<IModelProvider, ApertisProvider>();
         services.AddSingleton<IModelProvider, WisGateProvider>();
