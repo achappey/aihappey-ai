@@ -405,7 +405,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | QuiverAI       | ✅        | ✅                | ✅            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Radiance       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Radient        | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
-| Railwail       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Railwail       | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | RaxAI          | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Recraft        | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | RedPill        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
