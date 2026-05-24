@@ -16,7 +16,6 @@ public partial class TemboProvider
 {
     private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan MinimumPollInterval = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan DefaultPollTimeout = TimeSpan.FromMinutes(10);
     private static readonly JsonSerializerOptions JsonOptions = JsonSerializerOptions.Web;
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
@@ -444,7 +443,6 @@ public partial class TemboProvider
             yield break;
 
         var interval = ResolvePollInterval(providerOptions);
-        var timeout = ResolvePollTimeout(providerOptions);
         var startedAt = DateTimeOffset.UtcNow;
         TemboSession? trackedSession = execution.Session;
         var pollAttempt = execution.PollAttempt;
@@ -452,9 +450,6 @@ public partial class TemboProvider
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            if (DateTimeOffset.UtcNow - startedAt >= timeout)
-                throw new TimeoutException($"Tembo polling exceeded timeout ({timeout}).");
 
             await Task.Delay(interval, cancellationToken);
 
@@ -503,7 +498,7 @@ public partial class TemboProvider
             Version = HttpVersion.Version11,
             VersionPolicy = HttpVersionPolicy.RequestVersionExact
         };
-        
+
         var key = _keyResolver.Resolve(GetIdentifier());
 
         request.Headers.Authorization =
@@ -939,16 +934,7 @@ public partial class TemboProvider
 
         var requested = TimeSpan.FromSeconds(seconds.Value);
         return requested < MinimumPollInterval ? MinimumPollInterval : requested;
-    }
-
-    private static TimeSpan ResolvePollTimeout(JsonElement? providerOptions)
-    {
-        var seconds = TryReadDouble(providerOptions, "pollTimeoutSeconds");
-        if (seconds is null || seconds.Value <= 0)
-            return DefaultPollTimeout;
-
-        return TimeSpan.FromSeconds(seconds.Value);
-    }
+    }  
 
     private static double? TryReadDouble(JsonElement? providerOptions, string propertyName)
     {
