@@ -488,7 +488,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Tetrate        | ✅        | ✅                | ❌            | ❌            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Thaura         | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TheRouterAI    | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
-| TheOldAPI      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| TheOldAPI      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TextSynth      | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ✅                       | ✅               | ➖          | ➖          | ➖          |
 | TigerCity      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | TikHubAI       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
