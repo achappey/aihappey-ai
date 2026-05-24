@@ -408,7 +408,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Railwail       | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | RaxAI          | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Recraft        | ✅        | ❌                | ❌            | ❌            | ✅        | ✅                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| RedPill        | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
+| RedPill        | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | ReGraph        | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ❌                       | ❌               | ➖          | ➖          | ➖          |
 | RegoloAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ✅                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
 | RekaAI         | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ✅                       | ➖               | ➖          | ➖          | ➖          |

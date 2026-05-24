@@ -13,7 +13,7 @@ public partial class RedPillProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<ImageResponse> RedPillImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Prompt))
