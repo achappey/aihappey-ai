@@ -386,7 +386,6 @@ using AIHappey.Core.Providers.MemoryRouter;
 using AIHappey.Core.Providers.JassieAI;
 using AIHappey.Core.Providers.ImageRouter;
 using AIHappey.Core.Providers.Cailos;
-using AIHappey.Core.Providers.CodexForMe;
 using AIHappey.Core.Providers.RunAPI;
 using AIHappey.Core.Providers.BaseAPI;
 using AIHappey.Core.Providers.GateRouter;
@@ -948,7 +947,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MemoryRouterProvider>();
         services.AddSingleton<IModelProvider, ImageRouterProvider>();
         services.AddSingleton<IModelProvider, CailosProvider>();
-        services.AddSingleton<IModelProvider, CodexForMeProvider>();
         services.AddSingleton<IModelProvider, RunAPIProvider>();
         services.AddSingleton<IModelProvider, BaseAPIProvider>();      
         services.AddSingleton<IModelProvider, GateRouterProvider>();

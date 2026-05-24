@@ -388,7 +388,6 @@ public class AIServiceConfig
     public ProviderConfig? MemoryRouter { get; set; }
     public ProviderConfig? ImageRouter { get; set; }
     public ProviderConfig? Cailos { get; set; }
-    public ProviderConfig? CodexForMe { get; set; }
     public ProviderConfig? RunAPI { get; set; }
     public ProviderConfig? BaseAPI { get; set; }    
     public ProviderConfig? GateRouter { get; set; }

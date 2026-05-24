@@ -390,7 +390,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["memoryrouter"] = "X-MemoryRouter-Key",
             ["imagerouter"] = "X-ImageRouter-Key",
             ["cailos"] = "X-Cailos-Key",
-            ["codexforme"] = "X-CodexForMe-Key",
             ["runapi"] = "X-RunAPI-Key",
             ["baseapi"] = "X-BaseAPI-Key",
             ["gaterouter"] = "X-GateRouter-Key",
