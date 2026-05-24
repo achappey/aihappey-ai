@@ -15,7 +15,7 @@ public partial class RegoloAIProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<RerankingResponse> RerankingRequestRegolo(RerankingRequest request, CancellationToken cancellationToken = default)
+    public async Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

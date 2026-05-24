@@ -10,7 +10,7 @@ namespace AIHappey.Core.Providers.RegoloAI;
 
 public partial class RegoloAIProvider
 {
-    public async Task<TranscriptionResponse> TranscriptionRequestRegolo(
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {

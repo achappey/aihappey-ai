@@ -13,7 +13,7 @@ public partial class RegoloAIProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<ImageResponse> ImageRequestRegolo(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
