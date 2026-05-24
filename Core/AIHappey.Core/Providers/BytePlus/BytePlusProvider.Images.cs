@@ -14,7 +14,7 @@ public partial class BytePlusProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<ImageResponse> ImageRequestBytePlus(ImageRequest request, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
