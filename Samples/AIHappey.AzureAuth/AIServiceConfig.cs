@@ -356,8 +356,7 @@ public class AIServiceConfig
     public ProviderConfig? Sargalay { get; set; }
     public ProviderConfig? Zeabur { get; set; }
     public ProviderConfig? InferLink { get; set; }
-    public ProviderConfig? ChainHub { get; set; }
-    public ProviderConfig? ClawSwitch { get; set; }
+    public ProviderConfig? ChainHub { get; set; }    
     public ProviderConfig? UltraSafe { get; set; }
     public ProviderConfig? LLMCloud { get; set; }
     public ProviderConfig? Railwail { get; set; }
@@ -414,8 +413,7 @@ public class AIServiceConfig
     public ProviderConfig? SelinaAI { get; set; }
     public ProviderConfig? LMRouter { get; set; }
     public ProviderConfig? OpenPipe { get; set; }
-    public ProviderConfig? NONKYCAI { get; set; }
-    public ProviderConfig? ClawPlaza { get; set; }
+    public ProviderConfig? NONKYCAI { get; set; }    
     public ProviderConfig? ModelBridge { get; set; }
     public ProviderConfig? SimpleLLM { get; set; }
     public ProviderConfig? Privatemode { get; set; }
