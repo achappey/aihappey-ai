@@ -46,20 +46,25 @@ public partial class BytePlusProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options,
              relativeUrl: "v3/chat/completions",
              cancellationToken: cancellationToken);
+
+        return EnrichChatCompletionWithGatewayCost(response, options.Model);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
+        await foreach (var update in this.GetChatCompletions(_client,
                     options,
                     relativeUrl: "v3/chat/completions",
-                    cancellationToken: cancellationToken);
+                    cancellationToken: cancellationToken))
+        {
+            yield return EnrichChatCompletionUpdateWithGatewayCost(update, options.Model);
+        }
     }
 
     public string GetIdentifier() => nameof(BytePlus).ToLowerInvariant();
@@ -101,9 +106,11 @@ public partial class BytePlusProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetResponse(_client, options,
+        var response = await this.GetResponse(_client, options,
             relativeUrl: "v3/responses",
             cancellationToken: cancellationToken);
+
+        return EnrichResponseWithGatewayCost(response, options.Model);
 
     }
 
@@ -115,7 +122,12 @@ public partial class BytePlusProvider : IModelProvider
         await foreach (var update in this.GetResponses(_client, options,
             "v3/responses",
             cancellationToken: cancellationToken))
+        {
+            if (update is Responses.Streaming.ResponseCompleted completed)
+                EnrichResponseWithGatewayCost(completed.Response, options.Model);
+
             yield return update;
+        }
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
