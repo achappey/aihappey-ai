@@ -2,101 +2,108 @@
   "object": "list",
   "data": [
     {
-      "id": "tembo/claude-opus-4-6",
+      "id": "tembo/claudeCode:claude-opus-4-6",
       "object": "model",
       "owned_by": "Anthropic",
-      "name": "claude-opus-4-6",
+      "name": "claude-opus-4-6 (Claud Code)",
       "type": "language"
     },
     {
-      "id": "tembo/claude-sonnet-4-6",
+      "id": "tembo/claudeCode:claude-sonnet-4-6",
       "object": "model",
       "owned_by": "Anthropic",
-      "name": "claude-sonnet-4-6",
+      "name": "claude-sonnet-4-6 (Claud Code)",
       "type": "language"
     },
     {
-      "id": "tembo/claude-opus-4-5",
+      "id": "tembo/claudeCode:claude-opus-4-5",
       "object": "model",
       "owned_by": "Anthropic",
-      "name": "claude-opus-4-5",
+      "name": "claude-opus-4-5 (Claud Code)",
       "type": "language"
     },
     {
-      "id": "tembo/claude-4-5-haiku",
+      "id": "tembo/claudeCode:claude-4-5-haiku",
       "object": "model",
       "owned_by": "Anthropic",
-      "name": "claude-4-5-haiku",
+      "name": "claude-4-5-haiku (Claud Code)",
       "type": "language"
     },
     {
-      "id": "tembo/gpt-5.4-mini",
+      "id": "tembo/codex:gpt-5.5",
       "object": "model",
       "owned_by": "OpenAI",
-      "name": "gpt-5.4-mini",
+      "name": "gpt-5.5 (Codex)",
       "type": "language"
     },
     {
-      "id": "tembo/gpt-5.4-nano",
+      "id": "tembo/codex:gpt-5.4",
       "object": "model",
       "owned_by": "OpenAI",
-      "name": "gpt-5.4-nano",
+      "name": "gpt-5.4 (Codex)",
       "type": "language"
     },
     {
-      "id": "tembo/gpt-5.3-codex",
+      "id": "tembo/codex:gpt-5.4-mini",
       "object": "model",
       "owned_by": "OpenAI",
-      "name": "gpt-5.3-codex",
+      "name": "gpt-5.4-mini (Codex)",
       "type": "language"
     },
     {
-      "id": "tembo/gpt-5.2-codex",
+      "id": "tembo/codex:gpt-5.4-nano",
       "object": "model",
       "owned_by": "OpenAI",
-      "name": "gpt-5.2-codex",
+      "name": "gpt-5.4-nano (Codex)",
       "type": "language"
     },
     {
-      "id": "tembo/glm-5p1",
+      "id": "tembo/codex:gpt-5.3-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.3-codex (Codex)",
+      "type": "language"
+    },
+    {
+      "id": "tembo/codex:gpt-5.2-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.2-codex (Codex)",
+      "type": "language"
+    },
+    {
+      "id": "tembo/opencode:glm-5p1",
       "object": "model",
       "owned_by": "Z.ai",
-      "name": "glm-5p1",
+      "name": "glm-5p1 (Opencode)",
       "type": "language"
     },
     {
-      "id": "tembo/gemini-3-pro",
+      "id": "tembo/cursor:gemini-3-pro",
       "object": "model",
       "owned_by": "Google",
-      "name": "gemini-3-pro",
+      "name": "gemini-3-pro (Cursor)",
       "type": "language"
     },
     {
-      "id": "tembo/gemini-3.1-pro",
+      "id": "tembo/cursor:gemini-3.1-pro",
       "object": "model",
       "owned_by": "Google",
-      "name": "gemini-3.1-pro",
+      "name": "gemini-3.1-pro (Cursor)",
       "type": "language"
     },
     {
-      "id": "tembo/gemini-3-flash",
+      "id": "tembo/cursor:gemini-3-flash",
       "object": "model",
       "owned_by": "Google",
-      "name": "gemini-3-flash",
+      "name": "gemini-3-flash (Cursor)",
       "type": "language"
     },
     {
-      "id": "tembo/kimi-k2p5",
+      "id": "tembo/opencode:kimi-k2p5",
       "object": "model",
       "owned_by": "Fireworks",
-      "name": "kimi-k2p5",
-      "type": "language"
-    },
-    {
-      "id": "tembo/minimax-m2p5",
-      "object": "model",
-      "owned_by": "MiniMax",
-      "name": "minimax-m2p5",
+      "name": "kimi-k2p5 (Opencode)",
       "type": "language"
     },
     {

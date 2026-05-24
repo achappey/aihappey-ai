@@ -817,7 +817,8 @@ public partial class TemboProvider
             payload["prompt"] = prompt;
 
         if (!payload.ContainsKey("agent") && !string.IsNullOrWhiteSpace(localModel))
-            payload["agent"] = localModel.Contains(':', StringComparison.Ordinal) ? localModel : $"claudeCode:{localModel}";
+            //  payload["agent"] = localModel.Contains(':', StringComparison.Ordinal) ? localModel : $"claudeCode:{localModel}";
+            payload["agent"] = localModel;
 
         if (!payload.ContainsKey("queueRightAway"))
             payload["queueRightAway"] = true;
@@ -934,7 +935,7 @@ public partial class TemboProvider
 
         var requested = TimeSpan.FromSeconds(seconds.Value);
         return requested < MinimumPollInterval ? MinimumPollInterval : requested;
-    }  
+    }
 
     private static double? TryReadDouble(JsonElement? providerOptions, string propertyName)
     {
