@@ -535,6 +535,7 @@ public class AIServiceConfig
     public ProviderConfig? LibertAI { get; set; }
     public ProviderConfig? Jules { get; set; }
     public ProviderConfig? Geodd { get; set; }
+    public ProviderConfig? AIgateway { get; set; }
 
 }
 

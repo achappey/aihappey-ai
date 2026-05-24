@@ -534,6 +534,7 @@ using AIHappey.Core.Providers.Nodion;
 using AIHappey.Core.Providers.GeneralCompute;
 using AIHappey.Core.Providers.LibertAI;
 using AIHappey.Core.Providers.Jules;
+using AIHappey.Core.Providers.AIgateway;
 
 namespace AIHappey.Core.AI;
 
@@ -1093,6 +1094,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GeneralComputeProvider>();
         services.AddSingleton<IModelProvider, LibertAIProvider>();
         services.AddSingleton<IModelProvider, JulesProvider>();
+        services.AddSingleton<IModelProvider, AIgatewayProvider>();
 
     }
 }

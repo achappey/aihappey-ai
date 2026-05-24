@@ -306,7 +306,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agabeyogluai"] = "X-Agabeyogluai-Key",
             ["airouter"] = "X-AIRouter-Key",
             ["agentics"] = "X-Agentics-Key",
-            ["gatewayz"] = "X-Gatewayz-Key",          
+            ["gatewayz"] = "X-Gatewayz-Key",
             ["sovereignapi"] = "X-SovereignAPI-Key",
             ["nrpnautilus"] = "X-NRPNautilus-Key",
             ["eagm"] = "X-EAGM-Key",
@@ -392,7 +392,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["cailos"] = "X-Cailos-Key",
             ["codexforme"] = "X-CodexForMe-Key",
             ["runapi"] = "X-RunAPI-Key",
-            ["baseapi"] = "X-BaseAPI-Key",           
+            ["baseapi"] = "X-BaseAPI-Key",
             ["gaterouter"] = "X-GateRouter-Key",
             ["teamday"] = "X-TeamDay-Key",
             ["oxoapi"] = "X-OXOAPI-Key",
@@ -536,7 +536,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["generalcompute"] = "X-GeneralCompute-Key",
             ["libertai"] = "X-LibertAI-Key",
             ["jules"] = "X-Jules-Key",
-            ["geodd"] = "X-Geodd-Key"
+            ["geodd"] = "X-Geodd-Key",
+            ["aigateway"] = "X-AIgateway-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
