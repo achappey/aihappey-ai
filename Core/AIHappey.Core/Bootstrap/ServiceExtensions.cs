@@ -464,7 +464,6 @@ using AIHappey.Core.Providers.Commonstack;
 using AIHappey.Core.Providers.Llama;
 using AIHappey.Core.Providers.NinjaChat;
 using AIHappey.Core.Providers.MIMICXAI;
-using AIHappey.Core.Providers.SawtIA;
 using AIHappey.Core.Providers.Runtimo;
 using AIHappey.Core.Providers.Codzen;
 using AIHappey.Core.Providers.OpusCode;
@@ -1025,7 +1024,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LlamaProvider>();
         services.AddSingleton<IModelProvider, NinjaChatProvider>();
         services.AddSingleton<IModelProvider, MIMICXAIProvider>();
-        services.AddSingleton<IModelProvider, SawtIAProvider>();
         services.AddSingleton<IModelProvider, RuntimoProvider>();
         services.AddSingleton<IModelProvider, CodzenProvider>();
         services.AddSingleton<IModelProvider, OpusCodeProvider>();

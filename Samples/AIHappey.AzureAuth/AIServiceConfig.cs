@@ -466,8 +466,7 @@ public class AIServiceConfig
     public ProviderConfig? Commonstack { get; set; }
     public ProviderConfig? Llama { get; set; }
     public ProviderConfig? NinjaChat { get; set; }
-    public ProviderConfig? MIMICXAI { get; set; }
-    public ProviderConfig? SawtIA { get; set; }
+    public ProviderConfig? MIMICXAI { get; set; }    
     public ProviderConfig? Runtimo { get; set; }
     public ProviderConfig? AWstore { get; set; }
     public ProviderConfig? Codzen { get; set; }
