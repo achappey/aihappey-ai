@@ -227,9 +227,9 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ImageRouter    | ✅        | ❌                | 🟡            | ❌            | ❌        | ✅                     | ➖                       | ➖               | ➖          | ✅          | ➖          |
 | InceptionLabs  | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Infercom       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ❌                       | ➖               | ➖          | ➖          | ➖          |
-| Inferencenet   | ✅        | ❌                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| Inferencenet   | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Inferencesh    | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
-| InferLink      | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| InferLink      | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Inflection     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Infomaniak     | ✅        | ✅                | ❌            | ❌            | ❌        | ✅                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
 | Infraxa        | ✅        | ✅                | ❌            | ❌            | ❌        | ❌                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
