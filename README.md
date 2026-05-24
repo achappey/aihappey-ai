@@ -83,7 +83,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | BaseAPI        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | Baseten        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
 | BastionGPT     | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
-| BazaarLink     | ✅        | ✅                | ❌            | ❌            | ❌        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
+| BazaarLink     | ✅        | ✅                | ✅            | ✅            | ✅        | ❌                     | ➖                       | ❌               | ➖          | ❌          | ➖          |
 | BergetAI       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ✅                       | ➖               | ✅          | ➖          | ➖          |
 | Bineric        | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ✅               | ➖          | ➖          | ➖          |
 | BLACKBOX       | ✅        | ✅                | ✅            | ✅            | ✅        | ➖                     | ➖                       | ➖               | ➖          | ➖          | ➖          |
