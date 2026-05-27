@@ -186,8 +186,19 @@ public static partial class ChatCompletionsUnifiedMapper
 
     private static IEnumerable<ChatMessage> ToChatMessages(AIInput? input)
     {
-        if (input?.Items is null)
+        if (input?.Items is null && string.IsNullOrEmpty(input?.Text))
             return Enumerable.Empty<ChatMessage>();
+
+        if (input?.Items is null && !string.IsNullOrEmpty(input?.Text))
+            return [
+                new ChatMessage() {
+                      Role = "user",
+                      Content = JsonSerializer.SerializeToElement(input.Text)
+                  }
+            ];
+
+        if (input?.Items is null)
+            return [];
 
         var list = new List<ChatMessage>();
         var pendingParts = new List<AIContentPart>();

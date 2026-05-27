@@ -59,7 +59,21 @@ public static partial class ResponsesUnifiedMapper
     private static AIInput ToUnifiedInput(ResponseInput input, string providerId)
     {
         if (input.IsText)
-            return new AIInput { Text = input.Text };
+            return new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem()
+                    {
+                        Type = "message",
+                        Role = "user",
+                        Content = [new AITextContentPart() {
+                            Text = input.Text!,
+                            Type = "text"
+                        }]
+                    }
+                ]
+            };
 
         List<AIInputItem>? items = input.Items?.Select(item => ToUnifiedInputItem(item, providerId))
             .ToList();

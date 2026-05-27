@@ -42,6 +42,16 @@ public static partial class MessagesUnifiedMapper
 
         var metadata = request.Metadata ?? [];
         var inputItems = request.Input?.Items ?? [];
+
+        if (inputItems.Count == 0 && !string.IsNullOrEmpty(request.Input?.Text))
+            inputItems = [new AIInputItem() {
+            Role = "user",
+            Content = [new AITextContentPart() {
+                Text  =request.Input.Text,
+                Type = "text"
+            }]
+        }];
+
         var systemFromInput = ToSystemContent(inputItems, providerId);
         var system = systemFromInput
                      ?? (!string.IsNullOrWhiteSpace(request.Instructions) ? new MessagesContent(request.Instructions) : null);
