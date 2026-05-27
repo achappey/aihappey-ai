@@ -195,7 +195,6 @@ using AIHappey.Core.Providers.KissAPI;
 using AIHappey.Core.Providers.ZenMux;
 using AIHappey.Core.Providers.NetMind;
 using AIHappey.Core.Providers.APIyi;
-using AIHappey.Core.Providers.WidnAI;
 using AIHappey.Core.Providers.Thaura;
 using AIHappey.Core.Providers.Modal;
 using AIHappey.Core.Providers.APIFree;
@@ -747,7 +746,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ZenMuxProvider>();
         services.AddSingleton<IModelProvider, NetMindProvider>();
         services.AddSingleton<IModelProvider, APIyiProvider>();
-        services.AddSingleton<IModelProvider, WidnAIProvider>();
         services.AddSingleton<IModelProvider, ThauraProvider>();
         services.AddSingleton<IModelProvider, ModalProvider>();
         services.AddSingleton<IModelProvider, APIFreeProvider>();
