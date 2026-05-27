@@ -186,7 +186,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["simplismart"] = "X-Simplismart-Key",
             ["chaingpt"] = "X-ChainGPT-Key",
             ["routeway"] = "X-Routeway-Key",
-            ["cheapestinference"] = "X-CheapestInference-Key",
             ["tetrate"] = "X-Tetrate-Key",
             ["clod"] = "X-Clod-Key",
             ["github"] = "X-GitHub-Key",

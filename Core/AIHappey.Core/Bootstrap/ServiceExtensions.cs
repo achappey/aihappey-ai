@@ -185,7 +185,6 @@ using AIHappey.Core.Providers.LLMLayer;
 using AIHappey.Core.Providers.Simplismart;
 using AIHappey.Core.Providers.Routeway;
 using AIHappey.Core.Providers.ChainGPT;
-using AIHappey.Core.Providers.CheapestInference;
 using AIHappey.Core.Providers.Tetrate;
 using AIHappey.Core.Providers.Clod;
 using AIHappey.Core.Providers.GitHub;
@@ -739,7 +738,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SimplismartProvider>();
         services.AddSingleton<IModelProvider, RoutewayProvider>();
         services.AddSingleton<IModelProvider, ChainGPTProvider>();
-        services.AddSingleton<IModelProvider, CheapestInferenceProvider>();
         services.AddSingleton<IModelProvider, TetrateProvider>();
         services.AddSingleton<IModelProvider, ClodProvider>();
         services.AddSingleton<IModelProvider, GitHubProvider>();
