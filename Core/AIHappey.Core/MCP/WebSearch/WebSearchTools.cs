@@ -108,6 +108,7 @@ public class WebSearchTools
 
     [Description("Academic web search using multiple AI models in parallel")]
     [McpServerTool(Title = "Academic web search (multi-model)",
+        Name = "web_search_academic",
         Destructive = false,
         OpenWorld = true,
         Idempotent = false,

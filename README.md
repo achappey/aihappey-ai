@@ -3,7 +3,7 @@
 A multi-provider **.NET AI gateway** exposing normalized endpoints for models, media, skills, agents and MCP capabilities.
 
 No smart routing fairy. No shiny admin portal. No hidden logic maze.
-Just provider capabilities flattened, normalized hard, and exposed through open contracts.
+Just provider capabilities flattened, normalized hard and exposed through open contracts.
 Stateless. Boring on purpose.
 
 Access 190k+ models and provider-native capabilities from your favorite client.
@@ -33,11 +33,11 @@ Requests use provider-prefixed model ids and provider-specific API keys.
 Example model ids:
 
 ```txt
-openai/gpt-4o-mini
+openai/gpt-5.4-mini
 anthropic/claude-sonnet-4-5
 google/gemini-2.5-pro
 groq/llama-3.3-70b-versatile
-openrouter/openai/gpt-4o-mini
+openrouter/openai/gpt-5.4-mini
 zai/glm-4.6
 ```
 
@@ -64,7 +64,7 @@ curl "$BASE_URL/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai/gpt-5.4-mini",
     "messages": [
       { "role": "user", "content": "Say hi" }
     ]
@@ -85,7 +85,7 @@ curl "$BASE_URL/api/chat" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
     "id": "chat-1",
-    "model": "openai/gpt-4o-mini",
+    "model": "openai/gpt-5.4-mini",
     "messages": [
       {
         "id": "msg-1",
@@ -106,7 +106,7 @@ curl "$BASE_URL/api/chat" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
     "id": "chat-2",
-    "model": "openai/gpt-4o-mini",
+    "model": "openai/gpt-5.4-mini",
     "toolChoice": "auto",
     "maxToolCalls": 1,
     "tools": [
@@ -145,7 +145,7 @@ curl "$BASE_URL/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai/gpt-5.4-mini",
     "messages": [
       { "role": "user", "content": "Say hi" }
     ]
@@ -159,7 +159,7 @@ curl "$BASE_URL/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai/gpt-5.4-mini",
     "stream": true,
     "messages": [
       { "role": "user", "content": "Stream a short response" }
@@ -178,7 +178,7 @@ curl "$BASE_URL/v1/responses" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai/gpt-5.4-mini",
     "input": "List 3 creative project names"
   }'
 ```
@@ -190,7 +190,7 @@ curl "$BASE_URL/v1/responses" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai/gpt-5.4-mini",
     "stream": true,
     "input": "Stream a 2-sentence summary about AIHappey"
   }'
@@ -351,6 +351,7 @@ Core MCP server URLs use the same `$BASE_URL`.
 | AI Transcriptions | `POST /ai-transcriptions` | `ai_audio_transcriptions_create` |
 | AI Realtime | `POST /ai-realtime` | `ai_realtime_token_get` |
 | AI Rerank | `POST /ai-rerank` | `ai_rerank_texts`, `ai_rerank_urls` |
+| AI WebSearch | `POST /ai-websearch` | `web_search_google`, `web_search_execute`, `web_search_academic` |
 
 
 ## Provider Support Matrix
@@ -885,297 +886,3 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZenMux | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ❌ | ➖ |
 | ZyloAPI | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ❌ | 🟡 | ❌ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
-
-## Run locally
-
-### Prerequisites
-
-- **.NET 10 SDK**
-
-### Run HeaderAuth sample
-
-```bash
-dotnet run --project Samples/AIHappey.HeaderAuth/AIHappey.HeaderAuth.csproj
-```
-
-### Run AzureAuth sample
-
-```bash
-dotnet run --project Samples/AIHappey.AzureAuth/AIHappey.AzureAuth.csproj
-```
-
-### Example requests
-
-Set a base URL and API key once:
-
-```bash
-BASE_URL="https://ai.aihappey.net"
-API_KEY="<your-key>"
-```
-
-#### POST /api/chat (AI SDK UI stream)
-
-Minimal text message (UI message parts):
-
-```bash
-curl "$BASE_URL/api/chat" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "id": "chat-1",
-    "model": "openai/gpt-4o-mini",
-    "messages": [
-      {
-        "id": "msg-1",
-        "role": "user",
-        "parts": [
-          {"type": "text", "text": "Hello from AIHappey"}
-        ]
-      }
-    ]
-  }'
-```
-
-Tool call-capable request (tool schema + toolChoice):
-
-```bash
-curl "$BASE_URL/api/chat" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "id": "chat-2",
-    "model": "openai/gpt-4o-mini",
-    "toolChoice": "auto",
-    "maxToolCalls": 1,
-    "tools": [
-      {
-        "name": "get_weather",
-        "description": "Get the current weather for a city",
-        "inputSchema": {
-          "type": "object",
-          "properties": {"city": {"type": "string"}},
-          "required": ["city"]
-        }
-      }
-    ],
-    "messages": [
-      {
-        "id": "msg-2",
-        "role": "user",
-        "parts": [
-          {"type": "text", "text": "What is the weather in Amsterdam?"}
-        ]
-      }
-    ]
-  }'
-```
-
-#### POST /v1/chat/completions (OpenAI-compatible)
-
-Non-streaming:
-
-```bash
-curl "$BASE_URL/v1/chat/completions" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/gpt-4o-mini",
-    "messages": [
-      {"role": "user", "content": "Say hi"}
-    ]
-  }'
-```
-
-Streaming:
-
-```bash
-curl "$BASE_URL/v1/chat/completions" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/gpt-4o-mini",
-    "stream": true,
-    "messages": [
-      {"role": "user", "content": "Stream a short response"}
-    ]
-  }'
-```
-
-#### POST /v1/responses (OpenAI-compatible)
-
-Non-streaming:
-
-```bash
-curl "$BASE_URL/v1/responses" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/gpt-4o-mini",
-    "input": "List 3 creative project names"
-  }'
-```
-
-Streaming:
-
-```bash
-curl "$BASE_URL/v1/responses" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/gpt-4o-mini",
-    "stream": true,
-    "input": "Stream a 2-sentence summary about AIHappey"
-  }'
-```
-
-#### GET /v1/models
-
-List models
-
-```bash
-curl "$BASE_URL/v1/models" \
-  -H "X-OpenAI-Key: $API_KEY"
-```
-
-#### GET /v1/skills
-
-List skills
-
-```bash
-curl "$BASE_URL/v1/skills" \
-  -H "X-OpenAI-Key: $API_KEY"
-```
-
-#### POST /api/rerank
-
-Use a reranking-capable model (example uses Cohere):
-
-```bash
-curl "$BASE_URL/api/rerank" \
-  -H "Content-Type: application/json" \
-  -H "X-Cohere-Key: $API_KEY" \
-  -d '{
-    "model": "cohere/rerank-english-v3.0",
-    "query": "best pizza in Amsterdam",
-    "topN": 3,
-    "documents": {
-      "type": "text",
-      "values": [
-        "Try authentic Neapolitan pizza downtown.",
-        "A cozy spot with wood-fired crusts.",
-        "Grab a quick slice near the station."
-      ]
-    }
-  }'
-```
-
-#### POST /v1/images/generations
-
-```bash
-curl "$BASE_URL/v1/images/generations" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/gpt-image-1",
-    "prompt": "A minimal studio apartment in Scandinavian style",
-    "size": "1024x1024",
-    "n": 1
-  }'
-```
-
-#### POST /v1/audio/speech
-
-```bash
-curl "$BASE_URL/v1/audio/speech" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/tts-1",
-    "voice": "alloy",
-    "outputFormat": "mp3",
-    "text": "AIHappey makes it easy to route across providers."
-  }' > speech.json
-
-jq -r '.audio.base64' speech.json | base64 --decode > speech.mp3
-```
-
-#### POST /v1/audio/transcriptions
-
-```bash
-curl "$BASE_URL/v1/audio/transcriptions" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/whisper-1",
-    "mediaType": "audio/mpeg",
-    "audio": "data:audio/mpeg;base64,<base64-audio>"
-  }'
-```
-
-#### POST /sampling (Model Context Protocol)
-
-```bash
-curl "$BASE_URL/sampling" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "messages": [
-      {"role": "user", "content": "Give me a one-line summary."}
-    ],
-    "modelPreferences": {
-      "hints": [
-        {"name": "openai/gpt-4o-mini"}
-      ]
-    }
-  }'
-```
-
-#### POST /v1/realtime/client_secrets
-
-```bash
-curl "$BASE_URL/v1/realtime/client_secrets" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/gpt-4o-realtime-preview",
-    "providerOptions": {
-      "openai": {
-        "session": {
-          "instructions": "You are a concise assistant."
-        }
-      }
-    }
-  }'
-```
-
-#### POST /v1/videos
-
-```bash
-curl "$BASE_URL/v1/videos" \
-  -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $API_KEY" \
-  -d '{
-    "model": "openai/sora-2",
-    "prompt": "Drone shot in a minimal studio apartment in Scandinavian style",
-    "resolution": "720x1280",
-    "n": 1
-  }'
-```
-
-## Core MCP servers (Model Context Protocol)
-
-aihappey-ai exposes a set of **core MCP servers** (streamable HTTP) that give MCP clients serious power: discover models/providers, generate media, rerank content and mint realtime tokens.
-
-Discovery (recommended):
-
-- **MCP registry**: `GET $BASE_URL/v0.1/servers`
-
-Core MCP server URLs (use the same `$BASE_URL` as above):
-
-- **AI Models** — `POST $BASE_URL/ai-models` — Tools: `ai_models_list`
-- **AI Providers** — `POST $BASE_URL/ai-providers` — Tools: `ai_provider_metadata_get_schema`, `ai_providers_list`, `ai_provider_get_models`
-- **AI Images** — `POST $BASE_URL/ai-images` — Tools: `ai_images_generate`
-- **AI Speech** — `POST $BASE_URL/ai-speech` — Tools: `ai_speech_generate`
-- **AI Transcriptions** — `POST $BASE_URL/ai-transcriptions` — Tools: `ai_audio_transcriptions_create`
-- **AI Realtime** — `POST $BASE_URL/ai-realtime` — Tools: `ai_realtime_token_get`
-- **AI Rerank** — `POST $BASE_URL/ai-rerank` — Tools: `ai_rerank_texts`, `ai_rerank_urls`
