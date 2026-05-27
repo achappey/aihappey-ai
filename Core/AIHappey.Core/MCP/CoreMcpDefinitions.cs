@@ -4,6 +4,7 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Core.MCP.Provider;
 using AIHappey.Core.MCP.Realtime;
 using AIHappey.Core.MCP.Rerank;
+using AIHappey.Core.MCP.WebSearch;
 
 namespace AIHappey.Core.MCP;
 
@@ -58,6 +59,13 @@ public static class CoreMcpDefinitions
             Title: "AI Rerank",
             Description: "Rerank documents using the unified endpoint.",
             ToolTypes: [typeof(RerankingTools)]
+        );
+
+        yield return new McpServerDefinition(
+            Name: "AI-WebSearch",
+            Title: "AI Web Search",
+            Description: "Search the web using internal AI model providers and the unified responses endpoint.",
+            ToolTypes: [typeof(WebSearchTools)]
         );
     }
 }
