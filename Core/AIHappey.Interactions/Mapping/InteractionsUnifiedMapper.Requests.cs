@@ -48,6 +48,17 @@ public static partial class InteractionsUnifiedMapper
             ExtractValue<string>(metadata, "interactions.request.response_mime_type"),
             generationConfig);
 
+        var requestTools = request.Tools?.Select(ToInteractionTool).ToList() ?? [];
+
+        var providerTools = providerConfig != null
+            ? ExtractObject<List<InteractionTool>>(providerConfig, "tools")
+            : null;
+
+        if (providerTools is { Count: > 0 })
+        {
+            requestTools.AddRange(providerTools);
+        }
+
         return new InteractionRequest
         {
             Model = string.IsNullOrWhiteSpace(storedAgent) || !string.IsNullOrWhiteSpace(storedModel)
@@ -57,7 +68,7 @@ public static partial class InteractionsUnifiedMapper
             Metadata = request.Metadata,
             Input = request.Input is null ? null : ToInteractionInput(request.Input, providerId),
             SystemInstruction = request.Instructions,
-            Tools = request.Tools?.Select(ToInteractionTool).ToList(),
+            Tools = requestTools.Count > 0 ? requestTools : null,
             ResponseFormat = responseFormat,
             Stream = request.Stream,
             Store = false,
@@ -77,7 +88,7 @@ public static partial class InteractionsUnifiedMapper
     {
         if (input.IsText)
             return new AIInput { Text = input.Text };
- 
+
         if (input.IsSteps)
         {
             return new AIInput
@@ -155,7 +166,7 @@ public static partial class InteractionsUnifiedMapper
         var items = input.Items ?? [];
         if (items.Count == 0)
             return new InteractionsInput();
- 
+
         var rawSteps = ExtractObject<List<InteractionStep>>(input.Metadata, "interactions.steps.raw");
         if (rawSteps is not null)
             return new InteractionsInput(rawSteps, true);
@@ -163,10 +174,10 @@ public static partial class InteractionsUnifiedMapper
         var steps = items
             .SelectMany(item => ToInteractionSteps(item, providerId))
             .ToList();
-            
+
         return new InteractionsInput(steps, true);
     }
- 
+
     private static IEnumerable<InteractionStep> ToInteractionSteps(AIInputItem item, string providerId)
     {
         var content = new List<InteractionContent>();
@@ -202,20 +213,20 @@ public static partial class InteractionsUnifiedMapper
             if (mapped is not null)
                 content.Add(mapped);
         }
- 
+
         if (content.Count == 0)
             yield break;
- 
+
         if (NormalizeUnifiedRole(item.Role) == "user" && !IsReasoningOnlyInputItem(item))
         {
             yield return new InteractionUserInputStep { Content = content };
             yield break;
         }
- 
+
         var modelOutput = content.Where(c => !IsReasoningOrToolStep(c)).ToList();
         if (modelOutput.Count > 0)
             yield return new InteractionModelOutputStep { Content = modelOutput };
- 
+
         foreach (var step in content.Where(IsReasoningOrToolStep))
             yield return step;
     }
