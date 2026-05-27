@@ -239,7 +239,6 @@ using AIHappey.Core.Providers.Synthetic;
 using AIHappey.Core.Providers.Renderful;
 using AIHappey.Core.Providers.TigerCity;
 using AIHappey.Core.Providers.KittenStack;
-using AIHappey.Core.Providers.PacketAI;
 using AIHappey.Core.Providers.EdenAI;
 using AIHappey.Core.Providers.NimbleWay;
 using AIHappey.Core.Providers.WebsearchAPI;
@@ -790,7 +789,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RenderfulProvider>();
         services.AddSingleton<IModelProvider, TigerCityProvider>();
         services.AddSingleton<IModelProvider, KittenStackProvider>();
-        services.AddSingleton<IModelProvider, PacketAIProvider>();
         services.AddSingleton<IModelProvider, EdenAIProvider>();
         services.AddSingleton<IModelProvider, WebsearchAPIProvider>();
         services.AddSingleton<IModelProvider, NimbleWayProvider>();
