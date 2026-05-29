@@ -1,0 +1,58 @@
+{
+  "google/gemini-3.5-flash": {
+    "pricing": {
+      "input": "0.0000027",
+      "input_cache_read": "0.00000027",
+      "output": "0.0000162"
+    }
+  },
+  "google/gemini-3.1-flash-lite": {
+    "pricing": {
+      "input": "0.00000045",
+      "input_cache_read": "0.000000045",
+      "output": "0.0000027"
+    }
+  },
+  "google/gemini-3.1-pro-preview": {
+    "pricing": {
+      "input": "0.0000036",
+      "input_cache_read": "0.00000036",
+      "output": "0.0000216"
+    }
+  },
+  "google/gemini-3.1-pro-preview-customtools": {
+    "pricing": {
+      "input": "0.0000036",
+      "input_cache_read": "0.00000036",
+      "output": "0.0000216"
+    }
+  },
+  "google/gemini-3-flash-preview": {
+    "pricing": {
+      "input": "0.0000009",
+      "input_cache_read": "0.00000009",
+      "output": "0.0000054"
+    }
+  },
+  "google/gemini-2.5-pro": {
+    "pricing": {
+      "input": "0.00000225",
+      "input_cache_read": "0.000000225",
+      "output": "0.000018"
+    }
+  },
+  "google/gemini-2.5-flash": {
+    "pricing": {
+      "input": "0.00000054",
+      "input_cache_read": "0.000000054",
+      "output": "0.0000045"
+    }
+  },
+  "google/gemini-2.5-flash-lite": {
+    "pricing": {
+      "input": "0.00000018",
+      "input_cache_read": "0.000000018",
+      "output": "0.00000072"
+    }
+  }
+}

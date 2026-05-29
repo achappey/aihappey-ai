@@ -453,24 +453,25 @@ public partial class GoogleAIProvider
             _ => streamEvent.Event.Data
         };
 
-        if (ReferenceEquals(data, streamEvent.Event.Data))
-            return streamEvent;
-
-        return new AIStreamEvent
-        {
-            ProviderId = streamEvent.ProviderId,
-            Metadata = streamEvent.Metadata,
-            Event = new AIEventEnvelope
+        var transformedEvent = ReferenceEquals(data, streamEvent.Event.Data)
+            ? streamEvent
+            : new AIStreamEvent
             {
-                Type = streamEvent.Event.Type,
-                Id = streamEvent.Event.Id,
-                Timestamp = streamEvent.Event.Timestamp,
-                Input = streamEvent.Event.Input,
-                Output = streamEvent.Event.Output,
-                Data = data,
-                Metadata = streamEvent.Event.Metadata
-            }
-        };
+                ProviderId = streamEvent.ProviderId,
+                Metadata = streamEvent.Metadata,
+                Event = new AIEventEnvelope
+                {
+                    Type = streamEvent.Event.Type,
+                    Id = streamEvent.Event.Id,
+                    Timestamp = streamEvent.Event.Timestamp,
+                    Input = streamEvent.Event.Input,
+                    Output = streamEvent.Event.Output,
+                    Data = data,
+                    Metadata = streamEvent.Event.Metadata
+                }
+            };
+
+        return EnrichUnifiedFinishEventWithGatewayCost(transformedEvent);
     }
 
    

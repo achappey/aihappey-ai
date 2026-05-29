@@ -42,7 +42,8 @@ public partial class GoogleAIProvider
                             Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
                         };
                     })
-                    .Where(a => excludedSubstrings.All(z => a.Id?.Contains(z) != true));
+                    .Where(a => excludedSubstrings.All(z => a.Id?.Contains(z) != true))
+                    .WithPricing(GetIdentifier());
 
             },
             baseTtl: TimeSpan.FromHours(4),

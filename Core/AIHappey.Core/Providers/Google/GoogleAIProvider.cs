@@ -5,6 +5,7 @@ using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Interactions.Mapping;
+using AIHappey.Interactions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
@@ -97,10 +98,11 @@ public partial class GoogleAIProvider
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var result = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
+        var interaction = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
             cancellationToken);
 
-        return result.ToUnifiedResponse(GetIdentifier()).ToResponseResult();
+        var response = interaction.ToUnifiedResponse(GetIdentifier()).ToResponseResult();
+        return EnrichResponseWithGatewayCost(response, options.Model, options.ServiceTier, interaction);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
@@ -111,13 +113,35 @@ public partial class GoogleAIProvider
         interactionRequest.Store = false;
         this.SetDefaultInteractionProperties(interactionRequest);
 
+        Interaction? completedInteraction = null;
+
         await foreach (var update in GetInteractions(
-                                 interactionRequest,
-                                  cancellationToken: cancellationToken))
+                                  interactionRequest,
+                                   cancellationToken: cancellationToken))
         {
+            if (update is InteractionCompletedEvent { Interaction: not null } completedEvent)
+                completedInteraction = completedEvent.Interaction;
+
             foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
             {
-                yield return MarkGoogleAgentUnifiedToolEventProviderExecuted(item).ToResponseStreamPart();
+                var mappedItem = MarkGoogleAgentUnifiedToolEventProviderExecuted(item);
+                Responses.Streaming.ResponseStreamPart part = mappedItem.ToResponseStreamPart();
+
+                if (part is Responses.Streaming.ResponseCompleted completed)
+                {
+                    part = new Responses.Streaming.ResponseCompleted
+                    {
+                        SequenceNumber = completed.SequenceNumber,
+                        Response = EnrichResponseWithGatewayCost(
+                            completed.Response,
+                            options.Model,
+                            options.ServiceTier,
+                            completedInteraction),
+                        AdditionalProperties = completed.AdditionalProperties
+                    };
+                }
+
+                yield return part;
             }
         }
     }
