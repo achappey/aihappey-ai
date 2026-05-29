@@ -11,7 +11,7 @@ public static class SamplingUnifiedMapper
 {
     private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
 
-    [Obsolete("Obselete in MCP")]
+    [Obsolete("Obsolete in MCP")]
     public static AIRequest ToUnifiedRequest(this CreateMessageRequestParams request, string providerId)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -39,7 +39,7 @@ public static class SamplingUnifiedMapper
         };
     }
 
-    [Obsolete("Obselete in MCP")]
+    [Obsolete("Obsolete in MCP")]
     public static CreateMessageRequestParams ToSamplingRequest(this AIRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -57,7 +57,7 @@ public static class SamplingUnifiedMapper
         return result;
     }
 
-    [Obsolete("Obselete in MCP")]
+    [Obsolete("Obsolete in MCP")]
     public static AIResponse ToUnifiedResponse(this CreateMessageResult result, string providerId)
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -91,7 +91,7 @@ public static class SamplingUnifiedMapper
         };
     }
 
-    [Obsolete("Obselete in MCP")]
+    [Obsolete("Obsolete in MCP")]
     public static CreateMessageResult ToSamplingResult(this AIResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
