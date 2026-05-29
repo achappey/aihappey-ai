@@ -6,7 +6,7 @@ No smart routing fairy. No shiny admin portal. No hidden logic maze.
 Just provider capabilities flattened, normalized hard and exposed through open contracts.
 Stateless. Boring on purpose.
 
-Access 190k+ models and provider-native capabilities from your favorite client.
+Access 160k+ models and provider-native capabilities from your favorite client.
 
 ## Endpoint contracts
 
@@ -434,7 +434,6 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Bineric | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | BLACKBOX | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | BlackForestLabs | ✅ | ❌ | ❌ | ❌ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| BlazeRail | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Blink | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ |
 | BlockRun | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ❌ | ➖ | ❌ | ➖ |
 | BotVerse | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

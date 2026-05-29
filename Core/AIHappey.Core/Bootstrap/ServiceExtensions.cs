@@ -217,7 +217,6 @@ using AIHappey.Core.Providers.Speechactors;
 using AIHappey.Core.Providers.GPTProto;
 using AIHappey.Core.Providers.Neosantara;
 using AIHappey.Core.Providers.RedPill;
-using AIHappey.Core.Providers.BlazeRail;
 using AIHappey.Core.Providers.Aether;
 using AIHappey.Core.Providers.ReGraph;
 using AIHappey.Core.Providers.ElectronHub;
@@ -766,8 +765,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SpeechactorsProvider>();
         services.AddSingleton<IModelProvider, GPTProtoProvider>();
         services.AddSingleton<IModelProvider, NeosantaraProvider>();
-        services.AddSingleton<IModelProvider, RedPillProvider>();
-        services.AddSingleton<IModelProvider, BlazeRailProvider>();
+        services.AddSingleton<IModelProvider, RedPillProvider>();       
         services.AddSingleton<IModelProvider, AetherProvider>();
         services.AddSingleton<IModelProvider, ReGraphProvider>();
         services.AddSingleton<IModelProvider, ElectronHubProvider>();
