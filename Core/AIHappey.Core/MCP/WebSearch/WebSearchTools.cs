@@ -96,12 +96,6 @@ public class WebSearchTools
                 {
                     Results = results
                         .OfType<ResponseResult>()
-                        .GroupBy(r => r.Model)
-                        .ToDictionary(
-                            g => g.Key,
-                            g => g.SelectMany(r => r.Output.GetAssistantOutputTextItems())
-                                .ToList()
-                        )
                 }, ResponseJson.Default)
             };
         });
@@ -141,12 +135,6 @@ public class WebSearchTools
                 {
                     Results = results
                         .OfType<ResponseResult>()
-                        .GroupBy(r => r.Model)
-                        .ToDictionary(
-                            g => g.Key,
-                            g => g.SelectMany(r => r.Output.GetAssistantOutputTextItems())
-                                .ToList()
-                        )
                 }, ResponseJson.Default)
             };
         });
