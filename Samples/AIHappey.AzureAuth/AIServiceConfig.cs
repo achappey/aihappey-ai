@@ -302,7 +302,6 @@ public class AIServiceConfig
     public ProviderConfig? Agabeyogluai { get; set; }
     public ProviderConfig? AIRouter { get; set; }
     public ProviderConfig? Agentics { get; set; }
-    public ProviderConfig? Gatewayz { get; set; }    
     public ProviderConfig? NRPNautilus { get; set; }
     public ProviderConfig? EAGM { get; set; }
     public ProviderConfig? Edgee { get; set; }
