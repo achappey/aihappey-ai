@@ -42,12 +42,33 @@ public static partial class InteractionsUnifiedMapper
 
         switch (part)
         {
+            case InteractionCreatedEvent:
+                ResetStreamState(providerId);
+                yield break;
+
             case InteractionStepStartEvent { Step: InteractionModelOutputStep modelOutput } start:
                 {
                     var firstContent = modelOutput.Content?.FirstOrDefault();
-                    if (firstContent is null or InteractionTextContent)
+
+                    if (firstContent is not null)
+                    {
+                        foreach (var unifiedEvent in new InteractionStepStartEvent
+                        {
+                            Index = start.Index,
+                            EventId = start.EventId,
+                            Step = firstContent
+                        }.ToUnifiedStreamEvent(providerId))
+                        {
+                            yield return unifiedEvent;
+                        }
+
+                        yield break;
+                    }
+
+                    if (firstContent is null)
                     {
                         RememberStreamContentType(providerId, start.Index, "text");
+                        RememberTextStart(providerId, start.Index);
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -65,6 +86,7 @@ public static partial class InteractionsUnifiedMapper
  
             case InteractionStepStartEvent start when start.Step is InteractionTextContent:
                 RememberStreamContentType(providerId, start.Index, "text");
+                RememberTextStart(providerId, start.Index);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -136,6 +158,7 @@ public static partial class InteractionsUnifiedMapper
                         },
                         part,
                         start.Index);
+                    RememberReasoningStart(providerId, start.Index);
                     yield break;
                 }
 
@@ -658,6 +681,8 @@ public static partial class InteractionsUnifiedMapper
                     if (ForgetStreamFunctionCall(providerId, stop.Index) is { } functionCall)
                     {
                         ForgetStreamThoughtSignature(providerId, stop.Index);
+                        ForgetTextStart(providerId, stop.Index);
+                        ForgetReasoningStart(providerId, stop.Index);
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -680,6 +705,21 @@ public static partial class InteractionsUnifiedMapper
 
                     if (string.Equals(rememberedType, "text", StringComparison.OrdinalIgnoreCase))
                     {
+                        if (!HasTextStart(providerId, stop.Index))
+                        {
+                            RememberTextStart(providerId, stop.Index);
+                            yield return CreateStreamEvent(
+                                providerId,
+                                new AIEventEnvelope
+                                {
+                                    Type = "text-start",
+                                    Id = BuildContentEventId(stop.Index),
+                                    Data = new AITextStartEventData()
+                                },
+                                part,
+                                stop.Index);
+                        }
+
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -690,6 +730,8 @@ public static partial class InteractionsUnifiedMapper
                             },
                             part,
                             stop.Index);
+
+                        ForgetTextStart(providerId, stop.Index);
 
                         yield break;
                     }
@@ -711,6 +753,25 @@ public static partial class InteractionsUnifiedMapper
 
                         var signature = ForgetStreamThoughtSignature(providerId, stop.Index) ?? rememberedSignature;
 
+                        if (!HasReasoningStart(providerId, stop.Index))
+                        {
+                            RememberReasoningStart(providerId, stop.Index);
+                            yield return CreateStreamEvent(
+                                providerId,
+                                new AIEventEnvelope
+                                {
+                                    Type = "reasoning-start",
+                                    Id = BuildContentEventId(stop.Index),
+                                    Data = new AIReasoningStartEventData
+                                    {
+                                        Signature = signature,
+                                        ProviderMetadata = CreateThoughtSignatureProviderMetadata(providerId, signature)
+                                    }
+                                },
+                                part,
+                                stop.Index);
+                        }
+
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -727,6 +788,8 @@ public static partial class InteractionsUnifiedMapper
                             },
                             part,
                             stop.Index);
+
+                        ForgetReasoningStart(providerId, stop.Index);
 
                         yield break;
                     }
@@ -761,7 +824,7 @@ public static partial class InteractionsUnifiedMapper
                 }
 
             case InteractionCompletedEvent complete:
-                ForgetOpenThoughtAnchor(providerId);
+                ResetStreamState(providerId);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -789,7 +852,7 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             case InteractionErrorEvent error:
-                ForgetOpenThoughtAnchor(providerId);
+                ResetStreamState(providerId);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope

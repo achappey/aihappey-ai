@@ -10,6 +10,8 @@ public static partial class InteractionsUnifiedMapper
     private static readonly ConcurrentDictionary<string, string> StreamContentTypes = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, string> StreamThoughtSignatures = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, bool> StreamThoughtHasText = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, bool> StreamTextStarts = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, bool> StreamReasoningStarts = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamFunctionCallState> StreamFunctionCalls = new(StringComparer.Ordinal);
@@ -440,8 +442,54 @@ public static partial class InteractionsUnifiedMapper
     private static string BuildStreamContentKey(string providerId, int index)
         => $"{providerId}:{index}";
 
+    private static void ResetStreamState(string providerId)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+            return;
+
+        RemoveByProviderPrefix(StreamContentTypes, providerId);
+        RemoveByProviderPrefix(StreamThoughtSignatures, providerId);
+        RemoveByProviderPrefix(StreamThoughtHasText, providerId);
+        RemoveByProviderPrefix(StreamTextStarts, providerId);
+        RemoveByProviderPrefix(StreamReasoningStarts, providerId);
+        RemoveByProviderPrefix(StreamImages, providerId);
+        RemoveByProviderPrefix(StreamFunctionCalls, providerId);
+        RemoveByProviderPrefix(StreamToolSteps, providerId);
+        StreamOpenThoughtAnchors.TryRemove(providerId, out _);
+    }
+
+    private static void RemoveByProviderPrefix<T>(ConcurrentDictionary<string, T> dictionary, string providerId)
+    {
+        var prefix = $"{providerId}:";
+        foreach (var key in dictionary.Keys)
+        {
+            if (!key.StartsWith(prefix, StringComparison.Ordinal))
+                continue;
+
+            dictionary.TryRemove(key, out _);
+        }
+    }
+
     private static string BuildImageToolCallId(int index)
         => $"interactions-image-{index}";
+
+    private static void RememberTextStart(string providerId, int index)
+        => StreamTextStarts[BuildStreamContentKey(providerId, index)] = true;
+
+    private static bool HasTextStart(string providerId, int index)
+        => StreamTextStarts.ContainsKey(BuildStreamContentKey(providerId, index));
+
+    private static void ForgetTextStart(string providerId, int index)
+        => StreamTextStarts.TryRemove(BuildStreamContentKey(providerId, index), out _);
+
+    private static void RememberReasoningStart(string providerId, int index)
+        => StreamReasoningStarts[BuildStreamContentKey(providerId, index)] = true;
+
+    private static bool HasReasoningStart(string providerId, int index)
+        => StreamReasoningStarts.ContainsKey(BuildStreamContentKey(providerId, index));
+
+    private static void ForgetReasoningStart(string providerId, int index)
+        => StreamReasoningStarts.TryRemove(BuildStreamContentKey(providerId, index), out _);
  
     private static void RememberStreamFunctionCallStart(string providerId, int index, InteractionFunctionCallContent call)
     {

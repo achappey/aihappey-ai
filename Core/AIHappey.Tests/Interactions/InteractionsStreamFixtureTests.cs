@@ -12,6 +12,8 @@ public sealed class InteractionsStreamFixtureTests
 {
     private const string RawFixturePath = "Fixtures/interactions/raw/interactions-with-tools.jsonl";
     private const string AntigravityRawFixturePath = "Fixtures/interactions/raw/interactions-antigravity-agent-stream.jsonl";
+    private const string FailedReasoningStartFixturePath = "Fixtures/interactions/raw/failed-reasoning-start.-missing.jsonl";
+    private const string FailedTextStartFixturePath = "Fixtures/interactions/raw/failed-text-start-missing.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string ToolCallId = "986aolc5";
 
@@ -38,6 +40,73 @@ public sealed class InteractionsStreamFixtureTests
         var inputJson = JsonSerializer.SerializeToElement(toolInputAvailable.Input, JsonSerializerOptions.Web);
         Assert.Equal("PL", inputJson.GetProperty("cca").GetString());
 
+    }
+
+    [Theory]
+    [InlineData(FailedReasoningStartFixturePath)]
+    [InlineData(FailedTextStartFixturePath)]
+    public void Interactions_failed_fixtures_do_not_emit_orphan_text_or_reasoning_end_events(string rawFixturePath)
+    {
+        var unifiedEvents = LoadUnifiedEvents(rawFixturePath);
+        AssertNoOrphanEndEvents(unifiedEvents, "text-start", "text-end");
+        AssertNoOrphanEndEvents(unifiedEvents, "reasoning-start", "reasoning-end");
+    }
+
+    [Fact]
+    public void Interactions_model_output_thought_step_maps_to_reasoning_events_not_text_events()
+    {
+        var parts = new List<InteractionStreamEventPart>
+        {
+            new InteractionStepStartEvent
+            {
+                Index = 0,
+                Step = new InteractionModelOutputStep
+                {
+                    Content =
+                    [
+                        new InteractionThoughtContent
+                        {
+                            Signature = "sig-1"
+                        }
+                    ]
+                }
+            },
+            new InteractionStepDeltaEvent
+            {
+                Index = 0,
+                Delta = new InteractionContentDeltaData
+                {
+                    Type = "thought_summary",
+                    AdditionalProperties = new Dictionary<string, JsonElement>
+                    {
+                        ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent { Text = "thinking" }),
+                        ["signature"] = JsonSerializer.SerializeToElement("sig-1")
+                    }
+                }
+            },
+            new InteractionStepStopEvent
+            {
+                Index = 0
+            }
+        };
+
+        var unifiedEvents = parts
+            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end");
+
+        Assert.DoesNotContain(unifiedEvents, streamEvent =>
+            string.Equals(streamEvent.Event.Type, "text-start", StringComparison.Ordinal)
+            && string.Equals(streamEvent.Event.Id, "interactions-content-0", StringComparison.Ordinal));
+
+        Assert.DoesNotContain(unifiedEvents, streamEvent =>
+            string.Equals(streamEvent.Event.Type, "text-end", StringComparison.Ordinal)
+            && string.Equals(streamEvent.Event.Id, "interactions-content-0", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -423,4 +492,35 @@ public sealed class InteractionsStreamFixtureTests
         => FixtureFileLoader.LoadInteractionRawFixture(rawFixturePath)
             .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
             .ToList();
+
+    private static void AssertNoOrphanEndEvents(
+        IEnumerable<AIStreamEvent> streamEvents,
+        string startType,
+        string endType)
+    {
+        var startedIds = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var streamEvent in streamEvents)
+        {
+            if (string.Equals(streamEvent.Event.Type, startType, StringComparison.Ordinal))
+            {
+                if (!string.IsNullOrWhiteSpace(streamEvent.Event.Id))
+                    startedIds.Add(streamEvent.Event.Id!);
+                continue;
+            }
+
+            if (!string.Equals(streamEvent.Event.Type, endType, StringComparison.Ordinal))
+                continue;
+
+            Assert.False(
+                string.IsNullOrWhiteSpace(streamEvent.Event.Id),
+                $"Expected '{endType}' to have an ID.");
+
+            Assert.Contains(
+                streamEvent.Event.Id!,
+                startedIds);
+
+            startedIds.Remove(streamEvent.Event.Id!);
+        }
+    }
 }
