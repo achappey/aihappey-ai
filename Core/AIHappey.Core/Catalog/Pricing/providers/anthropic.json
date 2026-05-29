@@ -1,8 +1,18 @@
 {
+  "anthropic/claude-opus-4-8": {
+    "pricing": {
+      "input": "0.000005",
+      "output": "0.000025",
+      "input_cache_read": "0.0000005",
+      "input_cache_write": "0.00000625"
+    }
+  },
   "anthropic/claude-opus-4-7": {
     "pricing": {
       "input": "0.000005",
-      "output": "0.000025"
+      "output": "0.000025",
+      "input_cache_read": "0.0000005",
+      "input_cache_write": "0.00000625"
     }
   },
   "anthropic/claude-sonnet-4-6": {
