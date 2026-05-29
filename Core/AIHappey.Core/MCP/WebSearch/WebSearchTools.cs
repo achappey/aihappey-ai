@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Responses;
@@ -89,14 +91,15 @@ public class WebSearchTools
                 cancellationToken));
 
             var results = await Task.WhenAll(tasks);
+            var successfulResults = results.OfType<ResponseResult>().ToArray();
 
             return new CallToolResult
             {
                 StructuredContent = JsonSerializer.SerializeToElement(new
                 {
-                    Results = results
-                        .OfType<ResponseResult>()
-                }, ResponseJson.Default)
+                    Results = successfulResults
+                }, ResponseJson.Default),
+                Meta = CreateGatewayMeta(successfulResults)
             };
         });
 
@@ -128,14 +131,15 @@ public class WebSearchTools
                 cancellationToken));
 
             var results = await Task.WhenAll(tasks);
+            var successfulResults = results.OfType<ResponseResult>().ToArray();
 
             return new CallToolResult
             {
                 StructuredContent = JsonSerializer.SerializeToElement(new
                 {
-                    Results = results
-                        .OfType<ResponseResult>()
-                }, ResponseJson.Default)
+                    Results = successfulResults
+                }, ResponseJson.Default),
+                Meta = CreateGatewayMeta(successfulResults)
             };
         });
 
@@ -393,5 +397,113 @@ public class WebSearchTools
     {
         result.Metadata ??= [];
         result.Metadata["duration"] = (DateTime.UtcNow - startTime).ToString();
+    }
+
+    private static JsonObject CreateGatewayMeta(IEnumerable<ResponseResult> results)
+    {
+        decimal totalGatewayCost = 0m;
+
+        foreach (var result in results)
+        {
+            if (TryGetGatewayCost(result, out var gatewayCost))
+                totalGatewayCost += gatewayCost;
+        }
+
+        return new JsonObject
+        {
+            ["gateway"] = new JsonObject
+            {
+                ["cost"] = totalGatewayCost
+            }
+        };
+    }
+
+    private static bool TryGetGatewayCost(ResponseResult result, out decimal cost)
+    {
+        cost = 0m;
+
+        if (result.Metadata is null
+            || !result.Metadata.TryGetValue("gateway", out var gateway)
+            || gateway is null)
+        {
+            return false;
+        }
+
+        return TryGetGatewayCostValue(gateway, out cost);
+    }
+
+    private static bool TryGetGatewayCostValue(object gateway, out decimal cost)
+    {
+        cost = 0m;
+
+        if (gateway is Dictionary<string, object?> gatewayDict
+            && gatewayDict.TryGetValue("cost", out var gatewayCost))
+        {
+            return TryGetDecimalValue(gatewayCost, out cost);
+        }
+
+        var gatewayElement = gateway switch
+        {
+            JsonElement json => json,
+            _ => JsonSerializer.SerializeToElement(gateway, JsonSerializerOptions.Web)
+        };
+
+        if (gatewayElement.ValueKind != JsonValueKind.Object
+            || !TryGetPropertyCaseInsensitive(gatewayElement, "cost", out var gatewayCostElement))
+        {
+            return false;
+        }
+
+        return TryGetDecimalValue(gatewayCostElement, out cost);
+    }
+
+    private static bool TryGetDecimalValue(object? rawValue, out decimal value)
+    {
+        value = 0m;
+
+        return rawValue switch
+        {
+            decimal decimalValue => (value = decimalValue) >= 0m || decimalValue < 0m,
+            int intValue => (value = intValue) >= 0m || intValue < 0,
+            long longValue => (value = longValue) >= 0m || longValue < 0,
+            float floatValue => (value = (decimal)floatValue) >= 0m || floatValue < 0,
+            double doubleValue => (value = (decimal)doubleValue) >= 0m || doubleValue < 0,
+            string stringValue when decimal.TryParse(stringValue, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed)
+                => (value = parsed) >= 0m || parsed < 0m,
+            JsonElement jsonElement => TryGetDecimalFromJson(jsonElement, out value),
+            _ => false
+        };
+    }
+
+    private static bool TryGetDecimalFromJson(JsonElement valueElement, out decimal value)
+    {
+        value = 0m;
+
+        return valueElement.ValueKind switch
+        {
+            JsonValueKind.Number when valueElement.TryGetDecimal(out var parsedNumber)
+                => (value = parsedNumber) >= 0m || parsedNumber < 0m,
+            JsonValueKind.String when decimal.TryParse(valueElement.GetString(), NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedString)
+                => (value = parsedString) >= 0m || parsedString < 0m,
+            _ => false
+        };
+    }
+
+    private static bool TryGetPropertyCaseInsensitive(JsonElement json, string propertyName, out JsonElement value)
+    {
+        if (json.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in json.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
     }
 }
