@@ -1,0 +1,67 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "eugpt/auto",
+      "object": "model",
+      "owned_by": "EU GPT",
+      "name": "auto",
+      "type": "language",
+      "description": "EU GPT auto router. Selects the best available model based on reasoning needs, retrieval needs, speed, input complexity, context length, cost, and backend availability."
+    },
+    {
+      "id": "eugpt/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-oss-120b",
+      "type": "language",
+      "description": "Strong general reasoning open-weight model hosted on European infrastructure.",
+      "context_window": 128000
+    },
+    {
+      "id": "eugpt/qwen3-235b-a22b-instruct-2507",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-235b-a22b-instruct-2507",
+      "type": "language",
+      "description": "Large-context Qwen model with 235B parameters and 22B active parameters. Competitive with frontier proprietary models.",
+      "context_window": 250000
+    },
+    {
+      "id": "eugpt/llama-3.3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama-3.3-70b-instruct",
+      "type": "language",
+      "description": "Meta Llama 3.3 70B instruction model. Approaches Llama 3.1 405B quality at 70B cost.",
+      "context_window": 100000
+    },
+    {
+      "id": "eugpt/llama-3.1-nemotron-70b-instruct",
+      "object": "model",
+      "owned_by": "NVIDIA",
+      "name": "llama-3.1-nemotron-70b-instruct",
+      "type": "language",
+      "description": "NVIDIA Nemotron 70B instruction model, RLHF-tuned for instruction following on top of Llama 3.1.",
+      "context_window": 128000
+    },
+    {
+      "id": "eugpt/llama-3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "llama-3-70b-instruct",
+      "type": "language",
+      "description": "Earlier Llama 3 70B instruction model with shorter context. Use Llama 3.3 unless this exact lineage is needed.",
+      "context_window": 8000
+    },
+    {
+      "id": "eugpt/mixtral-8x7b-instruct-v0.1",
+      "object": "model",
+      "owned_by": "Mistral",
+      "name": "mixtral-8x7b-instruct-v0.1",
+      "type": "language",
+      "description": "Mixture-of-experts instruction model with 47B total parameters and 13B active parameters. Balanced cost and quality.",
+      "context_window": 32000
+    }
+  ]
+}
