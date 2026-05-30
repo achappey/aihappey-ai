@@ -534,6 +534,7 @@ using AIHappey.Core.Providers.OurToken;
 using AIHappey.Core.Providers.HyperRouter;
 using AIHappey.Core.Providers.ClawLite;
 using AIHappey.Core.Providers.ToolRelay;
+using AIHappey.Core.Providers.CallMissed;
 
 namespace AIHappey.Core.AI;
 
@@ -1093,6 +1094,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HyperRouterProvider>();
         services.AddSingleton<IModelProvider, ClawLiteProvider>();
         services.AddSingleton<IModelProvider, ToolRelayProvider>();
+        services.AddSingleton<IModelProvider, CallMissedProvider>();
 
     }
 }
