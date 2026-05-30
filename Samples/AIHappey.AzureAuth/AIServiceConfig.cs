@@ -528,6 +528,7 @@ public class AIServiceConfig
     public ProviderConfig? AIgateway { get; set; }
     public ProviderConfig? MIAPI { get; set; }
     public ProviderConfig? RodiumAI { get; set; }
+    public ProviderConfig? MiroMind { get; set; }
 
 }
 

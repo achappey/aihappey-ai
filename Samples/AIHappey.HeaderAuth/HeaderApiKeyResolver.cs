@@ -529,7 +529,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["geodd"] = "X-Geodd-Key",
             ["aigateway"] = "X-AIgateway-Key",
             ["miapi"] = "X-MIAPI-Key",
-            ["rodiumai"] = "X-RodiumAI-Key"
+            ["rodiumai"] = "X-RodiumAI-Key",
+            ["miromind"] = "X-MiroMind-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
