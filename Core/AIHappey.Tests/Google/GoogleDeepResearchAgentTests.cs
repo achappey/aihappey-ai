@@ -130,6 +130,17 @@ public sealed class GoogleDeepResearchAgentTests
         Assert.Equal("env_abc123", request.AdditionalProperties!["environment"].GetString());
     }
 
+    [Theory]
+    [InlineData("usr/local/lib/python3.12/dist-packages/fontTools/misc/xmlReader.py", true)]
+    [InlineData("./usr/local/lib/python3.12/dist-packages/fontTools/misc/xmlReader.py", true)]
+    [InlineData("mind-motion-poster/mind_motion_day.pdf", false)]
+    [InlineData("mind-motion-poster/mind_motion_day.png", false)]
+    public void GoogleAgentArchivePathSkipPolicyMatchesUsrLocalPrefixRule(string path, bool expected)
+    {
+        var actual = InvokeShouldSkipArchivePath(path);
+        Assert.Equal(expected, actual);
+    }
+
     [Fact]
     public async Task NonStreamingDeepResearchPollsAndDeletesStoredInteraction()
     {
@@ -699,6 +710,15 @@ public sealed class GoogleDeepResearchAgentTests
         var result = (bool)method.Invoke(null, parameters)!;
         agent = (string)parameters[1]!;
         return result;
+    }
+
+    private static bool InvokeShouldSkipArchivePath(string path)
+    {
+        var method = typeof(GoogleAIProvider).GetMethod(
+            "ShouldSkipGoogleAgentArchiveEntryPath",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        return (bool)method.Invoke(null, [path])!;
     }
 
     private static GoogleAIProvider CreateProvider(RecordingHandler handler)

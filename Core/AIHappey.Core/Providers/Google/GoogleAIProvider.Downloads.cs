@@ -108,6 +108,9 @@ public partial class GoogleAIProvider
                 continue;
             }
 
+            if (ShouldSkipGoogleAgentArchiveEntryPath(entryPath))
+                continue;
+
             await using var memory = new MemoryStream();
             await entry.DataStream.CopyToAsync(memory, cancellationToken);
             var bytes = memory.ToArray();
@@ -192,6 +195,16 @@ public partial class GoogleAIProvider
 
         normalizedPath = path;
         return true;
+    }
+
+    private static bool ShouldSkipGoogleAgentArchiveEntryPath(string normalizedPath)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedPath))
+            return true;
+
+        var path = normalizedPath.Replace('\\', '/');
+        return path.StartsWith("usr/local/", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("./usr/local/", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveGoogleAgentFileContentType(string filename, string entryPath)
