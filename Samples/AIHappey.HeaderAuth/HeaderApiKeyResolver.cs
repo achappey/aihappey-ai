@@ -531,7 +531,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["miapi"] = "X-MIAPI-Key",
             ["rodiumai"] = "X-RodiumAI-Key",
             ["miromind"] = "X-MiroMind-Key",
-            ["serverspace"] = "X-Serverspace-Key"
+            ["serverspace"] = "X-Serverspace-Key",
+            ["thalam"] = "X-Thalam-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
