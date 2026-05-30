@@ -527,6 +527,7 @@ public class AIServiceConfig
     public ProviderConfig? Geodd { get; set; }
     public ProviderConfig? AIgateway { get; set; }
     public ProviderConfig? MIAPI { get; set; }
+    public ProviderConfig? RodiumAI { get; set; }
 
 }
 

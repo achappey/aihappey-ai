@@ -526,6 +526,7 @@ using AIHappey.Core.Providers.LibertAI;
 using AIHappey.Core.Providers.Jules;
 using AIHappey.Core.Providers.AIgateway;
 using AIHappey.Core.Providers.MIAPI;
+using AIHappey.Core.Providers.RodiumAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1077,6 +1078,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, JulesProvider>();
         services.AddSingleton<IModelProvider, AIgatewayProvider>();
         services.AddSingleton<IModelProvider, MIAPIProvider>();
+        services.AddSingleton<IModelProvider, RodiumAIProvider>();
 
     }
 }
