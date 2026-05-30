@@ -193,7 +193,7 @@ public partial class GoogleAIProvider
                 finishMetadata,
                 fallbackModel: finishData.Model ?? interaction.Model ?? interaction.Agent,
                 fallbackTimestamp: DateTimeOffset.UtcNow),
-            Model = finishData.Model,
+            Model = finishData.Model?.ToModelId("google"),
             CompletedAt = finishData.CompletedAt,
             InputTokens = finishData.InputTokens,
             OutputTokens = finishData.OutputTokens,
