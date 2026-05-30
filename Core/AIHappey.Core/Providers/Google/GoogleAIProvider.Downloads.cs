@@ -202,9 +202,32 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(normalizedPath))
             return true;
 
-        var path = normalizedPath.Replace('\\', '/');
-        return path.StartsWith("usr/local/", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("./usr/local/", StringComparison.OrdinalIgnoreCase);
+        var path = normalizedPath.Replace('\\', '/').Trim();
+
+        if (path.StartsWith("/", StringComparison.Ordinal))
+            path = "." + path;
+        else if (!path.StartsWith("./", StringComparison.Ordinal))
+            path = "./" + path;
+
+        return IsPathOrChild(path, "./bin")
+               || IsPathOrChild(path, "./sbin")
+               || IsPathOrChild(path, "./lib")
+               || IsPathOrChild(path, "./lib64")
+               || IsPathOrChild(path, "./usr")
+               || IsPathOrChild(path, "./var")
+               || IsPathOrChild(path, "./etc")
+               || IsPathOrChild(path, "./boot")
+               || IsPathOrChild(path, "./dev")
+               || IsPathOrChild(path, "./proc")
+               || IsPathOrChild(path, "./sys")
+               || IsPathOrChild(path, "./run")
+               || IsPathOrChild(path, "./opt");
+
+        static bool IsPathOrChild(string path, string folder)
+        {
+            return path.Equals(folder, StringComparison.OrdinalIgnoreCase)
+                   || path.StartsWith(folder + "/", StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     private static string ResolveGoogleAgentFileContentType(string filename, string entryPath)
