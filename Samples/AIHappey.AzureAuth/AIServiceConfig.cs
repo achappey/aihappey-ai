@@ -532,6 +532,7 @@ public class AIServiceConfig
     public ProviderConfig? Serverspace { get; set; }
     public ProviderConfig? Thalam { get; set; }
     public ProviderConfig? OurToken { get; set; }
+    public ProviderConfig? HyperRouter { get; set; }
 
 }
 

@@ -533,7 +533,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["miromind"] = "X-MiroMind-Key",
             ["serverspace"] = "X-Serverspace-Key",
             ["thalam"] = "X-Thalam-Key",
-            ["ourtoken"] = "X-OurToken-Key"
+            ["ourtoken"] = "X-OurToken-Key",
+            ["hyperrouter"] = "X-HyperRouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

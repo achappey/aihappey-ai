@@ -531,6 +531,7 @@ using AIHappey.Core.Providers.MiroMind;
 using AIHappey.Core.Providers.Serverspace;
 using AIHappey.Core.Providers.Thalam;
 using AIHappey.Core.Providers.OurToken;
+using AIHappey.Core.Providers.HyperRouter;
 
 namespace AIHappey.Core.AI;
 
@@ -770,7 +771,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SpeechactorsProvider>();
         services.AddSingleton<IModelProvider, GPTProtoProvider>();
         services.AddSingleton<IModelProvider, NeosantaraProvider>();
-        services.AddSingleton<IModelProvider, RedPillProvider>();       
+        services.AddSingleton<IModelProvider, RedPillProvider>();
         services.AddSingleton<IModelProvider, AetherProvider>();
         services.AddSingleton<IModelProvider, ReGraphProvider>();
         services.AddSingleton<IModelProvider, ElectronHubProvider>();
@@ -905,7 +906,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SargalayProvider>();
         services.AddSingleton<IModelProvider, ZeaburProvider>();
         services.AddSingleton<IModelProvider, InferLinkProvider>();
-        services.AddSingleton<IModelProvider, ChainHubProvider>();        
+        services.AddSingleton<IModelProvider, ChainHubProvider>();
         services.AddSingleton<IModelProvider, UltraSafeProvider>();
         services.AddSingleton<IModelProvider, LLMCloudProvider>();
         services.AddSingleton<IModelProvider, RailwailProvider>();
@@ -964,7 +965,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SelinaAIProvider>();
         services.AddSingleton<IModelProvider, LMRouterProvider>();
         services.AddSingleton<IModelProvider, OpenPipeProvider>();
-        services.AddSingleton<IModelProvider, NONKYCAIProvider>();     
+        services.AddSingleton<IModelProvider, NONKYCAIProvider>();
         services.AddSingleton<IModelProvider, ModelBridgeProvider>();
         services.AddSingleton<IModelProvider, SimpleLLMProvider>();
         services.AddSingleton<IModelProvider, PrivatemodeProvider>();
@@ -1087,6 +1088,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ServerspaceProvider>();
         services.AddSingleton<IModelProvider, ThalamProvider>();
         services.AddSingleton<IModelProvider, OurTokenProvider>();
+        services.AddSingleton<IModelProvider, HyperRouterProvider>();
 
     }
 }
