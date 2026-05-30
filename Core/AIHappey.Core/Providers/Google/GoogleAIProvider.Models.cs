@@ -38,6 +38,7 @@ public partial class GoogleAIProvider
                         {
                             Name = a.DisplayName!,
                             OwnedBy = Google,
+                            Description = id,
                             Id = id.ToModelId(GetIdentifier()),
                             Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
                         };
