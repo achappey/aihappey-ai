@@ -536,6 +536,7 @@ using AIHappey.Core.Providers.ClawLite;
 using AIHappey.Core.Providers.ToolRelay;
 using AIHappey.Core.Providers.CallMissed;
 using AIHappey.Core.Providers.Picklyone;
+using AIHappey.Core.Providers.Realrouter;
 
 namespace AIHappey.Core.AI;
 
@@ -1097,6 +1098,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ToolRelayProvider>();
         services.AddSingleton<IModelProvider, CallMissedProvider>();
         services.AddSingleton<IModelProvider, PicklyoneProvider>();
+        services.AddSingleton<IModelProvider, RealrouterProvider>();
 
     }
 }

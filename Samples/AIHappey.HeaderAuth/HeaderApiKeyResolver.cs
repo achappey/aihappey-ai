@@ -538,7 +538,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["clawlite"] = "X-ClawLite-Key",
             ["toolrelay"] = "X-ToolRelay-Key",
             ["callmissed"] = "X-CallMissed-Key",
-            ["picklyone"] = "X-Picklyone-Key"
+            ["picklyone"] = "X-Picklyone-Key",
+            ["realrouter"] = "X-Realrouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
