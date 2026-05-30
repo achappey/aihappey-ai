@@ -529,6 +529,7 @@ public class AIServiceConfig
     public ProviderConfig? MIAPI { get; set; }
     public ProviderConfig? RodiumAI { get; set; }
     public ProviderConfig? MiroMind { get; set; }
+    public ProviderConfig? Serverspace { get; set; }
 
 }
 

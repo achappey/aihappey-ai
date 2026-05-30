@@ -528,6 +528,7 @@ using AIHappey.Core.Providers.AIgateway;
 using AIHappey.Core.Providers.MIAPI;
 using AIHappey.Core.Providers.RodiumAI;
 using AIHappey.Core.Providers.MiroMind;
+using AIHappey.Core.Providers.Serverspace;
 
 namespace AIHappey.Core.AI;
 
@@ -1081,6 +1082,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MIAPIProvider>();
         services.AddSingleton<IModelProvider, RodiumAIProvider>();
         services.AddSingleton<IModelProvider, MiroMindProvider>();
+        services.AddSingleton<IModelProvider, ServerspaceProvider>();
 
     }
 }
