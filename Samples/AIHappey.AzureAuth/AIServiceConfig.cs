@@ -536,6 +536,7 @@ public class AIServiceConfig
     public ProviderConfig? ClawLite { get; set; }
     public ProviderConfig? ToolRelay { get; set; }
     public ProviderConfig? CallMissed { get; set; }
+    public ProviderConfig? Picklyone { get; set; }
 
 }
 
