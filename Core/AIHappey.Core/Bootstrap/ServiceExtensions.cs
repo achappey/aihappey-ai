@@ -532,6 +532,7 @@ using AIHappey.Core.Providers.Serverspace;
 using AIHappey.Core.Providers.Thalam;
 using AIHappey.Core.Providers.OurToken;
 using AIHappey.Core.Providers.HyperRouter;
+using AIHappey.Core.Providers.ClawLite;
 
 namespace AIHappey.Core.AI;
 
@@ -1089,6 +1090,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ThalamProvider>();
         services.AddSingleton<IModelProvider, OurTokenProvider>();
         services.AddSingleton<IModelProvider, HyperRouterProvider>();
+        services.AddSingleton<IModelProvider, ClawLiteProvider>();
 
     }
 }

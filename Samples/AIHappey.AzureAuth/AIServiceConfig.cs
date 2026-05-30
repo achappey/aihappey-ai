@@ -533,6 +533,7 @@ public class AIServiceConfig
     public ProviderConfig? Thalam { get; set; }
     public ProviderConfig? OurToken { get; set; }
     public ProviderConfig? HyperRouter { get; set; }
+    public ProviderConfig? ClawLite { get; set; }
 
 }
 
