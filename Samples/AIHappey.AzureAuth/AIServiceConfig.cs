@@ -531,6 +531,7 @@ public class AIServiceConfig
     public ProviderConfig? MiroMind { get; set; }
     public ProviderConfig? Serverspace { get; set; }
     public ProviderConfig? Thalam { get; set; }
+    public ProviderConfig? OurToken { get; set; }
 
 }
 

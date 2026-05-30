@@ -530,6 +530,7 @@ using AIHappey.Core.Providers.RodiumAI;
 using AIHappey.Core.Providers.MiroMind;
 using AIHappey.Core.Providers.Serverspace;
 using AIHappey.Core.Providers.Thalam;
+using AIHappey.Core.Providers.OurToken;
 
 namespace AIHappey.Core.AI;
 
@@ -1085,6 +1086,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MiroMindProvider>();
         services.AddSingleton<IModelProvider, ServerspaceProvider>();
         services.AddSingleton<IModelProvider, ThalamProvider>();
+        services.AddSingleton<IModelProvider, OurTokenProvider>();
 
     }
 }
