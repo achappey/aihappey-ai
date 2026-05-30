@@ -534,6 +534,8 @@ public class AIServiceConfig
     public ProviderConfig? OurToken { get; set; }
     public ProviderConfig? HyperRouter { get; set; }
     public ProviderConfig? ClawLite { get; set; }
+    public ProviderConfig? ToolRelay { get; set; }
+    public ProviderConfig? CallMissed { get; set; }
 
 }
 
