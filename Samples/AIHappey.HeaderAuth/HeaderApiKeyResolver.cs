@@ -542,7 +542,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mycoai"] = "X-MyCoAI-Key",
             ["scalixworld"] = "X-ScalixWorld-Key",
             ["apipass"] = "X-APIPASS-Key",
-            ["inferencespace"] = "X-InferenceSpace-Key"
+            ["inferencespace"] = "X-InferenceSpace-Key",
+            ["virouter"] = "X-Virouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
