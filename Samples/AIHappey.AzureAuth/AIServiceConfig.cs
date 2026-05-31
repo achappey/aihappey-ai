@@ -264,7 +264,7 @@ public class AIServiceConfig
     public ProviderConfig? PixCode { get; set; }
     public ProviderConfig? Anannas { get; set; }
     public ProviderConfig? AiMo { get; set; }
-    public ProviderConfig? LemonData { get; set; }
+    public ProviderConfig? TokenLab { get; set; }
     public ProviderConfig? APIPod { get; set; }
     public ProviderConfig? FullAI { get; set; }
     public ProviderConfig? TokenFlux { get; set; }

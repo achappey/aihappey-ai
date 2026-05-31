@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.LemonData;
+namespace AIHappey.Core.Providers.TokenLab;
 
-public partial class LemonDataProvider
+public partial class TokenLabProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

@@ -267,7 +267,7 @@ using AIHappey.Core.Providers.Anannas;
 using AIHappey.Core.Providers.FullAI;
 using AIHappey.Core.Providers.APIPod;
 using AIHappey.Core.Providers.TokenFlux;
-using AIHappey.Core.Providers.LemonData;
+using AIHappey.Core.Providers.TokenLab;
 using AIHappey.Core.Providers.Assisters;
 using AIHappey.Core.Providers.LLMWise;
 using AIHappey.Core.Providers.CaseDev;
@@ -539,6 +539,7 @@ using AIHappey.Core.Providers.KeyMeAI;
 using AIHappey.Core.Providers.MyCoAI;
 using AIHappey.Core.Providers.ScalixWorld;
 using AIHappey.Core.Providers.APIPASS;
+using AIHappey.Core.Providers.TokenLab;
 
 namespace AIHappey.Core.AI;
 
@@ -827,7 +828,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FullAIProvider>();
         services.AddSingleton<IModelProvider, APIPodProvider>();
         services.AddSingleton<IModelProvider, TokenFluxProvider>();
-        services.AddSingleton<IModelProvider, LemonDataProvider>();
+        services.AddSingleton<IModelProvider, TokenLabProvider>();
         services.AddSingleton<IModelProvider, AssistersProvider>();
         services.AddSingleton<IModelProvider, LLMWiseProvider>();
         services.AddSingleton<CaseDevProvider>();

@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.LemonData;
+namespace AIHappey.Core.Providers.TokenLab;
 
-public partial class LemonDataProvider
+public partial class TokenLabProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -20,7 +20,7 @@ public partial class LemonDataProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"LemonData API error: {err}");
+                    throw new Exception($"TokenLab API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -29,7 +29,7 @@ public partial class LemonDataProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("models", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -42,9 +42,6 @@ public partial class LemonDataProvider
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
                     }
-
-                    if (el.TryGetProperty("displayName", out var orgEl))
-                        model.Name = orgEl.GetString() ?? model.Name;
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
