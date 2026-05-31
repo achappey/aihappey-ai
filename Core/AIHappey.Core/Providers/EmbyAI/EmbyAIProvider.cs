@@ -10,6 +10,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.EmbyAI;
 
@@ -48,12 +49,82 @@ public partial class EmbyAIProvider : IModelProvider
              options, cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var completion = await CompleteChatAsync(options, cancellationToken);
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        var id = string.IsNullOrWhiteSpace(completion.Id)
+            ? Guid.NewGuid().ToString("n")
+            : completion.Id;
+
+        var created = completion.Created > 0
+            ? completion.Created
+            : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        var model = string.IsNullOrWhiteSpace(completion.Model)
+            ? options.Model
+            : completion.Model;
+
+        var finishReason = "stop";
+        var content = string.Empty;
+
+        var firstChoice = completion.Choices?.FirstOrDefault();
+        if (firstChoice is JsonElement choiceEl && choiceEl.ValueKind == JsonValueKind.Object)
+        {
+            if (choiceEl.TryGetProperty("finish_reason", out var finishEl)
+                && finishEl.ValueKind == JsonValueKind.String)
+            {
+                finishReason = finishEl.GetString() ?? "stop";
+            }
+
+            if (choiceEl.TryGetProperty("message", out var messageEl)
+                && messageEl.ValueKind == JsonValueKind.Object
+                && messageEl.TryGetProperty("content", out var contentEl)
+                && contentEl.ValueKind == JsonValueKind.String)
+            {
+                content = contentEl.GetString() ?? string.Empty;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(content))
+        {
+            yield return new ChatCompletionUpdate
+            {
+                Id = id,
+                Object = "chat.completion.chunk",
+                Created = created,
+                Model = model,
+                Choices =
+                [
+                    new
+                    {
+                        index = 0,
+                        delta = new { content },
+                        finish_reason = (string?)null
+                    }
+                ]
+            };
+        }
+
+        yield return new ChatCompletionUpdate
+        {
+            Id = id,
+            Object = "chat.completion.chunk",
+            Created = created,
+            Model = model,
+            Choices =
+            [
+                new
+                {
+                    index = 0,
+                    delta = new { },
+                    finish_reason = finishReason
+                }
+            ],
+            Usage = completion.Usage
+        };
     }
 
     public string GetIdentifier() => nameof(EmbyAI).ToLowerInvariant();
