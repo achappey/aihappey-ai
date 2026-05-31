@@ -193,7 +193,7 @@ public class AIServiceConfig
     public ProviderConfig? KissAPI { get; set; }
     public ProviderConfig? ZenMux { get; set; }
     public ProviderConfig? NetMind { get; set; }
-    public ProviderConfig? APIyi { get; set; }    
+    public ProviderConfig? APIyi { get; set; }
     public ProviderConfig? Thaura { get; set; }
     public ProviderConfig? Modal { get; set; }
     public ProviderConfig? APIFree { get; set; }
@@ -235,7 +235,7 @@ public class AIServiceConfig
     public ProviderConfig? Synthetic { get; set; }
     public ProviderConfig? Renderful { get; set; }
     public ProviderConfig? TigerCity { get; set; }
-    public ProviderConfig? KittenStack { get; set; }   
+    public ProviderConfig? KittenStack { get; set; }
     public ProviderConfig? EdenAI { get; set; }
     public ProviderConfig? WebsearchAPI { get; set; }
     public ProviderConfig? NimbleWay { get; set; }
@@ -351,7 +351,7 @@ public class AIServiceConfig
     public ProviderConfig? Sargalay { get; set; }
     public ProviderConfig? Zeabur { get; set; }
     public ProviderConfig? InferLink { get; set; }
-    public ProviderConfig? ChainHub { get; set; }    
+    public ProviderConfig? ChainHub { get; set; }
     public ProviderConfig? UltraSafe { get; set; }
     public ProviderConfig? LLMCloud { get; set; }
     public ProviderConfig? Railwail { get; set; }
@@ -365,7 +365,7 @@ public class AIServiceConfig
     public ProviderConfig? Vultr { get; set; }
     public ProviderConfig? OfoxAI { get; set; }
     public ProviderConfig? DedalusLabs { get; set; }
-    public ProviderConfig? World3 { get; set; }   
+    public ProviderConfig? World3 { get; set; }
     public ProviderConfig? ModelMax { get; set; }
     public ProviderConfig? Yollomi { get; set; }
     public ProviderConfig? Infercom { get; set; }
@@ -382,7 +382,7 @@ public class AIServiceConfig
     public ProviderConfig? ImageRouter { get; set; }
     public ProviderConfig? Cailos { get; set; }
     public ProviderConfig? RunAPI { get; set; }
-    public ProviderConfig? BaseAPI { get; set; }    
+    public ProviderConfig? BaseAPI { get; set; }
     public ProviderConfig? GateRouter { get; set; }
     public ProviderConfig? TeamDay { get; set; }
     public ProviderConfig? OXOAPI { get; set; }
@@ -407,7 +407,7 @@ public class AIServiceConfig
     public ProviderConfig? SelinaAI { get; set; }
     public ProviderConfig? LMRouter { get; set; }
     public ProviderConfig? OpenPipe { get; set; }
-    public ProviderConfig? NONKYCAI { get; set; }    
+    public ProviderConfig? NONKYCAI { get; set; }
     public ProviderConfig? ModelBridge { get; set; }
     public ProviderConfig? SimpleLLM { get; set; }
     public ProviderConfig? Privatemode { get; set; }
@@ -457,7 +457,7 @@ public class AIServiceConfig
     public ProviderConfig? Commonstack { get; set; }
     public ProviderConfig? Llama { get; set; }
     public ProviderConfig? NinjaChat { get; set; }
-    public ProviderConfig? MIMICXAI { get; set; }    
+    public ProviderConfig? MIMICXAI { get; set; }
     public ProviderConfig? Runtimo { get; set; }
     public ProviderConfig? AWstore { get; set; }
     public ProviderConfig? Codzen { get; set; }
@@ -538,6 +538,7 @@ public class AIServiceConfig
     public ProviderConfig? OpenGate { get; set; }
     public ProviderConfig? KeyMeAI { get; set; }
     public ProviderConfig? MyCoAI { get; set; }
+    public ProviderConfig? ScalixWorld { get; set; }
 
 }
 

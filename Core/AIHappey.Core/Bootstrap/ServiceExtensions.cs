@@ -537,6 +537,7 @@ using AIHappey.Core.Providers.Realrouter;
 using AIHappey.Core.Providers.OpenGate;
 using AIHappey.Core.Providers.KeyMeAI;
 using AIHappey.Core.Providers.MyCoAI;
+using AIHappey.Core.Providers.ScalixWorld;
 
 namespace AIHappey.Core.AI;
 
@@ -1099,6 +1100,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OpenGateProvider>();
         services.AddSingleton<IModelProvider, KeyMeAIProvider>();
         services.AddSingleton<IModelProvider, MyCoAIProvider>();
+        services.AddSingleton<IModelProvider, ScalixWorldProvider>();
 
     }
 }

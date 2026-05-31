@@ -539,7 +539,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["realrouter"] = "X-Realrouter-Key",
             ["opengate"] = "X-OpenGate-Key",
             ["keymeai"] = "X-KeyMeAI-Key",
-            ["mycoai"] = "X-MyCoAI-Key"
+            ["mycoai"] = "X-MyCoAI-Key",
+            ["scalixworld"] = "X-ScalixWorld-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
