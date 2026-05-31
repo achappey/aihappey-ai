@@ -513,7 +513,6 @@ public class AIServiceConfig
     public ProviderConfig? Doubleword { get; set; }
     public ProviderConfig? OpenHands { get; set; }
     public ProviderConfig? Poolside { get; set; }
-    public ProviderConfig? Cloister { get; set; }
     public ProviderConfig? Antbase { get; set; }
     public ProviderConfig? Slancha { get; set; }
     public ProviderConfig? CodingPlanX { get; set; }
