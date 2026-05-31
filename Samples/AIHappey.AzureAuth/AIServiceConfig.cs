@@ -473,7 +473,6 @@ public class AIServiceConfig
     public ProviderConfig? TensorBlock { get; set; }
     public ProviderConfig? Blink { get; set; }
     public ProviderConfig? ShannonAI { get; set; }
-    public ProviderConfig? TrinixAI { get; set; }
     public ProviderConfig? HolySheepAI { get; set; }
     public ProviderConfig? ZyloAPI { get; set; }
     public ProviderConfig? Augure { get; set; }

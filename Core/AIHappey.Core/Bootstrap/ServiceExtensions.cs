@@ -469,7 +469,6 @@ using AIHappey.Core.Providers.AiApiWorld;
 using AIHappey.Core.Providers.TensorBlock;
 using AIHappey.Core.Providers.Blink;
 using AIHappey.Core.Providers.ShannonAI;
-using AIHappey.Core.Providers.TrinixAI;
 using AIHappey.Core.Providers.HolySheepAI;
 using AIHappey.Core.Providers.ZyloAPI;
 using AIHappey.Core.Providers.Augure;
@@ -1033,7 +1032,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TensorBlockProvider>();
         services.AddSingleton<IModelProvider, BlinkProvider>();
         services.AddSingleton<IModelProvider, ShannonAIProvider>();
-        services.AddSingleton<IModelProvider, TrinixAIProvider>();
         services.AddSingleton<IModelProvider, HolySheepAIProvider>();
         services.AddSingleton<IModelProvider, ZyloAPIProvider>();
         services.AddSingleton<IModelProvider, AugureProvider>();
