@@ -21,13 +21,10 @@ public partial class UncensoredChatProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly AsyncCacheHelper _memoryCache;
-
-    public UncensoredChatProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public UncensoredChatProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://uncensored.chat/api/");
     }

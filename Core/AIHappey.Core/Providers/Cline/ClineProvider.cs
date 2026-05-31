@@ -21,13 +21,10 @@ public partial class ClineProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly AsyncCacheHelper _memoryCache;
-
-    public ClineProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public ClineProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.cline.bot/api/");
     }

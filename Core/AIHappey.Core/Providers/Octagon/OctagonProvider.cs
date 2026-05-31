@@ -19,13 +19,11 @@ public partial class OctagonProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly AsyncCacheHelper _memoryCache;
 
-    public OctagonProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public OctagonProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.octagonagents.com/");
     }
