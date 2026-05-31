@@ -104,6 +104,9 @@ public partial class OpenCodeProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (!headers.ContainsKey("x-api-key"))
+            headers.Add("x-api-key", _keyResolver.Resolve(GetIdentifier())!);
+
         return await this.GetMessage(_client,
             request,
             headers: headers,
@@ -117,6 +120,9 @@ public partial class OpenCodeProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (!headers.ContainsKey("x-api-key"))
+            headers.Add("x-api-key", _keyResolver.Resolve(GetIdentifier())!);
+
         return this.GetMessages(_client,
             request,
             headers: headers,
@@ -124,8 +130,16 @@ public partial class OpenCodeProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-     => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+     => request.Model?.StartsWith("gpt-") == true ?
+        this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken) :
+        request.Model?.StartsWith("claude") == true || request.Model?.StartsWith("qwen") == true ?
+        this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken)
+        : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => request.Model?.StartsWith("gpt-") == true ?
+        this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken) :
+        request.Model?.StartsWith("claude") == true || request.Model?.StartsWith("qwen") == true ?
+        this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken)
+        : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }
