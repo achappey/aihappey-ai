@@ -536,6 +536,7 @@ using AIHappey.Core.Providers.CallMissed;
 using AIHappey.Core.Providers.Picklyone;
 using AIHappey.Core.Providers.Realrouter;
 using AIHappey.Core.Providers.OpenGate;
+using AIHappey.Core.Providers.KeyMeAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1097,6 +1098,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PicklyoneProvider>();
         services.AddSingleton<IModelProvider, RealrouterProvider>();
         services.AddSingleton<IModelProvider, OpenGateProvider>();
+        services.AddSingleton<IModelProvider, KeyMeAIProvider>();
 
     }
 }

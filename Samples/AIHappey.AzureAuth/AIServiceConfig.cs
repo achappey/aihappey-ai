@@ -537,6 +537,7 @@ public class AIServiceConfig
     public ProviderConfig? Picklyone { get; set; }
     public ProviderConfig? Realrouter { get; set; }
     public ProviderConfig? OpenGate { get; set; }
+    public ProviderConfig? KeyMeAI { get; set; }
 
 }
 

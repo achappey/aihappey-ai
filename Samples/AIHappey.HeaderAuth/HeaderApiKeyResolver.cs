@@ -367,7 +367,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["vultr"] = "X-Vultr-Key",
             ["ofoxai"] = "X-OfoxAI-Key",
             ["dedaluslabs"] = "X-DedalusLabs-Key",
-            ["world3"] = "X-World3-Key",           
+            ["world3"] = "X-World3-Key",
             ["modelmax"] = "X-ModelMax-Key",
             ["yollomi"] = "X-Yollomi-Key",
             ["infercom"] = "X-Infercom-Key",
@@ -473,7 +473,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["aiapiworld"] = "X-AiApiWorld-Key",
             ["tensorblock"] = "X-TensorBlock-Key",
             ["blink"] = "X-Blink-Key",
-            ["shannonai"] = "X-ShannonAI-Key",        
+            ["shannonai"] = "X-ShannonAI-Key",
             ["holysheepai"] = "X-HolySheepAI-Key",
             ["zyloapi"] = "X-ZyloAPI-Key",
             ["augure"] = "X-Augure-Key",
@@ -538,7 +538,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["callmissed"] = "X-CallMissed-Key",
             ["picklyone"] = "X-Picklyone-Key",
             ["realrouter"] = "X-Realrouter-Key",
-            ["opengate"] = "X-OpenGate-Key"
+            ["opengate"] = "X-OpenGate-Key",
+            ["keymeai"] = "X-KeyMeAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
