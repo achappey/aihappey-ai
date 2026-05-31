@@ -1,0 +1,61 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "scrapellm/chatgpt",
+      "object": "model",
+      "owned_by": "ScrapeLLM",
+      "name": "ChatGPT",
+      "type": "language",
+      "description": "Scrape ChatGPT's real user interface and receive the full reply with inline links and optional markdown token tree."
+    },
+    {
+      "id": "scrapellm/perplexity",
+      "object": "model",
+      "owned_by": "ScrapeLLM",
+      "name": "Perplexity",
+      "type": "language",
+      "description": "Scrape Perplexity AI and receive answers with web citations, sources, and related follow-up questions."
+    },
+    {
+      "id": "scrapellm/grok",
+      "object": "model",
+      "owned_by": "ScrapeLLM",
+      "name": "Grok",
+      "type": "language",
+      "description": "Scrape xAI Grok and receive answers with web sources, X posts, and reasoning modes."
+    },
+    {
+      "id": "scrapellm/gemini",
+      "object": "model",
+      "owned_by": "ScrapeLLM",
+      "name": "Gemini",
+      "type": "language",
+      "description": "Scrape Google Gemini and receive answers with citations, highlights, and source metadata."
+    },
+    {
+      "id": "scrapellm/copilot",
+      "object": "model",
+      "owned_by": "ScrapeLLM",
+      "name": "Copilot",
+      "type": "language",
+      "description": "Scrape Microsoft Copilot in search, smart, chat, reasoning, or study mode with citations and links."
+    },
+    {
+      "id": "scrapellm/google-ai-mode",
+      "object": "model",
+      "owned_by": "ScrapeLLM",
+      "name": "Google AI Mode",
+      "type": "language",
+      "description": "Scrape Google AI Mode and receive AI-generated answers with citations and supporting search results."
+    },
+    {
+      "id": "scrapellm/amazon-rufus",
+      "object": "model",
+      "owned_by": "ScrapeLLM",
+      "name": "Amazon Rufus",
+      "type": "shopping",
+      "description": "Scrape Amazon Rufus and receive product recommendations, ratings, ASINs, and shopping-related follow-up questions."
+    }
+  ]
+}

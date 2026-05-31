@@ -542,6 +542,7 @@ public class AIServiceConfig
     public ProviderConfig? APIPASS { get; set; }
     public ProviderConfig? InferenceSpace { get; set; }
     public ProviderConfig? Virouter { get; set; }
+    public ProviderConfig? ScrapeLLM { get; set; }
 
 }
 

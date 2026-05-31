@@ -541,6 +541,7 @@ using AIHappey.Core.Providers.ScalixWorld;
 using AIHappey.Core.Providers.APIPASS;
 using AIHappey.Core.Providers.InferenceSpace;
 using AIHappey.Core.Providers.Virouter;
+using AIHappey.Core.Providers.ScrapeLLM;
 
 namespace AIHappey.Core.AI;
 
@@ -1107,6 +1108,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, APIPASSProvider>();
         services.AddSingleton<IModelProvider, InferenceSpaceProvider>();
         services.AddSingleton<IModelProvider, VirouterProvider>();
+        services.AddSingleton<IModelProvider, ScrapeLLMProvider>();
 
     }
 }
