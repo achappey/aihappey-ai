@@ -429,7 +429,6 @@ public class AIServiceConfig
     public ProviderConfig? Lacesse { get; set; }
     public ProviderConfig? UncensoredChat { get; set; }
     public ProviderConfig? OrbGPU { get; set; }
-    public ProviderConfig? AppLingo { get; set; }
     public ProviderConfig? OpenGateway { get; set; }
     public ProviderConfig? OmniaKey { get; set; }
     public ProviderConfig? NebulaBlock { get; set; }

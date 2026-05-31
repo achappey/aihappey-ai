@@ -426,7 +426,6 @@ using AIHappey.Core.Providers.MumeAI;
 using AIHappey.Core.Providers.Lacesse;
 using AIHappey.Core.Providers.UncensoredChat;
 using AIHappey.Core.Providers.OpenGateway;
-using AIHappey.Core.Providers.AppLingo;
 using AIHappey.Core.Providers.OrbGPU;
 using AIHappey.Core.Providers.OmniaKey;
 using AIHappey.Core.Providers.NebulaBlock;
@@ -990,7 +989,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LacesseProvider>();
         services.AddSingleton<IModelProvider, UncensoredChatProvider>();
         services.AddSingleton<IModelProvider, OpenGatewayProvider>();
-        services.AddSingleton<IModelProvider, AppLingoProvider>();
         services.AddSingleton<IModelProvider, OrbGPUProvider>();
         services.AddSingleton<IModelProvider, OmniaKeyProvider>();
         services.AddSingleton<IModelProvider, NebulaBlockProvider>();
