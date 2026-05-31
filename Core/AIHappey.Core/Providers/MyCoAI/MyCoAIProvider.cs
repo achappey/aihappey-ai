@@ -113,10 +113,7 @@ public partial class MyCoAIProvider : IModelProvider
        Dictionary<string, string> headers,
        CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        if (!headers.ContainsKey("x-api-key"))
-            headers.Add("x-api-key", _keyResolver.Resolve(GetIdentifier())!);
+        ApplyAuthHeader();    
 
         return await this.GetMessage(_client,
             request,
@@ -130,9 +127,6 @@ public partial class MyCoAIProvider : IModelProvider
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
-        if (!headers.ContainsKey("x-api-key"))
-            headers.Add("x-api-key", _keyResolver.Resolve(GetIdentifier())!);
 
         return this.GetMessages(_client,
             request,
