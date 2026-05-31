@@ -365,8 +365,7 @@ public class AIServiceConfig
     public ProviderConfig? Vultr { get; set; }
     public ProviderConfig? OfoxAI { get; set; }
     public ProviderConfig? DedalusLabs { get; set; }
-    public ProviderConfig? World3 { get; set; }
-    public ProviderConfig? VoidAI { get; set; }
+    public ProviderConfig? World3 { get; set; }   
     public ProviderConfig? ModelMax { get; set; }
     public ProviderConfig? Yollomi { get; set; }
     public ProviderConfig? Infercom { get; set; }

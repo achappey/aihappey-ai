@@ -364,7 +364,6 @@ using AIHappey.Core.Providers.Vultr;
 using AIHappey.Core.Providers.OfoxAI;
 using AIHappey.Core.Providers.DedalusLabs;
 using AIHappey.Core.Providers.RouterLink;
-using AIHappey.Core.Providers.VoidAI;
 using AIHappey.Core.Providers.ModelMax;
 using AIHappey.Core.Providers.Yollomi;
 using AIHappey.Core.Providers.Infercom;
@@ -927,7 +926,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OfoxAIProvider>();
         services.AddSingleton<IModelProvider, DedalusLabsProvider>();
         services.AddSingleton<IModelProvider, RouterLinkProvider>();
-        services.AddSingleton<IModelProvider, VoidAIProvider>();
         services.AddSingleton<IModelProvider, ModelMaxProvider>();
         services.AddSingleton<IModelProvider, YollomiProvider>();
         services.AddSingleton<IModelProvider, InfercomProvider>();
