@@ -180,7 +180,7 @@ public class JulesProviderUnifiedTests
         Assert.Equal("completed", response.Status);
         Assert.Equal("jules/sources/github/acme/api", response.Model);
 
-        var messageItem = Assert.Single(response.Output!.Items!.Where(item => item.Type == "message"));
+        var messageItem = Assert.Single(response.Output!.Items!, item => item.Type == "message");
         var sessionTool = Assert.IsType<AIToolCallContentPart>(messageItem.Content!.First());
         Assert.True(sessionTool.ProviderExecuted);
         Assert.Equal("create_session", sessionTool.ToolName);
@@ -299,7 +299,7 @@ public class JulesProviderUnifiedTests
         Assert.NotNull(sendMessageBody);
         Assert.Contains("Please continue.", sendMessageBody, StringComparison.Ordinal);
 
-        var messageItem = Assert.Single(response.Output!.Items!.Where(item => item.Type == "message"));
+        var messageItem = Assert.Single(response.Output!.Items!, item => item.Type == "message");
         var textPart = Assert.IsType<AITextContentPart>(Assert.Single(messageItem.Content!));
         Assert.Equal("Reused existing Jules session", textPart.Text);
     }

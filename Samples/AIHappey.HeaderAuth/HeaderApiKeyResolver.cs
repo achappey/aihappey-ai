@@ -544,7 +544,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["apipass"] = "X-APIPASS-Key",
             ["inferencespace"] = "X-InferenceSpace-Key",
             ["virouter"] = "X-Virouter-Key",
-            ["scrapellm"] = "X-ScrapeLLM-Key"
+            ["scrapellm"] = "X-ScrapeLLM-Key",
+            ["uumuse"] = "X-UUMuse-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

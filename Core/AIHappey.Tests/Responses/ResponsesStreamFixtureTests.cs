@@ -183,7 +183,7 @@ public sealed class ResponsesStreamFixtureTests
         };
 
         var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaResponsesAsync(request));
-        var finishEvent = Assert.Single(unifiedEvents.Where(streamEvent => streamEvent.Event.Type == "finish"));
+        var finishEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "finish");
         var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
 
         Assert.Equal(0.00039300m, finishData.MessageMetadata?.Gateway?.Cost);
