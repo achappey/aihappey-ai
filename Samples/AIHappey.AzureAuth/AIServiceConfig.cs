@@ -536,6 +536,7 @@ public class AIServiceConfig
     public ProviderConfig? CallMissed { get; set; }
     public ProviderConfig? Picklyone { get; set; }
     public ProviderConfig? Realrouter { get; set; }
+    public ProviderConfig? OpenGate { get; set; }
 
 }
 
