@@ -539,7 +539,7 @@ using AIHappey.Core.Providers.KeyMeAI;
 using AIHappey.Core.Providers.MyCoAI;
 using AIHappey.Core.Providers.ScalixWorld;
 using AIHappey.Core.Providers.APIPASS;
-using AIHappey.Core.Providers.TokenLab;
+using AIHappey.Core.Providers.InferenceSpace;
 
 namespace AIHappey.Core.AI;
 
@@ -1104,6 +1104,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MyCoAIProvider>();
         services.AddSingleton<IModelProvider, ScalixWorldProvider>();
         services.AddSingleton<IModelProvider, APIPASSProvider>();
+        services.AddSingleton<IModelProvider, InferenceSpaceProvider>();
 
     }
 }
