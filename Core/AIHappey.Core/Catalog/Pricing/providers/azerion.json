@@ -1,0 +1,200 @@
+{
+  "azerion/alibaba-qwen-3-vl": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.000004"
+    }
+  },
+  "azerion/mistral-pixtral-large": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000006"
+    }
+  },
+  "azerion/mistral-devstral-2": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.000002"
+    }
+  },
+  "azerion/mistral-mistral-large-3": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  },
+  "azerion/alibaba-qwen-3-coder-next": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000008"
+    }
+  },
+  "azerion/alibaba-qwen-3": {
+    "pricing": {
+      "input": "0.00000023",
+      "output": "0.0000023"
+    }
+  },
+  "azerion/alibaba-qwen-3-next": {
+    "pricing": {
+      "input": "0.00000015",
+      "output": "0.0000012"
+    }
+  },
+  "azerion/google-gemini-3-1-pro-preview": {
+    "pricing": {
+      "input": "0.000004",
+      "output": "0.000012"
+    }
+  },
+  "azerion/anthropic-claude-sonnet-4-6": {
+    "pricing": {
+      "input": "0.000003",
+      "output": "0.000015"
+    }
+  },
+  "azerion/claude-opus-4-6": {
+    "pricing": {
+      "input": "0.000005",
+      "output": "0.000025"
+    }
+  },
+  "azerion/glm-5": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000003"
+    }
+  },
+  "azerion/anthropic-claude-haiku-4-5": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000005"
+    }
+  },
+  "azerion/minimax-m2-1": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000012"
+    }
+  },
+  "azerion/kimi-k2-5": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.000003"
+    }
+  },
+  "azerion/google-gemini-3-1-flash-lite": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.000003"
+    }
+  },
+  "azerion/glm-4-7-flash": {
+    "pricing": {
+      "input": "0.00000007",
+      "output": "0.0000004"
+    }
+  },
+  "azerion/glm-4-7": {
+    "pricing": {
+      "input": "0.0000004",
+      "output": "0.0000022"
+    }
+  },
+  "azerion/qwen3-max": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.0000055"
+    }
+  },
+  "azerion/kimi-k2-thinking": {
+    "pricing": {
+      "input": "0.0000006",
+      "output": "0.0000025"
+    }
+  },
+  "azerion/llama-scout": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000006"
+    }
+  },
+  "azerion/llama-maverick": {
+    "pricing": {
+      "input": "0.00000035",
+      "output": "0.000001"
+    }
+  },
+  "azerion/gemma-3-27b": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.0000004"
+    }
+  },
+  "azerion/gemma-3-12b": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.0000003"
+    }
+  },
+  "azerion/deepseek-v3-2": {
+    "pricing": {
+      "input": "0.00000025",
+      "output": "0.0000012"
+    }
+  },
+  "azerion/qwen3-coder-480b-a35b": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000002"
+    }
+  },
+  "azerion/gpt-oss-20b": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.00000015"
+    }
+  },
+  "azerion/gpt-oss-120b": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.0000005"
+    }
+  },
+  "azerion/gemini-2.5-pro": {
+    "pricing": {
+      "input": "0.00000125",
+      "output": "0.00001"
+    }
+  },
+  "azerion/gemini-2.5-flash-lite": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0.0000004"
+    }
+  },
+  "azerion/gemini-2.5-flash": {
+    "pricing": {
+      "input": "0.0000003",
+      "output": "0.0000025"
+    }
+  },
+  "azerion/deepseek-r1-0528": {
+    "pricing": {
+      "input": "0.00000135",
+      "output": "0.0000054"
+    }
+  },
+  "azerion/mistral-large-2407-v1:0": {
+    "pricing": {
+      "input": "0.0000018",
+      "output": "0.0000053"
+    }
+  },
+  "azerion/meta.llama3-3-70b-instruct-v1:0": {
+    "pricing": {
+      "input": "0.0000007",
+      "output": "0.0000007"
+    }
+  }
+}
