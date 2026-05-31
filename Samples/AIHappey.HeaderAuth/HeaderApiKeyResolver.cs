@@ -429,7 +429,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["magisterium"] = "X-Magisterium-Key",
             ["mumeai"] = "X-MumeAI-Key",
             ["lacesse"] = "X-Lacesse-Key",
-            ["uncensoredchat"] = "X-UncensoredChat-Key",          
+            ["uncensoredchat"] = "X-UncensoredChat-Key",
             ["orbgpu"] = "X-OrbGPU-Key",
             ["opengateway"] = "X-OpenGateway-Key",
             ["omniakey"] = "X-OmniaKey-Key",
@@ -538,7 +538,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["picklyone"] = "X-Picklyone-Key",
             ["realrouter"] = "X-Realrouter-Key",
             ["opengate"] = "X-OpenGate-Key",
-            ["keymeai"] = "X-KeyMeAI-Key"
+            ["keymeai"] = "X-KeyMeAI-Key",
+            ["mycoai"] = "X-MyCoAI-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
