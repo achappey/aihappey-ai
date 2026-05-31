@@ -544,6 +544,7 @@ public class AIServiceConfig
     public ProviderConfig? Virouter { get; set; }
     public ProviderConfig? ScrapeLLM { get; set; }
     public ProviderConfig? UUMuse { get; set; }
+    public ProviderConfig? FreeInference { get; set; }
 
 }
 
