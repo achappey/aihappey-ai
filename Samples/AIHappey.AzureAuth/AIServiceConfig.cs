@@ -539,6 +539,7 @@ public class AIServiceConfig
     public ProviderConfig? KeyMeAI { get; set; }
     public ProviderConfig? MyCoAI { get; set; }
     public ProviderConfig? ScalixWorld { get; set; }
+    public ProviderConfig? APIPASS { get; set; }
 
 }
 
