@@ -544,6 +544,7 @@ using AIHappey.Core.Providers.Virouter;
 using AIHappey.Core.Providers.ScrapeLLM;
 using AIHappey.Core.Providers.UUMuse;
 using AIHappey.Core.Providers.FreeInference;
+using AIHappey.Core.Providers.LLMTR;
 
 namespace AIHappey.Core.AI;
 
@@ -1113,6 +1114,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ScrapeLLMProvider>();
         services.AddSingleton<IModelProvider, UUMuseProvider>();
         services.AddSingleton<IModelProvider, FreeInferenceProvider>();
+        services.AddSingleton<IModelProvider, LLMTRProvider>();
 
     }
 }
