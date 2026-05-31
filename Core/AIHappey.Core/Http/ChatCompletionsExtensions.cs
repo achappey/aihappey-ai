@@ -157,6 +157,9 @@ public static class ChatCompletionsExtensions
             if (!string.IsNullOrEmpty(evt?.Model))
                 evt.Model = $"{providerId}/{evt.Model}";
 
+            if (evt?.Created == 0)
+                evt?.Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
             if (evt is not null)
                 yield return evt;
         }
