@@ -89,11 +89,17 @@ public static class ModelProviderResponsesUnifiedExtensions
 
         async IAsyncEnumerable<AIStreamEvent> StreamCore()
         {
+            var isOpenCode = OpenCodeStreamingCostExtensions.IsOpenCodeProvider(modelProvider.GetIdentifier());
+            decimal? latestGatewayCost = null;
+            AIStreamEvent? pendingFinish = null;
             var seenPerplexitySearchSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var openReasoningIds = new HashSet<string>(StringComparer.Ordinal);
 
             await foreach (var update in modelProvider.ResponsesStreamingAsync(responseRequest, cancellationToken))
             {
+                if (isOpenCode && OpenCodeStreamingCostExtensions.TryGetOpenCodePingCost(update, out var pingCost))
+                    latestGatewayCost = pingCost;
+
                 foreach (var evt in update.ToUnifiedStreamEvent(modelProvider.GetIdentifier()))
                 {
                     if (ShouldSkipDuplicatePerplexitySearchSourceUrl(modelProvider.GetIdentifier(), evt, seenPerplexitySearchSourceUrls))
@@ -101,6 +107,21 @@ public static class ModelProviderResponsesUnifiedExtensions
 
                     var eventType = NormalizeEventType(evt.Event.Type);
                     var eventId = evt.Event.Id;
+
+                    if (isOpenCode && string.Equals(eventType, "finish", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (pendingFinish is not null)
+                            yield return OpenCodeStreamingCostExtensions.ApplyGatewayCostToFinishEvent(pendingFinish, latestGatewayCost);
+
+                        pendingFinish = evt;
+                        continue;
+                    }
+
+                    if (pendingFinish is not null)
+                    {
+                        yield return OpenCodeStreamingCostExtensions.ApplyGatewayCostToFinishEvent(pendingFinish, latestGatewayCost);
+                        pendingFinish = null;
+                    }
 
                     if (eventType == "reasoning-delta" && !IsOpenReasoningId(openReasoningIds, eventId))
                     {
@@ -125,6 +146,9 @@ public static class ModelProviderResponsesUnifiedExtensions
                 }
 
             }
+
+            if (pendingFinish is not null)
+                yield return OpenCodeStreamingCostExtensions.ApplyGatewayCostToFinishEvent(pendingFinish, latestGatewayCost);
         }
     }
 

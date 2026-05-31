@@ -1,4 +1,6 @@
 using System.Text.Json;
+using AIHappey.Core.AI;
+using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -499,5 +501,98 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(19246, finishUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(789, finishUsage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(20035, finishUsage.GetProperty("total_tokens").GetInt32());
+    }
+
+    [Fact]
+    public async Task OpenCode_runtime_messages_stream_propagates_ping_cost_into_finish_gateway_metadata()
+    {
+        const string providerId = "opencode";
+
+        var parts = new List<MessageStreamPart>
+        {
+            new()
+            {
+                Type = "message_start",
+                Message = new MessagesResponse
+                {
+                    Id = "msg_opencode_1",
+                    Model = "claude-opus-4-1",
+                    Role = "assistant"
+                }
+            },
+            new()
+            {
+                Type = "content_block_start",
+                Index = 0,
+                ContentBlock = new MessageContentBlock
+                {
+                    Type = "text",
+                    Text = string.Empty
+                }
+            },
+            new()
+            {
+                Type = "content_block_delta",
+                Index = 0,
+                Delta = new MessageStreamDelta
+                {
+                    Type = "text_delta",
+                    Text = "Test ontvangen ✅"
+                }
+            },
+            new()
+            {
+                Type = "content_block_stop",
+                Index = 0
+            },
+            new()
+            {
+                Type = "message_delta",
+                Delta = new MessageStreamDelta
+                {
+                    StopReason = "end_turn"
+                },
+                Usage = new MessagesUsage
+                {
+                    InputTokens = 651,
+                    OutputTokens = 54,
+                    CacheCreationInputTokens = 0,
+                    CacheReadInputTokens = 0
+                }
+            },
+            new()
+            {
+                Type = "message_stop"
+            },
+            new()
+            {
+                Type = "ping",
+                AdditionalProperties = new Dictionary<string, JsonElement>
+                {
+                    ["cost"] = JsonSerializer.SerializeToElement("0.00460500", JsonSerializerOptions.Web)
+                }
+            }
+        };
+
+        var provider = new FixtureMessageStreamModelProvider(providerId, parts);
+        var request = new AIRequest
+        {
+            ProviderId = providerId,
+            Model = "claude-opus-4-1",
+            Stream = true,
+            Input = new AIInput
+            {
+                Text = "test"
+            }
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaMessagesAsync(request));
+        var finishEvent = Assert.Single(unifiedEvents.Where(streamEvent => streamEvent.Event.Type == "finish"));
+        var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
+
+        Assert.Equal(0.00460500m, finishData.MessageMetadata?.Gateway?.Cost);
+
+        var finishPart = Assert.IsType<FinishUIPart>(finishEvent.Event.ToUIMessagePart(providerId).Single());
+        Assert.Equal(0.00460500m, finishPart.MessageMetadata?.Gateway?.Cost);
     }
 }

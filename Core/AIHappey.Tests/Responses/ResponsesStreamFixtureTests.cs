@@ -11,6 +11,7 @@ using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
+using AIHappey.Responses;
 
 namespace AIHappey.Tests.Responses;
 
@@ -130,6 +131,65 @@ public sealed class ResponsesStreamFixtureTests
             "text-delta",
             "text-end",
             "finish");
+    }
+
+    [Fact]
+    public async Task OpenCode_runtime_responses_stream_propagates_ping_cost_into_finish_gateway_metadata()
+    {
+        const string providerId = "opencode";
+
+        var parts = new List<ResponseStreamPart>
+        {
+            new ResponseCompleted
+            {
+                SequenceNumber = 18,
+                Response = new ResponseResult
+                {
+                    Id = "resp_0821cb95",
+                    CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    Status = "completed",
+                    Model = "gpt-5.4-mini",
+                    Usage = JsonSerializer.SerializeToElement(new
+                    {
+                        input_tokens = 434,
+                        output_tokens = 15,
+                        total_tokens = 449
+                    }, JsonSerializerOptions.Web),
+                    Output = []
+                }
+            },
+            new ResponseUnknownEvent
+            {
+                SequenceNumber = 19,
+                Type = "ping",
+                Data = new Dictionary<string, JsonElement>
+                {
+                    ["cost"] = JsonSerializer.SerializeToElement("0.00039300", JsonSerializerOptions.Web)
+                }
+            }
+        };
+
+        var provider = new FixtureResponseStreamModelProvider(providerId, parts);
+        var request = new AIRequest
+        {
+            ProviderId = providerId,
+            Model = "gpt-5.4-mini",
+            Stream = true,
+            Input = new AIInput
+            {
+                Text = "test"
+            }
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaResponsesAsync(request));
+        var finishEvent = Assert.Single(unifiedEvents.Where(streamEvent => streamEvent.Event.Type == "finish"));
+        var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
+
+        Assert.Equal(0.00039300m, finishData.MessageMetadata?.Gateway?.Cost);
+
+        var finishPart = Assert.IsType<FinishUIPart>(finishEvent.Event.ToUIMessagePart(providerId).Single());
+        Assert.Equal(0.00039300m, finishPart.MessageMetadata?.Gateway?.Cost);
     }
 
     [Fact]

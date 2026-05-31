@@ -77,15 +77,47 @@ public static class ModelProviderMessagesUnifiedExtensions
         messageRequest.Stream = true;
 
         var state = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var isOpenCode = OpenCodeStreamingCostExtensions.IsOpenCodeProvider(modelProvider.GetIdentifier());
+        decimal? latestGatewayCost = null;
+        AIStreamEvent? pendingFinish = null;
 
         await foreach (var part in modelProvider.MessagesStreamingAsync(messageRequest, request.Headers ?? [], cancellationToken))
         {
             if (part is null)
                 continue;
 
+            if (isOpenCode && OpenCodeStreamingCostExtensions.TryGetOpenCodePingCost(part, out var pingCost))
+                latestGatewayCost = pingCost;
+
             foreach (var mapped in part.ToUnifiedStreamEvents(modelProvider.GetIdentifier(), state))
+            {
+                if (!isOpenCode)
+                {
+                    yield return mapped;
+                    continue;
+                }
+
+                if (string.Equals(mapped.Event.Type, "finish", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (pendingFinish is not null)
+                        yield return OpenCodeStreamingCostExtensions.ApplyGatewayCostToFinishEvent(pendingFinish, latestGatewayCost);
+
+                    pendingFinish = mapped;
+                    continue;
+                }
+
+                if (pendingFinish is not null)
+                {
+                    yield return OpenCodeStreamingCostExtensions.ApplyGatewayCostToFinishEvent(pendingFinish, latestGatewayCost);
+                    pendingFinish = null;
+                }
+
                 yield return mapped;
+            }
         }
+
+        if (pendingFinish is not null)
+            yield return OpenCodeStreamingCostExtensions.ApplyGatewayCostToFinishEvent(pendingFinish, latestGatewayCost);
 
     }
 }
