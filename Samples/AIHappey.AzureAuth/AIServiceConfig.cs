@@ -545,6 +545,7 @@ public class AIServiceConfig
     public ProviderConfig? UUMuse { get; set; }
     public ProviderConfig? FreeInference { get; set; }
     public ProviderConfig? LLMTR { get; set; }
+    public ProviderConfig? LLMStats { get; set; }
 
 }
 
