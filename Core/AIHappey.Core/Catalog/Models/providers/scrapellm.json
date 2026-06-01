@@ -54,7 +54,7 @@
       "object": "model",
       "owned_by": "ScrapeLLM",
       "name": "Amazon Rufus",
-      "type": "shopping",
+      "type": "language",
       "description": "Scrape Amazon Rufus and receive product recommendations, ratings, ASINs, and shopping-related follow-up questions."
     }
   ]
