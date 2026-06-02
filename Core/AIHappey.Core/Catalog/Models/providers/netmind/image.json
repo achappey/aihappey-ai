@@ -126,34 +126,6 @@
       "owned_by": "Stability AI",
       "name": "stable-diffusion-v1-5",
       "type": "image"
-    },
-    {
-      "id": "netmind/hunyuan3d-2.1",
-      "object": "model",
-      "owned_by": "Tencent",
-      "name": "hunyuan3d-2.1",
-      "type": "image"
-    },
-    {
-      "id": "netmind/triposr",
-      "object": "model",
-      "owned_by": "Tripo AI",
-      "name": "triposr",
-      "type": "image"
-    },
-    {
-      "id": "netmind/hyper3d-rodin",
-      "object": "model",
-      "owned_by": "Hyper3D",
-      "name": "hyper3d-rodin",
-      "type": "image"
-    },
-    {
-      "id": "netmind/triposr-3d",
-      "object": "model",
-      "owned_by": "Tripo AI",
-      "name": "triposr-3d",
-      "type": "image"
     }
   ]
 }

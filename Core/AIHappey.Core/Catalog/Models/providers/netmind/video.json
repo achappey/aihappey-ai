@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "netmind/wan2.7-t2v",
+      "object": "model",
+      "owned_by": "Alibaba Cloud",
+      "name": "wan2.7-t2v",
+      "type": "video"
+    },
+    {
       "id": "netmind/wan2.6-i2v",
       "object": "model",
       "owned_by": "Alibaba Cloud",
@@ -51,17 +58,24 @@
       "type": "video"
     },
     {
-      "id": "netmind/veo3-fast",
+      "id": "netmind/veo3.1-fast",
       "object": "model",
       "owned_by": "Google",
-      "name": "veo3-fast",
+      "name": "veo3.1-fast",
       "type": "video"
     },
     {
-      "id": "netmind/veo3",
+      "id": "netmind/veo3.1",
       "object": "model",
       "owned_by": "Google",
-      "name": "veo3",
+      "name": "veo3.1",
+      "type": "video"
+    },
+    {
+      "id": "netmind/gen-4.5",
+      "object": "model",
+      "owned_by": "Runway",
+      "name": "gen-4.5",
       "type": "video"
     },
     {
