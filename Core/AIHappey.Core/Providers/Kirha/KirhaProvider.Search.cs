@@ -13,6 +13,18 @@ public partial class KirhaProvider
     private const string KirhaCreatePlanToolName = "kirha_create_search_plan";
     private const string KirhaRunPlanToolName = "kirha_run_search_plan";
     private const string KirhaProviderMetadataKey = "kirha";
+    private const string KirhaSearchShortcutPrefix = "search/";
+
+    private static readonly HashSet<string> KirhaSearchVerticalShortcuts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "insurance",
+        "news",
+        "dev",
+        "adtech",
+        "crypto",
+        "medical",
+        "company"
+    };
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerOptions.Web)
     {
@@ -67,6 +79,7 @@ public partial class KirhaProvider
         var providerOptions = GetUnifiedProviderOptions(request);
         var reusablePlanId = TryFindReusablePlanId(request);
         var explicitPlanId = ReadString(providerOptions, "plan_id") ?? ReadString(providerOptions, "planId");
+        var shortcutVerticalId = ResolveKirhaSearchShortcutVerticalId(request.Model);
         var requestedMode = (ReadString(providerOptions, "mode")
                              ?? ReadString(providerOptions, "search_mode")
                              ?? ReadString(providerOptions, "operation")
@@ -91,7 +104,7 @@ public partial class KirhaProvider
             throw new InvalidOperationException("Kirha search requires text parts from the last user message.");
         }
 
-        var payload = BuildKirhaPayload(operation, request.Model, query, planId, providerOptions);
+        var payload = BuildKirhaPayload(operation, request.Model, query, planId, providerOptions, shortcutVerticalId);
 
         return new KirhaRequestContext
         {
@@ -126,7 +139,8 @@ public partial class KirhaProvider
         string? model,
         string query,
         string? planId,
-        Dictionary<string, object?> providerOptions)
+        Dictionary<string, object?> providerOptions,
+        string? shortcutVerticalId)
     {
         var payload = CopyPassthroughOptions(providerOptions);
 
@@ -134,6 +148,7 @@ public partial class KirhaProvider
         {
             case KirhaSearchOperation.CreatePlan:
                 payload["query"] = query;
+                EnsureVerticalId(payload, shortcutVerticalId);
                 payload.Remove("summarization");
                 payload.Remove("include_raw_data");
                 payload.Remove("include_planning");
@@ -148,6 +163,7 @@ public partial class KirhaProvider
 
             default:
                 payload["query"] = query;
+                EnsureVerticalId(payload, shortcutVerticalId);
                 EnsureSummarization(payload, model);
                 EnsureBoolean(payload, "include_raw_data", true);
                 EnsureBoolean(payload, "include_planning", true);
@@ -155,6 +171,49 @@ public partial class KirhaProvider
         }
 
         return payload;
+    }
+
+    private static void EnsureVerticalId(Dictionary<string, object?> payload, string? shortcutVerticalId)
+    {
+        if (string.IsNullOrWhiteSpace(shortcutVerticalId) || HasVerticalOption(payload))
+            return;
+
+        payload["vertical_id"] = shortcutVerticalId;
+    }
+
+    private static bool HasVerticalOption(Dictionary<string, object?> payload)
+        => HasNonEmptyOption(payload, "vertical_id")
+           || HasNonEmptyOption(payload, "verticalId")
+           || HasNonEmptyOption(payload, "vertical");
+
+    private static bool HasNonEmptyOption(Dictionary<string, object?> payload, string key)
+    {
+        if (!payload.TryGetValue(key, out var value) || value is null)
+            return false;
+
+        return value switch
+        {
+            string text => !string.IsNullOrWhiteSpace(text),
+            JsonElement { ValueKind: JsonValueKind.Null or JsonValueKind.Undefined } => false,
+            JsonElement { ValueKind: JsonValueKind.String } json => !string.IsNullOrWhiteSpace(json.GetString()),
+            _ => true
+        };
+    }
+
+    private static string? ResolveKirhaSearchShortcutVerticalId(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return null;
+
+        var normalized = model.Trim();
+        if (normalized.StartsWith($"{KirhaProviderMetadataKey}/", StringComparison.OrdinalIgnoreCase))
+            normalized = normalized[(KirhaProviderMetadataKey.Length + 1)..];
+
+        if (!normalized.StartsWith(KirhaSearchShortcutPrefix, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var verticalId = normalized[KirhaSearchShortcutPrefix.Length..].Trim('/');
+        return KirhaSearchVerticalShortcuts.Contains(verticalId) ? verticalId.ToLowerInvariant() : null;
     }
 
     private static Dictionary<string, object?> CopyPassthroughOptions(Dictionary<string, object?> providerOptions)
@@ -196,6 +255,9 @@ public partial class KirhaProvider
 
     private static string ResolveKirhaSummarizationModel(string? model)
     {
+        if (!string.IsNullOrWhiteSpace(ResolveKirhaSearchShortcutVerticalId(model)))
+            return "kirha";
+
         var suffix = model?.Split('/').LastOrDefault()?.Trim();
         return string.IsNullOrWhiteSpace(suffix) ? "kirha" : suffix;
     }

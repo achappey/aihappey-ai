@@ -18,6 +18,69 @@
       "description": "Faster Kirha Search API summarization model for low-latency and high-throughput use cases. Supports unified language endpoints through Kirha Search auto mode, explicit plan creation, and stateless plan execution reuse."
     },
     {
+      "id": "kirha/search/insurance",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "Kirha Insurance Search",
+      "type": "language",
+      "description": "Kirha Search shortcut for the insurance vertical. Automatically sends vertical_id=insurance while preserving metadata overrides for all other Search API options.",
+      "tags": [ "search", "vertical", "shortcut", "insurance" ]
+    },
+    {
+      "id": "kirha/search/news",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "Kirha News Search",
+      "type": "language",
+      "description": "Kirha Search shortcut for the news vertical. Automatically sends vertical_id=news while preserving metadata overrides for all other Search API options.",
+      "tags": [ "search", "vertical", "shortcut", "news" ]
+    },
+    {
+      "id": "kirha/search/dev",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "Kirha Dev Search",
+      "type": "language",
+      "description": "Kirha Search shortcut for the dev vertical. Automatically sends vertical_id=dev while preserving metadata overrides for all other Search API options.",
+      "tags": [ "search", "vertical", "shortcut", "dev" ]
+    },
+    {
+      "id": "kirha/search/adtech",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "Kirha Adtech Search",
+      "type": "language",
+      "description": "Kirha Search shortcut for the adtech vertical. Automatically sends vertical_id=adtech while preserving metadata overrides for all other Search API options.",
+      "tags": [ "search", "vertical", "shortcut", "adtech" ]
+    },
+    {
+      "id": "kirha/search/crypto",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "Kirha Crypto Search",
+      "type": "language",
+      "description": "Kirha Search shortcut for the crypto vertical. Automatically sends vertical_id=crypto while preserving metadata overrides for all other Search API options.",
+      "tags": [ "search", "vertical", "shortcut", "crypto" ]
+    },
+    {
+      "id": "kirha/search/medical",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "Kirha Medical Search",
+      "type": "language",
+      "description": "Kirha Search shortcut for the medical vertical. Automatically sends vertical_id=medical while preserving metadata overrides for all other Search API options.",
+      "tags": [ "search", "vertical", "shortcut", "medical" ]
+    },
+    {
+      "id": "kirha/search/company",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "Kirha Company Search",
+      "type": "language",
+      "description": "Kirha Search shortcut for the company vertical. Automatically sends vertical_id=company while preserving metadata overrides for all other Search API options.",
+      "tags": [ "search", "vertical", "shortcut", "company" ]
+    },
+    {
       "id": "kirha/kirha-tasks",
       "object": "model",
       "owned_by": "Kirha",
