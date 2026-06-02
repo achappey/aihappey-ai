@@ -74,27 +74,26 @@ public partial class PublicAIProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(
+        Responses.ResponseRequest options,
+        CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToResponseResult();
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
-
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
             cancellationToken))
         {
             yield return part.ToResponseStreamPart();
         }
-
-        yield break;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -129,8 +128,6 @@ public partial class PublicAIProvider : IModelProvider
             foreach (var item in part.ToMessageStreamParts())
                 yield return item;
         }
-
-        yield break;
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)

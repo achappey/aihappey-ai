@@ -21,7 +21,5 @@ public partial class PublicAIProvider
                 yield return uiPart;
             }
         }
-
-        yield break;
     }
 }

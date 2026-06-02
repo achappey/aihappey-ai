@@ -6,6 +6,10 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using System.Runtime.CompilerServices;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Moonshot;
 
@@ -15,9 +19,12 @@ public partial class MoonshotProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public MoonshotProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+    public MoonshotProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.moonshot.ai/");
     }
@@ -51,7 +58,7 @@ public partial class MoonshotProvider : IModelProvider
     public string GetIdentifier() => nameof(Moonshot).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -62,14 +69,26 @@ public partial class MoonshotProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(
+         Responses.ResponseRequest options,
+         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+        {
+            yield return part.ToResponseStreamPart();
+        }
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -83,13 +102,32 @@ public partial class MoonshotProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }
