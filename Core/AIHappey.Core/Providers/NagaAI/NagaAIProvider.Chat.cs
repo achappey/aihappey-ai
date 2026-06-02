@@ -10,7 +10,7 @@ public partial class NagaAIProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
@@ -21,7 +21,5 @@ public partial class NagaAIProvider
                 yield return uiPart;
             }
         }
-
-        yield break;
     }
 }
