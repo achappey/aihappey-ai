@@ -8,6 +8,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.NagaAI;
 
@@ -123,4 +124,10 @@ public partial class NagaAIProvider : IModelProvider
             headers: headers,
             cancellationToken: cancellationToken);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 }
