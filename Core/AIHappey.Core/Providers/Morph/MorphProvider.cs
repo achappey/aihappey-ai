@@ -26,10 +26,6 @@ public partial class MorphProvider : IModelProvider
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.morphllm.com/");
     }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
     private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
