@@ -551,7 +551,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["wafer"] = "X-Wafer-Key",
             ["freellmapikeys"] = "X-FreeLLMAPIKeys-Key",
             ["routera"] = "X-Routera-Key",
-            ["orcarouter"] = "X-OrcaRouter-Key"
+            ["orcarouter"] = "X-OrcaRouter-Key",
+            ["mara"] = "X-MARA-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

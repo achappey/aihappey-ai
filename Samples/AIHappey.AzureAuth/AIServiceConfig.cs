@@ -550,6 +550,7 @@ public class AIServiceConfig
     public ProviderConfig? FreeLLMAPIKeys { get; set; }
     public ProviderConfig? Routera { get; set; }
     public ProviderConfig? OrcaRouter { get; set; }
+    public ProviderConfig? MARA { get; set; }
 
 }
 

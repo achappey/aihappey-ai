@@ -549,6 +549,7 @@ using AIHappey.Core.Providers.Wafer;
 using AIHappey.Core.Providers.FreeLLMAPIKeys;
 using AIHappey.Core.Providers.Routera;
 using AIHappey.Core.Providers.OrcaRouter;
+using AIHappey.Core.Providers.MARA;
 
 namespace AIHappey.Core.AI;
 
@@ -1123,6 +1124,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FreeLLMAPIKeysProvider>();
         services.AddSingleton<IModelProvider, RouteraProvider>();
         services.AddSingleton<IModelProvider, OrcaRouterProvider>();
+        services.AddSingleton<IModelProvider, MARAProvider>();
         
 
     }
