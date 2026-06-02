@@ -3,19 +3,19 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
+using AIHappey.Messages.Mapping;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Responses.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Messages.Mapping;
-using AIHappey.Sampling.Mapping;
-using AIHappey.Responses.Mapping;
-using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Sampling.Mapping;
 
-namespace AIHappey.Core.Providers.StreamLake;
+namespace AIHappey.Core.Providers.Router9;
 
-public partial class StreamLakeProvider : IModelProvider
+public partial class Router9Provider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -23,13 +23,13 @@ public partial class StreamLakeProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public StreamLakeProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public Router9Provider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://vanchin.streamlake.ai/api/gateway/");
+        _client.BaseAddress = new Uri("https://api.router9.com/");
     }
 
     private void ApplyAuthHeader()
@@ -37,22 +37,17 @@ public partial class StreamLakeProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(StreamLake)} API key.");
+            throw new InvalidOperationException($"No {nameof(Router9)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
-             options,
-             relativeUrl: "v1/endpoints/chat/completions",
-             cancellationToken: cancellationToken);
+             options, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -60,12 +55,10 @@ public partial class StreamLakeProvider : IModelProvider
         ApplyAuthHeader();
 
         return this.GetChatCompletions(_client,
-                    options,
-                    relativeUrl: "v1/endpoints/chat/completions",
-                    cancellationToken: cancellationToken);
+                    options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(StreamLake).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Router9).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
@@ -81,27 +74,26 @@ public partial class StreamLakeProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(
+        Responses.ResponseRequest options,
+        CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToResponseResult();
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
-
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
             cancellationToken))
         {
             yield return part.ToResponseStreamPart();
         }
-
-        yield break;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -115,29 +107,32 @@ public partial class StreamLakeProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+       MessagesRequest request,
+       Dictionary<string, string> headers,
+       CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToMessagesResponse();
+        return await this.GetMessage(_client,
+            request,
+             relativeUrl: "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
-
-        yield break;
+        return this.GetMessages(_client,
+            request,
+            relativeUrl: "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)

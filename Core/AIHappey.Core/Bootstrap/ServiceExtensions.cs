@@ -553,6 +553,7 @@ using AIHappey.Core.Providers.CrofAI;
 using AIHappey.Core.Providers.CommandCode;
 using AIHappey.Core.Providers.Lilac;
 using AIHappey.Core.Providers.OpenAdapter;
+using AIHappey.Core.Providers.Router9;
 
 namespace AIHappey.Core.AI;
 
@@ -1131,6 +1132,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CommandCodeProvider>();
         services.AddSingleton<IModelProvider, LilacProvider>();
         services.AddSingleton<IModelProvider, OpenAdapterProvider>();
+        services.AddSingleton<IModelProvider, Router9Provider>();
         
 
     }

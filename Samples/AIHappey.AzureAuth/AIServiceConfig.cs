@@ -554,6 +554,7 @@ public class AIServiceConfig
     public ProviderConfig? CommandCode { get; set; }
     public ProviderConfig? Lilac { get; set; }
     public ProviderConfig? OpenAdapter { get; set; }
+    public ProviderConfig? Router9 { get; set; }
 
 }
 

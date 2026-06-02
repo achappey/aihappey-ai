@@ -555,7 +555,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["crofai"] = "X-CrofAI-Key",
             ["commandcode"] = "X-CommandCode-Key",
             ["lilac"] = "X-Lilac-Key",
-            ["openadapter"] = "X-OpenAdapter-Key"
+            ["openadapter"] = "X-OpenAdapter-Key",
+            ["router9"] = "X-Router9-Key"
 
         };
 
