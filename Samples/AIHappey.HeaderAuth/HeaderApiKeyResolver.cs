@@ -554,7 +554,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["orcarouter"] = "X-OrcaRouter-Key",
             ["mara"] = "X-MARA-Key",
             ["inceptron"] = "X-Inceptron-Key",
-            ["crofai"] = "X-CrofAI-Key"
+            ["crofai"] = "X-CrofAI-Key",
+            ["commandcode"] = "X-CommandCode-Key"
+            
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

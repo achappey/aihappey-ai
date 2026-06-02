@@ -553,6 +553,7 @@ public class AIServiceConfig
     public ProviderConfig? MARA { get; set; }
     public ProviderConfig? Inceptron { get; set; }
     public ProviderConfig? CrofAI { get; set; }
+    public ProviderConfig? CommandCode { get; set; }
 
 }
 
