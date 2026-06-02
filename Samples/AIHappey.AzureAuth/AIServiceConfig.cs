@@ -549,6 +549,7 @@ public class AIServiceConfig
     public ProviderConfig? Wafer { get; set; }
     public ProviderConfig? FreeLLMAPIKeys { get; set; }
     public ProviderConfig? Routera { get; set; }
+    public ProviderConfig? OrcaRouter { get; set; }
 
 }
 

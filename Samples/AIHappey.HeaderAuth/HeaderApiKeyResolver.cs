@@ -550,7 +550,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["llmstats"] = "X-LLMStats-Key",
             ["wafer"] = "X-Wafer-Key",
             ["freellmapikeys"] = "X-FreeLLMAPIKeys-Key",
-            ["routera"] = "X-Routera-Key"
+            ["routera"] = "X-Routera-Key",
+            ["orcarouter"] = "X-OrcaRouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
