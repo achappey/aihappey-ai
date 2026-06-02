@@ -394,7 +394,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ollama"] = "X-Ollama-Key",
             ["vivgrid"] = "X-Vivgrid-Key",
             ["relace"] = "X-Relace-Key",
-            ["inflection"] = "X-Inflection-Key",           
+            ["inflection"] = "X-Inflection-Key",
             ["baidu"] = "X-Baidu-Key",
             ["morph"] = "X-Morph-Key",
             ["streamlake"] = "X-StreamLake-Key",
@@ -554,8 +554,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mara"] = "X-MARA-Key",
             ["inceptron"] = "X-Inceptron-Key",
             ["crofai"] = "X-CrofAI-Key",
-            ["commandcode"] = "X-CommandCode-Key"
-            
+            ["commandcode"] = "X-CommandCode-Key",
+            ["lilac"] = "X-Lilac-Key"
+
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
