@@ -424,8 +424,7 @@ public class AIServiceConfig
     public ProviderConfig? Key4U { get; set; }
     public ProviderConfig? FiveDock { get; set; }
     public ProviderConfig? Magisterium { get; set; }
-    public ProviderConfig? MumeAI { get; set; }
-    public ProviderConfig? Lacesse { get; set; }
+    public ProviderConfig? MumeAI { get; set; }   
     public ProviderConfig? UncensoredChat { get; set; }
     public ProviderConfig? OrbGPU { get; set; }
     public ProviderConfig? OpenGateway { get; set; }

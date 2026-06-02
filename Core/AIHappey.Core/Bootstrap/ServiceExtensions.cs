@@ -422,7 +422,6 @@ using AIHappey.Core.Providers.Key4U;
 using AIHappey.Core.Providers.FiveDock;
 using AIHappey.Core.Providers.Magisterium;
 using AIHappey.Core.Providers.MumeAI;
-using AIHappey.Core.Providers.Lacesse;
 using AIHappey.Core.Providers.UncensoredChat;
 using AIHappey.Core.Providers.OpenGateway;
 using AIHappey.Core.Providers.OrbGPU;
@@ -1002,7 +1001,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FiveDockProvider>();
         services.AddSingleton<IModelProvider, MagisteriumProvider>();
         services.AddSingleton<IModelProvider, MumeAIProvider>();
-        services.AddSingleton<IModelProvider, LacesseProvider>();
         services.AddSingleton<IModelProvider, UncensoredChatProvider>();
         services.AddSingleton<IModelProvider, OpenGatewayProvider>();
         services.AddSingleton<IModelProvider, OrbGPUProvider>();
