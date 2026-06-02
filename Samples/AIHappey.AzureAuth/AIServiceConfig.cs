@@ -392,8 +392,7 @@ public class AIServiceConfig
     public ProviderConfig? Ollama { get; set; }
     public ProviderConfig? Vivgrid { get; set; }
     public ProviderConfig? Relace { get; set; }
-    public ProviderConfig? Inflection { get; set; }
-    public ProviderConfig? LangDB { get; set; }
+    public ProviderConfig? Inflection { get; set; }   
     public ProviderConfig? Baidu { get; set; }
     public ProviderConfig? Morph { get; set; }
     public ProviderConfig? StreamLake { get; set; }
