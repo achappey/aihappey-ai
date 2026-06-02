@@ -146,10 +146,10 @@ public partial class ScrapeLLMProvider
             new AIFinishEventData
             {
                 FinishReason = "stop",
-                Model = response.Model,
+                Model = response.Model?.ToModelId(GetIdentifier()),
                 CompletedAt = timestamp.ToUnixTimeSeconds(),
                 MessageMetadata = AIFinishMessageMetadata.Create(
-                    model: response.Model ?? NormalizeModelId(request.Model),
+                    model: response.Model?.ToModelId(GetIdentifier()) ?? NormalizeModelId(request.Model),
                     timestamp: timestamp,
                     usage: response.Usage,
                     temperature: request.Temperature)
