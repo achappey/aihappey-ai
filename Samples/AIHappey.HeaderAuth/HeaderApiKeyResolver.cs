@@ -309,7 +309,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["viablelab"] = "X-VIABLELab-Key",
             ["dreamgen"] = "X-DreamGen-Key",
             ["llm7"] = "X-LLM7-Key",
-            ["kimik2"] = "X-KimiK2-Key",
+            ["kimrel"] = "X-Kimrel-Key",
             ["keyplex"] = "X-Keyplex-Key",
             ["llmkiwi"] = "X-LLMkiwi-Key",
             ["cheapgrok"] = "X-CheapGrok-Key",

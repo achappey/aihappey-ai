@@ -304,7 +304,7 @@ using AIHappey.Core.Providers.Edgee;
 using AIHappey.Core.Providers.VIABLELab;
 using AIHappey.Core.Providers.DreamGen;
 using AIHappey.Core.Providers.LLM7;
-using AIHappey.Core.Providers.KimiK2;
+using AIHappey.Core.Providers.Kimrel;
 using AIHappey.Core.Providers.Keyplex;
 using AIHappey.Core.Providers.LLMkiwi;
 using AIHappey.Core.Providers.CheapGrok;
@@ -883,7 +883,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, VIABLELabProvider>();
         services.AddSingleton<IModelProvider, DreamGenProvider>();
         services.AddSingleton<IModelProvider, LLM7Provider>();
-        services.AddSingleton<IModelProvider, KimiK2Provider>();
+        services.AddSingleton<IModelProvider, KimrelProvider>();
         services.AddSingleton<IModelProvider, KeyplexProvider>();
         services.AddSingleton<IModelProvider, LLMkiwiProvider>();
         services.AddSingleton<IModelProvider, CheapGrokProvider>();

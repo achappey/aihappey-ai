@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.KimiK2;
+namespace AIHappey.Core.Providers.Kimrel;
 
-public partial class KimiK2Provider
+public partial class KimrelProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -27,7 +27,7 @@ public partial class KimiK2Provider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"KimiK2 API error: {err}");
+                    throw new Exception($"Kimirel API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);

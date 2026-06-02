@@ -307,7 +307,7 @@ public class AIServiceConfig
     public ProviderConfig? VIABLELab { get; set; }
     public ProviderConfig? DreamGen { get; set; }
     public ProviderConfig? LLM7 { get; set; }
-    public ProviderConfig? KimiK2 { get; set; }
+    public ProviderConfig? Kimrel { get; set; }
     public ProviderConfig? Keyplex { get; set; }
     public ProviderConfig? LLMkiwi { get; set; }
     public ProviderConfig? CheapGrok { get; set; }
