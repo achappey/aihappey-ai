@@ -7,7 +7,7 @@
       "owned_by": "Kirha",
       "name": "kirha",
       "type": "language",
-      "description": "Primary model, optimized for high-quality, context-aware responses. Best for complex queries requiring reasoning."
+      "description": "Primary Kirha Search API summarization model, optimized for high-quality, context-aware responses. Supports unified language endpoints through Kirha Search auto mode, explicit plan creation, and stateless plan execution reuse."
     },
     {
       "id": "kirha/kirha-flash",
@@ -15,7 +15,15 @@
       "owned_by": "Kirha",
       "name": "kirha-flash",
       "type": "language",
-      "description": "Faster, lightweight variant for low-latency use cases. Best for high-throughput applications."
+      "description": "Faster Kirha Search API summarization model for low-latency and high-throughput use cases. Supports unified language endpoints through Kirha Search auto mode, explicit plan creation, and stateless plan execution reuse."
+    },
+    {
+      "id": "kirha/kirha-tasks",
+      "object": "model",
+      "owned_by": "Kirha",
+      "name": "kirha-tasks",
+      "type": "language",
+      "description": "Kirha Tasks API model for asynchronous multi-vertical research tasks with multi-agent validation, automatic retries, task polling, and provider-executed task progress events in unified streaming."
     }
   ]
 }
