@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "router9/auto",
+      "object": "model",
+      "owned_by": "Router9",
+      "name": "Router9 Auto Model",
+      "type": "language",
+      "description": "Router9 will automatically select the best available model."
+    }
+  ]
+}
