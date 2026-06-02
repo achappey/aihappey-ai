@@ -547,6 +547,7 @@ public class AIServiceConfig
     public ProviderConfig? LLMTR { get; set; }
     public ProviderConfig? LLMStats { get; set; }
     public ProviderConfig? Wafer { get; set; }
+    public ProviderConfig? FreeLLMAPIKeys { get; set; }
 
 }
 

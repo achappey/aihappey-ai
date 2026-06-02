@@ -546,6 +546,7 @@ using AIHappey.Core.Providers.FreeInference;
 using AIHappey.Core.Providers.LLMTR;
 using AIHappey.Core.Providers.LLMStats;
 using AIHappey.Core.Providers.Wafer;
+using AIHappey.Core.Providers.FreeLLMAPIKeys;
 
 namespace AIHappey.Core.AI;
 
@@ -1117,6 +1118,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LLMTRProvider>();
         services.AddSingleton<IModelProvider, LLMStatsProvider>();
         services.AddSingleton<IModelProvider, WaferProvider>();
+        services.AddSingleton<IModelProvider, FreeLLMAPIKeysProvider>();
+        
 
     }
 }

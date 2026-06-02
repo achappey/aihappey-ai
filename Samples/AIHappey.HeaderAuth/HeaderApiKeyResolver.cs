@@ -514,7 +514,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sovrgpt"] = "X-SovrGPT-Key",
             ["doubleword"] = "X-Doubleword-Key",
             ["openhands"] = "X-OpenHands-Key",
-            ["poolside"] = "X-Poolside-Key",           
+            ["poolside"] = "X-Poolside-Key",
             ["antbase"] = "X-Antbase-Key",
             ["slancha"] = "X-Slancha-Key",
             ["codingplanx"] = "X-CodingPlanX-Key",
@@ -548,7 +548,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["freeinference"] = "X-FreeInference-Key",
             ["llmtr"] = "X-LLMTR-Key",
             ["llmstats"] = "X-LLMStats-Key",
-            ["wafer"] = "X-Wafer-Key"
+            ["wafer"] = "X-Wafer-Key",
+            ["freellmapikeys"] = "X-FreeLLMAPIKeys-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
