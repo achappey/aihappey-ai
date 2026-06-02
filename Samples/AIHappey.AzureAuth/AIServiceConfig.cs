@@ -546,6 +546,7 @@ public class AIServiceConfig
     public ProviderConfig? FreeInference { get; set; }
     public ProviderConfig? LLMTR { get; set; }
     public ProviderConfig? LLMStats { get; set; }
+    public ProviderConfig? Wafer { get; set; }
 
 }
 

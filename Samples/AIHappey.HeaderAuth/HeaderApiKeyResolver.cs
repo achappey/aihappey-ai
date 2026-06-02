@@ -547,7 +547,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["uumuse"] = "X-UUMuse-Key",
             ["freeinference"] = "X-FreeInference-Key",
             ["llmtr"] = "X-LLMTR-Key",
-            ["llmstats"] = "X-LLMStats-Key"
+            ["llmstats"] = "X-LLMStats-Key",
+            ["wafer"] = "X-Wafer-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
