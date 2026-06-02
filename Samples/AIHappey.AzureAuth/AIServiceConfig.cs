@@ -553,6 +553,7 @@ public class AIServiceConfig
     public ProviderConfig? CrofAI { get; set; }
     public ProviderConfig? CommandCode { get; set; }
     public ProviderConfig? Lilac { get; set; }
+    public ProviderConfig? OpenAdapter { get; set; }
 
 }
 
