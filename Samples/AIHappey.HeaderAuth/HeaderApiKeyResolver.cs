@@ -552,7 +552,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["freellmapikeys"] = "X-FreeLLMAPIKeys-Key",
             ["routera"] = "X-Routera-Key",
             ["orcarouter"] = "X-OrcaRouter-Key",
-            ["mara"] = "X-MARA-Key"
+            ["mara"] = "X-MARA-Key",
+            ["inceptron"] = "X-Inceptron-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

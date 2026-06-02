@@ -551,6 +551,7 @@ public class AIServiceConfig
     public ProviderConfig? Routera { get; set; }
     public ProviderConfig? OrcaRouter { get; set; }
     public ProviderConfig? MARA { get; set; }
+    public ProviderConfig? Inceptron { get; set; }
 
 }
 
