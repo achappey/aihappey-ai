@@ -7,8 +7,10 @@ public interface IChatStatisticsService
     Task<IReadOnlyList<TimeBucketStat>> GetDailyActivityAsync(StatsWindow window, CancellationToken ct = default);
     Task<RequestTypeBreakdown> GetRequestTypesAsync(StatsWindow window, CancellationToken ct = default);
     Task<IReadOnlyList<TopUserStat>> TopUsersAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
+    Task<IReadOnlyList<TopUserModelStat>> TopUserModelAggregatesAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
     Task<UserWindowSummary> GetUserWindowSummaryAsync(StatsWindow window, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
     Task<UserAggregatePage> GetUserAggregatesAsync(StatsWindow window, int skip = 0, int take = 100, TopOrder order = TopOrder.Tokens, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
+    Task<UserModelAggregatePage> GetUserModelAggregatesAsync(StatsWindow window, int skip = 0, int take = 100, TopOrder order = TopOrder.Tokens, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
     Task<UserAggregateReconciliation> GetUserAggregateReconciliationAsync(StatsWindow window, int top = 200, TopOrder order = TopOrder.Tokens, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
     Task<IdentifierHealthReport> GetIdentifierHealthAsync(StatsWindow window, CancellationToken ct = default);
     Task<IReadOnlyList<ModelUsageStat>> TopModelsAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
@@ -43,6 +45,7 @@ public record ModelUsageStat(string Provider, string Model, int Requests, int In
 public sealed record ModelUserUsageStat(string Provider, string Model, string TelemetryUserId, string RawUsername, string NormalizedIdentifier, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
 public sealed record UserModelUsageStat(string TelemetryUserId, string RawUsername, string NormalizedIdentifier, string Provider, string Model, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
 public record TopUserStat(string Key, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
+public sealed record TopUserModelStat(int Rank, string TelemetryUserId, string RawUsername, string NormalizedIdentifier, string Provider, string Model, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
 public sealed record UserWindowSummary(
     DateTime FromUtc,
     DateTime ToUtc,
@@ -87,6 +90,36 @@ public sealed record UserAggregatePageItem(
     string NormalizedIdentifier,
     bool IsLikelyEmail,
     string? EmailDomain,
+    int Requests,
+    int InputTokens,
+    int OutputTokens,
+    int TotalTokens,
+    int DurationSeconds);
+
+public sealed record UserModelAggregatePage(
+    DateTime FromUtc,
+    DateTime ToUtc,
+    int Skip,
+    int Take,
+    string Order,
+    int TotalRowsBeforeExclusions,
+    int TotalRows,
+    int ReturnedRows,
+    bool HasMore,
+    int ExcludedUsers,
+    int ExcludedTotalTokens,
+    IReadOnlyList<string> AppliedNormalizedExclusions,
+    IReadOnlyList<UserModelAggregatePageItem> Items);
+
+public sealed record UserModelAggregatePageItem(
+    int Rank,
+    string TelemetryUserId,
+    string RawUsername,
+    string NormalizedIdentifier,
+    bool IsLikelyEmail,
+    string? EmailDomain,
+    string Provider,
+    string Model,
     int Requests,
     int InputTokens,
     int OutputTokens,

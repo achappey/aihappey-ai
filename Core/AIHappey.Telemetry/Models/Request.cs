@@ -40,5 +40,6 @@ public enum RequestType
     Chat = 0,
     Sampling = 1,
     Completion = 2,
-    Responses = 3
+    Responses = 3,
+    Messages = 4
 }

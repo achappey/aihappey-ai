@@ -24,6 +24,20 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         int TotalTokens,
         int DurationSeconds);
 
+    private sealed record AggregatedUserModelRow(
+        string TelemetryUserId,
+        string RawUsername,
+        string NormalizedIdentifier,
+        bool IsLikelyEmail,
+        string? EmailDomain,
+        string Provider,
+        string Model,
+        int Requests,
+        int InputTokens,
+        int OutputTokens,
+        int TotalTokens,
+        int DurationSeconds);
+
     private static string NormalizeIdentifier(string? value) =>
         string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToLowerInvariant();
 
@@ -71,6 +85,26 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
                      .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal)
         };
 
+    private static IEnumerable<AggregatedUserModelRow> OrderUserModelAggregateRows(IEnumerable<AggregatedUserModelRow> rows, TopOrder order) =>
+        order switch
+        {
+            TopOrder.Tokens => rows.OrderByDescending(r => r.TotalTokens)
+                                  .ThenByDescending(r => r.Requests)
+                                  .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal)
+                                  .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                                  .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase),
+            TopOrder.Duration => rows.OrderByDescending(r => r.DurationSeconds)
+                                    .ThenByDescending(r => r.TotalTokens)
+                                    .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal)
+                                    .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                                    .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase),
+            _ => rows.OrderByDescending(r => r.Requests)
+                     .ThenByDescending(r => r.TotalTokens)
+                     .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal)
+                     .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase)
+        };
+
     private static IEnumerable<ModelUserUsageStat> OrderModelUserRows(IEnumerable<ModelUserUsageStat> rows, TopOrder order) =>
         order switch
         {
@@ -112,6 +146,28 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         var exclusionSet = normalizedExclusions.ToHashSet(StringComparer.Ordinal);
         var included = new List<AggregatedUserRow>();
         var excluded = new List<AggregatedUserRow>();
+
+        foreach (var row in rows)
+        {
+            if (exclusionSet.Contains(row.NormalizedIdentifier))
+                excluded.Add(row);
+            else
+                included.Add(row);
+        }
+
+        return (included, excluded, normalizedExclusions);
+    }
+
+    private static (List<AggregatedUserModelRow> Included, List<AggregatedUserModelRow> Excluded, string[] AppliedNormalizedExclusions)
+        PartitionUserModelRows(IEnumerable<AggregatedUserModelRow> rows, IEnumerable<string>? excludeIdentifiers)
+    {
+        var normalizedExclusions = NormalizeIdentifiers(excludeIdentifiers);
+        if (normalizedExclusions.Length == 0)
+            return ([.. rows], [], normalizedExclusions);
+
+        var exclusionSet = normalizedExclusions.ToHashSet(StringComparer.Ordinal);
+        var included = new List<AggregatedUserModelRow>();
+        var excluded = new List<AggregatedUserModelRow>();
 
         foreach (var row in rows)
         {
@@ -227,6 +283,86 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         })];
     }
 
+    private async Task<List<AggregatedUserModelRow>> GetAggregatedUserModelRowsAsync(StatsWindow w, CancellationToken ct = default)
+    {
+        var aggregates = await InWindow(db, w)
+            .Select(r => new
+            {
+                r.UserId,
+                r.ModelId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens,
+                r.StartedAt,
+                r.EndedAt
+            })
+            .GroupBy(x => new { x.UserId, x.ModelId })
+            .Select(g => new
+            {
+                g.Key.UserId,
+                g.Key.ModelId,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens),
+                DurationMilliseconds = g.Sum(x =>
+                    (long?)EF.Functions.DateDiffMillisecond(x.StartedAt, x.EndedAt) ?? 0L)
+            })
+            .ToListAsync(ct);
+
+        if (aggregates.Count == 0)
+            return [];
+
+        var userIds = aggregates.Select(a => a.UserId).Distinct().ToList();
+        var users = await db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.UserId, u.Username })
+            .ToDictionaryAsync(u => u.Id, ct);
+
+        var modelIds = aggregates.Select(a => a.ModelId).Distinct().ToList();
+        var models = await db.Models.AsNoTracking()
+            .Where(m => modelIds.Contains(m.Id))
+            .Select(m => new { m.Id, m.ModelName, m.ProviderId })
+            .ToListAsync(ct);
+
+        var providerIds = models.Select(m => m.ProviderId).Distinct().ToList();
+        var providers = await db.Providers.AsNoTracking()
+            .Where(p => providerIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, p => p.Name, ct);
+
+        var modelMap = models.ToDictionary(m => m.Id);
+
+        return [.. aggregates.Select(a =>
+        {
+            users.TryGetValue(a.UserId, out var user);
+            modelMap.TryGetValue(a.ModelId, out var model);
+
+            var rawUsername = user?.Username ?? $"user:{a.UserId}";
+            var normalizedIdentifier = NormalizeIdentifier(rawUsername);
+            var provider = model is not null && providers.TryGetValue(model.ProviderId, out var providerName)
+                ? providerName
+                : model is null ? "provider:unknown" : $"provider:{model.ProviderId}";
+            var modelName = model?.ModelName ?? $"model:{a.ModelId}";
+            var durationSeconds = a.DurationMilliseconds <= 0
+                ? 0
+                : (int)Math.Min(int.MaxValue, a.DurationMilliseconds / 1000);
+
+            return new AggregatedUserModelRow(
+                TelemetryUserId: user?.UserId ?? a.UserId.ToString(CultureInfo.InvariantCulture),
+                RawUsername: rawUsername,
+                NormalizedIdentifier: normalizedIdentifier,
+                IsLikelyEmail: LooksLikeEmail(normalizedIdentifier),
+                EmailDomain: GetEmailDomain(normalizedIdentifier),
+                Provider: provider,
+                Model: modelName,
+                Requests: a.Requests,
+                InputTokens: a.InputTokens,
+                OutputTokens: a.OutputTokens,
+                TotalTokens: a.TotalTokens,
+                DurationSeconds: durationSeconds);
+        })];
+    }
+
     public async Task<OverviewStats> GetOverviewAsync(StatsWindow w, CancellationToken ct = default)
     {
         var q = InWindow(db, w);
@@ -330,6 +466,26 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
                 r.DurationSeconds))];
     }
 
+    public async Task<IReadOnlyList<TopUserModelStat>> TopUserModelAggregatesAsync(StatsWindow w, int top = 10, TopOrder order = TopOrder.Requests, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default)
+    {
+        var rows = await GetAggregatedUserModelRowsAsync(w, ct);
+        var (included, _, _) = PartitionUserModelRows(rows, excludeIdentifiers);
+        return [.. OrderUserModelAggregateRows(included, order)
+            .Take(Math.Max(1, top))
+            .Select((r, index) => new TopUserModelStat(
+                Rank: index + 1,
+                TelemetryUserId: r.TelemetryUserId,
+                RawUsername: r.RawUsername,
+                NormalizedIdentifier: r.NormalizedIdentifier,
+                Provider: r.Provider,
+                Model: r.Model,
+                Requests: r.Requests,
+                InputTokens: r.InputTokens,
+                OutputTokens: r.OutputTokens,
+                TotalTokens: r.TotalTokens,
+                DurationSeconds: r.DurationSeconds))];
+    }
+
     public async Task<UserWindowSummary> GetUserWindowSummaryAsync(StatsWindow w, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default)
     {
         var rows = await GetAggregatedUserRowsAsync(w, ct);
@@ -373,6 +529,49 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             ReturnedRows: items.Count,
             HasMore: normalizedSkip + items.Count < ordered.Count,
             ExcludedUsers: excluded.Count,
+            ExcludedTotalTokens: excluded.Sum(r => r.TotalTokens),
+            AppliedNormalizedExclusions: appliedNormalizedExclusions,
+            Items: items);
+    }
+
+    public async Task<UserModelAggregatePage> GetUserModelAggregatesAsync(StatsWindow w, int skip = 0, int take = 100, TopOrder order = TopOrder.Tokens, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default)
+    {
+        var normalizedSkip = Math.Max(0, skip);
+        var normalizedTake = Math.Clamp(take, 1, 500);
+
+        var rows = await GetAggregatedUserModelRowsAsync(w, ct);
+        var (included, excluded, appliedNormalizedExclusions) = PartitionUserModelRows(rows, excludeIdentifiers);
+        var ordered = OrderUserModelAggregateRows(included, order).ToList();
+        var items = ordered
+            .Skip(normalizedSkip)
+            .Take(normalizedTake)
+            .Select((r, index) => new UserModelAggregatePageItem(
+                Rank: normalizedSkip + index + 1,
+                TelemetryUserId: r.TelemetryUserId,
+                RawUsername: r.RawUsername,
+                NormalizedIdentifier: r.NormalizedIdentifier,
+                IsLikelyEmail: r.IsLikelyEmail,
+                EmailDomain: r.EmailDomain,
+                Provider: r.Provider,
+                Model: r.Model,
+                Requests: r.Requests,
+                InputTokens: r.InputTokens,
+                OutputTokens: r.OutputTokens,
+                TotalTokens: r.TotalTokens,
+                DurationSeconds: r.DurationSeconds))
+            .ToList();
+
+        return new UserModelAggregatePage(
+            FromUtc: w.FromUtc,
+            ToUtc: w.ToUtc,
+            Skip: normalizedSkip,
+            Take: normalizedTake,
+            Order: order.ToString().ToLowerInvariant(),
+            TotalRowsBeforeExclusions: rows.Count,
+            TotalRows: ordered.Count,
+            ReturnedRows: items.Count,
+            HasMore: normalizedSkip + items.Count < ordered.Count,
+            ExcludedUsers: excluded.Select(r => r.NormalizedIdentifier).Distinct(StringComparer.Ordinal).Count(),
             ExcludedTotalTokens: excluded.Sum(r => r.TotalTokens),
             AppliedNormalizedExclusions: appliedNormalizedExclusions,
             Items: items);
