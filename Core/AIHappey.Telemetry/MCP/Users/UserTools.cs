@@ -35,7 +35,7 @@ public class UserTools
     // -------------------------
     // TELEMETRY: Top Users
     // -------------------------
-    [Description("Top users by requests, tokens or duration (seconds).")]
+    [Description("Top users by requests, tokens or duration (seconds). Optionally group the ranking by user and model to find user-model combinations ranked by usage.")]
     [McpServerTool(Title = "Telemetry top users", Name = "ai_users_top_users",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_TopUsers(
@@ -43,15 +43,25 @@ public class UserTools
         [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
         [Description("Max items to return.")] int top,
         [Description("Order by 'requests' (default), 'tokens' or 'duration'.")] string? order,
+        [Description("When true, rank user-model combinations instead of users only. Defaults to false when omitted.")] bool? groupByModel,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
+        if (groupByModel == true)
+        {
+            var modelRes = await s.TopUserModelAggregatesAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct: ct);
+            return new CallToolResult()
+            {
+                StructuredContent = JsonSerializer.SerializeToElement(new { grouped_by_model = true, items = modelRes }, JsonSerializerOptions.Web)
+            };
+        }
+
         var res = await s.TopUsersAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(new { grouped_by_model = false, items = res }, JsonSerializerOptions.Web)
         };
     }
 
@@ -75,7 +85,7 @@ public class UserTools
         };
     }
 
-    [Description("Paged, audit-safe per-user aggregates for an explicit UTC window. Includes raw username, normalized identifier candidate, email heuristics, requests, tokens and duration.")]
+    [Description("Paged, audit-safe aggregates for an explicit UTC window. By default ranks users; when groupByModel is true, ranks user-model combinations by requests, tokens or duration.")]
     [McpServerTool(Title = "User aggregates", Name = "ai_users_user_aggregates",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_UserAggregates(
@@ -85,11 +95,21 @@ public class UserTools
         [Description("Maximum number of rows to return. Values are clamped to 1..500.")] int take,
         [Description("Order by 'tokens', 'requests' or 'duration'.")] string? order,
         [Description("Optional identifiers to exclude after lower(trim(identifier)) normalization.")] string[]? excludeIdentifiers,
+        [Description("When true, rank user-model combinations instead of users only. Defaults to false when omitted.")] bool? groupByModel,
         IServiceProvider services,
         RequestContext<CallToolRequestParams> _,
         CancellationToken ct = default)
     {
         var stats = services.GetRequiredService<IChatStatisticsService>();
+        if (groupByModel == true)
+        {
+            var modelPage = await stats.GetUserModelAggregatesAsync(Range(startDateTimeUtc, endDateTimeUtc), skip, take, ParseOrder(order), excludeIdentifiers, ct);
+            return new CallToolResult()
+            {
+                StructuredContent = JsonSerializer.SerializeToElement(modelPage, JsonSerializerOptions.Web)
+            };
+        }
+
         var page = await stats.GetUserAggregatesAsync(Range(startDateTimeUtc, endDateTimeUtc), skip, take, ParseOrder(order), excludeIdentifiers, ct);
 
         return new CallToolResult()

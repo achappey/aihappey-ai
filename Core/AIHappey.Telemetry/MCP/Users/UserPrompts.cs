@@ -11,7 +11,7 @@ public class UserPrompts
     public static string TopUsersRecent(
         [Description("The number of users to retrieve (e.g., 10, 20, 50)")] string topXUsers,
         [Description("The number of past days to include (e.g., 14 for two weeks, 30 for one month)")] string days) =>
-        $"First call the 'User window summary' tool for the past {days} days to get exact totals. Then call the 'User aggregate reconciliation' tool to verify whether top-{topXUsers} is complete enough for leaderboard-only use. Finally call the 'User aggregates' tool ordered by duration, requests and tokens as needed, and present the top {topXUsers} users. Do not reconstruct exact totals from a top-N leaderboard alone.";
+        $"First call the 'User window summary' tool for the past {days} days to get exact totals. Then call the 'User aggregate reconciliation' tool to verify whether top-{topXUsers} is complete enough for leaderboard-only use. Finally call the 'User aggregates' tool ordered by duration, requests and tokens as needed, and present the top {topXUsers} users. If the user asks for a user-by-model ranking, call the same 'User aggregates' tool with groupByModel=true and order='tokens'. Do not reconstruct exact totals from a top-N leaderboard alone.";
 
     [McpServerPrompt(Name = "user-growth-chart", Title = "User growth chart"), Description("Track growth of distinct users")]
     public static string UserGrowthChart() =>
@@ -19,7 +19,7 @@ public class UserPrompts
 
     [McpServerPrompt(Name = "tokens-per-user-chart", Title = "Tokens per user chart"), Description("Token consumption per user")]
     public static string TokensPerUserChart() =>
-        "Use the 'User window summary' tool for exact monthly totals, then use the 'User aggregates' tool ordered by tokens to build a horizontal bar chart ranking users from highest to lowest. Prefer the paged aggregate endpoint over a top-N leaderboard when exact reconciliation matters.";
+        "Use the 'User window summary' tool for exact monthly totals, then use the 'User aggregates' tool ordered by tokens to build a horizontal bar chart ranking users from highest to lowest. If the request asks for user-and-model rows, set groupByModel=true on the same tool to rank user-model combinations by tokens. Prefer the paged aggregate endpoint over a top-N leaderboard when exact reconciliation matters.";
 
     [McpServerPrompt(Name = "user-model-ranking", Title = "User model ranking"), Description("Rank models used by one user")]
     public static string UserModelRanking(
