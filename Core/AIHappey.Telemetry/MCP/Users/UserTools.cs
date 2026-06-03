@@ -98,6 +98,28 @@ public class UserTools
         };
     }
 
+    [Description("For a specific telemetry user, rank the models they used by requests, tokens or duration (seconds). The user identifier can be the raw username or telemetry user id; matching is case-insensitive after trimming.")]
+    [McpServerTool(Title = "User top models", Name = "ai_users_top_models_for_user",
+        Idempotent = true, ReadOnly = true, OpenWorld = false)]
+    public static async Task<CallToolResult?> AIUsers_TopModelsForUser(
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
+        [Description("Raw username or telemetry user id to inspect. Matching is case-insensitive after trimming.")] string userIdentifier,
+        [Description("Max items to return.")] int top,
+        [Description("Order by 'requests' (default), 'tokens' or 'duration'.")] string? order,
+        IServiceProvider services,
+        RequestContext<CallToolRequestParams> _,
+        CancellationToken ct = default)
+    {
+        var stats = services.GetRequiredService<IChatStatisticsService>();
+        var res = await stats.TopModelsForUserAsync(Range(startDateTimeUtc, endDateTimeUtc), userIdentifier, Math.Max(1, top), ParseOrder(order), ct);
+
+        return new CallToolResult()
+        {
+            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+        };
+    }
+
     [Description("Reconciles exact user totals against a top-N ranking for an explicit UTC window. Use this to prove whether a leaderboard is complete enough for KPI work.")]
     [McpServerTool(Title = "User aggregate reconciliation", Name = "ai_users_user_reconciliation",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]

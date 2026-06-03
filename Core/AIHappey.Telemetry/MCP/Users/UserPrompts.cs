@@ -21,6 +21,13 @@ public class UserPrompts
     public static string TokensPerUserChart() =>
         "Use the 'User window summary' tool for exact monthly totals, then use the 'User aggregates' tool ordered by tokens to build a horizontal bar chart ranking users from highest to lowest. Prefer the paged aggregate endpoint over a top-N leaderboard when exact reconciliation matters.";
 
+    [McpServerPrompt(Name = "user-model-ranking", Title = "User model ranking"), Description("Rank models used by one user")]
+    public static string UserModelRanking(
+        [Description("Raw username or telemetry user id to inspect.")] string userIdentifier,
+        [Description("The number of models to retrieve, for example 10, 20 or 50.")] string topXModels,
+        [Description("The number of past days to include, for example 14, 30 or 90.")] string days) =>
+        $"Use the 'User top models' tool to rank the top {topXModels} models used by '{userIdentifier}' over the past {days} days. Order by total tokens unless the user asks for request count or duration. Present provider, model, requests, input tokens, output tokens, total tokens and duration seconds.";
+
     [McpServerPrompt(Name = "new-users-per-day", Title = "New users per day"), Description("Monitor onboarding of new users")]
     public static string NewUsersPerDay() =>
         "Count how many new users appeared each day over the last 60 days and display it as a bar chart.";

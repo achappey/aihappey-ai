@@ -12,6 +12,8 @@ public interface IChatStatisticsService
     Task<UserAggregateReconciliation> GetUserAggregateReconciliationAsync(StatsWindow window, int top = 200, TopOrder order = TopOrder.Tokens, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
     Task<IdentifierHealthReport> GetIdentifierHealthAsync(StatsWindow window, CancellationToken ct = default);
     Task<IReadOnlyList<ModelUsageStat>> TopModelsAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
+    Task<IReadOnlyList<ModelUserUsageStat>> TopUsersForModelAsync(StatsWindow window, string model, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
+    Task<IReadOnlyList<UserModelUsageStat>> TopModelsForUserAsync(StatsWindow window, string userIdentifier, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
     Task<IReadOnlyList<TopToolStat>> TopToolsAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
     Task<IReadOnlyList<TopProviderStat>> TopProvidersAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
 
@@ -38,6 +40,8 @@ public record OverviewStats(
 
 public record TimeBucketStat(DateOnly Date, int Requests, int Users, int InputTokens, int OutputTokens, int TotalTokens);
 public record ModelUsageStat(string Provider, string Model, int Requests, int InputTokens, int OutputTokens, int TotalTokens);
+public sealed record ModelUserUsageStat(string Provider, string Model, string TelemetryUserId, string RawUsername, string NormalizedIdentifier, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
+public sealed record UserModelUsageStat(string TelemetryUserId, string RawUsername, string NormalizedIdentifier, string Provider, string Model, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
 public record TopUserStat(string Key, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
 public sealed record UserWindowSummary(
     DateTime FromUtc,

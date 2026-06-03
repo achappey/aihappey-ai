@@ -71,6 +71,37 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
                      .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal)
         };
 
+    private static IEnumerable<ModelUserUsageStat> OrderModelUserRows(IEnumerable<ModelUserUsageStat> rows, TopOrder order) =>
+        order switch
+        {
+            TopOrder.Tokens => rows.OrderByDescending(r => r.TotalTokens)
+                                  .ThenByDescending(r => r.Requests)
+                                  .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal),
+            TopOrder.Duration => rows.OrderByDescending(r => r.DurationSeconds)
+                                    .ThenByDescending(r => r.TotalTokens)
+                                    .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal),
+            _ => rows.OrderByDescending(r => r.Requests)
+                     .ThenByDescending(r => r.TotalTokens)
+                     .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal)
+        };
+
+    private static IEnumerable<UserModelUsageStat> OrderUserModelRows(IEnumerable<UserModelUsageStat> rows, TopOrder order) =>
+        order switch
+        {
+            TopOrder.Tokens => rows.OrderByDescending(r => r.TotalTokens)
+                                  .ThenByDescending(r => r.Requests)
+                                  .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                                  .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase),
+            TopOrder.Duration => rows.OrderByDescending(r => r.DurationSeconds)
+                                    .ThenByDescending(r => r.TotalTokens)
+                                    .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                                    .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase),
+            _ => rows.OrderByDescending(r => r.Requests)
+                     .ThenByDescending(r => r.TotalTokens)
+                     .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase)
+        };
+
     private static (List<AggregatedUserRow> Included, List<AggregatedUserRow> Excluded, string[] AppliedNormalizedExclusions)
         PartitionRows(IEnumerable<AggregatedUserRow> rows, IEnumerable<string>? excludeIdentifiers)
     {
@@ -499,6 +530,186 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
             : merged.OrderByDescending(x => x.Requests);
 
         return [.. ordered.Take(top)];
+    }
+
+    public async Task<IReadOnlyList<ModelUserUsageStat>> TopUsersForModelAsync(StatsWindow w, string model, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            throw new ArgumentException("A model name must be provided.", nameof(model));
+
+        var normalizedModel = NormalizeIdentifier(model);
+
+        var matchedModels = await db.Models.AsNoTracking()
+            .Where(m => m.ModelName.ToLower() == normalizedModel)
+            .Select(m => new { m.Id, m.ModelName, m.ProviderId })
+            .ToListAsync(ct);
+
+        if (matchedModels.Count == 0)
+            return [];
+
+        var modelIds = matchedModels.Select(m => m.Id).ToList();
+
+        var aggregates = await InWindow(db, w)
+            .Where(r => modelIds.Contains(r.ModelId))
+            .Select(r => new
+            {
+                r.UserId,
+                r.ModelId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens,
+                r.StartedAt,
+                r.EndedAt
+            })
+            .GroupBy(x => new { x.UserId, x.ModelId })
+            .Select(g => new
+            {
+                g.Key.UserId,
+                g.Key.ModelId,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens),
+                DurationMilliseconds = g.Sum(x =>
+                    (long?)EF.Functions.DateDiffMillisecond(x.StartedAt, x.EndedAt) ?? 0L)
+            })
+            .ToListAsync(ct);
+
+        if (aggregates.Count == 0)
+            return [];
+
+        var userIds = aggregates.Select(a => a.UserId).Distinct().ToList();
+        var users = await db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.UserId, u.Username })
+            .ToDictionaryAsync(u => u.Id, ct);
+
+        var providerIds = matchedModels.Select(m => m.ProviderId).Distinct().ToList();
+        var providers = await db.Providers.AsNoTracking()
+            .Where(p => providerIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, p => p.Name, ct);
+
+        var modelMap = matchedModels.ToDictionary(m => m.Id);
+
+        var rows = aggregates.Select(a =>
+        {
+            users.TryGetValue(a.UserId, out var user);
+            var matchedModel = modelMap[a.ModelId];
+            var provider = providers.TryGetValue(matchedModel.ProviderId, out var providerName)
+                ? providerName
+                : $"provider:{matchedModel.ProviderId}";
+            var rawUsername = user?.Username ?? $"user:{a.UserId}";
+            var normalizedIdentifier = NormalizeIdentifier(rawUsername);
+            var durationSeconds = a.DurationMilliseconds <= 0
+                ? 0
+                : (int)Math.Min(int.MaxValue, a.DurationMilliseconds / 1000);
+
+            return new ModelUserUsageStat(
+                Provider: provider,
+                Model: matchedModel.ModelName,
+                TelemetryUserId: user?.UserId ?? a.UserId.ToString(CultureInfo.InvariantCulture),
+                RawUsername: rawUsername,
+                NormalizedIdentifier: normalizedIdentifier,
+                Requests: a.Requests,
+                InputTokens: a.InputTokens,
+                OutputTokens: a.OutputTokens,
+                TotalTokens: a.TotalTokens,
+                DurationSeconds: durationSeconds);
+        });
+
+        return [.. OrderModelUserRows(rows, order).Take(Math.Max(1, top))];
+    }
+
+    public async Task<IReadOnlyList<UserModelUsageStat>> TopModelsForUserAsync(StatsWindow w, string userIdentifier, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(userIdentifier))
+            throw new ArgumentException("A user identifier must be provided.", nameof(userIdentifier));
+
+        var normalizedUserIdentifier = NormalizeIdentifier(userIdentifier);
+
+        var matchedUsers = await db.Users.AsNoTracking()
+            .Select(u => new { u.Id, u.UserId, u.Username })
+            .ToListAsync(ct);
+
+        matchedUsers = [.. matchedUsers.Where(u =>
+            NormalizeIdentifier(u.Username) == normalizedUserIdentifier ||
+            NormalizeIdentifier(u.UserId) == normalizedUserIdentifier)];
+
+        if (matchedUsers.Count == 0)
+            return [];
+
+        var userIds = matchedUsers.Select(u => u.Id).ToList();
+
+        var aggregates = await InWindow(db, w)
+            .Where(r => userIds.Contains(r.UserId))
+            .Select(r => new
+            {
+                r.UserId,
+                r.ModelId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens,
+                r.StartedAt,
+                r.EndedAt
+            })
+            .GroupBy(x => new { x.UserId, x.ModelId })
+            .Select(g => new
+            {
+                g.Key.UserId,
+                g.Key.ModelId,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens),
+                DurationMilliseconds = g.Sum(x =>
+                    (long?)EF.Functions.DateDiffMillisecond(x.StartedAt, x.EndedAt) ?? 0L)
+            })
+            .ToListAsync(ct);
+
+        if (aggregates.Count == 0)
+            return [];
+
+        var modelIds = aggregates.Select(a => a.ModelId).Distinct().ToList();
+        var models = await db.Models.AsNoTracking()
+            .Where(m => modelIds.Contains(m.Id))
+            .Select(m => new { m.Id, m.ModelName, m.ProviderId })
+            .ToListAsync(ct);
+
+        var providerIds = models.Select(m => m.ProviderId).Distinct().ToList();
+        var providers = await db.Providers.AsNoTracking()
+            .Where(p => providerIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, p => p.Name, ct);
+
+        var userMap = matchedUsers.ToDictionary(u => u.Id);
+        var modelMap = models.ToDictionary(m => m.Id);
+
+        var rows = aggregates.Select(a =>
+        {
+            var user = userMap[a.UserId];
+            var matchedModel = modelMap[a.ModelId];
+            var provider = providers.TryGetValue(matchedModel.ProviderId, out var providerName)
+                ? providerName
+                : $"provider:{matchedModel.ProviderId}";
+            var rawUsername = user.Username;
+            var normalizedIdentifier = NormalizeIdentifier(rawUsername);
+            var durationSeconds = a.DurationMilliseconds <= 0
+                ? 0
+                : (int)Math.Min(int.MaxValue, a.DurationMilliseconds / 1000);
+
+            return new UserModelUsageStat(
+                TelemetryUserId: user.UserId,
+                RawUsername: rawUsername,
+                NormalizedIdentifier: normalizedIdentifier,
+                Provider: provider,
+                Model: matchedModel.ModelName,
+                Requests: a.Requests,
+                InputTokens: a.InputTokens,
+                OutputTokens: a.OutputTokens,
+                TotalTokens: a.TotalTokens,
+                DurationSeconds: durationSeconds);
+        });
+
+        return [.. OrderUserModelRows(rows, order).Take(Math.Max(1, top))];
     }
 
     public sealed record ToolTokenAgg(int ToolId, int InputTokens, int OutputTokens, int TotalTokens);

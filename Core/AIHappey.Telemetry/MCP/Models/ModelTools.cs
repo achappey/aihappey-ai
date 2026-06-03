@@ -26,7 +26,9 @@ public class ModelTools
     }
 
     private static TopOrder ParseOrder(string? order) =>
-        string.Equals(order, "tokens", StringComparison.OrdinalIgnoreCase) ? TopOrder.Tokens : TopOrder.Requests;
+        string.Equals(order, "tokens", StringComparison.OrdinalIgnoreCase) ? TopOrder.Tokens :
+        string.Equals(order, "duration", StringComparison.OrdinalIgnoreCase) ? TopOrder.Duration
+            : TopOrder.Requests;
 
     // -------------------------
     // TELEMETRY: Top Models
@@ -44,6 +46,30 @@ public class ModelTools
     {
         var s = services.GetRequiredService<IChatStatisticsService>();
         var res = await s.TopModelsAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct);
+
+        return new CallToolResult()
+        {
+            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+        };
+    }
+
+    // -------------------------
+    // TELEMETRY: Top Users For Model
+    // -------------------------
+    [Description("For a specific model, rank the users consuming that model by requests, tokens or duration (seconds).")]
+    [McpServerTool(Title = "Telemetry top users for model", Name = "ai_models_top_users_for_model", Idempotent = true, ReadOnly = true, OpenWorld = false)]
+    public static async Task<CallToolResult?> AIModels_TopUsersForModel(
+        [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
+        [Description("Optional end of the telemetry window in UTC. Defaults to current UTC time when omitted.")] DateTime? endDateTimeUtc,
+        [Description("Exact model name to inspect, for example 'gpt-4o-mini'. Matching is case-insensitive.")] string model,
+        [Description("Max items to return.")] int top,
+        [Description("Order by 'requests' (default), 'tokens' or 'duration'.")] string? order,
+        IServiceProvider services,
+        RequestContext<CallToolRequestParams> _,
+        CancellationToken ct = default)
+    {
+        var s = services.GetRequiredService<IChatStatisticsService>();
+        var res = await s.TopUsersForModelAsync(Range(startDateTimeUtc, endDateTimeUtc), model, Math.Max(1, top), ParseOrder(order), ct);
 
         return new CallToolResult()
         {
