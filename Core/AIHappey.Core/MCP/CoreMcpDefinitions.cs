@@ -1,4 +1,5 @@
 using AIHappey.Common.MCP;
+using AIHappey.Core.MCP.Inference;
 using AIHappey.Core.MCP.Models;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Core.MCP.Provider;
@@ -59,6 +60,13 @@ public static class CoreMcpDefinitions
             Title: "AI Rerank",
             Description: "Rerank documents using the unified endpoint.",
             ToolTypes: [typeof(RerankingTools)]
+        );
+
+        yield return new McpServerDefinition(
+            Name: "AI-Inference",
+            Title: "AI Inference",
+            Description: "Execute AI inference requests using the unified responses endpoint.",
+            ToolTypes: [typeof(InferenceTools)]
         );
 
         yield return new McpServerDefinition(
