@@ -3,7 +3,6 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
-using AIHappey.Responses;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;

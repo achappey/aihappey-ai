@@ -11,7 +11,6 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Models;
-using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Kirha;

@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.BytePlus;
 

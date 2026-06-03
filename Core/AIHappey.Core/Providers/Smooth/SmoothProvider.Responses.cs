@@ -1,15 +1,7 @@
-using System.IO.Compression;
-using System.Net.Mime;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.ChatCompletions.Models;
-using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
-using AIHappey.Responses.Streaming;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Smooth;
 

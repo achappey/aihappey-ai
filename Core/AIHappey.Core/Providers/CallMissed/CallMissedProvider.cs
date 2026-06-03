@@ -1,5 +1,4 @@
 using AIHappey.ChatCompletions.Models;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
@@ -11,7 +10,6 @@ using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.CallMissed;
 

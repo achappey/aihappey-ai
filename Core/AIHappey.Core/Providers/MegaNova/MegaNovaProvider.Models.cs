@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using System.Globalization;
 using AIHappey.Common.Extensions;
 
 namespace AIHappey.Core.Providers.MegaNova;
