@@ -56,12 +56,13 @@ public static class ModelProviderChatCompletionUnifiedExtensions
     public static async Task<AIResponse> ExecuteUnifiedViaChatCompletionsAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool enforceFlatContent = false)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
 
-        var responseRequest = request.ToChatCompletionOptions(modelProvider.GetIdentifier());
+        var responseRequest = request.ToChatCompletionOptions(modelProvider.GetIdentifier(), enforceFlatContent);
         responseRequest.Stream = false;
         responseRequest.Store ??= false;
 
@@ -75,12 +76,13 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         AIRequest request,
         Func<AIRequest, CancellationToken, IAsyncEnumerable<AIStreamEvent>>? fallback = null,
         Func<ChatCompletionUpdate, IEnumerable<AIStreamEvent>>? rawChunkMapper = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default,
+        bool enforceFlatContent = false)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
 
-        var responseRequest = request.ToChatCompletionOptions(modelProvider.GetIdentifier());
+        var responseRequest = request.ToChatCompletionOptions(modelProvider.GetIdentifier(), enforceFlatContent);
         responseRequest.Stream = true;
         responseRequest.Store ??= false;
 

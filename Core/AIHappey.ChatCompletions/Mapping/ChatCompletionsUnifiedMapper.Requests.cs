@@ -61,7 +61,7 @@ public static partial class ChatCompletionsUnifiedMapper
         };
     }
 
-    public static ChatCompletionOptions ToChatCompletionOptions(this AIRequest request, string providerId)
+    public static ChatCompletionOptions ToChatCompletionOptions(this AIRequest request, string providerId, bool enforceFlatContent = false)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -71,20 +71,22 @@ public static partial class ChatCompletionsUnifiedMapper
         IEnumerable<object> tools = [.. ToChatTools(request.Tools).ToList() ?? [],
             .. request.Metadata.GetChatCompletionToolDefinitions(providerId) ?? []];
 
-        var messages = ToChatMessages(request.Input).ToList();
+        var messages = ToChatMessages(request.Input, enforceFlatContent).ToList();
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             messages.Insert(0, new ChatMessage()
             {
                 Role = "system",
-                Content = JsonSerializer.SerializeToElement(new[]
-                {
-                    new
+                Content = enforceFlatContent
+                    ? JsonSerializer.SerializeToElement(request.Instructions, Json)
+                    : JsonSerializer.SerializeToElement(new[]
                     {
-                        type = "text",
-                        text = request.Instructions
-                    }
-                })
+                        new
+                        {
+                            type = "text",
+                            text = request.Instructions
+                        }
+                    }, Json)
             });
 
         var options = new ChatCompletionOptions

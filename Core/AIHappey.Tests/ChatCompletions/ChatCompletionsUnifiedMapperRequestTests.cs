@@ -67,6 +67,109 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
     }
 
     [Fact]
+    public void Unified_text_only_message_maps_to_flat_chat_completions_string_when_flat_content_is_enforced()
+    {
+        var request = new AIRequest
+        {
+            Model = "gpt-4.1-mini",
+            ProviderId = "apekey",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "user",
+                        Content =
+                        [
+                            new AITextContentPart
+                            {
+                                Type = "text",
+                                Text = "First line."
+                            },
+                            new AITextContentPart
+                            {
+                                    Type = "text",
+                                Text = "Second line."
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var options = request.ToChatCompletionOptions("apekey", enforceFlatContent: true);
+        var message = Assert.Single(options.Messages);
+
+        Assert.Equal("user", message.Role);
+        Assert.Equal(JsonValueKind.String, message.Content.ValueKind);
+        Assert.Equal($"First line.{Environment.NewLine}Second line.", message.Content.GetString());
+    }
+
+    [Fact]
+    public void Unified_instructions_map_to_flat_system_string_when_flat_content_is_enforced()
+    {
+        var request = new AIRequest
+        {
+            Model = "gpt-4.1-mini",
+            ProviderId = "deepbricks",
+            Instructions = "Follow the developer instructions.",
+            Input = new AIInput
+            {
+                Text = "Hello"
+            }
+        };
+
+        var options = request.ToChatCompletionOptions("deepbricks", enforceFlatContent: true);
+        var messages = options.Messages.ToList();
+
+        Assert.Equal(2, messages.Count);
+        Assert.Equal("system", messages[0].Role);
+        Assert.Equal(JsonValueKind.String, messages[0].Content.ValueKind);
+        Assert.Equal("Follow the developer instructions.", messages[0].Content.GetString());
+    }
+
+    [Fact]
+    public void Unified_non_text_content_throws_clear_exception_when_flat_content_is_enforced()
+    {
+        var request = new AIRequest
+        {
+            Model = "gpt-4.1-mini",
+            ProviderId = "apekey",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "user",
+                        Content =
+                        [
+                            new AITextContentPart
+                            {
+                                 Type = "text",
+                                Text = "Summarize the attached file."
+                            },
+                            new AIFileContentPart
+                            {
+                                Type = "file",
+                                MediaType = "text/plain",
+                                Filename = "notes.txt",
+                                Data = "SGVsbG8="
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => request.ToChatCompletionOptions("apekey", enforceFlatContent: true));
+
+        Assert.Contains("Flat chat-completions content is enabled", exception.Message);
+        Assert.Contains("file", exception.Message);
+    }
+
+    [Fact]
     public void Vercel_chat_request_with_client_tool_output_maps_to_assistant_tool_call_followed_by_tool_message()
     {
         var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(ApprovedToolCallWithOutputFixturePath));
@@ -184,7 +287,7 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
 
         var roundTrippedToolPart = Assert.Single(
                 Assert.Single(request.ToUnifiedRequest("anthropic").Input?.Items ?? []).Content?.OfType<AIToolCallContentPart>()
-                ?? []) ;
+                ?? []);
 
         var roundTrippedOutput = JsonSerializer.SerializeToElement(roundTrippedToolPart.Output, JsonSerializerOptions.Web);
         Assert.False(roundTrippedOutput.TryGetProperty("structuredContent", out _));

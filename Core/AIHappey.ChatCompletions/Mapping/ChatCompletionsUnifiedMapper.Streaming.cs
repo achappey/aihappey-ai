@@ -44,7 +44,7 @@ public static partial class ChatCompletionsUnifiedMapper
         }
 
         var emittedUiEnvelope = false;
-        foreach (var mappedEnvelope in MapUiEnvelopes(chunk))
+        foreach (var mappedEnvelope in MapUiEnvelopes(chunk, state))
         {
             emittedUiEnvelope = true;
             yield return new AIStreamEvent
@@ -279,7 +279,9 @@ public static partial class ChatCompletionsUnifiedMapper
         }
     }
 
-    private static IEnumerable<AIEventEnvelope> MapUiEnvelopes(JsonElement chunk)
+    private static IEnumerable<AIEventEnvelope> MapUiEnvelopes(
+        JsonElement chunk,
+        ChatCompletionsStreamMappingState? state = null)
     {
         var errorEnvelope = TryMapTopLevelErrorEnvelope(chunk);
         if (errorEnvelope is not null)
@@ -318,6 +320,19 @@ public static partial class ChatCompletionsUnifiedMapper
 
                 if (delta.TryGetProperty("tool_calls", out _))
                     continue;
+            }
+            else if (state is not null
+                     && choice.TryGetProperty("message", out var message)
+                     && message.ValueKind == JsonValueKind.Object)
+            {
+                var choiceIndex = ExtractValue<int?>(choice, "index") ?? 0;
+                if (TryExtractMessageContentSnapshotDelta(message, state, choiceIndex, out var textDelta))
+                {
+                    yield return CreateUiEnvelope(chunk, "text-delta", new AITextDeltaEventData
+                    {
+                        Delta = textDelta ?? string.Empty
+                    });
+                }
             }
 
             var finishReason = ExtractValue<string>(choice, "finish_reason");
@@ -415,6 +430,43 @@ public static partial class ChatCompletionsUnifiedMapper
         textDelta = contentEl.ValueKind == JsonValueKind.String
             ? contentEl.GetString()
             : ChatMessageContentExtensions.ToText(contentEl);
+
+        return !string.IsNullOrEmpty(textDelta);
+    }
+
+    private static bool TryExtractMessageContentSnapshotDelta(
+        JsonElement message,
+        ChatCompletionsStreamMappingState state,
+        int choiceIndex,
+        out string? textDelta)
+    {
+        textDelta = null;
+
+        if (!message.TryGetProperty("content", out var contentEl))
+            return false;
+
+        var currentText = contentEl.ValueKind == JsonValueKind.String
+            ? contentEl.GetString()
+            : ChatMessageContentExtensions.ToText(contentEl);
+
+        if (string.IsNullOrEmpty(currentText))
+            return false;
+
+        if (!state.MessageContentSnapshots.TryGetValue(choiceIndex, out var previousText))
+        {
+            state.MessageContentSnapshots[choiceIndex] = currentText;
+            textDelta = currentText;
+            return true;
+        }
+
+        state.MessageContentSnapshots[choiceIndex] = currentText;
+
+        if (string.Equals(currentText, previousText, StringComparison.Ordinal))
+            return false;
+
+        textDelta = currentText.StartsWith(previousText, StringComparison.Ordinal)
+            ? currentText[previousText.Length..]
+            : currentText;
 
         return !string.IsNullOrEmpty(textDelta);
     }
@@ -1186,5 +1238,7 @@ public static partial class ChatCompletionsUnifiedMapper
         internal Dictionary<string, PerplexityReasoningAccumulator> PerplexityReasoningSteps { get; } = [];
 
         internal HashSet<string> SeenSourceUrls { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        internal Dictionary<int, string> MessageContentSnapshots { get; } = [];
     }
 }

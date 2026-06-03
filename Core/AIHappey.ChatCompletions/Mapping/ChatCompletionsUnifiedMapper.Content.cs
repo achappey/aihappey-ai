@@ -184,7 +184,7 @@ public static partial class ChatCompletionsUnifiedMapper
         }
     }
 
-    private static IEnumerable<ChatMessage> ToChatMessages(AIInput? input)
+    private static IEnumerable<ChatMessage> ToChatMessages(AIInput? input, bool enforceFlatContent = false)
     {
         if (input?.Items is null && string.IsNullOrEmpty(input?.Text))
             return Enumerable.Empty<ChatMessage>();
@@ -212,7 +212,7 @@ public static partial class ChatCompletionsUnifiedMapper
             list.Add(new ChatMessage
             {
                 Role = pendingRole,
-                Content = ToChatMessageContent(pendingParts, pendingRole)
+                Content = ToChatMessageContent(pendingParts, pendingRole, enforceFlatContent)
             });
 
             pendingRole = null;
@@ -251,7 +251,7 @@ public static partial class ChatCompletionsUnifiedMapper
                           && toolCalls is { Count: > 0 }
                           && nonToolParts.Count == 0
                 ? SerializeJsonElement((object?)null)
-                : ToChatMessageContent(nonToolParts, role);
+                : ToChatMessageContent(nonToolParts, role, enforceFlatContent);
 
             var toolCallId = ExtractMetadataValue<string>(item.Metadata, "chatcompletions.message.tool_call_id");
 
@@ -321,11 +321,14 @@ public static partial class ChatCompletionsUnifiedMapper
     private static bool ContainsFileContent(IEnumerable<AIContentPart> parts)
         => parts.Any(part => part is AIFileContentPart);
 
-    private static JsonElement ToChatMessageContent(IEnumerable<AIContentPart>? parts, string role)
+    private static JsonElement ToChatMessageContent(IEnumerable<AIContentPart>? parts, string role, bool enforceFlatContent = false)
     {
         var list = (parts ?? []).ToList();
         if (list.Count == 0)
             return JsonSerializer.SerializeToElement(string.Empty, Json);
+
+        if (enforceFlatContent)
+            return ToFlatChatMessageContent(list, role);
 
         if (list.Count == 1 && list[0] is AITextContentPart textOnly)
             return JsonSerializer.SerializeToElement(textOnly.Text, Json);
@@ -390,6 +393,25 @@ public static partial class ChatCompletionsUnifiedMapper
         }
 
         return JsonSerializer.SerializeToElement(mapped, Json);
+    }
+
+    private static JsonElement ToFlatChatMessageContent(IReadOnlyCollection<AIContentPart> parts, string role)
+    {
+        var textParts = new List<string>();
+
+        foreach (var part in parts)
+        {
+            if (part is AITextContentPart text)
+            {
+                textParts.Add(text.Text);
+                continue;
+            }
+
+            throw new InvalidOperationException(
+                $"Flat chat-completions content is enabled for role '{role}', but content part of type '{part.Type}' cannot be represented as a string.");
+        }
+
+        return JsonSerializer.SerializeToElement(string.Join(Environment.NewLine, textParts), Json);
     }
 
     private static IEnumerable<object> ToChatTools(List<AIToolDefinition>? tools)

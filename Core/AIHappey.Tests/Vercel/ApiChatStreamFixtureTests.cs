@@ -29,6 +29,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/chat-completions/raw/openai-web-search-chat-completions.jsonl";
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
     private const string RelaxAiReasoningRawFixturePath = "Fixtures/chat-completions/raw/relaxai-with-reasoning-stream.jsonl";
+    private const string ApekeyRawFixturePath = "Fixtures/chat-completions/raw/apekey-chat-completions-stream.jsonl";
     private const string GitHubProviderId = "github";
     private const string NinjaChatProviderId = "ninjachat";
     private const string OpenAiProviderId = "openai";
@@ -40,6 +41,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string PerplexityProviderId = "perplexity";
     private const string RelaxAiProviderId = "relaxai";
     private const string BraveProviderId = "brave";
+    private const string ApekeyProviderId = "apekey";
 
     [Fact]
     public void Download_file_tool_outputs_emit_file_ui_parts_when_payload_is_wrapped_under_structured_content()
@@ -784,6 +786,56 @@ public sealed class ApiChatStreamFixtureTests
         var providerMetadata = Assert.Contains(OpenAiProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(1408, providerUsage.GetProperty("prompt_tokens_details").GetProperty("cached_tokens").GetInt32());
+    }
+
+    [Fact]
+    public async Task Apekey_chat_completions_message_snapshot_stream_emits_incremental_unified_text_events()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            ApekeyRawFixturePath,
+            ApekeyProviderId,
+            "llama-3.1-8b-instant");
+
+        var textAndFinishEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end" or "finish")
+            .ToList();
+
+        Assert.Equal(
+            ["text-start", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-end", "finish"],
+            textAndFinishEvents.Select(streamEvent => streamEvent.Event.Type).ToArray());
+
+        var textEvents = textAndFinishEvents
+            .Where(streamEvent => streamEvent.Event.Type is "text-start" or "text-delta" or "text-end")
+            .ToList();
+
+        var textSpanId = Assert.Single(textEvents
+            .Select(streamEvent => streamEvent.Event.Id)
+            .Distinct(StringComparer.Ordinal));
+
+        Assert.False(string.IsNullOrWhiteSpace(textSpanId));
+        Assert.Equal(
+            "Dit is een test melding.",
+            string.Concat(textEvents
+                .Where(streamEvent => streamEvent.Event.Type == "text-delta")
+                .Select(streamEvent => Assert.IsType<AITextDeltaEventData>(streamEvent.Event.Data).Delta)));
+
+        var uiParts = textAndFinishEvents
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ApekeyProviderId))
+            .ToList();
+
+        Assert.Equal(
+            ["text-start", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-delta", "text-end", "finish"],
+            uiParts.Select(part => part.Type).ToArray());
+
+        Assert.All(uiParts.OfType<TextStartUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextDeltaUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+        Assert.All(uiParts.OfType<TextEndUIMessageStreamPart>(), part => Assert.Equal(textSpanId, part.Id));
+
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts[^1]);
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(501, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(9, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(510, finishPart.MessageMetadata?.Usage.TotalTokens);
     }
 
     [Fact]
