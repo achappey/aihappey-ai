@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace AIHappey.Common.Extensions;
@@ -108,4 +109,26 @@ public static class JsonExtensions
 
         return null;
     }
+
+    public static decimal? TryGetDecimalValue(this JsonElement obj, string propertyName)
+    {
+        if (!obj.TryGetProperty(propertyName, out var el))
+            return null;
+
+        var raw = el.ValueKind switch
+        {
+            JsonValueKind.String => el.GetString(),
+            JsonValueKind.Number => el.GetRawText(),
+            _ => null
+        };
+
+        return decimal.TryParse(
+            raw,
+            NumberStyles.Any,
+            CultureInfo.InvariantCulture,
+            out var value)
+            ? value
+            : null;
+    }
+
 }
