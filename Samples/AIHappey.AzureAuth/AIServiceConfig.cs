@@ -281,8 +281,7 @@ public class AIServiceConfig
     public ProviderConfig? Gradium { get; set; }
     public ProviderConfig? VoiceAI { get; set; }
     public ProviderConfig? IonRouter { get; set; }
-    public ProviderConfig? FreedomGPT { get; set; }
-    public ProviderConfig? PixIA { get; set; }
+    public ProviderConfig? FreedomGPT { get; set; }  
     public ProviderConfig? Kirha { get; set; }
     public ProviderConfig? SUFY { get; set; }
     public ProviderConfig? LogicosLLMHub { get; set; }

@@ -279,7 +279,6 @@ using AIHappey.Core.Providers.Noiz;
 using AIHappey.Core.Providers.Rime;
 using AIHappey.Core.Providers.IonRouter;
 using AIHappey.Core.Providers.FreedomGPT;
-using AIHappey.Core.Providers.PixIA;
 using AIHappey.Core.Providers.Kirha;
 using AIHappey.Core.Providers.SUFY;
 using AIHappey.Core.Providers.LogicosLLMHub;
@@ -858,7 +857,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RimeProvider>();
         services.AddSingleton<IModelProvider, IonRouterProvider>();
         services.AddSingleton<IModelProvider, FreedomGPTProvider>();
-        services.AddSingleton<IModelProvider, PixIAProvider>();
         services.AddSingleton<IModelProvider, KirhaProvider>();
         services.AddSingleton<IModelProvider, SUFYProvider>();
         services.AddSingleton<IModelProvider, LogicosLLMHubProvider>();
