@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "rekaai/reka-flash-research",
+      "object": "model",
+      "owned_by": "Reka",
+      "name": "reka-flash-research",
+      "type": "language",
+      "description": "Reka Research gives your app access to real-time web results in one call. Built for developers who need answers that are accurate, auditable, and grounded in evidence."
+    }
+  ]
+}

@@ -63,15 +63,7 @@ public partial class SambaNovaProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        if (chatRequest.GetModel()?.Contains("whisper") == true)
-        {
-            throw new NotImplementedException();
-        }
-
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
