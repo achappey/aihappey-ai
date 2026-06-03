@@ -358,7 +358,6 @@ using AIHappey.Core.Providers.Vogent;
 using AIHappey.Core.Providers.TikHubAI;
 using AIHappey.Core.Providers.YouGetAI;
 using AIHappey.Core.Providers.PreAPI;
-using AIHappey.Core.Providers.ElkAPI;
 using AIHappey.Core.Providers.Vultr;
 using AIHappey.Core.Providers.OfoxAI;
 using AIHappey.Core.Providers.DedalusLabs;
@@ -938,7 +937,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TikHubAIProvider>();
         services.AddSingleton<IModelProvider, YouGetAIProvider>();
         services.AddSingleton<IModelProvider, PreAPIProvider>();
-        services.AddSingleton<IModelProvider, ElkAPIProvider>();
         services.AddSingleton<IModelProvider, VultrProvider>();
         services.AddSingleton<IModelProvider, OfoxAIProvider>();
         services.AddSingleton<IModelProvider, DedalusLabsProvider>();

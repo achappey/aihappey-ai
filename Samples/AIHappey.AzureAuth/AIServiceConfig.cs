@@ -359,8 +359,7 @@ public class AIServiceConfig
     public ProviderConfig? Vogent { get; set; }
     public ProviderConfig? YouGetAI { get; set; }
     public ProviderConfig? TikHubAI { get; set; }
-    public ProviderConfig? PreAPI { get; set; }
-    public ProviderConfig? ElkAPI { get; set; }
+    public ProviderConfig? PreAPI { get; set; }    
     public ProviderConfig? Vultr { get; set; }
     public ProviderConfig? OfoxAI { get; set; }
     public ProviderConfig? DedalusLabs { get; set; }
