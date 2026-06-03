@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -36,15 +38,16 @@ public sealed partial class DeepInfraProvider
             yield break;
         }
 
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        // POST https://api.deepinfra.com/v1/openai/chat/completions
-        await foreach (var update in _client.CompletionsStreamAsync(
-            chatRequest,
-            url: "v1/openai/chat/completions",
-            cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            yield return update;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
     }
 }
