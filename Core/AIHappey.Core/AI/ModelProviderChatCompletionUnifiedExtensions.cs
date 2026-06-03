@@ -158,8 +158,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                     timestamp: finishTimestamp,
                     metadata: pendingFinish.Metadata ?? lastMetadata,
                     finishReason: finishData?.FinishReason ?? lastFinishReason ?? "stop",
-                    model: finishData?.Model?.ToModelId(modelProvider.GetIdentifier())
-                        ?? activeModel?.ToModelId(modelProvider.GetIdentifier())
+                    model: finishData?.Model
+                        ?? activeModel
                          ?? responseRequest.Model?.ToModelId(modelProvider.GetIdentifier()),
                     inputTokens: finishData?.InputTokens ?? inputTokens,
                     outputTokens: finishData?.OutputTokens ?? outputTokens,
