@@ -12,7 +12,7 @@ public partial class RekaAIProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
+            return await Task.FromResult(GetStaticModels());
 
         var cacheKey = this.GetCacheKey(key);
 
@@ -34,7 +34,7 @@ public partial class RekaAIProvider
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-                var models = new List<Model>();
+                    var models = new List<Model>();
                 var root = doc.RootElement;
 
                 if (!root.TryGetProperty("data", out var dataEl) ||
@@ -52,7 +52,7 @@ public partial class RekaAIProvider
 
                     var model = new Model
                     {
-                        Id = id.ToModelId(GetIdentifier()),
+                        Id = NormalizeRekaModelId(id),
                         Name = el.TryGetProperty("name", out var nameEl)
                                 ? nameEl.GetString() ?? id
                                 : id,
@@ -145,7 +145,7 @@ public partial class RekaAIProvider
                     models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
+                AddMissingStaticModels(models);
 
                 return models;
 
@@ -155,4 +155,23 @@ public partial class RekaAIProvider
             cancellationToken: cancellationToken);
 
     }
+
+    private IEnumerable<Model> GetStaticModels()
+        => GetIdentifier().GetModels();
+
+    private void AddMissingStaticModels(List<Model> models)
+    {
+        foreach (var model in GetStaticModels())
+        {
+            if (models.Any(existing => string.Equals(existing.Id, model.Id, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            models.Add(model);
+        }
+    }
+
+    private string NormalizeRekaModelId(string modelId)
+        => modelId.StartsWith($"{GetIdentifier()}/", StringComparison.OrdinalIgnoreCase)
+            ? modelId
+            : modelId.ToModelId(GetIdentifier());
 }

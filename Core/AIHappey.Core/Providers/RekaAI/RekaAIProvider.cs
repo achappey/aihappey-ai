@@ -44,11 +44,13 @@ public partial class RekaAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return await EnrichChatCompletionWithGatewayCostAsync(response, options, cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -57,8 +59,13 @@ public partial class RekaAIProvider : IModelProvider
             options.ToolChoice = null;
         }
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken))
+        {
+            NormalizeStreamingUpdateForGatewayCost(update, options, ref lastFinishReason);
+            yield return await EnrichChatCompletionUpdateWithGatewayCostAsync(update, options, cancellationToken);
+        }
     }
     public string GetIdentifier() => nameof(RekaAI).ToLowerInvariant();
 
