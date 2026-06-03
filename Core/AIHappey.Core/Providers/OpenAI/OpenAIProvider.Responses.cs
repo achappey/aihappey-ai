@@ -23,7 +23,6 @@ public partial class OpenAIProvider
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
-        options.ParallelToolCalls ??= true;
         options.ContextManagement ??= options.Metadata
             .GetProviderOption<JsonElement[]>(GetIdentifier(), "context_management");
 
@@ -64,8 +63,6 @@ public partial class OpenAIProvider
     {
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
-
-        options.ParallelToolCalls ??= true;
 
         this.SetDefaultResponseProperties(options);
 
