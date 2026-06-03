@@ -1,13 +1,19 @@
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using AIHappey.Common.Model;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
+using AIHappey.Sampling.Mapping;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.AI21;
 
@@ -57,29 +63,23 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
         => throw new NotSupportedException();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+    {
+        throw new NotSupportedException();
+    }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
+
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        if (IsMaestroModel(options.Model))
-            return ExecuteMaestroResponsesAsync(options, cancellationToken);
-
-        throw new NotSupportedException("AI21 responses are only implemented for Maestro models.");
-    }
-
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        if (IsMaestroModel(options.Model))
-            return ExecuteMaestroResponsesStreamingAsync(options, cancellationToken);
-
-        throw new NotSupportedException("AI21 response streaming is only implemented for Maestro models.");
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        await foreach (var streamEvent in StreamUnifiedAsync(unifiedRequest, cancellationToken))
+            yield return streamEvent.ToResponseStreamPart();
     }
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
@@ -87,14 +87,30 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
         throw new NotSupportedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
+
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        await foreach (var streamEvent in StreamUnifiedAsync(unifiedRequest, cancellationToken))
+        {
+            foreach (var part in streamEvent.ToMessageStreamParts())
+                yield return part;
+        }
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => IsMaestroModel(request.Model)
+            ? ExecuteMaestroUnifiedAsync(request, cancellationToken)
+            : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken, enforceFlatContent: true);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => IsMaestroModel(request.Model)
+            ? StreamMaestroUnifiedAsync(request, cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken, enforceFlatContent: true);
 }
 

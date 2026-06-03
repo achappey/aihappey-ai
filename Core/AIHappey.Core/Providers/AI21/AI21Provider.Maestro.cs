@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,8 +8,10 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Extensions;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
+using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.AI21;
 
@@ -28,6 +31,9 @@ public sealed partial class AI21Provider
         => string.Equals(model, MaestroModelId, StringComparison.OrdinalIgnoreCase)
         || string.Equals(model, "ai21/maestro", StringComparison.OrdinalIgnoreCase);
 
+    private const string MaestroRunToolName = "ai21_maestro_run";
+    private const string MaestroRunToolTitle = "AI21 Maestro run";
+
     private async Task<Ai21MaestroRun> CreateMaestroRunAsync(
         Ai21MaestroCreateRunRequest payload,
         CancellationToken cancellationToken)
@@ -38,8 +44,9 @@ public sealed partial class AI21Provider
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"AI21 Maestro create run error: {(int)response.StatusCode} {response.ReasonPhrase}: {raw}");
 
-        return JsonSerializer.Deserialize<Ai21MaestroRun>(raw, MaestroJson)
-            ?? throw new InvalidOperationException("AI21 Maestro returned an empty create run response.");
+        return (JsonSerializer.Deserialize<Ai21MaestroRun>(raw, MaestroJson)
+            ?? throw new InvalidOperationException("AI21 Maestro returned an empty create run response.")) with
+        { RawJson = raw };
     }
 
     private async Task<Ai21MaestroRun> GetMaestroRunAsync(string runId, CancellationToken cancellationToken)
@@ -50,8 +57,9 @@ public sealed partial class AI21Provider
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"AI21 Maestro retrieve run error: {(int)response.StatusCode} {response.ReasonPhrase}: {raw}");
 
-        return JsonSerializer.Deserialize<Ai21MaestroRun>(raw, MaestroJson)
-            ?? throw new InvalidOperationException("AI21 Maestro returned an empty retrieve run response.");
+        return (JsonSerializer.Deserialize<Ai21MaestroRun>(raw, MaestroJson)
+            ?? throw new InvalidOperationException("AI21 Maestro returned an empty retrieve run response.")) with
+        { RawJson = raw };
     }
 
     private async Task<Ai21MaestroRun> WaitForMaestroRunCompletionAsync(string runId, CancellationToken cancellationToken)
@@ -68,18 +76,33 @@ public sealed partial class AI21Provider
         }
     }
 
+    private const string EscapedCrLf = @"\r\n";
+    private const string EscapedLf = @"\n";
+    private const string EscapedCr = @"\r";
+    private const string Lf = "\n";
+
     private static string ExtractMaestroResultText(Ai21MaestroRun run)
     {
         if (run.Result is null)
             return string.Empty;
 
-        return run.Result.Value.ValueKind switch
+        var text = run.Result.Value.ValueKind switch
         {
-            JsonValueKind.String => run.Result.Value.GetString() ?? string.Empty,
-            JsonValueKind.Null or JsonValueKind.Undefined => string.Empty,
+            JsonValueKind.String => run.Result.Value.GetString(),
+            JsonValueKind.Null or JsonValueKind.Undefined => null,
             _ => run.Result.Value.GetRawText()
         };
+
+        return NormalizeEscapedNewlines(text);
     }
+
+    private static string NormalizeEscapedNewlines(string? text)
+        => string.IsNullOrEmpty(text)
+            ? string.Empty
+            : text
+                .Replace(EscapedCrLf, Lf, StringComparison.Ordinal)
+                .Replace(EscapedLf, Lf, StringComparison.Ordinal)
+                .Replace(EscapedCr, Lf, StringComparison.Ordinal);
 
     private static object? ExtractMaestroStructuredResult(Ai21MaestroRun run)
     {
@@ -325,6 +348,161 @@ public sealed partial class AI21Provider
         return ToMaestroResponseResult(run, options);
     }
 
+    private async Task<AIResponse> ExecuteMaestroUnifiedAsync(AIRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ApplyAuthHeader();
+
+        var payload = BuildMaestroRunRequest(request);
+        var submittedPayload = JsonSerializer.SerializeToElement(payload, MaestroJson);
+        var run = await ExecuteMaestroRunAsync(payload, cancellationToken);
+        return ToMaestroUnifiedResponse(request, run, submittedPayload);
+    }
+
+    private async IAsyncEnumerable<AIStreamEvent> StreamMaestroUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ApplyAuthHeader();
+
+        var providerId = GetIdentifier();
+        var eventId = request.Id ?? Guid.NewGuid().ToString("N");
+        var toolCallId = $"maestro_run_{eventId}";
+        var payload = BuildMaestroRunRequest(request);
+        var submittedPayloadJson = JsonSerializer.Serialize(payload, MaestroJson);
+        var submittedPayload = JsonSerializer.SerializeToElement(payload, MaestroJson);
+        var timestamp = DateTimeOffset.UtcNow;
+
+        yield return CreateMaestroStreamEvent(
+            providerId,
+            toolCallId,
+            "tool-input-start",
+            new AIToolInputStartEventData
+            {
+                ToolName = MaestroRunToolName,
+                Title = MaestroRunToolTitle,
+                ProviderExecuted = true,
+                ProviderMetadata = CreateMaestroToolProviderMetadata(providerId, MaestroRunToolName, MaestroRunToolTitle, toolCallId, "tool_use")
+            },
+            timestamp,
+            null);
+
+        yield return CreateMaestroStreamEvent(
+            providerId,
+            toolCallId,
+            "tool-input-delta",
+            new AIToolInputDeltaEventData { InputTextDelta = submittedPayloadJson },
+            timestamp,
+            null);
+
+        yield return CreateMaestroStreamEvent(
+            providerId,
+            toolCallId,
+            "tool-input-available",
+            new AIToolInputAvailableEventData
+            {
+                ToolName = MaestroRunToolName,
+                Title = MaestroRunToolTitle,
+                ProviderExecuted = true,
+                Input = submittedPayload,
+                ProviderMetadata = CreateMaestroToolProviderMetadata(providerId, MaestroRunToolName, MaestroRunToolTitle, toolCallId, "tool_use")
+            },
+            timestamp,
+            null);
+
+        var run = await CreateMaestroRunAsync(payload, cancellationToken);
+        var pollAttempt = 0;
+
+        yield return CreateMaestroStreamEvent(
+            providerId,
+            toolCallId,
+            "tool-output-available",
+            CreateMaestroRunToolOutputEventData(providerId, run, submittedPayload, toolCallId, preliminary: IsMaestroRunInProgress(run), pollAttempt),
+            DateTimeOffset.UtcNow,
+            null);
+
+        while (IsMaestroRunInProgress(run))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Delay(MaestroPollingDelayMs, cancellationToken);
+
+            pollAttempt++;
+            run = await GetMaestroRunAsync(run.Id, cancellationToken);
+
+            yield return CreateMaestroStreamEvent(
+                providerId,
+                toolCallId,
+                "tool-output-available",
+                CreateMaestroRunToolOutputEventData(providerId, run, submittedPayload, toolCallId, preliminary: IsMaestroRunInProgress(run), pollAttempt),
+                DateTimeOffset.UtcNow,
+                null);
+        }
+
+        var response = ToMaestroUnifiedResponse(request, run, submittedPayload, toolCallId, pollAttempt);
+        var metadata = response.Metadata;
+
+        foreach (var sourceEvent in CreateMaestroSourceEvents(providerId, eventId, run, metadata))
+            yield return sourceEvent;
+
+        foreach (var toolEvent in CreateMaestroDataSourceToolEvents(providerId, run, metadata))
+            yield return toolEvent;
+
+        if (IsMaestroRunFailed(run))
+        {
+            yield return CreateMaestroStreamEvent(
+                providerId,
+                eventId,
+                "error",
+                new AIErrorEventData { ErrorText = GetMaestroFailureMessage(run) },
+                DateTimeOffset.UtcNow,
+                metadata);
+        }
+
+        var text = ExtractMaestroResultText(run);
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            yield return CreateMaestroStreamEvent(providerId, eventId, "text-start", new AITextStartEventData(), DateTimeOffset.UtcNow, metadata);
+
+            foreach (var chunk in ChunkText(text))
+            {
+                yield return CreateMaestroStreamEvent(
+                    providerId,
+                    eventId,
+                    "text-delta",
+                    new AITextDeltaEventData { Delta = chunk },
+                    DateTimeOffset.UtcNow,
+                    metadata);
+            }
+
+            yield return CreateMaestroStreamEvent(providerId, eventId, "text-end", new AITextEndEventData(), DateTimeOffset.UtcNow, metadata);
+        }
+
+        yield return new AIStreamEvent
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = "finish",
+                Id = eventId,
+                Timestamp = DateTimeOffset.UtcNow,
+                Output = response.Output,
+                Data = new AIFinishEventData
+                {
+                    FinishReason = IsMaestroRunFailed(run) ? "error" : "stop",
+                    Model = response.Model,
+                    CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    MessageMetadata = AIFinishMessageMetadata.Create(
+                        response.Model ?? request.Model ?? MaestroModelId,
+                        DateTimeOffset.UtcNow,
+                        usage: response.Usage,
+                        additionalProperties: ToMaestroFinishMessageMetadata(metadata))
+                }
+            },
+            Metadata = metadata
+        };
+    }
+
     private async IAsyncEnumerable<ResponseStreamPart> ExecuteMaestroResponsesStreamingAsync(
         ResponseRequest options,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
@@ -549,7 +727,68 @@ public sealed partial class AI21Provider
         };
     }
 
+    private Ai21MaestroCreateRunRequest BuildMaestroRunRequest(AIRequest request)
+    {
+        var metadata = ReadMaestroMetadata(request.Metadata);
+        var maestroInput = ToMaestroInput(request.Input, request.Instructions, metadata.SystemPrompt);
+        var requirements = CombineRequirements(metadata.Requirements, BuildResponseFormatRequirements(request.ResponseFormat));
+
+        return new Ai21MaestroCreateRunRequest
+        {
+            Input = maestroInput.Input,
+            SystemPrompt = maestroInput.SystemPrompt,
+            Requirements = requirements,
+            Tools = metadata.Tools,
+            Models = metadata.Models is { Count: > 0 } ? metadata.Models : null,
+            Budget = metadata.Budget,
+            Include = ResolveInclude(metadata.Include, includeDataSources: true, includeRequirementsResult: requirements?.Count > 0),
+            ResponseLanguage = metadata.ResponseLanguage
+        };
+    }
+
     private static string NormalizeMaestroModel(string? model) => MaestroModelId;
+
+    private static MaestroInputPayload ToMaestroInput(AIInput? input, string? instructions, string? explicitSystemPrompt)
+    {
+        var systemPrompt = AppendParagraph(explicitSystemPrompt, instructions);
+
+        if (input is null)
+            return new MaestroInputPayload(systemPrompt, string.Empty);
+
+        if (!string.IsNullOrWhiteSpace(input.Text))
+            return new MaestroInputPayload(systemPrompt, input.Text!);
+
+        var conversational = new List<object>();
+        var userOnly = new StringBuilder();
+
+        foreach (var item in input.Items ?? [])
+        {
+            if (!string.Equals(item.Type, "message", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var text = ExtractUnifiedText(item.Content);
+            if (string.IsNullOrWhiteSpace(text))
+                continue;
+
+            if (string.Equals(item.Role, "system", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(item.Role, "developer", StringComparison.OrdinalIgnoreCase))
+            {
+                systemPrompt = AppendParagraph(systemPrompt, text);
+                continue;
+            }
+
+            var role = string.Equals(item.Role, "assistant", StringComparison.OrdinalIgnoreCase) ? "assistant" : "user";
+            conversational.Add(new { role, content = text });
+            if (role == "user")
+                userOnly = AppendLine(userOnly, text);
+        }
+
+        object payload = conversational.Count == 1 && userOnly.Length > 0 ? userOnly.ToString() : conversational;
+        return new MaestroInputPayload(systemPrompt, payload);
+    }
+
+    private static string ExtractUnifiedText(IEnumerable<AIContentPart>? parts)
+        => string.Join("\n", parts?.OfType<AITextContentPart>().Select(a => a.Text).Where(a => !string.IsNullOrWhiteSpace(a)) ?? []);
 
     private static MaestroInputPayload ToMaestroInput(IEnumerable<UIMessage> messages, string? explicitSystemPrompt)
     {
@@ -563,15 +802,15 @@ public sealed partial class AI21Provider
             if (string.IsNullOrWhiteSpace(text))
                 continue;
 
-            if (message.Role == Role.system)
+            if (message.Role == Vercel.Models.Role.system)
             {
                 systemPrompt = AppendParagraph(systemPrompt, text);
                 continue;
             }
 
-            var role = message.Role == Role.assistant ? "assistant" : "user";
+            var role = message.Role == Vercel.Models.Role.assistant ? "assistant" : "user";
             conversational.Add(new { role, content = text });
-            if (message.Role != Role.assistant)
+            if (message.Role != Vercel.Models.Role.assistant)
                 singleUser = AppendLine(singleUser, text);
         }
 
@@ -590,7 +829,7 @@ public sealed partial class AI21Provider
 
         foreach (var message in messages ?? [])
         {
-            var text = message.Content.ToAi21ContentString();
+            var text = ToAi21ContentString(message.Content);
             if (string.IsNullOrWhiteSpace(text))
                 continue;
 
@@ -797,6 +1036,367 @@ public sealed partial class AI21Provider
         return new Ai21MaestroMetadata();
     }
 
+    private AIResponse ToMaestroUnifiedResponse(
+        AIRequest request,
+        Ai21MaestroRun run,
+        JsonElement submittedPayload,
+        string? toolCallId = null,
+        int pollAttempt = 0)
+    {
+        var metadata = BuildMaestroUnifiedMetadata(request, run, submittedPayload, toolCallId, pollAttempt);
+        var outputItems = new List<AIOutputItem>
+        {
+            new()
+            {
+                Type = "tool-call",
+                Content =
+                [
+                    new AIToolCallContentPart
+                    {
+                        Type = "tool-call",
+                        ToolCallId = toolCallId ?? $"maestro_run_{run.Id}",
+                        ToolName = MaestroRunToolName,
+                        Title = MaestroRunToolTitle,
+                        Input = submittedPayload,
+                        Output = CreateMaestroRunToolResult(run, pollAttempt),
+                        State = IsMaestroRunFailed(run) ? "output-error" : "output-available",
+                        ProviderExecuted = true,
+                        Metadata = new Dictionary<string, object?>
+                        {
+                            ["ai21.tool_name"] = MaestroRunToolName,
+                            ["ai21.run_id"] = run.Id,
+                            ["ai21.run_status"] = run.Status,
+                            ["ai21.poll_attempt"] = pollAttempt
+                        }
+                    }
+                ]
+            }
+        };
+
+        foreach (var toolCall in run.DataSources?.ToolCalls ?? [])
+        {
+            outputItems.Add(new AIOutputItem
+            {
+                Type = "tool-call",
+                Content =
+                [
+                    new AIToolCallContentPart
+                    {
+                        Type = "tool-call",
+                        ToolCallId = BuildToolCallId(toolCall),
+                        ToolName = toolCall.ToolName ?? toolCall.ToolType ?? "tool",
+                        Title = toolCall.ToolName ?? toolCall.ToolType,
+                        Input = ToObject(toolCall.Parameters),
+                        Output = ToObject(toolCall.Response) ?? new { status = "completed" },
+                        State = "output-available",
+                        ProviderExecuted = true,
+                        Metadata = new Dictionary<string, object?>
+                        {
+                            ["ai21.tool_type"] = toolCall.ToolType,
+                            ["ai21.server_label"] = toolCall.ServerLabel
+                        }
+                    }
+                ]
+            });
+        }
+
+        var text = ExtractMaestroResultText(run);
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            outputItems.Add(new AIOutputItem
+            {
+                Type = "message",
+                Role = "assistant",
+                Content = [new AITextContentPart { Type = "text", Text = text }]
+            });
+        }
+
+        outputItems.AddRange(CreateMaestroSourceOutputItems(run));
+
+        return new AIResponse
+        {
+            ProviderId = GetIdentifier(),
+            Model = request.Model ?? MaestroModelId,
+            Status = IsMaestroRunFailed(run) ? "failed" : string.Equals(run.Status, "completed", StringComparison.OrdinalIgnoreCase) ? "completed" : "in_progress",
+            Output = new AIOutput { Items = outputItems },
+            Usage = BuildMaestroUsage(),
+            Metadata = metadata
+        };
+    }
+
+    private Dictionary<string, object?> BuildMaestroUnifiedMetadata(AIRequest request, Ai21MaestroRun run, JsonElement submittedPayload, string? toolCallId, int pollAttempt)
+    {
+        var metadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ai21.run_id"] = run.Id,
+            ["ai21.status"] = run.Status,
+            ["ai21.raw"] = TryParseJsonElement(run.RawJson),
+            ["ai21.submitted_payload"] = submittedPayload,
+            ["ai21.poll_attempt"] = pollAttempt,
+            ["ai21.tool_name"] = MaestroRunToolName,
+            ["ai21.tool_call_id"] = toolCallId,
+            ["responses.id"] = run.Id,
+            ["responses.object"] = "response",
+            ["responses.created_at"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            ["responses.completed_at"] = !IsMaestroRunInProgress(run) ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : null,
+            ["responses.temperature"] = request.Temperature,
+            ["responses.max_output_tokens"] = request.MaxOutputTokens,
+            ["responses.error"] = IsMaestroRunFailed(run) ? new ResponseResultError { Code = "maestro_failed", Message = GetMaestroFailureMessage(run) } : null,
+            ["chatcompletions.response.id"] = run.Id,
+            ["chatcompletions.response.object"] = "chat.completion",
+            ["chatcompletions.response.created"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            ["chatcompletions.response.model"] = request.Model ?? MaestroModelId
+        };
+
+        if (run.DataSources is not null)
+            metadata["ai21.data_sources"] = JsonSerializer.SerializeToElement(run.DataSources, MaestroJson);
+        if (run.RequirementsResult is not null)
+            metadata["ai21.requirements_result"] = JsonSerializer.SerializeToElement(run.RequirementsResult, MaestroJson);
+        if (run.Error is not null)
+            metadata["ai21.error"] = JsonSerializer.SerializeToElement(run.Error, MaestroJson);
+
+        return metadata;
+    }
+
+    private static IEnumerable<AIOutputItem> CreateMaestroSourceOutputItems(Ai21MaestroRun run)
+    {
+        foreach (var source in run.DataSources?.WebSearch ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(source.Url))
+                continue;
+
+            yield return new AIOutputItem
+            {
+                Type = "source-url",
+                Content = [new AITextContentPart { Type = "text", Text = source.Url! }],
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["ai21.source.type"] = "web_search",
+                    ["ai21.source.url"] = source.Url,
+                    ["ai21.source.text"] = source.Text,
+                    ["ai21.source.score"] = source.Score
+                }
+            };
+        }
+
+        foreach (var source in run.DataSources?.FileSearch ?? [])
+        {
+            yield return new AIOutputItem
+            {
+                Type = "source-document",
+                Content = [new AITextContentPart { Type = "text", Text = source.FileName ?? source.FileId ?? "document" }],
+                Metadata = new Dictionary<string, object?>
+                {
+                    ["ai21.source.type"] = "file_search",
+                    ["ai21.source.file_id"] = source.FileId,
+                    ["ai21.source.file_name"] = source.FileName,
+                    ["ai21.source.text"] = source.Text,
+                    ["ai21.source.score"] = source.Score,
+                    ["ai21.source.order"] = source.Order
+                }
+            };
+        }
+    }
+
+    private static IEnumerable<AIStreamEvent> CreateMaestroSourceEvents(string providerId, string eventId, Ai21MaestroRun run, Dictionary<string, object?>? metadata)
+    {
+        foreach (var source in run.DataSources?.WebSearch ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(source.Url))
+                continue;
+
+            yield return CreateMaestroStreamEvent(
+                providerId,
+                $"{eventId}_source_{Math.Abs(source.Url!.GetHashCode())}",
+                "source-url",
+                new AISourceUrlEventData
+                {
+                    SourceId = source.Url!,
+                    Url = source.Url!,
+                    Title = source.Url,
+                    Type = "web_search",
+                    ProviderMetadata = new Dictionary<string, Dictionary<string, object>>
+                    {
+                        [providerId] = new Dictionary<string, object>
+                        {
+                            ["text"] = source.Text ?? string.Empty,
+                            ["score"] = source.Score ?? 0d
+                        }
+                    }
+                },
+                DateTimeOffset.UtcNow,
+                metadata);
+        }
+    }
+
+    private static IEnumerable<AIStreamEvent> CreateMaestroDataSourceToolEvents(string providerId, Ai21MaestroRun run, Dictionary<string, object?>? metadata)
+    {
+        foreach (var toolCall in run.DataSources?.ToolCalls ?? [])
+        {
+            var toolCallId = BuildToolCallId(toolCall);
+            var toolName = toolCall.ToolName ?? toolCall.ToolType ?? "tool";
+            var input = ToObject(toolCall.Parameters) ?? new { };
+
+            yield return CreateMaestroStreamEvent(
+                providerId,
+                toolCallId,
+                "tool-input-available",
+                new AIToolInputAvailableEventData
+                {
+                    ToolName = toolName,
+                    Title = toolCall.ToolName ?? toolCall.ToolType,
+                    Input = input,
+                    ProviderExecuted = true,
+                    ProviderMetadata = CreateMaestroToolProviderMetadata(providerId, toolName, toolName, toolCallId, "tool_use")
+                },
+                DateTimeOffset.UtcNow,
+                metadata);
+
+            yield return CreateMaestroStreamEvent(
+                providerId,
+                toolCallId,
+                "tool-output-available",
+                new AIToolOutputAvailableEventData
+                {
+                    ToolName = toolName,
+                    Output = ToObject(toolCall.Response) ?? new { status = "completed" },
+                    ProviderExecuted = true,
+                    Preliminary = false,
+                    ProviderMetadata = CreateMaestroToolProviderMetadata(providerId, toolName, toolName, toolCallId, "tool_result")
+                },
+                DateTimeOffset.UtcNow,
+                metadata);
+        }
+    }
+
+    private static AIToolOutputAvailableEventData CreateMaestroRunToolOutputEventData(
+        string providerId,
+        Ai21MaestroRun run,
+        JsonElement submittedPayload,
+        string toolCallId,
+        bool preliminary,
+        int pollAttempt)
+        => new()
+        {
+            ToolName = MaestroRunToolName,
+            Output = CreateMaestroRunToolResult(run, pollAttempt),
+            ProviderExecuted = true,
+            Preliminary = preliminary,
+            Dynamic = true,
+            ProviderMetadata = CreateMaestroToolProviderMetadata(providerId, MaestroRunToolName, MaestroRunToolTitle, toolCallId, "tool_result")
+        };
+
+    private static CallToolResult CreateMaestroRunToolResult(Ai21MaestroRun run, int pollAttempt)
+    {
+        var structuredContent = JsonSerializer.SerializeToElement(new
+        {
+            id = run.Id,
+            status = run.Status,
+            result = run.Result,
+            data_sources = run.DataSources,
+            requirements_result = run.RequirementsResult,
+            error = run.Error,
+            poll_attempt = pollAttempt
+        }, MaestroJson);
+
+        return new CallToolResult
+        {
+            Content = [new TextContentBlock { Text = run.RawJson ?? JsonSerializer.Serialize(structuredContent, MaestroJson) }],
+            StructuredContent = structuredContent
+        };
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateMaestroToolProviderMetadata(
+        string providerId,
+        string toolName,
+        string toolTitle,
+        string toolCallId,
+        string type)
+        => new()
+        {
+            [providerId] = new Dictionary<string, object>
+            {
+                ["type"] = type,
+                ["tool_name"] = toolName,
+                ["title"] = toolTitle,
+                ["tool_use_id"] = toolCallId
+            }
+        };
+
+    private static AIStreamEvent CreateMaestroStreamEvent(
+        string providerId,
+        string eventId,
+        string type,
+        object data,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?>? metadata)
+        => new()
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = type,
+                Id = eventId,
+                Timestamp = timestamp,
+                Data = data
+            },
+            Metadata = metadata
+        };
+
+    private static bool IsMaestroRunInProgress(Ai21MaestroRun run)
+        => string.Equals(run.Status, "in_progress", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsMaestroRunFailed(Ai21MaestroRun run)
+        => string.Equals(run.Status, "failed", StringComparison.OrdinalIgnoreCase);
+
+    private static JsonElement TryParseJsonElement(string? rawJson)
+    {
+        if (string.IsNullOrWhiteSpace(rawJson))
+            return JsonSerializer.SerializeToElement(new { }, MaestroJson);
+
+        try
+        {
+            using var document = JsonDocument.Parse(rawJson);
+            return document.RootElement.Clone();
+        }
+        catch
+        {
+            return JsonSerializer.SerializeToElement(new { raw = rawJson }, MaestroJson);
+        }
+    }
+
+    private static object? ToObject(JsonElement? element)
+    {
+        if (element is null)
+            return null;
+
+        return element.Value.ValueKind switch
+        {
+            JsonValueKind.Object or JsonValueKind.Array => JsonSerializer.Deserialize<object>(element.Value.GetRawText(), MaestroJson),
+            JsonValueKind.String => element.Value.GetString(),
+            JsonValueKind.Number when element.Value.TryGetInt64(out var longValue) => longValue,
+            JsonValueKind.Number when element.Value.TryGetDouble(out var doubleValue) => doubleValue,
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => null
+        };
+    }
+
+    private static Dictionary<string, object?>? ToMaestroFinishMessageMetadata(Dictionary<string, object?>? metadata)
+    {
+        if (metadata is null || metadata.Count == 0)
+            return null;
+
+        var result = new Dictionary<string, object?>();
+        foreach (var item in metadata)
+        {
+            if (item.Value is not null)
+                result[item.Key] = item.Value;
+        }
+
+        return result.Count == 0 ? null : result;
+    }
+
     private sealed class Ai21MaestroMetadata
     {
         [JsonPropertyName("system_prompt")]
@@ -807,6 +1407,9 @@ public sealed partial class AI21Provider
 
         [JsonPropertyName("tools")]
         public List<object>? Tools { get; init; }
+
+        [JsonPropertyName("models")]
+        public List<string>? Models { get; init; }
 
         [JsonPropertyName("include")]
         public List<string>? Include { get; init; }
@@ -822,6 +1425,20 @@ public sealed partial class AI21Provider
     {
         public string? SystemPrompt { get; } = systemPrompt;
         public object Input { get; } = input;
+    }
+
+    public static string ToAi21ContentString(JsonElement content)
+    {
+        // AI21 requires string content. Gateway content may be:
+        // - JsonValue string
+        // - array/object content parts (OpenAI Responses style)
+        // We stringify non-string content.
+        return content.ValueKind switch
+        {
+            JsonValueKind.String => content.GetString() ?? string.Empty,
+            JsonValueKind.Null or JsonValueKind.Undefined => string.Empty,
+            _ => content.GetRawText()
+        };
     }
 
     private static ResponseResult CloneResponseResult(ResponseResult source, string status)
@@ -910,7 +1527,7 @@ public sealed partial class AI21Provider
         public string? ResponseLanguage { get; init; }
     }
 
-    private sealed class Ai21MaestroRun
+    private sealed record Ai21MaestroRun
     {
         [JsonPropertyName("id")]
         public string Id { get; init; } = Guid.NewGuid().ToString("n");
@@ -929,6 +1546,9 @@ public sealed partial class AI21Provider
 
         [JsonPropertyName("error")]
         public Ai21MaestroError? Error { get; init; }
+
+        [JsonIgnore]
+        public string? RawJson { get; init; }
     }
 
     private sealed class Ai21MaestroDataSources
