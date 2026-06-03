@@ -4,6 +4,9 @@ using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Responses.Mapping;
+using AIHappey.Unified.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
@@ -14,10 +17,13 @@ public partial class SiliconFlowProvider : IModelProvider
     private readonly HttpClient _client;
     private readonly IHttpClientFactory _factory;
 
-    public SiliconFlowProvider(IApiKeyResolver keyResolver,
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public SiliconFlowProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _factory = httpClientFactory;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.siliconflow.com/");
@@ -45,8 +51,6 @@ public partial class SiliconFlowProvider : IModelProvider
                                         cancellationToken: cancellationToken),
             "speech" => await this.SpeechSamplingAsync(chatRequest,
                                         cancellationToken: cancellationToken),
-            "language" => await this.ChatCompletionsSamplingAsync(chatRequest,
-                                        cancellationToken: cancellationToken),
             _ => throw new NotImplementedException(),
         };
     }
@@ -55,29 +59,62 @@ public partial class SiliconFlowProvider : IModelProvider
     {
         var model = await this.GetModel(options.Model, cancellationToken);
 
-        return (model?.Type) switch
-        {
-            "speech" => await this.SpeechResponseAsync(options,
-                                        cancellationToken: cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+        if (model?.Type == "speech")
+            return await this.SpeechResponseAsync(options,
+                                                    cancellationToken: cancellationToken);
+
+        return (await ExecuteUnifiedAsync(
+           options.ToUnifiedRequest(GetIdentifier()),
+           cancellationToken))
+           .ToResponseResult();
+
+
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+        {
+            yield return part.ToResponseStreamPart();
+        }
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await this.GetMessage(_client,
+            request,
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this.GetMessages(_client,
+            request,
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
 }
