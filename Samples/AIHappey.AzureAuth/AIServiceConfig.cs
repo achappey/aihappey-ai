@@ -553,6 +553,7 @@ public class AIServiceConfig
     public ProviderConfig? Lilac { get; set; }
     public ProviderConfig? OpenAdapter { get; set; }
     public ProviderConfig? Router9 { get; set; }
+    public ProviderConfig? Auriko { get; set; }
 
 }
 
