@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.MCP.Telemetry;
 using AIHappey.Responses;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -41,6 +42,7 @@ public class InferenceTools
 
             var resolver = services.GetRequiredService<IAIModelProviderResolver>();
             var provider = await resolver.Resolve(model, ct);
+            var startedAt = DateTime.UtcNow;
 
             var request = new ResponseRequest
             {
@@ -53,6 +55,7 @@ public class InferenceTools
             };
 
             var result = await provider.ResponsesAsync(request, ct);
+            await services.TrackMcpResponsesTelemetryAsync(result, provider, request.Temperature ?? 1, startedAt, ct);
 
             return new CallToolResult
             {

@@ -10,6 +10,7 @@ using AIHappey.Telemetry.MCP;
 using AIHappey.Core.Providers.Azure;
 using System.Text.Json.Serialization;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.MCP.Telemetry;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;
 using AIHappey.Core.Providers.AmazonBedrock;
@@ -105,6 +106,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IApiKeyResolver, ConfigKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, AzureEndUserIdResolver>();
 builder.Services.AddSingleton<IMicrosoftGraphTokenResolver, AzureAdMicrosoftGraphTokenResolver>();
+builder.Services.AddScoped<IMcpResponsesTelemetryHandler, AzureAuthMcpResponsesTelemetryHandler>();
 builder.Services.AddProviders();
 
 var modelListingStorage = builder.Configuration.GetSection("ModelListingStorage").Get<ModelListingStorageOptions>();

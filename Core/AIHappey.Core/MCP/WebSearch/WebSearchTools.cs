@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.MCP.Telemetry;
 using AIHappey.Responses;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -53,6 +54,7 @@ public class WebSearchTools
                 FormatPrompt(WebSearchPromptTemplate, query),
                 maxOutputTokens: null,
                 metadata: CreateGoogleMetadata(),
+                startedAt: startTime,
                 cancellationToken);
 
             AddDuration(result, startTime);
@@ -161,6 +163,7 @@ public class WebSearchTools
                 prompt,
                 maxOutputTokens,
                 metadata,
+                startedAt: startTime,
                 cancellationToken);
 
             AddDuration(result, startTime);
@@ -183,6 +186,7 @@ public class WebSearchTools
         string prompt,
         int? maxOutputTokens,
         Dictionary<string, object?> metadata,
+        DateTime startedAt,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(prompt))
@@ -201,7 +205,10 @@ public class WebSearchTools
             Metadata = metadata
         };
 
-        return await provider.ResponsesAsync(request, cancellationToken);
+        var result = await provider.ResponsesAsync(request, cancellationToken);
+        await serviceProvider.TrackMcpResponsesTelemetryAsync(result, provider, request.Temperature ?? 1, startedAt, cancellationToken);
+
+        return result;
     }
 
     private static Dictionary<string, object?> CreateGoogleMetadata() => new()
