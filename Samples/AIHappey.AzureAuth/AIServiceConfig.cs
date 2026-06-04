@@ -558,6 +558,7 @@ public class AIServiceConfig
     public ProviderConfig? LangbasePipe { get; set; }
     public ProviderConfig? LangbaseAgent { get; set; }
     public ProviderConfig? RewindAI { get; set; }
+    public ProviderConfig? Pixserp { get; set; }
 
 }
 

@@ -557,6 +557,7 @@ using AIHappey.Core.Providers.Hyperbrowser;
 using AIHappey.Core.Providers.LangbasePipe;
 using AIHappey.Core.Providers.LangbaseAgent;
 using AIHappey.Core.Providers.RewindAI;
+using AIHappey.Core.Providers.Pixserp;
 
 namespace AIHappey.Core.AI;
 
@@ -1139,6 +1140,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LangbasePipeProvider>();
         services.AddSingleton<IModelProvider, LangbaseAgentProvider>();
         services.AddSingleton<IModelProvider, RewindAIProvider>();
+        services.AddSingleton<IModelProvider, PixserpProvider>();
         
 
     }

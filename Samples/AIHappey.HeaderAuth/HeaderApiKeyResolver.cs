@@ -559,7 +559,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["hyperbrowser"] = "X-Hyperbrowser-Key",
             ["langbasepipe"] = "X-LangbasePipe-Key",
             ["langbaseagent"] = "X-LangbaseAgent-Key",
-            ["rewindai"] = "X-RewindAI-Key"
+            ["rewindai"] = "X-RewindAI-Key",
+            ["pixserp"] = "X-Pixserp-Key"
 
         };
 
