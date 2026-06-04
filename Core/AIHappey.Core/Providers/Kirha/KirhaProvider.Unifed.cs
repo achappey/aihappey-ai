@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Kirha;
@@ -128,7 +129,7 @@ public partial class KirhaProvider
                 Data = new AIFinishEventData
                 {
                     FinishReason = response.Status == "failed" ? "error" : "stop",
-                    Model = response.Model,
+                    Model = response.Model?.ToModelId(GetIdentifier()),
                     CompletedAt = timestamp.ToUnixTimeSeconds(),
                     InputTokens = usage.InputTokens,
                     OutputTokens = usage.OutputTokens,
