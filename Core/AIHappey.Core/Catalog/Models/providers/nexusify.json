@@ -1,0 +1,813 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "nexusify/llama-4-maverick-17b-128e-instruct",
+      "object": "model",
+      "owned_by": "Meta AI",
+      "name": "llama-4-maverick-17b-128e-instruct",
+      "type": "language",
+      "description": "Instruction-tuned Llama 4"
+    },
+    {
+      "id": "nexusify/llama-3.2-90b-vision-instruct",
+      "object": "model",
+      "owned_by": "Meta AI",
+      "name": "llama-3.2-90b-vision-instruct",
+      "type": "language",
+      "description": "Vision enabled"
+    },
+    {
+      "id": "nexusify/llama-3.1-405b-instruct",
+      "object": "model",
+      "owned_by": "Meta AI",
+      "name": "llama-3.1-405b-instruct",
+      "type": "language",
+      "description": "Massive scale model"
+    },
+    {
+      "id": "nexusify/llama-3.3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta AI",
+      "name": "llama-3.3-70b-instruct",
+      "type": "language",
+      "description": "High-perf instruction"
+    },
+    {
+      "id": "nexusify/mistral-small-24b-instruct",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mistral-small-24b-instruct",
+      "type": "language",
+      "description": "Fast, code & math"
+    },
+    {
+      "id": "nexusify/mixtral-8x22b",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mixtral-8x22b",
+      "type": "language",
+      "description": "Mixture of experts 8x22B"
+    },
+    {
+      "id": "nexusify/mistral-small-3.1",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mistral-small-3.1",
+      "type": "language",
+      "description": "Multimodal, vision + tools"
+    },
+    {
+      "id": "nexusify/mistral-small-3.2",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mistral-small-3.2",
+      "type": "language",
+      "description": "Improved function calling"
+    },
+    {
+      "id": "nexusify/mistral-medium-3",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mistral-medium-3",
+      "type": "language",
+      "description": "Enterprise multimodal"
+    },
+    {
+      "id": "nexusify/mistral-nemotron",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mistral-nemotron",
+      "type": "language",
+      "description": "Agentic, function calling"
+    },
+    {
+      "id": "nexusify/magistral-small",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "magistral-small",
+      "type": "language",
+      "description": "Reasoning, multilingual"
+    },
+    {
+      "id": "nexusify/devstral-2",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "devstral-2",
+      "type": "language",
+      "description": "SOTA coding, 256K ctx"
+    },
+    {
+      "id": "nexusify/mamba-codestral",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mamba-codestral",
+      "type": "language",
+      "description": "Mamba architecture, code"
+    },
+    {
+      "id": "nexusify/mistral-large-3",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "mistral-large-3",
+      "type": "language",
+      "description": "Flagship MoE 675B, vision + tools"
+    },
+    {
+      "id": "nexusify/ministral-3-8b",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "ministral-3-8b",
+      "type": "language",
+      "description": "Edge-class 8B, vision + tools"
+    },
+    {
+      "id": "nexusify/ministral-3-14b",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "ministral-3-14b",
+      "type": "language",
+      "description": "Compact 14B, vision + tools"
+    },
+    {
+      "id": "nexusify/qwen3-235b-a22b",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen3-235b-a22b",
+      "type": "language",
+      "description": "Large-scale Qwen"
+    },
+    {
+      "id": "nexusify/qwen2.5-coder-32b",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen2.5-coder-32b",
+      "type": "language",
+      "description": "Code generation"
+    },
+    {
+      "id": "nexusify/qwen3-next-80b",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen3-next-80b",
+      "type": "language",
+      "description": "Next-gen reasoning Qwen"
+    },
+    {
+      "id": "nexusify/qwen3.5",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen3.5",
+      "type": "language",
+      "description": "Advanced multilingual"
+    },
+    {
+      "id": "nexusify/qwen3-coder",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen3-coder",
+      "type": "language",
+      "description": "Code generation 480B"
+    },
+    {
+      "id": "nexusify/qwen3-vl",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen3-vl",
+      "type": "language",
+      "description": "Vision & multimodal"
+    },
+    {
+      "id": "nexusify/qwen3-coder-next",
+      "object": "model",
+      "owned_by": "Alibaba",
+      "name": "qwen3-coder-next",
+      "type": "language",
+      "description": "Lightweight code gen"
+    },
+    {
+      "id": "nexusify/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-2.5-flash",
+      "type": "language",
+      "description": "Fast, Vision"
+    },
+    {
+      "id": "nexusify/gemini-2.5-flash-lite",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-2.5-flash-lite",
+      "type": "language",
+      "description": "Lite version"
+    },
+    {
+      "id": "nexusify/gemini-2.0-flash",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-2.0-flash",
+      "type": "language",
+      "description": "Balanced"
+    },
+    {
+      "id": "nexusify/gemini-2.0-flash-lite",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-2.0-flash-lite",
+      "type": "language",
+      "description": "Lite 2.0"
+    },
+    {
+      "id": "nexusify/gemma-7b",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma-7b",
+      "type": "language",
+      "description": "Open weights"
+    },
+    {
+      "id": "nexusify/gemma-2-9b",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma-2-9b",
+      "type": "language",
+      "description": "Next-gen open"
+    },
+    {
+      "id": "nexusify/gemma4",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma4",
+      "type": "language",
+      "description": "Multimodal 31B, vision + tools"
+    },
+    {
+      "id": "nexusify/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-flash-preview",
+      "type": "language",
+      "description": "Vision, Tool calling"
+    },
+    {
+      "id": "nexusify/gemini-3-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-pro",
+      "type": "language",
+      "description": "Deep reasoning, always thinking"
+    },
+    {
+      "id": "nexusify/gpt-4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4",
+      "type": "language",
+      "description": "Classic powerful"
+    },
+    {
+      "id": "nexusify/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o-mini",
+      "type": "language",
+      "description": "Fast GPT-4"
+    },
+    {
+      "id": "nexusify/gpt-5-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5-nano",
+      "type": "language",
+      "description": "Ultra light"
+    },
+    {
+      "id": "nexusify/gpt-5-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5-mini",
+      "type": "language",
+      "description": "Next-gen mini"
+    },
+    {
+      "id": "nexusify/gpt-5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5",
+      "type": "language",
+      "description": "Next-gen flagship"
+    },
+    {
+      "id": "nexusify/gpt-5-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5-codex",
+      "type": "language",
+      "description": "Code specialist"
+    },
+    {
+      "id": "nexusify/gpt-5-codex-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5-codex-mini",
+      "type": "language",
+      "description": "Compact code"
+    },
+    {
+      "id": "nexusify/gpt-5.1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.1",
+      "type": "language",
+      "description": "GPT-5.1 flagship"
+    },
+    {
+      "id": "nexusify/gpt-5.1-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.1-codex",
+      "type": "language",
+      "description": "GPT-5.1 code"
+    },
+    {
+      "id": "nexusify/gpt-5.1-codex-max",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.1-codex-max",
+      "type": "language",
+      "description": "GPT-5.1 code max"
+    },
+    {
+      "id": "nexusify/gpt-5.1-codex-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.1-codex-mini",
+      "type": "language",
+      "description": "GPT-5.1 code mini"
+    },
+    {
+      "id": "nexusify/gpt-5.2",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.2",
+      "type": "language",
+      "description": "GPT-5.2 advanced"
+    },
+    {
+      "id": "nexusify/gpt-5.2-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.2-codex",
+      "type": "language",
+      "description": "GPT-5.2 code"
+    },
+    {
+      "id": "nexusify/gpt-5.3-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.3-codex",
+      "type": "language",
+      "description": "GPT-5.3 code"
+    },
+    {
+      "id": "nexusify/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4",
+      "type": "language",
+      "description": "GPT-5.4 latest"
+    },
+    {
+      "id": "nexusify/gpt-5-search",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5-search",
+      "type": "language",
+      "description": "GPT-5 + live web search"
+    },
+    {
+      "id": "nexusify/gpt-5.1-search",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.1-search",
+      "type": "language",
+      "description": "GPT-5.1 + live web search"
+    },
+    {
+      "id": "nexusify/gpt-5.2-search",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.2-search",
+      "type": "language",
+      "description": "GPT-5.2 + live web search"
+    },
+    {
+      "id": "nexusify/gpt-5.3-codex-search",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.3-codex-search",
+      "type": "language",
+      "description": "GPT-5.3 Codex + live web search"
+    },
+    {
+      "id": "nexusify/gpt-5.4-search",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4-search",
+      "type": "language",
+      "description": "GPT-5.4 + live web search"
+    },
+    {
+      "id": "nexusify/gpt-oss-120b",
+      "object": "model",
+      "owned_by": "Open Source",
+      "name": "gpt-oss-120b",
+      "type": "language",
+      "description": "Large OSS"
+    },
+    {
+      "id": "nexusify/gpt-oss-20b",
+      "object": "model",
+      "owned_by": "Open Source",
+      "name": "gpt-oss-20b",
+      "type": "language",
+      "description": "Medium OSS"
+    },
+    {
+      "id": "nexusify/grok-3",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-3",
+      "type": "language",
+      "description": "Flagship reasoning"
+    },
+    {
+      "id": "nexusify/grok-3-mini",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-3-mini",
+      "type": "language",
+      "description": "Compact Grok Fast"
+    },
+    {
+      "id": "nexusify/grok-3-thinking",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-3-thinking",
+      "type": "language",
+      "description": "Chain-of-thought"
+    },
+    {
+      "id": "nexusify/grok-4",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4",
+      "type": "language",
+      "description": "Latest generation flagship"
+    },
+    {
+      "id": "nexusify/grok-4-thinking",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4-thinking",
+      "type": "language",
+      "description": "Deep reasoning enabled"
+    },
+    {
+      "id": "nexusify/grok-4.1-mini",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4.1-mini",
+      "type": "language",
+      "description": "Efficient everyday model"
+    },
+    {
+      "id": "nexusify/grok-4.1-fast",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4.1-fast",
+      "type": "language",
+      "description": "Low-latency optimized"
+    },
+    {
+      "id": "nexusify/grok-4.1-expert",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4.1-expert",
+      "type": "language",
+      "description": "Advanced reasoning"
+    },
+    {
+      "id": "nexusify/grok-4.1-thinking",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4.1-thinking",
+      "type": "language",
+      "description": "Full chain-of-thought"
+    },
+    {
+      "id": "nexusify/grok-4.20-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4.20-beta",
+      "type": "language",
+      "description": "Experimental preview"
+    },
+    {
+      "id": "nexusify/deepseek-v3.2",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.2",
+      "type": "language",
+      "description": "Advanced reasoning"
+    },
+    {
+      "id": "nexusify/deepseek-v3.1",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3.1",
+      "type": "language",
+      "description": "Thinking mode"
+    },
+    {
+      "id": "nexusify/kimi-k2",
+      "object": "model",
+      "owned_by": "Moonshot",
+      "name": "kimi-k2",
+      "type": "language",
+      "description": "Long context, Tool calling"
+    },
+    {
+      "id": "nexusify/kimi-k2.5",
+      "object": "model",
+      "owned_by": "Moonshot",
+      "name": "kimi-k2.5",
+      "type": "language",
+      "description": "Reasoning, Vision, Tools"
+    },
+    {
+      "id": "nexusify/minimax-m2",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2",
+      "type": "language",
+      "description": "Multilingual, Tool calling"
+    },
+    {
+      "id": "nexusify/minimax-m2.1",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.1",
+      "type": "language",
+      "description": "Multilingual"
+    },
+    {
+      "id": "nexusify/minimax-m2.5",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.5",
+      "type": "language",
+      "description": "Efficient & lightweight"
+    },
+    {
+      "id": "nexusify/minimax-m2.7",
+      "object": "model",
+      "owned_by": "MiniMax",
+      "name": "minimax-m2.7",
+      "type": "language",
+      "description": "Enhanced multimodal capabilities"
+    },
+    {
+      "id": "nexusify/nemotron-3-nano",
+      "object": "model",
+      "owned_by": "NVIDIA",
+      "name": "nemotron-3-nano",
+      "type": "language",
+      "description": "Efficient"
+    },
+    {
+      "id": "nexusify/nemotron-super-49b-v1.5",
+      "object": "model",
+      "owned_by": "NVIDIA",
+      "name": "nemotron-super-49b-v1.5",
+      "type": "language",
+      "description": "High performance"
+    },
+    {
+      "id": "nexusify/nemotron-3-super",
+      "object": "model",
+      "owned_by": "NVIDIA",
+      "name": "nemotron-3-super",
+      "type": "language",
+      "description": "High-performance reasoning"
+    },
+    {
+      "id": "nexusify/glm-4.6",
+      "object": "model",
+      "owned_by": "Zhipu AI",
+      "name": "glm-4.6",
+      "type": "language",
+      "description": "Chinese / English"
+    },
+    {
+      "id": "nexusify/glm-4.7",
+      "object": "model",
+      "owned_by": "Zhipu AI",
+      "name": "glm-4.7",
+      "type": "language",
+      "description": "Chinese / English"
+    },
+    {
+      "id": "nexusify/glm5",
+      "object": "model",
+      "owned_by": "Zhipu AI",
+      "name": "glm5",
+      "type": "language",
+      "description": "Advanced reasoning"
+    },
+    {
+      "id": "nexusify/glm-5.1",
+      "object": "model",
+      "owned_by": "Zhipu AI",
+      "name": "glm-5.1",
+      "type": "language",
+      "description": "Most advanced GLM model"
+    },
+    {
+      "id": "nexusify/step-3.5-flash",
+      "object": "model",
+      "owned_by": "StepFun",
+      "name": "step-3.5-flash",
+      "type": "language",
+      "description": "Reasoning"
+    },
+    {
+      "id": "nexusify/command-a-3",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-a-3",
+      "type": "language",
+      "description": "Command A latest"
+    },
+    {
+      "id": "nexusify/command-a-vision",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-a-vision",
+      "type": "language",
+      "description": "Vision optimized"
+    },
+    {
+      "id": "nexusify/command-a-reasoning",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-a-reasoning",
+      "type": "language",
+      "description": "Advanced reasoning"
+    },
+    {
+      "id": "nexusify/command-r",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-r",
+      "type": "language",
+      "description": "Efficient general"
+    },
+    {
+      "id": "nexusify/command-r-plus",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-r-plus",
+      "type": "language",
+      "description": "Enhanced performance"
+    },
+    {
+      "id": "nexusify/command-r7b",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-r7b",
+      "type": "language",
+      "description": "Compact & fast"
+    },
+    {
+      "id": "nexusify/command-r7b-arabic",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-r7b-arabic",
+      "type": "language",
+      "description": "Arabic specialized"
+    },
+    {
+      "id": "nexusify/aya-expanse-8b",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "aya-expanse-8b",
+      "type": "language",
+      "description": "Multilingual 8B"
+    },
+    {
+      "id": "nexusify/aya-expanse-32b",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "aya-expanse-32b",
+      "type": "language",
+      "description": "Multilingual 32B"
+    },
+    {
+      "id": "nexusify/aya-vision-8b",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "aya-vision-8b",
+      "type": "language",
+      "description": "Multilingual vision 8B"
+    },
+    {
+      "id": "nexusify/aya-vision-32b",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "aya-vision-32b",
+      "type": "language",
+      "description": "Multilingual vision 32B"
+    },
+    {
+      "id": "nexusify/phind-90b",
+      "object": "model",
+      "owned_by": "Phind",
+      "name": "phind-90b",
+      "type": "language",
+      "description": "Coding assistant"
+    },
+    {
+      "id": "nexusify/cogito-2.1",
+      "object": "model",
+      "owned_by": "Cogito AI",
+      "name": "cogito-2.1",
+      "type": "language",
+      "description": "Advanced reasoning"
+    },
+    {
+      "id": "nexusify/rnj-1",
+      "object": "model",
+      "owned_by": "RNJ AI",
+      "name": "rnj-1",
+      "type": "language",
+      "description": "Compact general purpose"
+    },
+    {
+      "id": "nexusify/flux",
+      "object": "model",
+      "owned_by": "Nexusify",
+      "name": "flux",
+      "type": "image",
+      "description": "General purpose diffusion model"
+    },
+    {
+      "id": "nexusify/zimage",
+      "object": "model",
+      "owned_by": "Nexusify",
+      "name": "zimage",
+      "type": "image",
+      "description": "Versatile high-quality generation"
+    },
+    {
+      "id": "nexusify/klein",
+      "object": "model",
+      "owned_by": "Nexusify",
+      "name": "klein",
+      "type": "image",
+      "description": "Creative artistic renders"
+    },
+    {
+      "id": "nexusify/gptimage",
+      "object": "model",
+      "owned_by": "Nexusify",
+      "name": "gptimage",
+      "type": "image",
+      "description": "AI-assisted image generation"
+    },
+    {
+      "id": "nexusify/qwen-image",
+      "object": "model",
+      "owned_by": "Nexusify",
+      "name": "qwen-image",
+      "type": "image",
+      "description": "Qwen vision diffusion model"
+    },
+    {
+      "id": "nexusify/wan-image",
+      "object": "model",
+      "owned_by": "Nexusify",
+      "name": "wan-image",
+      "type": "image",
+      "description": "Lightweight & fast generation"
+    },
+    {
+      "id": "nexusify/p-image",
+      "object": "model",
+      "owned_by": "Nexusify",
+      "name": "p-image",
+      "type": "image",
+      "description": "Premium high-fidelity synthesis"
+    }
+  ]
+}

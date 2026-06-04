@@ -11,6 +11,7 @@ using AIHappey.Sampling.Mapping;
 using AIHappey.Responses;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Nexusify;
 
@@ -59,12 +60,12 @@ public partial class NexusifyProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Nexusify).ToLowerInvariant();
 
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+          => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -105,7 +106,7 @@ public partial class NexusifyProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
