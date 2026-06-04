@@ -1,4 +1,5 @@
-using AIHappey.Core.AI;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
@@ -9,10 +10,16 @@ public partial class GetGoAPIProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            cancellationToken: cancellationToken))
-            yield return update;
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
     }
 }
