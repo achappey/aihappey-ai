@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
@@ -116,7 +117,6 @@ public partial class KirhaProvider
             }
         }
 
-        var usage = ExtractUsage(response.Usage);
         yield return new AIStreamEvent
         {
             ProviderId = providerId,
@@ -131,21 +131,44 @@ public partial class KirhaProvider
                     FinishReason = response.Status == "failed" ? "error" : "stop",
                     Model = response.Model?.ToModelId(GetIdentifier()),
                     CompletedAt = timestamp.ToUnixTimeSeconds(),
-                    InputTokens = usage.InputTokens,
-                    OutputTokens = usage.OutputTokens,
-                    TotalTokens = usage.TotalTokens,
                     MessageMetadata = AIFinishMessageMetadata.Create(
                         response.Model ?? request.Model ?? string.Empty,
                         timestamp,
                         response.Usage,
-                        outputTokens: usage.OutputTokens,
-                        inputTokens: usage.InputTokens,
-                        totalTokens: usage.TotalTokens,
                         temperature: request.Temperature,
+                        gateway: CreateKirhaSearchFinishGatewayMetadata(response.Metadata),
                         additionalProperties: response.Metadata)
                 }
             },
             Metadata = response.Metadata
         };
+    }
+
+    private static AIFinishGatewayMetadata? CreateKirhaSearchFinishGatewayMetadata(Dictionary<string, object?>? metadata)
+    {
+        if (metadata is null
+            || !metadata.TryGetValue("gateway", out var gatewayObj)
+            || gatewayObj is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return gatewayObj switch
+            {
+                AIFinishGatewayMetadata gateway => gateway,
+                Dictionary<string, object?> nullableTyped => AIFinishGatewayMetadata.FromDictionary(
+                    nullableTyped
+                        .Where(static item => item.Value is not null)
+                        .ToDictionary(static item => item.Key, static item => item.Value!)),
+                _ => JsonSerializer.SerializeToElement(gatewayObj, JsonSerializerOptions.Web)
+                    .Deserialize<AIFinishGatewayMetadata>(JsonSerializerOptions.Web)
+            };
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

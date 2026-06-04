@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
@@ -9,6 +10,7 @@ namespace AIHappey.Core.Providers.Kirha;
 
 public partial class KirhaProvider
 {
+    private const decimal KirhaSearchCostPerConsumedCredit = 0.05m;
     private const string KirhaSearchToolName = "kirha_search";
     private const string KirhaCreatePlanToolName = "kirha_create_search_plan";
     private const string KirhaRunPlanToolName = "kirha_run_search_plan";
@@ -344,7 +346,6 @@ public partial class KirhaProvider
                 Items = outputItems,
                 Metadata = result.Metadata
             },
-            Usage = BuildKirhaUsage(result.Response.Usage),
             Metadata = result.Metadata
         };
     }
@@ -487,7 +488,8 @@ public partial class KirhaProvider
     }
 
     private static Dictionary<string, object?> BuildKirhaMetadata(KirhaRequestContext context, KirhaSearchResponse response)
-        => new(StringComparer.OrdinalIgnoreCase)
+    {
+        var metadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
             ["id"] = response.Id,
             ["summary"] = response.Summary,
@@ -502,6 +504,12 @@ public partial class KirhaProvider
             ["kirha.plan_id"] = response.Id ?? context.PlanId,
             ["kirha.completed"] = context.Operation != KirhaSearchOperation.CreatePlan
         };
+
+        if (ComputeKirhaSearchCost(response.Usage) is { } cost)
+            metadata = ModelCostMetadataEnricher.AddCost(metadata, cost);
+
+        return metadata;
+    }
 
     private static Dictionary<string, object?> CreateToolMetadata(
         KirhaRequestContext context,
@@ -773,53 +781,8 @@ public partial class KirhaProvider
         return false;
     }
 
-    private static object BuildKirhaUsage(KirhaSearchUsage? usage)
-    {
-        var completionTokens = usage?.Consumed ?? 0;
-        var promptTokens = usage?.Estimated ?? 0;
-        return new Dictionary<string, object?>
-        {
-            ["prompt_tokens"] = promptTokens,
-            ["completion_tokens"] = completionTokens,
-            ["total_tokens"] = promptTokens + completionTokens,
-            ["inputTokens"] = promptTokens,
-            ["outputTokens"] = completionTokens,
-            ["totalTokens"] = promptTokens + completionTokens
-        };
-    }
-
-    private static (int? InputTokens, int? OutputTokens, int? TotalTokens) ExtractUsage(object? usage)
-    {
-        if (usage is null)
-            return (null, null, null);
-
-        var element = usage is JsonElement json ? json : JsonSerializer.SerializeToElement(usage, Json);
-        if (element.ValueKind != JsonValueKind.Object)
-            return (null, null, null);
-
-        var input = TryGetInt(element, "inputTokens", "prompt_tokens", "estimated");
-        var output = TryGetInt(element, "outputTokens", "completion_tokens", "consumed");
-        var total = TryGetInt(element, "totalTokens", "total_tokens") ?? ((input ?? 0) + (output ?? 0));
-
-        return (input, output, total);
-    }
-
-    private static int? TryGetInt(JsonElement element, params string[] names)
-    {
-        foreach (var name in names)
-        {
-            if (!TryGetProperty(element, name, out var property))
-                continue;
-
-            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var value))
-                return value;
-
-            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out value))
-                return value;
-        }
-
-        return null;
-    }
+    private static decimal? ComputeKirhaSearchCost(KirhaSearchUsage? usage)
+        => usage is null ? null : usage.Consumed * KirhaSearchCostPerConsumedCredit;
 
     private static Dictionary<string, Dictionary<string, object>>? ToProviderMetadataEnvelope(
         Dictionary<string, object?>? metadata,
