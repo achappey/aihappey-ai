@@ -42,6 +42,15 @@ public partial class RimeProvider
         using var doc = JsonDocument.Parse(body);
         return ParseVoices(doc.RootElement);
     }
+    
+    private static readonly Dictionary<string, string> BaseModelDescriptions =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["coda"] = "Our flagship TTS model. LLM backbone with a dedicated speech inference engine, trained on conversational full-duplex data.",
+            ["arcana"] = "Previous-generation flagship TTS model: ultra-realistic, expressive voices with low latency and native multilingual code-switching across more than 10 languages.",
+            ["mistv3"] = "Major update to the Mist engine: very low TTFA on the GPU engine, significantly faster than Coda or Arcana while preserving Mist’s pronunciation control and predictability.",
+            ["mistv2"] = "Previous-generation Mist model. For new projects, prefer Mist v3."
+        };
 
     private IEnumerable<Model> BuildBaseModels()
         => BaseModels.Select(modelId => new Model
@@ -50,7 +59,9 @@ public partial class RimeProvider
             OwnedBy = ProviderName,
             Type = "speech",
             Name = modelId,
-            Description = $"{ProviderName} base TTS model '{modelId}'. Voice must be supplied via request.voice or providerOptions.rime.voice.",
+            Description = BaseModelDescriptions.TryGetValue(modelId, out var description)
+                ? description
+                : null,
             Tags = [$"model:{modelId}", "tts", "base"]
         });
 
