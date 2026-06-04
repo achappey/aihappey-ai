@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Rime;
@@ -6,23 +7,28 @@ namespace AIHappey.Core.Providers.Rime;
 public partial class RimeProvider
 {
     private const string RimeModelPrefix = "rime/";
-    private static readonly string[] BaseModels = ["mist", "mistv2"];
+    private static readonly string[] BaseModels = ["mistv2", "mistv3", "arcana", "coda"];
 
-    private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
-        if (string.IsNullOrWhiteSpace(key))
-            return [];
+        var cacheKey = this.GetCacheKey();
 
-        ApplyAuthHeader();
+        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+            cacheKey,
+            async ct =>
+            {
+                var models = new List<Model>(BuildBaseModels());
+                var voices = await GetVoicesAsync(cancellationToken);
+                models.AddRange(BuildDynamicVoiceModels(voices));
 
-        var models = new List<Model>(BuildBaseModels());
-        var voices = await GetVoicesAsync(cancellationToken);
-        models.AddRange(BuildDynamicVoiceModels(voices));
+                return [.. models
+                    .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.First())];
 
-        return [.. models
-            .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())];
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<IReadOnlyList<RimeVoice>> GetVoicesAsync(CancellationToken cancellationToken)
