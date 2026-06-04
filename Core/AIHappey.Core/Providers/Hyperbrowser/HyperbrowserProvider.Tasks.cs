@@ -284,7 +284,22 @@ public partial class HyperbrowserProvider
     }
 
     private static IReadOnlyList<HyperbrowserTaskDefinition> GetHyperbrowserTaskDefinitions()
-        => [HyperAgentTaskDefinition, BrowserUseTaskDefinition];
+        =>
+        [
+            HyperAgentTaskDefinition,
+            BrowserUseTaskDefinition,
+            ClaudeComputerUseTaskDefinition,
+            GeminiComputerUseTaskDefinition,
+            CuaTaskDefinition
+        ];
+
+    private static void ApplyComputerUsePayload(Dictionary<string, object?> payload, HyperbrowserTaskMetadata metadata)
+    {
+        if (metadata.MaxFailures is not null)
+            payload["maxFailures"] = metadata.MaxFailures;
+        if (metadata.UseComputerAction is not null)
+            payload["useComputerAction"] = metadata.UseComputerAction;
+    }
 
     private static bool IsHyperbrowserTaskAlias(HyperbrowserTaskDefinition definition, string value)
     {
@@ -1068,6 +1083,9 @@ public partial class HyperbrowserProvider
 
         [JsonPropertyName("maxFailures")]
         public int? MaxFailures { get; set; }
+
+        [JsonPropertyName("useComputerAction")]
+        public bool? UseComputerAction { get; set; }
 
         [JsonPropertyName("initialActions")]
         public JsonElement? InitialActions { get; set; }

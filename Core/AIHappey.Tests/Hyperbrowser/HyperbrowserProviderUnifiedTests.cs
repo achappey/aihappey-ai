@@ -481,6 +481,117 @@ public class HyperbrowserProviderUnifiedTests
         Assert.Equal("finish", events.Last().Event.Type);
     }
 
+    [Theory]
+    [InlineData("hyperbrowser/claude-computer-use/claude-sonnet-4-5", "/api/task/claude-computer-use", "claude-sonnet-4-5")]
+    [InlineData("hyperbrowser/gemini-computer-use/gemini-2.5-computer-use-preview-10-2025", "/api/task/gemini-computer-use", "gemini-2.5-computer-use-preview-10-2025")]
+    [InlineData("hyperbrowser/cua/gpt-5.4-mini", "/api/task/cua", "gpt-5.4-mini")]
+    public async Task ExecuteUnifiedAsync_RoutesComputerUseRuntimesAndAppliesPayloadFields(string model, string endpoint, string expectedLlm)
+    {
+        var bodies = new List<string>();
+        var provider = CreateProvider(request =>
+        {
+            if (request.Content is not null)
+                bodies.Add(request.Content.ReadAsStringAsync().GetAwaiter().GetResult());
+
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath.EndsWith(endpoint) == true)
+                return JsonResponse(new { jobId = "job_computer_use", liveUrl = "https://live.example/computer-use" });
+
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath.EndsWith($"{endpoint}/job_computer_use") == true)
+                return JsonResponse(new
+                {
+                    jobId = "job_computer_use",
+                    status = "completed",
+                    liveUrl = "https://live.example/computer-use",
+                    data = new { steps = Array.Empty<object>(), finalResult = "Computer use result" }
+                });
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound) { Content = new StringContent("{}") };
+        });
+
+        var response = await provider.ExecuteUnifiedAsync(new AIRequest
+        {
+            ProviderId = "hyperbrowser",
+            Model = model,
+            Input = new AIInput { Text = "Use the computer" },
+            Metadata = new Dictionary<string, object?>
+            {
+                ["hyperbrowser"] = new
+                {
+                    maxSteps = 9,
+                    maxFailures = 2,
+                    useComputerAction = true,
+                    sessionOptions = new { useStealth = true }
+                }
+            }
+        });
+
+        Assert.Equal("completed", response.Status);
+        Assert.Contains(response.Output?.Items ?? [], item =>
+            item.Content?.OfType<AITextContentPart>().Any(part => part.Text == "Computer use result") == true);
+
+        using var doc = JsonDocument.Parse(Assert.Single(bodies));
+        var root = doc.RootElement;
+        Assert.Equal("Use the computer", root.GetProperty("task").GetString());
+        Assert.Equal(expectedLlm, root.GetProperty("llm").GetString());
+        Assert.Equal(9, root.GetProperty("maxSteps").GetInt32());
+        Assert.Equal(2, root.GetProperty("maxFailures").GetInt32());
+        Assert.True(root.GetProperty("useComputerAction").GetBoolean());
+        Assert.True(root.GetProperty("sessionOptions").GetProperty("useStealth").GetBoolean());
+    }
+
+    [Theory]
+    [InlineData("hyperbrowser/claude-computer-use/claude-opus-4-8", "/api/task/claude-computer-use")]
+    [InlineData("hyperbrowser/gemini-computer-use/gemini-3-flash-preview", "/api/task/gemini-computer-use")]
+    [InlineData("hyperbrowser/cua/computer-use-preview", "/api/task/cua")]
+    public async Task StreamUnifiedAsync_ComputerUseRuntimesEmitPreliminaryToolOutputs(string model, string endpoint)
+    {
+        var pollCount = 0;
+        var provider = CreateProvider(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath.EndsWith(endpoint) == true)
+                return JsonResponse(new { jobId = "job_computer_stream", liveUrl = "https://live.example/computer-stream" });
+
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath.EndsWith($"{endpoint}/job_computer_stream") == true)
+            {
+                pollCount++;
+                return JsonResponse(new
+                {
+                    jobId = "job_computer_stream",
+                    status = pollCount == 1 ? "running" : "completed",
+                    liveUrl = "https://live.example/computer-stream",
+                    data = new { steps = Array.Empty<object>(), finalResult = pollCount == 1 ? null : "Computer stream final" }
+                });
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound) { Content = new StringContent("{}") };
+        });
+
+        var events = new List<AIStreamEvent>();
+        await foreach (var evt in provider.StreamUnifiedAsync(new AIRequest
+        {
+            ProviderId = "hyperbrowser",
+            Model = model,
+            Input = new AIInput { Text = "Use the computer" },
+            Metadata = new Dictionary<string, object?>
+            {
+                ["hyperbrowser"] = new { pollIntervalMilliseconds = 100, pollTimeoutSeconds = 5 }
+            }
+        }))
+        {
+            events.Add(evt);
+        }
+
+        var outputs = events.Where(e => e.Event.Type == "tool-output-available")
+            .Select(e => Assert.IsType<AIToolOutputAvailableEventData>(e.Event.Data))
+            .ToList();
+        Assert.Contains(outputs, output => output.ProviderExecuted == true && output.Preliminary == true);
+        Assert.Contains(outputs, output => output.ProviderExecuted == true && output.Preliminary == false);
+        Assert.Contains(events, e => e.Event.Type == "source-url");
+        Assert.DoesNotContain(events, e => e.Event.Type is "reasoning-delta" or "file");
+        Assert.Contains(events, e => e.Event.Type == "text-delta" && Assert.IsType<AITextDeltaEventData>(e.Event.Data).Delta.Contains("Computer stream final"));
+        Assert.Equal("finish", events.Last().Event.Type);
+    }
+
     [Fact]
     public async Task ListModels_IncludesAllDocumentedShortcutModels()
     {
@@ -491,6 +602,11 @@ public class HyperbrowserProviderUnifiedTests
         Assert.Contains("hyperbrowser/hyper-agent/gemini-3-flash-preview", models);
         Assert.Contains("hyperbrowser/browser-use/gemini-2.0-flash", models);
         Assert.Contains("hyperbrowser/browser-use/claude-sonnet-4-20250514", models);
+        Assert.Contains("hyperbrowser/claude-computer-use/claude-opus-4-8", models);
+        Assert.Contains("hyperbrowser/claude-computer-use/claude-haiku-4-5-20251001", models);
+        Assert.Contains("hyperbrowser/gemini-computer-use/gemini-2.5-computer-use-preview-10-2025", models);
+        Assert.Contains("hyperbrowser/cua/computer-use-preview", models);
+        Assert.Contains("hyperbrowser/cua/gpt-5.4-mini", models);
     }
 
     private static HyperbrowserProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
