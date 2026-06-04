@@ -553,6 +553,7 @@ using AIHappey.Core.Providers.Lilac;
 using AIHappey.Core.Providers.OpenAdapter;
 using AIHappey.Core.Providers.Router9;
 using AIHappey.Core.Providers.Auriko;
+using AIHappey.Core.Providers.Hyperbrowser;
 
 namespace AIHappey.Core.AI;
 
@@ -1131,6 +1132,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OpenAdapterProvider>();
         services.AddSingleton<IModelProvider, Router9Provider>();
         services.AddSingleton<IModelProvider, AurikoProvider>();
+        services.AddSingleton<IModelProvider, HyperbrowserProvider>();
         
 
     }

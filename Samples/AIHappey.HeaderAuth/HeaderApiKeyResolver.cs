@@ -555,7 +555,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["lilac"] = "X-Lilac-Key",
             ["openadapter"] = "X-OpenAdapter-Key",
             ["router9"] = "X-Router9-Key",
-            ["auriko"] = "X-Auriko-Key"
+            ["auriko"] = "X-Auriko-Key",
+            ["hyperbrowser"] = "X-Hyperbrowser-Key"
 
         };
 

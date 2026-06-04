@@ -1,0 +1,212 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "hyperbrowser/hyper-agent",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut. Runs an async browser agent task and uses gpt-4o unless overridden with provider metadata.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-5.2",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-5.2",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-5.2.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5.2" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-5.1",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-5.1",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-5.1.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5.1" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-5",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-5",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-5.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-5-mini",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-5-mini",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-5-mini.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5-mini" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-4o",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-4o",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-4o.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4o" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-4o-mini",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-4o-mini.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4o-mini" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-4.1",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-4.1",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-4.1.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4.1" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gpt-4.1-mini",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gpt-4.1-mini.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4.1-mini" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · claude-sonnet-4-6",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using claude-sonnet-4-6.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "claude-sonnet-4-6" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/claude-sonnet-4-5",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · claude-sonnet-4-5",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using claude-sonnet-4-5.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "claude-sonnet-4-5" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gemini-2.5-flash",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gemini-2.5-flash.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gemini-2.5-flash" ]
+    },
+    {
+      "id": "hyperbrowser/hyper-agent/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "HyperAgent · gemini-3-flash-preview",
+      "type": "language",
+      "description": "Hyperbrowser HyperAgent shortcut using gemini-3-flash-preview.",
+      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gemini-3-flash-preview" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut. Runs an async BrowserUse task and uses gemini-2.0-flash unless overridden with provider metadata.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/gpt-4o",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · gpt-4o",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using gpt-4o.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4o" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/gpt-4o-mini",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · gpt-4o-mini",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using gpt-4o-mini.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4o-mini" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/gpt-4.1",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · gpt-4.1",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using gpt-4.1.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4.1" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · gpt-4.1-mini",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using gpt-4.1-mini.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4.1-mini" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · claude-sonnet-4-6",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using claude-sonnet-4-6.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "claude-sonnet-4-6" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/claude-sonnet-4-5",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · claude-sonnet-4-5",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using claude-sonnet-4-5.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "claude-sonnet-4-5" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/claude-sonnet-4-20250514",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · claude-sonnet-4-20250514",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using claude-sonnet-4-20250514.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "claude-sonnet-4-20250514" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/gemini-2.0-flash",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · gemini-2.0-flash",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using gemini-2.0-flash.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gemini-2.0-flash" ]
+    },
+    {
+      "id": "hyperbrowser/browser-use/gemini-2.5-flash",
+      "object": "model",
+      "owned_by": "Hyperbrowser",
+      "name": "BrowserUse · gemini-2.5-flash",
+      "type": "language",
+      "description": "Hyperbrowser BrowserUse shortcut using gemini-2.5-flash.",
+      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gemini-2.5-flash" ]
+    }
+  ]
+}
