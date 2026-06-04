@@ -280,7 +280,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["rime"] = "X-Rime-Key",
             ["noiz"] = "X-Noiz-Key",
             ["gradium"] = "X-Gradium-Key",
-            ["voiceai"] = "X-VoiceAI-Key",         
+            ["voiceai"] = "X-VoiceAI-Key",
             ["freedomgpt"] = "X-FreedomGPT-Key",
             ["ionrouter"] = "X-IonRouter-Key",
             ["kirha"] = "X-Kirha-Key",
@@ -361,7 +361,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["vogent"] = "X-Vogent-Key",
             ["tikhubai"] = "X-TikHubAI-Key",
             ["yougetai"] = "X-YouGetAI-Key",
-            ["preapi"] = "X-PreAPI-Key",            
+            ["preapi"] = "X-PreAPI-Key",
             ["vultr"] = "X-Vultr-Key",
             ["ofoxai"] = "X-OfoxAI-Key",
             ["dedaluslabs"] = "X-DedalusLabs-Key",
@@ -424,7 +424,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["key4u"] = "X-Key4U-Key",
             ["fivedock"] = "X-FiveDock-Key",
             ["magisterium"] = "X-Magisterium-Key",
-            ["mumeai"] = "X-MumeAI-Key",            
+            ["mumeai"] = "X-MumeAI-Key",
             ["uncensoredchat"] = "X-UncensoredChat-Key",
             ["orbgpu"] = "X-OrbGPU-Key",
             ["opengateway"] = "X-OpenGateway-Key",
@@ -558,7 +558,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["auriko"] = "X-Auriko-Key",
             ["hyperbrowser"] = "X-Hyperbrowser-Key",
             ["langbasepipe"] = "X-LangbasePipe-Key",
-            ["langbaseagent"] = "X-LangbaseAgent-Key"
+            ["langbaseagent"] = "X-LangbaseAgent-Key",
+            ["rewindai"] = "X-RewindAI-Key"
 
         };
 

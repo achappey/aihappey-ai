@@ -557,6 +557,7 @@ public class AIServiceConfig
     public ProviderConfig? Hyperbrowser { get; set; }
     public ProviderConfig? LangbasePipe { get; set; }
     public ProviderConfig? LangbaseAgent { get; set; }
+    public ProviderConfig? RewindAI { get; set; }
 
 }
 

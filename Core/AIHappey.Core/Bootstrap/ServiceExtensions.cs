@@ -556,6 +556,7 @@ using AIHappey.Core.Providers.Auriko;
 using AIHappey.Core.Providers.Hyperbrowser;
 using AIHappey.Core.Providers.LangbasePipe;
 using AIHappey.Core.Providers.LangbaseAgent;
+using AIHappey.Core.Providers.RewindAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1137,6 +1138,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HyperbrowserProvider>();
         services.AddSingleton<IModelProvider, LangbasePipeProvider>();
         services.AddSingleton<IModelProvider, LangbaseAgentProvider>();
+        services.AddSingleton<IModelProvider, RewindAIProvider>();
         
 
     }
