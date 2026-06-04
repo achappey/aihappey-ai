@@ -1,0 +1,53 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/mistralai:magistral-medium-2506",
+      "object": "model",
+      "owned_by": "Mistral",
+      "name": "Magistral Medium 2506",
+      "type": "language",
+      "context_window": 40000
+    },
+    {
+      "id": "langbaseagent/mistral:mistral-large-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Mistral Large 2",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/mistral:pixtral-large-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Pixtral Large",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/mistral:pixtral-12b",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Pixtral 12B",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/mistral:open-mistral-nemo",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Mistral Nemo",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/mistral:codestral-latest",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Codestral",
+      "type": "language",
+      "context_window": 32768
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/fireworks:llama4-maverick-instruct-basic",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama 4 Maverick Instruct Basic",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
+      "id": "langbaseagent/fireworks:llama4-scout-instruct-basic",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama 4 Scout Instruct Basic",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/fireworks:llama-v3p3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama 3.3 70B Instruct",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/fireworks:deepseek-v3",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-v3",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/fireworks:llama-v3p2-3b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.2-3b",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/fireworks:llama-v3p2-1b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.2-1b",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/fireworks:llama-v3p1-405b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.1-405b",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/fireworks:qwen2p5-72b-instruct",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "Qwen2.5-72b",
+      "type": "language",
+      "context_window": 32768
+    },
+    {
+      "id": "langbaseagent/fireworks:llama-v3p1-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.1-70b",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/fireworks:llama-v3p1-8b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.1-8b",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/fireworks:yi-large",
+      "object": "model",
+      "owned_by": "01.AI",
+      "name": "yi-large",
+      "type": "language",
+      "context_window": 32768
+    },
+    {
+      "id": "langbaseagent/fireworks:llama-v3-70b-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3-70b",
+      "type": "language",
+      "context_window": 8192
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/openrouter:anthropic/claude-3.7-sonnet",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "anthropic/claude-3.7-sonnet",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/openrouter:xai/grok-4",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4",
+      "type": "language",
+      "context_window": 256000
+    },
+    {
+      "id": "langbaseagent/openrouter:anthropic/claude-3.7-sonnet:thinking",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "anthropic/claude-3.7-sonnet:thinking",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/openrouter:mistralai/magistral-medium-2506:thinking",
+      "object": "model",
+      "owned_by": "Mistral",
+      "name": "mistralai/magistral-medium-2506:thinking",
+      "type": "language",
+      "context_window": 40000
+    },
+    {
+      "id": "langbaseagent/openrouter:openai/o1-pro",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "openai/o1-pro",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/openrouter:anthropic/claude-3.5-sonnet",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "anthropic/claude-3.5-sonnet",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/openrouter:xai/grok-3-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "xai/grok-3-beta",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/openrouter:xai/grok-3-mini-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "xai/grok-3-mini-beta",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/openrouter:cohere/command-a",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "cohere/command-a",
+      "type": "language",
+      "context_window": 256000
+    },
+    {
+      "id": "langbaseagent/openrouter:perplexity/sonar-deep-research",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "perplexity/sonar-deep-research",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/openrouter:deepseek/deepseek-r1:free",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek/deepseek-r1:free",
+      "type": "language",
+      "context_window": 164000
+    },
+    {
+      "id": "langbaseagent/openrouter:deepseek/deepseek-chat-v3-0324:free",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-chat-v3-0324:free",
+      "type": "language",
+      "context_window": 131000
+    },
+    {
+      "id": "langbaseagent/openrouter:deepseek/deepseek-chat-v3-0324",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-chat-v3-0324",
+      "type": "language",
+      "context_window": 131000
+    },
+    {
+      "id": "langbaseagent/openrouter:google/gemini-2.0-flash-001",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "google/gemini-2.0-flash-001",
+      "type": "language",
+      "context_window": 1000000
+    },
+    {
+      "id": "langbaseagent/openrouter:google/gemma-3-27b-it:free",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "google/gemma-3-27b-it:free",
+      "type": "language",
+      "context_window": 96000
+    },
+    {
+      "id": "langbaseagent/openrouter:mistralai/mistral-nemo",
+      "object": "model",
+      "owned_by": "Mistral",
+      "name": "mistralai/mistral-nemo",
+      "type": "language",
+      "context_window": 131000
+    }
+  ]
+}

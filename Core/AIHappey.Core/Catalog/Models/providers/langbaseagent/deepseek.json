@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/deepseek:deepseek-reasoner",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-reasoner",
+      "type": "language",
+      "context_window": 64000
+    },
+    {
+      "id": "langbaseagent/deepseek:deepseek-chat",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-chat",
+      "type": "language",
+      "context_window": 64000
+    }
+  ]
+}

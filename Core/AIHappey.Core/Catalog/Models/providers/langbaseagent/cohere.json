@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/cohere:command-r",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-r",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/cohere:command-r-plus",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "command-r-plus",
+      "type": "language",
+      "context_window": 128000
+    }
+  ]
+}

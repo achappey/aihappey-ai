@@ -1,0 +1,93 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/xai:grok-code-fast-1",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-code-fast-1",
+      "type": "language",
+      "context_window": 256000
+    },
+    {
+      "id": "langbaseagent/xai:grok-4-fast-reasoning",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4-fast-reasoning",
+      "type": "language",
+      "context_window": 2000000
+    },
+    {
+      "id": "langbaseagent/xai:grok-4-fast-non-reasoning",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4-fast-non-reasoning",
+      "type": "language",
+      "context_window": 2000000
+    },
+    {
+      "id": "langbaseagent/xai:grok-4",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-4",
+      "type": "language",
+      "context_window": 256000
+    },
+    {
+      "id": "langbaseagent/xai:grok-3-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-3-beta",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/xai:grok-3-fast-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-3-fast-beta",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/xai:grok-3-mini-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-3-mini-beta",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/xai:grok-3-mini-fast-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-3-mini-fast-beta",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/xai:grok-2-1212",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-2-1212",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/xai:grok-2-vision-1212",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-2-vision-1212",
+      "type": "language",
+      "context_window": 32000
+    },
+    {
+      "id": "langbaseagent/xai:grok-beta",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "grok-beta",
+      "type": "language",
+      "context_window": 131072
+    }
+  ]
+}

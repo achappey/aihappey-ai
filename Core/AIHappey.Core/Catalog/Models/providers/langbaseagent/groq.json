@@ -1,0 +1,93 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/groq:moonshotai/kimi-k2-instruct",
+      "object": "model",
+      "owned_by": "Moonshot",
+      "name": "Moonshot Kimi K2",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/groq:meta-llama/llama-4-maverick-17b-128e-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-4-Maverick-17B-128E-Instruct",
+      "type": "language",
+      "context_window": 131000
+    },
+    {
+      "id": "langbaseagent/groq:meta-llama/llama-4-scout-17b-16e-instruct",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-4-Scout-17B-16E-Instruct",
+      "type": "language",
+      "context_window": 131000
+    },
+    {
+      "id": "langbaseagent/groq:qwen/qwen3-32b",
+      "object": "model",
+      "owned_by": "Qwen",
+      "name": "qwen3-32b",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/groq:llama-3.3-70b-versatile",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.3-70b-versatile",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/groq:deepseek-r1-distill-llama-70b",
+      "object": "model",
+      "owned_by": "DeepSeek",
+      "name": "deepseek-r1-distill-llama-70b",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/groq:llama-3.1-70b-versatile",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.1-70b-versatile",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/groq:llama-3.1-8b-instant",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3.1-8b-instant",
+      "type": "language",
+      "context_window": 131072
+    },
+    {
+      "id": "langbaseagent/groq:llama3-70b-8192",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3-70b",
+      "type": "language",
+      "context_window": 8192
+    },
+    {
+      "id": "langbaseagent/groq:llama3-8b-8192",
+      "object": "model",
+      "owned_by": "Meta",
+      "name": "Llama-3-8b",
+      "type": "language",
+      "context_window": 8192
+    },
+    {
+      "id": "langbaseagent/groq:gemma2-9b-it",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemma2-9b-it",
+      "type": "language",
+      "context_window": 8192
+    }
+  ]
+}

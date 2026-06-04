@@ -1,0 +1,61 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/azureopenai:o1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "o1",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/azureopenai:o3-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "o3-mini",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/azureopenai:o1-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "o1-preview",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/azureopenai:o1-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "o1-mini",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/azureopenai:gpt-4.5-preview",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4.5-preview",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/azureopenai:gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o",
+      "type": "language",
+      "context_window": 128000
+    },
+    {
+      "id": "langbaseagent/azureopenai:gpt-4o-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o-mini",
+      "type": "language",
+      "context_window": 128000
+    }
+  ]
+}

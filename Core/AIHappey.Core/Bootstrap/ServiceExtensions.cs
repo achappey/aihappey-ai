@@ -554,6 +554,8 @@ using AIHappey.Core.Providers.OpenAdapter;
 using AIHappey.Core.Providers.Router9;
 using AIHappey.Core.Providers.Auriko;
 using AIHappey.Core.Providers.Hyperbrowser;
+using AIHappey.Core.Providers.LangbasePipe;
+using AIHappey.Core.Providers.LangbaseAgent;
 
 namespace AIHappey.Core.AI;
 
@@ -1133,6 +1135,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, Router9Provider>();
         services.AddSingleton<IModelProvider, AurikoProvider>();
         services.AddSingleton<IModelProvider, HyperbrowserProvider>();
+        services.AddSingleton<IModelProvider, LangbasePipeProvider>();
+        services.AddSingleton<IModelProvider, LangbaseAgentProvider>();
         
 
     }

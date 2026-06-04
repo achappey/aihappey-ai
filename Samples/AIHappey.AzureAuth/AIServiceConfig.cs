@@ -555,6 +555,8 @@ public class AIServiceConfig
     public ProviderConfig? Router9 { get; set; }
     public ProviderConfig? Auriko { get; set; }
     public ProviderConfig? Hyperbrowser { get; set; }
+    public ProviderConfig? LangbasePipe { get; set; }
+    public ProviderConfig? LangbaseAgent { get; set; }
 
 }
 

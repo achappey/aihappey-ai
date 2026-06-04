@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/perplexity:sonar-pro",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "sonar-pro",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/perplexity:sonar",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "sonar",
+      "type": "language",
+      "context_window": 127072
+    }
+  ]
+}

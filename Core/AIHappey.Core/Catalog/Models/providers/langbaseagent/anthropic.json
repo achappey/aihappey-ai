@@ -1,0 +1,101 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbaseagent/anthropic:claude-opus-4-5-20251115",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4.5",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-haiku-4-5-20251001",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-haiku-4.5",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-opus-4-20250514",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-sonnet-4-20250514",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-sonnet-4",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-7-sonnet-latest",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3.7-sonnet-latest",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-7-sonnet-20250219",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3.7-sonnet",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-5-sonnet-latest",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3.5-sonnet-latest",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-5-haiku-20241022",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3.5-haiku",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-5-sonnet-20240620",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3.5-sonnet",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-opus-20240229",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3-opus",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-sonnet-20240229",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3-sonnet",
+      "type": "language",
+      "context_window": 200000
+    },
+    {
+      "id": "langbaseagent/anthropic:claude-3-haiku-20240307",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-3-haiku",
+      "type": "language",
+      "context_window": 200000
+    }
+  ]
+}

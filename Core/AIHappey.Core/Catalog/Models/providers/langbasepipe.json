@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "langbasepipe/pipe",
+      "object": "model",
+      "owned_by": "Langbase",
+      "name": "Langbase Pipe",
+      "type": "language"
+    }
+  ]
+}
