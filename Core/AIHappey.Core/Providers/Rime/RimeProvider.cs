@@ -20,9 +20,13 @@ public partial class RimeProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
 
-    public RimeProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public RimeProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://users.rime.ai/");
     }
@@ -37,8 +41,6 @@ public partial class RimeProvider : IModelProvider
 
         _client.DefaultRequestHeaders.Remove("Authorization");
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {key}");
-        _client.DefaultRequestHeaders.Remove("Accept");
-        _client.DefaultRequestHeaders.Add("Accept", "application/json");
     }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -47,11 +49,8 @@ public partial class RimeProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await ListModelsInternal(cancellationToken);
-
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

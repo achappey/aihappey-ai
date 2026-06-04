@@ -29,6 +29,9 @@ public sealed class RimeSpeechProviderMetadata
     [JsonPropertyName("speedAlpha")]
     public float? SpeedAlpha { get; set; }
 
+    [JsonPropertyName("timeScaleFactor")]
+    public float? TimeScaleFactor { get; set; }
+
     [JsonPropertyName("noTextNormalization")]
     public bool? NoTextNormalization { get; set; }
 
