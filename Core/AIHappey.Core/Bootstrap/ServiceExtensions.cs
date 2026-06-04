@@ -58,6 +58,7 @@ using AIHappey.Core.Providers.Audixa;
 using AIHappey.Core.Providers.Freepik;
 using AIHappey.Core.Providers.MurfAI;
 using AIHappey.Core.Providers.Lingvanex;
+using AIHappey.Core.Providers.LTX;
 using AIHappey.Core.Providers.GoogleTranslate;
 using AIHappey.Core.Providers.ModernMT;
 using AIHappey.Core.Providers.LectoAI;
@@ -653,6 +654,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, GTranslateProvider>();
         services.AddSingleton<IModelProvider, GMICloudProvider>();
         services.AddSingleton<IModelProvider, BytePlusProvider>();
+        services.AddSingleton<IModelProvider, LTXProvider>();
         services.AddSingleton<IModelProvider, NLPCloudProvider>();
         services.AddSingleton<IModelProvider, MoonshotProvider>();
         services.AddSingleton<IModelProvider, UpstageProvider>();
@@ -1143,6 +1145,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RewindAIProvider>();
         services.AddSingleton<IModelProvider, PixserpProvider>();
         services.AddSingleton<IModelProvider, HumeAIProvider>();
+        services.AddSingleton<IModelProvider, LXG2ITProvider>();
         
 
     }

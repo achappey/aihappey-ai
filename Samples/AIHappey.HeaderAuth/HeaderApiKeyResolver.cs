@@ -561,7 +561,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["langbaseagent"] = "X-LangbaseAgent-Key",
             ["rewindai"] = "X-RewindAI-Key",
             ["pixserp"] = "X-Pixserp-Key",
-            ["humeai"] = "X-HumeAI-Key"
+            ["humeai"] = "X-HumeAI-Key",
+            ["ltx"] = "X-LTX-Key"
 
         };
 

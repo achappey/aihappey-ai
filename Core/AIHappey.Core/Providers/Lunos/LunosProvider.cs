@@ -28,7 +28,7 @@ public partial class LunosProvider : IModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.lunos.tech/");
+        _client.BaseAddress = new Uri("https://api.lunosrouter.com/");
     }
 
     private void ApplyAuthHeader()
