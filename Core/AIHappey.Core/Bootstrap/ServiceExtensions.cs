@@ -558,6 +558,7 @@ using AIHappey.Core.Providers.LangbasePipe;
 using AIHappey.Core.Providers.LangbaseAgent;
 using AIHappey.Core.Providers.RewindAI;
 using AIHappey.Core.Providers.Pixserp;
+using AIHappey.Core.Providers.HumeAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1141,6 +1142,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LangbaseAgentProvider>();
         services.AddSingleton<IModelProvider, RewindAIProvider>();
         services.AddSingleton<IModelProvider, PixserpProvider>();
+        services.AddSingleton<IModelProvider, HumeAIProvider>();
         
 
     }

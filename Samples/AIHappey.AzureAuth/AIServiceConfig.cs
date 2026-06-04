@@ -559,6 +559,8 @@ public class AIServiceConfig
     public ProviderConfig? LangbaseAgent { get; set; }
     public ProviderConfig? RewindAI { get; set; }
     public ProviderConfig? Pixserp { get; set; }
+    public ProviderConfig? HumeAI { get; set; }
+    
 
 }
 
