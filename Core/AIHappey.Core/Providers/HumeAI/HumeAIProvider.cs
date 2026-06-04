@@ -69,16 +69,16 @@ public partial class HumeAIProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(
+    public Task<Responses.ResponseResult> ResponsesAsync(
         Responses.ResponseRequest options,
         CancellationToken cancellationToken = default)
     {
       throw new NotSupportedException();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         Responses.ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+      CancellationToken cancellationToken = default)
     {
        throw new NotSupportedException();
     }
@@ -94,14 +94,14 @@ public partial class HumeAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
        throw new NotSupportedException();
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
        throw new NotSupportedException();
     }
