@@ -46,8 +46,30 @@ public partial class PixserpProvider
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-                    if (el.TryGetProperty("depth", out var depthEl))
-                        model.Description = depthEl.GetString() ?? "";
+                    var depth = el.TryGetProperty("depth", out var depthEl)
+                        ? depthEl.GetString()
+                        : null;
+
+                    var price = el.TryGetProperty("price_per_request_usd", out var priceEl)
+                        ? priceEl.GetDecimal()
+                        : (decimal?)null;
+
+                    var maxToolCalls = el.TryGetProperty("max_tool_calls", out var toolCallsEl)
+                        ? toolCallsEl.GetInt32()
+                        : (int?)null;
+
+                    var parts = new List<string>();
+
+                    if (!string.IsNullOrWhiteSpace(depth))
+                        parts.Add($"{depth} depth.");
+
+                    if (price is not null)
+                        parts.Add($"${price:0.####} per request.");
+
+                    if (maxToolCalls is not null)
+                        parts.Add($"Max {maxToolCalls:N0} tool calls.");
+
+                    model.Description = string.Join(" ", parts);
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);

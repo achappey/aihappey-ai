@@ -55,7 +55,7 @@ public static partial class ChatCompletionsUnifiedMapper
             };
         }
 
-        if (!emittedUiEnvelope && !HasToolCallDelta(chunk))
+        if (!emittedUiEnvelope && !HasToolCallDelta(chunk) && !HasSourceUrlPayload(chunk, providerId))
             yield break;
 
         foreach (var sourceEvent in MapSourceUrlEvents(chunk, providerId, timestamp, metadata, state))
@@ -231,11 +231,7 @@ public static partial class ChatCompletionsUnifiedMapper
             }
         }
 
-        if (!chunk.TryGetProperty("search_results", out var searchResults)
-            || searchResults.ValueKind != JsonValueKind.Array)
-            yield break;
-
-        foreach (var source in searchResults.EnumerateArray())
+        foreach (var source in EnumerateProviderSourceArrays(chunk))
         {
             var url = ExtractValue<string>(source, "url");
             if (string.IsNullOrWhiteSpace(url))
@@ -249,10 +245,17 @@ public static partial class ChatCompletionsUnifiedMapper
             {
                 [providerId] = new Dictionary<string, object>
                 {
+                    ["id"] = ExtractValue<string>(source, "id") ?? string.Empty,
+                    ["kind"] = ExtractValue<string>(source, "kind") ?? string.Empty,
                     ["date"] = ExtractValue<string>(source, "date") ?? string.Empty,
                     ["lastUpdated"] = ExtractValue<string>(source, "last_updated") ?? string.Empty,
-                    ["snippet"] = ExtractValue<string>(source, "snippet") ?? string.Empty,
-                    ["source"] = ExtractValue<string>(source, "source") ?? string.Empty
+                    ["snippet"] = ExtractValue<string>(source, "snippet")
+                        ?? ExtractValue<string>(source, "description")
+                        ?? string.Empty,
+                    ["source"] = ExtractValue<string>(source, "source") ?? string.Empty,
+                    ["domain"] = ExtractValue<string>(source, "domain") ?? string.Empty,
+                    ["favicon"] = ExtractValue<string>(source, "favicon") ?? string.Empty,
+                    ["raw"] = source.Clone()
                 }
             };
 
@@ -277,6 +280,80 @@ public static partial class ChatCompletionsUnifiedMapper
             };
 
         }
+    }
+
+    private static IEnumerable<JsonElement> EnumerateProviderSourceArrays(JsonElement chunk)
+    {
+        if (chunk.TryGetProperty("search_results", out var searchResults)
+            && searchResults.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var source in searchResults.EnumerateArray())
+                yield return source;
+        }
+
+        if (chunk.TryGetProperty("citations", out var topLevelCitations)
+            && topLevelCitations.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var citation in topLevelCitations.EnumerateArray())
+                yield return citation;
+        }
+
+        if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            yield break;
+
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.ValueKind != JsonValueKind.Object
+                || !choice.TryGetProperty("delta", out var delta)
+                || delta.ValueKind != JsonValueKind.Object
+                || !delta.TryGetProperty("citations", out var deltaCitations)
+                || deltaCitations.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            foreach (var citation in deltaCitations.EnumerateArray())
+                yield return citation;
+        }
+    }
+
+    private static bool HasSourceUrlPayload(JsonElement chunk, string providerId)
+    {
+        if (string.Equals(providerId, "jina", StringComparison.OrdinalIgnoreCase)
+            && chunk.TryGetProperty("readURLs", out var readUrls)
+            && readUrls.ValueKind == JsonValueKind.Array)
+        {
+            return true;
+        }
+
+        if (chunk.TryGetProperty("search_results", out var searchResults)
+            && searchResults.ValueKind == JsonValueKind.Array)
+        {
+            return true;
+        }
+
+        if (chunk.TryGetProperty("citations", out var topLevelCitations)
+            && topLevelCitations.ValueKind == JsonValueKind.Array)
+        {
+            return true;
+        }
+
+        if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            return false;
+
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.ValueKind == JsonValueKind.Object
+                && choice.TryGetProperty("delta", out var delta)
+                && delta.ValueKind == JsonValueKind.Object
+                && delta.TryGetProperty("citations", out var deltaCitations)
+                && deltaCitations.ValueKind == JsonValueKind.Array)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static IEnumerable<AIEventEnvelope> MapUiEnvelopes(

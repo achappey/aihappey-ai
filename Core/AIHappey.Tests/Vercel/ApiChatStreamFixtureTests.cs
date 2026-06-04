@@ -28,6 +28,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string NinjaChatSimpleRawFixturePath = "Fixtures/chat-completions/raw/ninjachat-simple-stream.jsonl";
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/chat-completions/raw/openai-web-search-chat-completions.jsonl";
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
+    private const string PixserpWithCitationsRawFixturePath = "Fixtures/chat-completions/raw/pixserp-with-citations-stream.jsonl";
     private const string RelaxAiReasoningRawFixturePath = "Fixtures/chat-completions/raw/relaxai-with-reasoning-stream.jsonl";
     private const string ApekeyRawFixturePath = "Fixtures/chat-completions/raw/apekey-chat-completions-stream.jsonl";
     private const string GitHubProviderId = "github";
@@ -39,6 +40,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string ProviderId = "fixture-provider";
     private const string GroqProviderId = "groq";
     private const string PerplexityProviderId = "perplexity";
+    private const string PixserpProviderId = "pixserp";
     private const string RelaxAiProviderId = "relaxai";
     private const string BraveProviderId = "brave";
     private const string ApekeyProviderId = "apekey";
@@ -968,6 +970,45 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal("medium", providerUsage.GetProperty("search_context_size").GetString());
         Assert.Equal(0.00869m, providerUsage.GetProperty("cost").GetProperty("total_cost").GetDecimal());
         Assert.Equal(0.008m, providerUsage.GetProperty("cost").GetProperty("request_cost").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Pixserp_chat_completions_delta_citations_emit_source_url_events_and_ui_parts()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            PixserpWithCitationsRawFixturePath,
+            PixserpProviderId,
+            "pixserp-fast");
+
+        var sourceEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "source-url")
+            .ToList();
+
+        var sourceEvent = Assert.Single(sourceEvents);
+
+        var firstSource = Assert.IsType<AISourceUrlEventData>(sourceEvent.Event.Data);
+        Assert.Equal("https://www.ad.nl/buitenland/live-oorlog-oekraine-zelensky-na-aanvallen-op-rusland-we-brengen-de-oorlog-terug-naar-waar-die-vandaan-komt~adfb97be/", firstSource.Url);
+        Assert.Equal("LIVE Oorlog Oekraïne | Toetreding van Oekraïne tot EU stap dichterbij nadat Hongarije veto intrekt: ‘Een belangrijke mijlpaal’", firstSource.Title);
+        Assert.Equal("url_citation", firstSource.Type);
+
+        var firstProviderMetadata = Assert.Contains(PixserpProviderId, firstSource.ProviderMetadata ?? []);
+        Assert.Equal("news", Assert.IsType<string>(firstProviderMetadata["kind"]));
+        Assert.Equal("AD.nl", Assert.IsType<string>(firstProviderMetadata["source"]));
+        Assert.Equal("ad.nl", Assert.IsType<string>(firstProviderMetadata["domain"]));
+        Assert.Contains("recordaantal", Assert.IsType<string>(firstProviderMetadata["snippet"]));
+        Assert.True(sourceEvent.Metadata?.ContainsKey("chatcompletions.stream.raw") == true);
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "source-url" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(PixserpProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiParts);
+
+        var sourceUiParts = uiParts.OfType<SourceUIPart>().ToList();
+        Assert.Single(sourceUiParts);
+        Assert.All(sourceUiParts, part => Assert.Equal(firstSource.Url, part.Url));
+        Assert.Equal("finish", uiParts[^1].Type);
     }
 
     [Fact]
