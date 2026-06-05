@@ -1,11 +1,13 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.ChatCompletions.Models;
 using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Responses.Mapping;
+using AIHappey.Unified.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.DeepSeek;
 
@@ -15,7 +17,7 @@ namespace AIHappey.Core.Providers.DeepSeek;
 /// - POST /chat/completions
 /// - GET  /models
 /// </summary>
-public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper _memoryCache)
     : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
@@ -40,7 +42,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
     }
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        => throw new NotImplementedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -56,22 +58,29 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         throw new NotImplementedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    public async Task<Responses.ResponseResult> ResponsesAsync(
+        Responses.ResponseRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+        {
+            yield return part.ToResponseStreamPart();
+        }
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -81,14 +90,38 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         throw new NotImplementedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+         MessagesRequest request,
+         Dictionary<string, string> headers,
+         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await this.GetMessage(_client,
+            request,
+            relativeUrl: "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this.GetMessages(_client,
+            request,
+            relativeUrl: "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }
 

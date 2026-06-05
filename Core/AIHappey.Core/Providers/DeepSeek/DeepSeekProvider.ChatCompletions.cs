@@ -9,20 +9,20 @@ public sealed partial class DeepSeekProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
+        return await this.GetChatCompletion(_client,
              options,
              relativeUrl: "chat/completions",
-             ct: cancellationToken);
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
+        return this.GetChatCompletions(_client,
                     options,
                     relativeUrl: "chat/completions",
-                    ct: cancellationToken);
+                    cancellationToken: cancellationToken);
     }
 }
 

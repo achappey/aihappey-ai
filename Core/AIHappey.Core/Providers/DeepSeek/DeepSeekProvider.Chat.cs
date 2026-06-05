@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Core.AI;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.DeepSeek;
@@ -10,16 +11,16 @@ public sealed partial class DeepSeekProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        // DeepSeek is OpenAI Chat Completions compatible, but WITHOUT the /v1 prefix.
-        // POST https://api.deepseek.com/chat/completions
-        await foreach (var update in _client.CompletionsStreamAsync(
-            chatRequest,
-            url: "chat/completions",
-            cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            yield return update;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
     }
 }
