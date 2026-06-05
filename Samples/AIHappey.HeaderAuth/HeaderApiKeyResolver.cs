@@ -562,7 +562,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["rewindai"] = "X-RewindAI-Key",
             ["pixserp"] = "X-Pixserp-Key",
             ["humeai"] = "X-HumeAI-Key",
-            ["ltx"] = "X-LTX-Key"
+            ["ltx"] = "X-LTX-Key",
+            ["melious"] = "X-Melious-Key"
 
         };
 
