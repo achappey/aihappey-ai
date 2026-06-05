@@ -70,7 +70,15 @@ public static class ModelProviderResponsesChatExtensions
     {
         var headers = chatCompletionOptions.Metadata.GetResponseHeaders(modelProvider.GetIdentifier());
 
-        chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
+        if (chatCompletionOptions.Tools == null)
+        {
+            chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
+            .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+
+            chatCompletionOptions.Tools = chatCompletionOptions.Tools.Any() ? chatCompletionOptions.Tools : null!;
+        }
+        else
+            chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
             .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
         modelProvider.ApplyProviderOptions(chatCompletionOptions.Metadata, chatCompletionOptions.AdditionalProperties ??=
