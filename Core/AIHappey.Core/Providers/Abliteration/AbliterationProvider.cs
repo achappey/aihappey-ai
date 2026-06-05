@@ -6,7 +6,6 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Responses;
 using System.Runtime.CompilerServices;
@@ -60,9 +59,7 @@ public partial class AbliterationProvider : IModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
 
@@ -138,10 +135,9 @@ public partial class AbliterationProvider : IModelProvider
             cancellationToken: cancellationToken);
     }
 
-
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+       => this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
 }
