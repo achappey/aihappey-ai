@@ -6,7 +6,6 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
@@ -61,14 +60,10 @@ public partial class ApiAirforceProvider : IModelProvider
 
     public string GetIdentifier() => "apiairforce";
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-              cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
-
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
