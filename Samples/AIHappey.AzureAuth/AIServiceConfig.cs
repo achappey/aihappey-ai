@@ -234,8 +234,7 @@ public class AIServiceConfig
     public ProviderConfig? AskARC { get; set; }
     public ProviderConfig? Synthetic { get; set; }
     public ProviderConfig? Renderful { get; set; }
-    public ProviderConfig? TigerCity { get; set; }
-    public ProviderConfig? KittenStack { get; set; }
+    public ProviderConfig? TigerCity { get; set; }    
     public ProviderConfig? EdenAI { get; set; }
     public ProviderConfig? WebsearchAPI { get; set; }
     public ProviderConfig? NimbleWay { get; set; }
