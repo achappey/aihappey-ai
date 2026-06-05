@@ -9,6 +9,10 @@ public sealed partial class UpstageProvider
     {
         ApplyAuthHeader();
 
+        options.Store = null;
+        options.ToolChoice = options.Tools.Any() ? options.ToolChoice : null!;
+        options.Tools = options.Tools.Any() ? options.Tools : null!;
+
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
     }
@@ -17,10 +21,14 @@ public sealed partial class UpstageProvider
     {
         ApplyAuthHeader();
 
+        options.Store = null;
+        options.ToolChoice = options.Tools.Any() ? options.ToolChoice : null!;
+        options.Tools = options.Tools.Any() ? options.Tools : null!;
+
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
     }
 
-   
+
 }
 
