@@ -564,7 +564,6 @@ public class StorageBackedModelProviderResolver(
             var maxTokens = models.FirstOrDefault(m => m.MaxTokens != null && m.MaxTokens != 0)?.MaxTokens;
             var created = models.FirstOrDefault(m => m.Created != null)?.Created;
             var tags = models.FirstOrDefault(m => m.Tags?.Any() == true)?.Tags;
-            var description = models.FirstOrDefault(m => !string.IsNullOrEmpty(m.Description))?.Description;
 
             foreach (var model in models)
             {
@@ -572,7 +571,6 @@ public class StorageBackedModelProviderResolver(
                 model.MaxTokens ??= maxTokens;
                 model.Created ??= created;
                 model.Tags ??= tags;
-                model.Description ??= description;
             }
         }
     }
