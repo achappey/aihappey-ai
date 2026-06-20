@@ -353,7 +353,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["inferlink"] = "X-InferLink-Key",
             ["chainhub"] = "X-ChainHub-Key",
             ["ultrasafe"] = "X-UltraSafe-Key",
-            ["llmcloud"] = "X-LLMCloud-Key",
             ["railwail"] = "X-Railwail-Key",
             ["knoxchat"] = "X-KnoxChat-Key",
             ["vlmrun"] = "X-VLMRun-Key",

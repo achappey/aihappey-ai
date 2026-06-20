@@ -350,7 +350,6 @@ using AIHappey.Core.Providers.Zeabur;
 using AIHappey.Core.Providers.InferLink;
 using AIHappey.Core.Providers.ChainHub;
 using AIHappey.Core.Providers.UltraSafe;
-using AIHappey.Core.Providers.LLMCloud;
 using AIHappey.Core.Providers.Railwail;
 using AIHappey.Core.Providers.KnoxChat;
 using AIHappey.Core.Providers.VLMRun;
@@ -935,7 +934,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, InferLinkProvider>();
         services.AddSingleton<IModelProvider, ChainHubProvider>();
         services.AddSingleton<IModelProvider, UltraSafeProvider>();
-        services.AddSingleton<IModelProvider, LLMCloudProvider>();
         services.AddSingleton<IModelProvider, RailwailProvider>();
         services.AddSingleton<IModelProvider, KnoxChatProvider>();
         services.AddSingleton<VLMRunProvider>();

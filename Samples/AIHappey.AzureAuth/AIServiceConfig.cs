@@ -351,7 +351,6 @@ public class AIServiceConfig
     public ProviderConfig? InferLink { get; set; }
     public ProviderConfig? ChainHub { get; set; }
     public ProviderConfig? UltraSafe { get; set; }
-    public ProviderConfig? LLMCloud { get; set; }
     public ProviderConfig? Railwail { get; set; }
     public ProviderConfig? KnoxChat { get; set; }
     public ProviderConfig? VLMRun { get; set; }
