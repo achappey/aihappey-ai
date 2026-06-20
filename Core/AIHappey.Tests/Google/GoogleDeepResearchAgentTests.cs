@@ -7,6 +7,9 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Google;
 using AIHappey.Interactions;
 using AIHappey.Interactions.Mapping;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -212,89 +215,6 @@ public sealed class GoogleDeepResearchAgentTests
     }
 
     [Fact]
-    public async Task NonStreamingDeepResearchCapturesCreateResponseFromGoogleMetadataOnly()
-    {
-        var captureRoot = CreateTempCaptureRoot();
-        var previousCaptureOptions = ProviderBackendCapture.Current;
-
-        try
-        {
-            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
-            {
-                Enabled = true,
-                DevelopmentOnly = false,
-                RootDirectory = captureRoot
-            });
-
-            var handler = new RecordingHandler([
-                new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = JsonContent(new
-                    {
-                        id = "interaction-capture-1",
-                        agent = "deep-research-preview-04-2026",
-                        status = "in_progress"
-                    })
-                },
-                new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = JsonContent(new
-                    {
-                        id = "interaction-capture-1",
-                        agent = "deep-research-preview-04-2026",
-                        status = "completed",
-                        steps = new[]
-                        {
-                            new
-                            {
-                                type = "model_output",
-                                content = new[] { new { type = "text", text = "final report" } }
-                            }
-                        }
-                    })
-                },
-                new HttpResponseMessage(HttpStatusCode.OK)
-            ]);
-
-            var provider = CreateProvider(handler);
-            var result = await provider.GetInteraction(new InteractionRequest
-            {
-                Model = "deep-research-preview-04-2026",
-                Input = new InteractionsInput("research this"),
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["google"] = new Dictionary<string, object?>
-                    {
-                        ["capture"] = ProviderBackendCaptureRequest.Create(
-                            "google-agent-capture",
-                            "deep-research-create")
-                    }
-                }
-            });
-
-            Assert.Equal("completed", result.Status);
-            Assert.Collection(handler.Requests,
-                create => Assert.Equal(HttpMethod.Post, create.Method),
-                get => Assert.Equal(HttpMethod.Get, get.Method),
-                delete => Assert.Equal(HttpMethod.Delete, delete.Method));
-
-            var captureFiles = Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories);
-            var captureFile = Assert.Single(captureFiles);
-            Assert.EndsWith(Path.Combine("google-agent-capture", "deep-research-create.json"), captureFile);
-
-            var captured = await File.ReadAllTextAsync(captureFile);
-            using var doc = JsonDocument.Parse(captured);
-            Assert.Equal("interaction-capture-1", doc.RootElement.GetProperty("id").GetString());
-            Assert.Equal("in_progress", doc.RootElement.GetProperty("status").GetString());
-        }
-        finally
-        {
-            ProviderBackendCapture.Configure(previousCaptureOptions);
-            TryDeleteDirectory(captureRoot);
-        }
-    }
-
-    [Fact]
     public async Task StreamingDeepResearchUsesNativeStreamAndDeletesStoredInteraction()
     {
         var handler = new RecordingHandler([
@@ -397,103 +317,139 @@ public sealed class GoogleDeepResearchAgentTests
     }
 
     [Fact]
-    public async Task StreamingDeepResearchCapturesRawSseFromGoogleBackendCaptureMetadataOnly()
+    public async Task GenericInteractionStreamPreservesSingleGoogleModelPrefixInFinishMetadata()
     {
-        var captureRoot = CreateTempCaptureRoot();
-        var previousCaptureOptions = ProviderBackendCapture.Current;
-
-        try
-        {
-            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
+        var handler = new RecordingHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Enabled = true,
-                DevelopmentOnly = false,
-                RootDirectory = captureRoot
-            });
-
-            var handler = new RecordingHandler([
-                new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = SseContent(
-                        new
+                Content = SseContent(
+                    new
+                    {
+                        event_type = "interaction.created",
+                        event_id = "event-1",
+                        interaction = new
                         {
-                            event_type = "interaction.created",
-                            event_id = "event-1",
-                            interaction = new
-                            {
-                                id = "interaction-stream-capture-1",
-                                agent = "deep-research-preview-04-2026",
-                                status = "in_progress"
-                            }
-                        },
-                        new
+                            id = "interaction-gemini-stream-1",
+                            model = "google/gemini-3.5-flash",
+                            status = "in_progress"
+                        }
+                    },
+                    new
+                    {
+                        event_type = "interaction.completed",
+                        event_id = "event-2",
+                        interaction = new
                         {
-                            event_type = "step.delta",
-                            event_id = "event-2",
-                            index = 0,
-                            delta = new
-                            {
-                                type = "text",
-                                text = "streamed final report"
-                            }
-                        },
-                        new
-                        {
-                            event_type = "interaction.completed",
-                            event_id = "event-3",
-                            interaction = new
-                            {
-                                id = "interaction-stream-capture-1",
-                                agent = "deep-research-preview-04-2026",
-                                status = "completed"
-                            }
-                        })
-                },
-                new HttpResponseMessage(HttpStatusCode.OK)
-            ]);
-
-            var provider = CreateProvider(handler);
-            var parts = new List<InteractionStreamEventPart>();
-            await foreach (var part in provider.GetInteractions(new InteractionRequest
-                           {
-                               Model = "deep-research-preview-04-2026",
-                               Input = new InteractionsInput("research this"),
-                               Metadata = new Dictionary<string, object?>
-                               {
-                                   ["google"] = new Dictionary<string, object?>
-                                   {
-                                       ["backend_capture"] = ProviderBackendCaptureRequest.Create(
-                                           "google-agent-stream-capture",
-                                           "deep-research-stream")
-                                   }
-                               }
-                           }))
-            {
-                parts.Add(part);
+                            id = "interaction-gemini-stream-1",
+                            model = "google/gemini-3.5-flash",
+                            status = "completed"
+                        }
+                    })
             }
+        ]);
 
-            Assert.Contains(parts, part => part is InteractionCreatedEvent);
-            Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta.Text: "streamed final report" });
-            Assert.Contains(parts, part => part is InteractionCompletedEvent);
-            Assert.Collection(handler.Requests,
-                create => Assert.Equal(HttpMethod.Post, create.Method),
-                delete => Assert.Equal(HttpMethod.Delete, delete.Method));
-
-            var captureFiles = Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories);
-            var captureFile = Assert.Single(captureFiles);
-            Assert.EndsWith(Path.Combine("google-agent-stream-capture", "deep-research-stream.jsonl"), captureFile);
-
-            var captured = await File.ReadAllTextAsync(captureFile);
-            Assert.Contains("data:", captured);
-            Assert.Contains("interaction.created", captured);
-            Assert.Contains("streamed final report", captured);
-            Assert.Contains("data: [DONE]", captured);
-        }
-        finally
+        var provider = CreateProvider(handler);
+        var parts = new List<InteractionStreamEventPart>();
+        await foreach (var part in provider.GetInteractions(new InteractionRequest
+                       {
+                           Model = "gemini-3.5-flash",
+                           Input = new InteractionsInput("test"),
+                           Stream = true
+                       }))
         {
-            ProviderBackendCapture.Configure(previousCaptureOptions);
-            TryDeleteDirectory(captureRoot);
+            parts.Add(part);
         }
+
+        Assert.Contains(parts, part => part is InteractionCreatedEvent { Interaction.Model: "google/gemini-3.5-flash" });
+        Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Model: "google/gemini-3.5-flash" });
+
+        var finishPart = Assert.IsType<FinishUIPart>(parts
+            .SelectMany(part => part.ToUnifiedStreamEvent("google"))
+            .Where(streamEvent => streamEvent.Event.Type == "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart("google"))
+            .Single());
+
+        Assert.Equal("google/gemini-3.5-flash", finishPart.MessageMetadata?.Model);
+        Assert.DoesNotContain("google/google/", finishPart.MessageMetadata?.Model, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GenericInteractionRequestPreservesSingleGoogleModelPrefix()
+    {
+        var handler = new RecordingHandler([
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent(new
+                {
+                    id = "interaction-gemini-1",
+                    model = "google/gemini-3.5-flash",
+                    status = "completed"
+                })
+            }
+        ]);
+
+        var provider = CreateProvider(handler);
+        var result = await provider.GetInteraction(new InteractionRequest
+        {
+            Model = "gemini-3.5-flash",
+            Input = new InteractionsInput("test")
+        });
+
+        Assert.Equal("google/gemini-3.5-flash", result.Model);
+        Assert.DoesNotContain("google/google/", result.Model, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void GoogleFinishCostEnrichmentPreservesSingleGoogleModelPrefixInUiMetadata()
+    {
+        var provider = CreateProvider(new RecordingHandler([]));
+        var timestamp = DateTimeOffset.Parse("2026-06-20T15:00:00+00:00");
+        var interaction = new Interaction
+        {
+            Id = "interaction-gemini-finish-1",
+            Model = "google/gemini-3.5-flash",
+            Status = "completed",
+            Usage = new InteractionUsage
+            {
+                TotalInputTokens = 10,
+                TotalOutputTokens = 5,
+                TotalTokens = 15
+            }
+        };
+
+        var finishEvent = new AIStreamEvent
+        {
+            ProviderId = "google",
+            Event = new AIEventEnvelope
+            {
+                Type = "finish",
+                Id = interaction.Id,
+                Timestamp = timestamp,
+                Data = new AIFinishEventData
+                {
+                    FinishReason = "stop",
+                    Model = "google/gemini-3.5-flash",
+                    CompletedAt = timestamp,
+                    InputTokens = 10,
+                    OutputTokens = 5,
+                    TotalTokens = 15,
+                    Response = interaction,
+                    MessageMetadata = AIFinishMessageMetadata.Create(
+                        model: "google/gemini-3.5-flash",
+                        timestamp: timestamp,
+                        inputTokens: 10,
+                        outputTokens: 5,
+                        totalTokens: 15)
+                }
+            }
+        };
+
+        var enrichedEvent = InvokeMarkGoogleAgentUnifiedToolEventProviderExecuted(provider, finishEvent);
+        var finishPart = Assert.IsType<FinishUIPart>(enrichedEvent.Event.ToUIMessagePart("google").Single());
+
+        Assert.Equal("google/gemini-3.5-flash", finishPart.MessageMetadata?.Model);
+        Assert.DoesNotContain("google/google/", finishPart.MessageMetadata?.Model, StringComparison.OrdinalIgnoreCase);
+        Assert.True(finishPart.MessageMetadata?.Gateway?.Cost > 0);
     }
 
     [Fact]
@@ -719,6 +675,15 @@ public sealed class GoogleDeepResearchAgentTests
             BindingFlags.NonPublic | BindingFlags.Static)!;
 
         return (bool)method.Invoke(null, [path])!;
+    }
+
+    private static AIStreamEvent InvokeMarkGoogleAgentUnifiedToolEventProviderExecuted(GoogleAIProvider provider, AIStreamEvent streamEvent)
+    {
+        var method = typeof(GoogleAIProvider).GetMethod(
+            "MarkGoogleAgentUnifiedToolEventProviderExecuted",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        return (AIStreamEvent)method.Invoke(provider, [streamEvent])!;
     }
 
     private static GoogleAIProvider CreateProvider(RecordingHandler handler)

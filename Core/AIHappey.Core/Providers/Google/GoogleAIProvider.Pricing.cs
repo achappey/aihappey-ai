@@ -191,9 +191,9 @@ public partial class GoogleAIProvider
             FinishReason = finishData.FinishReason,
             MessageMetadata = AIFinishMessageMetadata.FromDictionary(
                 finishMetadata,
-                fallbackModel: finishData.Model ?? interaction.Model ?? interaction.Agent,
+                fallbackModel: NormalizeGoogleProviderModelId(finishData.Model ?? interaction.Model ?? interaction.Agent),
                 fallbackTimestamp: DateTimeOffset.UtcNow),
-            Model = finishData.Model?.ToModelId("google"),
+            Model = NormalizeGoogleProviderModelId(finishData.Model ?? interaction.Model ?? interaction.Agent),
             CompletedAt = finishData.CompletedAt,
             InputTokens = finishData.InputTokens,
             OutputTokens = finishData.OutputTokens,
@@ -245,5 +245,16 @@ public partial class GoogleAIProvider
         {
             return false;
         }
+    }
+
+    private static string? NormalizeGoogleProviderModelId(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return model;
+
+        const string providerPrefix = "google/";
+        return model.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)
+            ? model
+            : model.ToModelId(providerPrefix.TrimEnd('/'));
     }
 }

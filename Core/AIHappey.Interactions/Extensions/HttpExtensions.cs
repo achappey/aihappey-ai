@@ -46,7 +46,7 @@ public static class HttpExtensions
         var result = JsonSerializer.Deserialize<Interaction>(body)
             ?? throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
 
-        result.Model = $"{providerId}/{result.Model}";
+        NormalizeInteractionModel(result, providerId);
         return result;
     }
 
@@ -113,12 +113,12 @@ public static class HttpExtensions
 
             if (evt is InteractionCompletedEvent interactionCompleteEvent)
             {
-                interactionCompleteEvent.Interaction?.Model = $"{providerId}/{interactionCompleteEvent.Interaction?.Model}";
+                NormalizeInteractionModel(interactionCompleteEvent.Interaction, providerId);
             }
 
             if (evt is InteractionCreatedEvent interactionStartEvent)
             {
-                interactionStartEvent.Interaction?.Model = $"{providerId}/{interactionStartEvent.Interaction?.Model}";
+                NormalizeInteractionModel(interactionStartEvent.Interaction, providerId);
             }
 
             if (evt is not null)
@@ -132,6 +132,25 @@ public static class HttpExtensions
 
         var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct);
         throw new HttpRequestException($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
+    }
+
+    private static void NormalizeInteractionModel(Interaction? interaction, string providerId)
+    {
+        if (interaction is null || string.IsNullOrWhiteSpace(interaction.Model))
+            return;
+
+        interaction.Model = EnsureProviderScopedModel(interaction.Model, providerId);
+    }
+
+    private static string EnsureProviderScopedModel(string model, string providerId)
+    {
+        if (string.IsNullOrWhiteSpace(model) || string.IsNullOrWhiteSpace(providerId))
+            return model;
+
+        var normalizedProviderPrefix = $"{providerId}/";
+        return model.StartsWith(normalizedProviderPrefix, StringComparison.OrdinalIgnoreCase)
+            ? model
+            : $"{providerId}/{model}";
     }
 
 }
