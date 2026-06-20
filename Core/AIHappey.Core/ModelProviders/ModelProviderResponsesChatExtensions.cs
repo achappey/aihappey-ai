@@ -48,6 +48,7 @@ public static class ModelProviderResponsesChatExtensions
                 [], [.. exclude ?? [], "tools", "headers"]);
 
         responseRequest.Metadata = null;
+        responseRequest.AdditionalProperties.Remove("providerMetadata");
 
         return headers;
     }
