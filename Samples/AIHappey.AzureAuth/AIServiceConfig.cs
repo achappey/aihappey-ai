@@ -415,8 +415,7 @@ public class AIServiceConfig
     public ProviderConfig? Fortytwo { get; set; }
     public ProviderConfig? Oraicle { get; set; }
     public ProviderConfig? Foureverland { get; set; }
-    public ProviderConfig? DistributeAI { get; set; }
-    public ProviderConfig? WesenAI { get; set; }
+    public ProviderConfig? DistributeAI { get; set; }   
     public ProviderConfig? Key4U { get; set; }
     public ProviderConfig? FiveDock { get; set; }
     public ProviderConfig? Magisterium { get; set; }
