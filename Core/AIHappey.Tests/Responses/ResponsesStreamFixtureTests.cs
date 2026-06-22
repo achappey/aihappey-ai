@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Responses.Extensions;
 using AIHappey.Core.AI;
@@ -12,6 +13,7 @@ using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 using AIHappey.Responses;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Responses;
 
@@ -26,6 +28,7 @@ public sealed class ResponsesStreamFixtureTests
     private const string CodeInterpreterOutputFileRawFixturePath = "Fixtures/responses/raw/xai-with-code_interpreter-output-file-stream.jsonl";
     private const string PerplexityFinancialSearchRawFixturePath = "Fixtures/responses/raw/perplexity-with-financial-search.jsonl";
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/responses/raw/openai-with-websearch-stream.jsonl";
+    private const string OpenAiImageResultsRawFixturePath = "Fixtures/responses/raw/openai-with-image-results-streaming.jsonl";
 
     [Fact]
     public void Typed_and_raw_responses_fixtures_produce_the_same_stream_part_types()
@@ -551,6 +554,75 @@ public sealed class ResponsesStreamFixtureTests
     }
 
     [Fact]
+    public async Task OpenAI_web_search_image_results_streaming_emit_download_file_outputs_and_ui_file_parts()
+    {
+        const string providerId = "openai";
+        const string fullImageUrl = "https://www.dlubal.com/zh/webimage/061526/5139458/pexels-architecture-1868265_1920.jpg?hash=3cf2d60d514510773640ae0ec09f56e52e64b4f2&mw=760";
+        var imageBytes = Encoding.UTF8.GetBytes("openai-image-result-bytes");
+        var downloadCount = 0;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.RequestUri?.AbsolutePath == "/v1/responses")
+            {
+                return CreateStreamingResponse(File.ReadAllText(FixtureFileLoader.ResolveFixturePath(OpenAiImageResultsRawFixturePath)));
+            }
+
+            if (request.RequestUri?.AbsoluteUri == fullImageUrl)
+            {
+                downloadCount++;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(imageBytes)
+                    {
+                        Headers = { ContentType = new MediaTypeHeaderValue("image/jpeg") }
+                    }
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("not found")
+            };
+        });
+        var provider = CreateOpenAIProvider(handler);
+        var responseParts = await FixtureAssertions.CollectAsync(provider.ResponsesStreamingAsync(new ResponseRequest
+        {
+            Model = "gpt-test",
+            Stream = true
+        }));
+
+        Assert.Equal(1, downloadCount);
+
+        var unifiedEvents = responseParts
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .ToList();
+
+        var downloadToolOutput = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
+            .Select(streamEvent => Assert.IsType<AIToolOutputAvailableEventData>(streamEvent.Event.Data))
+            .Single(data => data.ProviderMetadata?.TryGetValue(providerId, out var metadata) == true
+                            && string.Equals(metadata["type"]?.ToString(), "web_search_image_result", StringComparison.Ordinal));
+
+        Assert.True(downloadToolOutput.ProviderExecuted);
+        Assert.Equal("download_file", downloadToolOutput.ToolName);
+
+        var output = JsonSerializer.SerializeToElement(downloadToolOutput.Output, JsonSerializerOptions.Web);
+        var structuredContent = output.GetProperty("structuredContent");
+        Assert.Equal("image/jpeg", structuredContent.GetProperty("media_type").GetString());
+        Assert.StartsWith("data:image/jpeg;base64,", structuredContent.GetProperty("data_url").GetString(), StringComparison.Ordinal);
+        Assert.Equal(fullImageUrl, structuredContent.GetProperty("url").GetString());
+
+        var filePart = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(providerId))
+            .OfType<FileUIPart>()
+            .Single();
+
+        Assert.Equal("image/jpeg", filePart.MediaType);
+        Assert.StartsWith("data:image/jpeg;base64,", filePart.Url, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Responses_sse_parser_accumulates_multiline_data_blocks_before_deserializing()
     {
         const string providerId = "openai";
@@ -630,6 +702,28 @@ public sealed class ResponsesStreamFixtureTests
             "data: [DONE]",
             string.Empty
         ]);
+
+    private static OpenAIProvider CreateOpenAIProvider(HttpMessageHandler handler)
+        => new(
+            new StaticApiKeyResolver(),
+            new StaticHttpClientFactory(new HttpClient(handler)),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new NullEndUserIdResolver());
+
+    private sealed class StaticApiKeyResolver : IApiKeyResolver
+    {
+        public string? Resolve(string provider) => "test-key";
+    }
+
+    private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => httpClient;
+    }
+
+    private sealed class NullEndUserIdResolver : IEndUserIdResolver
+    {
+        public string? Resolve(ChatRequest chatRequest) => null;
+    }
 
     private sealed class StaticResponseHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
     {

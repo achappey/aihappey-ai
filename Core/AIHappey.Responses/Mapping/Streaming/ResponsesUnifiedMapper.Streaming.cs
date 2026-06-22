@@ -1124,6 +1124,7 @@ public static partial class ResponsesUnifiedMapper
                                 JsonElement? queries = null;
                                 JsonElement? query = null;
                                 JsonElement? sources = null;
+                                JsonElement? results = null;
                                 JsonElement? url = null;
                                 JsonElement? pattern = null;
 
@@ -1137,6 +1138,9 @@ public static partial class ResponsesUnifiedMapper
 
                                     if (act.TryGetProperty("sources", out var s))
                                         sources = s;
+
+                                    if (done.Item.AdditionalProperties?.TryGetValue("results", out var r) == true)
+                                        results = r.Clone();
                                 }
                                 else if (actionType == "open_page")
                                 {
@@ -1181,6 +1185,12 @@ public static partial class ResponsesUnifiedMapper
                                     {
                                         ["sources"] = sources.Value
                                     };
+                                }
+
+                                if (results is not null)
+                                {
+                                    outputContent ??= [];
+                                    outputContent["results"] = results.Value;
                                 }
 
                                 yield return CreateToolOutputEnvelope(

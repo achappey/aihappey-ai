@@ -2,6 +2,7 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -236,6 +237,14 @@ public partial class OpenAIProvider
 
             if (enrichedItems.Count > 0)
                 enrichedOutput.AddRange(enrichedItems);
+
+            var imageResultDownloads = await CreateWebSearchImageResultArtifactsAsync(
+                outputItem,
+                seenCitations,
+                cancellationToken);
+
+            foreach (var download in imageResultDownloads)
+                AddDownloadArtifacts(enrichedOutput, download);
         }
 
         if (seenCitations.Count == 0
@@ -280,6 +289,23 @@ public partial class OpenAIProvider
                 generatedImageUpload.Input,
                 CreateGeneratedImageUploadToolCallResult(generatedImageUpload),
                 generatedImageUpload.ProviderMetadata);
+        }
+
+        var imageResultDownloads = await TryDownloadWebSearchImageResultsAsync(
+            update,
+            state.SeenCitationKeys,
+            cancellationToken);
+
+        foreach (var imageResultDownload in imageResultDownloads)
+        {
+            AddSyntheticCustomToolCallParts(
+                parts,
+                state,
+                imageResultDownload.ToolCallId,
+                DownloadFileToolName,
+                imageResultDownload.Input,
+                CreateDownloadToolCallResult(imageResultDownload),
+                imageResultDownload.ProviderMetadata);
         }
 
         if (update is ResponseCompleted
@@ -600,6 +626,313 @@ public partial class OpenAIProvider
             return [];
         }
     }
+
+    private async Task<List<OpenAiContainerCitationDownload>> CreateWebSearchImageResultArtifactsAsync(
+        object outputItem,
+        HashSet<string> seenCitations,
+        CancellationToken cancellationToken)
+    {
+        var map = TryGetJsonElementMap(outputItem);
+        if (map is null)
+            return [];
+
+        return await TryDownloadWebSearchImageResultsAsync(
+            itemType: map.TryGetString("type"),
+            itemStatus: map.TryGetString("status"),
+            itemId: map.TryGetString("id") ?? string.Empty,
+            outputIndex: null,
+            additionalProperties: map,
+            seenCitations: seenCitations,
+            cancellationToken: cancellationToken);
+    }
+
+    private Task<List<OpenAiContainerCitationDownload>> TryDownloadWebSearchImageResultsAsync(
+        ResponseStreamPart update,
+        HashSet<string> seenCitations,
+        CancellationToken cancellationToken)
+    {
+        if (update is not ResponseOutputItemDone done)
+            return Task.FromResult<List<OpenAiContainerCitationDownload>>([]);
+
+        return TryDownloadWebSearchImageResultsAsync(
+            itemType: done.Item.Type,
+            itemStatus: done.Item.Status,
+            itemId: done.Item.Id ?? string.Empty,
+            outputIndex: done.OutputIndex,
+            additionalProperties: done.Item.AdditionalProperties,
+            seenCitations: seenCitations,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task<List<OpenAiContainerCitationDownload>> TryDownloadWebSearchImageResultsAsync(
+        string? itemType,
+        string? itemStatus,
+        string itemId,
+        int? outputIndex,
+        Dictionary<string, JsonElement>? additionalProperties,
+        HashSet<string> seenCitations,
+        CancellationToken cancellationToken)
+    {
+        if (!string.Equals(itemType, "web_search_call", StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(itemStatus, "completed", StringComparison.OrdinalIgnoreCase)
+            || additionalProperties?.TryGetValue("results", out var results) != true
+            || results.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var downloads = new List<OpenAiContainerCitationDownload>();
+        var imageIndex = 0;
+
+        foreach (var result in results.EnumerateArray())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (result.ValueKind != JsonValueKind.Object
+                || !string.Equals(result.TryGetString("type"), "image_result", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var download = await TryDownloadWebSearchImageResultAsync(
+                itemId,
+                outputIndex,
+                imageIndex,
+                result,
+                seenCitations,
+                cancellationToken);
+
+            if (download is not null)
+                downloads.Add(download);
+
+            imageIndex++;
+        }
+
+        return downloads;
+    }
+
+    private async Task<OpenAiContainerCitationDownload?> TryDownloadWebSearchImageResultAsync(
+        string itemId,
+        int? outputIndex,
+        int imageIndex,
+        JsonElement imageResult,
+        HashSet<string> seenCitations,
+        CancellationToken cancellationToken)
+    {
+        var imageUrl = imageResult.TryGetString("image_url");
+        var thumbnailUrl = imageResult.TryGetString("thumbnail_url");
+        var sourceWebsiteUrl = imageResult.TryGetString("source_website_url");
+        var caption = imageResult.TryGetString("caption");
+
+        var primaryUrl = IsHttpUrl(imageUrl) ? imageUrl : null;
+        var fallbackUrl = IsHttpUrl(thumbnailUrl) ? thumbnailUrl : null;
+        if (string.IsNullOrWhiteSpace(primaryUrl) && string.IsNullOrWhiteSpace(fallbackUrl))
+            return null;
+
+        var citationKey = $"web_search_image:{itemId}:{primaryUrl ?? fallbackUrl}";
+        if (!seenCitations.Add(citationKey))
+            return null;
+
+        var downloaded = await TryDownloadImageResultBytesAsync(primaryUrl, fallbackUrl, cancellationToken);
+        if (downloaded is null)
+            return null;
+
+        var mediaType = downloaded.MediaType;
+        var filename = BuildWebSearchImageResultFilename(itemId, imageIndex, caption, mediaType, downloaded.Url);
+        var fileId = $"{(string.IsNullOrWhiteSpace(itemId) ? "web_search" : itemId)}_image_{imageIndex}";
+        var rawData = ToJsonElementMap(imageResult);
+
+        var providerMetadata = new Dictionary<string, Dictionary<string, object>>
+        {
+            [GetIdentifier()] = BuildWebSearchImageResultMetadata(
+                rawData,
+                itemId,
+                outputIndex,
+                imageIndex,
+                fileId,
+                filename,
+                mediaType,
+                downloaded.Url,
+                primaryUrl,
+                fallbackUrl,
+                sourceWebsiteUrl,
+                caption)
+        };
+
+        return new OpenAiContainerCitationDownload
+        {
+            ToolCallId = Guid.NewGuid().ToString("n"),
+            FileId = fileId,
+            Filename = filename,
+            CanonicalUrl = downloaded.Url,
+            MediaType = mediaType,
+            Bytes = downloaded.Bytes,
+            DataUrl = ToDataUrl(downloaded.Bytes, mediaType),
+            ProviderMetadata = providerMetadata,
+            Input = JsonSerializer.SerializeToElement(new
+            {
+                source_item_id = itemId,
+                output_index = outputIndex,
+                result_index = imageIndex,
+                image_url = primaryUrl,
+                thumbnail_url = fallbackUrl,
+                source_website_url = sourceWebsiteUrl,
+                caption,
+                file_name = filename,
+                file_type = mediaType,
+                url = downloaded.Url
+            }, JsonSerializerOptions.Web)
+        };
+    }
+
+    private async Task<OpenAiDownloadedWebSearchImage?> TryDownloadImageResultBytesAsync(
+        string? primaryUrl,
+        string? fallbackUrl,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(primaryUrl)
+            && await TryDownloadImageBytesAsync(primaryUrl, cancellationToken) is { } primaryDownload)
+        {
+            return primaryDownload;
+        }
+
+        if (!string.IsNullOrWhiteSpace(fallbackUrl)
+            && !string.Equals(primaryUrl, fallbackUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            return await TryDownloadImageBytesAsync(fallbackUrl, cancellationToken);
+        }
+
+        return null;
+    }
+
+    private async Task<OpenAiDownloadedWebSearchImage?> TryDownloadImageBytesAsync(
+        string url,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (bytes.Length == 0)
+                return null;
+
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            if (string.IsNullOrWhiteSpace(mediaType) || !mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                mediaType = GuessImageMediaType(url) ?? MediaTypeNames.Image.Png;
+
+            return new OpenAiDownloadedWebSearchImage(url, mediaType, bytes);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static Dictionary<string, object> BuildWebSearchImageResultMetadata(
+        Dictionary<string, JsonElement> rawData,
+        string itemId,
+        int? outputIndex,
+        int imageIndex,
+        string fileId,
+        string filename,
+        string mediaType,
+        string downloadedUrl,
+        string? imageUrl,
+        string? thumbnailUrl,
+        string? sourceWebsiteUrl,
+        string? caption)
+        => new()
+        {
+            ["type"] = "web_search_image_result",
+            ["tool_name"] = DownloadFileToolName,
+            ["name"] = DownloadFileToolName,
+            ["download_tool"] = true,
+            ["source_item_id"] = itemId,
+            ["output_index"] = outputIndex ?? -1,
+            ["result_index"] = imageIndex,
+            ["file_id"] = fileId,
+            ["filename"] = filename,
+            ["media_type"] = mediaType,
+            ["downloaded_url"] = downloadedUrl,
+            ["image_url"] = imageUrl ?? string.Empty,
+            ["thumbnail_url"] = thumbnailUrl ?? string.Empty,
+            ["source_website_url"] = sourceWebsiteUrl ?? string.Empty,
+            ["caption"] = caption ?? string.Empty,
+            ["raw"] = JsonSerializer.SerializeToElement(rawData, JsonSerializerOptions.Web)
+        };
+
+    private static string BuildWebSearchImageResultFilename(
+        string itemId,
+        int imageIndex,
+        string? caption,
+        string mediaType,
+        string url)
+    {
+        var baseName = string.IsNullOrWhiteSpace(caption)
+            ? string.IsNullOrWhiteSpace(itemId) ? "openai-web-search-image" : itemId
+            : caption;
+
+        var safeName = string.Concat(baseName.Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')).Trim('-');
+        if (string.IsNullOrWhiteSpace(safeName))
+            safeName = "openai-web-search-image";
+
+        if (safeName.Length > 80)
+            safeName = safeName[..80].Trim('-');
+
+        return $"{safeName}-{imageIndex + 1}{GuessImageExtension(mediaType, url)}";
+    }
+
+    private static string GuessImageExtension(string? mediaType, string? url)
+    {
+        var normalized = mediaType?.Split(';', 2)[0].Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            MediaTypeNames.Image.Jpeg or "image/jpg" => ".jpg",
+            MediaTypeNames.Image.Png => ".png",
+            MediaTypeNames.Image.Gif => ".gif",
+            "image/webp" => ".webp",
+            "image/svg+xml" => ".svg",
+            _ => GuessImageExtensionFromUrl(url) ?? ".png"
+        };
+    }
+
+    private static string? GuessImageMediaType(string? url)
+    {
+        var extension = GuessImageExtensionFromUrl(url);
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => MediaTypeNames.Image.Jpeg,
+            ".png" => MediaTypeNames.Image.Png,
+            ".gif" => MediaTypeNames.Image.Gif,
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            _ => null
+        };
+    }
+
+    private static string? GuessImageExtensionFromUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return null;
+
+        var extension = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
+        return extension is ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" or ".svg"
+            ? extension
+            : null;
+    }
+
+    private static bool IsHttpUrl(string? url)
+        => !string.IsNullOrWhiteSpace(url)
+           && Uri.TryCreate(url, UriKind.Absolute, out var uri)
+           && uri.Scheme is "http" or "https";
 
     private async Task<OpenAiContainerCitationDownload?> TryDownloadContainerFileAsync(
         string containerId,
@@ -1048,6 +1381,11 @@ public partial class OpenAIProvider
         string Path,
         int Bytes,
         JsonElement Raw);
+
+    private sealed record OpenAiDownloadedWebSearchImage(
+        string Url,
+        string MediaType,
+        byte[] Bytes);
 
     private sealed class OpenAiContainerFilesListResponse
     {
