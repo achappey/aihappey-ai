@@ -42,7 +42,6 @@ using AIHappey.Core.Providers.Azure;
 using AIHappey.Core.Providers.Async;
 using Microsoft.Extensions.DependencyInjection;
 using AIHappey.Core.Providers.VoyageAI;
-using AIHappey.Core.Providers.ContextualAI;
 using AIHappey.Core.Providers.Sarvam;
 using AIHappey.Core.Providers.MiniMax;
 using AIHappey.Core.Providers.AssemblyAI;
@@ -625,7 +624,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<AzureProvider>());
         services.AddSingleton<IModelProvider, AsyncProvider>();
         services.AddSingleton<IModelProvider, VoyageAIProvider>();
-        services.AddSingleton<IModelProvider, ContextualAIProvider>();
         services.AddSingleton<IModelProvider, SarvamProvider>();
         services.AddSingleton<IModelProvider, MiniMaxProvider>();
         services.AddSingleton<IModelProvider, AssemblyAIProvider>();
