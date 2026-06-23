@@ -557,6 +557,7 @@ using AIHappey.Core.Providers.RewindAI;
 using AIHappey.Core.Providers.Pixserp;
 using AIHappey.Core.Providers.HumeAI;
 using AIHappey.Core.Providers.Melious;
+using AIHappey.Core.Providers.LucidQuery;
 
 namespace AIHappey.Core.AI;
 
@@ -1140,6 +1141,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HumeAIProvider>();
         services.AddSingleton<IModelProvider, LXG2ITProvider>();
         services.AddSingleton<IModelProvider, MeliousProvider>();
+        services.AddSingleton<IModelProvider, LucidQueryProvider>();
         
 
     }

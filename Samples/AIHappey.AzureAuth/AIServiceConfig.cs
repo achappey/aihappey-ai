@@ -558,6 +558,7 @@ public class AIServiceConfig
     public ProviderConfig? HumeAI { get; set; }
     public ProviderConfig? LTX { get; set; }
     public ProviderConfig? Melious { get; set; }
+    public ProviderConfig? LucidQuery { get; set; }
     
 
 }

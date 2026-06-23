@@ -44,7 +44,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["async"] = "X-Async-Key",
             ["replicate"] = "X-Replicate-Key",
             ["baseten"] = "X-Baseten-Key",
-            ["speechify"] = "X-Speechify-Key",         
+            ["speechify"] = "X-Speechify-Key",
             ["sarvam"] = "X-Sarvam-Key",
             ["voyageai"] = "X-VoyageAI-Key",
             ["minimax"] = "X-MiniMax-Key",
@@ -234,7 +234,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["askarc"] = "X-AskARC-Key",
             ["synthetic"] = "X-Synthetic-Key",
             ["renderful"] = "X-Renderful-Key",
-            ["tigercity"] = "X-TigerCity-Key",          
+            ["tigercity"] = "X-TigerCity-Key",
             ["edenai"] = "X-EdenAI-Key",
             ["websearchapi"] = "X-WebsearchAPI-Key",
             ["nimbleway"] = "X-NimbleWay-Key",
@@ -416,7 +416,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["fortytwo"] = "X-Fortytwo-Key",
             ["oraicle"] = "X-Oraicle-Key",
             ["foureverland"] = "X-Foureverland-Key",
-            ["distributeai"] = "X-DistributeAI-Key",           
+            ["distributeai"] = "X-DistributeAI-Key",
             ["key4u"] = "X-Key4U-Key",
             ["fivedock"] = "X-FiveDock-Key",
             ["magisterium"] = "X-Magisterium-Key",
@@ -559,7 +559,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["pixserp"] = "X-Pixserp-Key",
             ["humeai"] = "X-HumeAI-Key",
             ["ltx"] = "X-LTX-Key",
-            ["melious"] = "X-Melious-Key"
+            ["melious"] = "X-Melious-Key",
+            ["lucidquery"] = "X-LucidQuery-Key"
 
         };
 
