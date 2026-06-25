@@ -185,7 +185,6 @@ public class AIServiceConfig
     public ProviderConfig? Routeway { get; set; }
     public ProviderConfig? Tetrate { get; set; }
     public ProviderConfig? Clod { get; set; }
-    public ProviderConfig? GitHub { get; set; }
     public ProviderConfig? WAI { get; set; }
     public ProviderConfig? Venice { get; set; }
     public ProviderConfig? QuiverAI { get; set; }

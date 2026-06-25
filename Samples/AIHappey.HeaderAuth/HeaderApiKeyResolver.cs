@@ -187,7 +187,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["routeway"] = "X-Routeway-Key",
             ["tetrate"] = "X-Tetrate-Key",
             ["clod"] = "X-Clod-Key",
-            ["github"] = "X-GitHub-Key",
             ["wai"] = "X-WAI-Key",
             ["venice"] = "X-Venice-Key",
             ["quiverai"] = "X-QuiverAI-Key",
