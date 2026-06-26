@@ -4,8 +4,6 @@ public class ModelListingStorageOptions
 {
     public string? ConnectionString { get; set; }
 
-    public bool DisableModelDiscovery { get; set; } = false;
-
     public string BlobContainerName { get; set; } = "model-listings";
 
     public string? QueueName { get; set; }
