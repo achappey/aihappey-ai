@@ -18,6 +18,7 @@ using AIHappey.Core.Providers.Databricks;
 using AIHappey.Core.Providers.Modal;
 using AIHappey.Core.Storage;
 using Microsoft.Extensions.Caching.Memory;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -109,6 +110,17 @@ builder.Services.AddSingleton<IMicrosoftGraphTokenResolver, AzureAdMicrosoftGrap
 builder.Services.AddScoped<IMcpResponsesTelemetryHandler, AzureAuthMcpResponsesTelemetryHandler>();
 builder.Services.AddProviders();
 
+var appInsightsConnectionString =
+    builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
+{
+    builder.Services.AddOpenTelemetry()
+        .UseAzureMonitor(options =>
+        {
+            options.ConnectionString = appInsightsConnectionString;
+        });
+}
 var modelListingStorage = builder.Configuration.GetSection("ModelListingStorage").Get<ModelListingStorageOptions>();
 if (!string.IsNullOrWhiteSpace(modelListingStorage?.ConnectionString))
 {

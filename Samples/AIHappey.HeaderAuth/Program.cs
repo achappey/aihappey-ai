@@ -9,6 +9,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Orchestration;
 using AIHappey.Core.Models;
 using AIHappey.Core.Storage;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,18 @@ builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();
 builder.Services.AddProviders();
 builder.Services.AddHttpClient();
+
+var appInsightsConnectionString =
+    builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
+{
+    builder.Services.AddOpenTelemetry()
+        .UseAzureMonitor(options =>
+        {
+            options.ConnectionString = appInsightsConnectionString;
+        });
+}
 
 var headerModelListingStorage = builder.Configuration.GetSection("ModelListingStorage").Get<ModelListingStorageOptions>();
 if (!string.IsNullOrWhiteSpace(headerModelListingStorage?.ConnectionString))
