@@ -26,22 +26,6 @@
       "description": "An intelligent creation agent built for working people and creators. It goes beyond traditional engineering-style assembly tools—supporting one-click generation of slides or posters from natural language instructions. By natively integrating content generation with layout aesthetics and design conventions, it helps you quickly produce polished, professional-grade materials while lowering design barriers and boosting creative efficiency."
     },
     {
-      "id": "zai/glm-5v-turbo",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-5v-turbo",
-      "type": "language",
-      "description": "A multimodal agent foundation model with native integration of vision and language capabilities. It delivers elegant visual programming, while excelling in long-term planning, complex programming, and action execution."
-    },
-    {
-      "id": "zai/glm-4.6v",
-      "object": "model",
-      "owned_by": "z.ai",
-      "name": "glm-4.6v",
-      "type": "language",
-      "description": "Z.ai’s multimodal model with a 128k training context window and SoTA visual understanding. It also introduces native Function Calling, linking visual perception with executable actions for real-world multimodal agents."
-    },
-    {
       "id": "zai/glm-5.1",
       "object": "model",
       "owned_by": "z.ai",
