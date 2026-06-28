@@ -42,18 +42,9 @@ public partial class GreenPTProvider : IModelProvider
 
     public string GetIdentifier() => nameof(GreenPT).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        if (chatRequest.GetModel()?.StartsWith("green-s", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            throw new NotImplementedException();
-        }
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+       => throw new NotSupportedException();
 
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-             cancellationToken);
-
-        return result.ToSamplingResult();
-    }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
