@@ -50,6 +50,13 @@
       "description": "Z.ai's new flagship foundation model with significant gains on long-horizon tasks, support for 8-hour autonomous work, engineering-grade deliverables, and Claude Opus 4.6-level performance."
     },
     {
+      "id": "zai/glm-5.2",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-5.2",
+      "type": "language"
+    },
+    {
       "id": "zai/glm-5.1",
       "object": "model",
       "owned_by": "z.ai",
