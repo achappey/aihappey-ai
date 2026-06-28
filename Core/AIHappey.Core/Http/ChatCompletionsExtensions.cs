@@ -87,7 +87,7 @@ public static class ChatCompletionsExtensions
         ProviderBackendCaptureRequest? capture = null,
         IReadOnlyDictionary<string, string>? headers = null,
         CancellationToken ct = default)
-        => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), providerId, relativeUrl, capture, headers, ct);
+        => await client.GetChatCompletion(BuildPayload(options, providerId, extraRootProperties), providerId, relativeUrl, capture, headers, ct);
 
     /// <summary>
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
@@ -115,7 +115,7 @@ public static class ChatCompletionsExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = BuildPayload(options, extraRootProperties);
+        var payload = BuildPayload(options, providerId, extraRootProperties);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -212,7 +212,7 @@ public static class ChatCompletionsExtensions
             CancellationToken ct = default,
             JsonElement? extraRootProperties = null,
             ProviderBackendCaptureRequest? capture = null)
-            => await client.GetChatCompletion(BuildPayload(options, extraRootProperties), relativeUrl, ct, capture);
+            => await client.GetChatCompletion(BuildPayload(options, null, extraRootProperties), relativeUrl, ct, capture);
 
     [Obsolete]
     /// <summary>
@@ -238,7 +238,7 @@ public static class ChatCompletionsExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = BuildPayload(options, extraRootProperties);
+        var payload = BuildPayload(options, null, extraRootProperties);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -291,31 +291,106 @@ public static class ChatCompletionsExtensions
         throw new HttpRequestException($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
     }
 
-    private static JsonElement BuildPayload(ChatCompletionOptions options, JsonElement? extraRootProperties)
+    private static JsonElement BuildPayload(
+        ChatCompletionOptions options,
+        string? providerId,
+        JsonElement? extraRootProperties,
+        bool? stream = null)
     {
         var payload = JsonSerializer.SerializeToElement(options, Json);
 
-        if (extraRootProperties is not JsonElement extra)
-            return payload;
-
-        if (extra.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return payload;
-
-        if (extra.ValueKind != JsonValueKind.Object)
-            throw new InvalidOperationException("Extra chat-completions root properties must be a JSON object.");
+        if (payload.ValueKind != JsonValueKind.Object)
+            throw new InvalidOperationException("Chat-completions payload must be a JSON object.");
 
         var merged = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
 
+        // Always normalize through a dictionary.
+        // This collapses duplicate keys caused by JsonExtensionData.
         foreach (var property in payload.EnumerateObject())
             merged[property.Name] = property.Value.Clone();
 
-        foreach (var property in extra.EnumerateObject())
-        {
-            if (!merged.ContainsKey(property.Name))
-                merged[property.Name] = property.Value.Clone();
-        }
+        // Internal-only request metadata should not leak to providers.
+        merged.Remove("providerMetadata");
+
+        // If your ChatCompletionOptions.Metadata is internal-only, keep this.
+        // If you also support native OpenAI metadata, remove only the internal one before provider patch.
+        merged.Remove("metadata");
+
+        ApplyRootProperties(
+            merged,
+            extraRootProperties,
+            overwriteExisting: false,
+            sourceName: "Extra chat-completions root properties");
+
+        var providerOptions = GetProviderOptions(options, providerId);
+
+        ApplyRootProperties(
+            merged,
+            providerOptions,
+            overwriteExisting: true,
+            sourceName: $"Provider metadata for '{providerId}'",
+            excluded:
+            [
+                "headers",
+            "tools",
+            "providerMetadata"
+            ]);
+
+        // Method invariant wins last.
+        // Streaming reader must get SSE, non-stream reader must get JSON.
+        if (stream is not null)
+            merged["stream"] = JsonSerializer.SerializeToElement(stream.Value, Json);
 
         return JsonSerializer.SerializeToElement(merged, Json);
+    }
+
+    private static JsonElement? GetProviderOptions(
+        ChatCompletionOptions options,
+        string? providerId)
+    {
+        if (string.IsNullOrWhiteSpace(providerId))
+            return null;
+
+        if (options.Metadata is null)
+            return null;
+
+        if (!options.Metadata.TryGetValue(providerId, out var obj))
+            return null;
+
+        return obj switch
+        {
+            null => null,
+            JsonElement json => json,
+            _ => JsonSerializer.SerializeToElement(obj, Json)
+        };
+    }
+
+    private static void ApplyRootProperties(
+        IDictionary<string, JsonElement> target,
+        JsonElement? rootProperties,
+        bool overwriteExisting,
+        string sourceName,
+        HashSet<string>? excluded = null)
+    {
+        if (rootProperties is not JsonElement root)
+            return;
+
+        if (root.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return;
+
+        if (root.ValueKind != JsonValueKind.Object)
+            throw new InvalidOperationException($"{sourceName} must be a JSON object.");
+
+        foreach (var property in root.EnumerateObject())
+        {
+            if (excluded?.Contains(property.Name) == true)
+                continue;
+
+            if (!overwriteExisting && target.ContainsKey(property.Name))
+                continue;
+
+            target[property.Name] = property.Value.Clone();
+        }
     }
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)

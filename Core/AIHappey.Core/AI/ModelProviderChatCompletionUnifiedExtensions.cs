@@ -7,6 +7,8 @@ using AIHappey.Responses.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using static AIHappey.ChatCompletions.Mapping.ChatCompletionsUnifiedMapper;
 using AIHappey.ChatCompletions.Models;
+using System.Text.Json.Nodes;
+using System.Text;
 
 namespace AIHappey.Core.AI;
 
@@ -692,30 +694,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         }
     }
 
-    private static AIStreamEvent CreateDataStreamEvent(
-        string providerId,
-        string type,
-        object payload,
-        Dictionary<string, string>? headers = null)
-        => new()
-        {
-            ProviderId = providerId,
-            Event = new AIEventEnvelope
-            {
-                Type = type,
-                Timestamp = DateTimeOffset.UtcNow,
-                Data = new AIDataEventData
-                {
-                    Data = payload
-                }
-            },
-            Metadata = headers is null || headers.Count == 0
-                ? null
-                : new Dictionary<string, object?>
-                {
-                    ["unified.request.headers"] = headers.ToDictionary(a => a.Key, a => (object?)a.Value)
-                }
-        };
 
 }
 

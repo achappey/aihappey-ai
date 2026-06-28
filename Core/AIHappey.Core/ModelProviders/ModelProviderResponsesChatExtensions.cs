@@ -36,6 +36,7 @@ public static class ModelProviderResponsesChatExtensions
         }
     }
 
+
     public static IReadOnlyDictionary<string, string>? SetDefaultResponseProperties(
         this IModelProvider modelProvider, ResponseRequest responseRequest, HashSet<string>? exclude = null)
     {
@@ -43,12 +44,7 @@ public static class ModelProviderResponsesChatExtensions
 
         responseRequest.Tools = [.. responseRequest.Tools ?? [],
             .. responseRequest.Metadata.GetResponseToolDefinitions(modelProvider.GetIdentifier()) ?? []];
-
-        modelProvider.ApplyProviderOptions(responseRequest.Metadata, responseRequest.AdditionalProperties ??=
-                [], [.. exclude ?? [], "tools", "headers"]);
-
-        responseRequest.Metadata = null;
-        responseRequest.AdditionalProperties.Remove("providerMetadata");
+      
 
         return headers;
     }
@@ -81,11 +77,6 @@ public static class ModelProviderResponsesChatExtensions
         else
             chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
             .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
-
-        modelProvider.ApplyProviderOptions(chatCompletionOptions.Metadata, chatCompletionOptions.AdditionalProperties ??=
-                [], [.. exclude ?? [], "tools", "headers"]);
-
-        chatCompletionOptions.Metadata = null;
 
         return headers;
     }

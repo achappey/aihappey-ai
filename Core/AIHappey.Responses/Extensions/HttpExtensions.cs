@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Abstractions.Http;
 using AIHappey.Responses.Streaming;
+using System.Text.Json.Nodes;
+using System.Security.Cryptography.X509Certificates;
 
 namespace AIHappey.Responses.Extensions;
 
@@ -56,7 +58,7 @@ public static class HttpExtensions
         req.ApplyRequestHeaders(headers);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
-        var payload = BuildPayload(options, extraRootProperties);
+        var payload = BuildPayload(options, providerId, extraRootProperties);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -101,7 +103,7 @@ public static class HttpExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = BuildPayload(options, extraRootProperties);
+        var payload = BuildPayload(options, providerId, extraRootProperties);
 
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
@@ -136,7 +138,7 @@ public static class HttpExtensions
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
-        var payload = BuildPayload(options, extraRootProperties);
+        var payload = BuildPayload(options, null, extraRootProperties);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -176,7 +178,7 @@ public static class HttpExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = BuildPayload(options, extraRootProperties);
+        var payload = BuildPayload(options, null, extraRootProperties);
 
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
@@ -304,32 +306,74 @@ public static class HttpExtensions
         throw new HttpRequestException($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
     }
 
-    private static JsonElement BuildPayload(ResponseRequest options, JsonElement? extraRootProperties)
+    public static JsonElement? GetProviderOptions(
+        this Dictionary<string, object?>? metadata,
+        string? providerId)
     {
-        var payload = JsonSerializer.SerializeToElement(options, ResponseJson.Default);
+        if (metadata is null || string.IsNullOrWhiteSpace(providerId))
+            return null;
 
-        if (extraRootProperties is not JsonElement extra)
-            return payload;
+        if (!metadata.TryGetValue(providerId, out var obj))
+            return null;
 
-        if (extra.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return payload;
-
-        if (extra.ValueKind != JsonValueKind.Object)
-            throw new InvalidOperationException("Extra responses root properties must be a JSON object.");
-
-        var merged = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
-
-        foreach (var property in payload.EnumerateObject())
-            merged[property.Name] = property.Value.Clone();
-
-        foreach (var property in extra.EnumerateObject())
-        {
-            merged[property.Name] = property.Value.Clone();
-        }
-
-        return JsonSerializer.SerializeToElement(merged, ResponseJson.Default);
+        return obj is JsonElement json ? json : null;
     }
 
+    private static JsonElement BuildPayload(
+        ResponseRequest options,
+        string? providerId,
+        JsonElement? extraRootProperties = null)
+    {
+        var node = JsonSerializer.SerializeToNode(options, ResponseJson.Default);
+
+        if (node is not JsonObject body)
+            throw new InvalidOperationException("ResponseRequest did not serialize to a JSON object.");
+
+        // Internal-only stuff should never go to provider.
+        body.Remove("metadata");
+        body.Remove("providerMetadata");
+
+        // Optional root extras first.
+        if (extraRootProperties is { ValueKind: JsonValueKind.Object })
+        {
+            ApplyJsonObjectPatch(body, extraRootProperties.Value);
+        }
+
+        // Provider metadata last, so it wins.
+        var providerOptions = options.Metadata.GetProviderOptions(providerId);
+
+        if (providerOptions is { ValueKind: JsonValueKind.Object })
+        {
+            ApplyJsonObjectPatch(
+                body,
+                providerOptions.Value,
+                excluded:
+                [
+                    "headers",
+                    "tools",
+                    "providerMetadata",
+                    "metadata"
+                ]);
+        }
+
+        body["store"] = false;
+
+        return JsonSerializer.SerializeToElement(body);
+    }
+
+    private static void ApplyJsonObjectPatch(
+    JsonObject body,
+    JsonElement patch,
+    HashSet<string>? excluded = null)
+    {
+        foreach (var prop in patch.EnumerateObject())
+        {
+            if (excluded?.Contains(prop.Name) == true)
+                continue;
+
+            body[prop.Name] = JsonNode.Parse(prop.Value.GetRawText());
+        }
+    }
 
     public static ResponseRequest CleanUnsafeReasoningReplay(this ResponseRequest request)
     {
