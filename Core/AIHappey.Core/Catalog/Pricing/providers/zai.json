@@ -11,6 +11,13 @@
       "output": "0.0000007"
     }
   },
+  "zai/glm-5.2": {
+    "pricing": {
+      "input": "0.0000014",
+      "output": "0.0000044",
+      "input_cache_read": "0.00000026"
+    }
+  },
   "zai/glm-5.1": {
     "pricing": {
       "input": "0.0000014",
