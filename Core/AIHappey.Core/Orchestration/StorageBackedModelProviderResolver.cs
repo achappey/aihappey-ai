@@ -19,10 +19,12 @@ public class StorageBackedModelProviderResolver(
     IModelListingRefreshQueue refreshQueue,
     AsyncCacheHelper memoryCache,
     IOptions<ModelListingStorageOptions> options,
+    IOptions<ModelResolverOptions> resolverOptions,
     ILogger<StorageBackedModelProviderResolver> logger) : IAIModelProviderResolver
 {
     private const string AggregateMemoryCachePrefix = "resolver:aggregate:";
     private readonly ModelListingStorageOptions _options = options.Value;
+    private readonly ModelResolverOptions _resolverOptions = resolverOptions.Value;
     private readonly IApiKeyPresenceResolver? _apiKeyPresenceResolver = apiKeyResolver as IApiKeyPresenceResolver;
     private readonly HashSet<string> _alwaysIncludeProviders = (options.Value.AlwaysIncludeProviders ?? [])
         .Where(providerId => !string.IsNullOrWhiteSpace(providerId))
@@ -37,13 +39,27 @@ public class StorageBackedModelProviderResolver(
         var map = await GetAggregateMapAsync(ct);
 
         if (map.TryGetValue(model, out var entry))
+        {
+            ThrowIfDisabled(model, entry.Model.Id, entry.Model.Name);
             return entry.Provider;
+        }
 
         var key = map.Keys.FirstOrDefault(z => z.SplitModelId().Model == model);
         if (key != null && map.TryGetValue(key, out var fallbackEntry))
+        {
+            ThrowIfDisabled(model, key, fallbackEntry.Model.Id, fallbackEntry.Model.Name);
             return fallbackEntry.Provider;
+        }
 
         throw new NotSupportedException($"No provider found for model '{model}'.");
+    }
+
+    private void ThrowIfDisabled(string requestedModel, params string?[] resolvedModelAliases)
+    {
+        if (!_resolverOptions.IsModelDisabled(requestedModel, resolvedModelAliases))
+            return;
+
+        throw new NotSupportedException(ModelResolverOptions.GetDisabledModelMessage(requestedModel));
     }
 
     public IModelProvider GetProvider() => providers

@@ -69,6 +69,8 @@ builder.Services.Configure<ModalProviderOptions>(
 builder.Services.Configure<ModelListingStorageOptions>(
     builder.Configuration.GetSection("ModelListingStorage"));
 
+builder.Services.Configure<ModelResolverOptions>(builder.Configuration);
+
 builder.Services.Configure<SkillProviderResolverOptions>(
     builder.Configuration.GetSection("SkillProviderResolver"));
 

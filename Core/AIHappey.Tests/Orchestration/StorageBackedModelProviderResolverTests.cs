@@ -137,12 +137,50 @@ public sealed class StorageBackedModelProviderResolverTests
         Assert.Equal(["configured", "unconfigured"], providers.Where(provider => provider.ListModelsCalls > 0).Select(provider => provider.GetIdentifier()).Order(StringComparer.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public async Task Resolve_DisabledModelThrowsButResolveModelsStillIncludesModel()
+    {
+        var providers = new[]
+        {
+            new TestModelProvider("openai", "openai/chat-latest")
+        };
+        var resolver = CreateResolver(
+            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            providers,
+            new RecordingSnapshotStore(),
+            disabledModels: ["openai/chat-latest"]);
+
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(() => resolver.Resolve("openai/chat-latest"));
+        Assert.Equal("The system administrator has disabled use for the model 'openai/chat-latest'.", exception.Message);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+        Assert.Equal(["openai/chat-latest"], response.Data.Select(model => model.Id));
+    }
+
+    [Fact]
+    public async Task Resolve_DisabledResolvedModelThrowsForUnprefixedRequest()
+    {
+        var providers = new[]
+        {
+            new TestModelProvider("openai", "openai/chat-latest")
+        };
+        var resolver = CreateResolver(
+            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            providers,
+            new RecordingSnapshotStore(),
+            disabledModels: ["openai/chat-latest"]);
+
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(() => resolver.Resolve("chat-latest"));
+        Assert.Equal("The system administrator has disabled use for the model 'chat-latest'.", exception.Message);
+    }
+
     private static StorageBackedModelProviderResolver CreateResolver(
         IApiKeyResolver apiKeyResolver,
         IReadOnlyCollection<TestModelProvider> providers,
         RecordingSnapshotStore snapshotStore,
         bool includeApiKeysInSnapshotIdentity = true,
-        string[]? alwaysIncludeProviders = null)
+        string[]? alwaysIncludeProviders = null,
+        string[]? disabledModels = null)
         => new(
             apiKeyResolver,
             providers,
@@ -157,6 +195,10 @@ public sealed class StorageBackedModelProviderResolverTests
                 MemoryCacheTtl = TimeSpan.FromSeconds(5),
                 AggregateRefreshAfter = TimeSpan.FromHours(1),
                 ProviderRefreshAfter = TimeSpan.FromHours(1)
+            }),
+            Options.Create(new ModelResolverOptions
+            {
+                DisabledModels = disabledModels ?? []
             }),
             NullLogger<StorageBackedModelProviderResolver>.Instance);
 

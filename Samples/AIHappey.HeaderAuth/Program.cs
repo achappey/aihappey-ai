@@ -28,6 +28,7 @@ builder.WebHost.ConfigureKestrel(o =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<EndUserIdHashingOptions>(builder.Configuration.GetSection("EndUserIdHashing"));
 builder.Services.Configure<ModelListingStorageOptions>(builder.Configuration.GetSection("ModelListingStorage"));
+builder.Services.Configure<ModelResolverOptions>(builder.Configuration);
 
 // CORS for SPA (adjust origin as needed)
 builder.Services.AddCors(options =>
