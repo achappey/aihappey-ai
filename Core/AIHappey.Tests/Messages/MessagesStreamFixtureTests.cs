@@ -216,7 +216,7 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(35, finishPart.MessageMetadata?.Usage.TotalTokens);
         Assert.True(finishPart.MessageMetadata?.Timestamp > DateTimeOffset.UnixEpoch);
 
-        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.ProviderMetadata ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(12, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(23, providerUsage.GetProperty("output_tokens").GetInt32());
@@ -271,7 +271,7 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(52, finishPart.MessageMetadata?.Usage.TotalTokens);
         Assert.True(finishPart.MessageMetadata?.Timestamp > DateTimeOffset.UnixEpoch);
 
-        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var providerMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.ProviderMetadata ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(10, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(42, providerUsage.GetProperty("output_tokens").GetInt32());

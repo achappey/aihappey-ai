@@ -626,7 +626,7 @@ public static class VercelUnifiedMapper
         filePart = new FileUIPart
         {
             MediaType = mediaType ?? "application/octet-stream",
-           // Filename = filename,
+            // Filename = filename,
             Url = url,
             ProviderMetadata = EnsureDownloadFileProviderMetadata(providerMetadata, providerId, filename, mediaType, fileId)
         };
@@ -1134,15 +1134,69 @@ public static class VercelUnifiedMapper
             typedData?.TotalTokens,
             rawUsage);
 
-        metadata[providerId] = BuildProviderMetadataContainer(
-            metadata.TryGetValue(providerId, out var existingProviderMetadata) ? existingProviderMetadata : null,
-            rawUsage);
-
         SetFinishMetadataValue(metadata, "temperature", typedData?.MessageMetadata?.Temperature, data);
+
+        metadata["providerMetadata"] = BuildFinishProviderMetadata(metadata, providerId, rawUsage);
+        metadata.Remove("gateway");
+
+        if (!string.IsNullOrWhiteSpace(providerId))
+            metadata.Remove(providerId);
 
         return FinishMessageMetadata.FromDictionary(
             ToNonNullableMetadataDictionary(metadata),
             fallbackTimestamp: ResolveFinishTimestamp(null, typedData?.CompletedAt));
+    }
+
+    private static Dictionary<string, object?> BuildFinishProviderMetadata(
+        Dictionary<string, object?> metadata,
+        string providerId,
+        object rawUsage)
+    {
+        var providerMetadata = metadata.TryGetValue("providerMetadata", out var existingProviderMetadata)
+            ? ToProviderMetadataDictionary(existingProviderMetadata)
+            : [];
+
+        if (metadata.TryGetValue("gateway", out var gateway) && gateway is not null)
+            providerMetadata.TryAdd("gateway", gateway);
+
+        if (!string.IsNullOrWhiteSpace(providerId))
+        {
+            providerMetadata[providerId] = BuildProviderMetadataContainer(
+                providerMetadata.TryGetValue(providerId, out var existingNestedProviderMetadata)
+                    ? existingNestedProviderMetadata
+                    : metadata.TryGetValue(providerId, out var existingRootProviderMetadata)
+                        ? existingRootProviderMetadata
+                        : new { },
+                rawUsage);
+        }
+
+        return providerMetadata;
+    }
+
+    private static Dictionary<string, object?> ToProviderMetadataDictionary(object? providerMetadata)
+    {
+        if (providerMetadata is null)
+            return [];
+
+        if (providerMetadata is Dictionary<string, object?> nullableDictionary)
+            return nullableDictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+        if (providerMetadata is Dictionary<string, object> dictionary)
+            return dictionary.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
+
+        try
+        {
+            if (providerMetadata is JsonElement json && json.ValueKind == JsonValueKind.Object)
+                return JsonSerializer.Deserialize<Dictionary<string, object?>>(json.GetRawText(), JsonSerializerOptions.Web) ?? [];
+
+            return JsonSerializer.Deserialize<Dictionary<string, object?>>(
+                JsonSerializer.Serialize(providerMetadata, JsonSerializerOptions.Web),
+                JsonSerializerOptions.Web) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private static Dictionary<string, object> ToNonNullableMetadataDictionary(Dictionary<string, object?> metadata)

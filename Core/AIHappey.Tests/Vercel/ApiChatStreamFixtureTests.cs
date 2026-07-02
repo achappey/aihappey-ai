@@ -140,7 +140,14 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(975, finishPart.MessageMetadata?.Usage.TotalTokens);
         Assert.Equal(0.005828m, finishPart.MessageMetadata?.Gateway?.Cost);
 
-        var providerMetadata = Assert.Contains("anthropic", finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var serializedMetadata = JsonSerializer.SerializeToElement(finishPart.MessageMetadata, JsonSerializerOptions.Web);
+        Assert.False(serializedMetadata.TryGetProperty("gateway", out _));
+        Assert.False(serializedMetadata.TryGetProperty("anthropic", out _));
+
+        var finishProviderMetadata = serializedMetadata.GetProperty("providerMetadata");
+        Assert.Equal(0.005828m, finishProviderMetadata.GetProperty("gateway").GetProperty("cost").GetDecimal());
+
+        var providerMetadata = finishProviderMetadata.GetProperty("anthropic");
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(321, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(120, providerUsage.GetProperty("input_tokens_details").GetProperty("cached_tokens").GetInt32());
@@ -545,7 +552,7 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(789, finishPart.MessageMetadata?.Usage.CompletionTokens);
         Assert.Equal(20035, finishPart.MessageMetadata?.Usage.TotalTokens);
 
-        var finishProviderMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var finishProviderMetadata = Assert.Contains(ProviderId, finishPart.MessageMetadata?.ProviderMetadata ?? []);
         var providerUsage = finishProviderMetadata.GetProperty("usage");
         Assert.Equal(19246, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(789, providerUsage.GetProperty("output_tokens").GetInt32());
@@ -785,7 +792,7 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(101, finishPart.MessageMetadata?.Usage.CompletionTokens);
         Assert.Equal(16418, finishPart.MessageMetadata?.Usage.TotalTokens);
 
-        var providerMetadata = Assert.Contains(OpenAiProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var providerMetadata = Assert.Contains(OpenAiProviderId, finishPart.MessageMetadata?.ProviderMetadata ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal(1408, providerUsage.GetProperty("prompt_tokens_details").GetProperty("cached_tokens").GetInt32());
     }
@@ -965,7 +972,7 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(260, finishPart.MessageMetadata?.Usage.CompletionTokens);
         Assert.Equal(691, finishPart.MessageMetadata?.Usage.TotalTokens);
 
-        var providerMetadata = Assert.Contains(PerplexityProviderId, finishPart.MessageMetadata?.AdditionalProperties ?? []);
+        var providerMetadata = Assert.Contains(PerplexityProviderId, finishPart.MessageMetadata?.ProviderMetadata ?? []);
         var providerUsage = providerMetadata.GetProperty("usage");
         Assert.Equal("medium", providerUsage.GetProperty("search_context_size").GetString());
         Assert.Equal(0.00869m, providerUsage.GetProperty("cost").GetProperty("total_cost").GetDecimal());

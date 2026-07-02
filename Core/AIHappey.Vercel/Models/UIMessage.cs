@@ -489,8 +489,17 @@ public sealed record FinishMessageMetadata
     [JsonPropertyName("temperature")]
     public float? Temperature { get; init; }
 
-    [JsonPropertyName("gateway")]
-    public FinishGatewayMetadata? Gateway { get; init; }
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, JsonElement>? ProviderMetadata { get; init; }
+
+    [JsonIgnore]
+    public FinishGatewayMetadata? Gateway
+        => ProviderMetadata is not null
+           && ProviderMetadata.TryGetValue("gateway", out var gateway)
+           && gateway.ValueKind == JsonValueKind.Object
+            ? gateway.Deserialize<FinishGatewayMetadata>(Json)
+            : null;
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
@@ -525,9 +534,16 @@ public sealed record FinishMessageMetadata
                 CompletionTokens = outputTokens,
                 TotalTokens = totalTokens ?? ((inputTokens ?? 0) + (outputTokens ?? 0))
             },
-            ["temperature"] = temperature,
-            ["gateway"] = gateway
+            ["temperature"] = temperature
         };
+
+        if (gateway is not null)
+        {
+            metadata["providerMetadata"] = new Dictionary<string, object?>
+            {
+                ["gateway"] = gateway
+            };
+        }
 
         if (additionalProperties is not null)
         {
@@ -546,6 +562,8 @@ public sealed record FinishMessageMetadata
         DateTimeOffset? fallbackTimestamp = null)
     {
         var merged = metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value) ?? [];
+
+        MoveLegacyGatewayIntoProviderMetadata(merged);
 
         merged["usage"] = NormalizeUsage(
             merged.TryGetValue("usage", out var usage) ? usage : null,
@@ -569,6 +587,45 @@ public sealed record FinishMessageMetadata
 
     public static implicit operator FinishMessageMetadata?(Dictionary<string, object>? metadata)
         => metadata is null ? null : FromDictionary(metadata);
+
+    private static void MoveLegacyGatewayIntoProviderMetadata(Dictionary<string, object?> metadata)
+    {
+        if (!metadata.TryGetValue("gateway", out var gateway) || gateway is null)
+            return;
+
+        var providerMetadata = metadata.TryGetValue("providerMetadata", out var existingProviderMetadata)
+            ? DeserializeProviderMetadata(existingProviderMetadata)
+            : [];
+
+        providerMetadata.TryAdd("gateway", gateway);
+        metadata["providerMetadata"] = providerMetadata;
+        metadata.Remove("gateway");
+    }
+
+    private static Dictionary<string, object?> DeserializeProviderMetadata(object? providerMetadata)
+    {
+        if (providerMetadata is null)
+            return [];
+
+        if (providerMetadata is Dictionary<string, object?> nullableDictionary)
+            return nullableDictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+        if (providerMetadata is Dictionary<string, object> dictionary)
+            return dictionary.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
+
+        try
+        {
+            if (providerMetadata is JsonElement json && json.ValueKind == JsonValueKind.Object)
+                return JsonSerializer.Deserialize<Dictionary<string, object?>>(json.GetRawText(), Json) ?? [];
+
+            return JsonSerializer.Deserialize<Dictionary<string, object?>>(
+                JsonSerializer.Serialize(providerMetadata, Json), Json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
 
     private static Usage NormalizeUsage(object? usage, int? inputTokens, int? outputTokens, int? totalTokens)
     {
