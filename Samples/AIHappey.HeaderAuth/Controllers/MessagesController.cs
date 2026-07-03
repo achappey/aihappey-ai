@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Messages;
 
 namespace AIHappey.HeaderAuth.Controllers;
@@ -33,8 +34,9 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
         body.Model = model.SplitModelId().Model;
 
         var headers = Request.Headers
-                          .Where(a => a.Key.StartsWith("anthropic-"))
-                          .ToDictionary(h => h.Key, h => h.Value.ToString(), StringComparer.OrdinalIgnoreCase);
+            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+            .GetProviderPassthroughHeaders(provider.GetIdentifier());
+        body.Headers = headers;
 
         // streaming?
         if (body.Stream == true)

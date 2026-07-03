@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Responses;
 using AIHappey.Core.Contracts;
 
@@ -26,6 +27,9 @@ public class ResponsesController(IAIModelProviderResolver resolver) : Controller
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
         requestDto.Store = false;
+        requestDto.Headers = Request.Headers
+            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+            .GetProviderPassthroughHeaders(provider.GetIdentifier());
 
         if (requestDto.Stream == true)
         {

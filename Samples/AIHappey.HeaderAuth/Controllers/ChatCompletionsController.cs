@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -25,6 +26,9 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
         requestDto.Store = false;
+        requestDto.Headers = Request.Headers
+            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+            .GetProviderPassthroughHeaders(provider.GetIdentifier());
         if (requestDto.Stream == true)
         {
             Response.ContentType = "text/event-stream";

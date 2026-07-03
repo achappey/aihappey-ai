@@ -35,6 +35,9 @@ public class ChatRequest
     [JsonPropertyName("providerMetadata")]
     public Dictionary<string, JsonElement>? ProviderMetadata { get; set; }
 
+    [JsonIgnore]
+    public Dictionary<string, string>? Headers { get; set; }
+
     [JsonPropertyName("response_format")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? ResponseFormat { get; set; }

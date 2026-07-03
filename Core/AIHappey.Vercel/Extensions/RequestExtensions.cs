@@ -80,6 +80,7 @@ public static class RequestExtensions
             MaxToolCalls = request.MaxToolCalls,
             ToolChoice = request.ToolChoice,
             Tools = request.Tools?.Select(ToUnifiedTool).ToList(),
+            Headers = request.Headers,
             Metadata = request.ProviderMetadata?
                 .ToDictionary(p => p.Key, p => (object?)p.Value)
         };

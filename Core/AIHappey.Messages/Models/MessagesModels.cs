@@ -26,6 +26,9 @@ public sealed class MessagesRequest
     [JsonPropertyName("metadata")]
     public MessagesRequestMetadata? Metadata { get; set; }
 
+    [JsonIgnore]
+    public Dictionary<string, string>? Headers { get; set; }
+
     [JsonPropertyName("output_config")]
     public MessagesOutputConfig? OutputConfig { get; set; }
 

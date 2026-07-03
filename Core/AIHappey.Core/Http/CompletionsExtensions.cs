@@ -81,6 +81,15 @@ public static class CompletionsExtensions
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
 
+        if (chatRequest.Headers is not null)
+        {
+            foreach (var (key, value) in chatRequest.Headers)
+            {
+                if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
+                    req.Headers.TryAddWithoutValidation(key, value);
+            }
+        }
+
         // ---------- 2) Send request as streaming SSE ----------
         using var resp = await client.SendAsync(
             req,

@@ -4,6 +4,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.HeaderAuth.Controllers;
@@ -25,6 +26,9 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
         chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
         chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
+        chatRequest.Headers = Request.Headers
+            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+            .GetProviderPassthroughHeaders(provider.GetIdentifier());
 
         try
         {

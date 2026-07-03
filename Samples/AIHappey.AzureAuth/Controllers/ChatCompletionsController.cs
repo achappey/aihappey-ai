@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.AI;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.AzureAuth.Extensions;
 using AIHappey.Telemetry;
 
@@ -28,6 +29,9 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver, IChatT
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
         requestDto.Store = false;
+        requestDto.Headers = Request.Headers
+            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+            .GetProviderPassthroughHeaders(provider.GetIdentifier());
         var startedAt = DateTime.UtcNow;
 
         if (requestDto.Stream == true)

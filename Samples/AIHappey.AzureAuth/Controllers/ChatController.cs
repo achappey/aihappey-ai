@@ -5,6 +5,7 @@ using AIHappey.Telemetry;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.AzureAuth.Extensions;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
@@ -30,6 +31,9 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
         chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
         chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
+        chatRequest.Headers = Request.Headers
+            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+            .GetProviderPassthroughHeaders(provider.GetIdentifier());
 
         FinishUIPart? finishUIPart = null;
 

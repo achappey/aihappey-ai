@@ -23,6 +23,7 @@ public static partial class ResponsesUnifiedMapper
             ParallelToolCalls = request.ParallelToolCalls,
             ToolChoice = request.ToolChoice,
             Tools = request.Tools?.Select(ToUnifiedTool).ToList(),
+            Headers = request.Headers,
             Metadata = request.Metadata
         };
     }
@@ -45,6 +46,7 @@ public static partial class ResponsesUnifiedMapper
             ParallelToolCalls = request.ParallelToolCalls,
             ToolChoice = request.ToolChoice,
             Tools = request.Tools?.Select(ToResponsesTool).ToList(),
+            Headers = request.Headers,
             Metadata = request.Metadata,
             Store = ExtractValue<bool?>(metadata, "responses.store"),
             ServiceTier = ExtractValue<string>(metadata, "responses.service_tier"),

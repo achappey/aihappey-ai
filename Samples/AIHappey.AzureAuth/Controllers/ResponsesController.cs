@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Responses.Streaming;
 using AIHappey.AzureAuth.Extensions;
 using AIHappey.Telemetry;
@@ -29,6 +30,9 @@ public class ResponsesController(IAIModelProviderResolver resolver, IChatTelemet
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
         requestDto.Store = false;
+        requestDto.Headers = Request.Headers
+            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+            .GetProviderPassthroughHeaders(provider.GetIdentifier());
         var startedAt = DateTime.UtcNow;
 
         if (requestDto.Stream == true)

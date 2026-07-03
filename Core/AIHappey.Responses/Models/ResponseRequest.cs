@@ -61,6 +61,9 @@ public sealed class ResponseRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object?>? Metadata { get; set; }
 
+    [JsonIgnore]
+    public Dictionary<string, string>? Headers { get; set; }
+
     /// <summary>
     /// Tools are a big tree. Keep as flexible objects for now.
     /// If you want, I can type all tool variants too.

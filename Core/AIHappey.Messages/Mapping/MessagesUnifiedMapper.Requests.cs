@@ -32,6 +32,7 @@ public static partial class MessagesUnifiedMapper
             ParallelToolCalls = request.ToolChoice?.DisableParallelToolUse is bool disable ? !disable : null,
             ToolChoice = request.ToolChoice is null ? null : JsonSerializer.SerializeToElement(request.ToolChoice, Json),
             Tools = request.Tools?.Select(ToUnifiedTool).ToList(),
+            Headers = request.Headers,
             Metadata = BuildUnifiedRequestMetadata(request)
         };
     }
@@ -68,6 +69,7 @@ public static partial class MessagesUnifiedMapper
         var result = new MessagesRequest
         {
             Model = request.Model,
+            Headers = request.Headers,
             MaxTokens = request.MaxOutputTokens ?? request.Metadata?
                 .GetProviderOption<int?>(providerId, "max_tokens"),
             Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],

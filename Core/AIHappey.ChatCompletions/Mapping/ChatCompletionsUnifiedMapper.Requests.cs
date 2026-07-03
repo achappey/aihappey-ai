@@ -103,6 +103,7 @@ public static partial class ChatCompletionsUnifiedMapper
                 IncludeUsage = true
             },
             ResponseFormat = request.ResponseFormat,
+            Headers = request.Headers,
             Metadata = request.Metadata,
             Store = false,
             AdditionalProperties = additionalProperties

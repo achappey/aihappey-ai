@@ -17,7 +17,7 @@ public static class ModelProviderResponsesUnifiedExtensions
           Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
           CancellationToken cancellationToken = default)
     {
-        var headers = modelProvider.SetDefaultResponseProperties(options);
+        var headers = MergeRequestHeaders(modelProvider.SetDefaultResponseProperties(options), options.Headers);
 
         return await client.GetResponses(options,
             modelProvider.GetIdentifier(),
@@ -38,7 +38,7 @@ public static class ModelProviderResponsesUnifiedExtensions
         Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var headers = modelProvider.SetDefaultResponseProperties(options);
+        var headers = MergeRequestHeaders(modelProvider.SetDefaultResponseProperties(options), options.Headers);
 
         await foreach (var update in client.GetResponsesUpdates(options,
             relativeUrl: relativeUrl,
@@ -49,6 +49,33 @@ public static class ModelProviderResponsesUnifiedExtensions
             ct: cancellationToken))
             yield return update;
 
+    }
+
+    private static IReadOnlyDictionary<string, string>? MergeRequestHeaders(
+        IReadOnlyDictionary<string, string>? first,
+        IReadOnlyDictionary<string, string>? second)
+    {
+        if ((first is null || first.Count == 0) && (second is null || second.Count == 0))
+            return null;
+
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (first is not null)
+        {
+            foreach (var (key, value) in first)
+                result[key] = value;
+        }
+
+        if (second is not null)
+        {
+            foreach (var (key, value) in second)
+            {
+                result.Remove(key);
+                result[key] = value;
+            }
+        }
+
+        return result.Count == 0 ? null : result;
     }
 
 
