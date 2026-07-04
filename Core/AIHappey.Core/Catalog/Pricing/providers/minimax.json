@@ -1,0 +1,65 @@
+{
+  "minimax/MiniMax-M3": {
+    "pricing": {
+      "input": "0.0000003",
+      "input_cache_read": "0.00000006",
+      "output": "0.0000012"
+    }
+  },
+  "minimax/MiniMax-M2.7": {
+    "pricing": {
+      "input": "0.0000003",
+      "input_cache_read": "0.00000006",
+      "input_cache_write": "0.000000375",
+      "output": "0.0000012"
+    }
+  },
+  "minimax/MiniMax-M2.7-highspeed": {
+    "pricing": {
+      "input": "0.0000006",
+      "input_cache_read": "0.00000006",
+      "input_cache_write": "0.000000375",
+      "output": "0.0000024"
+    }
+  },
+  "minimax/MiniMax-M2.5": {
+    "pricing": {
+      "input": "0.0000003",
+      "input_cache_read": "0.00000003",
+      "input_cache_write": "0.000000375",
+      "output": "0.0000012"
+    }
+  },
+  "minimax/MiniMax-M2.5-highspeed": {
+    "pricing": {
+      "input": "0.0000006",
+      "input_cache_read": "0.00000003",
+      "input_cache_write": "0.000000375",
+      "output": "0.0000024"
+    }
+  },
+  "minimax/MiniMax-M2.1": {
+    "pricing": {
+      "input": "0.0000003",
+      "input_cache_read": "0.00000003",
+      "input_cache_write": "0.000000375",
+      "output": "0.0000012"
+    }
+  },
+  "minimax/MiniMax-M2.1-highspeed": {
+    "pricing": {
+      "input": "0.0000006",
+      "input_cache_read": "0.00000003",
+      "input_cache_write": "0.000000375",
+      "output": "0.0000024"
+    }
+  },
+  "minimax/MiniMax-M2": {
+    "pricing": {
+      "input": "0.0000003",
+      "input_cache_read": "0.00000003",
+      "input_cache_write": "0.000000375",
+      "output": "0.0000012"
+    }
+  }
+}
