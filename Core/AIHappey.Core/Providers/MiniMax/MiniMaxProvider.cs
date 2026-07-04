@@ -7,7 +7,7 @@ using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Core.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -76,12 +76,25 @@ public partial class MiniMaxProvider : IModelProvider
             return await this.SpeechResponseAsync(options, cancellationToken);
         }
 
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
+
+        return response;
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        await foreach (var update in this.GetResponses(_client,
+           options,
+           cancellationToken: cancellationToken))
+        {
+            yield return update;
+        }
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -89,13 +102,31 @@ public partial class MiniMaxProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+       MessagesRequest request,
+       Dictionary<string, string> headers,
+       CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await this.GetMessage(_client,
+            request,
+            "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this.GetMessages(_client,
+            request,
+            "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 }
