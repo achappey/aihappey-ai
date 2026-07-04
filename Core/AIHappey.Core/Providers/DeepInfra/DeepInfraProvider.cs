@@ -3,7 +3,6 @@ using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
@@ -106,28 +105,38 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
-    }   
-
-    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
-
-        return result.ToMessagesResponse();
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public async Task<MessagesResponse> MessagesAsync(
+       MessagesRequest request,
+       Dictionary<string, string> headers,
+       CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        var response = await this.GetMessage(_client,
+            request,
+            "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
+
+        return response;
+    }
+
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
+        await foreach (var part in this.GetMessages(_client,
+            request,
+            "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken))
         {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
+            yield return part;
         }
     }
 
