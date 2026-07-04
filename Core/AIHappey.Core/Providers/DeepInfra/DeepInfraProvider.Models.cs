@@ -41,6 +41,7 @@ public partial class DeepInfraProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                        model.Type = model.Name.GuessModelType();
                     }
                    
                     if (el.TryGetProperty("owned_by", out var orgEl))

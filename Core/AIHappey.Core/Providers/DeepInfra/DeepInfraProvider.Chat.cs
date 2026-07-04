@@ -30,6 +30,14 @@ public sealed partial class DeepInfraProvider
             yield break;
         }
 
+        if (model.Type == "video")
+        {
+            await foreach (var p in this.StreamVideoAsync(chatRequest, cancellationToken))
+                yield return p;
+
+            yield break;
+        }
+
         if (model.Type == "transcription")
         {
             await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
