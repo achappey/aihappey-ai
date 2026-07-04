@@ -24,9 +24,6 @@ public partial class MiniMaxProvider
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
 
-        if (string.IsNullOrWhiteSpace(request.Prompt) && request.Image is null)
-            throw new ArgumentException("Prompt or image is required.", nameof(request));
-
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
@@ -42,39 +39,7 @@ public partial class MiniMaxProvider
         if (!string.IsNullOrWhiteSpace(request.AspectRatio))
             warnings.Add(new { type = "unsupported", feature = "aspect_ratio" });
 
-        if (request.Image is not null && request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("MiniMax video generation only supports base64 or data URLs for images.");
-
-        var metadata = GetVideoProviderMetadata<MiniMaxVideoProviderMetadata>(request, GetIdentifier());
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = NormalizeModelName(request.Model)
-        };
-
-        if (!string.IsNullOrWhiteSpace(request.Prompt))
-            payload["prompt"] = request.Prompt;
-
-        if (request.Image is not null)
-        {
-            var imageData = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? request.Image.Data
-                : request.Image.Data.ToDataUrl(request.Image.MediaType);
-
-            payload["first_frame_image"] = imageData;
-        }
-
-        if (request.Duration is not null)
-            payload["duration"] = request.Duration;
-
-        if (!string.IsNullOrWhiteSpace(request.Resolution))
-            payload["resolution"] = request.Resolution;
-
-        if (metadata?.PromptOptimizer is not null)
-            payload["prompt_optimizer"] = metadata.PromptOptimizer;
-
-        if (metadata?.FastPretreatment is not null)
-            payload["fast_pretreatment"] = metadata.FastPretreatment;
+        var payload = BuildMiniMaxVideoPayload(request, warnings, GetIdentifier());
 
         var json = JsonSerializer.Serialize(payload, VideoJson);
         using var createReq = new HttpRequestMessage(HttpMethod.Post, "v1/video_generation")
@@ -178,6 +143,119 @@ public partial class MiniMaxProvider
             }
         };
     }
+
+    private static Dictionary<string, object?> BuildMiniMaxVideoPayload(
+        VideoRequest request,
+        List<object> warnings,
+        string providerId)
+    {
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = NormalizeModelName(request.Model)
+        };
+
+        if (!string.IsNullOrWhiteSpace(request.Prompt))
+            payload["prompt"] = request.Prompt;
+
+        AddMiniMaxVideoFrameImages(payload, request);
+
+        if (string.IsNullOrWhiteSpace(request.Prompt)
+            && !payload.ContainsKey("first_frame_image")
+            && !payload.ContainsKey("last_frame_image"))
+        {
+            throw new ArgumentException("Prompt or image is required.", nameof(request));
+        }
+
+        if (request.InputReferences?.Any() == true)
+            warnings.Add(new { type = "unsupported", feature = "input_references" });
+
+        if (request.Duration is not null)
+            payload["duration"] = request.Duration;
+
+        if (!string.IsNullOrWhiteSpace(request.Resolution))
+            payload["resolution"] = request.Resolution;
+
+        var metadata = GetVideoProviderMetadata<MiniMaxVideoProviderMetadata>(request, providerId);
+
+        if (metadata?.PromptOptimizer is not null)
+            payload["prompt_optimizer"] = metadata.PromptOptimizer;
+
+        if (metadata?.FastPretreatment is not null)
+            payload["fast_pretreatment"] = metadata.FastPretreatment;
+
+        return payload;
+    }
+
+    private static void AddMiniMaxVideoFrameImages(Dictionary<string, object?> payload, VideoRequest request)
+    {
+        var frameImages = request.FrameImages?.ToList() ?? [];
+        VideoFile? firstFrame = null;
+        VideoFile? lastFrame = null;
+
+        foreach (var frameImage in frameImages)
+        {
+            if (frameImage?.Image is null)
+                throw new InvalidOperationException("MiniMax video frameImages entries must include an image.");
+
+            if (IsMiniMaxFirstFrame(frameImage.FrameType))
+            {
+                if (firstFrame is not null)
+                    throw new InvalidOperationException("MiniMax video generation supports only one first_frame image.");
+
+                firstFrame = frameImage.Image;
+            }
+            else if (IsMiniMaxLastFrame(frameImage.FrameType))
+            {
+                if (lastFrame is not null)
+                    throw new InvalidOperationException("MiniMax video generation supports only one last_frame image.");
+
+                lastFrame = frameImage.Image;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unsupported MiniMax video frameType '{frameImage.FrameType}'. Use 'first_frame' or 'last_frame'.");
+            }
+        }
+
+        firstFrame ??= request.Image;
+
+        if (firstFrame is not null)
+            payload["first_frame_image"] = NormalizeMiniMaxVideoImage(firstFrame);
+
+        if (lastFrame is not null)
+            payload["last_frame_image"] = NormalizeMiniMaxVideoImage(lastFrame);
+    }
+
+    private static string NormalizeMiniMaxVideoImage(VideoFile image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        if (string.IsNullOrWhiteSpace(image.Data))
+            throw new InvalidOperationException("MiniMax video image data is required.");
+
+        var data = image.Data.Trim();
+        if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return data;
+        }
+
+        if (string.IsNullOrWhiteSpace(image.MediaType))
+            throw new InvalidOperationException("MiniMax video image mediaType is required for base64 image data.");
+
+        return data.ToDataUrl(image.MediaType);
+    }
+
+    private static bool IsMiniMaxFirstFrame(string? frameType)
+        => string.Equals(frameType, "first_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "firstFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "first", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsMiniMaxLastFrame(string? frameType)
+        => string.Equals(frameType, "last_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "lastFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "last", StringComparison.OrdinalIgnoreCase);
 
     private static string? TryGetStatus(JsonElement root)
     {
