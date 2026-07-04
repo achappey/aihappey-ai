@@ -47,19 +47,7 @@ public partial class XAIProvider
             });
         }
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["prompt"] = request.Prompt,
-            ["duration"] = request.Duration,
-            ["resolution"] = request.Resolution,
-            ["aspect_ratio"] = request.AspectRatio
-        };
-
-        if (request.Image is not null)
-        {
-            payload["image"] = request.Image.Data.ToDataUrl(request.Image.MediaType);
-        }
+        var payload = BuildXaiVideoPayload(request);
 
         var json = JsonSerializer.Serialize(payload, VideoJson);
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/videos/generations")
@@ -129,6 +117,57 @@ public partial class XAIProvider
         }
 
         throw new TimeoutException("Timed out waiting for xAI video generation result.");
+    }
+
+    private static Dictionary<string, object?> BuildXaiVideoPayload(VideoRequest request)
+    {
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = request.Model,
+            ["prompt"] = request.Prompt,
+            ["duration"] = request.Duration,
+            ["resolution"] = request.Resolution,
+            ["aspect_ratio"] = request.AspectRatio
+        };
+
+        if (request.Image is not null)
+            payload["image"] = ToXaiVideoImage(request.Image);
+
+        var referenceImages = request.InputReferences?.Select(ToXaiVideoImage).ToList() ?? [];
+        if (referenceImages.Count > 0)
+            payload["reference_images"] = referenceImages;
+
+        return payload;
+    }
+
+    private static Dictionary<string, object?> ToXaiVideoImage(VideoFile image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        return new Dictionary<string, object?>
+        {
+            ["url"] = NormalizeXaiVideoImageUrl(image)
+        };
+    }
+
+    private static string NormalizeXaiVideoImageUrl(VideoFile image)
+    {
+        if (string.IsNullOrWhiteSpace(image.Data))
+            throw new InvalidOperationException("xAI video image data is required.");
+
+        var data = image.Data.Trim();
+        if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return data;
+        }
+
+        var mediaType = string.IsNullOrWhiteSpace(image.MediaType)
+            ? "image/png"
+            : image.MediaType;
+
+        return data.ToDataUrl(mediaType);
     }
 
     private static string? TryGetVideoUrl(JsonElement root)
