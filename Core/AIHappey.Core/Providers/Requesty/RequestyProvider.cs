@@ -45,16 +45,23 @@ public partial class RequestyProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return EnrichChatCompletionWithGatewayCost(response);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var update in this.GetChatCompletions(_client,
+                     options, cancellationToken: cancellationToken))
+        {
+            yield return EnrichChatCompletionUpdateWithGatewayCost(update);
+        }
     }
 
     public string GetIdentifier() => nameof(Requesty).ToLowerInvariant();
@@ -81,7 +88,7 @@ public partial class RequestyProvider : IModelProvider
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 
-        return result.ToResponseResult();
+        return EnrichResponseWithGatewayCost(result.ToResponseResult());
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
@@ -93,7 +100,12 @@ public partial class RequestyProvider : IModelProvider
             unifiedRequest,
             cancellationToken))
         {
-            yield return part.ToResponseStreamPart();
+            var streamPart = part.ToResponseStreamPart();
+
+            if (streamPart is Responses.Streaming.ResponseCompleted completed)
+                EnrichResponseWithGatewayCost(completed.Response);
+
+            yield return streamPart;
         }
 
         yield break;
