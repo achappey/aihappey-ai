@@ -35,8 +35,8 @@ public partial class MiniMaxProvider
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
-              
-                var arr =  root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -59,6 +59,8 @@ public partial class MiniMaxProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
+
+                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },
