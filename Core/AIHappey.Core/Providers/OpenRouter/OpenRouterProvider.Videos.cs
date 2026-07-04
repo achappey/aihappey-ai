@@ -124,24 +124,75 @@ public partial class OpenRouterProvider
         if (request.Seed is not null)
             payload["seed"] = request.Seed;
 
-        if (request.Image is not null)
-        {
-            payload["input_references"] = new[]
-            {
-                new
-                {
-                    image_url = new
-                    {
-                        url = NormalizeOpenRouterImageUrl(request.Image)
-                    },
-                    type = "image_url"
-                }
-            };
-        }
+        AddOpenRouterVideoImageInputs(payload, request);
 
         MergeOpenRouterVideoProviderOptions(payload, request);
 
         return payload;
+    }
+
+    private static void AddOpenRouterVideoImageInputs(Dictionary<string, object?> payload, VideoRequest request)
+    {
+        var frameImages = request.FrameImages?.ToList() ?? [];
+        if (frameImages.Count > 0)
+            payload["frame_images"] = frameImages.Select(ToOpenRouterFrameImage).ToList();
+
+        var inputReferences = request.InputReferences?.ToList() ?? [];
+        if (inputReferences.Count == 0 && request.Image is not null)
+            inputReferences.Add(request.Image);
+
+        if (inputReferences.Count > 0)
+            payload["input_references"] = inputReferences.Select(ToOpenRouterImageReference).ToList();
+    }
+
+    private static Dictionary<string, object?> ToOpenRouterFrameImage(VideoFrameImage frameImage)
+    {
+        if (frameImage?.Image is null)
+            throw new InvalidOperationException("OpenRouter video frameImages entries must include an image.");
+
+        return new Dictionary<string, object?>
+        {
+            ["type"] = "image_url",
+            ["image_url"] = new Dictionary<string, object?>
+            {
+                ["url"] = NormalizeOpenRouterImageUrl(frameImage.Image)
+            },
+            ["frame_type"] = NormalizeOpenRouterFrameType(frameImage.FrameType)
+        };
+    }
+
+    private static Dictionary<string, object?> ToOpenRouterImageReference(VideoFile image)
+    {
+        if (image is null)
+            throw new InvalidOperationException("OpenRouter video inputReferences entries must include an image.");
+
+        return new Dictionary<string, object?>
+        {
+            ["type"] = "image_url",
+            ["image_url"] = new Dictionary<string, object?>
+            {
+                ["url"] = NormalizeOpenRouterImageUrl(image)
+            }
+        };
+    }
+
+    private static string NormalizeOpenRouterFrameType(string? frameType)
+    {
+        if (string.Equals(frameType, "first_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "firstFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "first", StringComparison.OrdinalIgnoreCase))
+        {
+            return "first_frame";
+        }
+
+        if (string.Equals(frameType, "last_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "lastFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "last", StringComparison.OrdinalIgnoreCase))
+        {
+            return "last_frame";
+        }
+
+        throw new InvalidOperationException($"Unsupported OpenRouter video frameType '{frameType}'. Use 'first_frame' or 'last_frame'.");
     }
 
     private static void MergeOpenRouterVideoProviderOptions(Dictionary<string, object?> payload, VideoRequest request)
@@ -222,17 +273,24 @@ public partial class OpenRouterProvider
 
     private static string NormalizeOpenRouterImageUrl(VideoFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        ArgumentNullException.ThrowIfNull(file);
+
+        if (string.IsNullOrWhiteSpace(file.Data))
+            throw new InvalidOperationException("OpenRouter video image data is required.");
+
+        var data = file.Data.Trim();
+        if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
-            return file.Data;
+            return data;
         }
 
         var mediaType = string.IsNullOrWhiteSpace(file.MediaType)
             ? MediaTypeNames.Image.Png
             : file.MediaType;
 
-        return $"data:{mediaType};base64,{file.Data}";
+        return $"data:{mediaType};base64,{data}";
     }
 
     private static int GetOpenRouterUnsignedUrlCount(JsonElement root)
