@@ -41,7 +41,7 @@ public class VideoRequest
 public class VideoFrameImage
 {
     [JsonPropertyName("frameType")]
-    public string FrameType { get; set; } = null!;
+    public string FrameType { get; set; } = null!;  // 'first_frame' or 'last_frame'
 
     public VideoFile Image { get; set; } = null!;
 }
