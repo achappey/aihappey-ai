@@ -154,6 +154,30 @@
       "owned_by": "z.ai",
       "name": "vidu2-image",
       "type": "video"
+    },
+    {
+      "id": "zai/viduq1-start-end",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "viduq1-start-end",
+      "type": "video",
+      "description": "Vidu first and last frame to video model. Accepts one or two image_url inputs where the first image is the first frame and the second image is the last frame."
+    },
+    {
+      "id": "zai/vidu2-start-end",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "vidu2-start-end",
+      "type": "video",
+      "description": "Vidu first and last frame to video model. Accepts one or two image_url inputs where the first image is the first frame and the second image is the last frame."
+    },
+    {
+      "id": "zai/vidu2-reference",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "vidu2-reference",
+      "type": "video",
+      "description": "Vidu reference to video model. Accepts one to three reference image_url inputs to generate a video with consistent subjects."
     }
   ]
 }

@@ -28,9 +28,18 @@ public partial class ZaiProvider
         var isViduText = string.Equals(model, "viduq1-text", StringComparison.OrdinalIgnoreCase);
         var isViduImage = string.Equals(model, "viduq1-image", StringComparison.OrdinalIgnoreCase)
             || string.Equals(model, "vidu2-image", StringComparison.OrdinalIgnoreCase);
+        var isViduStartEnd = string.Equals(model, "viduq1-start-end", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model, "vidu2-start-end", StringComparison.OrdinalIgnoreCase);
+        var isViduReference = string.Equals(model, "vidu2-reference", StringComparison.OrdinalIgnoreCase);
 
         if (isViduImage && request.Image is null)
             throw new InvalidOperationException("Z.AI video generation requires an image for Vidu image models.");
+
+        if (isViduStartEnd && request.FrameImages?.Any() != true)
+            throw new InvalidOperationException("Z.AI video generation requires frameImages for Vidu first-and-last-frame models.");
+
+        if (isViduReference && request.InputReferences?.Any() != true)
+            throw new InvalidOperationException("Z.AI video generation requires inputReferences for Vidu reference models.");
 
         if (request.Seed is not null)
         {
@@ -52,14 +61,24 @@ public partial class ZaiProvider
             warnings.Add(new { type = "unsupported", feature = "image" });
         }
 
-        if (!isViduText && !string.IsNullOrWhiteSpace(request.AspectRatio))
+        if (request.FrameImages?.Any() == true && !isViduStartEnd && !isCogVideo)
+        {
+            warnings.Add(new { type = "unsupported", feature = "frameImages" });
+        }
+
+        if (request.InputReferences?.Any() == true && !isViduReference)
+        {
+            warnings.Add(new { type = "unsupported", feature = "inputReferences" });
+        }
+
+        if (!isViduText && !isViduReference && !string.IsNullOrWhiteSpace(request.AspectRatio))
         {
             warnings.Add(new { type = "unsupported", feature = "aspect_ratio" });
         }
 
         var metadata = GetVideoProviderMetadata<ZaiVideoProviderMetadata>(request, GetIdentifier());
 
-        var payload = BuildVideoPayload(request, metadata, isCogVideo, isViduText, isViduImage, warnings);
+        var payload = BuildVideoPayload(request, metadata, isCogVideo, isViduText, isViduImage, isViduStartEnd, isViduReference, warnings);
         var json = JsonSerializer.Serialize(payload, ZaiVideoJsonOptions);
 
         using var createReq = new HttpRequestMessage(HttpMethod.Post, "v4/videos/generations")
@@ -150,6 +169,8 @@ public partial class ZaiProvider
         bool isCogVideo,
         bool isViduText,
         bool isViduImage,
+        bool isViduStartEnd,
+        bool isViduReference,
         List<object> warnings)
     {
         var payload = new Dictionary<string, object?>
@@ -160,17 +181,7 @@ public partial class ZaiProvider
         if (!string.IsNullOrWhiteSpace(request.Prompt))
             payload["prompt"] = request.Prompt;
 
-        if (request.Image is not null)
-        {
-            if (request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Z.AI video generation only supports base64 or data URLs for images.");
-
-            var imageData = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? request.Image.Data
-                : request.Image.Data.ToDataUrl(request.Image.MediaType);
-
-            payload["image_url"] = isCogVideo ? new[] { imageData } : imageData;
-        }
+        AddZaiVideoImageInputs(payload, request, isCogVideo, isViduImage, isViduStartEnd, isViduReference);
 
         var duration = request.Duration;
         if (duration is not null)
@@ -181,7 +192,7 @@ public partial class ZaiProvider
             payload["size"] = size;
 
         var aspectRatio = request.AspectRatio;
-        if (isViduText && !string.IsNullOrWhiteSpace(aspectRatio))
+        if ((isViduText || isViduReference) && !string.IsNullOrWhiteSpace(aspectRatio))
             payload["aspect_ratio"] = aspectRatio;
 
         if (isCogVideo)
@@ -205,7 +216,7 @@ public partial class ZaiProvider
             if (!string.IsNullOrWhiteSpace(metadata?.MovementAmplitude))
                 payload["movement_amplitude"] = metadata!.MovementAmplitude;
         }
-        else if (isViduImage)
+        else if (isViduImage || isViduStartEnd || isViduReference)
         {
             if (!string.IsNullOrWhiteSpace(metadata?.MovementAmplitude))
                 payload["movement_amplitude"] = metadata!.MovementAmplitude;
@@ -220,6 +231,130 @@ public partial class ZaiProvider
 
         return payload;
     }
+
+    private static void AddZaiVideoImageInputs(
+        Dictionary<string, object?> payload,
+        VideoRequest request,
+        bool isCogVideo,
+        bool isViduImage,
+        bool isViduStartEnd,
+        bool isViduReference)
+    {
+        if (isViduReference)
+        {
+            var references = (request.InputReferences ?? [])
+                .Select(ToZaiVideoImageUrl)
+                .ToList();
+
+            if (references.Count is < 1 or > 3)
+                throw new InvalidOperationException("Z.AI Vidu reference video generation requires 1 to 3 inputReferences images.");
+
+            payload["image_url"] = references;
+            return;
+        }
+
+        if (isViduStartEnd)
+        {
+            var frameImageUrls = GetZaiStartEndFrameImageUrls(request);
+            if (frameImageUrls.Count is < 1 or > 2)
+                throw new InvalidOperationException("Z.AI Vidu first-and-last-frame video generation requires 1 or 2 frameImages images.");
+
+            payload["image_url"] = frameImageUrls;
+            return;
+        }
+
+        if (isCogVideo)
+        {
+            var frameImages = request.FrameImages?.ToList() ?? [];
+            if (frameImages.Count > 0)
+            {
+                var frameImageUrls = GetZaiStartEndFrameImageUrls(request);
+                if (frameImageUrls.Count > 2)
+                    throw new InvalidOperationException("Z.AI CogVideoX video generation supports at most 2 frameImages images.");
+
+                payload["image_url"] = frameImageUrls;
+                return;
+            }
+
+            if (request.Image is not null)
+                payload["image_url"] = new[] { ToZaiVideoImageUrl(request.Image) };
+
+            return;
+        }
+
+        if (isViduImage && request.Image is not null)
+            payload["image_url"] = ToZaiVideoImageUrl(request.Image);
+    }
+
+    private static List<string> GetZaiStartEndFrameImageUrls(VideoRequest request)
+    {
+        VideoFile? firstFrame = null;
+        VideoFile? lastFrame = null;
+
+        foreach (var frameImage in request.FrameImages ?? [])
+        {
+            if (frameImage?.Image is null)
+                throw new InvalidOperationException("Z.AI video frameImages entries must include an image.");
+
+            if (IsFirstFrame(frameImage.FrameType))
+            {
+                if (firstFrame is not null)
+                    throw new InvalidOperationException("Z.AI video generation supports only one first_frame image.");
+
+                firstFrame = frameImage.Image;
+            }
+            else if (IsLastFrame(frameImage.FrameType))
+            {
+                if (lastFrame is not null)
+                    throw new InvalidOperationException("Z.AI video generation supports only one last_frame image.");
+
+                lastFrame = frameImage.Image;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unsupported Z.AI video frameType '{frameImage.FrameType}'. Use 'first_frame' or 'last_frame'.");
+            }
+        }
+
+        List<string> imageUrls = [];
+        if (firstFrame is not null)
+            imageUrls.Add(ToZaiVideoImageUrl(firstFrame));
+        if (lastFrame is not null)
+            imageUrls.Add(ToZaiVideoImageUrl(lastFrame));
+
+        return imageUrls;
+    }
+
+    private static string ToZaiVideoImageUrl(VideoFile image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        if (string.IsNullOrWhiteSpace(image.Data))
+            throw new InvalidOperationException("Z.AI video image data is required.");
+
+        var data = image.Data.Trim();
+        if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return data;
+        }
+
+        if (string.IsNullOrWhiteSpace(image.MediaType))
+            throw new InvalidOperationException("Z.AI video image mediaType is required for raw base64 image data.");
+
+        return data.ToDataUrl(image.MediaType);
+    }
+
+    private static bool IsFirstFrame(string? frameType)
+        => string.Equals(frameType, "first_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "firstFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "first", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsLastFrame(string? frameType)
+        => string.Equals(frameType, "last_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "lastFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "last", StringComparison.OrdinalIgnoreCase);
 
     private static string? TryGetStatus(JsonElement root)
     {
