@@ -1,0 +1,66 @@
+{
+  "moonshot/kimi-k2.7-code": {
+    "pricing": {
+      "input": "0.00000095",
+      "input_cache_read": "0.00000019",
+      "output": "0.000004"
+    }
+  },
+  "moonshot/kimi-k2.7-code-highspeed": {
+    "pricing": {
+      "input": "0.0000019",
+      "input_cache_read": "0.00000038",
+      "output": "0.000008"
+    }
+  },
+  "moonshot/kimi-k2.6": {
+    "pricing": {
+      "input": "0.00000095",
+      "input_cache_read": "0.00000016",
+      "output": "0.000004"
+    }
+  },
+  "moonshot/kimi-k2.5": {
+    "pricing": {
+      "input": "0.0000006",
+      "input_cache_read": "0.0000001",
+      "output": "0.000003"
+    }
+  },
+  "moonshot/moonshot-v1-8k": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.000002"
+    }
+  },
+  "moonshot/moonshot-v1-32k": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000003"
+    }
+  },
+  "moonshot/moonshot-v1-128k": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000005"
+    }
+  },
+  "moonshot/moonshot-v1-8k-vision-preview": {
+    "pricing": {
+      "input": "0.0000002",
+      "output": "0.000002"
+    }
+  },
+  "moonshot/moonshot-v1-32k-vision-preview": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000003"
+    }
+  },
+  "moonshot/moonshot-v1-128k-vision-preview": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000005"
+    }
+  }
+}
