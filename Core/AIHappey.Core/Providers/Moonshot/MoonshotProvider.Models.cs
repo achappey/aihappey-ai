@@ -84,7 +84,7 @@ public partial class MoonshotProvider
                         models.Add(model);
                 }
 
-                return models;
+                return models.WithPricing(GetIdentifier());
 
             },
             baseTtl: TimeSpan.FromHours(4),

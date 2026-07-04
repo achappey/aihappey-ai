@@ -150,6 +150,6 @@ public sealed class AIEventEnvelope
     public object? Data { get; init; }
 
     public Dictionary<string, object?>? Metadata { get; init; }
-
+    
 }
 

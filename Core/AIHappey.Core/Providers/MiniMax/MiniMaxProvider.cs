@@ -8,6 +8,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -42,16 +43,26 @@ public partial class MiniMaxProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return this.EnrichChatCompletionWithCatalogGatewayCost(response, options.Model);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                            options,
+                            cancellationToken: cancellationToken))
+        {
+            CatalogPricingCostingExtensions.NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+            yield return this.EnrichChatCompletionUpdateWithCatalogGatewayCost(update, options.Model);
+        }
     }
 
     public string GetIdentifier() => nameof(MiniMax).ToLowerInvariant();
@@ -81,7 +92,7 @@ public partial class MiniMaxProvider : IModelProvider
         var response = await this.GetResponse(_client,
                    options, cancellationToken: cancellationToken);
 
-        return response;
+        return this.EnrichResponseWithCatalogGatewayCost(response, options.Model);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
@@ -93,6 +104,9 @@ public partial class MiniMaxProvider : IModelProvider
            options,
            cancellationToken: cancellationToken))
         {
+            if (update is Responses.Streaming.ResponseCompleted completed)
+                this.EnrichResponseWithCatalogGatewayCost(completed.Response, options.Model);
+
             yield return update;
         }
     }
@@ -109,24 +123,47 @@ public partial class MiniMaxProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetMessage(_client,
+        var response = await this.GetMessage(_client,
             request,
             "anthropic/v1/messages",
             headers: headers,
             cancellationToken: cancellationToken);
+
+        return this.EnrichMessagesResponseWithCatalogGatewayCost(response, request.Model);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
         MessagesRequest request,
         Dictionary<string, string> headers,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetMessages(_client,
+        await foreach (var part in this.GetMessages(_client,
             request,
             "anthropic/v1/messages",
             headers: headers,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken))
+        {
+            yield return this.EnrichMessageStreamPartWithCatalogGatewayCost(part, request.Model);
+        }
+    }
+
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return this.EnrichUnifiedResponseWithCatalogGatewayCost(response, request.Model);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+                           request,
+                           cancellationToken: cancellationToken))
+        {
+            yield return this.EnrichUnifiedStreamEventWithCatalogGatewayCost(streamEvent, request.Model);
+        }
     }
 }
