@@ -127,6 +127,14 @@ public static partial class InteractionsUnifiedMapper
                     yield break;
                 }
 
+            case InteractionStepStartEvent { Step: InteractionVideoContent video } start:
+                {
+                    RememberStreamContentType(providerId, start.Index, "video");
+                    RememberStreamVideoStart(providerId, start.Index, video.MimeType, video.Data, video.Uri, video.Resolution);
+
+                    yield break;
+                }
+
             case InteractionStepStartEvent { Step: InteractionThoughtContent thought } start:
                 {
                     var hasSummaryText = !string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary));
@@ -312,6 +320,39 @@ public static partial class InteractionsUnifiedMapper
                             },
                             part,
                             delta.Index);
+                    }
+
+                    yield break;
+                }
+
+            case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "video", StringComparison.OrdinalIgnoreCase):
+                {
+                    RememberStreamContentType(providerId, delta.Index, "video");
+
+                    var rememberedVideo = GetStreamVideo(providerId, delta.Index);
+                    var mimeType = GetDeltaAdditionalString(delta, "mime_type")
+                                   ?? rememberedVideo?.MimeType
+                                   ?? "video/mp4";
+                    var videoData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
+                    var videoUri = GetDeltaAdditionalString(delta, "uri") ?? rememberedVideo?.Uri;
+                    var resolution = GetDeltaAdditionalString(delta, "resolution") ?? rememberedVideo?.Resolution;
+
+                    RememberStreamVideoDelta(providerId, delta.Index, mimeType, videoData, videoUri, resolution);
+
+                    if (HasTextStart(providerId, delta.Index))
+                    {
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "text-end",
+                                Id = BuildContentEventId(delta.Index),
+                                Data = new AITextEndEventData()
+                            },
+                            part,
+                            delta.Index);
+
+                        ForgetTextStart(providerId, delta.Index);
                     }
 
                     yield break;
@@ -676,6 +717,7 @@ public static partial class InteractionsUnifiedMapper
                     var rememberedSignature = GetStreamThoughtSignature(providerId, stop.Index);
                     var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
                     var rememberedImage = ForgetStreamImage(providerId, stop.Index);
+                    var rememberedVideo = ForgetStreamVideo(providerId, stop.Index);
                     ForgetStreamToolStep(providerId, stop.Index);
 
                     if (ForgetStreamFunctionCall(providerId, stop.Index) is { } functionCall)
@@ -819,7 +861,26 @@ public static partial class InteractionsUnifiedMapper
 
                         yield break;
                     }
- 
+
+                    if (string.Equals(rememberedType, "video", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (TryCreateInteractionVideoFileEventData(providerId, stop.Index, rememberedVideo, out var fileEventData))
+                        {
+                            yield return CreateStreamEvent(
+                                providerId,
+                                new AIEventEnvelope
+                                {
+                                    Type = "file",
+                                    Id = rememberedVideo?.FileId ?? BuildVideoFileId(stop.Index),
+                                    Data = fileEventData
+                                },
+                                part,
+                                stop.Index);
+                        }
+
+                        yield break;
+                    }
+  
                     yield break;
                 }
 
@@ -1442,6 +1503,33 @@ public static partial class InteractionsUnifiedMapper
             }
         };
 
+    private static Dictionary<string, Dictionary<string, object>> CreateInteractionVideoFileProviderMetadata(
+        string providerId,
+        int index,
+        string? mimeType,
+        string? uri,
+        string? resolution)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "interaction_video_file",
+            ["interactions.content.type"] = "video",
+            ["interactions.content.index"] = index,
+            ["mime_type"] = string.IsNullOrWhiteSpace(mimeType) ? "video/mp4" : mimeType
+        };
+
+        if (!string.IsNullOrWhiteSpace(uri))
+            metadata["interactions.uri"] = uri;
+
+        if (!string.IsNullOrWhiteSpace(resolution))
+            metadata["interactions.resolution"] = resolution;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = metadata
+        };
+    }
+
     private static bool HasSourceUrlAnnotations(InteractionStepDeltaEvent delta)
         => GetSourceUrlAnnotations(delta).Count != 0;
 
@@ -1603,6 +1691,55 @@ public static partial class InteractionsUnifiedMapper
 
     private static string ToInteractionImageDataUrl(string? mimeType, string? data)
         => $"data:{(string.IsNullOrWhiteSpace(mimeType) ? "image/png" : mimeType)};base64,{(data ?? string.Empty).StripBase64Prefix()}";
+
+    private static bool TryCreateInteractionVideoFileEventData(
+        string providerId,
+        int index,
+        InteractionStreamVideoState? video,
+        out AIFileEventData fileEventData)
+    {
+        fileEventData = default!;
+
+        if (video is null)
+            return false;
+
+        var url = !string.IsNullOrWhiteSpace(video.Data)
+            ? ToInteractionVideoDataUrl(video.MimeType, video.Data)
+            : video.Uri;
+
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+
+        var mimeType = string.IsNullOrWhiteSpace(video.MimeType)
+            ? "video/mp4"
+            : video.MimeType!;
+
+        fileEventData = new AIFileEventData
+        {
+            MediaType = mimeType,
+            Url = url,
+            Filename = $"{video.FileId}.{GetVideoFileExtension(mimeType)}",
+            ProviderMetadata = CreateInteractionVideoFileProviderMetadata(providerId, index, mimeType, video.Uri, video.Resolution)
+        };
+
+        return true;
+    }
+
+    private static string ToInteractionVideoDataUrl(string? mimeType, string? data)
+        => $"data:{(string.IsNullOrWhiteSpace(mimeType) ? "video/mp4" : mimeType)};base64,{(data ?? string.Empty).StripBase64Prefix()}";
+
+    private static string GetVideoFileExtension(string mimeType)
+        => mimeType.ToLowerInvariant() switch
+        {
+            "video/mpeg" or "video/mpg" => "mpg",
+            "video/mov" or "video/quicktime" => "mov",
+            "video/avi" => "avi",
+            "video/x-flv" => "flv",
+            "video/webm" => "webm",
+            "video/wmv" or "video/x-ms-wmv" => "wmv",
+            "video/3gpp" => "3gp",
+            _ => "mp4"
+        };
  
     private static object ParseStreamingArguments(string? argumentsJson)
     {

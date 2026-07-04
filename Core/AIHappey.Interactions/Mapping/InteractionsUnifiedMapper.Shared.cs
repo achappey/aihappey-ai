@@ -14,6 +14,7 @@ public static partial class InteractionsUnifiedMapper
     private static readonly ConcurrentDictionary<string, bool> StreamReasoningStarts = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, InteractionStreamVideoState> StreamVideos = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamFunctionCallState> StreamFunctionCalls = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamToolStepState> StreamToolSteps = new(StringComparer.Ordinal);
 
@@ -453,6 +454,7 @@ public static partial class InteractionsUnifiedMapper
         RemoveByProviderPrefix(StreamTextStarts, providerId);
         RemoveByProviderPrefix(StreamReasoningStarts, providerId);
         RemoveByProviderPrefix(StreamImages, providerId);
+        RemoveByProviderPrefix(StreamVideos, providerId);
         RemoveByProviderPrefix(StreamFunctionCalls, providerId);
         RemoveByProviderPrefix(StreamToolSteps, providerId);
         StreamOpenThoughtAnchors.TryRemove(providerId, out _);
@@ -472,6 +474,9 @@ public static partial class InteractionsUnifiedMapper
 
     private static string BuildImageToolCallId(int index)
         => $"interactions-image-{index}";
+
+    private static string BuildVideoFileId(int index)
+        => $"interactions-video-{index}";
 
     private static void RememberTextStart(string providerId, int index)
         => StreamTextStarts[BuildStreamContentKey(providerId, index)] = true;
@@ -607,6 +612,63 @@ public static partial class InteractionsUnifiedMapper
     {
         StreamImages.TryRemove(BuildStreamContentKey(providerId, index), out var image);
         return image;
+    }
+
+    private static void RememberStreamVideoStart(string providerId, int index, string? mimeType, string? data = null, string? uri = null, string? resolution = null)
+    {
+        var key = BuildStreamContentKey(providerId, index);
+        StreamVideos.AddOrUpdate(
+            key,
+            _ => new InteractionStreamVideoState
+            {
+                FileId = BuildVideoFileId(index),
+                MimeType = mimeType,
+                Data = data,
+                Uri = uri,
+                Resolution = resolution
+            },
+            (_, existing) => existing with
+            {
+                FileId = string.IsNullOrWhiteSpace(existing.FileId) ? BuildVideoFileId(index) : existing.FileId,
+                MimeType = mimeType ?? existing.MimeType,
+                Data = data ?? existing.Data,
+                Uri = uri ?? existing.Uri,
+                Resolution = resolution ?? existing.Resolution
+            });
+    }
+
+    private static InteractionStreamVideoState RememberStreamVideoDelta(string providerId, int index, string? mimeType, string? data, string? uri, string? resolution)
+    {
+        var key = BuildStreamContentKey(providerId, index);
+        return StreamVideos.AddOrUpdate(
+            key,
+            _ => new InteractionStreamVideoState
+            {
+                FileId = BuildVideoFileId(index),
+                MimeType = mimeType,
+                Data = data,
+                Uri = uri,
+                Resolution = resolution
+            },
+            (_, existing) => existing with
+            {
+                FileId = string.IsNullOrWhiteSpace(existing.FileId) ? BuildVideoFileId(index) : existing.FileId,
+                MimeType = mimeType ?? existing.MimeType,
+                Data = data ?? existing.Data,
+                Uri = uri ?? existing.Uri,
+                Resolution = resolution ?? existing.Resolution
+            });
+    }
+
+    private static InteractionStreamVideoState? GetStreamVideo(string providerId, int index)
+        => StreamVideos.TryGetValue(BuildStreamContentKey(providerId, index), out var video)
+            ? video
+            : null;
+
+    private static InteractionStreamVideoState? ForgetStreamVideo(string providerId, int index)
+    {
+        StreamVideos.TryRemove(BuildStreamContentKey(providerId, index), out var video);
+        return video;
     }
 
     private static void RememberStreamThoughtHasText(string providerId, int index, bool hasText)
@@ -805,7 +867,20 @@ public static partial class InteractionsUnifiedMapper
 
         public string? Data { get; init; }
     }
- 
+
+    private sealed record InteractionStreamVideoState
+    {
+        public string FileId { get; init; } = string.Empty;
+
+        public string? MimeType { get; init; }
+
+        public string? Data { get; init; }
+
+        public string? Uri { get; init; }
+
+        public string? Resolution { get; init; }
+    }
+  
     private sealed record InteractionStreamFunctionCallState
     {
         public string ToolCallId { get; init; } = string.Empty;

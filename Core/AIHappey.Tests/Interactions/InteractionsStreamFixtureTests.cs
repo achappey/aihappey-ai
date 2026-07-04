@@ -12,6 +12,7 @@ public sealed class InteractionsStreamFixtureTests
 {
     private const string RawFixturePath = "Fixtures/interactions/raw/interactions-with-tools.jsonl";
     private const string AntigravityRawFixturePath = "Fixtures/interactions/raw/interactions-antigravity-agent-stream.jsonl";
+    private const string VideoOutputRawFixturePath = "Fixtures/interactions/raw/interactions-with-video-output.jsonl";
     private const string FailedReasoningStartFixturePath = "Fixtures/interactions/raw/failed-reasoning-start.-missing.jsonl";
     private const string FailedTextStartFixturePath = "Fixtures/interactions/raw/failed-text-start-missing.jsonl";
     private const string ProviderId = "fixture-provider";
@@ -485,6 +486,45 @@ public sealed class InteractionsStreamFixtureTests
         Assert.Equal(
             codeCallId,
             toolOutputAvailable.ProviderMetadata?[ProviderId]["tool_use_id"].ToString());
+    }
+
+    [Fact]
+    public void Interactions_video_output_fixture_maps_to_file_event_and_vercel_file_ui_part()
+    {
+        var unifiedEvents = LoadUnifiedEvents(VideoOutputRawFixturePath);
+
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "text-start",
+            "text-delta",
+            "text-delta",
+            "text-delta",
+            "text-end",
+            "file",
+            "finish");
+
+        var fileEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "file");
+        Assert.Equal("interactions-video-2", fileEvent.Event.Id);
+
+        var fileEventData = Assert.IsType<AIFileEventData>(fileEvent.Event.Data);
+        Assert.Equal("video/mp4", fileEventData.MediaType);
+        Assert.Equal("interactions-video-2.mp4", fileEventData.Filename);
+        Assert.StartsWith("data:video/mp4;base64,AAAAIGZ0eXBpc29t", fileEventData.Url, StringComparison.Ordinal);
+
+        var providerMetadata = Assert.Contains(ProviderId, fileEventData.ProviderMetadata ?? []);
+        Assert.Equal("interaction_video_file", Assert.IsType<string>(providerMetadata["type"]));
+        Assert.Equal("video", Assert.IsType<string>(providerMetadata["interactions.content.type"]));
+        Assert.Equal(2, Convert.ToInt32(providerMetadata["interactions.content.index"]));
+        Assert.Equal("video/mp4", Assert.IsType<string>(providerMetadata["mime_type"]));
+
+        var uiFilePart = fileEvent.Event
+            .ToUIMessagePart(ProviderId)
+            .OfType<FileUIPart>()
+            .Single();
+
+        Assert.Equal(fileEventData.MediaType, uiFilePart.MediaType);
+        Assert.Equal(fileEventData.Url, uiFilePart.Url);
+        Assert.Contains(ProviderId, uiFilePart.ProviderMetadata ?? []);
     }
 
 
