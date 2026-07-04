@@ -59,35 +59,11 @@ public partial class StepFunProvider : IModelProvider
 
     public string GetIdentifier() => nameof(StepFun).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(
+    public Task<CreateMessageResult> SamplingAsync(
     CreateMessageRequestParams chatRequest,
     CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        switch (model?.Type)
-        {
-            case "speech":
-                return await this.SpeechSamplingAsync(
-                    chatRequest,
-                    cancellationToken: cancellationToken);
-
-            case "image":
-                return await this.ImageSamplingAsync(
-                    chatRequest,
-                    cancellationToken: cancellationToken);
-
-            case "language":
-                var result = await this.ExecuteUnifiedAsync(
-                    chatRequest.ToUnifiedRequest(GetIdentifier()),
-                    cancellationToken);
-
-                return result.ToSamplingResult();
-
-            default:
-                throw new NotImplementedException(
-                    $"Sampling is not implemented for model type '{model?.Type ?? "unknown"}'.");
-        }
+        throw new NotImplementedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

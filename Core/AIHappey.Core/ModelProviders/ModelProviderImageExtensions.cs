@@ -82,10 +82,11 @@ public static class ModelProviderImageExtensions
         yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, null);
     }
 
+    [Obsolete("MCP Sampling obsolete")]
     public static async Task<CreateMessageResult> ImageSamplingAsync(
-          this IModelProvider modelProvider,
-          CreateMessageRequestParams chatRequest,
-          CancellationToken cancellationToken = default)
+              this IModelProvider modelProvider,
+              CreateMessageRequestParams chatRequest,
+              CancellationToken cancellationToken = default)
     {
         var input = string.Join("\n\n", chatRequest
             .Messages

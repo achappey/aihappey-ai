@@ -7,10 +7,11 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderSpeechSamplingExtensions
 {
+    [Obsolete("MCP Sampling obsolete")]
     public static async Task<CreateMessageResult> SpeechSamplingAsync(
-        this IModelProvider modelProvider,
-        CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken = default)
+       this IModelProvider modelProvider,
+       CreateMessageRequestParams chatRequest,
+       CancellationToken cancellationToken = default)
     {
         var input = string.Join("\n\n", chatRequest
             .Messages
