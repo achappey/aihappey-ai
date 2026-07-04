@@ -29,6 +29,21 @@ public class VideoRequest
 
     [JsonPropertyName("image")]
     public VideoFile? Image { get; set; }
+
+    [JsonPropertyName("inputReferences")]
+    public IEnumerable<VideoFile>? InputReferences { get; set; }
+
+    [JsonPropertyName("frameImages")]
+    public IEnumerable<VideoFrameImage>? FrameImages { get; set; }
+
+}
+
+public class VideoFrameImage
+{
+    [JsonPropertyName("frameType")]
+    public string FrameType { get; set; } = null!;
+
+    public VideoFile Image { get; set; } = null!;
 }
 
 public class VideoFile
