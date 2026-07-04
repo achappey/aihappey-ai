@@ -24,9 +24,6 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        if (request.Image is not null)
-            throw new InvalidOperationException("Google Veo video generation currently supports text-only requests.");
-
         var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No Google API key.");
@@ -40,12 +37,15 @@ public partial class GoogleAIProvider
         if (request.N is not null && request.N > 1)
             warnings.Add(new { type = "unsupported", feature = "n" });
 
+        if (request.Seed is not null)
+            warnings.Add(new { type = "unsupported", feature = "seed" });
+
         using var http = new HttpClient
         {
             BaseAddress = new Uri("https://generativelanguage.googleapis.com/v1beta/")
         };
 
-        var payload = BuildVideoPayload(request);
+        var payload = BuildVideoPayload(request, warnings);
         var json = JsonSerializer.Serialize(payload, GoogleVideoJson);
 
         using var createReq = new HttpRequestMessage(HttpMethod.Post, $"models/{request.Model}:predictLongRunning")
@@ -132,16 +132,20 @@ public partial class GoogleAIProvider
         };
     }
 
-    private static Dictionary<string, object?> BuildVideoPayload(VideoRequest request)
+    private static Dictionary<string, object?> BuildVideoPayload(VideoRequest request, List<object> warnings)
     {
+        var instance = new Dictionary<string, object?>
+        {
+            ["prompt"] = request.Prompt
+        };
+
+        AddImageInputs(request, instance, warnings);
+
         var payload = new Dictionary<string, object?>
         {
             ["instances"] = new List<Dictionary<string, object?>>
             {
-                new()
-                {
-                    ["prompt"] = request.Prompt
-                }
+                instance
             }
         };
 
@@ -161,6 +165,153 @@ public partial class GoogleAIProvider
 
         return payload;
     }
+
+    private static void AddImageInputs(VideoRequest request, Dictionary<string, object?> instance, List<object> warnings)
+    {
+        var frameImages = request.FrameImages?.ToList() ?? [];
+        VideoFile? firstFrame = null;
+        VideoFile? lastFrame = null;
+
+        foreach (var frameImage in frameImages)
+        {
+            if (frameImage?.Image is null)
+                throw new InvalidOperationException("Google video frameImages entries must include an image.");
+
+            if (IsFirstFrame(frameImage.FrameType))
+            {
+                if (firstFrame is not null)
+                    throw new InvalidOperationException("Google video generation supports only one first_frame image.");
+
+                firstFrame = frameImage.Image;
+            }
+            else if (IsLastFrame(frameImage.FrameType))
+            {
+                if (lastFrame is not null)
+                    throw new InvalidOperationException("Google video generation supports only one last_frame image.");
+
+                lastFrame = frameImage.Image;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unsupported Google video frameType '{frameImage.FrameType}'. Use 'first_frame' or 'last_frame'.");
+            }
+        }
+
+        if (firstFrame is not null)
+        {
+            instance["image"] = ToGoogleVideoImage(firstFrame);
+        }
+        else if (request.Image is not null)
+        {
+            instance["image"] = ToGoogleVideoImage(request.Image);
+        }
+
+        if (lastFrame is not null)
+            instance["lastFrame"] = ToGoogleVideoInlineData(lastFrame);
+
+        var referenceImages = new List<object>();
+        foreach (var reference in request.InputReferences ?? [])
+        {
+            referenceImages.Add(ToGoogleVideoReferenceImage(reference));
+        }
+
+        if (firstFrame is not null && request.Image is not null)
+            referenceImages.Add(ToGoogleVideoReferenceImage(request.Image));
+
+        if (referenceImages.Count > 3)
+            throw new InvalidOperationException("Google Veo 3.1 video generation supports at most 3 reference images, including top-level image when first_frame is also provided.");
+
+        if (referenceImages.Count > 0)
+            instance["referenceImages"] = referenceImages;
+
+        if (frameImages.Count > 0 || referenceImages.Count > 0)
+        {
+            var hasVeo31Model = request.Model.Contains("veo-3.1", StringComparison.OrdinalIgnoreCase);
+            if (!hasVeo31Model)
+            {
+                warnings.Add(new
+                {
+                    type = "unsupported",
+                    feature = "veo_3_1_image_inputs",
+                    message = "Google reference images and frame images are documented for Veo 3.1 models only."
+                });
+            }
+        }
+    }
+
+    private static Dictionary<string, object?> ToGoogleVideoImage(VideoFile image)
+        => new()
+        {
+            ["inlineData"] = ToGoogleVideoInlineData(image)
+        };
+
+    private static Dictionary<string, object?> ToGoogleVideoReferenceImage(VideoFile image)
+        => new()
+        {
+            ["image"] = ToGoogleVideoImage(image),
+            ["referenceType"] = "asset"
+        };
+
+    private static Dictionary<string, object?> ToGoogleVideoInlineData(VideoFile image)
+    {
+        var (mimeType, data) = NormalizeGoogleVideoImage(image);
+        return new Dictionary<string, object?>
+        {
+            ["mimeType"] = mimeType,
+            ["data"] = data
+        };
+    }
+
+    private static (string MimeType, string Data) NormalizeGoogleVideoImage(VideoFile image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        if (string.IsNullOrWhiteSpace(image.Data))
+            throw new InvalidOperationException("Google video image data is required.");
+
+        var data = image.Data.Trim();
+        if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Google video generation only supports base64 or data URL image inputs.");
+        }
+
+        var mimeType = image.MediaType;
+        if (data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var commaIndex = data.IndexOf(',');
+            if (commaIndex < 0)
+                throw new InvalidOperationException("Google video data URL image inputs must include a comma separator.");
+
+            var header = data[5..commaIndex];
+            if (!header.Contains(";base64", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Google video data URL image inputs must be base64 encoded.");
+
+            var mimeEnd = header.IndexOf(';');
+            if (mimeEnd > 0)
+                mimeType = header[..mimeEnd];
+
+            data = data[(commaIndex + 1)..].Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(mimeType))
+            throw new InvalidOperationException("Google video image mediaType is required.");
+
+        if (string.IsNullOrWhiteSpace(data))
+            throw new InvalidOperationException("Google video image base64 data is required.");
+
+        return (mimeType, data);
+    }
+
+    private static bool IsFirstFrame(string? frameType)
+        => string.Equals(frameType, "first_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "firstFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "first", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsLastFrame(string? frameType)
+        => string.Equals(frameType, "last_frame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "lastFrame", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(frameType, "last", StringComparison.OrdinalIgnoreCase);
 
     private static string? TryGetVideoUri(JsonElement root)
     {
