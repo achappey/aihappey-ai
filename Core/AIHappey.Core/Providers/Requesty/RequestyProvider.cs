@@ -75,10 +75,10 @@ public partial class RequestyProvider : IModelProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => RequestyTranscriptionRequest(imageRequest, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => RequestySpeechRequest(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
