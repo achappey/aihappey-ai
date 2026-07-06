@@ -12,6 +12,54 @@
       "object": "model",
       "owned_by": "Requesty",
       "type": "image"
+    },
+    {
+      "id": "requesty/openai/gpt-4o-transcribe",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o-transcribe",
+      "type": "transcription",
+      "description": "Highest accuracy multilingual transcription model with token-based billing."
+    },
+    {
+      "id": "requesty/openai/gpt-4o-mini-transcribe",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o-mini-transcribe",
+      "type": "transcription",
+      "description": "Fast and cost-efficient transcription model with token-based billing."
+    },
+    {
+      "id": "requesty/openai/whisper-1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "whisper-1",
+      "type": "transcription",
+      "description": "Drop-in replacement for legacy Whisper with duration-based billing per second of audio."
+    },
+    {
+      "id": "requesty/openai/gpt-4o-mini-tts",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-4o-mini-tts",
+      "type": "speech",
+      "description": "High-quality text-to-speech model for most use cases. Supports instructions and SSE streaming."
+    },
+    {
+      "id": "requesty/openai/tts-1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "tts-1",
+      "type": "speech",
+      "description": "Lightweight real-time text-to-speech model optimized for low latency. Does not support instructions or SSE streaming."
+    },
+    {
+      "id": "requesty/openai/tts-1-hd",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "tts-1-hd",
+      "type": "speech",
+      "description": "Higher-fidelity text-to-speech model for offline use. Does not support instructions or SSE streaming."
     }
   ]
 }
