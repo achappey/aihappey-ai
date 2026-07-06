@@ -559,7 +559,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["humeai"] = "X-HumeAI-Key",
             ["ltx"] = "X-LTX-Key",
             ["melious"] = "X-Melious-Key",
-            ["lucidquery"] = "X-LucidQuery-Key"
+            ["lucidquery"] = "X-LucidQuery-Key",
+            ["hostyourai"] = "X-HostYourAI-Key"
 
         };
 
