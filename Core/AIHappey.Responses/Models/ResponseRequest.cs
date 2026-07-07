@@ -84,6 +84,10 @@ public sealed class ResponseRequest
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
+    [JsonPropertyName("background")]
+    public bool? Background { get; set; }
+
 }
 
 public sealed class Reasoning
