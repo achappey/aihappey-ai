@@ -40,7 +40,7 @@ public class AIServiceConfig
     public ProviderConfig? Baseten { get; set; }
     public ProviderConfig? Async { get; set; }
     public ProviderConfig? Replicate { get; set; }
-    public ProviderConfig? VoyageAI { get; set; }    
+    public ProviderConfig? VoyageAI { get; set; }
     public ProviderConfig? Azure { get; set; }
     public ProviderConfig? Deepgram { get; set; }
     public ProviderConfig? MiniMax { get; set; }
@@ -232,7 +232,7 @@ public class AIServiceConfig
     public ProviderConfig? AskARC { get; set; }
     public ProviderConfig? Synthetic { get; set; }
     public ProviderConfig? Renderful { get; set; }
-    public ProviderConfig? TigerCity { get; set; }    
+    public ProviderConfig? TigerCity { get; set; }
     public ProviderConfig? EdenAI { get; set; }
     public ProviderConfig? WebsearchAPI { get; set; }
     public ProviderConfig? NimbleWay { get; set; }
@@ -278,7 +278,7 @@ public class AIServiceConfig
     public ProviderConfig? Gradium { get; set; }
     public ProviderConfig? VoiceAI { get; set; }
     public ProviderConfig? IonRouter { get; set; }
-    public ProviderConfig? FreedomGPT { get; set; }  
+    public ProviderConfig? FreedomGPT { get; set; }
     public ProviderConfig? Kirha { get; set; }
     public ProviderConfig? SUFY { get; set; }
     public ProviderConfig? LogicosLLMHub { get; set; }
@@ -355,7 +355,7 @@ public class AIServiceConfig
     public ProviderConfig? Vogent { get; set; }
     public ProviderConfig? YouGetAI { get; set; }
     public ProviderConfig? TikHubAI { get; set; }
-    public ProviderConfig? PreAPI { get; set; }    
+    public ProviderConfig? PreAPI { get; set; }
     public ProviderConfig? Vultr { get; set; }
     public ProviderConfig? OfoxAI { get; set; }
     public ProviderConfig? DedalusLabs { get; set; }
@@ -386,7 +386,7 @@ public class AIServiceConfig
     public ProviderConfig? Ollama { get; set; }
     public ProviderConfig? Vivgrid { get; set; }
     public ProviderConfig? Relace { get; set; }
-    public ProviderConfig? Inflection { get; set; }   
+    public ProviderConfig? Inflection { get; set; }
     public ProviderConfig? Baidu { get; set; }
     public ProviderConfig? Morph { get; set; }
     public ProviderConfig? StreamLake { get; set; }
@@ -413,11 +413,11 @@ public class AIServiceConfig
     public ProviderConfig? Fortytwo { get; set; }
     public ProviderConfig? Oraicle { get; set; }
     public ProviderConfig? Foureverland { get; set; }
-    public ProviderConfig? DistributeAI { get; set; }   
+    public ProviderConfig? DistributeAI { get; set; }
     public ProviderConfig? Key4U { get; set; }
     public ProviderConfig? FiveDock { get; set; }
     public ProviderConfig? Magisterium { get; set; }
-    public ProviderConfig? MumeAI { get; set; }   
+    public ProviderConfig? MumeAI { get; set; }
     public ProviderConfig? UncensoredChat { get; set; }
     public ProviderConfig? OrbGPU { get; set; }
     public ProviderConfig? OpenGateway { get; set; }
@@ -559,7 +559,9 @@ public class AIServiceConfig
     public ProviderConfig? Melious { get; set; }
     public ProviderConfig? LucidQuery { get; set; }
     public ProviderConfig? HostYourAI { get; set; }
-    
+    public ProviderConfig? ReByteTasks { get; set; }
+    public ProviderConfig? ReByteModels { get; set; }
+
 
 }
 

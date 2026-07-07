@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "rebytetasks/claude",
+      "object": "model",
+      "owned_by": "Rebyte",
+      "name": "claude",
+      "type": "language",
+      "description": "Executor. Default model: claude-sonnet-4.6."
+    },
+    {
+      "id": "rebytetasks/codex",
+      "object": "model",
+      "owned_by": "Rebyte",
+      "name": "codex",
+      "type": "language",
+      "description": "Executor. Default model: gpt-5.4."
+    },
+    {
+      "id": "rebytetasks/opencode",
+      "object": "model",
+      "owned_by": "Rebyte",
+      "name": "opencode",
+      "type": "language",
+      "description": "Executor. Default model: gemini-3.1-pro."
+    },
+    {
+      "id": "rebytetasks/gemini",
+      "object": "model",
+      "owned_by": "Rebyte",
+      "name": "gemini",
+      "type": "language",
+      "description": "Executor. Default model: auto-gemini-3."
+    }
+  ]
+}

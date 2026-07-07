@@ -558,6 +558,8 @@ using AIHappey.Core.Providers.HumeAI;
 using AIHappey.Core.Providers.Melious;
 using AIHappey.Core.Providers.LucidQuery;
 using AIHappey.Core.Providers.HostYourAI;
+using AIHappey.Core.Providers.ReByteTasks;
+using AIHappey.Core.Providers.ReByteModels;
 
 namespace AIHappey.Core.AI;
 
@@ -1142,6 +1144,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MeliousProvider>();
         services.AddSingleton<IModelProvider, LucidQueryProvider>();
         services.AddSingleton<IModelProvider, HostYourAIProvider>();
+        services.AddSingleton<IModelProvider, ReByteTasksProvider>();
+        services.AddSingleton<IModelProvider, ReByteModelsProvider>();
         
 
     }

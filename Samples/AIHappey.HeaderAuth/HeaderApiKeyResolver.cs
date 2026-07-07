@@ -560,7 +560,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ltx"] = "X-LTX-Key",
             ["melious"] = "X-Melious-Key",
             ["lucidquery"] = "X-LucidQuery-Key",
-            ["hostyourai"] = "X-HostYourAI-Key"
+            ["hostyourai"] = "X-HostYourAI-Key",
+            ["rebytemodels"] = "X-ReByteModels-Key",
+            ["rebytetasks"] = "X-ReByteTasks-Key"
 
         };
 

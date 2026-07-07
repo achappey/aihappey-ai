@@ -1,0 +1,85 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "rebytemodels/claude-opus-4.6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-opus-4.6",
+      "type": "language",
+      "description": "Rebyte-hosted Claude Opus 4.6 model. Available executors: claude, opencode."
+    },
+    {
+      "id": "rebytemodels/claude-sonnet-4.6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "claude-sonnet-4.6",
+      "type": "language",
+      "description": "Rebyte-hosted Claude Sonnet 4.6 model. Available executors: claude, opencode."
+    },
+    {
+      "id": "rebytemodels/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.4",
+      "type": "language",
+      "description": "Rebyte-hosted GPT-5.4 model. Available executors: claude, codex, opencode."
+    },
+    {
+      "id": "rebytemodels/gpt-5.3-codex",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-5.3-codex",
+      "type": "language",
+      "description": "Rebyte-hosted GPT-5.3 Codex model. Available executors: claude, codex, opencode."
+    },
+    {
+      "id": "rebytemodels/gemini-3.1-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3.1-pro",
+      "type": "language",
+      "description": "Rebyte-hosted Gemini 3.1 Pro model. Available executors: claude, opencode."
+    },
+    {
+      "id": "rebytemodels/gemini-3-flash",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "gemini-3-flash",
+      "type": "language",
+      "description": "Rebyte-hosted Gemini 3 Flash model. Available executors: claude, opencode."
+    },
+    {
+      "id": "rebytemodels/auto-gemini-3",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "auto-gemini-3",
+      "type": "language",
+      "description": "Rebyte-hosted Auto Gemini 3 model. Available executor: gemini."
+    },
+    {
+      "id": "rebytemodels/minimax-m2.7",
+      "object": "model",
+      "owned_by": "Open Source",
+      "name": "minimax-m2.7",
+      "type": "language",
+      "description": "Rebyte-hosted MiniMax M2.7 model. Available executors: claude, opencode."
+    },
+    {
+      "id": "rebytemodels/kimi-k2.6",
+      "object": "model",
+      "owned_by": "Open Source",
+      "name": "kimi-k2.6",
+      "type": "language",
+      "description": "Rebyte-hosted Kimi K2.6 model. Available executors: claude, opencode."
+    },
+    {
+      "id": "rebytemodels/glm-5.1",
+      "object": "model",
+      "owned_by": "Open Source",
+      "name": "glm-5.1",
+      "type": "language",
+      "description": "Rebyte-hosted GLM 5.1 model. Available executors: claude, opencode."
+    }
+  ]
+}
