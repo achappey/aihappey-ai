@@ -4,7 +4,6 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;

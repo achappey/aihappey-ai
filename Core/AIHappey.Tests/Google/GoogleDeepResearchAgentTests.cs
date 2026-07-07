@@ -1,7 +1,6 @@
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Google;

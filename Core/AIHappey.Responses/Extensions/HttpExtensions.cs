@@ -5,7 +5,6 @@ using System.Net.Http.Headers;
 using AIHappey.Abstractions.Http;
 using AIHappey.Responses.Streaming;
 using System.Text.Json.Nodes;
-using System.Security.Cryptography.X509Certificates;
 
 namespace AIHappey.Responses.Extensions;
 

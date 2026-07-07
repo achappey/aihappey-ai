@@ -1,4 +1,3 @@
-using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;

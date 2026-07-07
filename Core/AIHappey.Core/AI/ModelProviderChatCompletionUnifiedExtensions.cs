@@ -7,8 +7,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using static AIHappey.ChatCompletions.Mapping.ChatCompletionsUnifiedMapper;
 using AIHappey.ChatCompletions.Models;
-using System.Text.Json.Nodes;
-using System.Text;
 
 namespace AIHappey.Core.AI;
 
