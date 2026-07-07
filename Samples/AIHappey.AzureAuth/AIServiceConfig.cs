@@ -209,7 +209,6 @@ public class AIServiceConfig
     public ProviderConfig? OpenAIHK { get; set; }
     public ProviderConfig? Apekey { get; set; }
     public ProviderConfig? Apertis { get; set; }
-    public ProviderConfig? WisGate { get; set; }
     public ProviderConfig? Smooth { get; set; }
     public ProviderConfig? Speechactors { get; set; }
     public ProviderConfig? GPTProto { get; set; }

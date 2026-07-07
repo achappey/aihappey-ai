@@ -211,7 +211,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["openaihk"] = "X-OpenAIHK-Key",
             ["apekey"] = "X-Apekey-Key",
             ["apertis"] = "X-Apertis-Key",
-            ["wisgate"] = "X-WisGate-Key",
             ["smooth"] = "X-Smooth-Key",
             ["speechactors"] = "X-Speechactors-Key",
             ["gptproto"] = "X-GPTProto-Key",
