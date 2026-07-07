@@ -290,7 +290,6 @@ public class AIServiceConfig
     public ProviderConfig? Hanzo { get; set; }
     public ProviderConfig? SurferCloud { get; set; }
     public ProviderConfig? Claudible { get; set; }
-    public ProviderConfig? EmbraceableAI { get; set; }
     public ProviderConfig? Glama { get; set; }
     public ProviderConfig? Brainiall { get; set; }
     public ProviderConfig? Agabeyogluai { get; set; }

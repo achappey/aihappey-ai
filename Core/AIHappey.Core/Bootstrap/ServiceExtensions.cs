@@ -285,7 +285,6 @@ using AIHappey.Core.Providers.ShuttleAI;
 using AIHappey.Core.Providers.Claudible;
 using AIHappey.Core.Providers.SurferCloud;
 using AIHappey.Core.Providers.Hanzo;
-using AIHappey.Core.Providers.EmbraceableAI;
 using AIHappey.Core.Providers.Routstr;
 using AIHappey.Core.Providers.Setapp;
 using AIHappey.Core.Providers.Writer;
@@ -869,7 +868,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ClaudibleProvider>();
         services.AddSingleton<IModelProvider, SurferCloudProvider>();
         services.AddSingleton<IModelProvider, HanzoProvider>();
-        services.AddSingleton<IModelProvider, EmbraceableAIProvider>();
         services.AddSingleton<IModelProvider, RoutstrProvider>();
         services.AddSingleton<IModelProvider, SetappProvider>();
         services.AddSingleton<IModelProvider, WriterProvider>();
