@@ -59,8 +59,24 @@ public class TranscriptionResponse
     [JsonPropertyName("response")]
     public ResponseData Response { get; set; } = default!;
 
+    /**
+        * Optional request information for telemetry and debugging purposes.
+        */
+    [JsonPropertyName("request")]
+    public TranscriptionRequestItem? Request { get; set; }
+
 }
 
+public class TranscriptionRequestItem
+{
+    /**
+         * Raw request HTTP body that was sent to the provider API as a string (JSON should be stringified).
+         * Non-HTTP(s) providers should not set this.
+         */
+
+    [JsonPropertyName("body")]
+    public string? Body { get; set; }
+}
 
 public class TranscriptionSegment
 {
