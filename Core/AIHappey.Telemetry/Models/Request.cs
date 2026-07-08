@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIHappey.Telemetry.Models;
@@ -33,6 +34,10 @@ public class Request
     public DateTime EndedAt { get; set; }
 
     public RequestType RequestType { get; set; }
+
+    [MaxLength(512)]
+    public string? AgentId { get; set; }
+
 }
 
 public enum RequestType
