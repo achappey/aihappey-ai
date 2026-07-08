@@ -2,10 +2,13 @@ using OpenAI.Audio;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using System.Text.Json;
+using AIHappey.Core.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider 
+public partial class OpenAIProvider
 {
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
@@ -36,9 +39,12 @@ public partial class OpenAIProvider
             cancellationToken);
 
         var base64 = Convert.ToBase64String(result.Value.ToArray());
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+        var providerMetadata = BuildProviderMetadata(request.Text, modelItem);
 
         return new SpeechResponse()
         {
+            ProviderMetadata = providerMetadata,
             Audio = new SpeechAudioResponse()
             {
                 Base64 = base64,
@@ -52,6 +58,33 @@ public partial class OpenAIProvider
                 ModelId = request.Model,
             },
         };
+    }
+
+    private static Dictionary<string, JsonElement> BuildProviderMetadata(string text, Model? modelItem)
+    {
+        var providerMetadata = new Dictionary<string, JsonElement>
+        {
+            [Constants.OpenAI] = JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web)
+        };
+
+        var inputPricePerCharacter = modelItem?.Pricing?.Input;
+
+        if (inputPricePerCharacter is null or <= 0m)
+            return providerMetadata;
+
+        var inputCharacters = text.Length;
+
+        var inputCost = Math.Round(
+            inputCharacters * inputPricePerCharacter.Value,
+            8,
+            MidpointRounding.AwayFromZero);
+
+        providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+        {
+            cost = inputCost
+        }, JsonSerializerOptions.Web);
+
+        return providerMetadata;
     }
 
     public static string MapToAudioMimeType(string? value)

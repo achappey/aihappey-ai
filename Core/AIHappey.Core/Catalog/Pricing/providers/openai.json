@@ -163,5 +163,25 @@
       "input_cache_read": "0.000000175",
       "output": "0.000014"
     }
+  },
+  "openai/tts-1": {
+    "pricing": {
+      "input": "0.000015"
+    }
+  },
+  "openai/tts-1-hd": {
+    "pricing": {
+      "input": "0.00003"
+    }
+  },
+  "openai/tts-1-1106": {
+    "pricing": {
+      "input": "0.000015"
+    }
+  },
+  "openai/tts-1-hd-1106": {
+    "pricing": {
+      "input": "0.00003"
+    }
   }
 }
