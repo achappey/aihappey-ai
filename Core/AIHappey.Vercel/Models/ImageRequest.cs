@@ -106,6 +106,9 @@ public class ResponseData
     [JsonPropertyName("timestamp")]
     public DateTime Timestamp { get; set; }
 
+    [JsonPropertyName("headers")]
+    public IDictionary<string, string>? Headers { get; set; }
+
     [JsonPropertyName("body")]
     public object? Body { get; set; }
 }
