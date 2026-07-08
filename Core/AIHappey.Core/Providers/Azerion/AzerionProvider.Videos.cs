@@ -110,8 +110,7 @@ public partial class AzerionProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -192,8 +191,7 @@ public partial class AzerionProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = finalTask.Root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -78,14 +78,14 @@ public class ImageResponse
     public IEnumerable<object> Warnings { get; set; } = [];
 
     [JsonPropertyName("response")]
-    public ImageResponseData Response { get; set; } = default!;
+    public HeaderResponseData Response { get; set; } = default!;
 
     [JsonPropertyName("usage")]
     public ImageUsageData? Usage { get; set; }
 }
 
 
-public class ImageResponseData
+public class HeaderResponseData
 {
     [JsonPropertyName("modelId")]
     public string ModelId { get; set; } = null!;

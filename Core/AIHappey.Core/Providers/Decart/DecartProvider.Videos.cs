@@ -99,15 +99,7 @@ public partial class DecartProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint,
-                    jobId,
-                    status = completed.Status,
-                    mediaType,
-                    bytes = videoBytes.Length
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

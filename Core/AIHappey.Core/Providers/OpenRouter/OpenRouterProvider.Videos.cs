@@ -95,11 +95,10 @@ public partial class OpenRouterProvider
                     poll = completed.Root
                 }, OpenRouterVideoJsonOptions)
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = completed.Root
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

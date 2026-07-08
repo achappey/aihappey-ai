@@ -110,8 +110,7 @@ public partial class ViduProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = startDoc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

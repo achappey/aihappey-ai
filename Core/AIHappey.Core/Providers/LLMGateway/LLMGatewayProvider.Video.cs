@@ -91,11 +91,11 @@ public partial class LLMGatewayProvider
                     poll = completed.Root
                 }, LLMGatewayVideoJsonOptions)
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = ResolveLLMGatewayVideoTimestamp(completed.Root, now),
-                ModelId = ReadLLMGatewayVideoString(completed.Root, "model") ?? request.Model,
-                Body = completed.Root
+                ModelId = ReadLLMGatewayVideoString(completed.Root, "model")?.ToModelId(GetIdentifier())
+                     ?? request.Model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -132,8 +132,7 @@ public partial class JSON2VideoProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = createRoot
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

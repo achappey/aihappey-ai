@@ -117,8 +117,7 @@ public sealed partial class FreepikProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = finalDoc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             },
             ProviderMetadata = new Dictionary<string, JsonElement>
             {

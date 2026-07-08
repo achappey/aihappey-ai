@@ -111,8 +111,7 @@ public partial class AICCProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = completed
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

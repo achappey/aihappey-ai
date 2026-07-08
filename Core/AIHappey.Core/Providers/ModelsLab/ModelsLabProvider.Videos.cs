@@ -112,8 +112,7 @@ public partial class ModelsLabProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = completed.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

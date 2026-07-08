@@ -121,8 +121,7 @@ public sealed partial class RunwareProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = completed.root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

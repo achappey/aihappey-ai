@@ -129,13 +129,7 @@ public partial class LTXProvider
             Response = new()
             {
                 Timestamp = timestamp,
-                ModelId = request.Model,
-                Body = new
-                {
-                    operation,
-                    endpoint,
-                    payload
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -228,8 +222,7 @@ public partial class LTXProvider
             Response = new()
             {
                 Timestamp = timestamp,
-                ModelId = request.Model,
-                Body = submitRoot
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

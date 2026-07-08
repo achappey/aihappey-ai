@@ -137,8 +137,7 @@ public partial class SiliconFlowProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = completed.Root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

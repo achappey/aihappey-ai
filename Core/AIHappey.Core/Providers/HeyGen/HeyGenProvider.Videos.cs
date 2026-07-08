@@ -100,17 +100,10 @@ public partial class HeyGenProvider
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetadata, JsonSerializerOptions.Web)
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    video_id = videoId,
-                    status = completed.Status,
-                    contentType = mediaType,
-                    bytes = videoBytes.Length
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

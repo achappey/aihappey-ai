@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Infron;
 
@@ -74,11 +75,11 @@ public partial class InfronProvider
                     mode = isEdit ? "edit" : "generation"
                 }, InfronVideoJsonOptions)
             },
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = ResolveInfronTimestamp(root, now),
-                ModelId = root.TryGetString("model") ?? request.Model,
-                Body = root
+                ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier())
+                    ?? request.Model.ToModelId(GetIdentifier())
             }
         };
     }

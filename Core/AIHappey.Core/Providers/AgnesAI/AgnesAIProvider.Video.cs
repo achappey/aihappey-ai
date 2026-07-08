@@ -148,11 +148,10 @@ public partial class AgnesAIProvider
                     retrieve = terminal.Root
                 }, JsonSerializerOptions.Web)
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = terminal.Root
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

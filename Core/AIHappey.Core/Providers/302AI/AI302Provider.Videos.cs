@@ -109,8 +109,7 @@ public partial class AI302Provider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = createRoot.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

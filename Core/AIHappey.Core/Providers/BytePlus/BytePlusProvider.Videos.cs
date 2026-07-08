@@ -123,8 +123,7 @@ public partial class BytePlusProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = createRaw
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

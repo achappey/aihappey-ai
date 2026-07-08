@@ -118,14 +118,7 @@ public partial class GMICloudProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new Dictionary<string, object?>
-                {
-                    ["requestId"] = requestId,
-                    ["status"] = completed.Status,
-                    ["create"] = createRoot,
-                    ["result"] = completed.Root.Clone()
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

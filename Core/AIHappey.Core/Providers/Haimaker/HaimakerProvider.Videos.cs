@@ -156,8 +156,7 @@ public partial class HaimakerProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = terminal.Root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

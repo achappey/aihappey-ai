@@ -67,7 +67,7 @@ public class VideoResponse
     public IEnumerable<object> Warnings { get; set; } = [];
 
     [JsonPropertyName("response")]
-    public ResponseData Response { get; set; } = default!;
+    public HeaderResponseData Response { get; set; } = default!;
 }
 
 public class VideoResponseFile

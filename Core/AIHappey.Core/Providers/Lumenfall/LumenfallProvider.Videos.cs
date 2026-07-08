@@ -71,8 +71,7 @@ public partial class LumenfallProvider
                 Response = new()
                 {
                     Timestamp = ResolveVideoTimestamp(createRoot, now),
-                    ModelId = request.Model,
-                    Body = createRoot
+                    ModelId = request.Model.ToModelId(GetIdentifier())
                 }
             };
         }
@@ -119,8 +118,7 @@ public partial class LumenfallProvider
             Response = new()
             {
                 Timestamp = ResolveVideoTimestamp(completed.Root, now),
-                ModelId = request.Model,
-                Body = completed.Root
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

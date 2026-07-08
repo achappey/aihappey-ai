@@ -138,8 +138,7 @@ public partial class MiniMaxProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = createDoc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

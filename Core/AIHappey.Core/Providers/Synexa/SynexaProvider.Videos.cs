@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Synexa;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -77,10 +78,7 @@ public partial class SynexaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = completed.Output.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
-                    ? null
-                    : completed.Output.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

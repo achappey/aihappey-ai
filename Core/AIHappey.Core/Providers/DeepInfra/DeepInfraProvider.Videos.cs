@@ -84,8 +84,8 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = terminal.Root.TryGetString("model") ?? request.Model,
-                Body = terminal.Root
+                ModelId = terminal.Root.TryGetString("model")?.ToModelId(GetIdentifier())
+                    ?? request.Model.ToModelId(GetIdentifier())
             }
         };
     }

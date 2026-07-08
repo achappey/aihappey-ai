@@ -132,14 +132,7 @@ public partial class LumaAIProvider
                 Response = new()
                 {
                     Timestamp = now,
-                    ModelId = request.Model,
-                    Body = new Dictionary<string, object?>
-                    {
-                        ["submit"] = createRoot,
-                        ["poll"] = final.Root.Clone(),
-                        ["deleted"] = true,
-                        ["generationId"] = generationId
-                    }
+                    ModelId = request.Model.ToModelId(GetIdentifier())
                 }
             };
         }

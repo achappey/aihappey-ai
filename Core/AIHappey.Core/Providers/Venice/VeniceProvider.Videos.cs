@@ -97,16 +97,10 @@ public partial class VeniceProvider
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetadata, JsonSerializerOptions.Web)
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = queuedModel,
-                Body = new
-                {
-                    queue_id = queueId,
-                    contentType = mediaType,
-                    bytes = videoBytes.Length
-                }
+                ModelId = queuedModel.ToModelId(GetIdentifier())
             }
         };
     }
