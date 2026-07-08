@@ -33,8 +33,10 @@ public partial class NovitaProvider
         if (metadata?.Hotwords?.Any() == true)
             payload["hotwords"] = metadata.Hotwords.ToArray();
 
+        var requestBody = JsonSerializer.Serialize(payload);
+
         using var content = new StringContent(
-            JsonSerializer.Serialize(payload),
+            requestBody,
             Encoding.UTF8,
             "application/json"
         );
@@ -50,10 +52,10 @@ public partial class NovitaProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Novita STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertNovitaResponse(json);
+        return ConvertNovitaResponse(json, requestBody);
     }
 
-    private static TranscriptionResponse ConvertNovitaResponse(string json)
+    private static TranscriptionResponse ConvertNovitaResponse(string json, string requestBody)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -72,6 +74,10 @@ public partial class NovitaProvider
                 Timestamp = DateTime.UtcNow,
                 ModelId = "glm-asr-2512",
                 Body = json
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

@@ -67,10 +67,12 @@ public partial class NLPCloudProvider
                 warnings.Add(new { type = "ignored", feature = "encoded_file", reason = "Request audio is used instead." });
         }
 
+        var requestBody = JsonSerializer.Serialize(payload, TranscriptionJson);
+
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"gpu/{model}")
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(payload, TranscriptionJson),
+                requestBody,
                 Encoding.UTF8,
                 "application/json")
         };
@@ -81,14 +83,15 @@ public partial class NLPCloudProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"NLPCloud transcription failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertTranscriptionResponse(json, model, now, warnings);
+        return ConvertTranscriptionResponse(json, model, now, warnings, requestBody);
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
         string json,
         string model,
         DateTime now,
-        IEnumerable<object> warnings)
+        IEnumerable<object> warnings,
+        string requestBody)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -124,6 +127,10 @@ public partial class NLPCloudProvider
                 Timestamp = now,
                 ModelId = model,
                 Body = json
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

@@ -100,9 +100,11 @@ public partial class AlibabaProvider
         if (isLiveTranslate)
             payload["translation_options"] = new { target_lang = targetLanguage };
 
+        var requestBody = JsonSerializer.Serialize(payload, JsonOpts);
+
         using var req = new HttpRequestMessage(HttpMethod.Post, "compatible-mode/v1/chat/completions")
         {
-            Content = new StringContent(JsonSerializer.Serialize(payload, JsonOpts), Encoding.UTF8, "application/json")
+            Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
         };
 
         using var resp = await _client.SendAsync(req, cancellationToken);
@@ -111,7 +113,7 @@ public partial class AlibabaProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Alibaba STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertTranscriptionResponse(json, model);
+        return ConvertTranscriptionResponse(json, model, requestBody);
     }
 
     private static bool TryParseLiveTranslateModel(
@@ -132,7 +134,7 @@ public partial class AlibabaProvider
         return true;
     }
 
-    private static TranscriptionResponse ConvertTranscriptionResponse(string json, string model)
+    private static TranscriptionResponse ConvertTranscriptionResponse(string json, string model, string requestBody)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -179,6 +181,10 @@ public partial class AlibabaProvider
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,
                 Body = root.Clone()
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

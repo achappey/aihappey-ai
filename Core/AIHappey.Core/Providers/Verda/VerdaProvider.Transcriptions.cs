@@ -60,11 +60,11 @@ public partial class VerdaProvider
             });
         }
 
-        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+        var requestBody = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
 
         using var resp = await _client.PostAsync(
             "whisper/predict",
-            new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json),
+            new StringContent(requestBody, Encoding.UTF8, MediaTypeNames.Application.Json),
             cancellationToken);
 
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -114,6 +114,10 @@ public partial class VerdaProvider
                 Timestamp = now,
                 ModelId = request.Model,
                 Body = root.Clone()
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

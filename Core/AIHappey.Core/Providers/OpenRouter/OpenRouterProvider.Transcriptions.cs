@@ -31,11 +31,12 @@ public partial class OpenRouterProvider
 
         var now = DateTime.UtcNow;
         var payload = BuildOpenRouterTranscriptionPayload(request);
+        var requestBody = JsonSerializer.Serialize(payload, OpenRouterTranscriptionJsonOptions);
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/transcriptions")
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(payload, OpenRouterTranscriptionJsonOptions),
+                requestBody,
                 Encoding.UTF8,
                 MediaTypeNames.Application.Json)
         };
@@ -48,7 +49,7 @@ public partial class OpenRouterProvider
                 ? $"OpenRouter transcription request failed ({(int)resp.StatusCode})."
                 : $"OpenRouter transcription request failed ({(int)resp.StatusCode}): {raw}");
 
-        return ConvertOpenRouterTranscriptionResponse(raw, request.Model, now, request, payload, resp);
+        return ConvertOpenRouterTranscriptionResponse(raw, request.Model, now, request, payload, resp, requestBody);
     }
 
     private static Dictionary<string, object?> BuildOpenRouterTranscriptionPayload(TranscriptionRequest request)
@@ -92,7 +93,8 @@ public partial class OpenRouterProvider
         DateTime timestamp,
         TranscriptionRequest request,
         Dictionary<string, object?> payload,
-        HttpResponseMessage response)
+        HttpResponseMessage response,
+        string requestBody)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement.Clone();
@@ -112,6 +114,10 @@ public partial class OpenRouterProvider
                 Timestamp = timestamp,
                 ModelId = model,
                 Body = root
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

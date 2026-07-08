@@ -90,7 +90,7 @@ public partial class RekaAIProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"RekaAI transcription failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertRekaTranscriptionResponse(json, request.Model, metadata, now, warnings);
+        return ConvertRekaTranscriptionResponse(json, request.Model, metadata, now, warnings, body);
     }
 
     private static string BuildAudioDataUrl(string base64Audio, string? mediaType)
@@ -125,7 +125,8 @@ public partial class RekaAIProvider
         string model,
         RekaAITranscriptionProviderMetadata? metadata,
         DateTime timestamp,
-        IEnumerable<object> warnings)
+        IEnumerable<object> warnings,
+        string requestBody)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -195,6 +196,10 @@ public partial class RekaAIProvider
                 Timestamp = timestamp,
                 ModelId = string.IsNullOrWhiteSpace(model) ? "reka_transcription_or_translation" : model,
                 Body = json
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

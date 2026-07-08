@@ -70,6 +70,7 @@ public sealed class XAITranscriptionTests
         Assert.Equal(1.25f, response.DurationInSeconds);
         Assert.Equal(2, response.Segments.Count());
         Assert.Equal("hello", response.Segments.First().Text);
+        Assert.Null(response.Request);
     }
 
     [Fact]

@@ -52,13 +52,14 @@ public partial class AssemblyAIProvider
         try
         {
             // 2) Create transcript: POST /v2/transcript
-            transcriptId = await CreateTranscriptAsync(uploadUrl, request.Model, metadata, cancellationToken);
+            var createTranscript = await CreateTranscriptAsync(uploadUrl, request.Model, metadata, cancellationToken);
+            transcriptId = createTranscript.Id;
 
             // 3) Poll status: GET /v2/transcript/{id}
             var completedJson = await PollTranscriptUntilDoneAsync(transcriptId, cancellationToken);
 
             // 4) Convert
-            return ConvertTranscriptResponse(completedJson, request.Model, now, warnings);
+            return ConvertTranscriptResponse(completedJson, request.Model, now, warnings, createTranscript.RequestBody);
         }
         finally
         {
@@ -108,7 +109,7 @@ public partial class AssemblyAIProvider
         return uploadUrl;
     }
 
-    private async Task<string> CreateTranscriptAsync(
+    private async Task<(string Id, string RequestBody)> CreateTranscriptAsync(
         string uploadUrl,
         string model,
         AssemblyAITranscriptionProviderMetadata? metadata,
@@ -175,7 +176,8 @@ public partial class AssemblyAIProvider
             Add("custom_spelling", metadata.CustomSpelling.Select(a => new { from = a.From, to = a.To }).ToArray());
         }
 
-        using var content = new StringContent(JsonSerializer.Serialize(payload, JsonSerializerOptions.Web), Encoding.UTF8, "application/json");
+        var requestBody = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+        using var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
         using var resp = await _client.PostAsync("v2/transcript", content, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -192,7 +194,7 @@ public partial class AssemblyAIProvider
         if (string.IsNullOrWhiteSpace(id))
             throw new InvalidOperationException($"AssemblyAI create transcript response did not contain id. Body: {json}");
 
-        return id;
+        return (id, requestBody);
     }
 
     private async Task<string> PollTranscriptUntilDoneAsync(string transcriptId, CancellationToken cancellationToken)
@@ -252,7 +254,8 @@ public partial class AssemblyAIProvider
         string json,
         string model,
         DateTime timestamp,
-        IEnumerable<object> warnings)
+        IEnumerable<object> warnings,
+        string requestBody)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -348,6 +351,10 @@ public partial class AssemblyAIProvider
                 Timestamp = timestamp,
                 ModelId = model,
                 Body = json
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

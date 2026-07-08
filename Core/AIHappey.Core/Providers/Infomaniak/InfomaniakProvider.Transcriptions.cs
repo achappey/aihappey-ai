@@ -43,13 +43,14 @@ public partial class InfomaniakProvider
         _ = Convert.FromBase64String(audioString);
 
         var productId = await GetProductIdAsync(cancellationToken);
-        var batchId = await CreateTranscriptionBatchAsync(productId, request.Model, audioString, metadata, cancellationToken);
+        var createBatch = await CreateTranscriptionBatchAsync(productId, request.Model, audioString, metadata, cancellationToken);
+        var batchId = createBatch.BatchId;
         var resultRoot = await PollBatchResultUntilDoneAsync(productId, batchId, cancellationToken);
 
-        return ConvertTranscriptionResult(resultRoot, request.Model, now, warnings);
+        return ConvertTranscriptionResult(resultRoot, request.Model, now, warnings, createBatch.RequestBody);
     }
 
-    private async Task<string> CreateTranscriptionBatchAsync(
+    private async Task<(string BatchId, string RequestBody)> CreateTranscriptionBatchAsync(
         int productId,
         string model,
         string audioBase64,
@@ -121,7 +122,7 @@ public partial class InfomaniakProvider
         if (string.IsNullOrWhiteSpace(batchId))
             throw new InvalidOperationException($"Infomaniak transcription create response missing batch_id. Body: {raw}");
 
-        return batchId;
+        return (batchId, reqJson);
     }
 
     private async Task<JsonElement> PollBatchResultUntilDoneAsync(int productId, string batchId, CancellationToken cancellationToken)
@@ -172,7 +173,8 @@ public partial class InfomaniakProvider
         JsonElement batchResultRoot,
         string model,
         DateTime now,
-        IEnumerable<object> warnings)
+        IEnumerable<object> warnings,
+        string requestBody)
     {
         if (!batchResultRoot.TryGetProperty("data", out var dataEl))
             throw new InvalidOperationException("Infomaniak transcription result does not contain 'data'.");
@@ -191,6 +193,10 @@ public partial class InfomaniakProvider
                     Timestamp = now,
                     ModelId = model,
                     Body = batchResultRoot.Clone()
+                },
+                Request = new TranscriptionRequestItem
+                {
+                    Body = requestBody
                 }
             };
         }
@@ -211,6 +217,10 @@ public partial class InfomaniakProvider
                 Timestamp = now,
                 ModelId = model,
                 Body = batchResultRoot.Clone()
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }

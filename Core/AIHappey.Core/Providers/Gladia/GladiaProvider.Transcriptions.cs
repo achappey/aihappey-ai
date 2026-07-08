@@ -55,11 +55,12 @@ public partial class GladiaProvider
 
         var audioUrl = await UploadAudioAsync(bytes, request.MediaType, cancellationToken);
         var metadata = request.GetProviderMetadata<GladiaTranscriptionProviderMetadata>(GetIdentifier());
-        var jobId = await CreatePreRecordedJobAsync(audioUrl, metadata, cancellationToken);
+        var createJob = await CreatePreRecordedJobAsync(audioUrl, metadata, cancellationToken);
+        var jobId = createJob.Id;
         var resultJson = await PollUntilDoneAsync(jobId, cancellationToken);
 
 
-        var result = ConvertTranscriptionResponse(resultJson, request.Model, now);
+        var result = ConvertTranscriptionResponse(resultJson, request.Model, now, createJob.RequestBody);
 
         await DeletePreRecordedJobAsync(jobId, cancellationToken);
 
@@ -99,7 +100,7 @@ public partial class GladiaProvider
         return audioUrl;
     }
 
-    private async Task<string> CreatePreRecordedJobAsync(
+    private async Task<(string Id, string RequestBody)> CreatePreRecordedJobAsync(
         string audioUrl,
         GladiaTranscriptionProviderMetadata? metadata,
         CancellationToken cancellationToken)
@@ -139,7 +140,8 @@ public partial class GladiaProvider
             AddIfHasValue(payload, "language_config", metadata.LanguageConfig);
         }
 
-        var body = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        var requestBody = JsonSerializer.Serialize(payload);
+        var body = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
         using var resp = await _client.PostAsync(PreRecordedEndpoint, body, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -157,7 +159,7 @@ public partial class GladiaProvider
         if (string.IsNullOrWhiteSpace(id))
             throw new InvalidOperationException($"Gladia pre-recorded init response did not contain id. Body: {json}");
 
-        return id;
+        return (id, requestBody);
     }
 
     private static void AddIfHasValue(IDictionary<string, object?> payload, string key, bool? value)
@@ -229,7 +231,7 @@ public partial class GladiaProvider
         }
     }
 
-    private static TranscriptionResponse ConvertTranscriptionResponse(string json, string modelId, DateTime timestamp)
+    private static TranscriptionResponse ConvertTranscriptionResponse(string json, string modelId, DateTime timestamp, string requestBody)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -284,6 +286,10 @@ public partial class GladiaProvider
                 Timestamp = timestamp,
                 ModelId = modelId,
                 Body = json
+            },
+            Request = new TranscriptionRequestItem
+            {
+                Body = requestBody
             }
         };
     }
