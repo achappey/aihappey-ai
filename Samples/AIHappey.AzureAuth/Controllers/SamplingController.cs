@@ -94,6 +94,7 @@ public class SamplingController(IAIModelProviderResolver resolver, IChatTelemetr
             Telemetry.Models.RequestType.Sampling,
             startedAt,
             endedAt,
+            HttpContext.GetAgentId(),
             cancellationToken);
 
         return Ok(result);

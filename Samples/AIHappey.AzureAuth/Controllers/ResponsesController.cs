@@ -171,6 +171,7 @@ public class ResponsesController(IAIModelProviderResolver resolver, IChatTelemet
             Telemetry.Models.RequestType.Responses,
             startedAt,
             endedAt,
+            HttpContext.GetAgentId(),
             cancellationToken: cancellationToken);
     }
 }

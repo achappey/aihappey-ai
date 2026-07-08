@@ -13,6 +13,8 @@ namespace AIHappey.Telemetry
             int inputTokens, int totalTokens,
             string provider,
             RequestType requestType,
-            DateTime started, DateTime ended, CancellationToken cancellationToken = default);
+            DateTime started, DateTime ended,
+            string? agentId,
+            CancellationToken cancellationToken = default);
     }
 }

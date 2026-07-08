@@ -34,6 +34,7 @@ public sealed class AzureAuthMcpResponsesTelemetryHandler(
             RequestType.Responses,
             context.StartedAt,
             context.EndedAt,
+            httpContext?.GetAgentId(),
             cancellationToken: cancellationToken);
     }
 }

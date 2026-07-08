@@ -128,6 +128,7 @@ public class MessagesController(IAIModelProviderResolver resolver, IChatTelemetr
             Telemetry.Models.RequestType.Messages,
             startedAt,
             endedAt,
+            HttpContext.GetAgentId(),
             cancellationToken: cancellationToken);
     }
 

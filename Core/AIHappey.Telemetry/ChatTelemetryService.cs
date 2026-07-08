@@ -14,11 +14,12 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
      string userId,
      string username,
      int inputTokens,
-     int totalTokens,
-     string providerName,
-     RequestType requestType,
-     DateTime started, DateTime ended,
-     CancellationToken cancellationToken = default)
+      int totalTokens,
+      string providerName,
+      RequestType requestType,
+      DateTime started, DateTime ended,
+      string? agentId,
+      CancellationToken cancellationToken = default)
     {
         // 1. Ensure the User exists
         var user = await _db.Users
@@ -110,6 +111,7 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
             ToolChoice = chatRequest.ToolChoice,
             Temperature = chatRequest.Temperature,
             UserId = user.Id,
+            AgentId = agentId,
             Tools = [.. allTools.Select(t => new RequestTool { ToolId = t.Id })]
         };
 

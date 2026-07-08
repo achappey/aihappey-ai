@@ -121,6 +121,7 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver, IChatT
             Telemetry.Models.RequestType.Completion,
             startedAt,
             endedAt,
+            HttpContext.GetAgentId(),
             cancellationToken: cancellationToken);
     }
 

@@ -83,6 +83,7 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
                 Telemetry.Models.RequestType.Chat,
                 startedAt,
                 endedAt,
+                HttpContext.GetAgentId(),
                 cancellationToken: cancellationToken);
         }
 
