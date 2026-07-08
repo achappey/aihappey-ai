@@ -92,12 +92,7 @@ public partial class BlackForestLabsProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new Dictionary<string, object?>
-                {
-                    ["submit"] = submitRoot,
-                    ["poll"] = final.Root.Clone()
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

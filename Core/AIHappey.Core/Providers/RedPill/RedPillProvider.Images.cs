@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.RedPill;
@@ -128,8 +129,7 @@ public partial class RedPillProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

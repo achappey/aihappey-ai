@@ -6,6 +6,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Nebius;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Nebius;
 
@@ -90,8 +91,7 @@ public sealed partial class NebiusProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

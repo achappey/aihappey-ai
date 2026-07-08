@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.LLMGateway;
@@ -98,11 +99,10 @@ public partial class LLMGatewayProvider
             Images = images,
             Warnings = warnings,
             Usage = ExtractUsage(doc.RootElement),
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

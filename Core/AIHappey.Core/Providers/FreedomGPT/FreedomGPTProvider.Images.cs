@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.FreedomGPT;
@@ -120,11 +121,10 @@ public partial class FreedomGPTProvider
             {
                 [GetIdentifier()] = root.Clone()
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

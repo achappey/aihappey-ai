@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.DeepInfra;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -99,8 +100,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = req.Model.ToModelId(GetIdentifier()) 
             }
         };
     }
@@ -173,8 +173,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = req.Model.ToModelId(GetIdentifier()) 
             }
         };
     }
@@ -243,8 +242,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = req.Model.ToModelId(GetIdentifier()) 
             }
         };
     }
@@ -294,8 +292,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = req.Model.ToModelId(GetIdentifier()) 
             }
         };
     }
@@ -344,8 +341,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = req.Model.ToModelId(GetIdentifier()) 
             }
         };
     }
@@ -405,8 +401,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = req.Model.ToModelId(GetIdentifier()) 
             }
         };
     }
@@ -456,8 +451,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = req.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

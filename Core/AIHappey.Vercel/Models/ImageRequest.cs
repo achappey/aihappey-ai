@@ -78,11 +78,25 @@ public class ImageResponse
     public IEnumerable<object> Warnings { get; set; } = [];
 
     [JsonPropertyName("response")]
-    public ResponseData Response { get; set; } = default!;
+    public ImageResponseData Response { get; set; } = default!;
 
     [JsonPropertyName("usage")]
     public ImageUsageData? Usage { get; set; }
 }
+
+
+public class ImageResponseData
+{
+    [JsonPropertyName("modelId")]
+    public string ModelId { get; set; } = null!;
+
+    [JsonPropertyName("timestamp")]
+    public DateTime Timestamp { get; set; }
+
+    [JsonPropertyName("headers")]
+    public IDictionary<string, string>? Headers { get; set; }
+}
+
 
 public class ResponseData
 {

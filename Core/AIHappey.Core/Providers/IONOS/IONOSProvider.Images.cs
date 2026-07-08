@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -164,8 +165,7 @@ public partial class IONOSProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

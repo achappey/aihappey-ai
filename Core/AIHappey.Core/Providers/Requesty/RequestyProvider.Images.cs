@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
 using System.Net.Mime;
@@ -78,8 +79,7 @@ public partial class RequestyProvider
                 Response = new()
                 {
                     Timestamp = now,
-                    ModelId = imageRequest.Model,
-                    Body = JsonDocument.Parse(rawEdit).RootElement.Clone()
+                    ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
                 }
             };
         }
@@ -119,8 +119,7 @@ public partial class RequestyProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -179,8 +180,7 @@ public partial class HaimakerProvider
             Response = new()
             {
                 Timestamp = timestamp,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -1,6 +1,7 @@
 using System.Net.Mime;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.ApiAirforce;
@@ -75,11 +76,10 @@ public partial class ApiAirforceProvider
             {
                 [GetIdentifier()] = root.Clone()
             },
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

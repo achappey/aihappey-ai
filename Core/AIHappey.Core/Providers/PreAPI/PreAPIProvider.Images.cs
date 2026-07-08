@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.PreAPI;
@@ -60,8 +61,7 @@ public partial class PreAPIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

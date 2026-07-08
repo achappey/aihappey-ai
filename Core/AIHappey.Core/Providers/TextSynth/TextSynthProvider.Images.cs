@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -104,8 +105,7 @@ public partial class TextSynthProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

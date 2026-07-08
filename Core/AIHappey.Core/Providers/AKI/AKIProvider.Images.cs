@@ -116,8 +116,7 @@ public partial class AKIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model
             }
         };
     }

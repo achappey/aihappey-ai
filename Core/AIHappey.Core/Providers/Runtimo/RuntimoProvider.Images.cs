@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Runtimo;
@@ -70,12 +71,7 @@ public partial class RuntimoProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint,
-                    body = root
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

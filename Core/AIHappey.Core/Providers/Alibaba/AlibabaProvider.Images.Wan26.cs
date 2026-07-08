@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Alibaba;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Alibaba;
@@ -191,8 +192,7 @@ public partial class AlibabaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }

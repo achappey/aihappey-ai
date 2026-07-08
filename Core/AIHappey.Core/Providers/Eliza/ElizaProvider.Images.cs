@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -92,11 +93,10 @@ public partial class ElizaProvider
             {
                 [GetIdentifier()] = root
             },
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = root.TryGetString("model") ?? model,
-                Body = root
+                ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier()) ?? model.ToModelId(GetIdentifier())
             }
         };
     }

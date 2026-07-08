@@ -122,11 +122,10 @@ public partial class SiliconFlowProvider
         {
             Images = images,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonDocument.Parse(jsonResponse).RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

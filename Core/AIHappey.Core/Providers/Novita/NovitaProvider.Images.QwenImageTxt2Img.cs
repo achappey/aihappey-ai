@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -147,8 +148,7 @@ public partial class NovitaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonDocument.Parse(taskResultJson).RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

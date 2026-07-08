@@ -148,8 +148,7 @@ public partial class KlingAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = final.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

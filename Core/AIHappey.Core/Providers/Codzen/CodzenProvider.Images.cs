@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -72,11 +73,10 @@ public partial class CodzenProvider
             {
                 [GetIdentifier()] = root
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = raw
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

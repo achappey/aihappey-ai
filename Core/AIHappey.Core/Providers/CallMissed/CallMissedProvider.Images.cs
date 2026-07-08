@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
@@ -108,11 +109,10 @@ public partial class CallMissedProvider
                     responseCount = images.Count
                 })
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = raw
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

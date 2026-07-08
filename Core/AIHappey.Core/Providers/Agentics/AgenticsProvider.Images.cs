@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -63,9 +64,8 @@ public partial class AgenticsProvider
             {
                 Timestamp = ResolveAgenticsImageTimestamp(root, now),
                 ModelId = root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String
-                    ? modelEl.GetString() ?? request.Model
-                    : request.Model,
-                Body = root.Clone()
+                    ? modelEl.GetString()?.ToModelId(GetIdentifier()) ?? request.Model.ToModelId(GetIdentifier())
+                    : request.Model.ToModelId(GetIdentifier())
             }
         };
     }

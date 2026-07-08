@@ -4,10 +4,11 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider 
+public partial class ZaiProvider
 {
     private static readonly JsonSerializerOptions zaiJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -153,8 +154,7 @@ public partial class ZaiProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = raw
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Verda;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Verda;
 
@@ -116,8 +117,7 @@ public partial class VerdaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

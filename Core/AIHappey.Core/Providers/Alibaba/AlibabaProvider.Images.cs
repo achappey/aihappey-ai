@@ -108,8 +108,7 @@ public partial class AlibabaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }

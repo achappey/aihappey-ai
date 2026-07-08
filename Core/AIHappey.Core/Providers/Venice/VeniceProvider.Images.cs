@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -316,11 +317,10 @@ public partial class VeniceProvider
                 {
                     [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta, JsonSerializerOptions.Web)
                 },
-                Response = new ResponseData
+                Response = new ()
                 {
                     Timestamp = now,
-                    ModelId = model,
-                    Body = new { endpoint, contentType = mediaType, binary = true }
+                    ModelId = model.ToModelId(GetIdentifier()) 
                 }
             };
         }
@@ -366,11 +366,10 @@ public partial class VeniceProvider
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetadata, JsonSerializerOptions.Web)
             },
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = model,
-                Body = root.Clone()
+                ModelId = model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -148,8 +148,7 @@ public partial class NovitaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

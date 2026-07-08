@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -203,8 +204,7 @@ public partial class MiniMaxProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }

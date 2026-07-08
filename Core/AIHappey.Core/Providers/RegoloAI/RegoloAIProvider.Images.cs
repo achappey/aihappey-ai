@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.RegoloAI;
@@ -111,11 +112,10 @@ public partial class RegoloAIProvider
         {
             Images = images,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = body
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

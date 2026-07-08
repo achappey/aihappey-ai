@@ -59,27 +59,9 @@ public partial class EuqaiProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Euqai).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (model?.Type == "language")
-        {
-            var result = await ExecuteUnifiedAsync(
-                chatRequest.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken);
-
-            return result.ToSamplingResult();
-        }
-
-        return model?.Type switch
-        {
-            "image" => await this.ImageSamplingAsync(
-                chatRequest,
-                cancellationToken),
-
-            _ => throw new NotSupportedException(),
-        };
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

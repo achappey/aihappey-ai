@@ -49,8 +49,7 @@ public partial class AlphaNeuralProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = root
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }

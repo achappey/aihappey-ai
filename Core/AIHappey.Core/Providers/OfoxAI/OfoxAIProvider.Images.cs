@@ -67,8 +67,7 @@ public partial class OfoxAIProvider
             Response = new()
             {
                 Timestamp = ResolveTimestamp(root, now),
-                ModelId = request.Model,
-                Body = body
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

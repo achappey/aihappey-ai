@@ -91,8 +91,7 @@ public partial class PicsartProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = submitDoc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

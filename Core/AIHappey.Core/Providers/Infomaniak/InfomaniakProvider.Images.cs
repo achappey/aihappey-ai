@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Infomaniak;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -135,11 +136,10 @@ public partial class InfomaniakProvider
         {
             Images = images,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

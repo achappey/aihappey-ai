@@ -142,8 +142,7 @@ public partial class PortkeyProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

@@ -113,14 +113,7 @@ public partial class VerdaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = new
-                {
-                    endpoint,
-                    status = (int)resp.StatusCode,
-                    contentType = resp.Content.Headers.ContentType?.MediaType,
-                    byteLength = rawBytes.Length
-                }
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

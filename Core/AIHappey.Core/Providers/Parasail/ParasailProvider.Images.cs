@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
@@ -159,8 +160,7 @@ public partial class ParasailProvider
             Response = new()
             {
                 Timestamp = timestamp,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

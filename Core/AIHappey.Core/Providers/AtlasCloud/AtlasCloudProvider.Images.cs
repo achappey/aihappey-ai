@@ -98,8 +98,7 @@ public partial class AtlasCloudProvider
             Response = new()
             {
                 Timestamp = ResolveTimestamp(task.Root, now),
-                ModelId = request.Model,
-                Body = task.Root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

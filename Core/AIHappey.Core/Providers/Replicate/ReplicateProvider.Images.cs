@@ -112,8 +112,7 @@ public sealed partial class ReplicateProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = model,
-                Body = root.Clone()
+                ModelId = model.ToModelId(GetIdentifier()) 
             }
         };
     }

@@ -93,11 +93,10 @@ public partial class BytezProvider
             {
                 [GetIdentifier()] = root.Clone()
             },
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

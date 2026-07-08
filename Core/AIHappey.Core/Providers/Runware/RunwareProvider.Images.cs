@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Runware;
 
@@ -54,8 +55,7 @@ public sealed partial class RunwareProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

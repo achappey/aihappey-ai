@@ -87,8 +87,7 @@ public partial class BlinkProvider
             Response = new()
             {
                 Timestamp = startedAt,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model
             },
             Usage = ReadImageUsage(root)
         };

@@ -162,8 +162,7 @@ public sealed partial class FreepikProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = doc.RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }
@@ -265,8 +264,7 @@ public sealed partial class FreepikProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = finalDoc.RootElement.Clone()
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             },
             ProviderMetadata = new Dictionary<string, JsonElement>
             {

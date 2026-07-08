@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
@@ -150,11 +151,10 @@ public partial class LumenfallProvider
             Warnings = warnings,
             Usage = usage,
             ProviderMetadata = providerMetadata,
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = timestamp,
-                ModelId = request.Model,
-                Body = root.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

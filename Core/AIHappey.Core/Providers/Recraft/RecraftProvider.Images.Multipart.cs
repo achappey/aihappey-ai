@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Recraft;
@@ -98,8 +99,7 @@ public partial class RecraftProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonDocument.Parse(raw).RootElement.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

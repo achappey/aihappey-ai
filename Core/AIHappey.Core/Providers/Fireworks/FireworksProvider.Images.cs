@@ -6,6 +6,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Fireworks;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -79,11 +80,10 @@ public partial class FireworksProvider
         {
             Images = images,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = responseBody
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
     }

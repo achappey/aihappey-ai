@@ -66,11 +66,10 @@ public partial class InfronProvider
             {
                 [GetIdentifier()] = root
             },
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = ResolveInfronImageTimestamp(root, now),
-                ModelId = root.TryGetString("model") ?? request.Model,
-                Body = raw
+                ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier()) ?? request.Model.ToModelId(GetIdentifier())
             }
         };
     }

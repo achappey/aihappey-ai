@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Runpod;
@@ -118,8 +119,7 @@ public partial class RunpodProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = model,
-                Body = root.Clone()
+                ModelId = model.ToModelId(GetIdentifier()) 
             }
         };
     }

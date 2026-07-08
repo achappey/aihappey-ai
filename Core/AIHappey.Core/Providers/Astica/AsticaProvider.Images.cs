@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Astica;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -102,11 +103,7 @@ public partial class AsticaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model,
-                Body = JsonSerializer.SerializeToElement(new
-                {
-                    response = JsonSerializer.Deserialize<JsonElement>(raw)
-                })
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }
