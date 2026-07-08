@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.XAI;
+using AIHappey.Core.AI;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -74,15 +76,8 @@ public partial class XAIProvider
         var contentType = response.Content.Headers.ContentType?.MediaType;
         var resolvedFormat = ResolveAudioFormat(codec, contentType);
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["model"] = JsonSerializer.SerializeToElement(selection.BaseModelId, JsonSerializerOptions.Web),
-            ["language"] = JsonSerializer.SerializeToElement(language, JsonSerializerOptions.Web),
-            ["voice_id"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web)
-        };
-
-        if (outputFormat is not null)
-            providerMetadata["output_format"] = JsonSerializer.SerializeToElement(outputFormat, XaiSpeechJsonOptions);
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+        var providerMetadata = BuildProviderMetadata(request.Text, modelItem);
 
         return new SpeechResponse
         {
@@ -97,14 +92,33 @@ public partial class XAIProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint = "v1/tts",
-                    status = (int)response.StatusCode,
-                    contentType
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
+        };
+    }
+
+    private static Dictionary<string, JsonElement> BuildProviderMetadata(string text, Model? modelItem)
+    {
+        var inputCharacters = text.Length;
+        var inputPricePerCharacter = modelItem?.Pricing?.Input ?? 0m;
+
+        var inputCost = Math.Round(
+            inputCharacters * inputPricePerCharacter,
+            8,
+            MidpointRounding.AwayFromZero);
+
+        return new Dictionary<string, JsonElement>
+        {
+            [XAIRequestExtensions.XAIIdentifier] = JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web),
+
+            ["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost = inputCost
+            }, JsonSerializerOptions.Web)
         };
     }
 
