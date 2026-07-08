@@ -1,4 +1,5 @@
 using AIHappey.Common.MCP;
+using AIHappey.Telemetry.MCP.Agents;
 using AIHappey.Telemetry.MCP.Models;
 using AIHappey.Telemetry.MCP.Requests;
 using AIHappey.Telemetry.MCP.Tools;
@@ -40,6 +41,14 @@ public static class TelemetryMcpDefinitions
             Description: "Tracks all AI activity and request types on {host}.",
             PromptTypes: [typeof(RequestPrompts)],
             ToolTypes: [typeof(RequestTools)]
+        );
+
+        yield return new McpServerDefinition(
+            Name: "AI-Telemetry-Agents",
+            Title: "AI Telemetry Agents",
+            Description: "Tracks AI agent request activity and usage on {host}.",
+            PromptTypes: [typeof(AgentPrompts)],
+            ToolTypes: [typeof(AgentTools)]
         );
     }
 }

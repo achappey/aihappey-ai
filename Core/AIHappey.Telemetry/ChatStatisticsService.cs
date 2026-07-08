@@ -12,6 +12,10 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         db.Requests.AsNoTracking()
           .Where(r => r.StartedAt >= w.FromUtc && r.StartedAt < w.ToUtc);
 
+    private static IQueryable<Request> AgentInWindow(AIHappeyTelemetryDatabaseContext db, StatsWindow w) =>
+        InWindow(db, w)
+            .Where(r => r.AgentId != null && r.AgentId.Trim() != string.Empty);
+
     private sealed record AggregatedUserRow(
         string TelemetryUserId,
         string RawUsername,
@@ -32,6 +36,14 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         string? EmailDomain,
         string Provider,
         string Model,
+        int Requests,
+        int InputTokens,
+        int OutputTokens,
+        int TotalTokens,
+        int DurationSeconds);
+
+    private sealed record AggregatedAgentRow(
+        string AgentId,
         int Requests,
         int InputTokens,
         int OutputTokens,
@@ -134,6 +146,51 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
                      .ThenByDescending(r => r.TotalTokens)
                      .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
                      .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase)
+        };
+
+    private static IEnumerable<AggregatedAgentRow> OrderAgentRows(IEnumerable<AggregatedAgentRow> rows, TopOrder order) =>
+        order switch
+        {
+            TopOrder.Tokens => rows.OrderByDescending(r => r.TotalTokens)
+                                  .ThenByDescending(r => r.Requests)
+                                  .ThenBy(r => r.AgentId, StringComparer.OrdinalIgnoreCase),
+            TopOrder.Duration => rows.OrderByDescending(r => r.DurationSeconds)
+                                    .ThenByDescending(r => r.TotalTokens)
+                                    .ThenBy(r => r.AgentId, StringComparer.OrdinalIgnoreCase),
+            _ => rows.OrderByDescending(r => r.Requests)
+                     .ThenByDescending(r => r.TotalTokens)
+                     .ThenBy(r => r.AgentId, StringComparer.OrdinalIgnoreCase)
+        };
+
+    private static IEnumerable<AgentModelUsageStat> OrderAgentModelRows(IEnumerable<AgentModelUsageStat> rows, TopOrder order) =>
+        order switch
+        {
+            TopOrder.Tokens => rows.OrderByDescending(r => r.TotalTokens)
+                                  .ThenByDescending(r => r.Requests)
+                                  .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                                  .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase),
+            TopOrder.Duration => rows.OrderByDescending(r => r.DurationSeconds)
+                                    .ThenByDescending(r => r.TotalTokens)
+                                    .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                                    .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase),
+            _ => rows.OrderByDescending(r => r.Requests)
+                     .ThenByDescending(r => r.TotalTokens)
+                     .ThenBy(r => r.Provider, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(r => r.Model, StringComparer.OrdinalIgnoreCase)
+        };
+
+    private static IEnumerable<AgentUserUsageStat> OrderAgentUserRows(IEnumerable<AgentUserUsageStat> rows, TopOrder order) =>
+        order switch
+        {
+            TopOrder.Tokens => rows.OrderByDescending(r => r.TotalTokens)
+                                  .ThenByDescending(r => r.Requests)
+                                  .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal),
+            TopOrder.Duration => rows.OrderByDescending(r => r.DurationSeconds)
+                                    .ThenByDescending(r => r.TotalTokens)
+                                    .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal),
+            _ => rows.OrderByDescending(r => r.Requests)
+                     .ThenByDescending(r => r.TotalTokens)
+                     .ThenBy(r => r.NormalizedIdentifier, StringComparer.Ordinal)
         };
 
     private static (List<AggregatedUserRow> Included, List<AggregatedUserRow> Excluded, string[] AppliedNormalizedExclusions)
@@ -447,8 +504,316 @@ public class ChatStatisticsService(AIHappeyTelemetryDatabaseContext db) : IChatS
         var chat = await q.CountAsync(x => x == RequestType.Chat, ct);
         var sampling = await q.CountAsync(x => x == RequestType.Sampling, ct);
         var completion = await q.CountAsync(x => x == RequestType.Completion, ct);
+        var responses = await q.CountAsync(x => x == RequestType.Responses, ct);
+        var messages = await q.CountAsync(x => x == RequestType.Messages, ct);
 
-        return new RequestTypeBreakdown(chat, sampling, completion);
+        return new RequestTypeBreakdown(chat, sampling, completion, responses, messages);
+    }
+
+    public async Task<AgentOverviewStats> GetAgentOverviewAsync(StatsWindow w, CancellationToken ct = default)
+    {
+        var overview = await AgentInWindow(db, w)
+            .Select(r => new
+            {
+                AgentId = r.AgentId!,
+                r.InputTokens,
+                r.TotalTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.UserId,
+                r.ModelId,
+                LatMs = EF.Functions.DateDiffMillisecond(r.StartedAt, r.EndedAt)
+            })
+            .ToListAsync(ct);
+
+        var requests = overview.Count;
+        var activeAgents = overview.Select(x => NormalizeIdentifier(x.AgentId)).Distinct(StringComparer.Ordinal).Count();
+        var activeUsers = overview.Select(x => x.UserId).Distinct().Count();
+        var distinctModels = overview.Select(x => x.ModelId).Distinct().Count();
+        var tokensIn = overview.Sum(x => x.InputTokens);
+        var tokensOut = overview.Sum(x => x.OutputTokens);
+        var tokensTot = overview.Sum(x => x.TotalTokens);
+        var avgLatency = overview.Count == 0 ? 0.0 : overview.Average(x => x.LatMs);
+
+        return new AgentOverviewStats(
+            FromUtc: w.FromUtc,
+            ToUtc: w.ToUtc,
+            Requests: requests,
+            ActiveAgents: activeAgents,
+            ActiveUsers: activeUsers,
+            DistinctModels: distinctModels,
+            AvgLatency: TimeSpan.FromMilliseconds(avgLatency),
+            SumInputTokens: tokensIn,
+            SumOutputTokens: tokensOut,
+            SumTotalTokens: tokensTot);
+    }
+
+    public async Task<IReadOnlyList<AgentTimeBucketStat>> GetAgentDailyActivityAsync(StatsWindow w, CancellationToken ct = default)
+    {
+        var baseDay = w.FromUtc.Date;
+
+        var grouped = await AgentInWindow(db, w)
+            .Select(r => new
+            {
+                Offset = EF.Functions.DateDiffDay(baseDay, r.StartedAt),
+                AgentId = r.AgentId!,
+                r.UserId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens
+            })
+            .GroupBy(x => x.Offset)
+            .Select(g => new
+            {
+                Offset = g.Key,
+                Requests = g.Count(),
+                Agents = g.Select(x => x.AgentId).Distinct().Count(),
+                Users = g.Select(x => x.UserId).Distinct().Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens)
+            })
+            .OrderBy(x => x.Offset)
+            .ToListAsync(ct);
+
+        return [.. grouped.Select(x =>
+        {
+            var day = baseDay.AddDays(x.Offset);
+            return new AgentTimeBucketStat(DateOnly.FromDateTime(day), x.Requests, x.Agents, x.Users, x.InputTokens, x.OutputTokens, x.TotalTokens);
+        })];
+    }
+
+    public async Task<IReadOnlyList<TopAgentStat>> TopAgentsAsync(StatsWindow w, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
+    {
+        var aggregates = await AgentInWindow(db, w)
+            .Select(r => new
+            {
+                AgentId = r.AgentId!,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens,
+                r.StartedAt,
+                r.EndedAt
+            })
+            .GroupBy(x => x.AgentId.Trim())
+            .Select(g => new
+            {
+                AgentId = g.Key,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens),
+                DurationMilliseconds = g.Sum(x =>
+                    (long?)EF.Functions.DateDiffMillisecond(x.StartedAt, x.EndedAt) ?? 0L)
+            })
+            .ToListAsync(ct);
+
+        var rows = aggregates.Select(a => new AggregatedAgentRow(
+            AgentId: a.AgentId,
+            Requests: a.Requests,
+            InputTokens: a.InputTokens,
+            OutputTokens: a.OutputTokens,
+            TotalTokens: a.TotalTokens,
+            DurationSeconds: a.DurationMilliseconds <= 0 ? 0 : (int)Math.Min(int.MaxValue, a.DurationMilliseconds / 1000)));
+
+        return [.. OrderAgentRows(rows, order)
+            .Take(Math.Max(1, top))
+            .Select(r => new TopAgentStat(r.AgentId, r.Requests, r.InputTokens, r.OutputTokens, r.TotalTokens, r.DurationSeconds))];
+    }
+
+    public async Task<RequestTypeBreakdown> GetAgentRequestTypesAsync(StatsWindow w, CancellationToken ct = default)
+    {
+        var q = AgentInWindow(db, w).Select(r => r.RequestType);
+
+        var chat = await q.CountAsync(x => x == RequestType.Chat, ct);
+        var sampling = await q.CountAsync(x => x == RequestType.Sampling, ct);
+        var completion = await q.CountAsync(x => x == RequestType.Completion, ct);
+        var responses = await q.CountAsync(x => x == RequestType.Responses, ct);
+        var messages = await q.CountAsync(x => x == RequestType.Messages, ct);
+
+        return new RequestTypeBreakdown(chat, sampling, completion, responses, messages);
+    }
+
+    public async Task<IReadOnlyList<AgentModelUsageStat>> TopModelsForAgentAsync(StatsWindow w, string agentId, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(agentId))
+            throw new ArgumentException("An agent id must be provided.", nameof(agentId));
+
+        var normalizedAgentId = NormalizeIdentifier(agentId);
+
+        var aggregates = await AgentInWindow(db, w)
+            .Where(r => r.AgentId != null && r.AgentId.Trim().ToLower() == normalizedAgentId)
+            .Select(r => new
+            {
+                AgentId = r.AgentId!,
+                r.ModelId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens,
+                r.StartedAt,
+                r.EndedAt
+            })
+            .GroupBy(x => new { AgentId = x.AgentId.Trim(), x.ModelId })
+            .Select(g => new
+            {
+                g.Key.AgentId,
+                g.Key.ModelId,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens),
+                DurationMilliseconds = g.Sum(x =>
+                    (long?)EF.Functions.DateDiffMillisecond(x.StartedAt, x.EndedAt) ?? 0L)
+            })
+            .ToListAsync(ct);
+
+        if (aggregates.Count == 0)
+            return [];
+
+        var modelIds = aggregates.Select(a => a.ModelId).Distinct().ToList();
+        var models = await db.Models.AsNoTracking()
+            .Where(m => modelIds.Contains(m.Id))
+            .Select(m => new { m.Id, m.ModelName, m.ProviderId })
+            .ToListAsync(ct);
+
+        var providerIds = models.Select(m => m.ProviderId).Distinct().ToList();
+        var providers = await db.Providers.AsNoTracking()
+            .Where(p => providerIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, p => p.Name, ct);
+
+        var modelMap = models.ToDictionary(m => m.Id);
+        var rows = aggregates.Select(a =>
+        {
+            modelMap.TryGetValue(a.ModelId, out var model);
+            var provider = model is not null && providers.TryGetValue(model.ProviderId, out var providerName)
+                ? providerName
+                : model is null ? "provider:unknown" : $"provider:{model.ProviderId}";
+            var modelName = model?.ModelName ?? $"model:{a.ModelId}";
+            var durationSeconds = a.DurationMilliseconds <= 0 ? 0 : (int)Math.Min(int.MaxValue, a.DurationMilliseconds / 1000);
+
+            return new AgentModelUsageStat(
+                AgentId: a.AgentId,
+                Provider: provider,
+                Model: modelName,
+                Requests: a.Requests,
+                InputTokens: a.InputTokens,
+                OutputTokens: a.OutputTokens,
+                TotalTokens: a.TotalTokens,
+                DurationSeconds: durationSeconds);
+        });
+
+        return [.. OrderAgentModelRows(rows, order).Take(Math.Max(1, top))];
+    }
+
+    public async Task<IReadOnlyList<AgentUserUsageStat>> TopUsersForAgentAsync(StatsWindow w, string agentId, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(agentId))
+            throw new ArgumentException("An agent id must be provided.", nameof(agentId));
+
+        var normalizedAgentId = NormalizeIdentifier(agentId);
+
+        var aggregates = await AgentInWindow(db, w)
+            .Where(r => r.AgentId != null && r.AgentId.Trim().ToLower() == normalizedAgentId)
+            .Select(r => new
+            {
+                AgentId = r.AgentId!,
+                r.UserId,
+                r.InputTokens,
+                OutputTokens = r.TotalTokens - r.InputTokens,
+                r.TotalTokens,
+                r.StartedAt,
+                r.EndedAt
+            })
+            .GroupBy(x => new { AgentId = x.AgentId.Trim(), x.UserId })
+            .Select(g => new
+            {
+                g.Key.AgentId,
+                g.Key.UserId,
+                Requests = g.Count(),
+                InputTokens = g.Sum(x => x.InputTokens),
+                OutputTokens = g.Sum(x => x.OutputTokens),
+                TotalTokens = g.Sum(x => x.TotalTokens),
+                DurationMilliseconds = g.Sum(x =>
+                    (long?)EF.Functions.DateDiffMillisecond(x.StartedAt, x.EndedAt) ?? 0L)
+            })
+            .ToListAsync(ct);
+
+        if (aggregates.Count == 0)
+            return [];
+
+        var userIds = aggregates.Select(a => a.UserId).Distinct().ToList();
+        var users = await db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.UserId, u.Username })
+            .ToDictionaryAsync(u => u.Id, ct);
+
+        var rows = aggregates.Select(a =>
+        {
+            users.TryGetValue(a.UserId, out var user);
+            var rawUsername = user?.Username ?? $"user:{a.UserId}";
+            var normalizedIdentifier = NormalizeIdentifier(rawUsername);
+            var durationSeconds = a.DurationMilliseconds <= 0 ? 0 : (int)Math.Min(int.MaxValue, a.DurationMilliseconds / 1000);
+
+            return new AgentUserUsageStat(
+                AgentId: a.AgentId,
+                TelemetryUserId: user?.UserId ?? a.UserId.ToString(CultureInfo.InvariantCulture),
+                RawUsername: rawUsername,
+                NormalizedIdentifier: normalizedIdentifier,
+                Requests: a.Requests,
+                InputTokens: a.InputTokens,
+                OutputTokens: a.OutputTokens,
+                TotalTokens: a.TotalTokens,
+                DurationSeconds: durationSeconds);
+        });
+
+        return [.. OrderAgentUserRows(rows, order).Take(Math.Max(1, top))];
+    }
+
+    public async Task<TokenStats> GetAgentTokenStatsAsync(StatsWindow w, CancellationToken ct = default)
+    {
+        var list = await AgentInWindow(db, w)
+            .Select(r => new { r.InputTokens, r.TotalTokens })
+            .ToListAsync(ct);
+
+        if (list.Count == 0)
+            return new TokenStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+        static int Pctl(IReadOnlyList<int> data, double p)
+        {
+            if (data.Count == 0) return 0;
+            var idx = (int)Math.Floor((data.Count - 1) * p);
+            return data[idx];
+        }
+
+        var ins = list.Select(x => x.InputTokens).OrderBy(x => x).ToList();
+        var outs = list.Select(x => x.TotalTokens - x.InputTokens).OrderBy(x => x).ToList();
+        var tots = list.Select(x => x.TotalTokens).OrderBy(x => x).ToList();
+
+        return new TokenStats(
+            MinInputTokens: ins.First(), P50InputTokens: Pctl(ins, 0.50), P95InputTokens: Pctl(ins, 0.95), MaxInputTokens: ins.Last(),
+            MinOutputTokens: outs.First(), P50OutputTokens: Pctl(outs, 0.50), P95OutputTokens: Pctl(outs, 0.95), MaxOutputTokens: outs.Last(),
+            MinTotalTokens: tots.First(), P50TotalTokens: Pctl(tots, 0.50), P95TotalTokens: Pctl(tots, 0.95), MaxTotalTokens: tots.Last(),
+            AvgInputTokens: ins.Average(), AvgOutputTokens: outs.Average(), AvgTotalTokens: tots.Average());
+    }
+
+    public async Task<LatencyStats> GetAgentLatencyStatsAsync(StatsWindow w, CancellationToken ct = default)
+    {
+        var lat = await AgentInWindow(db, w)
+            .Select(r => EF.Functions.DateDiffMillisecond(r.StartedAt, r.EndedAt))
+            .ToListAsync(ct);
+
+        if (lat.Count == 0)
+            return new LatencyStats(TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero);
+
+        lat.Sort();
+        static int Pctl(IReadOnlyList<int> data, double p) =>
+            data[(int)Math.Floor((data.Count - 1) * p)];
+
+        return new LatencyStats(
+            Min: TimeSpan.FromMilliseconds(lat.First()),
+            P50: TimeSpan.FromMilliseconds(Pctl(lat, 0.50)),
+            P95: TimeSpan.FromMilliseconds(Pctl(lat, 0.95)),
+            Max: TimeSpan.FromMilliseconds(lat.Last()),
+            Avg: TimeSpan.FromMilliseconds(lat.Average()));
     }
 
     public async Task<IReadOnlyList<TopUserStat>> TopUsersAsync(StatsWindow w, int top = 10,

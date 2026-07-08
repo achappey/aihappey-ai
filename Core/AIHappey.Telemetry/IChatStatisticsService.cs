@@ -6,6 +6,14 @@ public interface IChatStatisticsService
     Task<OverviewStats> GetOverviewAsync(StatsWindow window, CancellationToken ct = default);
     Task<IReadOnlyList<TimeBucketStat>> GetDailyActivityAsync(StatsWindow window, CancellationToken ct = default);
     Task<RequestTypeBreakdown> GetRequestTypesAsync(StatsWindow window, CancellationToken ct = default);
+    Task<AgentOverviewStats> GetAgentOverviewAsync(StatsWindow window, CancellationToken ct = default);
+    Task<IReadOnlyList<AgentTimeBucketStat>> GetAgentDailyActivityAsync(StatsWindow window, CancellationToken ct = default);
+    Task<IReadOnlyList<TopAgentStat>> TopAgentsAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
+    Task<RequestTypeBreakdown> GetAgentRequestTypesAsync(StatsWindow window, CancellationToken ct = default);
+    Task<IReadOnlyList<AgentModelUsageStat>> TopModelsForAgentAsync(StatsWindow window, string agentId, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
+    Task<IReadOnlyList<AgentUserUsageStat>> TopUsersForAgentAsync(StatsWindow window, string agentId, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
+    Task<TokenStats> GetAgentTokenStatsAsync(StatsWindow window, CancellationToken ct = default);
+    Task<LatencyStats> GetAgentLatencyStatsAsync(StatsWindow window, CancellationToken ct = default);
     Task<IReadOnlyList<TopUserStat>> TopUsersAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, CancellationToken ct = default);
     Task<IReadOnlyList<TopUserModelStat>> TopUserModelAggregatesAsync(StatsWindow window, int top = 10, TopOrder order = TopOrder.Requests, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
     Task<UserWindowSummary> GetUserWindowSummaryAsync(StatsWindow window, IEnumerable<string>? excludeIdentifiers = null, CancellationToken ct = default);
@@ -41,6 +49,21 @@ public record OverviewStats(
     int SumTotalTokens);
 
 public record TimeBucketStat(DateOnly Date, int Requests, int Users, int InputTokens, int OutputTokens, int TotalTokens);
+public record AgentOverviewStats(
+    DateTime FromUtc,
+    DateTime ToUtc,
+    int Requests,
+    int ActiveAgents,
+    int ActiveUsers,
+    int DistinctModels,
+    TimeSpan AvgLatency,
+    int SumInputTokens,
+    int SumOutputTokens,
+    int SumTotalTokens);
+public record AgentTimeBucketStat(DateOnly Date, int Requests, int Agents, int Users, int InputTokens, int OutputTokens, int TotalTokens);
+public record TopAgentStat(string AgentId, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
+public sealed record AgentModelUsageStat(string AgentId, string Provider, string Model, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
+public sealed record AgentUserUsageStat(string AgentId, string TelemetryUserId, string RawUsername, string NormalizedIdentifier, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
 public record ModelUsageStat(string Provider, string Model, int Requests, int InputTokens, int OutputTokens, int TotalTokens);
 public sealed record ModelUserUsageStat(string Provider, string Model, string TelemetryUserId, string RawUsername, string NormalizedIdentifier, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
 public sealed record UserModelUsageStat(string TelemetryUserId, string RawUsername, string NormalizedIdentifier, string Provider, string Model, int Requests, int InputTokens, int OutputTokens, int TotalTokens, int DurationSeconds);
@@ -183,7 +206,7 @@ public record TokenStats(int MinInputTokens, int P50InputTokens, int P95InputTok
                          int MinTotalTokens, int P50TotalTokens, int P95TotalTokens, int MaxTotalTokens,
                          double AvgInputTokens, double AvgOutputTokens, double AvgTotalTokens);
 public record LatencyStats(TimeSpan Min, TimeSpan P50, TimeSpan P95, TimeSpan Max, TimeSpan Avg);
-public record RequestTypeBreakdown(int Chat, int Sampling, int Completion);
+public record RequestTypeBreakdown(int Chat, int Sampling, int Completion, int Responses, int Messages);
 
 public enum TopOrder { Requests, Tokens, Duration }
 
