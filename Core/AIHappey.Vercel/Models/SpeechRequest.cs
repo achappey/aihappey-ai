@@ -58,6 +58,17 @@ public class SpeechResponse
     [JsonPropertyName("response")]
     public ResponseData Response { get; set; } = default!;
 
+    [JsonPropertyName("request")]
+    public SpeechRequestItem? Request { get; set; }
+
+}
+public class SpeechRequestItem
+{
+    /**
+         * Response body (available only for providers that use HTTP requests).
+         */
+    [JsonPropertyName("body")]
+    public object? Body { get; set; }
 }
 
 public class SpeechAudioResponse
