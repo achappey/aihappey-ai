@@ -55,7 +55,7 @@ public partial class OpenAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
             },
         };
     }
