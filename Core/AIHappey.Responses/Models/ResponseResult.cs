@@ -57,6 +57,9 @@ public class ResponseResult
     [JsonPropertyName("service_tier")]
     public string? ServiceTier { get; set; }
 
+    [JsonPropertyName("output_text")]
+    public string? OutputText { get; set; }
+
     [JsonPropertyName("error")]
     public ResponseResultError? Error { get; set; }
 
