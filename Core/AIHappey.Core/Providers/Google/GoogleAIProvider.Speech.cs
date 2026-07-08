@@ -1,5 +1,9 @@
-using Mscc.GenerativeAI;
-using AIHappey.Common.Model.Providers.Google;
+using System.Net.Mime;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -7,19 +11,28 @@ namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
 {
+    private const string GoogleSpeechDefaultVoice = "Kore";
+
+    private static readonly JsonSerializerOptions GoogleSpeechJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     public async Task<SpeechResponse> SpeechRequest(
         SpeechRequest request,
         CancellationToken cancellationToken = default)
     {
+        ApplyAuthHeader();
+
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        var googleAI = GetClient();
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
+        var payload = BuildSpeechPayload(request, warnings);
 
         if (!string.IsNullOrWhiteSpace(request.OutputFormat))
             warnings.Add(new { type = "unsupported", feature = "outputFormat" });
@@ -30,89 +43,324 @@ public partial class GoogleAIProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetProviderMetadata<GoogleSpeechProviderMetadata>(GetIdentifier());
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
+        httpRequest.Headers.Accept.Clear();
+        httpRequest.Headers.Accept.ParseAdd(MediaTypeNames.Application.Json);
+        httpRequest.Content = new StringContent(payload.ToJsonString(GoogleSpeechJsonOptions), Encoding.UTF8, MediaTypeNames.Application.Json);
 
-        var voice =
-            request.Voice
-            ?? metadata?.Voice
-            ?? "Kore";
+        using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
-        var speechConfig = new SpeechConfig();
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"{Google} speech failed ({(int)response.StatusCode}): {raw}");
 
-        var speakers = metadata?.Speakers?.Where(s => !string.IsNullOrWhiteSpace(s.Name)).ToList();
-        if (speakers is { Count: > 0 })
-        {
-            speechConfig.MultiSpeakerVoiceConfig = new MultiSpeakerVoiceConfig
-            {
-                SpeakerVoiceConfigs =
-                [
-                    .. speakers.Select(s => new SpeakerVoiceConfig
-                    {
-                        Speaker = s.Name!,
-                        VoiceConfig = new VoiceConfig
-                        {
-                            PrebuiltVoiceConfig = new PrebuiltVoiceConfig
-                            {
-                                VoiceName = string.IsNullOrWhiteSpace(s.Voice) ? voice : s.Voice
-                            }
-                        }
-                    })
-                ]
-            };
-        }
-        else
-        {
-            speechConfig.VoiceConfig = new VoiceConfig
-            {
-                PrebuiltVoiceConfig = new PrebuiltVoiceConfig
-                {
-                    VoiceName = voice
-                }
-            };
-        }
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
 
-        var modelClient = googleAI.GenerativeModel(request.Model);
-        var item = await modelClient.GenerateContent(new GenerateContentRequest
-        {
-            Model = request.Model,
-            Contents = [new Content(request.Text)],
-            GenerationConfig = new()
-            {
-                ResponseModalities = [ResponseModality.Audio],
-                SpeechConfig = speechConfig,
-                Seed = metadata?.Seed
-            }
-        }, cancellationToken: cancellationToken);
-
-        var audioPart = item.Candidates
-            ?.FirstOrDefault()
-            ?.Content
-            ?.Parts
-            ?.FirstOrDefault(p => p?.InlineData is not null);
-
-        var base64 = audioPart?.InlineData?.Data;
-        if (string.IsNullOrWhiteSpace(base64))
+        if (!TryExtractGoogleSpeechAudio(root, out var base64, out var mimeType))
             throw new InvalidOperationException("No audio data returned.");
 
-        var mime = audioPart?.InlineData?.MimeType;
-        if (string.IsNullOrWhiteSpace(mime))
-            mime = "audio/L16";
+        mimeType = string.IsNullOrWhiteSpace(mimeType) ? "audio/L16" : mimeType;
+
+        var providerMetadata = BuildGoogleSpeechProviderMetadata(root, request.Model);
 
         return new SpeechResponse
         {
-            Audio = new()
+            ProviderMetadata = providerMetadata,
+            Audio = new SpeechAudioResponse
             {
                 Base64 = base64,
-                MimeType = mime,
-                Format = "pcm"
+                MimeType = mimeType,
+                Format = ResolveGoogleSpeechAudioFormat(mimeType)
             },
             Warnings = warnings,
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = root
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }
-}
 
+    private Dictionary<string, JsonElement> BuildGoogleSpeechProviderMetadata(JsonElement root, string model)
+    {
+        var hasUsage = TryGetProperty(root, "usage", out var usage)
+            && usage.ValueKind == JsonValueKind.Object;
+
+        var providerMetadata = new Dictionary<string, JsonElement>
+        {
+            [GetIdentifier()] = hasUsage
+                ? JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
+                {
+                    ["usage"] = usage.Clone()
+                }, JsonSerializerOptions.Web)
+                : JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web)
+        };
+
+        if (!hasUsage)
+            return providerMetadata;
+
+        var normalizedUsage = NormalizeGoogleUsage(usage, null);
+        var serviceTier = TryGetString(root, "service_tier") ?? TryGetString(root, "serviceTier");
+        var pricing = GoogleTieredPricingResolver.Resolve(
+            model,
+            serviceTier,
+            ModelCostMetadataEnricher.GetTotalTokens(normalizedUsage));
+
+        var costMetadata = ModelCostMetadataEnricher.AddCostFromUsage(
+            normalizedUsage,
+            existingMetadata: null,
+            pricing);
+
+        if (TryGetGatewayMetadata(costMetadata, out var gateway))
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(gateway, JsonSerializerOptions.Web);
+
+        return providerMetadata;
+    }
+
+    private static JsonObject BuildSpeechPayload(SpeechRequest request, ICollection<object> warnings)
+    {
+        var metadata = request.GetProviderMetadata<JsonElement>(GoogleExtensions.Identifier());
+        var payload = metadata.ValueKind == JsonValueKind.Object
+            ? CloneJsonObject(metadata)
+            : [];
+
+        if (!HasJsonProperty(payload, "model"))
+            payload["model"] = request.Model;
+
+        if (!HasJsonProperty(payload, "input"))
+            payload["input"] = request.Text;
+
+        if (!HasJsonProperty(payload, "response_format"))
+        {
+            payload["response_format"] = new JsonObject
+            {
+                ["type"] = "audio"
+            };
+        }
+
+        var speechConfigFromTopLevel = TryRemoveJsonProperty(payload, "speech_config", out var topLevelSpeechConfig)
+            ? topLevelSpeechConfig
+            : null;
+
+        var hasGenerationConfig = TryGetJsonObjectProperty(payload, "generation_config", out var generationConfig);
+
+        if (!HasJsonProperty(generationConfig, "speech_config"))
+        {
+            generationConfig["speech_config"] = speechConfigFromTopLevel ?? BuildDefaultGoogleSpeechConfig(request);
+        }
+        else if (speechConfigFromTopLevel is not null)
+        {
+            warnings.Add(new
+            {
+                type = "ignored",
+                feature = "providerOptions.google.speech_config",
+                reason = "providerOptions.google.generation_config.speech_config is already set"
+            });
+        }
+
+        if (!hasGenerationConfig)
+            payload["generation_config"] = generationConfig;
+
+        return payload;
+    }
+
+    private static JsonArray BuildDefaultGoogleSpeechConfig(SpeechRequest request)
+    {
+        var voice = string.IsNullOrWhiteSpace(request.Voice)
+            ? GoogleSpeechDefaultVoice
+            : request.Voice.Trim();
+
+        return
+        [
+            new JsonObject
+            {
+                ["voice"] = voice
+            }
+        ];
+    }
+
+    private static bool TryExtractGoogleSpeechAudio(JsonElement root, out string base64, out string? mimeType)
+    {
+        base64 = string.Empty;
+        mimeType = null;
+
+        if (TryGetProperty(root, "output_audio", out var outputAudio)
+            && TryExtractOutputAudioObject(outputAudio, out base64, out mimeType))
+        {
+            return true;
+        }
+
+        return TryFindAudioObject(root, out base64, out mimeType);
+    }
+
+    private static bool TryFindAudioObject(JsonElement element, out string base64, out string? mimeType)
+    {
+        base64 = string.Empty;
+        mimeType = null;
+
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                if (TryExtractAudioFromObject(element, out base64, out mimeType))
+                    return true;
+
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (TryFindAudioObject(property.Value, out base64, out mimeType))
+                        return true;
+                }
+
+                return false;
+
+            case JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (TryFindAudioObject(item, out base64, out mimeType))
+                        return true;
+                }
+
+                return false;
+
+            default:
+                return false;
+        }
+    }
+
+    private static bool TryExtractAudioFromObject(JsonElement element, out string base64, out string? mimeType)
+    {
+        base64 = string.Empty;
+        mimeType = null;
+
+        if (element.ValueKind != JsonValueKind.Object)
+            return false;
+
+        var type = TryGetString(element, "type");
+        var data = TryGetString(element, "data");
+        var mime = TryGetString(element, "mime_type") ?? TryGetString(element, "mimeType");
+
+        if (string.IsNullOrWhiteSpace(data))
+            return false;
+
+        if (!string.Equals(type, "audio", StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(mime) || !mime.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
+        }
+
+        base64 = data;
+        mimeType = mime;
+        return true;
+    }
+
+    private static bool TryExtractOutputAudioObject(JsonElement element, out string base64, out string? mimeType)
+    {
+        base64 = string.Empty;
+        mimeType = null;
+
+        if (element.ValueKind != JsonValueKind.Object)
+            return false;
+
+        var data = TryGetString(element, "data");
+        if (string.IsNullOrWhiteSpace(data))
+            return false;
+
+        base64 = data;
+        mimeType = TryGetString(element, "mime_type") ?? TryGetString(element, "mimeType");
+        return true;
+    }
+
+    private static string ResolveGoogleSpeechAudioFormat(string? mimeType)
+    {
+        if (string.IsNullOrWhiteSpace(mimeType))
+            return "pcm";
+
+        var normalized = mimeType.Trim().ToLowerInvariant();
+        if (normalized.Contains("mpeg") || normalized.Contains("mp3")) return "mp3";
+        if (normalized.Contains("wav") || normalized.Contains("wave")) return "wav";
+        if (normalized.Contains("ogg")) return "ogg";
+        if (normalized.Contains("opus")) return "opus";
+        if (normalized.Contains("flac")) return "flac";
+        if (normalized.Contains("aac")) return "aac";
+        if (normalized.Contains("l16") || normalized.Contains("pcm")) return "pcm";
+
+        return "pcm";
+    }
+
+    private static JsonObject CloneJsonObject(JsonElement element)
+        => JsonNode.Parse(element.GetRawText()) as JsonObject ?? [];
+
+    private static bool HasJsonProperty(JsonObject obj, string propertyName)
+        => obj.Any(property => string.Equals(property.Key, propertyName, StringComparison.OrdinalIgnoreCase));
+
+    private static bool TryGetJsonObjectProperty(JsonObject obj, string propertyName, out JsonObject value)
+    {
+        foreach (var property in obj)
+        {
+            if (!string.Equals(property.Key, propertyName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value as JsonObject ?? [];
+            return true;
+        }
+
+        value = [];
+        return false;
+    }
+
+    private static bool TryRemoveJsonProperty(JsonObject obj, string propertyName, out JsonNode? value)
+    {
+        foreach (var property in obj.ToList())
+        {
+            if (!string.Equals(property.Key, propertyName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value?.DeepClone();
+            obj.Remove(property.Key);
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    private static bool TryGetProperty(JsonElement element, string propertyName, out JsonElement property)
+    {
+        property = default;
+
+        if (element.ValueKind != JsonValueKind.Object)
+            return false;
+
+        if (element.TryGetProperty(propertyName, out property))
+            return true;
+
+        foreach (var candidate in element.EnumerateObject())
+        {
+            if (string.Equals(candidate.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                property = candidate.Value;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string? TryGetString(JsonElement element, string propertyName)
+    {
+        if (!TryGetProperty(element, propertyName, out var property)
+            || property.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : property.ToString();
+    }
+}
