@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -34,29 +35,9 @@ public partial class OpenRouterProvider
         if (request.Mask is not null && !OpenRouterImageHasRawOption(rawOpenRouterOptions, "mask"))
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        if (request.N is not null && !OpenRouterImageHasRawOption(rawOpenRouterOptions, "n"))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "n",
-                details = "OpenRouter image generation docs do not define a generic n parameter. Use providerOptions.openrouter for model-specific passthrough fields."
-            });
-        }
-
-        if (request.Seed is not null && !OpenRouterImageHasRawOption(rawOpenRouterOptions, "seed"))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "seed",
-                details = "OpenRouter image generation docs do not define a generic seed parameter. Use providerOptions.openrouter for model-specific passthrough fields."
-            });
-        }
-
         var payload = BuildOpenRouterImagePayload(request, rawOpenRouterOptions);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/images")
         {
             Content = new StringContent(
                 JsonSerializer.Serialize(payload, OpenRouterImageJsonOptions),
@@ -87,11 +68,11 @@ public partial class OpenRouterProvider
             Warnings = warnings,
             Usage = ExtractOpenRouterImageUsage(root),
             ProviderMetadata = BuildOpenRouterImageProviderMetadata(payload, root, resp, rawOpenRouterOptions),
-            Response = new ResponseData
+            Response = new ()
             {
                 Timestamp = now,
-                ModelId = ReadOpenRouterImageString(root, "model") ?? request.Model,
-                Body = root
+                ModelId = ReadOpenRouterImageString(root, "model")?.ToModelId(GetIdentifier())
+                    ?? request.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -100,75 +81,45 @@ public partial class OpenRouterProvider
         ImageRequest request,
         JsonElement? rawOpenRouterOptions)
     {
-        var imageConfig = new Dictionary<string, object?>();
-
-        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
-            imageConfig["aspect_ratio"] = request.AspectRatio;
-
-        if (!string.IsNullOrWhiteSpace(request.Size))
-            imageConfig["image_size"] = request.Size;
-
         var payload = new Dictionary<string, object?>
         {
             ["model"] = request.Model,
-            ["messages"] = BuildOpenRouterImageMessages(request),
-            ["modalities"] = new[] { "image" },
-            ["stream"] = false
+            ["prompt"] = request.Prompt
         };
 
-        if (imageConfig.Count > 0)
-            payload["image_config"] = imageConfig;
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
+            payload["aspect_ratio"] = request.AspectRatio;
+
+        if (!string.IsNullOrWhiteSpace(request.Size))
+            payload["size"] = request.Size;
+
+        if (request.N is not null)
+            payload["n"] = request.N.Value;
+
+        if (request.Seed is not null)
+            payload["seed"] = request.Seed.Value;
+
+        var files = request.Files?.ToList() ?? [];
+        if (files.Count > 0)
+            payload["input_references"] = files.Select(ToOpenRouterImageReference).ToList();
 
         MergeOpenRouterImageProviderOptions(payload, rawOpenRouterOptions);
 
         return payload;
     }
 
-    private static object[] BuildOpenRouterImageMessages(ImageRequest request)
+    private static Dictionary<string, object?> ToOpenRouterImageReference(ImageFile file)
     {
-        var files = request.Files?.ToList() ?? [];
+        ArgumentNullException.ThrowIfNull(file);
 
-        if (files.Count == 0)
+        return new Dictionary<string, object?>
         {
-            return
-            [
-                new
-                {
-                    role = "user",
-                    content = request.Prompt
-                }
-            ];
-        }
-
-        var content = new List<object>
-        {
-            new
+            ["type"] = "image_url",
+            ["image_url"] = new Dictionary<string, object?>
             {
-                type = "text",
-                text = request.Prompt
+                ["url"] = NormalizeOpenRouterImageInput(file)
             }
         };
-
-        foreach (var file in files)
-        {
-            content.Add(new
-            {
-                type = "image_url",
-                image_url = new
-                {
-                    url = NormalizeOpenRouterImageInput(file)
-                }
-            });
-        }
-
-        return
-        [
-            new
-            {
-                role = "user",
-                content
-            }
-        ];
     }
 
     private static void MergeOpenRouterImageProviderOptions(
@@ -202,45 +153,26 @@ public partial class OpenRouterProvider
     {
         List<string> images = [];
 
-        if (!root.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+        if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
             return images;
 
-        foreach (var choice in choices.EnumerateArray())
+        foreach (var image in data.EnumerateArray())
         {
-            if (choice.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.Object)
-                CollectOpenRouterImageParts(message, images);
+            if (image.ValueKind != JsonValueKind.Object)
+                continue;
 
-            if (choice.TryGetProperty("delta", out var delta) && delta.ValueKind == JsonValueKind.Object)
-                CollectOpenRouterImageParts(delta, images);
+            if (!image.TryGetProperty("b64_json", out var b64Json) || b64Json.ValueKind != JsonValueKind.String)
+                continue;
+
+            var value = b64Json.GetString();
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
+
+            var mediaType = ReadOpenRouterImageString(image, "media_type");
+            images.Add(NormalizeOpenRouterImageOutput(value, mediaType));
         }
 
         return [.. images.Distinct(StringComparer.Ordinal)];
-    }
-
-    private static void CollectOpenRouterImageParts(JsonElement messageOrDelta, List<string> images)
-    {
-        if (!messageOrDelta.TryGetProperty("images", out var imageParts) || imageParts.ValueKind != JsonValueKind.Array)
-            return;
-
-        foreach (var imagePart in imageParts.EnumerateArray())
-        {
-            if (imagePart.TryGetProperty("type", out var typeEl)
-                && typeEl.ValueKind == JsonValueKind.String
-                && !string.Equals(typeEl.GetString(), "image_url", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (!imagePart.TryGetProperty("image_url", out var imageUrl) || imageUrl.ValueKind != JsonValueKind.Object)
-                continue;
-
-            if (!imageUrl.TryGetProperty("url", out var urlEl) || urlEl.ValueKind != JsonValueKind.String)
-                continue;
-
-            var url = urlEl.GetString();
-            if (!string.IsNullOrWhiteSpace(url))
-                images.Add(NormalizeOpenRouterImageOutput(url));
-        }
     }
 
     private static ImageUsageData? ExtractOpenRouterImageUsage(JsonElement root)
@@ -298,7 +230,7 @@ public partial class OpenRouterProvider
         return file.Data.ToDataUrl(mediaType);
     }
 
-    private static string NormalizeOpenRouterImageOutput(string value)
+    private static string NormalizeOpenRouterImageOutput(string value, string? mediaType)
     {
         if (value.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
             || value.StartsWith("http", StringComparison.OrdinalIgnoreCase))
@@ -306,7 +238,7 @@ public partial class OpenRouterProvider
             return value;
         }
 
-        return value.ToDataUrl(MediaTypeNames.Image.Png);
+        return value.ToDataUrl(string.IsNullOrWhiteSpace(mediaType) ? MediaTypeNames.Image.Png : mediaType);
     }
 
     private static string? ReadOpenRouterImageString(JsonElement element, string propertyName)
