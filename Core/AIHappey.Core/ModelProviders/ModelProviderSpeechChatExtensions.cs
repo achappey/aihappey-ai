@@ -55,7 +55,7 @@ public static class ModelProviderSpeechChatExtensions
             yield break;
         }
 
-        var mimeType = "audio/mpeg";
+        var mimeType = result.Audio.MimeType;
         var base64 = result.Audio.Base64;
 
         yield return new FileUIPart
@@ -65,7 +65,8 @@ public static class ModelProviderSpeechChatExtensions
         };
 
         // Finish
-        yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, null);
+        yield return "stop".ToFinishUIPart(
+                chatRequest.Model.ToModelId(modelProvider.GetIdentifier()), 0, 0, 0, null);
     }
 }
 
