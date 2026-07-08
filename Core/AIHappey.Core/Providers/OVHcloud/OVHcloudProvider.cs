@@ -54,22 +54,9 @@ public partial class OVHcloudProvider : IModelProvider
 
     public string GetIdentifier() => nameof(OVHcloud).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = chatRequest.GetModel();
-        ArgumentException.ThrowIfNullOrEmpty(model);
-
-        if (IsImageModel(model))
-        {
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        if (IsSpeechModel(model))
-        {
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)

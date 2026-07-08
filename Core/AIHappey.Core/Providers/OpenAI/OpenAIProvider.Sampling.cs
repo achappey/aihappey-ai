@@ -18,8 +18,7 @@ public partial class OpenAIProvider
 
         if (model?.Contains("tts") == true)
         {
-            return await this.SpeechSamplingAsync(chatRequest,
-                    cancellationToken: cancellationToken);
+            throw new NotSupportedException();
         }
 
         var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),

@@ -49,7 +49,7 @@ public partial class VerbatikProvider : IModelProvider
         => await ListModelsInternal(cancellationToken);
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

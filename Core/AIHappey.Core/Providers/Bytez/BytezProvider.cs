@@ -58,18 +58,9 @@ public partial class BytezProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Bytez).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken: cancellationToken);
-
-        return model.Type switch
-        {
-            "speech" => await this.SpeechSamplingAsync(chatRequest, cancellationToken),
-            "language" => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken),
-            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
-            "video" => await this.VideoSamplingAsync(chatRequest, cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+       throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

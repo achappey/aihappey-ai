@@ -48,15 +48,9 @@ public partial class SmallestAIProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await ListModelsInternal(cancellationToken);
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-        var type = model.Type;
-
-        if (string.Equals(type, "speech", StringComparison.OrdinalIgnoreCase))
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-
-        throw new NotSupportedException($"{ProviderName} sampling supports speech models only.");
+       throw new NotSupportedException();
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(

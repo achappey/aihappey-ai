@@ -61,20 +61,9 @@ public partial class HyperbolicProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var modelId = chatRequest.GetModel();
-
-        ArgumentException.ThrowIfNullOrEmpty(modelId);
-        var model = await this.GetModel(modelId, cancellationToken: cancellationToken)
-        ?? throw new ArgumentException(modelId);
-
-        return model.Type switch
-        {
-            "speech" => await this.SpeechSamplingAsync(chatRequest, cancellationToken),
-            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

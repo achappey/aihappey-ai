@@ -59,26 +59,9 @@ public partial class AI302Provider : IModelProvider
 
     public string GetIdentifier() => "ai302";
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (model?.Type == "language")
-        {
-            var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-                      cancellationToken);
-
-            return result.ToSamplingResult();
-        }
-
-        return (model?.Type) switch
-        {
-            "speech" => await this.SpeechSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            "image" => await this.ImageSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+        throw new NotSupportedException();
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)

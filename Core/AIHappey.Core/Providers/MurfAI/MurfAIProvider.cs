@@ -5,6 +5,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.MurfAI;
 
@@ -47,6 +48,11 @@ public sealed partial class MurfAIProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

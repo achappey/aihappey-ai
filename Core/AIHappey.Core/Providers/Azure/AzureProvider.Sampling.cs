@@ -7,18 +7,7 @@ public sealed partial class AzureProvider
 {
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var modelId = chatRequest.GetModel();
-
-        ArgumentException.ThrowIfNullOrEmpty(modelId);
-        var model = await this.GetModel(modelId, cancellationToken: cancellationToken)
-        ?? throw new ArgumentException(modelId);
-
-        return model.Type switch
-        {
-            "speech" => await this.SpeechSamplingAsync(chatRequest, cancellationToken),
-            "language" => await this.TranslateSamplingAsync(chatRequest, modelId!, cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+      throw new NotSupportedException();
     }
 
     internal async Task<CreateMessageResult> TranslateSamplingAsync(

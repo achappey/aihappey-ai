@@ -63,21 +63,9 @@ public partial class BinericProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Bineric).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var modelId = chatRequest.GetModel();
-
-        if (modelId == "Text to Speech")
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-        else if (modelId == "Speech to Text")
-            throw new NotImplementedException();
-        else
-        {
-            var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken);
-
-            return result.ToSamplingResult();
-        }
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

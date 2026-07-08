@@ -33,14 +33,9 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public async Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        if (chatRequest.GetModel()?.Contains("scribe") == true)
-        {
-            throw new NotImplementedException();
-        }
-
-        return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        throw new NotSupportedException();
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,

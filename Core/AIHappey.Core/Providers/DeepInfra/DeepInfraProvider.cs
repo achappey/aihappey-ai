@@ -64,18 +64,11 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         }
     }
 
-    public async Task<CreateMessageResult> SamplingAsync(
+    public Task<CreateMessageResult> SamplingAsync(
         CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        return (model?.Type) switch
-        {
-            "speech" => await this.SpeechSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+        throw new NotSupportedException();
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)

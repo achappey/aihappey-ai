@@ -48,7 +48,7 @@ public partial class LOVOProvider : IModelProvider
         => await ListModelsInternal(cancellationToken);
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {

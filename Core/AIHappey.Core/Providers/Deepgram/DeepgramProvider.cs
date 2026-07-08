@@ -36,16 +36,9 @@ public sealed partial class DeepgramProvider
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (model.Type == "speech")
-        {
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
@@ -76,7 +69,7 @@ public sealed partial class DeepgramProvider
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(options.Model , cancellationToken);
+        var model = await this.GetModel(options.Model, cancellationToken);
 
         if (model.Type == "speech")
         {

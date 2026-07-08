@@ -37,7 +37,7 @@ public partial class AsyncProvider(IApiKeyResolver keyResolver, IHttpClientFacto
         => throw new NotImplementedException();
 
     public async Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.SpeechSamplingAsync(chatRequest, cancellationToken: cancellationToken);
+        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)

@@ -41,27 +41,9 @@ public sealed partial class SarvamProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("api-subscription-key", key);
     }
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (model.Type == "speech")
-        {
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        if (model.Id.Contains("translate"))
-        {
-            ApplyAuthHeader();
-            return await TranslateSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        if (model.Type == "language")
-        {
-            return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)

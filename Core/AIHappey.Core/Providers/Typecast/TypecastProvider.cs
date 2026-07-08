@@ -45,7 +45,7 @@ public partial class TypecastProvider : IModelProvider
         => throw new NotImplementedException();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => this.SpeechSamplingAsync(chatRequest, cancellationToken);
+        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

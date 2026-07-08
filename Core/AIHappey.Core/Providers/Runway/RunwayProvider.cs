@@ -49,26 +49,9 @@ public partial class RunwayProvider : IModelProvider
 
     public string GetIdentifier() => "runway";
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        switch (model?.Type)
-        {
-            case "speech":
-                {
-                    return await this.SpeechSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-            case "image":
-                {
-                    return await this.ImageSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-            default:
-                throw new NotImplementedException();
-        }
+      throw new NotSupportedException();
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(

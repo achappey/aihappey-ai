@@ -6,16 +6,11 @@ namespace AIHappey.Core.Providers.FishAudio;
 
 public partial class FishAudioProvider
 {
-    private async Task<CreateMessageResult> SamplingAsyncInternal(
+    private Task<CreateMessageResult> SamplingAsyncInternal(
         CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (model.Type == "speech")
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-
-        throw new NotImplementedException();
+       throw new NotSupportedException();
     }
 
     private async Task<ResponseResult> ResponsesAsyncInternal(

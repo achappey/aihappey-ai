@@ -37,20 +37,9 @@ public partial class ARKLabsProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        return (model?.Type) switch
-        {
-            "image" => await this.ImageSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            "language" => await this.ChatCompletionsSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            "speech" => await this.SpeechSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+       throw new NotSupportedException();
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)

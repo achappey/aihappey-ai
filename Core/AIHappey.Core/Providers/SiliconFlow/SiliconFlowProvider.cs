@@ -41,18 +41,9 @@ public partial class SiliconFlowProvider : IModelProvider
 
     public string GetIdentifier() => nameof(SiliconFlow).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        return (model?.Type) switch
-        {
-            "image" => await this.ImageSamplingAsync(chatRequest,
-                                        cancellationToken: cancellationToken),
-            "speech" => await this.SpeechSamplingAsync(chatRequest,
-                                        cancellationToken: cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+     throw new NotSupportedException();
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)

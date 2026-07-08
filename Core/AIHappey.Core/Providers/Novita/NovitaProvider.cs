@@ -46,24 +46,9 @@ public partial class NovitaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Novita).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (model.Type == "speech")
-        {
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        if (model.Type == "image")
-        {
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)

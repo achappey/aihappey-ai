@@ -45,14 +45,9 @@ public partial class StabilityAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(StabilityAI).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        if (chatRequest.GetModel()?.Contains("audio") == true)
-        {
-            return await this.SpeechSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        return await this.ImageSamplingAsync(chatRequest, cancellationToken);
+        throw new NotSupportedException();
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,

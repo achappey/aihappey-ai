@@ -70,19 +70,10 @@ public partial class AIMLProvider : IModelProvider
 
     public string GetIdentifier() => AIMLExtensions.GetIdentifier();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        return (model?.Type) switch
-        {
-            "speech" => await this.SpeechSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            "image" => await this.ImageSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+       throw new NotSupportedException();
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)

@@ -54,20 +54,9 @@ public partial class APIpieProvider : IModelProvider
 
     public string GetIdentifier() => nameof(APIpie).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        return (model?.Type) switch
-        {
-            "speech" => await this.SpeechSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            "image" => await this.ImageSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            "language" => await this.ChatCompletionsSamplingAsync(chatRequest,
-                                    cancellationToken: cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+        throw new NotSupportedException();
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)

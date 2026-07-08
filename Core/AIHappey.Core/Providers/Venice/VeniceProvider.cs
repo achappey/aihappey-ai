@@ -60,26 +60,9 @@ public partial class VeniceProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Venice).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var staticModels = GetIdentifier().GetModels();
-        var model = staticModels.FirstOrDefault(a => a.Id.EndsWith(chatRequest.GetModel()!));
-        if (model != null)
-        {
-            return (model?.Type) switch
-            {
-                "speech" => await this.SpeechSamplingAsync(chatRequest,
-                                        cancellationToken: cancellationToken),
-                "image" => await this.ImageSamplingAsync(chatRequest,
-                                        cancellationToken: cancellationToken),
-                _ => throw new NotImplementedException(),
-            };
-        }
-
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-         cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
