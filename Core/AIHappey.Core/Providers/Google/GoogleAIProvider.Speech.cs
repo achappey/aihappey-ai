@@ -13,6 +13,40 @@ public partial class GoogleAIProvider
 {
     private const string GoogleSpeechDefaultVoice = "Kore";
 
+    private static readonly GoogleSpeechVoice[] GoogleSpeechVoices =
+    [
+        new("Zephyr", "Bright"),
+        new("Puck", "Upbeat"),
+        new("Charon", "Informative"),
+        new("Kore", "Firm"),
+        new("Fenrir", "Excitable"),
+        new("Leda", "Youthful"),
+        new("Orus", "Firm"),
+        new("Aoede", "Breezy"),
+        new("Callirrhoe", "Easy-going"),
+        new("Autonoe", "Bright"),
+        new("Enceladus", "Breathy"),
+        new("Iapetus", "Clear"),
+        new("Umbriel", "Easy-going"),
+        new("Algieba", "Smooth"),
+        new("Despina", "Smooth"),
+        new("Erinome", "Clear"),
+        new("Algenib", "Gravelly"),
+        new("Rasalgethi", "Informative"),
+        new("Laomedeia", "Upbeat"),
+        new("Achernar", "Soft"),
+        new("Alnilam", "Firm"),
+        new("Schedar", "Even"),
+        new("Gacrux", "Mature"),
+        new("Pulcherrima", "Forward"),
+        new("Achird", "Friendly"),
+        new("Zubenelgenubi", "Casual"),
+        new("Vindemiatrix", "Gentle"),
+        new("Sadachbia", "Lively"),
+        new("Sadaltager", "Knowledgeable"),
+        new("Sulafat", "Warm")
+    ];
+
     private static readonly JsonSerializerOptions GoogleSpeechJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -125,13 +159,22 @@ public partial class GoogleAIProvider
 
     private static JsonObject BuildSpeechPayload(SpeechRequest request, ICollection<object> warnings)
     {
+        var (modelId, modelVoice) = ParseGoogleSpeechModelAndVoice(request.Model);
+
+        if (!string.IsNullOrWhiteSpace(modelVoice)
+            && !string.IsNullOrWhiteSpace(request.Voice)
+            && !string.Equals(request.Voice.Trim(), modelVoice, StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+        }
+
         var metadata = request.GetProviderMetadata<JsonElement>(GoogleExtensions.Identifier());
         var payload = metadata.ValueKind == JsonValueKind.Object
             ? CloneJsonObject(metadata)
             : [];
 
         if (!HasJsonProperty(payload, "model"))
-            payload["model"] = request.Model;
+            payload["model"] = modelId;
 
         if (!HasJsonProperty(payload, "input"))
             payload["input"] = request.Text;
@@ -152,7 +195,7 @@ public partial class GoogleAIProvider
 
         if (!HasJsonProperty(generationConfig, "speech_config"))
         {
-            generationConfig["speech_config"] = speechConfigFromTopLevel ?? BuildDefaultGoogleSpeechConfig(request);
+            generationConfig["speech_config"] = speechConfigFromTopLevel ?? BuildDefaultGoogleSpeechConfig(request, modelVoice);
         }
         else if (speechConfigFromTopLevel is not null)
         {
@@ -171,10 +214,15 @@ public partial class GoogleAIProvider
     }
 
     private static JsonArray BuildDefaultGoogleSpeechConfig(SpeechRequest request)
+        => BuildDefaultGoogleSpeechConfig(request, modelVoice: null);
+
+    private static JsonArray BuildDefaultGoogleSpeechConfig(SpeechRequest request, string? modelVoice)
     {
-        var voice = string.IsNullOrWhiteSpace(request.Voice)
+        var voice = !string.IsNullOrWhiteSpace(modelVoice)
+            ? modelVoice
+            : string.IsNullOrWhiteSpace(request.Voice)
             ? GoogleSpeechDefaultVoice
-            : request.Voice.Trim();
+            : ResolveGoogleSpeechVoiceName(request.Voice.Trim()) ?? request.Voice.Trim();
 
         return
         [
@@ -184,6 +232,35 @@ public partial class GoogleAIProvider
             }
         ];
     }
+
+    private static (string ModelId, string? Voice) ParseGoogleSpeechModelAndVoice(string model)
+    {
+        var localModel = model.Trim();
+        var providerPrefix = GoogleExtensions.Identifier() + "/";
+        if (localModel.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            localModel = localModel[providerPrefix.Length..];
+
+        var slashIndex = localModel.LastIndexOf('/');
+        if (slashIndex <= 0 || slashIndex >= localModel.Length - 1)
+            return (localModel, null);
+
+        var baseModel = localModel[..slashIndex].Trim();
+        var voice = localModel[(slashIndex + 1)..].Trim();
+
+        if (!baseModel.Contains("tts", StringComparison.OrdinalIgnoreCase))
+            return (localModel, null);
+
+        if (string.IsNullOrWhiteSpace(voice))
+            throw new ArgumentException("Google speech model voice shortcut must be in the form '[tts-model]/{voice}'.", nameof(model));
+
+        var canonicalVoice = ResolveGoogleSpeechVoiceName(voice)
+            ?? throw new NotSupportedException($"Google speech voice '{voice}' is not supported.");
+
+        return (baseModel, canonicalVoice);
+    }
+
+    private static string? ResolveGoogleSpeechVoiceName(string voice)
+        => GoogleSpeechVoices.FirstOrDefault(v => string.Equals(v.Name, voice.Trim(), StringComparison.OrdinalIgnoreCase))?.Name;
 
     private static bool TryExtractGoogleSpeechAudio(JsonElement root, out string base64, out string? mimeType)
     {
@@ -363,4 +440,6 @@ public partial class GoogleAIProvider
             ? property.GetString()
             : property.ToString();
     }
+
+    private sealed record GoogleSpeechVoice(string Name, string Style);
 }

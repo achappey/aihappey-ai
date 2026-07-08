@@ -27,7 +27,7 @@ public partial class GoogleAIProvider
                     "native",
                 ];
 
-                return models
+                var rawModels = models
                     .Select(a =>
                     {
                         var id = a.Name?.Split("/").LastOrDefault() ?? string.Empty;
@@ -40,15 +40,67 @@ public partial class GoogleAIProvider
                             OwnedBy = Google,
                             Description = id,
                             Id = id.ToModelId(GetIdentifier()),
+                            Type = id.GuessModelType(),
                             Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
                         };
                     })
                     .Where(a => excludedSubstrings.All(z => a.Id?.Contains(z) != true))
+                    .ToList();
+
+                rawModels.AddRange(BuildGoogleSpeechVoiceShortcutModels(rawModels.ToList(), GetIdentifier()));
+
+                return rawModels
                     .WithPricing(GetIdentifier());
 
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+    }
+
+    private static IEnumerable<Model> BuildGoogleSpeechVoiceShortcutModels(IEnumerable<Model> models, string providerId)
+    {
+        var existingIds = new HashSet<string>(
+            models.Select(model => model.Id),
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var baseModel in models)
+        {
+            var baseModelId = GetLocalGoogleModelId(baseModel, providerId);
+            if (string.IsNullOrWhiteSpace(baseModelId)
+                || !baseModelId.Contains("tts", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            foreach (var voice in GoogleSpeechVoices)
+            {
+                var shortcutId = $"{baseModelId}/{voice.Name}";
+                var providerModelId = shortcutId.ToModelId(providerId);
+                if (!existingIds.Add(providerModelId))
+                    continue;
+
+                yield return new Model
+                {
+                    Id = providerModelId,
+                    Name = shortcutId,
+                    OwnedBy = Google,
+                    Type = "speech",
+                    Created = baseModel.Created,
+                    Description = $"Google Gemini text-to-speech model '{baseModelId}' with preset voice '{voice.Name}' ({voice.Style}).",
+                    Tags = ["tts", "speech", $"model:{baseModelId}", $"voice:{voice.Name}", $"voice-style:{voice.Style}", "shortcut"]
+                };
+            }
+        }
+    }
+
+    private static string GetLocalGoogleModelId(Model model, string providerId)
+    {
+        var id = model.Id ?? string.Empty;
+        var providerPrefix = providerId + "/";
+        if (id.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            return id[providerPrefix.Length..];
+
+        return id;
     }
 }

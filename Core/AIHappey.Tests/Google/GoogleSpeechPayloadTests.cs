@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Google;
 using AIHappey.Vercel.Models;
 
@@ -38,6 +39,51 @@ public sealed class GoogleSpeechPayloadTests
 
         var speechConfig = payload.GetProperty("generation_config").GetProperty("speech_config").EnumerateArray().Single();
         Assert.Equal("Puck", speechConfig.GetProperty("voice").GetString());
+    }
+
+    [Fact]
+    public void BuildSpeechPayloadMapsModelVoiceShortcutToBaseModelAndCanonicalVoice()
+    {
+        var (payload, warnings) = BuildPayload(new SpeechRequest
+        {
+            Model = "gemini-3.1-flash-tts-preview/Puck",
+            Text = "Hello",
+            Voice = "Kore"
+        });
+
+        Assert.Equal("gemini-3.1-flash-tts-preview", payload.GetProperty("model").GetString());
+
+        var speechConfig = payload.GetProperty("generation_config").GetProperty("speech_config").EnumerateArray().Single();
+        Assert.Equal("Puck", speechConfig.GetProperty("voice").GetString());
+        Assert.Contains(warnings, warning => warning.ToString()!.Contains("voice", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BuildSpeechPayloadMapsProviderQualifiedModelVoiceShortcut()
+    {
+        var (payload, warnings) = BuildPayload(new SpeechRequest
+        {
+            Model = "google/gemini-3.1-flash-tts-preview/Kore",
+            Text = "Hello"
+        });
+
+        Assert.Equal("gemini-3.1-flash-tts-preview", payload.GetProperty("model").GetString());
+
+        var speechConfig = payload.GetProperty("generation_config").GetProperty("speech_config").EnumerateArray().Single();
+        Assert.Equal("Kore", speechConfig.GetProperty("voice").GetString());
+        Assert.Empty(warnings);
+    }
+
+    [Fact]
+    public void BuildSpeechPayloadRejectsUnknownModelShortcutVoice()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => BuildPayload(new SpeechRequest
+        {
+            Model = "gemini-3.1-flash-tts-preview/UnknownVoice",
+            Text = "Hello"
+        }));
+
+        Assert.Contains("UnknownVoice", ex.Message);
     }
 
     [Fact]
@@ -153,6 +199,39 @@ public sealed class GoogleSpeechPayloadTests
         Assert.True(found);
         Assert.Equal("nested-audio-base64", base64);
         Assert.Equal("audio/wav", mimeType);
+    }
+
+    [Fact]
+    public void BuildGoogleSpeechVoiceShortcutModelsAddsCanonicalVoiceModelsForTtsModelsOnly()
+    {
+        var method = typeof(GoogleAIProvider).GetMethod("BuildGoogleSpeechVoiceShortcutModels", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new MissingMethodException(nameof(GoogleAIProvider), "BuildGoogleSpeechVoiceShortcutModels");
+
+        var rawModels = new[]
+        {
+            new Model
+            {
+                Id = "google/gemini-3.1-flash-tts-preview",
+                Name = "Gemini TTS",
+                OwnedBy = "Google",
+                Type = "speech",
+                Created = 1910000000
+            },
+            new Model
+            {
+                Id = "google/gemini-3.5-flash",
+                Name = "Gemini Flash",
+                OwnedBy = "Google",
+                Type = "language"
+            }
+        };
+
+        var shortcuts = ((IEnumerable<Model>)method.Invoke(null, [rawModels, "google"])!).ToList();
+
+        Assert.Equal(30, shortcuts.Count);
+        Assert.Contains(shortcuts, model => model.Id == "google/gemini-3.1-flash-tts-preview/Kore" && model.Name == "gemini-3.1-flash-tts-preview/Kore" && model.Type == "speech");
+        Assert.Contains(shortcuts, model => model.Id == "google/gemini-3.1-flash-tts-preview/Puck" && model.Tags!.Contains("voice:Puck"));
+        Assert.DoesNotContain(shortcuts, model => model.Id.Contains("gemini-3.5-flash", StringComparison.OrdinalIgnoreCase));
     }
 
     private static (JsonElement Payload, List<object> Warnings) BuildPayload(SpeechRequest request)
