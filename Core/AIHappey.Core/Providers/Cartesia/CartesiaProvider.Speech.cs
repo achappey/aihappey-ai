@@ -124,6 +124,10 @@ public partial class CartesiaProvider
                 Timestamp = now,
                 ModelId = request.Model,
                 Body = JsonSerializer.SerializeToElement(providerMeta)
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

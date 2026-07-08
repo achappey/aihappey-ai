@@ -84,6 +84,10 @@ public partial class OpenRouterProvider
                     contentType,
                     contentLength = bytes.LongLength
                 }
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

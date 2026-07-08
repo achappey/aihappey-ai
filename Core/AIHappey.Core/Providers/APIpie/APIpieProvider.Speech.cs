@@ -117,6 +117,10 @@ public partial class APIpieProvider
             {
                 Timestamp = now,
                 ModelId = request.Model
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

@@ -100,6 +100,10 @@ public sealed partial class DeepInfraProvider
                 Timestamp = started,
                 ModelId = model,
                 Body = root.Clone()
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

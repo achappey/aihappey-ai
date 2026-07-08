@@ -102,6 +102,10 @@ public partial class TogetherProvider
             {
                 Timestamp = now,
                 ModelId = request.Model,
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

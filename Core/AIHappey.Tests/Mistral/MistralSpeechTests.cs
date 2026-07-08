@@ -68,6 +68,15 @@ public sealed class MistralSpeechTests
         Assert.Equal("YmFzZTY0LWF1ZGlv", response.Audio.Base64);
         Assert.Equal("audio/wav", response.Audio.MimeType);
         Assert.Equal("wav", response.Audio.Format);
+        Assert.NotNull(response.Request);
+
+        var returnedRequestBody = JsonSerializer.SerializeToElement(response.Request!.Body, JsonSerializerOptions.Web);
+        Assert.Equal("mistral-tts-latest", returnedRequestBody.GetProperty("model").GetString());
+        Assert.Equal("hello world", returnedRequestBody.GetProperty("input").GetString());
+        Assert.Equal("voice_123", returnedRequestBody.GetProperty("voice_id").GetString());
+        Assert.Equal("wav", returnedRequestBody.GetProperty("response_format").GetString());
+        Assert.False(returnedRequestBody.GetProperty("stream").GetBoolean());
+
         Assert.Contains(response.Warnings, warning => warning.ToString()!.Contains("voice", StringComparison.OrdinalIgnoreCase));
     }
 

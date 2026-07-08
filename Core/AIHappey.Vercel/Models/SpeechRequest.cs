@@ -65,7 +65,7 @@ public class SpeechResponse
 public class SpeechRequestItem
 {
     /**
-         * Response body (available only for providers that use HTTP requests).
+         * Provider HTTP request body payload (available only for providers that use HTTP requests).
          */
     [JsonPropertyName("body")]
     public object? Body { get; set; }

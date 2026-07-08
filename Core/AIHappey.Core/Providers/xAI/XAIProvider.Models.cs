@@ -128,11 +128,17 @@ public partial class XAIProvider
 
     private static IEnumerable<Model> BuildSpeechModels(IReadOnlyList<XAITtsVoice> voices)
     {
+        var ttsPricing = new ModelPricing()
+        {
+            Input = 0.000015m
+        };
+
         yield return new Model
         {
             Id = BaseSpeechModel.ToModelId(XAIRequestExtensions.XAIIdentifier),
             OwnedBy = ProviderName,
             Type = "speech",
+            Pricing = ttsPricing,
             Name = "xAI Text-to-Speech"
         };
 
@@ -142,6 +148,7 @@ public partial class XAIProvider
             {
                 Id = $"{BaseSpeechModel}/{language.Code}".ToModelId(XAIRequestExtensions.XAIIdentifier),
                 OwnedBy = ProviderName,
+                Pricing = ttsPricing,
                 Type = "speech",
                 Name = $"xAI TTS {language.DisplayName}",
                 Description = $"xAI text-to-speech with {language.DisplayName} language."
@@ -153,6 +160,7 @@ public partial class XAIProvider
                 {
                     Id = $"{BaseSpeechModel}/{language.Code}/{voice.VoiceId}".ToModelId(XAIRequestExtensions.XAIIdentifier),
                     OwnedBy = ProviderName,
+                    Pricing = ttsPricing,
                     Type = "speech",
                     Name = $"xAI TTS {language.DisplayName} {voice.Name}",
                     Description = $"xAI text-to-speech with {language.DisplayName} language and {voice.Name} voice."

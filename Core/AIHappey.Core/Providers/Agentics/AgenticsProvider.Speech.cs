@@ -116,6 +116,10 @@ public partial class AgenticsProvider
                 Timestamp = now,
                 ModelId = request.Model,
                 Body = body
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

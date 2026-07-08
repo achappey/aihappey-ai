@@ -80,6 +80,10 @@ public partial class GroqProvider
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = request.Model,
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

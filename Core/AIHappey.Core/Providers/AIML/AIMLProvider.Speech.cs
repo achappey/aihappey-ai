@@ -128,6 +128,10 @@ public partial class AIMLProvider
                     Timestamp = now,
                     ModelId = request.Model,
                     Body = lastPollJson
+                },
+                Request = new SpeechRequestItem
+                {
+                    Body = payload
                 }
             };
         }

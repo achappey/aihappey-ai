@@ -101,6 +101,10 @@ public partial class MistralProvider
                 Timestamp = now,
                 ModelId = request.Model,
                 Body = root.Clone()
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

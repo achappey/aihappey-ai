@@ -99,7 +99,11 @@ public partial class ElevenLabsProvider
                 Format = outputFormat?.Split("_")?.FirstOrDefault() ?? "mp3",
             },
             Warnings = [],
-            Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
+            Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model },
+            Request = new SpeechRequestItem
+            {
+                Body = body
+            }
         };
     }
 
