@@ -92,6 +92,6 @@ public static class ModelProviderTranscriptionExtensions
         }
 
         // 4. Finish
-        yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, null);
+        yield return "stop".ToFinishUIPart(chatRequest.Model.ToModelId(modelProvider.GetIdentifier()), 0, 0, 0, null);
     }
 }
