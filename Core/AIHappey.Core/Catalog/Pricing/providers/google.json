@@ -68,5 +68,23 @@
       "input_cache_read": "0.00000001",
       "output": "0.0000004"
     }
+  },
+  "google/gemini-2.5-flash-preview-tts": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.00001"
+    }
+  },
+  "google/gemini-2.5-pro-preview-tts": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.00002"
+    }
+  },
+  "google/gemini-3.1-flash-tts-preview": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.00002"
+    }
   }
 }
