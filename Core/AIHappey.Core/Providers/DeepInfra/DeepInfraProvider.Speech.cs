@@ -54,6 +54,71 @@ public sealed partial class DeepInfraProvider
         throw new NotImplementedException(request.Model);
     }
 
+    private static (string Base64, string MimeType, string Format) ParseAudioDataUrl(
+    string value,
+    string? fallbackFormat,
+    string? fallbackMimeType)
+    {
+        const string marker = ";base64,";
+
+        if (!value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var mime = string.IsNullOrWhiteSpace(fallbackMimeType)
+                ? "application/octet-stream"
+                : fallbackMimeType;
+
+            var f = string.IsNullOrWhiteSpace(fallbackFormat)
+                ? MimeToAudioFormat(mime)
+                : fallbackFormat;
+
+            return (value, mime, f);
+        }
+
+        var markerIndex = value.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0)
+            throw new InvalidOperationException("Audio data URL did not contain base64 audio data.");
+
+        var mimeType = value["data:".Length..markerIndex];
+
+        if (string.IsNullOrWhiteSpace(mimeType))
+            mimeType = string.IsNullOrWhiteSpace(fallbackMimeType)
+                ? "application/octet-stream"
+                : fallbackMimeType;
+
+        var base64 = value[(markerIndex + marker.Length)..];
+
+        if (string.IsNullOrWhiteSpace(base64))
+            throw new InvalidOperationException("Audio data URL contained empty base64 audio data.");
+
+        var format = MimeToAudioFormat(mimeType);
+
+        if (string.IsNullOrWhiteSpace(format))
+            format = string.IsNullOrWhiteSpace(fallbackFormat)
+                ? "bin"
+                : fallbackFormat;
+
+        return (base64, mimeType, format);
+    }
+
+
+    private static string MimeToAudioFormat(string mimeType)
+    {
+        return mimeType.ToLowerInvariant() switch
+        {
+            "audio/wav" or "audio/wave" or "audio/x-wav" => "wav",
+            "audio/mpeg" or "audio/mp3" => "mp3",
+            "audio/ogg" => "ogg",
+            "audio/webm" => "webm",
+            "audio/flac" => "flac",
+            "audio/aac" => "aac",
+            "audio/mp4" or "audio/m4a" => "m4a",
+            "audio/pcm" => "pcm",
+            _ when mimeType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)
+                => mimeType["audio/".Length..],
+            _ => ""
+        };
+    }
+
     private async Task<SpeechResponse> DeepInfraSpeechRequest(string model,
         Dictionary<string, object?> payload,
         List<object> warnings,
@@ -86,15 +151,43 @@ public sealed partial class DeepInfraProvider
 
         var mime = OpenAIProvider.MapToAudioMimeType(outputFormat);
 
+        if (!root.TryGetProperty("audio", out var a) || a.ValueKind != JsonValueKind.String)
+            throw new InvalidOperationException("DeepInfra TTS response did not contain audio data.");
+
+        var audioRaw = audioEl.GetString();
+        if (string.IsNullOrWhiteSpace(audioRaw))
+            throw new InvalidOperationException("DeepInfra TTS returned empty audio data.");
+
+        var (audio, mimeType, format) = ParseAudioDataUrl(
+            audioRaw,
+            fallbackFormat: outputFormat,
+            fallbackMimeType: OpenAIProvider.MapToAudioMimeType(outputFormat));
+
+        var providerMetadata = new Dictionary<string, JsonElement>()
+        {
+            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+            }, JsonSerializerOptions.Web)
+        };
+
+        if (TryGetDeepInfraCost(root, out var cost))
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
+
         return new SpeechResponse
         {
             Audio = new()
             {
-                Base64 = audioBase64.RemoveDataUrlPrefix(),
-                MimeType = mime,
-                Format = outputFormat
+                Base64 = audio,
+                MimeType = mimeType,
+                Format = format
             },
             Warnings = warnings,
+            ProviderMetadata = providerMetadata,
             Response = new()
             {
                 Timestamp = started,
@@ -106,6 +199,25 @@ public sealed partial class DeepInfraProvider
                 Body = payload
             }
         };
+    }
+
+    private static bool TryGetDeepInfraCost(JsonElement root, out decimal cost)
+    {
+        cost = 0;
+
+        if (!root.TryGetProperty("inference_status", out var inferenceStatusEl) ||
+            inferenceStatusEl.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        if (!inferenceStatusEl.TryGetProperty("cost", out var costEl) ||
+            costEl.ValueKind != JsonValueKind.Number)
+        {
+            return false;
+        }
+
+        return costEl.TryGetDecimal(out cost);
     }
 
 }
