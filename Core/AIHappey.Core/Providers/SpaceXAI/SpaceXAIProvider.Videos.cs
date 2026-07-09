@@ -93,6 +93,58 @@ public partial class SpaceXAIProvider
                     throw new Exception("xAI video result contained no video url.");
 
                 var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
+                var providerKey = GetIdentifier();
+
+                var providerMetadata = new Dictionary<string, JsonElement>();
+
+                JsonElement? usageClone = null;
+                if (root.TryGetProperty("usage", out var usageEl)
+                    && usageEl.ValueKind == JsonValueKind.Object)
+                {
+                    usageClone = usageEl.Clone();
+                }
+
+                JsonElement? videoWithoutUrl = null;
+                if (root.TryGetProperty("video", out var videoEl)
+                    && videoEl.ValueKind == JsonValueKind.Object)
+                {
+                    var videoMetadata = new Dictionary<string, object?>();
+
+                    foreach (var property in videoEl.EnumerateObject())
+                    {
+                        if (string.Equals(property.Name, "url", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        videoMetadata[property.Name] = property.Value.Clone();
+                    }
+
+                    videoWithoutUrl = JsonSerializer.SerializeToElement(videoMetadata, JsonSerializerOptions.Web);
+                }
+
+                providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
+                {
+                    usage = usageClone,
+                    video = videoWithoutUrl
+                }, JsonSerializerOptions.Web);
+
+                decimal? cost = null;
+
+                if (root.TryGetProperty("usage", out var gatewayUsageEl)
+                    && gatewayUsageEl.ValueKind == JsonValueKind.Object
+                    && gatewayUsageEl.TryGetProperty("cost_in_usd_ticks", out var costTicksEl)
+                    && costTicksEl.ValueKind == JsonValueKind.Number
+                    && costTicksEl.TryGetDecimal(out var costTicks))
+                {
+                    cost = costTicks / UsdTicksPerDollar;
+                }
+
+                if (cost is not null)
+                {
+                    providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+                    {
+                        cost
+                    }, JsonSerializerOptions.Web);
+                }
 
                 return new VideoResponse
                 {
@@ -105,6 +157,7 @@ public partial class SpaceXAIProvider
                         }
                     ],
                     Warnings = warnings,
+                    ProviderMetadata = providerMetadata,
                     Response = new()
                     {
                         Timestamp = now,
