@@ -90,6 +90,7 @@ public partial class SpaceXAIProvider
                 models.AddRange(GetIdentifier().GetModels());
 
                 return [.. models
+                .WithPricing(GetIdentifier())
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())];
             },

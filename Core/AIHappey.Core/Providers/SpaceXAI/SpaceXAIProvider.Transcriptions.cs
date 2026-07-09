@@ -72,7 +72,11 @@ public partial class SpaceXAIProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"{ProviderName} transcription failed ({(int)response.StatusCode}): {raw}");
 
-        return ConvertXAISttResponse(raw, request.Model, now, providerOptions);
+        var model = await this.GetModel(request.Model, cancellationToken);
+
+        return ConvertXAISttResponse(raw, request.Model.ToModelId(GetIdentifier()),
+            now,
+            model.Pricing?.Input);
     }
 
     private static void AddXAISttProviderOptions(MultipartFormDataContent form, JsonElement providerOptions)
@@ -168,10 +172,10 @@ public partial class SpaceXAIProvider
     }
 
     private static TranscriptionResponse ConvertXAISttResponse(
-        string raw,
-        string? requestModel,
-        DateTime timestamp,
-        JsonElement providerOptions)
+      string raw,
+      string? requestModel,
+      DateTime timestamp,
+      decimal? pricePerSecond)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
@@ -181,14 +185,19 @@ public partial class SpaceXAIProvider
         var language = TryGetString(root, "language");
         var duration = TryGetFloat(root, "duration");
 
-        var metadata = new Dictionary<string, object?>
+        var providerMetadata = new Dictionary<string, JsonElement>
         {
-            ["endpoint"] = "v1/stt",
-            ["request"] = providerOptions.ValueKind == JsonValueKind.Object
-                ? JsonSerializer.Deserialize<object>(providerOptions.GetRawText(), JsonSerializerOptions.Web)
-                : null,
-            ["response"] = JsonSerializer.Deserialize<object>(raw, JsonSerializerOptions.Web)
+            [SpaceXAIRequestExtensions.SpaceXAIIdentifier] =
+                JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web)
         };
+
+        if (pricePerSecond is not null && duration is > 0)
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost = pricePerSecond.Value * (decimal)duration.Value
+            }, JsonSerializerOptions.Web);
+        }
 
         return new TranscriptionResponse
         {
@@ -196,10 +205,7 @@ public partial class SpaceXAIProvider
             Language = string.IsNullOrWhiteSpace(language) ? null : language,
             DurationInSeconds = duration,
             Segments = segments,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [SpaceXAIRequestExtensions.SpaceXAIIdentifier] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = providerMetadata,
             Response = new ResponseData
             {
                 Timestamp = timestamp,
