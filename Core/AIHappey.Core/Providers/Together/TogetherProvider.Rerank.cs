@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -72,16 +73,16 @@ public partial class TogetherProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = errText
             }
         };
 
     }
-    
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

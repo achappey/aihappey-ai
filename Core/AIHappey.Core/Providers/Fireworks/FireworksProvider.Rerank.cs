@@ -99,7 +99,7 @@ public partial class FireworksProvider
             {
                 Ranking = [],
                 Warnings = warnings,
-                Response = new ResponseData
+                Response = new()
                 {
                     Timestamp = now,
                     ModelId = request.Model,
@@ -128,7 +128,7 @@ public partial class FireworksProvider
         {
             Ranking = ranked,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,

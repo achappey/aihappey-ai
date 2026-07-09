@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Cohere;
 
@@ -66,10 +67,10 @@ public partial class CohereProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = errText
             }
         };

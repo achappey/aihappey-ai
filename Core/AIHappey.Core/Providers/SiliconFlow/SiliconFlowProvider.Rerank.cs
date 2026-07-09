@@ -3,6 +3,7 @@ using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
@@ -57,10 +58,10 @@ public partial class SiliconFlowProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = errText
             }
         };

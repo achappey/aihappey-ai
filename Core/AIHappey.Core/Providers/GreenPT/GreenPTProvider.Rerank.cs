@@ -80,7 +80,7 @@ public partial class GreenPTProvider
         return new RerankingResponse
         {
             Ranking = ranking,
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,

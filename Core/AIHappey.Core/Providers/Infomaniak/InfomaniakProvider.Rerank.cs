@@ -73,7 +73,7 @@ public partial class InfomaniakProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,

@@ -68,7 +68,7 @@ public partial class VoyageAIProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,

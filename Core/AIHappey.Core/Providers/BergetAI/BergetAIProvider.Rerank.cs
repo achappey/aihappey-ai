@@ -94,7 +94,7 @@ public partial class BergetAIProvider
             {
                 Ranking = [],
                 Warnings = warnings,
-                Response = new ResponseData
+                Response = new()
                 {
                     Timestamp = now,
                     ModelId = request.Model,
@@ -125,7 +125,7 @@ public partial class BergetAIProvider
         {
             Ranking = ranked,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = modelId,

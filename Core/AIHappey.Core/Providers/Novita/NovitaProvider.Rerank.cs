@@ -6,7 +6,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
@@ -61,7 +61,7 @@ public partial class NovitaProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,

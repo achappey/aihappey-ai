@@ -99,7 +99,7 @@ public partial class AssistersProvider
             {
                 Ranking = [],
                 Warnings = warnings,
-                Response = new ResponseData
+                Response = new()
                 {
                     Timestamp = now,
                     ModelId = request.Model,
@@ -121,7 +121,7 @@ public partial class AssistersProvider
         {
             Ranking = ranked,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,

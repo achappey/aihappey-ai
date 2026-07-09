@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Infron;
 
@@ -96,20 +97,12 @@ public partial class InfronProvider
         {
             Ranking = ranked,
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = ResolveInfronTimestamp(root, now),
-                ModelId = root.TryGetString("model") ?? request.Model,
-                Body = new
-                {
-                    request = payload,
-                    response = root,
-                    statusCode = (int)response.StatusCode,
-                    usage = root.TryGetProperty("usage", out var usageEl)
-                        && usageEl.ValueKind == JsonValueKind.Object
-                            ? usageEl.Clone()
-                            : (JsonElement?)null
-                }
+                ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier())
+                    ?? request.Model.ToModelId(GetIdentifier()),
+                Body = root
             }
         };
     }

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Common.Model.Providers.Pinecone;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Pinecone;
 
@@ -74,10 +75,10 @@ public partial class PineconeProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = errText
             }
         };

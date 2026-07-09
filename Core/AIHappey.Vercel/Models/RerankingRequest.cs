@@ -31,6 +31,11 @@ public class RerankingDocument
     public required JsonElement Values { get; init; }
 }
 
+public class RerankResponseData : ResponseData
+{
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+}
 
 public class RerankingResponse
 {
@@ -41,7 +46,10 @@ public class RerankingResponse
     public IEnumerable<object> Warnings { get; set; } = [];
 
     [JsonPropertyName("response")]
-    public ResponseData Response { get; set; } = default!;
+    public RerankResponseData Response { get; set; } = default!;
+
+    [JsonPropertyName("providerMetadata")]
+    public Dictionary<string, JsonElement>? ProviderMetadata { get; set; }
 }
 
 public class RerankingRanking

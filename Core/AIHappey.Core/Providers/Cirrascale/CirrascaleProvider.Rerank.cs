@@ -55,7 +55,7 @@ public partial class CirrascaleProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new ()
             {
                 Timestamp = now,
                 ModelId = request.Model,

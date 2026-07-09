@@ -118,7 +118,7 @@ public sealed partial class DeepInfraProvider
         {
             Ranking = [.. ranked],
             Warnings = warnings,
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model,

@@ -6,6 +6,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Jina;
 
@@ -79,10 +80,10 @@ public partial class JinaProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ResponseData()
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = errText
             }
         };
