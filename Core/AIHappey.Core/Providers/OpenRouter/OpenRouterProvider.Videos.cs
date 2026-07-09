@@ -83,19 +83,44 @@ public partial class OpenRouterProvider
         if (videos.Count == 0)
             throw new InvalidOperationException($"OpenRouter video task completed but returned no downloadable content (id={jobId}).");
 
+
+        var providerKey = GetIdentifier();
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        if (completed.Root.TryGetProperty("usage", out var usageEl)
+            && usageEl.ValueKind == JsonValueKind.Object)
+        {
+            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
+            {
+                usage = usageEl.Clone()
+            }, JsonSerializerOptions.Web);
+        }
+
+        decimal? cost = null;
+
+        if (completed.Root.TryGetProperty("usage", out var gatewayUsageEl)
+            && gatewayUsageEl.ValueKind == JsonValueKind.Object
+            && gatewayUsageEl.TryGetProperty("cost", out var costEl)
+            && costEl.ValueKind == JsonValueKind.Number
+            && costEl.TryGetDecimal(out var parsedCost))
+        {
+            cost = parsedCost;
+        }
+
+        if (cost is not null)
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
+
         return new VideoResponse
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    create = createRoot,
-                    poll = completed.Root
-                }, OpenRouterVideoJsonOptions)
-            },
-            Response = new ()
+            ProviderMetadata = providerMetadata,
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
