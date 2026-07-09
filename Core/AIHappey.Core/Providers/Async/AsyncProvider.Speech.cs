@@ -20,12 +20,20 @@ public partial class AsyncProvider
             throw new ArgumentException("Text is required.", nameof(request));
 
         var metadata = request.GetProviderMetadata<AsyncSpeechProviderMetadata>(GetIdentifier());
-        var voiceId = request.Voice ?? metadata?.Voice?.Id;
+        var now = DateTime.UtcNow;
+        var warnings = new List<object>();
+
+        var (modelId, modelVoiceId) = ParseAsyncSpeechModelAndVoice(request.Model);
+        var voiceId = modelVoiceId ?? request.Voice?.Trim() ?? metadata?.Voice?.Id?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("'voice' (async voice UUID) is required.");
 
-        var now = DateTime.UtcNow;
-        var warnings = new List<object>();
+        if (!string.IsNullOrWhiteSpace(modelVoiceId)
+            && !string.IsNullOrWhiteSpace(request.Voice)
+            && !string.Equals(modelVoiceId, request.Voice.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
@@ -60,7 +68,7 @@ public partial class AsyncProvider
 
         var body = new Dictionary<string, object?>
         {
-            ["model_id"] = request.Model,
+            ["model_id"] = modelId,
             ["transcript"] = request.Text,
             ["voice"] = new Dictionary<string, object?>
             {
@@ -113,6 +121,8 @@ public partial class AsyncProvider
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(new
                 {
+                    model = modelId,
+                    voice = voiceId
                 }, JsonSerializerOptions.Web)
             },
             Request = new()
@@ -122,9 +132,42 @@ public partial class AsyncProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()),
+                ModelId = $"{modelId}/{voiceId}".ToModelId(GetIdentifier()),
             }
         };
+    }
+
+    private string NormalizeAsyncModelId(string model)
+    {
+        var normalized = model.Trim();
+        var providerPrefix = GetIdentifier() + "/";
+        if (normalized.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            normalized = normalized[providerPrefix.Length..].Trim();
+
+        return normalized;
+    }
+
+    private (string ModelId, string? VoiceId) ParseAsyncSpeechModelAndVoice(string model)
+    {
+        var normalized = NormalizeAsyncModelId(model);
+
+        foreach (var speechModel in AsyncSpeechModelIds)
+        {
+            if (string.Equals(normalized, speechModel, StringComparison.OrdinalIgnoreCase))
+                return (speechModel, null);
+
+            var prefix = speechModel + "/";
+            if (!normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var voiceId = normalized[prefix.Length..].Trim();
+            if (string.IsNullOrWhiteSpace(voiceId))
+                throw new ArgumentException($"Async speech shortcut model must be in the form '{{model}}/{{voice_id}}'.", nameof(model));
+
+            return (speechModel, voiceId);
+        }
+
+        throw new NotSupportedException($"Async speech model '{model}' is not supported. Use one of: {string.Join(", ", AsyncSpeechModelIds)} or '{{model}}/{{voice_id}}'.");
     }
 }
 

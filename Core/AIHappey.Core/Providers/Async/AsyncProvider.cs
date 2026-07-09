@@ -3,7 +3,6 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
@@ -14,6 +13,15 @@ public partial class AsyncProvider(IApiKeyResolver keyResolver, IHttpClientFacto
     : IModelProvider
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient();
+
+    private static readonly string[] AsyncSpeechModelIds =
+    [
+        "async_pro_v1.0",
+        "async_flash_v1.5",
+        "async_flash_v1.0"
+    ];
+
+    private const string AsyncTranscriptionModelId = "async_asr_v1.0";
 
     public string GetIdentifier() => "async";
 
@@ -46,14 +54,13 @@ public partial class AsyncProvider(IApiKeyResolver keyResolver, IHttpClientFacto
             yield return p;
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
+   
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
+        => TranscriptionRequestInternal(request, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
