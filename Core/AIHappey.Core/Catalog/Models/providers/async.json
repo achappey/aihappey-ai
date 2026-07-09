@@ -24,6 +24,14 @@
             "name": "Async Flash v1.0",
             "type": "speech",
             "description": "Legacy model with the broadest language support. Use this for languages not yet supported by Flash v1.5."
+        },
+        {
+            "id": "async/async_asr_v1.0",
+            "object": "model",
+            "owned_by": "async",
+            "name": "Async ASR v1.0",
+            "type": "transcription",
+            "description": "Multilingual speech recognition model."
         }
     ]
 }
