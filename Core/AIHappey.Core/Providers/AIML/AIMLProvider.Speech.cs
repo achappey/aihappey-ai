@@ -75,27 +75,38 @@ public partial class AIMLProvider
 
         var providerMetadata = new Dictionary<string, JsonElement>();
 
-        JsonElement? usageClone = null;
         decimal? cost = null;
 
         if (root.TryGetProperty("meta", out var metaEl)
-            && metaEl.ValueKind == JsonValueKind.Object
-            && metaEl.TryGetProperty("usage", out var usageEl)
-            && usageEl.ValueKind == JsonValueKind.Object)
+             && metaEl.ValueKind == JsonValueKind.Object)
         {
-            usageClone = usageEl.Clone();
+            JsonElement? usageClone = null;
+            JsonElement? metricsClone = null;
+
+            if (metaEl.TryGetProperty("usage", out var usageEl)
+                && usageEl.ValueKind == JsonValueKind.Object)
+            {
+                usageClone = usageEl.Clone();
+
+                if (usageEl.TryGetProperty("usd_spent", out var usdSpentEl)
+                    && usdSpentEl.ValueKind == JsonValueKind.Number
+                    && usdSpentEl.TryGetDecimal(out var parsedCost))
+                {
+                    cost = parsedCost;
+                }
+            }
+
+            if (metaEl.TryGetProperty("metrics", out var metricsEl)
+                && metricsEl.ValueKind == JsonValueKind.Object)
+            {
+                metricsClone = metricsEl.Clone();
+            }
 
             providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
             {
-                usage = usageClone
+                usage = usageClone,
+                metrics = metricsClone
             }, JsonSerializerOptions.Web);
-
-            if (usageEl.TryGetProperty("usd_spent", out var usdSpentEl)
-                && usdSpentEl.ValueKind == JsonValueKind.Number
-                && usdSpentEl.TryGetDecimal(out var parsedCost))
-            {
-                cost = parsedCost;
-            }
         }
 
         if (cost is not null)
@@ -107,7 +118,7 @@ public partial class AIMLProvider
         }
 
         return CreateSpeechResponse(request, payload, warnings, now, audioBytes,
-            mime, GetIdentifier(), format, root.Clone());
+            mime, GetIdentifier(), format, root.Clone(), providerMetadata);
     }
 
     private static SpeechResponse CreateSpeechResponse(
