@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Sarvam;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -101,6 +102,34 @@ public partial class SarvamProvider
         // Sarvam docs: output audio is a wave file encoded as base64 string.
         // If output_audio_codec is set, best-effort mime mapping.
         var mime = GuessMimeType(outputAudioCodec) ?? "audio/wav";
+        var currentModel = await this.GetModel(request.Model, cancellationToken);
+
+        var providerKey = GetIdentifier();
+
+        var inputCharacters = request.Text.Length;
+
+        decimal? cost = null;
+
+        if (currentModel?.Pricing?.Input is not null)
+        {
+            cost = inputCharacters * currentModel.Pricing.Input;
+        }
+
+        var providerMetadata = new Dictionary<string, JsonElement>
+        {
+            [providerKey] = JsonSerializer.SerializeToElement(new
+            {
+
+            }, JsonSerializerOptions.Web)
+        };
+
+        if (cost is not null)
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
 
         return new SpeechResponse
         {
@@ -110,11 +139,16 @@ public partial class SarvamProvider
                 MimeType = mime,
                 Format = outputAudioCodec ?? "mp3"
             },
+            ProviderMetadata = providerMetadata,
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = parsed
             }
         };
