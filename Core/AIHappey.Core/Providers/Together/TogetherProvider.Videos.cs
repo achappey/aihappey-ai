@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider 
+public partial class TogetherProvider
 {
     private static readonly JsonSerializerOptions VideoJsonSettings = new(JsonSerializerDefaults.Web)
     {
@@ -132,6 +132,33 @@ public partial class TogetherProvider
         var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
         var mediaType = ResolveVideoMediaType(metadata?.OutputFormat, videoUrl);
 
+        var providerKey = GetIdentifier();
+
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        decimal? cost = null;
+
+        if (outputs.ValueKind == JsonValueKind.Object
+            && outputs.TryGetProperty("cost", out var costEl)
+            && costEl.ValueKind == JsonValueKind.Number
+            && costEl.TryGetDecimal(out var parsedCost))
+        {
+            cost = parsedCost;
+        }
+
+        if (cost is not null)
+        {
+            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
+
         return new VideoResponse
         {
             Videos =
@@ -143,6 +170,7 @@ public partial class TogetherProvider
                 }
             ],
             Warnings = warnings,
+            ProviderMetadata = providerMetadata,
             Response = new()
             {
                 Timestamp = now,
