@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -73,31 +74,30 @@ public partial class AgenticsProvider
         var contentType = response.Content.Headers.ContentType?.MediaType;
         var format = NormalizeAgenticsAudioFormat(request.OutputFormat ?? TryGetAgenticsString(metadata, "format") ?? TryGetAgenticsString(metadata, "outputFormat") ?? TryGetAgenticsString(metadata, "output_format"));
         string base64;
-        JsonElement? providerMetadata = null;
-        object? body;
 
-        if (IsJsonContentType(contentType))
-        {
-            var raw = Encoding.UTF8.GetString(bytes);
-            using var doc = JsonDocument.Parse(raw);
-            var root = doc.RootElement;
-            providerMetadata = root.Clone();
-            body = root.Clone();
+        var raw = Encoding.UTF8.GetString(bytes);
+        using var doc = JsonDocument.Parse(raw);
+        var root = doc.RootElement;
 
-            base64 = TryGetAgenticsString(root, "base64")
-                ?? TryGetAgenticsString(root, "audio")
-                ?? TryGetAgenticsString(root, "audioBase64")
-                ?? TryGetAgenticsString(root, "audio_base64")
-                ?? throw new InvalidOperationException("Agentics speech JSON response did not contain base64 audio.");
-        }
-        else
-        {
-            base64 = Convert.ToBase64String(bytes);
-            body = new { contentType, length = bytes.Length };
-        }
+        base64 = TryGetAgenticsString(root, "audioData")
+            ?? throw new InvalidOperationException("Agentics speech JSON response did not contain base64 audio.");
 
-        format ??= ResolveAgenticsAudioFormat(contentType, "wav");
+        format ??= TryGetAgenticsString(root, "format")!;
         var mimeType = ResolveAgenticsAudioMimeType(format, contentType);
+
+        var providerKey = GetIdentifier();
+        var sanitizedMetadata = new Dictionary<string, JsonElement>();
+
+        foreach (var property in root.EnumerateObject())
+        {
+            if (string.Equals(property.Name, "audioData", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            sanitizedMetadata[property.Name] = property.Value.Clone();
+        }
+
+        var providerMetadata = JsonSerializer.SerializeToElement(sanitizedMetadata, JsonSerializerOptions.Web);
+        var body = root.Clone();
 
         return new SpeechResponse
         {
@@ -108,13 +108,14 @@ public partial class AgenticsProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = providerMetadata is { } metadataRoot
-                ? new Dictionary<string, JsonElement> { [GetIdentifier()] = metadataRoot }
-                : null,
+            ProviderMetadata = new Dictionary<string, JsonElement>
+            {
+                [providerKey] = providerMetadata
+            },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = body
             },
             Request = new SpeechRequestItem
