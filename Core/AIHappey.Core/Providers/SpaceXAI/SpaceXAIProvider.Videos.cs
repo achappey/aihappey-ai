@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
@@ -161,7 +162,7 @@ public partial class SpaceXAIProvider
                     Response = new()
                     {
                         Timestamp = now,
-                        ModelId = request.Model
+                        ModelId = request.Model.ToModelId(GetIdentifier())
                     }
                 };
             }
