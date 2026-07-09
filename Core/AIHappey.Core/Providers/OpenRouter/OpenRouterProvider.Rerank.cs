@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -90,28 +91,77 @@ public partial class OpenRouterProvider
         if (request.TopN is > 0)
             ranked = [.. ranked.Take(request.TopN.Value)];
 
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        if (root.TryGetProperty("usage", out var usageEl) && usageEl.ValueKind == JsonValueKind.Object)
+        {
+            providerMetadata[GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+                usage = usageEl.Clone()
+            }, JsonSerializerOptions.Web);
+
+            if (TryReadOpenRouterRerankDecimal(usageEl, "cost", out var cost))
+            {
+                providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+                {
+                    cost
+                }, JsonSerializerOptions.Web);
+            }
+        }
+        else
+        {
+            providerMetadata[GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+            }, JsonSerializerOptions.Web);
+        }
+
         return new RerankingResponse
         {
             Ranking = ranked,
             Warnings = warnings,
-            Response = new ResponseData
+            ProviderMetadata = providerMetadata,
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = ReadOpenRouterRerankString(root, "model") ?? request.Model,
-                Body = new
-                {
-                    request = payload,
-                    response = root,
-                    statusCode = (int)resp.StatusCode,
-                    id = ReadOpenRouterRerankString(root, "id"),
-                    provider = ReadOpenRouterRerankString(root, "provider"),
-                    usage = root.TryGetProperty("usage", out var usageEl)
-                        && usageEl.ValueKind == JsonValueKind.Object
-                            ? usageEl.Clone()
-                            : (JsonElement?)null
-                }
+                Id = ReadOpenRouterRerankString(root, "id"),
+                ModelId = ReadOpenRouterRerankString(root, "model")?.ToModelId(GetIdentifier())
+                    ?? request.Model.ToModelId(GetIdentifier()),
+                Body = root
             }
         };
+    }
+
+    private static bool TryReadOpenRouterRerankDecimal(
+        JsonElement element,
+        string propertyName,
+        out decimal value)
+    {
+        value = 0m;
+
+        if (element.ValueKind != JsonValueKind.Object)
+            return false;
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (property.Value.ValueKind == JsonValueKind.Number)
+                return property.Value.TryGetDecimal(out value);
+
+            if (property.Value.ValueKind == JsonValueKind.String)
+            {
+                return decimal.TryParse(
+                    property.Value.GetString(),
+                    System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out value);
+            }
+
+            return false;
+        }
+
+        return false;
     }
 
     private static Dictionary<string, object?> BuildOpenRouterRerankPayload(RerankingRequest request)
