@@ -9,7 +9,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
-public partial class MiniMaxProvider 
+public partial class MiniMaxProvider
 {
     private static readonly JsonSerializerOptions VideoJson = new(JsonSerializerDefaults.Web)
     {
@@ -104,25 +104,6 @@ public partial class MiniMaxProvider
         var videoBytes = await _client.GetByteArrayAsync(downloadUrl, cancellationToken);
         var mediaType = GuessVideoMediaType(downloadUrl) ?? "video/mp4";
 
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        try
-        {
-            var meta = new Dictionary<string, JsonElement>
-            {
-                ["create"] = createDoc.RootElement.Clone(),
-                ["query"] = completed.root.Clone()
-            };
-
-            providerMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(meta, JsonSerializerOptions.Web)
-            };
-        }
-        catch
-        {
-            // best-effort only
-        }
-
         return new VideoResponse
         {
             Videos =
@@ -134,7 +115,13 @@ public partial class MiniMaxProvider
                 }
             ],
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = new Dictionary<string, JsonElement>
+            {
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+                {
+
+                }, JsonSerializerOptions.Web)
+            },
             Response = new()
             {
                 Timestamp = now,
