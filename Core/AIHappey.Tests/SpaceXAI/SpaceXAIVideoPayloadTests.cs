@@ -1,11 +1,11 @@
 using System.Reflection;
 using System.Text.Json;
-using AIHappey.Core.Providers.xAI;
+using AIHappey.Core.Providers.SpaceXAI;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Tests.XAI;
+namespace AIHappey.Tests.SpaceXAI;
 
-public sealed class XAIVideoPayloadTests
+public sealed class SpaceXAIVideoPayloadTests
 {
     [Fact]
     public void BuildXaiVideoPayloadMapsTopLevelImageToDocumentedImageObject()
@@ -80,8 +80,8 @@ public sealed class XAIVideoPayloadTests
 
     private static JsonElement BuildPayload(VideoRequest request)
     {
-        var method = typeof(XAIProvider).GetMethod("BuildXaiVideoPayload", BindingFlags.NonPublic | BindingFlags.Static)
-            ?? throw new MissingMethodException(nameof(XAIProvider), "BuildXaiVideoPayload");
+        var method = typeof(SpaceXAIProvider).GetMethod("BuildXaiVideoPayload", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new MissingMethodException(nameof(SpaceXAIProvider), "BuildXaiVideoPayload");
 
         try
         {

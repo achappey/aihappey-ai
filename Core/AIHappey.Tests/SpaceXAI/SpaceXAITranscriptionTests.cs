@@ -7,9 +7,9 @@ using AIHappey.Core.Providers.SpaceXAI;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace AIHappey.Tests.XAI;
+namespace AIHappey.Tests.SpaceXAI;
 
-public sealed class XAITranscriptionTests
+public sealed class SpaceXAITranscriptionTests
 {
     [Fact]
     public async Task Transcription_request_passes_provider_options_and_adds_file_last()
