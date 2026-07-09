@@ -52,17 +52,19 @@ public partial class TogetherProvider
 
         var language = request.Language ?? metadata?.Language;
 
-        var payload = new
+        var payload = new Dictionary<string, object?>
         {
-            model = modelName,
-            input = request.Text,
-            voice,
-            response_format = responseFormat,
-            language,
-            response_encoding = metadata?.ResponseEncoding,
-            sample_rate = metadata?.SampleRate,
-            stream = false
+            ["model"] = modelName,
+            ["input"] = request.Text,
+            ["voice"] = voice,
+            ["language"] = language,
+            ["response_encoding"] = metadata?.ResponseEncoding,
+            ["sample_rate"] = metadata?.SampleRate,
+            ["stream"] = false
         };
+
+        if (!string.IsNullOrWhiteSpace(responseFormat))
+            payload["response_format"] = responseFormat;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
@@ -89,19 +91,27 @@ public partial class TogetherProvider
         var mime = ResolveSpeechMimeType(responseFormat, resp.Content.Headers.ContentType?.MediaType);
         var audio = Convert.ToBase64String(bytes);
 
+        var providerMetadata = new Dictionary<string, JsonElement>()
+        {
+            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+            }, JsonSerializerOptions.Web)
+        };
+
         return new SpeechResponse
         {
             Audio = new()
             {
                 MimeType = mime,
                 Base64 = audio,
-                Format = responseFormat
+                Format = !string.IsNullOrEmpty(responseFormat) ? responseFormat : "wav"
             },
             Warnings = warnings,
+            ProviderMetadata = providerMetadata,
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
             },
             Request = new SpeechRequestItem
             {
@@ -154,7 +164,7 @@ public partial class TogetherProvider
             "mp3" => "audio/mpeg",
             "wav" => "audio/wav",
             "raw" => contentType ?? "application/octet-stream",
-            _ => contentType ?? "application/octet-stream"
+            _ => "audio/wav"
         };
     }
 }
