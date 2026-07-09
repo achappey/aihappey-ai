@@ -49,7 +49,7 @@ public partial class OpenRouterProvider
                 ? $"OpenRouter transcription request failed ({(int)resp.StatusCode})."
                 : $"OpenRouter transcription request failed ({(int)resp.StatusCode}): {raw}");
 
-        return ConvertOpenRouterTranscriptionResponse(raw, request.Model, now, request, payload, resp, requestBody);
+        return ConvertOpenRouterTranscriptionResponse(raw, request.Model, now, requestBody);
     }
 
     private static Dictionary<string, object?> BuildOpenRouterTranscriptionPayload(TranscriptionRequest request)
@@ -87,19 +87,61 @@ public partial class OpenRouterProvider
             payload[property.Name] = property.Value.Clone();
     }
 
+
+    private static decimal? ReadOpenRouterTranscriptionDecimal(JsonElement? element, string propertyName)
+    {
+        if (element is not { ValueKind: JsonValueKind.Object } value
+            || !value.TryGetProperty(propertyName, out var property))
+        {
+            return null;
+        }
+
+        if (property.ValueKind == JsonValueKind.Number)
+            return property.GetDecimal();
+
+        if (property.ValueKind == JsonValueKind.String
+            && decimal.TryParse(
+                property.GetString(),
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var parsed))
+        {
+            return parsed;
+        }
+
+        return null;
+    }
+
+    private Dictionary<string, JsonElement> BuildOpenRouterTranscriptionProviderMetadata(
+        JsonElement? usage)
+    {
+        var cost = ReadOpenRouterTranscriptionDecimal(usage, "cost");
+
+        return new Dictionary<string, JsonElement>
+        {
+            ["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, OpenRouterTranscriptionJsonOptions),
+
+            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+                usage
+            }, OpenRouterTranscriptionJsonOptions)
+        };
+    }
+
     private TranscriptionResponse ConvertOpenRouterTranscriptionResponse(
         string raw,
         string model,
         DateTime timestamp,
-        TranscriptionRequest request,
-        Dictionary<string, object?> payload,
-        HttpResponseMessage response,
         string requestBody)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement.Clone();
 
         var text = ReadOpenRouterTranscriptionString(root, "text") ?? string.Empty;
+
         var usage = root.TryGetProperty("usage", out var usageEl) && usageEl.ValueKind == JsonValueKind.Object
             ? usageEl.Clone()
             : (JsonElement?)null;
@@ -108,43 +150,17 @@ public partial class OpenRouterProvider
         {
             Text = text,
             DurationInSeconds = ReadOpenRouterTranscriptionFloat(usage, "seconds"),
-            ProviderMetadata = BuildOpenRouterTranscriptionProviderMetadata(request, payload, response, root),
+            ProviderMetadata = BuildOpenRouterTranscriptionProviderMetadata(usage),
             Response = new ResponseData
             {
                 Timestamp = timestamp,
-                ModelId = model,
+                ModelId = model.ToModelId(GetIdentifier()),
                 Body = root
             },
             Request = new TranscriptionRequestItem
             {
                 Body = requestBody
             }
-        };
-    }
-
-    private Dictionary<string, JsonElement> BuildOpenRouterTranscriptionProviderMetadata(
-        TranscriptionRequest request,
-        Dictionary<string, object?> payload,
-        HttpResponseMessage response,
-        JsonElement responseRoot)
-    {
-        var metadata = new Dictionary<string, object?>
-        {
-            ["request"] = payload,
-            ["response"] = responseRoot,
-            ["statusCode"] = (int)response.StatusCode
-        };
-
-        if (request.ProviderOptions is not null
-            && request.ProviderOptions.TryGetValue("openrouter", out var rawOptions)
-            && rawOptions.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-        {
-            metadata["providerOptions"] = rawOptions.Clone();
-        }
-
-        return new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(metadata, OpenRouterTranscriptionJsonOptions)
         };
     }
 
