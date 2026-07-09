@@ -97,12 +97,17 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedMo
         "dall-e-3"
      ];
 
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("OpenAI deprecated Video API and Sora models.");
+    }
+
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
     }
 
-   public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
