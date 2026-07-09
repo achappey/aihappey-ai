@@ -298,17 +298,17 @@ public partial class GladiaProvider
             ? metadataEl.Clone()
             : default;
 
-        var billingTime = root.TryGetProperty("billing_time", out var billingTimeEl) &&
+        var billingTime = gladiaMetadata.TryGetProperty("billing_time", out var billingTimeEl) &&
                           billingTimeEl.ValueKind == JsonValueKind.Number
             ? billingTimeEl.GetDecimal()
             : (decimal?)null;
 
-        var audioDuration = root.TryGetProperty("audio_duration", out var audioDurationEl) &&
+        var audioDuration = gladiaMetadata.TryGetProperty("audio_duration", out var audioDurationEl) &&
                             audioDurationEl.ValueKind == JsonValueKind.Number
             ? audioDurationEl.GetDecimal()
             : (decimal?)null;
 
-        var transcriptionTime = root.TryGetProperty("transcription_time", out var transcriptionTimeEl) &&
+        var transcriptionTime = gladiaMetadata.TryGetProperty("transcription_time", out var transcriptionTimeEl) &&
                                 transcriptionTimeEl.ValueKind == JsonValueKind.Number
             ? transcriptionTimeEl.GetDecimal()
             : (decimal?)null;
