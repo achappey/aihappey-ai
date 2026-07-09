@@ -2,20 +2,20 @@
     "object": "list",
     "data": [
         {
-            "id": "async/asyncflow_v2.0",
+            "id": "async/async_pro_v1.0",
             "object": "model",
             "owned_by": "async",
-            "name": "AsyncFlow V2",
+            "name": "Async Pro v1.0",
             "type": "speech",
-            "description": "[DEPRECATED] English Only Model"
+            "description": "High-quality TTS model for the most natural-sounding speech. Fast streaming with accurate handling of dates, numbers, currencies, and abbreviations."
         },
         {
-            "id": "async/asyncflow_multilingual_v1.0",
+            "id": "async/async_flash_v1.5",
             "object": "model",
             "owned_by": "async",
-            "name": "AsyncFlow Multilingual V1",
+            "name": "Async Flash v1.5",
             "type": "speech",
-            "description": "[DEPRECATED] Multilingual Model"
+            "description": "A latency-optimized streaming TTS model with strong built-in handling of non-standard text such as dates, currencies, numbers, and abbreviations."
         },
         {
             "id": "async/async_flash_v1.0",
@@ -23,7 +23,7 @@
             "owned_by": "async",
             "name": "Async Flash v1.0",
             "type": "speech",
-            "description": "Fastest model, designed for real-time and low-latency applications"
+            "description": "Legacy model with the broadest language support. Use this for languages not yet supported by Flash v1.5."
         }
     ]
 }

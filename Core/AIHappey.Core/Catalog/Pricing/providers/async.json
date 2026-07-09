@@ -1,0 +1,17 @@
+{
+  "async/async_pro_v1.0": {
+    "pricing": {
+      "output": "0.0002777777777777778"
+    }
+  },
+  "async/async_flash_v1.5": {
+    "pricing": {
+      "output": "0.0001388888888888889"
+    }
+  },
+  "async/async_flash_v1.0": {
+    "pricing": {
+      "output": "0.0001388888888888889"
+    }
+  }
+}

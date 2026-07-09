@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Async;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -67,10 +68,14 @@ public partial class AsyncProvider
                 ["id"] = voiceId
             },
             ["output_format"] = outputFormat,
-            ["language"] = string.IsNullOrWhiteSpace(language) ? null : language,
-            ["speed_control"] = speedControl,
-            ["stability"] = metadata?.Stability,
+            ["language"] = string.IsNullOrWhiteSpace(language) ? null : language
         };
+
+        if (speedControl is not null)
+            body["speed_control"] = speedControl;
+
+        if (metadata?.Stability is not null)
+            body["stability"] = metadata.Stability;
 
         using var content = new StringContent(
             JsonSerializer.Serialize(body),
@@ -95,24 +100,8 @@ public partial class AsyncProvider
 
         var audio = Convert.ToBase64String(bytes);
 
-        // Echo back the effective knobs used so callers can introspect what was sent.
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["model_id"] = JsonSerializer.SerializeToElement(request.Model, JsonSerializerOptions.Web),
-            ["voice_id"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web),
-            ["output_format"] = JsonSerializer.SerializeToElement(outputFormat, JsonSerializerOptions.Web),
-        };
-
-        if (!string.IsNullOrWhiteSpace(language))
-            providerMetadata["language"] = JsonSerializer.SerializeToElement(language, JsonSerializerOptions.Web);
-        if (speedControl is not null)
-            providerMetadata["speed_control"] = JsonSerializer.SerializeToElement(speedControl, JsonSerializerOptions.Web);
-        if (metadata?.Stability is not null)
-            providerMetadata["stability"] = JsonSerializer.SerializeToElement(metadata.Stability, JsonSerializerOptions.Web);
-
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
             Audio = new()
             {
                 Base64 = audio,
@@ -120,10 +109,20 @@ public partial class AsyncProvider
                 Format = container ?? "mp3"
             },
             Warnings = warnings,
+            ProviderMetadata = new Dictionary<string, JsonElement>
+            {
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+                {
+                }, JsonSerializerOptions.Web)
+            },
+            Request = new()
+            {
+                Body = body
+            },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
     }
