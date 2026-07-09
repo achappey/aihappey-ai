@@ -38,7 +38,7 @@ public partial class GladiaProvider : IModelProvider
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+           => (await this.ListModels(_keyResolver.Resolve(GetIdentifier()))).WithPricing(GetIdentifier());
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
