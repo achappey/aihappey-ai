@@ -66,7 +66,7 @@ public partial class RunwayProvider
         var node = JsonNode.Parse(body);
         var taskId = ExtractTaskId(node);
 
-        var (bytes, mimeType, outputUrl) = await WaitForTaskAndDownloadFirstOutputAsync(taskId, cancellationToken);
+        var (bytes, mimeType, outputUrl, lastResult) = await WaitForTaskAndDownloadFirstOutputAsync(taskId, cancellationToken);
         var base64 = Convert.ToBase64String(bytes);
 
         var resolvedMime = !string.IsNullOrWhiteSpace(mimeType)
@@ -81,12 +81,19 @@ public partial class RunwayProvider
                 MimeType = resolvedMime,
                 Format = MapMimeToAudioFormat(resolvedMime)
             },
+            ProviderMetadata = new Dictionary<string, JsonElement>
+            {
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+                {
+
+                }, JsonSerializerOptions.Web)
+            },
             Warnings = warnings,
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = node
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = lastResult
             }
         };
     }
@@ -151,7 +158,7 @@ public partial class RunwayProvider
         var node = JsonNode.Parse(body);
         var taskId = ExtractTaskId(node);
 
-        var (bytes, mimeType, outputUrl) = await WaitForTaskAndDownloadFirstOutputAsync(taskId, cancellationToken);
+        var (bytes, mimeType, outputUrl, lastResult) = await WaitForTaskAndDownloadFirstOutputAsync(taskId, cancellationToken);
         var base64 = Convert.ToBase64String(bytes);
 
         var resolvedMime = !string.IsNullOrWhiteSpace(mimeType)
@@ -182,12 +189,12 @@ public partial class RunwayProvider
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = node
+                Body = lastResult
             }
         };
     }
 
-    private async Task<(byte[] Bytes, string? MimeType, string? OutputUrl)> WaitForTaskAndDownloadFirstOutputAsync(
+    private async Task<(byte[] Bytes, string? MimeType, string? OutputUrl, JsonNode? lastResult)> WaitForTaskAndDownloadFirstOutputAsync(
         string taskId,
         CancellationToken ct = default)
     {
@@ -218,7 +225,7 @@ public partial class RunwayProvider
                     throw new InvalidOperationException($"Runway output download failed ({(int)outResp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
 
                 var mime = outResp.Content.Headers.ContentType?.MediaType;
-                return (bytes, mime, outputUrl);
+                return (bytes, mime, outputUrl, json);
             }
 
             if (status == "FAILED")

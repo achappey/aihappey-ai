@@ -1,4 +1,5 @@
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -62,7 +63,7 @@ public partial class RunwayProvider
         var node = JsonNode.Parse(body);
         var taskId = ExtractTaskId(node);
 
-        var (bytes, mimeType, outputUrl) = await WaitForTaskAndDownloadFirstOutputAsync(taskId, cancellationToken);
+        var (bytes, mimeType, outputUrl, lastResult) = await WaitForTaskAndDownloadFirstOutputAsync(taskId, cancellationToken);
         var resolvedMime = !string.IsNullOrWhiteSpace(mimeType)
             ? mimeType!
             : GuessMimeFromUrl(outputUrl) ?? "video/mp4";
@@ -81,7 +82,7 @@ public partial class RunwayProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

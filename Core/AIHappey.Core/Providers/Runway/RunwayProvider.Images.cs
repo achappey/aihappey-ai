@@ -13,7 +13,7 @@ namespace AIHappey.Core.Providers.Runway;
 
 public partial class RunwayProvider
 {
-   
+
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -26,7 +26,7 @@ public partial class RunwayProvider
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        
+
         var now = DateTime.UtcNow;
         var metadata = imageRequest.GetProviderMetadata<RunwayImageProviderMetadata>(GetIdentifier());
         var payload = new
@@ -60,7 +60,7 @@ public partial class RunwayProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }
