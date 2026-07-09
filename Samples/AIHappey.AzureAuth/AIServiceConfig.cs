@@ -504,7 +504,6 @@ public class AIServiceConfig
     public ProviderConfig? Poolside { get; set; }
     public ProviderConfig? Antbase { get; set; }
     public ProviderConfig? Slancha { get; set; }
-    public ProviderConfig? CodingPlanX { get; set; }
     public ProviderConfig? Nodion { get; set; }
     public ProviderConfig? GeneralCompute { get; set; }
     public ProviderConfig? LibertAI { get; set; }

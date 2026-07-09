@@ -506,7 +506,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["poolside"] = "X-Poolside-Key",
             ["antbase"] = "X-Antbase-Key",
             ["slancha"] = "X-Slancha-Key",
-            ["codingplanx"] = "X-CodingPlanX-Key",
             ["nodion"] = "X-Nodion-Key",
             ["generalcompute"] = "X-GeneralCompute-Key",
             ["libertai"] = "X-LibertAI-Key",
