@@ -2,6 +2,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.AIML;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -10,10 +11,12 @@ public static class AIMLExtensions
     public static string GetIdentifier() => nameof(AIML).ToLowerInvariant();
 
     /// <summary>
-    /// Best-effort payload builder for AIML audio generation models routed via the unified
-    /// <see cref="SpeechRequest"/>.
+    /// Builds the AIML <c>POST /v1/tts</c> payload from raw provider options and unified
+    /// speech fields. Raw <c>providerOptions.aiml</c> values are passed through first, then
+    /// non-null/non-empty unified fields are overlaid so the public request contract remains
+    /// authoritative for shared fields.
     /// </summary>
-    public static object GetAudioRequestPayload(this SpeechRequest request, AIMLSpeechProviderMetadata? metadata, List<object> warnings)
+    public static Dictionary<string, object?> GetTtsRequestPayload(this SpeechRequest request, string providerId)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -21,42 +24,43 @@ public static class AIMLExtensions
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        // Model-aware payload mapping (similar to image payload switching).
-        return request.Model switch
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+
+        if (request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(providerId, out var providerOptions)
+            && providerOptions.ValueKind == JsonValueKind.Object)
         {
-            // MiniMax music: supports lyrics + audio_setting.
-            "minimax/music-2.0" => new
-            {
-                model = request.Model,
-                prompt = request.Text,
-                lyrics = metadata?.MiniMax?.Lyrics,
-                audio_setting = metadata?.MiniMax?.AudioSetting?.ValueKind is null or System.Text.Json.JsonValueKind.Null or System.Text.Json.JsonValueKind.Undefined
-                    ? null
-                    : metadata!.MiniMax?.AudioSetting
-            },
+            foreach (var property in providerOptions.EnumerateObject())
+                payload[property.Name] = property.Value.Clone();
+        }
 
-            // Stability Audio: supports prompt + timing + steps.
-            "stable-audio" => BuildStableAudioPayload(request, metadata, warnings),
+        payload["model"] = request.Model.Trim();
+        payload["text"] = request.Text;
 
-            // Default: send minimal common fields.
-            _ => new
-            {
-                model = request.Model,
-                prompt = request.Text
-            }
-        };
+        if (!string.IsNullOrWhiteSpace(request.Voice))
+            payload["voice"] = request.Voice.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.OutputFormat))
+            ApplySpeechOutputFormat(payload, request.OutputFormat.Trim());
+
+        return payload;
     }
 
-    private static object BuildStableAudioPayload(SpeechRequest request, AIMLSpeechProviderMetadata? metadata, List<object> warnings)
+    private static void ApplySpeechOutputFormat(Dictionary<string, object?> payload, string outputFormat)
     {
-        return new
+        var applied = false;
+
+        foreach (var key in new[] { "response_format", "output_format", "format" })
         {
-            model = request.Model,
-            prompt = request.Text,
-            seconds_total = metadata?.StabilityAI?.SecondsTotal,
-            seconds_start = metadata?.StabilityAI?.SecondsStart,
-            steps = metadata?.StabilityAI?.Steps
-        };
+            if (!payload.ContainsKey(key))
+                continue;
+
+            payload[key] = outputFormat;
+            applied = true;
+        }
+
+        if (!applied)
+            payload["format"] = outputFormat;
     }
 
     public static object GetImageRequestPayload(this ImageRequest imageRequest)
