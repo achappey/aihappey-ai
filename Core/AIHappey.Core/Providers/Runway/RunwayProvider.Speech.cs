@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.Runway;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Runway;
 
@@ -131,10 +132,10 @@ public partial class RunwayProvider
             ["promptText"] = request.Text,
         };
 
-        if(se?.Duration is not null) 
+        if (se?.Duration is not null)
             payload["duration"] = se?.Duration;
 
-        if(se?.Loop is not null) 
+        if (se?.Loop is not null)
             payload["loop"] = se?.Loop;
 
         var json = JsonSerializer.Serialize(payload, JsonOpts);
@@ -168,16 +169,19 @@ public partial class RunwayProvider
             Warnings = warnings,
             ProviderMetadata = new Dictionary<string, JsonElement>
             {
-                ["runway"] = JsonSerializer.SerializeToElement(new
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
                 {
-                    task_id = taskId,
-                    output_url = outputUrl
+
                 }, JsonSerializerOptions.Web)
+            },
+            Request = new()
+            {
+                Body = payload
             },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = node
             }
         };
@@ -236,26 +240,43 @@ public partial class RunwayProvider
         if (output is null)
             return null;
 
-        // Most commonly: output: ["https://..."]
-        if (output is JsonArray arr && arr.Count > 0)
+        // output: ["https://..."] or output: [{"uri":"https://..."}]
+        if (output is JsonArray arr)
         {
-            var first = arr[0];
-            if (first is null)
-                return null;
+            foreach (var item in arr)
+            {
+                if (item is null)
+                    continue;
 
-            // Sometimes: output: [{"uri":"https://..."}]
-            var uri = first?["uri"]?.ToString();
-            if (!string.IsNullOrWhiteSpace(uri))
-                return uri;
+                if (item is JsonObject obj)
+                {
+                    var uri = obj["uri"]?.GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(uri))
+                        return uri;
 
-            // Fallback to stringification
-            var s = first?.ToString();
-            return string.IsNullOrWhiteSpace(s) ? null : s;
+                    var url = obj["url"]?.GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(url))
+                        return url;
+
+                    continue;
+                }
+
+                var value = item.GetValue<string>();
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value;
+            }
+
+            return null;
         }
 
-        // Rare: output: "https://..."
-        var direct = output.ToString();
-        return string.IsNullOrWhiteSpace(direct) ? null : direct;
+        // output: "https://..."
+        if (output is JsonValue)
+        {
+            var direct = output.GetValue<string>();
+            return string.IsNullOrWhiteSpace(direct) ? null : direct;
+        }
+
+        return null;
     }
 
     private static string MapMimeToAudioFormat(string mimeType)
