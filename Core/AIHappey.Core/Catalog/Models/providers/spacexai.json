@@ -2,16 +2,16 @@
   "object": "list",
   "data": [
     {
-      "id": "xai/stt",
+      "id": "spacexai/stt",
       "object": "model",
-      "owned_by": "xAI",
+      "owned_by": "SpaceXAI",
       "name": "Speech to text",
       "type": "transcription"
     },
     {
-      "id": "xai/grok-voice-think-fast-1.0",
+      "id": "spacexai/grok-voice-think-fast-1.0",
       "object": "model",
-      "owned_by": "xAI",
+      "owned_by": "SpaceXAI",
       "name": "Grok Voice Think Fast",
       "type": "audio",
       "description": "Our flagship voice model"

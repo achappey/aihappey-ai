@@ -21,7 +21,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
 
         var expectedEncryptedContents = LoadEncryptedContents(json);
         var originalReasoningPartCount = CountReasoningParts(json);
-        var responseRequest = chatRequest.ToUnifiedRequest("xai").ToResponseRequest("xai");
+        var responseRequest = chatRequest.ToUnifiedRequest("spacexai").ToResponseRequest("spacexai");
 
         var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(responseRequest.Input?.Items);
         var reasoningItems = inputItems.OfType<ResponseReasoningItem>().ToList();
@@ -56,8 +56,8 @@ public sealed class ResponsesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
-            Model = "xai/test-model",
-            ProviderId = "xai",
+            Model = "spacexai/test-model",
+            ProviderId = "spacexai",
             Input = new AIInput
             {
                 Items =
@@ -84,7 +84,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
             }
         };
 
-        var responseRequest = request.ToResponseRequest("xai");
+        var responseRequest = request.ToResponseRequest("spacexai");
         var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(responseRequest.Input?.Items);
         var reasoningItem = Assert.IsType<ResponseReasoningItem>(Assert.Single(inputItems.OfType<ResponseReasoningItem>()));
 
@@ -97,8 +97,8 @@ public sealed class ResponsesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
-            Model = "xai/test-model",
-            ProviderId = "xai",
+            Model = "spacexai/test-model",
+            ProviderId = "spacexai",
             Input = new AIInput
             {
                 Items =
@@ -132,7 +132,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
             }
         };
 
-        var responseRequest = request.ToResponseRequest("xai");
+        var responseRequest = request.ToResponseRequest("spacexai");
         var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(responseRequest.Input?.Items);
         var reasoningItem = Assert.IsType<ResponseReasoningItem>(Assert.Single(inputItems.OfType<ResponseReasoningItem>()));
 
@@ -148,8 +148,8 @@ public sealed class ResponsesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
-            Model = "xai/test-model",
-            ProviderId = "xai",
+            Model = "spacexai/test-model",
+            ProviderId = "spacexai",
             Input = new AIInput
             {
                 Items =
@@ -166,7 +166,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
                                 Text = "Encrypted reasoning.",
                                 Metadata = new Dictionary<string, object?>
                                 {
-                                    ["xai"] = new Dictionary<string, object>
+                                    ["spacexai"] = new Dictionary<string, object>
                                     {
                                         ["id"] = "resp_reasoning_item_123",
                                         ["item_id"] = "resp_reasoning_item_123",
@@ -180,7 +180,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
             }
         };
 
-        var responseRequest = request.ToResponseRequest("xai");
+        var responseRequest = request.ToResponseRequest("spacexai");
         var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(responseRequest.Input?.Items);
         var reasoningItem = Assert.IsType<ResponseReasoningItem>(Assert.Single(inputItems.OfType<ResponseReasoningItem>()));
 
@@ -193,7 +193,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
     {
         var request = new ChatRequest
         {
-            Model = "xai/test-model",
+            Model = "spacexai/test-model",
             Messages =
             [
                 new UIMessage
@@ -208,7 +208,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
                             Text = "Encrypted reasoning from saved UI part.",
                             ProviderMetadata = new Dictionary<string, object>
                             {
-                                ["xai"] = new Dictionary<string, object>
+                                ["spacexai"] = new Dictionary<string, object>
                                 {
                                     ["id"] = "rs_provider_reasoning_42",
                                     ["item_id"] = "rs_provider_reasoning_42",
@@ -221,7 +221,7 @@ public sealed class ResponsesUnifiedMapperRequestTests
             ]
         };
 
-        var responseRequest = request.ToUnifiedRequest("xai").ToResponseRequest("xai");
+        var responseRequest = request.ToUnifiedRequest("spacexai").ToResponseRequest("spacexai");
         var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(responseRequest.Input?.Items);
         var reasoningItem = Assert.IsType<ResponseReasoningItem>(Assert.Single(inputItems.OfType<ResponseReasoningItem>()));
 
@@ -240,9 +240,9 @@ public sealed class ResponsesUnifiedMapperRequestTests
             .Where(message => message.TryGetProperty("role", out var role) && role.GetString() == "assistant")
             .SelectMany(message => message.GetProperty("parts").EnumerateArray())
             .Where(part => part.TryGetProperty("providerMetadata", out var providerMetadata)
-                && providerMetadata.TryGetProperty("xai", out var xaiMetadata)
+                && providerMetadata.TryGetProperty("spacexai", out var xaiMetadata)
                 && xaiMetadata.TryGetProperty("encrypted_content", out _))
-            .Select(part => part.GetProperty("providerMetadata").GetProperty("xai").GetProperty("encrypted_content").GetString())
+            .Select(part => part.GetProperty("providerMetadata").GetProperty("spacexai").GetProperty("encrypted_content").GetString())
             .Where(static encryptedContent => !string.IsNullOrWhiteSpace(encryptedContent))
             .Select(static encryptedContent => encryptedContent!)
             .ToList();

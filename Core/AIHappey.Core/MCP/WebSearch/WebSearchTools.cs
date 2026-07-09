@@ -23,7 +23,7 @@ public class WebSearchTools
         "openai/gpt-5.4-mini",
         "google/gemini-3.5-flash",
         "anthropic/claude-haiku-4-5-20251001",
-        "xai/grok-4.20-0309-non-reasoning",
+        "spacexai/grok-4.20-0309-non-reasoning",
         "mistral/mistral-medium-latest",
      //   "groq/openai/gpt-oss-20b"
       ];
@@ -31,7 +31,7 @@ public class WebSearchTools
     private static readonly string[] AcademicModelNames = ["perplexity/sonar-reasoning-pro",
         "openai/gpt-5.2",
         "google/gemini-pro-latest",
-        "anthropic/claude-opus-4-7", "xai/grok-4.3", "mistral/mistral-large-latest"];
+        "anthropic/claude-opus-4-7", "spacexai/grok-4.3", "mistral/mistral-large-latest"];
 
     [Description("Perform a quick web search using Google AI with Google Search grounding.")]
     [McpServerTool(

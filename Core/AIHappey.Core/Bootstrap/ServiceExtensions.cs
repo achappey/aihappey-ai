@@ -36,7 +36,7 @@ using AIHappey.Core.Providers.Baseten;
 using AIHappey.Core.Providers.Together;
 using AIHappey.Core.Providers.Telnyx;
 using AIHappey.Core.Providers.Tinfoil;
-using AIHappey.Core.Providers.xAI;
+using AIHappey.Core.Providers.SpaceXAI;
 using AIHappey.Core.Providers.Zai;
 using AIHappey.Core.Providers.Azure;
 using AIHappey.Core.Providers.Async;
@@ -602,7 +602,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PerplexityProvider>();
         services.AddSingleton<IModelProvider, TogetherProvider>();
         services.AddSingleton<IModelProvider, PollinationsProvider>();
-        services.AddSingleton<IModelProvider, XAIProvider>();
+        services.AddSingleton<IModelProvider, SpaceXAIProvider>();
         services.AddSingleton<IModelProvider, RunwayProvider>();
         services.AddSingleton<IModelProvider, RunwareProvider>();
         services.AddSingleton<IModelProvider, AIMLProvider>();
@@ -1142,7 +1142,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HostYourAIProvider>();
         services.AddSingleton<IModelProvider, ReByteTasksProvider>();
         services.AddSingleton<IModelProvider, ReByteModelsProvider>();
-        
+
 
     }
 }

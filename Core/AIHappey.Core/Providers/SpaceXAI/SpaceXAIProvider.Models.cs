@@ -2,11 +2,11 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using System.Text.Json;
 
-namespace AIHappey.Core.Providers.xAI;
+namespace AIHappey.Core.Providers.SpaceXAI;
 
-public partial class XAIProvider
+public partial class SpaceXAIProvider
 {
-    private const string ProviderName = nameof(xAI);
+    private const string ProviderName = nameof(SpaceXAI);
     private const string BaseSpeechModel = "tts";
 
     private static readonly XAITtsLanguage[] SupportedTtsLanguages =
@@ -34,7 +34,7 @@ public partial class XAIProvider
         new("vi", "Vietnamese")
     ];
 
-    public string GetIdentifier() => XAIRequestExtensions.XAIIdentifier;
+    public string GetIdentifier() => SpaceXAIRequestExtensions.SpaceXAIIdentifier;
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -135,7 +135,7 @@ public partial class XAIProvider
 
         yield return new Model
         {
-            Id = BaseSpeechModel.ToModelId(XAIRequestExtensions.XAIIdentifier),
+            Id = BaseSpeechModel.ToModelId(SpaceXAIRequestExtensions.SpaceXAIIdentifier),
             OwnedBy = ProviderName,
             Type = "speech",
             Pricing = ttsPricing,
@@ -146,7 +146,7 @@ public partial class XAIProvider
         {
             yield return new Model
             {
-                Id = $"{BaseSpeechModel}/{language.Code}".ToModelId(XAIRequestExtensions.XAIIdentifier),
+                Id = $"{BaseSpeechModel}/{language.Code}".ToModelId(SpaceXAIRequestExtensions.SpaceXAIIdentifier),
                 OwnedBy = ProviderName,
                 Pricing = ttsPricing,
                 Type = "speech",
@@ -158,7 +158,7 @@ public partial class XAIProvider
             {
                 yield return new Model
                 {
-                    Id = $"{BaseSpeechModel}/{language.Code}/{voice.VoiceId}".ToModelId(XAIRequestExtensions.XAIIdentifier),
+                    Id = $"{BaseSpeechModel}/{language.Code}/{voice.VoiceId}".ToModelId(SpaceXAIRequestExtensions.SpaceXAIIdentifier),
                     OwnedBy = ProviderName,
                     Pricing = ttsPricing,
                     Type = "speech",

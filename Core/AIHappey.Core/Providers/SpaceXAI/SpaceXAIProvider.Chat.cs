@@ -4,9 +4,9 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 
-namespace AIHappey.Core.Providers.xAI;
+namespace AIHappey.Core.Providers.SpaceXAI;
 
-public partial class XAIProvider
+public partial class SpaceXAIProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

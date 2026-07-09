@@ -417,7 +417,7 @@ public sealed class ResponsesStreamFixtureTests
     [Fact]
     public void Code_interpreter_output_files_emit_unified_file_events_without_changing_tool_outputs()
     {
-        const string providerId = "xai";
+        const string providerId = "spacexai";
 
         var unifiedEvents = FixtureFileLoader.LoadResponseRawFixture(CodeInterpreterOutputFileRawFixturePath)
             .SelectMany(part => part.ToUnifiedStreamEvent(providerId))

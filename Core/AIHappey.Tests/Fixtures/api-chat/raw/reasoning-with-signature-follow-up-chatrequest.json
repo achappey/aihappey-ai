@@ -1,5 +1,5 @@
 {
-    "model": "xai/grok-4.20-0309-reasoning",
+    "model": "spacexai/grok-4.20-0309-reasoning",
     "tools": [],
     "agents": [],
     "workflowType": "concurrent",
@@ -62,7 +62,7 @@
         {
             "id": "dgyb3ngKo2FQggmr",
             "metadata": {
-                "model": "xai/grok-4.20-0309-reasoning",
+                "model": "spacexai/grok-4.20-0309-reasoning",
                 "usage": {
                     "promptTokens": 1274,
                     "completionTokens": 410,
@@ -136,7 +136,7 @@
         {
             "id": "JzbkAd3Esddldzdh",
             "metadata": {
-                "model": "xai/grok-4.20-0309-reasoning",
+                "model": "spacexai/grok-4.20-0309-reasoning",
                 "usage": {
                     "promptTokens": 16445,
                     "completionTokens": 2141,

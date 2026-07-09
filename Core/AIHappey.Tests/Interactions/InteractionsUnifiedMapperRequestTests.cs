@@ -51,7 +51,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
         var chatRequest = JsonSerializer.Deserialize<ChatRequest>(json, JsonSerializerOptions.Web)
             ?? throw new InvalidOperationException($"Could not deserialize fixture chat request from [{GoogleReasoningFixturePath}](Core/AIHappey.Tests/{GoogleReasoningFixturePath}).");
 
-        var interactionRequest = chatRequest.ToUnifiedRequest("google").ToInteractionRequest("xai");
+        var interactionRequest = chatRequest.ToUnifiedRequest("google").ToInteractionRequest("spacexai");
 
         var thoughtParts = interactionRequest.Input?.Steps
             .OfType<InteractionThoughtContent>()

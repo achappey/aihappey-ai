@@ -8,9 +8,9 @@ using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.xAI;
+namespace AIHappey.Core.Providers.SpaceXAI;
 
-public partial class XAIProvider
+public partial class SpaceXAIProvider
 {
     private const string DefaultTtsLanguage = "auto";
     private const string DefaultTtsVoiceId = "eve";
@@ -113,7 +113,7 @@ public partial class XAIProvider
 
         return new Dictionary<string, JsonElement>
         {
-            [XAIRequestExtensions.XAIIdentifier] = JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web),
+            [SpaceXAIRequestExtensions.SpaceXAIIdentifier] = JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web),
 
             ["gateway"] = JsonSerializer.SerializeToElement(new
             {
@@ -125,7 +125,7 @@ public partial class XAIProvider
     private static XAITtsModelSelection ParseSpeechModel(string model)
     {
         var raw = model.Trim();
-        var providerPrefix = XAIRequestExtensions.XAIIdentifier + "/";
+        var providerPrefix = SpaceXAIRequestExtensions.SpaceXAIIdentifier + "/";
         if (raw.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
             raw = raw[providerPrefix.Length..];
 

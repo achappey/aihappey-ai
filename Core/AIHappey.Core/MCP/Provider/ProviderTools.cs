@@ -65,7 +65,7 @@ public class ProviderTools
                 "perplexity" => generator.Generate(typeof(PerplexityProviderMetadata)),
                 "mistral" => generator.Generate(typeof(MistralProviderMetadata)),
                 "pollinations" => generator.Generate(typeof(PollinationsProviderMetadata)),
-                "xai" => generator.Generate(typeof(XAIProviderMetadata)),
+                "spacexai" => generator.Generate(typeof(XAIProviderMetadata)),
                 "jina" => generator.Generate(typeof(JinaProviderMetadata)),
                 "groq" => generator.Generate(typeof(GroqProviderMetadata)),
                 "together" => generator.Generate(typeof(TogetherProviderMetadata)),

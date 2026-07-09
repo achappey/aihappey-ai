@@ -9,7 +9,7 @@ public class AIServiceConfig
     public ProviderConfig? Perplexity { get; set; }
     public ProviderConfig? Mistral { get; set; }
     public ProviderConfig? Groq { get; set; }
-    public ProviderConfig? XAI { get; set; }
+    public ProviderConfig? SpaceXAI { get; set; }
     public ProviderConfig? Together { get; set; }
     public ProviderConfig? Microsoft { get; set; }
     public ProviderConfig? Cohere { get; set; }

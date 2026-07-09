@@ -13,9 +13,9 @@ using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
 
-namespace AIHappey.Core.Providers.xAI;
+namespace AIHappey.Core.Providers.SpaceXAI;
 
-public partial class XAIProvider : IModelProvider
+public partial class SpaceXAIProvider : IModelProvider
 {
     private const decimal UsdTicksPerDollar = 10_000_000_000m;
     private const decimal NanoUsdPerDollar = 1_000_000_000m;
@@ -26,7 +26,7 @@ public partial class XAIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public XAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public SpaceXAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
@@ -41,7 +41,7 @@ public partial class XAIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(xAI)} API key.");
+            throw new InvalidOperationException($"No {nameof(SpaceXAI)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }

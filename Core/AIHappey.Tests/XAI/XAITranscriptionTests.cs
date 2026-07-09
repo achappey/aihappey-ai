@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Providers.xAI;
+using AIHappey.Core.Providers.SpaceXAI;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -34,12 +34,12 @@ public sealed class XAITranscriptionTests
 
         var response = await provider.TranscriptionRequest(new TranscriptionRequest
         {
-            Model = "xai/stt",
+            Model = "spacexai/stt",
             Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("fake audio")),
             MediaType = "audio/wav",
             ProviderOptions = new Dictionary<string, JsonElement>
             {
-                ["xai"] = JsonSerializer.SerializeToElement(new
+                ["spacexai"] = JsonSerializer.SerializeToElement(new
                 {
                     language = "en",
                     format = true,
@@ -92,10 +92,10 @@ public sealed class XAITranscriptionTests
 
         var response = await provider.TranscriptionRequest(new TranscriptionRequest
         {
-            Model = "xai/stt",
+            Model = "spacexai/stt",
             ProviderOptions = new Dictionary<string, JsonElement>
             {
-                ["xai"] = JsonSerializer.SerializeToElement(new
+                ["xspacexaiai"] = JsonSerializer.SerializeToElement(new
                 {
                     url = "https://example.com/audio.mp3",
                     language = "en"
@@ -118,12 +118,12 @@ public sealed class XAITranscriptionTests
 
         await Assert.ThrowsAsync<ArgumentException>(() => provider.TranscriptionRequest(new TranscriptionRequest
         {
-            Model = "xai/stt",
+            Model = "spacexai/stt",
             Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("fake audio")),
             MediaType = "audio/wav",
             ProviderOptions = new Dictionary<string, JsonElement>
             {
-                ["xai"] = JsonSerializer.SerializeToElement(new
+                ["spacexai"] = JsonSerializer.SerializeToElement(new
                 {
                     audio_format = "pcm"
                 }, JsonSerializerOptions.Web)
@@ -131,7 +131,7 @@ public sealed class XAITranscriptionTests
         }));
     }
 
-    private static XAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
+    private static SpaceXAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {
         var handler = new StaticResponseHttpMessageHandler(responder);
         var httpClientFactory = new StaticHttpClientFactory(new HttpClient(handler)
@@ -140,7 +140,7 @@ public sealed class XAITranscriptionTests
         });
         var cache = new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions()));
 
-        return new XAIProvider(new StaticApiKeyResolver(), cache, httpClientFactory);
+        return new SpaceXAIProvider(new StaticApiKeyResolver(), cache, httpClientFactory);
     }
 
     private static HttpRequestMessage CloneRequest(HttpRequestMessage request)

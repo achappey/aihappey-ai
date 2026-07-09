@@ -5,9 +5,9 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
-namespace AIHappey.Core.Providers.xAI;
+namespace AIHappey.Core.Providers.SpaceXAI;
 
-public partial class XAIProvider
+public partial class SpaceXAIProvider
 {
     private static readonly HashSet<string> XAISttRawFormats = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -198,7 +198,7 @@ public partial class XAIProvider
             Segments = segments,
             ProviderMetadata = new Dictionary<string, JsonElement>
             {
-                [XAIRequestExtensions.XAIIdentifier] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
+                [SpaceXAIRequestExtensions.SpaceXAIIdentifier] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
             },
             Response = new ResponseData
             {

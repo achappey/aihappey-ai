@@ -6,9 +6,9 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.xAI;
+namespace AIHappey.Core.Providers.SpaceXAI;
 
-public partial class XAIProvider
+public partial class SpaceXAIProvider
 {
 
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest,

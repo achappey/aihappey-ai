@@ -16,7 +16,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["runway"] = "X-Runway-Key",
             ["aiml"] = "X-AIML-Key",
             ["jina"] = "X-Jina-Key",
-            ["xai"] = "X-xAI-Key",
+            ["spacexai"] = "X-SpaceXAI-Key",
             ["scaleway"] = "X-Scaleway-Key",
             ["nscale"] = "X-Nscale-Key",
             ["cerebras"] = "X-Cerebras-Key",
