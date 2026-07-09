@@ -62,13 +62,45 @@ public partial class OpenRouterProvider
         if (images.Count == 0)
             throw new InvalidOperationException("OpenRouter image response did not contain generated images.");
 
+        var providerKey = GetIdentifier();
+
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        if (root.TryGetProperty("usage", out var usageEl)
+            && usageEl.ValueKind == JsonValueKind.Object)
+        {
+            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
+            {
+                usage = usageEl.Clone()
+            }, JsonSerializerOptions.Web);
+        }
+
+        decimal? cost = null;
+
+        if (root.TryGetProperty("usage", out var gatewayUsageEl)
+            && gatewayUsageEl.ValueKind == JsonValueKind.Object
+            && gatewayUsageEl.TryGetProperty("cost", out var costEl)
+            && costEl.ValueKind == JsonValueKind.Number
+            && costEl.TryGetDecimal(out var parsedCost))
+        {
+            cost = parsedCost;
+        }
+
+        if (cost is not null)
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
+
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
             Usage = ExtractOpenRouterImageUsage(root),
-            ProviderMetadata = BuildOpenRouterImageProviderMetadata(payload, root, resp, rawOpenRouterOptions),
-            Response = new ()
+            ProviderMetadata = providerMetadata,
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = ReadOpenRouterImageString(root, "model")?.ToModelId(GetIdentifier())
@@ -191,28 +223,6 @@ public partial class OpenRouterProvider
             return null;
 
         return usageData;
-    }
-
-    private Dictionary<string, JsonElement> BuildOpenRouterImageProviderMetadata(
-        Dictionary<string, object?> payload,
-        JsonElement root,
-        HttpResponseMessage response,
-        JsonElement? rawOpenRouterOptions)
-    {
-        var metadata = new Dictionary<string, object?>
-        {
-            ["request"] = payload,
-            ["response"] = root,
-            ["statusCode"] = (int)response.StatusCode
-        };
-
-        if (rawOpenRouterOptions is { ValueKind: JsonValueKind.Object } rawOptions)
-            metadata["providerOptions"] = rawOptions;
-
-        return new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(metadata, OpenRouterImageJsonOptions)
-        };
     }
 
     private static string NormalizeOpenRouterImageInput(ImageFile file)
