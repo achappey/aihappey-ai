@@ -75,10 +75,6 @@ public sealed partial class DeepInfraProvider
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(new
                 {
-                    id = videoId,
-                    status = terminal.Status,
-                    create = createRoot,
-                    final = terminal.Root
                 }, VideoJson)
             },
             Response = new()

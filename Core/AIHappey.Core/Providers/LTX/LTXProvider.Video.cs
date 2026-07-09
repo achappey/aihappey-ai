@@ -121,9 +121,6 @@ public partial class LTXProvider
             {
                 [GetIdentifier()] = ToJsonElement(new
                 {
-                    operation,
-                    endpoint,
-                    payload
                 })
             },
             Response = new()
@@ -211,12 +208,7 @@ public partial class LTXProvider
             {
                 [GetIdentifier()] = ToJsonElement(new
                 {
-                    operation = "video-to-video-hdr",
-                    endpoint = "v2/video-to-video-hdr",
-                    payload,
-                    submit = submitRoot,
-                    final = completed.Root,
-                    downloaded_result_url = resultUrl
+
                 })
             },
             Response = new()
