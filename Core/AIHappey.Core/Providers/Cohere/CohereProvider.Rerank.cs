@@ -53,6 +53,8 @@ public partial class CohereProvider
         using var doc = JsonDocument.Parse(errText);
         var root = doc.RootElement;
 
+        var rerankModel = await this.GetModel(request.Model, cancellationToken);
+
         var results = root.TryGetProperty("results", out var resultsEl)
             && resultsEl.ValueKind == JsonValueKind.Array
                 ? resultsEl.EnumerateArray()
@@ -64,14 +66,60 @@ public partial class CohereProvider
                     .ToList()
                 : [];
 
+        decimal? searchUnits = null;
+
+        if (root.TryGetProperty("meta", out var metaEl)
+            && metaEl.ValueKind == JsonValueKind.Object
+            && metaEl.TryGetProperty("billed_units", out var billedUnitsEl)
+            && billedUnitsEl.ValueKind == JsonValueKind.Object
+            && billedUnitsEl.TryGetProperty("search_units", out var searchUnitsEl)
+            && searchUnitsEl.ValueKind == JsonValueKind.Number
+            && searchUnitsEl.TryGetDecimal(out var parsedSearchUnits))
+        {
+            searchUnits = parsedSearchUnits;
+        }
+
+        decimal? cost = null;
+
+        if (searchUnits is not null && rerankModel?.Pricing?.Input is not null)
+        {
+            cost = searchUnits.Value * rerankModel.Pricing.Input;
+        }
+
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        if (root.TryGetProperty("meta", out var cohereMetaEl)
+            && cohereMetaEl.ValueKind == JsonValueKind.Object)
+        {
+            providerMetadata[GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+                meta = cohereMetaEl.Clone()
+            }, JsonSerializerOptions.Web);
+        }
+
+        if (cost is not null)
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
+
+        var responseId = root.TryGetProperty("id", out var idEl)
+            && idEl.ValueKind == JsonValueKind.String
+                ? idEl.GetString()
+                : null;
+
         return new RerankingResponse
         {
             Ranking = results,
+            ProviderMetadata = providerMetadata,
             Response = new()
             {
                 Timestamp = now,
+                Id = responseId,
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = errText
+                Body = root.Clone()
             }
         };
 

@@ -58,5 +58,35 @@
       "input": "0.0000000375",
       "output": "0.00000015"
     }
+  },
+  "cohere/rerank-v3.0": {
+    "pricing": {
+      "input": "0.001"
+    }
+  },
+  "cohere/rerank-english-v3.0": {
+    "pricing": {
+      "input": "0.001"
+    }
+  },
+  "cohere/rerank-multilingual-v3.0": {
+    "pricing": {
+      "input": "0.001"
+    }
+  },
+  "cohere/rerank-v3.5": {
+    "pricing": {
+      "input": "0.001"
+    }
+  },
+  "cohere/rerank-4-fast": {
+    "pricing": {
+      "input": "0.002"
+    }
+  },
+  "cohere/rerank-4-pro": {
+    "pricing": {
+      "input": "0.0025"
+    }
   }
 }
