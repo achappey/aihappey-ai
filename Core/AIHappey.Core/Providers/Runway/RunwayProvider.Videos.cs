@@ -78,6 +78,13 @@ public partial class RunwayProvider
                     Data = Convert.ToBase64String(bytes)
                 }
             ],
+            ProviderMetadata = new Dictionary<string, JsonElement>
+            {
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+                {
+
+                }, JsonSerializerOptions.Web)
+            },
             Warnings = warnings,
             Response = new()
             {
@@ -113,7 +120,7 @@ public partial class RunwayProvider
             payload["promptText"] = request.Prompt;
 
         if (!string.IsNullOrWhiteSpace(request.Resolution))
-            payload["ratio"] = request.Resolution;
+            payload["ratio"] = request.Resolution.Replace("x", ":");
 
         if (request.Duration is not null)
             payload["duration"] = request.Duration;
