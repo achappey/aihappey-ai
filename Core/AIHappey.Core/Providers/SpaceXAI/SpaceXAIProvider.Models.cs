@@ -139,7 +139,7 @@ public partial class SpaceXAIProvider
             OwnedBy = ProviderName,
             Type = "speech",
             Pricing = ttsPricing,
-            Name = "xAI Text-to-Speech"
+            Name = "SpaceXAI Text-to-Speech"
         };
 
         foreach (var language in SupportedTtsLanguages)
@@ -150,8 +150,8 @@ public partial class SpaceXAIProvider
                 OwnedBy = ProviderName,
                 Pricing = ttsPricing,
                 Type = "speech",
-                Name = $"xAI TTS {language.DisplayName}",
-                Description = $"xAI text-to-speech with {language.DisplayName} language."
+                Name = $"SpaceXAI TTS {language.DisplayName}",
+                Description = $"SpaceXAI text-to-speech with {language.DisplayName} language."
             };
 
             foreach (var voice in voices)
@@ -162,8 +162,8 @@ public partial class SpaceXAIProvider
                     OwnedBy = ProviderName,
                     Pricing = ttsPricing,
                     Type = "speech",
-                    Name = $"xAI TTS {language.DisplayName} {voice.Name}",
-                    Description = $"xAI text-to-speech with {language.DisplayName} language and {voice.Name} voice."
+                    Name = $"SpaceXAI TTS {language.DisplayName} {voice.Name}",
+                    Description = $"SpaceXAI text-to-speech with {language.DisplayName} language and {voice.Name} voice."
                 };
             }
         }
