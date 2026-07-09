@@ -10,6 +10,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Jina;
 
@@ -56,6 +57,11 @@ public partial class JinaProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
     }
