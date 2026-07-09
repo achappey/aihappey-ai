@@ -1,0 +1,195 @@
+using System.Net;
+using System.Text.Json;
+using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Providers.OpenAI;
+using AIHappey.Vercel.Models;
+using Microsoft.Extensions.Caching.Memory;
+
+namespace AIHappey.Tests.OpenAI;
+
+public sealed class OpenAIProviderImageTests
+{
+    [Fact]
+    public async Task ImageRequestWithoutFilesPostsGenerationJsonAndEnrichesUsageMetadataAndCost()
+    {
+        string? requestedPath = null;
+        string? requestJson = null;
+        var provider = CreateProvider(request =>
+        {
+            requestedPath = request.RequestUri?.PathAndQuery;
+            requestJson = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            return JsonResponse("""
+            {
+              "created": 1748372400,
+              "output_format": "png",
+              "data": [
+                { "b64_json": "image-base64" }
+              ],
+              "usage": {
+                "input_tokens": 50,
+                "input_tokens_details": {
+                  "text_tokens": 10,
+                  "image_tokens": 40
+                },
+                "output_tokens": 50,
+                "output_tokens_details": {
+                  "image_tokens": 45,
+                  "text_tokens": 5
+                },
+                "total_tokens": 100
+              }
+            }
+            """);
+        });
+
+        var result = await provider.ImageRequest(new ImageRequest
+        {
+            Model = "gpt-image-1.5",
+            Prompt = "native generation",
+            N = 1,
+            Size = "1024x1024"
+        });
+
+        Assert.Equal("/v1/images/generations", requestedPath);
+        Assert.Contains("\"prompt\":\"native generation\"", requestJson);
+        Assert.Contains("\"output_format\":\"png\"", requestJson);
+        Assert.Equal(["data:image/png;base64,image-base64"], result.Images);
+        Assert.Equal(50, result.Usage?.InputTokens);
+        Assert.Equal(50, result.Usage?.OutputTokens);
+        Assert.Equal(100, result.Usage?.TotalTokens);
+
+        var openAiMetadata = Assert.Contains("openai", result.ProviderMetadata ?? []);
+        Assert.Equal(100, openAiMetadata.GetProperty("usage").GetProperty("total_tokens").GetInt32());
+        var gatewayMetadata = Assert.Contains("gateway", result.ProviderMetadata ?? []);
+        Assert.Equal(0.00191m, gatewayMetadata.GetProperty("cost").GetDecimal());
+    }
+
+    [Fact]
+    public async Task ImageRequestWithSingleFilePostsVariationMultipart()
+    {
+        string? requestedPath = null;
+        string? contentType = null;
+        string? body = null;
+        var provider = CreateProvider(request =>
+        {
+            requestedPath = request.RequestUri?.PathAndQuery;
+            contentType = request.Content?.Headers.ContentType?.MediaType;
+            body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            return JsonResponse("""
+            {
+              "created": 1589478378,
+              "data": [
+                { "b64_json": "variation-base64" }
+              ]
+            }
+            """);
+        });
+
+        var result = await provider.ImageRequest(new ImageRequest
+        {
+            Model = "dall-e-2",
+            Prompt = "ignored prompt",
+            N = 2,
+            Size = "1024x1024",
+            Files = [Image("image/png", Convert.ToBase64String([1, 2, 3]))]
+        });
+
+        Assert.Equal("/v1/images/variations", requestedPath);
+        Assert.Equal("multipart/form-data", contentType);
+        Assert.Contains("name=model", body);
+        Assert.Contains("dall-e-2", body);
+        Assert.Contains("name=response_format", body);
+        Assert.Contains("b64_json", body);
+        Assert.Equal(["data:image/png;base64,variation-base64"], result.Images);
+        Assert.Contains("prompt", JsonSerializer.Serialize(result.Warnings));
+    }
+
+    [Fact]
+    public async Task ImageRequestWithMultipleFilesPostsEditJsonWithImageReferences()
+    {
+        string? requestedPath = null;
+        string? requestJson = null;
+        var provider = CreateProvider(request =>
+        {
+            requestedPath = request.RequestUri?.PathAndQuery;
+            requestJson = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            return JsonResponse("""
+            {
+              "created": 1748372400,
+              "data": [
+                { "b64_json": "edit-base64" }
+              ],
+              "usage": {
+                "input_tokens": 30,
+                "output_tokens": 20,
+                "total_tokens": 50
+              }
+            }
+            """);
+        });
+
+        var result = await provider.ImageRequest(new ImageRequest
+        {
+            Model = "gpt-image-1-mini",
+            Prompt = "combine these images",
+            Files =
+            [
+                Image("image/png", "first-base64"),
+                Image("image/jpeg", "https://example.com/second.jpg")
+            ]
+        });
+
+        Assert.Equal("/v1/images/edits", requestedPath);
+        Assert.Contains("\"prompt\":\"combine these images\"", requestJson);
+        Assert.Contains("\"images\"", requestJson);
+        Assert.Contains("data:image/png;base64,first-base64", requestJson);
+        Assert.Contains("https://example.com/second.jpg", requestJson);
+        Assert.Contains("\"output_format\":\"png\"", requestJson);
+        Assert.Equal(["data:image/png;base64,edit-base64"], result.Images);
+    }
+
+    private static OpenAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
+        => new(
+            new StaticApiKeyResolver(),
+            new StaticHttpClientFactory(new HttpClient(new StaticResponseHttpMessageHandler(responder))),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new NullEndUserIdResolver());
+
+    private static HttpResponseMessage JsonResponse(string json)
+        => new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(json)
+        };
+
+    private static ImageFile Image(string mediaType, string data)
+        => new()
+        {
+            MediaType = mediaType,
+            Data = data
+        };
+
+    private sealed class StaticApiKeyResolver : IApiKeyResolver
+    {
+        public string? Resolve(string provider) => "test-key";
+    }
+
+    private sealed class NullEndUserIdResolver : IEndUserIdResolver
+    {
+        public string? Resolve(ChatRequest chatRequest) => null;
+    }
+
+    private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => httpClient;
+    }
+
+    private sealed class StaticResponseHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(responder(request));
+    }
+}
