@@ -5,12 +5,20 @@
             "id": "gladia/solaria-1",
             "object": "model",
             "owned_by": "Gladia",
-            "name": "Solaria",
+            "name": "Solaria 1",
             "type": "transcription",
-            "description": "Solaria",
+            "description": "Our generalist model: maximum language coverage across any domain",
             "tags": [
                 "real-time"
             ]
+        },
+        {
+            "id": "gladia/solaria-3",
+            "object": "model",
+            "owned_by": "Gladia",
+            "name": "Solaria 3",
+            "description": "Our latest model: highest accuracy on European real-world audio.",
+            "type": "transcription"
         }
     ]
 }
