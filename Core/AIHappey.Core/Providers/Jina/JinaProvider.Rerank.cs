@@ -77,18 +77,60 @@ public partial class JinaProvider
                     .ToList()
                 : [];
 
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+        var providerKey = GetIdentifier();
+
+        decimal? totalTokens = null;
+
+        if (root.TryGetProperty("usage", out var usageEl)
+            && usageEl.ValueKind == JsonValueKind.Object
+            && usageEl.TryGetProperty("total_tokens", out var totalTokensEl)
+            && totalTokensEl.ValueKind == JsonValueKind.Number
+            && totalTokensEl.TryGetDecimal(out var parsedTotalTokens))
+        {
+            totalTokens = parsedTotalTokens;
+        }
+
+        decimal? cost = null;
+
+        if (totalTokens is not null && modelItem?.Pricing?.Input is not null)
+        {
+            cost = totalTokens.Value * modelItem.Pricing.Input;
+        }
+
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        if (root.TryGetProperty("usage", out var providerUsageEl)
+            && providerUsageEl.ValueKind == JsonValueKind.Object)
+        {
+            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
+            {
+                usage = providerUsageEl.Clone()
+            }, JsonSerializerOptions.Web);
+        }
+
+        if (cost is not null)
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
+
         return new RerankingResponse
         {
             Ranking = results,
+            ProviderMetadata = providerMetadata,
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = errText
+                ModelId = request.Model.ToModelId(providerKey),
+                Body = root.Clone()
             }
         };
 
     }
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

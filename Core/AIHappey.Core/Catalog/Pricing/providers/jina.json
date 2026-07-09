@@ -4,5 +4,40 @@
       "input": "0.00000005",
       "output": "0.00000005"
     }
+  },
+  "jina/jina-reranker-v3": {
+    "pricing": {
+      "input": "0.00000005"
+    }
+  },
+  "jina/jina-reranker-m0": {
+    "pricing": {
+      "input": "0.00000005"
+    }
+  },
+  "jina/jina-reranker-v2-base-multilingual": {
+    "pricing": {
+      "input": "0.00000005"
+    }
+  },
+  "jina/jina-colbert-v2": {
+    "pricing": {
+      "input": "0.00000005"
+    }
+  },
+  "jina/jina-reranker-v1-base-en": {
+    "pricing": {
+      "input": "0.00000005"
+    }
+  },
+  "jina/jina-reranker-v1-turbo-en": {
+    "pricing": {
+      "input": "0.00000005"
+    }
+  },
+  "jina/jina-reranker-v1-tiny-en": {
+    "pricing": {
+      "input": "0.00000005"
+    }
   }
 }
