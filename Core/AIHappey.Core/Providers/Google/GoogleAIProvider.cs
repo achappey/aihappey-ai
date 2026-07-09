@@ -67,10 +67,7 @@ public partial class GoogleAIProvider
 
     public string GetIdentifier() => GoogleExtensions.Identifier();
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+   
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {

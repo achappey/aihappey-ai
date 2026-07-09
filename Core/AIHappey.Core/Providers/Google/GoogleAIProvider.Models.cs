@@ -49,6 +49,21 @@ public partial class GoogleAIProvider
 
                 rawModels.AddRange(BuildGoogleSpeechVoiceShortcutModels(rawModels.ToList(), GetIdentifier()));
 
+                var transcriptionModel = rawModels.FirstOrDefault(a => a.Id.EndsWith("gemini-3.5-flash"));
+
+                if (transcriptionModel != null)
+                {
+                    rawModels.Add(new Model()
+                    {
+                        Name = transcriptionModel.Name,
+                        Id = transcriptionModel.Id,
+                        OwnedBy = transcriptionModel.OwnedBy,
+                        Description = transcriptionModel.Description,
+                        Created = transcriptionModel.Created,
+                        Type = "transcription"
+                    });
+                }
+
                 return rawModels
                     .WithPricing(GetIdentifier());
 
