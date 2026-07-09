@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
 using System.Net.Mime;
@@ -99,10 +100,14 @@ public partial class RequestyProvider
                 Format = responseFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
