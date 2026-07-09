@@ -3,12 +3,13 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.MiniMax;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
-public partial class MiniMaxProvider 
+public partial class MiniMaxProvider
 {
     private static readonly JsonSerializerOptions SpeechJson = new(JsonSerializerDefaults.Web)
     {
@@ -150,6 +151,43 @@ public partial class MiniMaxProvider
         var mime = GuessAudioMimeType(format);
         var audioDataUrl = Convert.ToBase64String(bytes);
 
+        var providerKey = GetIdentifier();
+        var currentModel = await this.GetModel(request.Model, cancellationToken);
+
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        decimal? usageCharacters = null;
+        decimal? cost = null;
+
+        if (doc.RootElement.TryGetProperty("extra_info", out var extraInfoEl)
+            && extraInfoEl.ValueKind == JsonValueKind.Object)
+        {
+            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
+            {
+                extra_info = extraInfoEl.Clone()
+            }, JsonSerializerOptions.Web);
+
+            if (extraInfoEl.TryGetProperty("usage_characters", out var usageCharactersEl)
+                && usageCharactersEl.ValueKind == JsonValueKind.Number
+                && usageCharactersEl.TryGetDecimal(out var parsedUsageCharacters))
+            {
+                usageCharacters = parsedUsageCharacters;
+            }
+        }
+
+        if (usageCharacters is not null && currentModel?.Pricing?.Input is not null)
+        {
+            cost = usageCharacters.Value * currentModel.Pricing.Input;
+        }
+
+        if (cost is not null)
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
+            {
+                cost
+            }, JsonSerializerOptions.Web);
+        }
+
         return new SpeechResponse
         {
             Audio = new()
@@ -158,11 +196,16 @@ public partial class MiniMaxProvider
                 MimeType = mime,
                 Format = format
             },
+            ProviderMetadata = providerMetadata,
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = doc.RootElement.Clone()
             }
         };

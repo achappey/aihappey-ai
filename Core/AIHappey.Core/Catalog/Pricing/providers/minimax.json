@@ -61,5 +61,35 @@
       "input_cache_write": "0.000000375",
       "output": "0.0000012"
     }
+  },
+  "minimax/speech-2.6-turbo": {
+    "pricing": {
+      "input": "0.00006"
+    }
+  },
+  "minimax/speech-02-turbo": {
+    "pricing": {
+      "input": "0.00006"
+    }
+  },
+  "minimax/speech-2.6-hd": {
+    "pricing": {
+      "input": "0.0001"
+    }
+  },
+  "minimax/speech-02-hd": {
+    "pricing": {
+      "input": "0.0001"
+    }
+  },
+  "minimax/speech-2.8-turbo": {
+    "pricing": {
+      "input": "0.00006"
+    }
+  },
+  "minimax/speech-2.8-hd": {
+    "pricing": {
+      "input": "0.0001"
+    }
   }
 }
