@@ -11,6 +11,9 @@ public sealed class VerbatikSpeechProviderMetadata
     [JsonPropertyName("contentType")]
     public string? ContentType { get; set; }
 
+    [JsonPropertyName("voice")]
+    public string? Voice { get; set; }
+
     [JsonPropertyName("speed")]
     public float? Speed { get; set; }
 

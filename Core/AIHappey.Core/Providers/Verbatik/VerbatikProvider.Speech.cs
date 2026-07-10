@@ -1,6 +1,7 @@
 using System.Text;
-using System.Text.Json;
 using AIHappey.Common.Model.Providers.Verbatik;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -8,7 +9,8 @@ namespace AIHappey.Core.Providers.Verbatik;
 
 public partial class VerbatikProvider
 {
-    public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+    public async Task<SpeechResponse> SpeechRequest(SpeechRequest request,
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -21,8 +23,9 @@ public partial class VerbatikProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var normalizedModel = request.Model;
-        var voiceId = ParseVoiceIdFromModel(normalizedModel);
+        var metadata = request.GetProviderMetadata<VerbatikSpeechProviderMetadata>(GetIdentifier());
+        var model = NormalizeLocalModelId(request.Model);
+        var voiceId = ResolveVoiceId(model, request.Voice, metadata?.Voice);
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
@@ -32,8 +35,6 @@ public partial class VerbatikProvider
 
         if (!string.IsNullOrWhiteSpace(request.Voice) && !string.Equals(request.Voice.Trim(), voiceId, StringComparison.OrdinalIgnoreCase))
             warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
-
-        var metadata = request.GetProviderMetadata<VerbatikSpeechProviderMetadata>(GetIdentifier());
 
         if (request.Speed is { } speed && (speed < 0.5f || speed > 2f))
             throw new ArgumentOutOfRangeException(nameof(request.Speed), "Verbatik speed must be between 0.5 and 2.0.");
@@ -100,14 +101,18 @@ public partial class VerbatikProvider
         byte[] audioBytes;
         string mimeType;
         string resolvedFormat;
-        string? audioUrl = null;
-        JsonElement? synthResultElement = null;
 
         var responseContentType = synthResp.Content.Headers.ContentType?.MediaType;
 
         audioBytes = synthBytes;
         mimeType = ResolveMimeType(responseContentType, null, format);
         resolvedFormat = ResolveFormat(mimeType, null, format);
+
+        var charCount = request.Text.Length;
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+        decimal? cost = modelItem.Pricing?.Input is { } inputPrice && charCount > 0
+            ? inputPrice * (decimal)charCount
+            : null;
 
         return new SpeechResponse
         {
@@ -118,25 +123,13 @@ public partial class VerbatikProvider
                 Format = resolvedFormat
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    voiceId,
-                    synthResult = synthResultElement,
-                    audioUrl
-                })
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(
+                costs: cost
+            ),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(new
-                {
-                    voiceId,
-                    synthResult = synthResultElement,
-                    audioUrl
-                })
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -242,6 +235,72 @@ public partial class VerbatikProvider
             "wave" => "wav",
             _ => value
         };
+    }
+
+    private static string NormalizeLocalModelId(string model)
+    {
+        var value = model.Trim();
+
+        var slashIndex = value.IndexOf('/');
+        if (slashIndex > 0)
+        {
+            // Allows both:
+            // tts
+            // tts/voice-id
+            // verbatik/tts
+            // verbatik/tts/voice-id
+            var firstPart = value[..slashIndex];
+
+            if (!string.Equals(firstPart, "tts", StringComparison.OrdinalIgnoreCase))
+                value = value[(slashIndex + 1)..];
+        }
+
+        return value.Trim();
+    }
+
+    private static string ResolveVoiceId(
+        string model,
+        string? requestVoice,
+        string? metadataVoice)
+    {
+        var modelVoice = TryParseVoiceIdFromModel(model);
+
+        if (!string.IsNullOrWhiteSpace(modelVoice))
+            return modelVoice;
+
+        if (!string.IsNullOrWhiteSpace(requestVoice))
+            return requestVoice.Trim();
+
+        if (!string.IsNullOrWhiteSpace(metadataVoice))
+            return metadataVoice.Trim();
+
+        throw new ArgumentException(
+            "Voice is required. Use model 'tts/{voiceId}', request.Voice, or provider metadata voice.");
+    }
+
+    private static string? TryParseVoiceIdFromModel(string model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return null;
+
+        var value = model.Trim();
+
+        if (string.Equals(value, "tts", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        if (!value.StartsWith("tts/", StringComparison.OrdinalIgnoreCase))
+            throw new NotSupportedException(
+                $"{ProviderName} model '{model}' is not supported. Expected 'tts' or 'tts/[voiceId]'.");
+
+        var voiceId = value["tts/".Length..].Trim();
+
+        if (string.IsNullOrWhiteSpace(voiceId))
+            throw new ArgumentException("Model must contain a voice id after 'tts/'.", nameof(model));
+
+        if (voiceId.Contains('/'))
+            throw new ArgumentException("Voice id cannot contain '/'.", nameof(model));
+
+        return voiceId;
     }
 }
 
