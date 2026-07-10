@@ -16,7 +16,6 @@ public partial class UnrealSpeechProvider : IModelProvider
 {
     private const string ProviderId = "unrealspeech";
     private const string ProviderName = "UnrealSpeech";
-    private const string ModelPrefix = "unrealspeech/";
 
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;

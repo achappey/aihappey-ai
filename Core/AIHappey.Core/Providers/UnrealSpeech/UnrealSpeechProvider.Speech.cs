@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.UnrealSpeech;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -94,18 +95,24 @@ public partial class UnrealSpeechProvider
         byte[] audioBytes;
         object? apiResult;
 
+        Dictionary<string, object?>? payload = null;
+
         if (endpoint == "stream")
         {
-            var payload = new Dictionary<string, object?>
+            payload = new Dictionary<string, object?>
             {
                 ["Text"] = text,
                 ["VoiceId"] = voiceId,
                 ["Bitrate"] = bitrate,
                 ["Speed"] = speed,
-                ["Pitch"] = pitch,
-                ["Codec"] = codec,
-                ["Temperature"] = temperature
+                ["Pitch"] = pitch
             };
+
+            if (!string.IsNullOrWhiteSpace(codec))
+                payload["Codec"] = codec;
+
+            if (temperature.HasValue)
+                payload["Temperature"] = temperature.Value;
 
             using var req = new HttpRequestMessage(HttpMethod.Post, "stream")
             {
@@ -127,7 +134,7 @@ public partial class UnrealSpeechProvider
             if (temperature is not null)
                 warnings.Add(new { type = "ignored", feature = "temperature", reason = "temperature is supported only for /stream" });
 
-            var payload = new Dictionary<string, object?>
+            payload = new Dictionary<string, object?>
             {
                 ["Text"] = text,
                 ["VoiceId"] = voiceId,
@@ -165,7 +172,7 @@ public partial class UnrealSpeechProvider
             if (temperature is not null)
                 warnings.Add(new { type = "ignored", feature = "temperature", reason = "temperature is supported only for /stream" });
 
-            var payload = new Dictionary<string, object?>
+            payload = new Dictionary<string, object?>
             {
                 ["Text"] = text,
                 ["VoiceId"] = voiceId,
@@ -230,11 +237,14 @@ public partial class UnrealSpeechProvider
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta)
             },
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(providerMeta)
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
