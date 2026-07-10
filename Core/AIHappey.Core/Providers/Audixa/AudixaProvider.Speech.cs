@@ -2,8 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Audixa;
-using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Audixa;
@@ -18,13 +18,13 @@ public partial class AudixaProvider
 
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
+
+        ApplyAuthHeader();
 
         var (resolvedModel, modelVoice) = ResolveModelAndVoice(request.Model);
 
@@ -33,16 +33,13 @@ public partial class AudixaProvider
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            warnings.Add(new { type = "unsupported", feature = "language" });
-        if (!string.IsNullOrWhiteSpace(request.OutputFormat))
-            warnings.Add(new { type = "unsupported", feature = "outputFormat" });
 
-        var metadata = request.GetProviderMetadata<AudixaSpeechProviderMetadata>(GetIdentifier());
+        var rawProviderOptions = GetAudixaProviderOptions(request);
+        var payload = BuildAudixaTtsPayload(request, rawProviderOptions, resolvedModel);
 
-        var voice = (modelVoice ?? request.Voice ?? metadata?.Voice)?.Trim();
+        var voice = (modelVoice ?? request.Voice ?? ReadString(rawProviderOptions, "voice_id"))?.Trim();
         if (string.IsNullOrWhiteSpace(voice))
-            throw new ArgumentException("Audixa requires a voice. Provide SpeechRequest.voice or providerOptions.audixa.voice.", nameof(request));
+            throw new ArgumentException("Audixa requires a voice. Provide SpeechRequest.voice, an Audixa voice shortcut in the model id, or providerOptions.audixa.voice_id.", nameof(request));
 
         if (!string.IsNullOrWhiteSpace(modelVoice)
             && !string.IsNullOrWhiteSpace(request.Voice)
@@ -51,31 +48,26 @@ public partial class AudixaProvider
             warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
         }
 
-        var speed = request.Speed ?? metadata?.Speed;
-        var emotion = metadata?.Emotion;
-        var temperature = metadata?.Temperature;
-        var topP = metadata?.TopP;
-
-        var payload = new Dictionary<string, object?>
+        if (!string.IsNullOrWhiteSpace(modelVoice)
+            && TryGetPropertyIgnoreCase(rawProviderOptions, "voice_id", out var rawVoiceEl)
+            && rawVoiceEl.ValueKind == JsonValueKind.String
+            && !string.Equals(modelVoice, rawVoiceEl.GetString(), StringComparison.OrdinalIgnoreCase))
         {
-            ["text"] = request.Text,
-            ["voice"] = voice,
-            ["model"] = resolvedModel,
-        };
+            warnings.Add(new { type = "ignored", feature = "voice_id", reason = "voice_id is derived from model id" });
+        }
 
-        if (speed is not null)
-            payload["speed"] = speed;
+        payload["voice_id"] = voice;
 
-        if (!string.IsNullOrEmpty(emotion))
-            payload["emotion"] = emotion;
+        if (request.Speed is not null)
+            payload["speed"] = request.Speed;
 
-        if (temperature is not null)
-            payload["temperature"] = temperature;
+        if (!string.IsNullOrWhiteSpace(request.OutputFormat))
+            payload["audio_format"] = request.OutputFormat.Trim();
 
-        if (topP is not null)
-            payload["top_p"] = topP;
+        if (!string.IsNullOrWhiteSpace(request.Language))
+            payload["language_code"] = request.Language.Trim();
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v2/tts")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v3/tts")
         {
             Content = new StringContent(
                 JsonSerializer.Serialize(payload, SpeechJson),
@@ -99,15 +91,18 @@ public partial class AudixaProvider
 
         var start = DateTime.UtcNow;
         var timeout = TimeSpan.FromSeconds(60);
-        JsonElement? statusRoot = null;
-        string? audioUrl = null;
+        var statusRoot = createDoc.RootElement.Clone();
+        var status = ReadString(createDoc.RootElement, "status");
+        var audioUrl = string.Equals(status, "COMPLETED", StringComparison.OrdinalIgnoreCase)
+            ? ReadString(createDoc.RootElement, "audio_url")
+            : null;
 
-        while (DateTime.UtcNow - start < timeout)
+        while (string.IsNullOrWhiteSpace(audioUrl) && DateTime.UtcNow - start < timeout)
         {
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
 
             using var pollResp = await _client.GetAsync(
-                $"v2/status?generation_id={Uri.EscapeDataString(generationId)}",
+                $"v3/tts?generation_id={Uri.EscapeDataString(generationId)}",
                 cancellationToken);
 
             var pollJson = await pollResp.Content.ReadAsStringAsync(cancellationToken);
@@ -118,28 +113,27 @@ public partial class AudixaProvider
             using var pollDoc = JsonDocument.Parse(pollJson);
             statusRoot = pollDoc.RootElement.Clone();
 
-            var status = pollDoc.RootElement.TryGetProperty("status", out var statusEl)
-                ? statusEl.GetString()
-                : null;
+            status = ReadString(pollDoc.RootElement, "status");
 
-            if (string.Equals(status, "Generating", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(status, "IN_QUEUE", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(status, "GENERATING", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            if (string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(status, "FAILED", StringComparison.OrdinalIgnoreCase))
             {
-                var detail = pollDoc.RootElement.TryGetProperty("detail", out var detailEl)
-                    ? detailEl.GetString()
-                    : "Unknown error";
+                var detail = ReadString(pollDoc.RootElement, "error_message")
+                    ?? ReadString(pollDoc.RootElement, "detail")
+                    ?? "Unknown error";
                 throw new InvalidOperationException($"Audixa TTS failed: {detail}");
             }
 
-            if (string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(status, "COMPLETED", StringComparison.OrdinalIgnoreCase))
             {
-                audioUrl = pollDoc.RootElement.TryGetProperty("url", out var urlEl)
-                    ? urlEl.GetString()
-                    : null;
+                audioUrl = ReadString(pollDoc.RootElement, "audio_url");
                 break;
             }
+
+            throw new InvalidOperationException($"Audixa TTS returned unknown status '{status ?? "null"}'.");
         }
 
         if (string.IsNullOrWhiteSpace(audioUrl))
@@ -148,45 +142,148 @@ public partial class AudixaProvider
                 "Audixa TTS timed out waiting for completion.");
         }
 
-        var bytes = await _client.GetByteArrayAsync(audioUrl, cancellationToken);
+        using var audioResp = await _client.GetAsync(audioUrl, cancellationToken);
+        var bytes = await audioResp.Content.ReadAsByteArrayAsync(cancellationToken);
+
+        if (!audioResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Audixa TTS audio download failed ({(int)audioResp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
+
         var base64 = Convert.ToBase64String(bytes);
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["generation_id"] = JsonSerializer.SerializeToElement(generationId, JsonSerializerOptions.Web),
-            ["model"] = JsonSerializer.SerializeToElement(resolvedModel, JsonSerializerOptions.Web),
-            ["voice"] = JsonSerializer.SerializeToElement(voice, JsonSerializerOptions.Web)
-        };
-
-        if (speed is not null)
-            providerMetadata["speed"] = JsonSerializer.SerializeToElement(speed, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(emotion))
-            providerMetadata["emotion"] = JsonSerializer.SerializeToElement(emotion, JsonSerializerOptions.Web);
-        if (temperature is not null)
-            providerMetadata["temperature"] = JsonSerializer.SerializeToElement(temperature, JsonSerializerOptions.Web);
-        if (topP is not null)
-            providerMetadata["top_p"] = JsonSerializer.SerializeToElement(topP, JsonSerializerOptions.Web);
+        var audioFormat = ResolveAudixaAudioFormat(payload, audioUrl);
+        var mimeType = ResolveAudixaAudioMimeType(audioResp.Content.Headers.ContentType?.MediaType, audioFormat, audioUrl);
+        var responseFormat = ResolveAudixaAudioFormat(mimeType, audioFormat, audioUrl);
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Audio = new SpeechAudioResponse
             {
                 Base64 = base64,
-                MimeType = "audio/mpeg",
-                Format = "mp3"
+                MimeType = mimeType,
+                Format = responseFormat
             },
             Warnings = warnings,
+            Request = new SpeechRequestItem
+            {
+                Body = payload
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = resolvedModel,
-                Body = new
-                {
-                    create = createDoc.RootElement.Clone(),
-                    status = statusRoot
-                }
+                ModelId = resolvedModel.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    private JsonElement GetAudixaProviderOptions(SpeechRequest request)
+    {
+        if (request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var options)
+            && options.ValueKind == JsonValueKind.Object)
+            return options;
+
+        return default;
+    }
+
+    private static Dictionary<string, object?> BuildAudixaTtsPayload(
+        SpeechRequest request,
+        JsonElement providerOptions,
+        string resolvedModel)
+    {
+        var payload = new Dictionary<string, object?>();
+
+        if (providerOptions.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in providerOptions.EnumerateObject())
+                payload[property.Name] = property.Value.Clone();
+        }
+
+        payload["text"] = request.Text;
+        payload["model"] = resolvedModel;
+
+        return payload;
+    }
+
+    private static void CopyProviderMetadataValue(
+        Dictionary<string, JsonElement> providerMetadata,
+        IReadOnlyDictionary<string, object?> payload,
+        string key)
+    {
+        if (!payload.TryGetValue(key, out var value) || value is null)
+            return;
+
+        providerMetadata[key] = value is JsonElement json
+            ? json.Clone()
+            : JsonSerializer.SerializeToElement(value, JsonSerializerOptions.Web);
+    }
+
+    private static void CopyProviderMetadataValue(
+        Dictionary<string, JsonElement> providerMetadata,
+        JsonElement source,
+        string key)
+    {
+        if (TryGetPropertyIgnoreCase(source, key, out var value))
+            providerMetadata[key] = value.Clone();
+    }
+
+    private static string? ResolveAudixaAudioFormat(IReadOnlyDictionary<string, object?> payload, string audioUrl)
+    {
+        if (payload.TryGetValue("audio_format", out var value))
+        {
+            if (value is string s && !string.IsNullOrWhiteSpace(s))
+                return s.Trim().ToLowerInvariant();
+
+            if (value is JsonElement { ValueKind: JsonValueKind.String } json)
+            {
+                var format = json.GetString();
+                if (!string.IsNullOrWhiteSpace(format))
+                    return format.Trim().ToLowerInvariant();
+            }
+        }
+
+        return ResolveAudixaAudioFormat(null, null, audioUrl);
+    }
+
+    private static string ResolveAudixaAudioMimeType(string? contentType, string? audioFormat, string audioUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType))
+            return contentType;
+
+        return audioFormat?.Trim().ToLowerInvariant() switch
+        {
+            "wav" => "audio/wav",
+            "mp3" => "audio/mpeg",
+            _ => ResolveAudixaAudioFormat(null, null, audioUrl) switch
+            {
+                "wav" => "audio/wav",
+                _ => "audio/mpeg"
+            }
+        };
+    }
+
+    private static string ResolveAudixaAudioFormat(string? contentType, string? requestedFormat, string audioUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(requestedFormat))
+            return requestedFormat.Trim().ToLowerInvariant();
+
+        if (!string.IsNullOrWhiteSpace(contentType))
+        {
+            var normalized = contentType.Trim().ToLowerInvariant();
+            if (normalized.Contains("wav", StringComparison.Ordinal))
+                return "wav";
+            if (normalized.Contains("mpeg", StringComparison.Ordinal) || normalized.Contains("mp3", StringComparison.Ordinal))
+                return "mp3";
+        }
+
+        var path = Uri.TryCreate(audioUrl, UriKind.Absolute, out var uri)
+            ? uri.AbsolutePath
+            : audioUrl;
+
+        return Path.GetExtension(path).Trim('.').ToLowerInvariant() switch
+        {
+            "wav" => "wav",
+            "mp3" => "mp3",
+            _ => "wav"
         };
     }
 
