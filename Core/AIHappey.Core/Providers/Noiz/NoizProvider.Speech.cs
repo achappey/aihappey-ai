@@ -77,32 +77,6 @@ public partial class NoizProvider
             throw new InvalidOperationException($"Noiz TTS failed ({(int)resp.StatusCode}): {body}");
         }
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["model"] = JsonSerializer.SerializeToElement(baseModelId, JsonSerializerOptions.Web)
-        };
-
-        if (!string.IsNullOrWhiteSpace(voiceId))
-            providerMetadata["voice_id"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web);
-        if (metadata?.QualityPreset is not null)
-            providerMetadata["quality_preset"] = JsonSerializer.SerializeToElement(metadata.QualityPreset.Value, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(request.OutputFormat ?? metadata?.OutputFormat))
-            providerMetadata["output_format"] = JsonSerializer.SerializeToElement(NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat), JsonSerializerOptions.Web);
-        if ((request.Speed ?? metadata?.Speed) is { } speed)
-            providerMetadata["speed"] = JsonSerializer.SerializeToElement(speed, JsonSerializerOptions.Web);
-        if (metadata?.Duration is not null)
-            providerMetadata["duration"] = JsonSerializer.SerializeToElement(metadata.Duration.Value, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(request.Language ?? metadata?.TargetLang))
-            providerMetadata["target_lang"] = JsonSerializer.SerializeToElement(request.Language ?? metadata?.TargetLang, JsonSerializerOptions.Web);
-        if (metadata?.SimilarityEnh is not null)
-            providerMetadata["similarity_enh"] = JsonSerializer.SerializeToElement(metadata.SimilarityEnh.Value, JsonSerializerOptions.Web);
-        if (!string.IsNullOrWhiteSpace(metadata?.Emo))
-            providerMetadata["emo"] = JsonSerializer.SerializeToElement(metadata.Emo, JsonSerializerOptions.Web);
-        if (metadata?.TrimSilence is not null)
-            providerMetadata["trim_silence"] = JsonSerializer.SerializeToElement(metadata.TrimSilence.Value, JsonSerializerOptions.Web);
-        if (metadata?.SaveVoice is not null)
-            providerMetadata["save_voice"] = JsonSerializer.SerializeToElement(metadata.SaveVoice.Value, JsonSerializerOptions.Web);
-
         var mediaType = resp.Content.Headers.ContentType?.MediaType;
         var format = NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat) ?? GuessFormat(mediaType) ?? "wav";
         var mimeType = string.IsNullOrWhiteSpace(mediaType) ? GuessMimeType(format) : mediaType!;
