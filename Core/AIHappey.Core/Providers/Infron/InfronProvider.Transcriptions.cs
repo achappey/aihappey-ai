@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -57,7 +58,7 @@ public partial class InfronProvider
             Content = form
         };
 
-        ApplyInfronAudioAuthHeader(httpRequest);
+        ApplyAuthHeader();
 
         using var resp = await _client.SendAsync(httpRequest, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -67,7 +68,7 @@ public partial class InfronProvider
                 ? $"Infron transcription request failed ({(int)resp.StatusCode})."
                 : $"Infron transcription request failed ({(int)resp.StatusCode}): {raw}");
 
-        return ConvertInfronTranscriptionResponse(raw, request.Model, now, warnings, request, resp);
+        return ConvertInfronTranscriptionResponse(raw, request.Model, now, warnings);
     }
 
     private static void AddInfronTranscriptionOptions(
@@ -129,9 +130,7 @@ public partial class InfronProvider
         string raw,
         string model,
         DateTime timestamp,
-        IEnumerable<object> warnings,
-        TranscriptionRequest request,
-        HttpResponseMessage response)
+        IEnumerable<object> warnings)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement.Clone();
@@ -151,11 +150,13 @@ public partial class InfronProvider
             DurationInSeconds = duration,
             Segments = segments,
             Warnings = warnings,
-            ProviderMetadata = BuildInfronTranscriptionProviderMetadata(request, root, response),
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = ResolveInfronTimestamp(root, timestamp),
-                ModelId = root.TryGetString("model") ?? model,
+                ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier())
+                     ?? model.ToModelId(GetIdentifier()),
                 Body = root
             }
         };

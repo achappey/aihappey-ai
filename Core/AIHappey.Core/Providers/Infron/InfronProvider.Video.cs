@@ -6,13 +6,13 @@ using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Infron;
 
 public partial class InfronProvider
 {
-    private static readonly Uri InfronVideoGenerationsUri = new("https://video.onerouter.pro/v1/videos/generations");
-    private static readonly Uri InfronVideoEditsUri = new("https://video.onerouter.pro/v1/videos/edits");
+    private static readonly Uri InfronVideoGenerationsUri = new("https://media.onerouter.pro/v1/videos/generations");
 
     private static readonly JsonSerializerOptions InfronVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -36,7 +36,7 @@ public partial class InfronProvider
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var videoId = ReadInfronVideoOption(metadata, "video_id", "videoId");
         var isEdit = !string.IsNullOrWhiteSpace(videoId);
-        var endpoint = isEdit ? InfronVideoEditsUri : InfronVideoGenerationsUri;
+        var endpoint = InfronVideoGenerationsUri;
         var payload = BuildInfronVideoPayload(request, videoId, metadata, warnings);
         var json = JsonSerializer.Serialize(payload, InfronVideoJsonOptions);
 
@@ -54,8 +54,13 @@ public partial class InfronProvider
                 : $"Infron video request failed ({(int)response.StatusCode}): {raw}");
 
         using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement.Clone();
-        var videos = await ExtractInfronVideosAsync(root, cancellationToken);
+        var createRoot = doc.RootElement.Clone();
+        var terminal = await WaitForInfronMediaTaskAsync("videos", createRoot, metadata, cancellationToken);
+
+        if (!IsInfronMediaSuccessStatus(terminal.Status) && !HasInfronMediaOutputs(terminal.Root))
+            throw new InvalidOperationException($"Infron video generation failed with status '{terminal.Status}': {GetInfronMediaError(terminal.Root)}");
+
+        var videos = await ExtractInfronVideosAsync(terminal.Root, cancellationToken);
 
         if (videos.Count == 0)
             throw new InvalidOperationException("No valid videos returned from Infron video API.");
@@ -64,21 +69,11 @@ public partial class InfronProvider
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    endpoint = endpoint.ToString(),
-                    request = payload,
-                    response = root,
-                    statusCode = (int)response.StatusCode,
-                    mode = isEdit ? "edit" : "generation"
-                }, InfronVideoJsonOptions)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
-                Timestamp = ResolveInfronTimestamp(root, now),
-                ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier())
+                Timestamp = ResolveInfronTimestamp(terminal.Root, now),
+                ModelId = terminal.Root.TryGetString("model")?.ToModelId(GetIdentifier())
                     ?? request.Model.ToModelId(GetIdentifier())
             }
         };
@@ -93,9 +88,12 @@ public partial class InfronProvider
         var payload = new Dictionary<string, object?>
         {
             ["model"] = request.Model,
-            ["prompt"] = request.Prompt,
-            ["output_format"] = ReadInfronVideoOption(metadata, "output_format", "outputFormat", "response_format", "responseFormat") ?? "url"
+            ["prompt"] = request.Prompt
         };
+
+        var outputFormat = ReadInfronVideoOption(metadata, "output_format", "outputFormat", "response_format", "responseFormat");
+        if (!string.IsNullOrWhiteSpace(outputFormat))
+            payload["output_format"] = outputFormat;
 
         if (!string.IsNullOrWhiteSpace(videoId))
             payload["video_id"] = videoId;
@@ -154,7 +152,8 @@ public partial class InfronProvider
                 || string.Equals(property.Name, "video_id", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(property.Name, "videoId", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(property.Name, "endpoint", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(property.Name, "operation", StringComparison.OrdinalIgnoreCase))
+                || string.Equals(property.Name, "operation", StringComparison.OrdinalIgnoreCase)
+                || IsInfronMediaControlOption(property.Name))
             {
                 continue;
             }
@@ -167,7 +166,14 @@ public partial class InfronProvider
     {
         List<VideoResponseFile> videos = [];
 
-        if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
+        foreach (var item in EnumerateInfronMediaOutputItems(root))
+        {
+            var normalized = await NormalizeInfronVideoItemAsync(item, cancellationToken);
+            if (normalized is not null)
+                videos.Add(normalized);
+        }
+
+        if (videos.Count > 0 || !root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
             return videos;
 
         foreach (var item in dataEl.EnumerateArray())
@@ -182,9 +188,11 @@ public partial class InfronProvider
 
     private async Task<VideoResponseFile?> NormalizeInfronVideoItemAsync(JsonElement item, CancellationToken cancellationToken)
     {
-        var dataValue = item.TryGetString("b64_json")
+        var dataValue = item.ValueKind == JsonValueKind.Object
+            ? item.TryGetString("b64_json")
             ?? item.TryGetString("base64")
-            ?? item.TryGetString("data");
+            ?? item.TryGetString("data")
+            : null;
 
         if (!string.IsNullOrWhiteSpace(dataValue))
         {
@@ -196,9 +204,7 @@ public partial class InfronProvider
             };
         }
 
-        var url = item.TryGetString("url")
-            ?? item.TryGetString("video_url")
-            ?? item.TryGetString("videoUrl");
+        var url = TryGetInfronMediaUrl(item, "video_url", "videoUrl");
 
         if (string.IsNullOrWhiteSpace(url))
             return null;

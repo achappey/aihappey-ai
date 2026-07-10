@@ -30,7 +30,18 @@ public sealed class InfronProviderMediaTests
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("""
-                    {"created":1761380356,"data":[{"url":"https://resource.onerouter.pro/video/generated/test.mp4","video_id":"video_123"}]}
+                    {"code":200,"message":"success","data":{"task_id":"task_123","object":"video","status":"created"}}
+                    """, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            if (request.Method == HttpMethod.Get
+                && string.Equals(request.RequestUri?.AbsoluteUri, "https://media.onerouter.pro/v1/videos/tasks/task_123", StringComparison.Ordinal))
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                    {"code":200,"message":"success","data":{"task_id":"task_123","object":"video","model":"veo3-fast","status":"completed","outputs":["https://resource.onerouter.pro/video/generated/test.mp4"]}}
                     """, Encoding.UTF8, MediaTypeNames.Application.Json)
                 };
             }
@@ -63,7 +74,7 @@ public sealed class InfronProviderMediaTests
         Assert.Equal("/v1/videos/generations", requestedPath);
         Assert.Equal("veo3-fast", payload.RootElement.GetProperty("model").GetString());
         Assert.Equal("A cute baby sea otter", payload.RootElement.GetProperty("prompt").GetString());
-        Assert.Equal("url", payload.RootElement.GetProperty("output_format").GetString());
+        Assert.False(payload.RootElement.TryGetProperty("output_format", out _));
 
         var video = Assert.Single(result.Videos ?? []);
         Assert.Equal(Convert.ToBase64String(expectedBytes), video.Data);
@@ -72,7 +83,7 @@ public sealed class InfronProviderMediaTests
     }
 
     [Fact]
-    public async Task VideoRequest_with_video_id_posts_to_edits_endpoint()
+    public async Task VideoRequest_with_video_id_posts_to_generations_endpoint_and_preserves_video_id()
     {
         var requestedPath = string.Empty;
         var requestJson = string.Empty;
@@ -113,9 +124,180 @@ public sealed class InfronProviderMediaTests
 
         using var payload = JsonDocument.Parse(requestJson);
 
-        Assert.Equal("/v1/videos/edits", requestedPath);
+        Assert.Equal("/v1/videos/generations", requestedPath);
         Assert.Equal("video_123", payload.RootElement.GetProperty("video_id").GetString());
         Assert.Equal("video/mp4", Assert.Single(result.Videos ?? []).MediaType);
+    }
+
+    [Fact]
+    public async Task ImageRequest_polls_task_and_downloads_output_url()
+    {
+        var requestedPath = string.Empty;
+        var requestJson = string.Empty;
+        var expectedBytes = Encoding.UTF8.GetBytes("image-bytes");
+
+        var provider = CreateProvider(request =>
+        {
+            if (request.Method == HttpMethod.Post)
+            {
+                requestedPath = request.RequestUri?.PathAndQuery ?? string.Empty;
+                requestJson = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult() ?? string.Empty;
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                    {"code":200,"message":"success","data":{"task_id":"image_task_123","object":"image","status":"created"}}
+                    """, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            if (request.Method == HttpMethod.Get
+                && string.Equals(request.RequestUri?.AbsoluteUri, "https://media.onerouter.pro/v1/images/tasks/image_task_123", StringComparison.Ordinal))
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                    {"code":200,"message":"success","data":{"task_id":"image_task_123","object":"image","model":"openai/gpt-image-2/text-to-image","status":"completed","outputs":["https://resource.onerouter.pro/image/generated/test.png"]}}
+                    """, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            if (string.Equals(request.RequestUri?.AbsoluteUri, "https://resource.onerouter.pro/image/generated/test.png", StringComparison.Ordinal))
+            {
+                var content = new ByteArrayContent(expectedBytes);
+                content.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = content
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("unexpected request")
+            };
+        });
+
+        var result = await provider.ImageRequest(new ImageRequest
+        {
+            Model = "openai/gpt-image-2/text-to-image",
+            Prompt = "A cute baby sea otter"
+        });
+
+        using var payload = JsonDocument.Parse(requestJson);
+
+        Assert.Equal("/v1/images/generations", requestedPath);
+        Assert.Equal("openai/gpt-image-2/text-to-image", payload.RootElement.GetProperty("model").GetString());
+        Assert.False(payload.RootElement.TryGetProperty("output_format", out _));
+        Assert.Equal($"data:image/png;base64,{Convert.ToBase64String(expectedBytes)}", Assert.Single(result.Images ?? []));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_polls_task_and_downloads_audio()
+    {
+        var requestedPath = string.Empty;
+        var requestJson = string.Empty;
+        var expectedBytes = Encoding.UTF8.GetBytes("audio-bytes");
+
+        var provider = CreateProvider(request =>
+        {
+            if (request.Method == HttpMethod.Post)
+            {
+                requestedPath = request.RequestUri?.PathAndQuery ?? string.Empty;
+                requestJson = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult() ?? string.Empty;
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                    {"code":200,"message":"success","data":{"task_id":"audio_task_123","object":"audio","status":"created"}}
+                    """, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            if (request.Method == HttpMethod.Get
+                && string.Equals(request.RequestUri?.AbsoluteUri, "https://media.onerouter.pro/v1/audios/tasks/audio_task_123", StringComparison.Ordinal))
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                    {"code":200,"message":"success","data":{"task_id":"audio_task_123","object":"audio","model":"openai/gpt-4o-mini-tts/text-to-audio","status":"completed","outputs":["https://resource.onerouter.pro/audio/generated/test.mp3"]}}
+                    """, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            if (string.Equals(request.RequestUri?.AbsoluteUri, "https://resource.onerouter.pro/audio/generated/test.mp3", StringComparison.Ordinal))
+            {
+                var content = new ByteArrayContent(expectedBytes);
+                content.Headers.ContentType = new MediaTypeHeaderValue("audio/mpeg");
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = content
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("unexpected request")
+            };
+        });
+
+        var result = await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "openai/gpt-4o-mini-tts/text-to-audio",
+            Text = "A cute baby sea otter",
+            Voice = "alloy"
+        });
+
+        using var payload = JsonDocument.Parse(requestJson);
+
+        Assert.Equal("/v1/audios/generations", requestedPath);
+        Assert.Equal("openai/gpt-4o-mini-tts/text-to-audio", payload.RootElement.GetProperty("model").GetString());
+        Assert.Equal("A cute baby sea otter", payload.RootElement.GetProperty("prompt").GetString());
+        Assert.Equal(Convert.ToBase64String(expectedBytes), result.Audio?.Base64);
+        Assert.Equal("audio/mpeg", result.Audio?.MimeType);
+    }
+
+    [Fact]
+    public async Task VideoRequest_throws_when_polled_task_fails()
+    {
+        var provider = CreateProvider(request =>
+        {
+            if (request.Method == HttpMethod.Post)
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                    {"code":200,"message":"success","data":{"task_id":"failed_task_123","object":"video","status":"created"}}
+                    """, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            if (request.Method == HttpMethod.Get
+                && string.Equals(request.RequestUri?.AbsoluteUri, "https://media.onerouter.pro/v1/videos/tasks/failed_task_123", StringComparison.Ordinal))
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                    {"code":200,"message":"success","data":{"task_id":"failed_task_123","object":"video","status":"failed","fail_reason":"capacity exhausted"}}
+                    """, Encoding.UTF8, MediaTypeNames.Application.Json)
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("unexpected request")
+            };
+        });
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.VideoRequest(new VideoRequest
+        {
+            Model = "google/veo3.1/text-to-video",
+            Prompt = "A cute baby sea otter"
+        }));
+
+        Assert.Contains("capacity exhausted", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -176,7 +358,7 @@ public sealed class InfronProviderMediaTests
 
         var ranking = result.Ranking.ToArray();
         Assert.Equal([2, 1], ranking.Select(r => r.Index).ToArray());
-        Assert.Equal("qwen/qwen3-reranker-0.6b", result.Response.ModelId);
+        Assert.Equal("infron/qwen/qwen3-reranker-0.6b", result.Response.ModelId);
         Assert.Contains(result.Warnings, warning => warning.ToString()?.Contains("documents.type", StringComparison.Ordinal) == true);
     }
 

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -11,8 +12,7 @@ namespace AIHappey.Core.Providers.Infron;
 
 public partial class InfronProvider
 {
-    private static readonly Uri InfronImageGenerationsUri = new("https://image.onerouter.pro/v1/images/generations");
-    private static readonly Uri InfronImageEditsUri = new("https://image.onerouter.pro/v1/images/edits");
+    private static readonly Uri InfronImageGenerationsUri = new("https://media.onerouter.pro/v1/images/generations");
 
     private static readonly JsonSerializerOptions InfronImageJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -37,7 +37,7 @@ public partial class InfronProvider
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var payload = BuildInfronImagePayload(request, hasFiles, metadata, warnings);
         var json = JsonSerializer.Serialize(payload, InfronImageJsonOptions);
-        var endpoint = hasFiles ? InfronImageEditsUri : InfronImageGenerationsUri;
+        var endpoint = InfronImageGenerationsUri;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
@@ -51,8 +51,13 @@ public partial class InfronProvider
             throw new InvalidOperationException($"Infron image request failed ({(int)httpResponse.StatusCode}): {raw}");
 
         using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement.Clone();
-        var images = await ExtractInfronImagesAsync(root, cancellationToken);
+        var createRoot = doc.RootElement.Clone();
+        var terminal = await WaitForInfronMediaTaskAsync("images", createRoot, metadata, cancellationToken);
+
+        if (!IsInfronMediaSuccessStatus(terminal.Status) && !HasInfronMediaOutputs(terminal.Root))
+            throw new InvalidOperationException($"Infron image generation failed with status '{terminal.Status}': {GetInfronMediaError(terminal.Root)}");
+
+        var images = await ExtractInfronImagesAsync(terminal.Root, cancellationToken);
 
         if (images.Count == 0)
             throw new InvalidOperationException("No valid images returned from Infron image API.");
@@ -61,15 +66,13 @@ public partial class InfronProvider
         {
             Images = images,
             Warnings = warnings,
-            Usage = ExtractInfronImageUsage(root),
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root
-            },
+            Usage = ExtractInfronImageUsage(terminal.Root),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
-                Timestamp = ResolveInfronImageTimestamp(root, now),
-                ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier()) ?? request.Model.ToModelId(GetIdentifier())
+                Timestamp = ResolveInfronImageTimestamp(terminal.Root, now),
+                ModelId = terminal.Root.TryGetString("model")?.ToModelId(GetIdentifier())
+                    ?? request.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -83,17 +86,18 @@ public partial class InfronProvider
         var outputFormat = metadata?.TryGetString("output_format")
             ?? metadata?.TryGetString("outputFormat")
             ?? metadata?.TryGetString("response_format")
-            ?? metadata?.TryGetString("responseFormat")
-            ?? "url";
+            ?? metadata?.TryGetString("responseFormat");
 
         var payload = new Dictionary<string, object?>
         {
             ["model"] = request.Model,
             ["prompt"] = request.Prompt,
             ["n"] = request.N,
-            ["size"] = request.Size,
-            ["output_format"] = outputFormat
+            ["size"] = request.Size
         };
+
+        if (!string.IsNullOrWhiteSpace(outputFormat))
+            payload["output_format"] = outputFormat;
 
         if (request.Seed is not null)
             payload["seed"] = request.Seed;
@@ -143,10 +147,13 @@ public partial class InfronProvider
 
         foreach (var property in metadataElement.EnumerateObject())
         {
-            if (string.Equals(property.Name, "outputFormat", StringComparison.OrdinalIgnoreCase)
+            if (string.Equals(property.Name, "output_format", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(property.Name, "outputFormat", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(property.Name, "response_format", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(property.Name, "responseFormat", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(property.Name, "image_urls", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(property.Name, "imageUrls", StringComparison.OrdinalIgnoreCase))
+                || string.Equals(property.Name, "imageUrls", StringComparison.OrdinalIgnoreCase)
+                || IsInfronMediaControlOption(property.Name))
             {
                 continue;
             }
@@ -159,7 +166,15 @@ public partial class InfronProvider
     {
         var images = new List<string>();
 
-        if (root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)
+        foreach (var item in EnumerateInfronMediaOutputItems(root))
+        {
+            var image = await NormalizeInfronImageItemAsync(item, cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(image))
+                images.Add(image);
+        }
+
+        if (images.Count == 0 && root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in dataEl.EnumerateArray())
             {
@@ -175,16 +190,16 @@ public partial class InfronProvider
 
     private async Task<string?> NormalizeInfronImageItemAsync(JsonElement item, CancellationToken cancellationToken)
     {
-        var b64 = item.TryGetString("b64_json")
+        var b64 = item.ValueKind == JsonValueKind.Object
+            ? item.TryGetString("b64_json")
             ?? item.TryGetString("base64")
-            ?? item.TryGetString("data");
+            ?? item.TryGetString("data")
+            : null;
 
         if (!string.IsNullOrWhiteSpace(b64))
             return b64.ToDataUrl(GuessInfronImageMediaType(item) ?? MediaTypeNames.Image.Png);
 
-        var url = item.TryGetString("url")
-            ?? item.TryGetString("image_url")
-            ?? item.TryGetString("imageUrl");
+        var url = TryGetInfronMediaUrl(item, "image_url", "imageUrl");
 
         if (string.IsNullOrWhiteSpace(url))
             return null;
