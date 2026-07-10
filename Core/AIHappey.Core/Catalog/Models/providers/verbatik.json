@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "verbatik/tts",
+      "object": "model",
+      "owned_by": "Verbatik",
+      "name": "Verbatik Text to Speech",
+      "type": "speech",
+      "description": "Convert any text into natural-sounding speech in 150+ languages."
+    }
+  ]
+}

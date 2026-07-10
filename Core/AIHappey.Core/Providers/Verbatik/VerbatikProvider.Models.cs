@@ -16,8 +16,76 @@ public partial class VerbatikProvider
 
         ApplyAuthHeader();
 
+        var baseModels = GetIdentifier().GetModels();
+
         var voices = await GetVoicesAsync(cancellationToken);
-        return BuildDynamicVoiceModels(voices);
+        var voiceModels = BuildDynamicVoiceModels(baseModels, voices);
+
+        return baseModels.Concat(voiceModels);
+    }
+
+    private IEnumerable<Model> BuildDynamicVoiceModels(
+    IEnumerable<Model> baseModels,
+    IEnumerable<VerbatikVoice> voices)
+    {
+        var validVoices = voices
+            .Where(IsValidVoice)
+            .ToArray();
+
+        return baseModels.SelectMany(baseModel =>
+            validVoices.Select(voice => CreateVoiceModel(baseModel, voice)));
+    }
+
+    private string GetLocalModelId(string modelId)
+    {
+        var providerPrefix = $"{GetIdentifier()}/";
+
+        return modelId.StartsWith(
+                providerPrefix,
+                StringComparison.OrdinalIgnoreCase)
+            ? modelId[providerPrefix.Length..]
+            : modelId;
+    }
+
+    private static IEnumerable<string> BuildVoiceTags(
+        Model baseModel,
+        VerbatikVoice voice)
+    {
+        var tags = new HashSet<string>(
+            baseModel.Tags ?? [],
+            StringComparer.OrdinalIgnoreCase);
+
+        tags.Add($"voice:{voice.Id}");
+
+        if (!string.IsNullOrWhiteSpace(voice.LanguageCode))
+            tags.Add($"language:{voice.LanguageCode.Trim()}");
+
+        if (!string.IsNullOrWhiteSpace(voice.Gender))
+            tags.Add($"gender:{voice.Gender.Trim()}");
+
+        return tags;
+    }
+
+    private static bool IsValidBaseModel(Model model)
+        => !string.IsNullOrWhiteSpace(model.Id)
+           && string.Equals(model.Type, "speech", StringComparison.OrdinalIgnoreCase);
+
+    private Model CreateVoiceModel(
+        Model baseModel,
+        VerbatikVoice voice)
+    {
+        var baseModelId = GetLocalModelId(baseModel.Id);
+
+        return new Model
+        {
+            Id = $"{baseModelId}/{voice.Id}".ToModelId(GetIdentifier()),
+            OwnedBy = baseModel.OwnedBy ?? ProviderName,
+            Type = baseModel.Type ?? "speech",
+            Name = $"{baseModel.Name ?? baseModelId} · {BuildVoiceDisplayName(voice)}",
+            Description = $"{baseModel.Description ?? $"{ProviderName} TTS model {baseModelId}"} Voice: {voice.Id}.",
+            Pricing = baseModel.Pricing,
+            Tags = BuildVoiceTags(baseModel, voice)
+        };
     }
 
     private async Task<IReadOnlyList<VerbatikVoice>> GetVoicesAsync(CancellationToken cancellationToken)
@@ -84,32 +152,6 @@ public partial class VerbatikProvider
             .Where(IsValidVoice)
             .GroupBy(v => v.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())];
-    }
-
-    private IEnumerable<Model> BuildDynamicVoiceModels(IEnumerable<VerbatikVoice> voices)
-        => voices
-            .Where(IsValidVoice)
-            .Select(v => new Model
-            {
-                Id = $"{VerbatikTtsModelPrefix}{v.Id}".ToModelId(GetIdentifier()),
-                OwnedBy = ProviderName,
-                Type = "speech",
-                Name = BuildVoiceDisplayName(v),
-                Description = $"{ProviderName} TTS voice {v.Id}.",
-                Tags = BuildVoiceTags(v)
-            });
-
-    private static IEnumerable<string> BuildVoiceTags(VerbatikVoice voice)
-    {
-        var tags = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(voice.LanguageCode))
-            tags.Add($"language:{voice.LanguageCode}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
-
-        return tags;
     }
 
     private static bool IsValidVoice(VerbatikVoice voice)
