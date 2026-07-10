@@ -147,7 +147,8 @@ public static class ChatCompletionsExtensions
             ChatCompletionUpdate? evt;
             try
             {
-                evt = JsonSerializer.Deserialize<ChatCompletionUpdate>(data);
+                evt = JsonSerializer.Deserialize<ChatCompletionUpdate>(
+                    NormalizeChatCompletionChunkJson(data));
             }
             catch (Exception ex)
             {
@@ -165,7 +166,51 @@ public static class ChatCompletionsExtensions
         }
     }
 
+    private static string NormalizeChatCompletionChunkJson(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
 
+        if (root.ValueKind != JsonValueKind.Object)
+            return json;
+
+        if (!root.TryGetProperty("created", out var createdEl) ||
+            createdEl.ValueKind != JsonValueKind.Number)
+        {
+            return json;
+        }
+
+        // Already valid long, no rewrite needed.
+        if (createdEl.TryGetInt64(out _))
+            return json;
+
+        var createdDecimal = createdEl.GetDecimal();
+
+        if (createdDecimal != decimal.Truncate(createdDecimal))
+            return json;
+
+        using var ms = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(ms))
+        {
+            writer.WriteStartObject();
+
+            foreach (var prop in root.EnumerateObject())
+            {
+                if (prop.NameEquals("created"))
+                {
+                    writer.WriteNumber("created", checked((long)createdDecimal));
+                }
+                else
+                {
+                    prop.WriteTo(writer);
+                }
+            }
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(ms.ToArray());
+    }
 
     [Obsolete]
     /// <summary>
