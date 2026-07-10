@@ -5,6 +5,10 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.ResembleAI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using System.Globalization;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
+using System.Text.Json.Nodes;
 
 namespace AIHappey.Core.Providers.ResembleAI;
 
@@ -113,6 +117,18 @@ public partial class ResembleAIProvider
 
         var effectiveFormat = NormalizeResembleOutputFormat(returnedFormat ?? outputFormat) ?? "wav";
         var mime = effectiveFormat.Equals("mp3", StringComparison.OrdinalIgnoreCase) ? "audio/mpeg" : "audio/wav";
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+        var duration = TryGetDecimal(root, "duration")
+            ?? TryGetDecimal(root, "synth_duration");
+
+        var costs = duration is > 0 && modelItem.Pricing?.Output != null
+            ? duration.Value * modelItem.Pricing.Output
+            : (decimal?)null;
+
+        var metadataNode = JsonNode.Parse(body)?.AsObject()
+            ?? throw new InvalidOperationException("ResembleAI TTS response was not a JSON object.");
+
+        metadataNode.Remove("audio_content");
 
         return new SpeechResponse
         {
@@ -123,12 +139,35 @@ public partial class ResembleAIProvider
                 Format = effectiveFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(metadataNode, costs),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = doc.RootElement.Clone()
             }
+        };
+    }
+
+    private static decimal? TryGetDecimal(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var el))
+            return null;
+
+        return el.ValueKind switch
+        {
+            JsonValueKind.Number when el.TryGetDecimal(out var value) => value,
+            JsonValueKind.String when decimal.TryParse(
+                el.GetString(),
+                NumberStyles.Any,
+                CultureInfo.InvariantCulture,
+                out var value) => value,
+            _ => null
         };
     }
 
