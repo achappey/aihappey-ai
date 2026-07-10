@@ -8,23 +8,38 @@ public partial class ResembleAIProvider
 {
     private const string ProviderName = nameof(ResembleAI);
 
-    private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var staticModels = GetIdentifier().GetModels().ToList();
-        var models = new List<Model>(staticModels);
+        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
 
-        var voices = await GetVoicesAsync(cancellationToken);
-        models.AddRange(BuildDynamicVoiceModels(voices, staticModels));
+                var staticModels = GetIdentifier()
+                    .GetModels()
+                    .WithPricing(GetIdentifier())
+                    .ToList();
+                    
+                var models = new List<Model>(staticModels);
 
-        return [.. models
-            .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())];
+                var voices = await GetVoicesAsync(cancellationToken);
+                models.AddRange(BuildDynamicVoiceModels(voices, staticModels));
+
+                return [.. models
+                .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())];
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<IReadOnlyList<ResembleVoice>> GetVoicesAsync(CancellationToken cancellationToken)
@@ -68,6 +83,7 @@ public partial class ResembleAIProvider
             .Select(m => new
             {
                 BaseModelId = ExtractProviderLocalModelId(m.Id),
+                Model = m,
                 BaseName = string.IsNullOrWhiteSpace(m.Name) ? ExtractProviderLocalModelId(m.Id) : m.Name
             })
             .Where(m => !string.IsNullOrWhiteSpace(m.BaseModelId))
@@ -83,6 +99,7 @@ public partial class ResembleAIProvider
                 {
                     Id = $"{baseModel.BaseModelId}/{voice.Uuid}".ToModelId(GetIdentifier()),
                     OwnedBy = ProviderName,
+                    Pricing = baseModel.Model.Pricing,
                     Type = "speech",
                     Name = $"{baseModel.BaseName} · {voiceName} ({voice.Uuid})",
                     Description = $"{ProviderName} {baseModel.BaseModelId} voice {voice.Uuid}.",

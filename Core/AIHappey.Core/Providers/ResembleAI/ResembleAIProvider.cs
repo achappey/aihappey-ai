@@ -17,9 +17,13 @@ public partial class ResembleAIProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public ResembleAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public ResembleAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://app.resemble.ai/");
     }
@@ -40,14 +44,6 @@ public partial class ResembleAIProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(ResembleAI).ToLowerInvariant();
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        return await ListModelsInternal(cancellationToken);
-    }
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
