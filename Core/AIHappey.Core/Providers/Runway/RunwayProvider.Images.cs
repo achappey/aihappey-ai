@@ -8,6 +8,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Runway;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Runway;
 
@@ -57,6 +58,7 @@ public partial class RunwayProvider
         return new()
         {
             Images = images,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
