@@ -16,10 +16,13 @@ public partial class SpeechifyProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public SpeechifyProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public SpeechifyProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.sws.speechify.com/");
     }
@@ -40,9 +43,6 @@ public partial class SpeechifyProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(Speechify).ToLowerInvariant();
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
