@@ -162,10 +162,16 @@ public partial class IONOSProvider
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = new Dictionary<string, JsonElement>()
+            {
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(new { },
+                    JsonSerializerOptions.Web)
+            },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+
             }
         };
     }
