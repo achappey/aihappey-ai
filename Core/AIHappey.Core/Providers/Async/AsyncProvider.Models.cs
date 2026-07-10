@@ -1,10 +1,7 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Async;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Async;
 

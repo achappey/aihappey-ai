@@ -2,7 +2,6 @@ using AIHappey.Core.AI;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using AIHappey.Vercel.Models;
-using System.Text.Json;
 using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Azure;

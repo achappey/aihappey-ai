@@ -7,7 +7,6 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Common.Model.Providers.Gladia;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using System.Globalization;
 using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Gladia;
