@@ -557,6 +557,7 @@ using AIHappey.Core.Providers.LucidQuery;
 using AIHappey.Core.Providers.HostYourAI;
 using AIHappey.Core.Providers.ReByteTasks;
 using AIHappey.Core.Providers.ReByteModels;
+using AIHappey.Core.Providers.WAYSCloud;
 
 namespace AIHappey.Core.AI;
 
@@ -1140,6 +1141,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HostYourAIProvider>();
         services.AddSingleton<IModelProvider, ReByteTasksProvider>();
         services.AddSingleton<IModelProvider, ReByteModelsProvider>();
+        services.AddSingleton<IModelProvider, WAYSCloudProvider>();
 
 
     }

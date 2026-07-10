@@ -558,6 +558,7 @@ public class AIServiceConfig
     public ProviderConfig? HostYourAI { get; set; }
     public ProviderConfig? ReByteTasks { get; set; }
     public ProviderConfig? ReByteModels { get; set; }
+    public ProviderConfig? WAYSCloud { get; set; }
 
 
 }

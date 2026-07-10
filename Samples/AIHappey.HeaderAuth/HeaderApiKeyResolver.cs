@@ -559,7 +559,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["lucidquery"] = "X-LucidQuery-Key",
             ["hostyourai"] = "X-HostYourAI-Key",
             ["rebytemodels"] = "X-ReByteModels-Key",
-            ["rebytetasks"] = "X-ReByteTasks-Key"
+            ["rebytetasks"] = "X-ReByteTasks-Key",
+            ["wayscloud"] = "X-WAYSCloud-Key"
 
         };
 
