@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Gradium;
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -108,7 +109,8 @@ public partial class GradiumProvider
 
         return new SpeechResponse
         {
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMetadata),
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(providerMetadata),
             Audio = new SpeechAudioResponse
             {
                 Base64 = Convert.ToBase64String(bytes),
@@ -116,16 +118,14 @@ public partial class GradiumProvider
                 Format = outputFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint = "api/post/speech/tts",
-                    status = (int)resp.StatusCode,
-                    contentType = mediaType
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
