@@ -50,13 +50,53 @@ public partial class AIMLProvider
             }
         }
 
+        var providerMetadata = new Dictionary<string, JsonElement>();
+        decimal? cost = null;
+
+        if (root["meta"] is JsonObject meta)
+        {
+            JsonNode? usage = null;
+            JsonNode? metrics = null;
+
+            if (meta["usage"] is JsonObject usageObject)
+            {
+                usage = usageObject.DeepClone();
+
+                if (usageObject["usd_spent"] is JsonValue costValue
+                    && costValue.TryGetValue<decimal>(out var parsedCost))
+                {
+                    cost = parsedCost;
+                }
+            }
+
+            if (meta["metrics"] is JsonObject metricsObject)
+                metrics = metricsObject.DeepClone();
+
+            providerMetadata[GetIdentifier()] =
+                JsonSerializer.SerializeToElement(new
+                {
+                    usage,
+                    metrics
+                }, JsonSerializerOptions.Web);
+        }
+
+        if (cost is not null)
+        {
+            providerMetadata["gateway"] =
+                JsonSerializer.SerializeToElement(new
+                {
+                    cost
+                }, JsonSerializerOptions.Web);
+        }
+
         return new()
         {
             Images = images,
+            ProviderMetadata = providerMetadata,
             Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }
