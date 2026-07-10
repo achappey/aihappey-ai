@@ -27,10 +27,6 @@ public partial class InworldProvider
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
 
-        var voiceId = request.Voice?.Trim();
-        if (string.IsNullOrWhiteSpace(voiceId))
-            throw new ArgumentException("Inworld TTS requires a voiceId. Provide SpeechRequest.voice.", nameof(request));
-
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
@@ -41,7 +37,18 @@ public partial class InworldProvider
 
         var metadata = request.GetProviderMetadata<InworldSpeechProviderMetadata>(GetIdentifier());
 
-        var modelId = NormalizeInworldModelId(request.Model);
+        var (modelId, modelVoiceId) = ParseInworldSpeechModelAndVoice(request.Model);
+        var voiceId = (modelVoiceId ?? request.Voice)?.Trim();
+        if (string.IsNullOrWhiteSpace(voiceId))
+            throw new ArgumentException("Inworld TTS requires a voiceId. Provide SpeechRequest.voice or use an Inworld speech shortcut model id.", nameof(request));
+
+        if (!string.IsNullOrWhiteSpace(modelVoiceId)
+            && !string.IsNullOrWhiteSpace(request.Voice)
+            && !string.Equals(request.Voice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+        }
+
         var audioConfig = BuildAudioConfig(request, metadata);
 
         var payload = new Dictionary<string, object?>
@@ -129,23 +136,43 @@ public partial class InworldProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()),
+                ModelId = BuildInworldSpeechResponseModelId(modelId, modelVoiceId),
                 Body = root.Clone()
             }
         };
     }
 
-    private static string NormalizeInworldModelId(string model)
+    private static (string ModelId, string? VoiceId) ParseInworldSpeechModelAndVoice(string model)
     {
         if (string.IsNullOrWhiteSpace(model))
             throw new ArgumentException("Model is required.", nameof(model));
 
         // Accept both "inworld/<model>" and "<model>".
-        var prefix = "inworld/";
-        return model.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-            ? model.SplitModelId().Model
-            : model.Trim();
+        const string prefix = "inworld/";
+        var raw = model.Trim();
+        if (raw.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            raw = raw[prefix.Length..];
+
+        var slashIndex = raw.IndexOf('/');
+        if (slashIndex < 0)
+            return (raw, null);
+
+        if (slashIndex == 0 || slashIndex >= raw.Length - 1)
+            throw new ArgumentException("Inworld speech shortcut model must include both base model id and voice id in the form '<baseModel>/<voiceId>'.", nameof(model));
+
+        var baseModelId = raw[..slashIndex].Trim();
+        var voiceId = raw[(slashIndex + 1)..].Trim();
+
+        if (string.IsNullOrWhiteSpace(baseModelId) || string.IsNullOrWhiteSpace(voiceId))
+            throw new ArgumentException("Inworld speech shortcut model must include both base model id and voice id in the form '<baseModel>/<voiceId>'.", nameof(model));
+
+        return (baseModelId, voiceId);
     }
+
+    private string BuildInworldSpeechResponseModelId(string modelId, string? voiceId)
+        => string.IsNullOrWhiteSpace(voiceId)
+            ? modelId.ToModelId(GetIdentifier())
+            : $"{modelId}/{voiceId}".ToModelId(GetIdentifier());
 
     private static object? BuildAudioConfig(SpeechRequest request, InworldSpeechProviderMetadata? metadata)
     {

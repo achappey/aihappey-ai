@@ -23,8 +23,11 @@ public partial class InworldProvider
                 ApplyAuthHeader();
 
                 var models = new List<Model>();
+                var catalogModels = GetIdentifier().GetModels();
+
                 models.AddRange(await ListApiModelsAsync(ct));
-                models.AddRange(GetIdentifier().GetModels());
+                models.AddRange(catalogModels);
+                models.AddRange(await ListSpeechVoiceShortcutModelsAsync(catalogModels, ct));
                 models.AddRange(await ListRouterShortcutModelsAsync(ct));
 
                 return DeduplicateModels(models);
@@ -154,6 +157,238 @@ public partial class InworldProvider
 
         return models;
     }
+
+    private async Task<List<Model>> ListSpeechVoiceShortcutModelsAsync(
+        IEnumerable<Model> catalogModels,
+        CancellationToken cancellationToken)
+    {
+        var baseSpeechModels = catalogModels
+            .Where(model => string.Equals(model.Type, "speech", StringComparison.OrdinalIgnoreCase))
+            .Where(model => !string.IsNullOrWhiteSpace(model.Id))
+            .ToArray();
+
+        if (baseSpeechModels.Length == 0)
+            return [];
+
+        var voices = await ListSpeechVoicesAsync(cancellationToken);
+        if (voices.Count == 0)
+            return [];
+
+        return [.. baseSpeechModels.SelectMany(baseModel => BuildSpeechVoiceShortcutModels(baseModel, voices))];
+    }
+
+    private async Task<IReadOnlyList<InworldVoice>> ListSpeechVoicesAsync(CancellationToken cancellationToken)
+    {
+        var voices = new List<InworldVoice>();
+
+        await AddSpeechVoicePagesAsync(voices, filter: null, cancellationToken);
+        await AddSpeechVoicePagesAsync(voices, filter: "community = \"true\"", cancellationToken);
+
+        return [.. voices
+            .Where(IsValidSpeechVoice)
+            .GroupBy(voice => voice.VoiceId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())];
+    }
+
+    private async Task AddSpeechVoicePagesAsync(
+        List<InworldVoice> voices,
+        string? filter,
+        CancellationToken cancellationToken)
+    {
+        const int pageSize = 2000;
+        string? pageToken = null;
+
+        do
+        {
+            var query = new List<string>
+            {
+                $"pageSize={pageSize}"
+            };
+
+            if (!string.IsNullOrWhiteSpace(filter))
+                query.Add($"filter={Uri.EscapeDataString(filter)}");
+
+            if (!string.IsNullOrWhiteSpace(pageToken))
+                query.Add($"pageToken={Uri.EscapeDataString(pageToken)}");
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"voices/v1/voices?{string.Join('&', query)}");
+            using var response = await _client.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new InvalidOperationException($"Inworld voices API failed ({(int)response.StatusCode}): {error}");
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = document.RootElement;
+
+            voices.AddRange(ParseSpeechVoices(root));
+            pageToken = ReadString(root, "nextPageToken") ?? ReadString(root, "next_page_token");
+        }
+        while (!string.IsNullOrWhiteSpace(pageToken));
+    }
+
+    private IEnumerable<Model> BuildSpeechVoiceShortcutModels(Model baseModel, IEnumerable<InworldVoice> voices)
+    {
+        var baseModelId = StripInworldProviderPrefix(baseModel.Id);
+
+        foreach (var voice in voices.Where(IsValidSpeechVoice))
+        {
+            yield return new Model
+            {
+                Id = $"{baseModelId}/{voice.VoiceId}".ToModelId(GetIdentifier()),
+                OwnedBy = baseModel.OwnedBy,
+                Type = "speech",
+                Name = $"{baseModel.Name} · {BuildSpeechVoiceDisplayName(voice)}",
+                Description = BuildSpeechVoiceShortcutDescription(baseModelId, voice),
+                Tags = BuildSpeechVoiceShortcutTags(baseModelId, voice),
+                Pricing = baseModel.Pricing
+            };
+        }
+    }
+
+    private static IReadOnlyList<InworldVoice> ParseSpeechVoices(JsonElement root)
+    {
+        JsonElement voicesElement = default;
+
+        if (root.ValueKind == JsonValueKind.Array)
+        {
+            voicesElement = root;
+        }
+        else if (root.ValueKind == JsonValueKind.Object
+                 && !TryGetProperty(root, "voices", out voicesElement))
+        {
+            return [];
+        }
+
+        if (voicesElement.ValueKind != JsonValueKind.Array)
+            return [];
+
+        var voices = new List<InworldVoice>();
+
+        foreach (var item in voicesElement.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var voiceId = ReadString(item, "voiceId")
+                ?? ReadString(item, "voice_id")
+                ?? ReadString(item, "id");
+
+            if (string.IsNullOrWhiteSpace(voiceId))
+                continue;
+
+            voices.Add(new InworldVoice
+            {
+                VoiceId = voiceId.Trim(),
+                Name = ReadString(item, "name"),
+                DisplayName = ReadString(item, "displayName") ?? ReadString(item, "display_name"),
+                Description = ReadString(item, "description"),
+                LanguageCode = ReadString(item, "langCode") ?? ReadString(item, "lang_code"),
+                Source = ReadString(item, "source"),
+                Gender = ReadString(item, "gender"),
+                AgeGroup = ReadString(item, "ageGroup") ?? ReadString(item, "age_group"),
+                PromptLanguages = [.. ReadStringArray(item, "promptLanguages")
+                    .Concat(ReadStringArray(item, "prompt_languages"))],
+                Tags = [.. ReadStringArray(item, "tags")],
+                Categories = [.. ReadStringArray(item, "categories")]
+            });
+        }
+
+        return [.. voices
+            .Where(IsValidSpeechVoice)
+            .GroupBy(voice => voice.VoiceId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())];
+    }
+
+    private static string StripInworldProviderPrefix(string modelId)
+    {
+        const string providerPrefix = "inworld/";
+        return modelId.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)
+            ? modelId[providerPrefix.Length..]
+            : modelId;
+    }
+
+    private static string BuildSpeechVoiceDisplayName(InworldVoice voice)
+    {
+        var name = string.IsNullOrWhiteSpace(voice.DisplayName)
+            ? voice.VoiceId
+            : voice.DisplayName.Trim();
+
+        var language = voice.PromptLanguages.FirstOrDefault(language => !string.IsNullOrWhiteSpace(language))
+            ?? voice.LanguageCode;
+
+        if (string.IsNullOrWhiteSpace(language) && string.IsNullOrWhiteSpace(voice.Gender))
+            return name;
+
+        var details = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(language))
+            details.Add(language.Trim());
+
+        if (!string.IsNullOrWhiteSpace(voice.Gender))
+            details.Add(voice.Gender.Trim());
+
+        return $"{name} ({string.Join(", ", details)})";
+    }
+
+    private static string BuildSpeechVoiceShortcutDescription(string baseModelId, InworldVoice voice)
+    {
+        var displayName = string.IsNullOrWhiteSpace(voice.DisplayName)
+            ? voice.VoiceId
+            : voice.DisplayName.Trim();
+
+        var parts = new List<string>
+        {
+            $"Inworld TTS shortcut model for voice '{displayName}' ({voice.VoiceId}) on {baseModelId}."
+        };
+
+        if (!string.IsNullOrWhiteSpace(voice.Description))
+            parts.Add(voice.Description.Trim());
+
+        if (!string.IsNullOrWhiteSpace(voice.Source))
+            parts.Add($"Source: {voice.Source.Trim()}.");
+
+        return string.Join(' ', parts);
+    }
+
+    private static IEnumerable<string> BuildSpeechVoiceShortcutTags(string baseModelId, InworldVoice voice)
+    {
+        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "tts",
+            "voice-shortcut",
+            $"model:{NormalizeTagValue(baseModelId)}",
+            $"voice:{NormalizeTagValue(voice.VoiceId)}"
+        };
+
+        AddTag(tags, "source", voice.Source);
+        AddTag(tags, "gender", voice.Gender);
+        AddTag(tags, "age-group", voice.AgeGroup);
+        AddTag(tags, "language", voice.LanguageCode);
+
+        foreach (var language in voice.PromptLanguages.Take(10))
+            AddTag(tags, "prompt-language", language);
+
+        foreach (var category in voice.Categories.Take(10))
+            AddTag(tags, "category", category);
+
+        foreach (var tag in voice.Tags.Take(20))
+            AddTag(tags, "tag", tag);
+
+        return tags;
+    }
+
+    private static void AddTag(HashSet<string> tags, string prefix, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            tags.Add($"{prefix}:{NormalizeTagValue(value)}");
+    }
+
+    private static bool IsValidSpeechVoice(InworldVoice voice)
+        => !string.IsNullOrWhiteSpace(voice.VoiceId);
 
     private List<Model> DeduplicateModels(IEnumerable<Model> models)
         => models
@@ -396,7 +631,34 @@ public partial class InworldProvider
         if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out value))
             return true;
 
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
         value = default;
         return false;
+    }
+
+    private sealed class InworldVoice
+    {
+        public string VoiceId { get; set; } = null!;
+        public string? Name { get; set; }
+        public string? DisplayName { get; set; }
+        public string? Description { get; set; }
+        public string? LanguageCode { get; set; }
+        public string? Source { get; set; }
+        public string? Gender { get; set; }
+        public string? AgeGroup { get; set; }
+        public IReadOnlyList<string> PromptLanguages { get; set; } = [];
+        public IReadOnlyList<string> Tags { get; set; } = [];
+        public IReadOnlyList<string> Categories { get; set; } = [];
     }
 }
