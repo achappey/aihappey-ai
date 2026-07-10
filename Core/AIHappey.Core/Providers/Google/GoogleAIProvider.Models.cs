@@ -64,6 +64,21 @@ public partial class GoogleAIProvider
                     });
                 }
 
+                var omniModels = rawModels.Where(a => a.Id.Contains("omni"));
+
+                foreach (var omniModel in omniModels ?? [])
+                {
+                    rawModels.Add(new Model()
+                    {
+                        Name = omniModel.Name,
+                        Id = omniModel.Id,
+                        OwnedBy = omniModel.OwnedBy,
+                        Description = omniModel.Description,
+                        Created = omniModel.Created,
+                        Type = "video"
+                    });
+                }
+
                 return rawModels
                     .WithPricing(GetIdentifier());
 

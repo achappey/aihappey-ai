@@ -28,6 +28,9 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No Google API key.");
 
+        if (request.Model.Contains("omni"))
+            return await OmniVideoRequest(request, cancellationToken);
+
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
