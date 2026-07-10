@@ -59,10 +59,10 @@ public partial class BergetAIProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Berget STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertBergetTranscriptionResponse(json, effectiveModel, now);
+        return ConvertBergetTranscriptionResponse(json, effectiveModel, now, GetIdentifier());
     }
 
-    private static TranscriptionResponse ConvertBergetTranscriptionResponse(string json, string model, DateTime timestamp)
+    private static TranscriptionResponse ConvertBergetTranscriptionResponse(string json, string model, DateTime timestamp, string providerKey)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -71,15 +71,24 @@ public partial class BergetAIProvider
             ? textEl.GetString() ?? string.Empty
             : string.Empty;
 
+        var providerMetadata = new Dictionary<string, JsonElement>
+        {
+            [providerKey] = JsonSerializer.SerializeToElement(new
+            {
+
+            }, JsonSerializerOptions.Web)
+        };
+
         return new TranscriptionResponse
         {
             Text = text,
             Segments = [],
+            ProviderMetadata = providerMetadata,
             Response = new ResponseData
             {
                 Timestamp = timestamp,
-                ModelId = model,
-                Body = json
+                ModelId = model.ToModelId(providerKey),
+                Body = root.Clone()
             }
         };
     }
