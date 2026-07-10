@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tierup/tierup-speed",
+      "object": "model",
+      "owned_by": "TierUp",
+      "name": "tierup-speed",
+      "type": "language",
+      "description": "Fast, simple tasks."
+    },
+    {
+      "id": "tierup/tierup-balance",
+      "object": "model",
+      "owned_by": "TierUp",
+      "name": "tierup-balance",
+      "type": "language",
+      "description": "Best all-rounder for chat & code."
+    },
+    {
+      "id": "tierup/tierup-intelligence",
+      "object": "model",
+      "owned_by": "TierUp",
+      "name": "tierup-intelligence",
+      "type": "language",
+      "description": "Highest general intelligence."
+    },
+    {
+      "id": "tierup/tierup-reasoning",
+      "object": "model",
+      "owned_by": "TierUp",
+      "name": "tierup-reasoning",
+      "type": "language",
+      "description": "Deep chain-of-thought reasoning."
+    }
+  ]
+}

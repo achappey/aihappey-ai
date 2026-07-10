@@ -560,7 +560,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["hostyourai"] = "X-HostYourAI-Key",
             ["rebytemodels"] = "X-ReByteModels-Key",
             ["rebytetasks"] = "X-ReByteTasks-Key",
-            ["wayscloud"] = "X-WAYSCloud-Key"
+            ["wayscloud"] = "X-WAYSCloud-Key",
+            ["tierup"] = "X-TierUp-Key"
 
         };
 

@@ -1,0 +1,20 @@
+{
+  "tierup/tierup-balance": {
+    "pricing": {
+      "input": "0.0000015",
+      "output": "0.0000075"
+    }
+  },
+  "tierup/tierup-intelligence": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.0000125"
+    }
+  },
+  "tierup/tierup-reasoning": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000004"
+    }
+  }
+}
