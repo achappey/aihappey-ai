@@ -717,7 +717,7 @@ public class StorageBackedModelProviderResolver(
         if (snapshot == null || snapshot.Entries.Count == 0)
             return null;
 
-        if (_options.IncludeApiKeysInSnapshotIdentity && UseKeyedFirstProviderSelection)
+        if (UseKeyedFirstProviderSelection)
             snapshot = FilterSnapshotForCurrentRequest(snapshot);
 
         if (snapshot == null || snapshot.Entries.Count == 0)
@@ -987,7 +987,7 @@ public class StorageBackedModelProviderResolver(
     }
 
     private bool UseKeyedFirstProviderSelection
-        => _options.IncludeApiKeysInSnapshotIdentity && _apiKeyPresenceResolver != null;
+        => _apiKeyPresenceResolver != null;
 
     private bool HasRequestProviderKey(IModelProvider provider)
         => _apiKeyPresenceResolver?.HasConfiguredKey(provider.GetIdentifier()) == true;

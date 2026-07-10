@@ -138,6 +138,64 @@ public sealed class StorageBackedModelProviderResolverTests
     }
 
     [Fact]
+    public async Task ResolveModels_ServerSideResolverWithPresenceExtensionReturnsOnlyConfiguredProviders()
+    {
+        var providers = new[]
+        {
+            new TestModelProvider("configured", "configured/model"),
+            new TestModelProvider("empty", "empty/model"),
+            new TestModelProvider("unconfigured", "unconfigured/model")
+        };
+        var snapshotStore = new RecordingSnapshotStore();
+        var resolver = CreateResolver(
+            new ConfigPresenceApiKeyResolver(new Dictionary<string, string?>
+            {
+                ["configured"] = "server-key",
+                ["empty"] = " "
+            }),
+            providers,
+            snapshotStore,
+            includeApiKeysInSnapshotIdentity: false);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+
+        Assert.Equal(["configured/model"], response.Data.Select(model => model.Id));
+        Assert.Equal(["configured"], providers.Where(provider => provider.ListModelsCalls > 0).Select(provider => provider.GetIdentifier()));
+        Assert.Equal(["configured"], snapshotStore.ProviderSnapshotReads.Select(read => read.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task ResolveModels_ServerSideResolverWithPresenceExtensionFiltersSharedAggregateSnapshot()
+    {
+        var providers = new[]
+        {
+            new TestModelProvider("configured", "configured/model"),
+            new TestModelProvider("unconfigured", "unconfigured/model")
+        };
+        var snapshotStore = new RecordingSnapshotStore
+        {
+            LatestAggregateSnapshot = CreateAggregateSnapshot(
+            [
+                ("configured", "configured/model"),
+                ("unconfigured", "unconfigured/model")
+            ])
+        };
+        var resolver = CreateResolver(
+            new ConfigPresenceApiKeyResolver(new Dictionary<string, string?>
+            {
+                ["configured"] = "server-key"
+            }),
+            providers,
+            snapshotStore,
+            includeApiKeysInSnapshotIdentity: false);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+
+        Assert.Equal(["configured/model"], response.Data.Select(model => model.Id));
+        Assert.DoesNotContain(response.Data, model => model.Id == "unconfigured/model");
+    }
+
+    [Fact]
     public async Task Resolve_DisabledModelThrowsButResolveModelsStillIncludesModel()
     {
         var providers = new[]
@@ -225,6 +283,15 @@ public sealed class StorageBackedModelProviderResolverTests
             => keys.TryGetValue(provider, out var key) ? key : null;
     }
 
+    private sealed class ConfigPresenceApiKeyResolver(IReadOnlyDictionary<string, string?> keys) : IApiKeyResolver, IApiKeyPresenceResolver
+    {
+        public string? Resolve(string provider)
+            => keys.TryGetValue(provider, out var key) ? key : null;
+
+        public bool HasConfiguredKey(string provider)
+            => !string.IsNullOrWhiteSpace(Resolve(provider));
+    }
+
     private sealed class TestHttpClientFactory : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => new();
@@ -233,6 +300,8 @@ public sealed class StorageBackedModelProviderResolverTests
     private sealed class RecordingSnapshotStore : IModelListingSnapshotStore
     {
         public List<(string ProviderId, string CacheKey)> ProviderSnapshotReads { get; } = [];
+
+        public StoredResolvedModelSnapshot? LatestAggregateSnapshot { get; init; }
 
         public Task<StoredProviderModelSnapshot?> GetProviderSnapshotAsync(
             string providerId,
@@ -261,7 +330,7 @@ public sealed class StorageBackedModelProviderResolverTests
             => Task.FromResult<StoredResolvedModelSnapshot?>(null);
 
         public Task<StoredResolvedModelSnapshot?> GetLatestAggregateSnapshotAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult<StoredResolvedModelSnapshot?>(null);
+            => Task.FromResult(LatestAggregateSnapshot);
 
         public Task SaveAggregateSnapshotAsync(
             string aggregateKey,
@@ -282,6 +351,40 @@ public sealed class StorageBackedModelProviderResolverTests
 
         public Task DeleteAsync(ModelListingQueueMessage message, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
+    }
+
+    private static StoredResolvedModelSnapshot CreateAggregateSnapshot(IReadOnlyCollection<(string ProviderId, string ModelId)> entries)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new StoredResolvedModelSnapshot
+        {
+            AggregateKey = "resolver:test",
+            StoredAtUtc = now,
+            RefreshAfterUtc = now.AddHours(1),
+            ExpiresAtUtc = now.AddDays(1),
+            Entries = [.. entries.Select(entry => new StoredResolvedModelEntry
+            {
+                ProviderId = entry.ProviderId,
+                Model = new Model
+                {
+                    Id = entry.ModelId,
+                    Name = entry.ModelId,
+                    OwnedBy = entry.ProviderId,
+                    Created = 1,
+                    Type = "chat"
+                }
+            })],
+            Providers = [.. entries.Select(entry => new StoredResolvedProviderState
+            {
+                ProviderId = entry.ProviderId,
+                CacheKey = $"models:{entry.ProviderId}",
+                SourceCacheKey = $"models:{entry.ProviderId}",
+                StoredAtUtc = now,
+                RefreshAfterUtc = now.AddHours(1),
+                ExpiresAtUtc = now.AddDays(1)
+            })]
+        };
     }
 
     private sealed class TestModelProvider(string identifier, string modelId) : IModelProvider

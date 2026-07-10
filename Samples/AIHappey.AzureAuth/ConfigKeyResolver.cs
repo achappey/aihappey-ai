@@ -8,7 +8,7 @@ using Azure.Identity;
 
 namespace AIHappey.AzureAuth;
 
-public class ConfigKeyResolver : IApiKeyResolver
+public class ConfigKeyResolver : IApiKeyResolver, IApiKeyPresenceResolver
 {
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
     private static readonly IReadOnlyDictionary<string, PropertyInfo> ProviderProperties = typeof(AIServiceConfig)
@@ -59,6 +59,9 @@ public class ConfigKeyResolver : IApiKeyResolver
 
         return (property.GetValue(_config) as ProviderConfig)?.ApiKey;
     }
+
+    public bool HasConfiguredKey(string provider)
+        => !string.IsNullOrWhiteSpace(Resolve(provider));
 
     private string? ResolveFromKeyVaultIfAvailable(string secretName)
     {
