@@ -3,14 +3,16 @@ using AIHappey.ChatCompletions.Models;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+             options,
+             relativeUrl: "openai/v1/chat/completions",
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -18,6 +20,8 @@ public partial class NovitaProvider
         ApplyAuthHeader();
 
         return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+                    options,
+                    relativeUrl: "openai/v1/chat/completions",
+                    cancellationToken: cancellationToken);
     }
 }
