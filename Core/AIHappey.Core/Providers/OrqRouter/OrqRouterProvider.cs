@@ -114,17 +114,17 @@ public partial class OrqRouterProvider : IModelProvider
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => OrqRouterImageRequest(request, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => OrqRouterTranscriptionRequest(request, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => OrqRouterSpeechRequest(request, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => OrqRouterRerankingRequest(request, cancellationToken);
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest,
         CancellationToken cancellationToken = default)
