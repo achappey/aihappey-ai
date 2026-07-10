@@ -15,9 +15,13 @@ public partial class NoizProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
 
-    public NoizProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+     private readonly AsyncCacheHelper _memoryCache;
+
+    public NoizProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://noiz.ai/v1/");
     }
@@ -37,14 +41,6 @@ public partial class NoizProvider : IModelProvider
         => throw new NotImplementedException();
 
     public string GetIdentifier() => "noiz";
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        return await ListModelsInternal(cancellationToken);
-    }
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

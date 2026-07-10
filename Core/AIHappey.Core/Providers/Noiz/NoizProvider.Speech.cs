@@ -1,5 +1,7 @@
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Noiz;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -107,7 +109,7 @@ public partial class NoizProvider
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Audio = new SpeechAudioResponse
             {
                 Base64 = Convert.ToBase64String(bytes),
@@ -118,18 +120,7 @@ public partial class NoizProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint = "text-to-speech",
-                    status = (int)resp.StatusCode,
-                    contentType = mediaType,
-                    headers = new
-                    {
-                        timestamp = GetHeader(resp, "X-Timestamp"),
-                        audioDuration = GetHeader(resp, "X-Audio-Duration")
-                    }
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
