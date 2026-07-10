@@ -15,6 +15,8 @@ public partial class RunwayProvider
     private const string RunwayAvatarModel = "avatar";
     private const string RunwayAvatarApiModel = "gwm1_avatars";
     private const string RunwayAvatarEndpoint = "v1/avatar_videos";
+    private const string RunwayVideoUpscaleModel = "magnific_video_upscaler_creative";
+    private const string RunwayVideoUpscaleEndpoint = "v1/video_upscale";
 
     private static readonly HashSet<string> RunwayPresetAvatarIds = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -61,11 +63,18 @@ public partial class RunwayProvider
         }
 
         var avatarRoute = ResolveAvatarRoute(request.Model);
+        var isVideoUpscale = IsVideoUpscaleModel(request.Model);
 
         Dictionary<string, object?> payload;
         string endpoint;
 
-        if (avatarRoute.IsAvatar)
+        if (isVideoUpscale)
+        {
+            AddVideoUpscaleUnsupportedWarnings(request, warnings);
+            payload = BuildVideoUpscalePayload(request, warnings);
+            endpoint = RunwayVideoUpscaleEndpoint;
+        }
+        else if (avatarRoute.IsAvatar)
         {
             AddAvatarUnsupportedWarnings(request, warnings);
             payload = BuildAvatarVideoPayload(request, avatarRoute, warnings);
@@ -183,6 +192,95 @@ public partial class RunwayProvider
 
         return payload;
     }
+
+    private static bool IsVideoUpscaleModel(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return false;
+
+        var localModel = model.Trim();
+        var split = localModel.SplitModelId();
+        if (string.Equals(split.Provider, "runway", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(split.Model))
+        {
+            localModel = split.Model;
+        }
+
+        return string.Equals(localModel, RunwayVideoUpscaleModel, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AddVideoUpscaleUnsupportedWarnings(VideoRequest request, List<object> warnings)
+    {
+        if (!string.IsNullOrWhiteSpace(request.Prompt))
+            warnings.Add(new { type = "unsupported", feature = "prompt" });
+        if (request.Seed is not null)
+            warnings.Add(new { type = "unsupported", feature = "seed" });
+        if (request.Duration is not null)
+            warnings.Add(new { type = "unsupported", feature = "duration" });
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
+            warnings.Add(new { type = "unsupported", feature = "aspectRatio" });
+        if (request.Image is not null)
+            warnings.Add(new { type = "unsupported", feature = "image" });
+        if (request.FrameImages?.Any() == true)
+            warnings.Add(new { type = "unsupported", feature = "frameImages" });
+    }
+
+    private static Dictionary<string, object?> BuildVideoUpscalePayload(VideoRequest request, List<object> warnings)
+    {
+        var providerOptions = TryGetRunwayProviderOptions(request);
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = RunwayVideoUpscaleModel
+        };
+
+        AddVideoUpscaleProviderOption(payload, providerOptions, "resolution");
+        AddVideoUpscaleProviderOption(payload, providerOptions, "creativity");
+        AddVideoUpscaleProviderOption(payload, providerOptions, "sharpen");
+        AddVideoUpscaleProviderOption(payload, providerOptions, "smartGrain");
+        AddVideoUpscaleProviderOption(payload, providerOptions, "flavor");
+        AddVideoUpscaleProviderOption(payload, providerOptions, "fpsBoost");
+
+        if (!payload.ContainsKey("resolution") && !string.IsNullOrWhiteSpace(request.Resolution))
+            payload["resolution"] = request.Resolution;
+
+        if (providerOptions is { ValueKind: JsonValueKind.Object })
+        {
+            foreach (var property in providerOptions.Value.EnumerateObject())
+            {
+                if (!IsSupportedVideoUpscaleProviderOption(property.Name))
+                    warnings.Add(new { type = "unsupported", feature = $"providerOptions.runway.{property.Name}" });
+            }
+        }
+
+        var inputReferences = request.InputReferences?.ToList() ?? [];
+        var videoReference = inputReferences.FirstOrDefault(static r =>
+            r.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase));
+
+        if (inputReferences.Any(static r => !r.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)))
+            warnings.Add(new { type = "unsupported", feature = "inputReferences.nonVideo" });
+
+        if (videoReference is null)
+            throw new ArgumentException("Runway video upscale requires a video inputReference.", nameof(request));
+
+        payload["videoUri"] = ToRunwayMediaUri(videoReference);
+
+        return payload;
+    }
+
+    private static void AddVideoUpscaleProviderOption(Dictionary<string, object?> payload, JsonElement? providerOptions, string propertyName)
+    {
+        if (providerOptions is not { ValueKind: JsonValueKind.Object } options)
+            return;
+
+        if (options.TryGetProperty(propertyName, out var property)
+            && property.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        {
+            payload[propertyName] = property.Clone();
+        }
+    }
+
+    private static bool IsSupportedVideoUpscaleProviderOption(string propertyName)
+        => propertyName is "resolution" or "creativity" or "sharpen" or "smartGrain" or "flavor" or "fpsBoost";
 
     private static RunwayAvatarRoute ResolveAvatarRoute(string? model)
     {
