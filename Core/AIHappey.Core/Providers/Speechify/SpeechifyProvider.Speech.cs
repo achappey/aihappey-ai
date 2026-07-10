@@ -7,6 +7,7 @@ using AIHappey.Common.Model.Providers.Speechify;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Speechify;
 
@@ -39,14 +40,31 @@ public partial class SpeechifyProvider
 
         var metadata = request.GetProviderMetadata<SpeechifySpeechProviderMetadata>(GetIdentifier());
 
+        var (model, modelVoiceId) = ResolveModelAndVoice(request.Model);
+
         // ---- resolve required voice_id ----
         // Contract requested by user:
-        // 1) providerOptions.speechify.voice_id
-        // 2) SpeechRequest.voice
-        // 3) error
-        var voiceId = (metadata?.VoiceId ?? request.Voice)?.Trim();
+        // 1) Speechify voice shortcut in the model id
+        // 2) providerOptions.speechify.voice_id
+        // 3) SpeechRequest.voice
+        // 4) error
+        var voiceId = (modelVoiceId ?? metadata?.VoiceId ?? request.Voice)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
-            throw new ArgumentException("Speechify requires a voice_id. Provide providerOptions.speechify.voice_id or SpeechRequest.voice.", nameof(request));
+            throw new ArgumentException("Speechify requires a voice_id. Provide a Speechify voice shortcut in the model id, providerOptions.speechify.voice_id, or SpeechRequest.voice.", nameof(request));
+
+        if (!string.IsNullOrWhiteSpace(modelVoiceId)
+            && !string.IsNullOrWhiteSpace(request.Voice)
+            && !string.Equals(modelVoiceId, request.Voice.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(modelVoiceId)
+            && !string.IsNullOrWhiteSpace(metadata?.VoiceId)
+            && !string.Equals(modelVoiceId, metadata.VoiceId.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add(new { type = "ignored", feature = "voice_id", reason = "voice_id is derived from model id" });
+        }
 
         // Speechify audio_format: recommend always passing it.
         var audioFormat = NormalizeSpeechifyAudioFormat(
@@ -55,9 +73,6 @@ public partial class SpeechifyProvider
             ?? "wav");
 
         var language = (request.Language ?? metadata?.Language)?.Trim();
-
-        // Allow providerOptions override of model if desired.
-        var model = request.Model.Trim();
 
         var payload = new Dictionary<string, object?>
         {
@@ -133,10 +148,12 @@ public partial class SpeechifyProvider
                 Format = effectiveFormat
             },
             Warnings = warnings,
-            Response = new ResponseData
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
+             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = BuildResolvedSpeechifyModelId(model, modelVoiceId),
                 Body = root.Clone()
             },
             Request = new SpeechRequestItem
@@ -182,5 +199,29 @@ public partial class SpeechifyProvider
             _ => "application/octet-stream"
         };
     }
+
+    private (string Model, string? VoiceId) ResolveModelAndVoice(string model)
+    {
+        var raw = model.Trim();
+        var providerPrefix = GetIdentifier() + "/";
+        if (raw.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            raw = raw[providerPrefix.Length..];
+
+        var parts = raw.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 1 && !string.IsNullOrWhiteSpace(parts[0]))
+            return (parts[0], null);
+
+        if (parts.Length == 2
+            && !string.IsNullOrWhiteSpace(parts[0])
+            && !string.IsNullOrWhiteSpace(parts[1]))
+            return (parts[0], parts[1]);
+
+        throw new ArgumentException("Speechify model must be '{model}' or '{model}/{voiceId}'.", nameof(model));
+    }
+
+    private string BuildResolvedSpeechifyModelId(string model, string? voiceId)
+        => string.IsNullOrWhiteSpace(voiceId)
+            ? model.ToModelId(GetIdentifier())
+            : $"{model}/{voiceId}".ToModelId(GetIdentifier());
 }
 
