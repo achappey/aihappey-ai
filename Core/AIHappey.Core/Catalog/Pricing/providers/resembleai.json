@@ -1,0 +1,17 @@
+{
+  "resembleai/chatterbox-turbo": {
+    "pricing": {
+      "output": "0.0005"
+    }
+  },
+  "resembleai/chatterbox": {
+    "pricing": {
+      "output": "0.0005"
+    }
+  },
+  "resembleai/chatterbox-multilingual": {
+    "pricing": {
+      "output": "0.0005"
+    }
+  }
+}
