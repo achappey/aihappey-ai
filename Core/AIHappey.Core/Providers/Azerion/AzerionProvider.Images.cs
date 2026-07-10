@@ -20,7 +20,7 @@ public partial class AzerionProvider
         ApplyAuthHeader();
 
         ArgumentNullException.ThrowIfNull(request);
-        
+
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
@@ -88,11 +88,26 @@ public partial class AzerionProvider
             throw new InvalidOperationException("Azerion image generation response contained no images.");
 
         var usage = ExtractUsage(raw);
+        using var responseDoc = JsonDocument.Parse(raw);
+        var root = responseDoc.RootElement;
+
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        if (root.TryGetProperty("usage", out var usageEl)
+            && usageEl.ValueKind == JsonValueKind.Object)
+        {
+            providerMetadata[GetIdentifier()] =
+                JsonSerializer.SerializeToElement(new
+                {
+                    usage = usageEl.Clone()
+                }, JsonSerializerOptions.Web);
+        }
 
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = providerMetadata,
             Usage = usage,
             Response = new()
             {
