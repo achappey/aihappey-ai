@@ -6,6 +6,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.ResembleAI;
 
@@ -65,7 +66,7 @@ public partial class ResembleAIProvider
         var completedJson = await PollTranscriptUntilDoneAsync(jobUuid, cancellationToken);
 
         // 3) Convert
-        return ConvertTranscriptResponse(completedJson, modelId, now);
+        return ConvertTranscriptResponse(completedJson, modelId, now, GetIdentifier());
     }
 
     private async Task<string> CreateTranscriptJobAsync(
@@ -153,7 +154,8 @@ public partial class ResembleAIProvider
         }
     }
 
-    private static TranscriptionResponse ConvertTranscriptResponse(string json, string modelId, DateTime timestamp)
+    private static TranscriptionResponse ConvertTranscriptResponse(
+            string json, string modelId, DateTime timestamp, string providerId)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -215,7 +217,7 @@ public partial class ResembleAIProvider
 
         return new TranscriptionResponse
         {
-            ProviderMetadata = null,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Text = text,
             Language = null,
             DurationInSeconds = durationSeconds,
@@ -225,7 +227,7 @@ public partial class ResembleAIProvider
             {
                 Timestamp = timestamp,
                 ModelId = modelId,
-                Body = json
+                Body = root.Clone()
             }
         };
     }
