@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Inworld;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -92,6 +93,22 @@ public partial class InworldProvider
         var encoding = ResolveAudioEncoding(request, metadata);
         var format = MapEncodingToFormat(encoding);
         var mime = MapEncodingToMimeType(encoding);
+        var currentModel = await this.GetModel(request.Model, cancellationToken);
+        var usage = root.TryGetProperty("usage", out var usageEl) &&
+            usageEl.ValueKind == JsonValueKind.Object
+                    ? usageEl.Clone()
+                    : JsonSerializer.SerializeToElement(new { });
+
+        var processedCharacters = usage.TryGetProperty(
+                "processedCharactersCount",
+                out var processedCharactersEl) &&
+            processedCharactersEl.TryGetInt64(out var count)
+                ? count
+                : 0;
+
+        var costs = currentModel?.Pricing?.Input is { } inputPrice
+            ? processedCharacters * inputPrice
+            : (decimal?)null;
 
         return new SpeechResponse
         {
@@ -101,15 +118,18 @@ public partial class InworldProvider
                 MimeType = mime,
                 Format = format
             },
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Request = new()
             {
-                [GetIdentifier()] = root.Clone()
+                Body = payload,
             },
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(usage,
+                costs: costs
+            ),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

@@ -1,0 +1,17 @@
+{
+  "inworld/inworld-tts-2": {
+    "pricing": {
+      "input": "0.000025"
+    }
+  },
+  "inworld/inworld-tts-1.5-max": {
+    "pricing": {
+      "input": "0.000035"
+    }
+  },
+  "inworld/inworld-tts-1.5-mini": {
+    "pricing": {
+      "input": "0.000015"
+    }
+  }
+}
