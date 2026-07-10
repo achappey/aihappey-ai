@@ -2,6 +2,13 @@
     "object": "list",
     "data": [
         {
+            "id": "runway/gen4_image_turbo",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "gen4_image_turbo",
+            "type": "image"
+        },
+        {
             "id": "runway/gen4_image",
             "object": "model",
             "owned_by": "Runway",
@@ -9,10 +16,24 @@
             "type": "image"
         },
         {
-            "id": "runway/gen4_image_turbo",
+            "id": "runway/gpt_image_2",
             "object": "model",
             "owned_by": "Runway",
-            "name": "gen4_image_turbo",
+            "name": "gpt_image_2",
+            "type": "image"
+        },
+        {
+            "id": "runway/gemini_image3_pro",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "gemini_image3_pro",
+            "type": "image"
+        },
+        {
+            "id": "runway/gemini_image3.1_flash",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "gemini_image3.1_flash",
             "type": "image"
         },
         {
@@ -23,6 +44,13 @@
             "type": "image"
         },
         {
+            "id": "runway/seedream5_pro",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "seedream5_pro",
+            "type": "image"
+        },
+        {
             "id": "runway/eleven_multilingual_v2",
             "object": "model",
             "owned_by": "Runway",
@@ -30,11 +58,18 @@
             "type": "speech"
         },
         {
-            "id": "runway/eleven_text_to_sound_v2",
+            "id": "runway/seed_audio",
             "object": "model",
             "owned_by": "Runway",
-            "name": "eleven_text_to_sound_v2",
+            "name": "seed_audio",
             "type": "speech"
+        },
+        {
+            "id": "runway/gen4.5",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "gen4.5",
+            "type": "video"
         },
         {
             "id": "runway/veo3.1",
@@ -51,6 +86,48 @@
             "type": "video"
         },
         {
+            "id": "runway/happyhorse_1_0",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "happyhorse_1_0",
+            "type": "video"
+        },
+        {
+            "id": "runway/aleph2",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "aleph2",
+            "type": "video"
+        },
+        {
+            "id": "runway/seedance2",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "seedance2",
+            "type": "video"
+        },
+        {
+            "id": "runway/seedance2_fast",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "seedance2_fast",
+            "type": "video"
+        },
+        {
+            "id": "runway/seedance2_mini",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "seedance2_mini",
+            "type": "video"
+        },
+        {
+            "id": "runway/gemini_omni_flash",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "gemini_omni_flash",
+            "type": "video"
+        },
+        {
             "id": "runway/veo3",
             "object": "model",
             "owned_by": "Runway",
@@ -58,17 +135,81 @@
             "type": "video"
         },
         {
-            "id": "runway/gen4_turbo",
+            "id": "runway/avatar",
             "object": "model",
             "owned_by": "Runway",
-            "name": "gen4_turbo",
+            "name": "Avatar",
+            "description": "Generate avatar video from audio or text",
             "type": "video"
         },
         {
-            "id": "runway/gen3a_turbo",
+            "id": "runway/avatar/game-character",
             "object": "model",
             "owned_by": "Runway",
-            "name": "gen3a_turbo",
+            "name": "game-character",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/music-superstar",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "music-superstar",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/game-character-man",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "game-character-man",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/cat-character",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "cat-character",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/influencer",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "influencer",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/tennis-coach",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "tennis-coach",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/human-resource",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "human-resource",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/fashion-designer",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "fashion-designer",
+            "type": "video"
+        },
+        {
+            "id": "runway/avatar/cooking-teacher",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "cooking-teacher",
+            "type": "video"
+        },
+        {
+            "id": "runway/magnific_video_upscaler_creative",
+            "object": "model",
+            "owned_by": "Runway",
+            "name": "magnific_video_upscaler_creative",
             "type": "video"
         }
     ]
