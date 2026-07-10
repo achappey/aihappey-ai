@@ -1,6 +1,8 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -103,19 +105,11 @@ public partial class TextSynthProvider
                 Format = "mp3"
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    model = baseModel,
-                    voice = normalizedVoice,
-                    output_mime = mime
-                }, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = new
                 {
                     model = baseModel,
