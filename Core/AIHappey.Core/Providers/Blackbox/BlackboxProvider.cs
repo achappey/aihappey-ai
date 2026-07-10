@@ -6,7 +6,6 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
@@ -69,12 +68,9 @@ public partial class BLACKBOXProvider : IModelProvider
 
     public string GetIdentifier() => nameof(BLACKBOX).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-             cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -147,13 +143,20 @@ public partial class BLACKBOXProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => request.Model?.Equals("blackbox-search") == true
-      ? this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
-      : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => request.Model?.Equals("blackbox-search") == true
-        ? this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
-        : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
+
+    /*  public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => request.Model?.Equals("blackbox-search") == true
+        ? this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+        : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+      public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+         => request.Model?.Equals("blackbox-search") == true
+          ? this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
+          : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+  */
 }
