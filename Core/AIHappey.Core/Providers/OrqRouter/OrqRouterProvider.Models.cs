@@ -21,7 +21,7 @@ public partial class OrqRouterProvider
             {
                 ApplyAuthHeader();
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "models");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v2/router/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
