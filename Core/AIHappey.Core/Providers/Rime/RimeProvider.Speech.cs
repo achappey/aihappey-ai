@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Rime;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -159,10 +160,14 @@ public partial class RimeProvider
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta)
             },
+            Request = new()
+            {
+                Body = payload,
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = JsonSerializer.SerializeToElement(providerMeta)
             }
         };
