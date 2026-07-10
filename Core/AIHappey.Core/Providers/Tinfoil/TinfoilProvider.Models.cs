@@ -63,16 +63,19 @@ public sealed partial class TinfoilProvider
                 _ => type
             };
 
-            models.Add(new Model
+            if (type == "language")
             {
-                Id = id!.ToModelId(GetIdentifier()),
-                Name = id!,
-                OwnedBy = ownedBy ?? "tinfoil",
-                Created = created,
-                ContextWindow = contextWindow,
-                MaxTokens = maxTokens,
-                Type = type ?? id!.GuessModelType()
-            });
+                models.Add(new Model
+                {
+                    Id = id!.ToModelId(GetIdentifier()),
+                    Name = id!,
+                    OwnedBy = ownedBy ?? "tinfoil",
+                    Created = created,
+                    ContextWindow = contextWindow,
+                    MaxTokens = maxTokens,
+                    Type = type ?? id!.GuessModelType()
+                });
+            }
         }
 
         return models
