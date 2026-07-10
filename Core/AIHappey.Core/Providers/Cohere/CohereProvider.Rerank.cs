@@ -7,6 +7,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Cohere;
 
@@ -86,25 +87,6 @@ public partial class CohereProvider
             cost = searchUnits.Value * rerankModel.Pricing.Input;
         }
 
-        var providerMetadata = new Dictionary<string, JsonElement>();
-
-        if (root.TryGetProperty("meta", out var cohereMetaEl)
-            && cohereMetaEl.ValueKind == JsonValueKind.Object)
-        {
-            providerMetadata[GetIdentifier()] = JsonSerializer.SerializeToElement(new
-            {
-                meta = cohereMetaEl.Clone()
-            }, JsonSerializerOptions.Web);
-        }
-
-        if (cost is not null)
-        {
-            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, JsonSerializerOptions.Web);
-        }
-
         var responseId = root.TryGetProperty("id", out var idEl)
             && idEl.ValueKind == JsonValueKind.String
                 ? idEl.GetString()
@@ -113,7 +95,15 @@ public partial class CohereProvider
         return new RerankingResponse
         {
             Ranking = results,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier()
+            .CreatePrimitiveProviderMetadata(
+                root.TryGetProperty("meta", out var cohereMetaEl)
+                && cohereMetaEl.ValueKind == JsonValueKind.Object ? new
+                {
+                    meta = cohereMetaEl.Clone()
+                } : null,
+                cost
+            ),
             Response = new()
             {
                 Timestamp = now,

@@ -1,3 +1,4 @@
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
@@ -91,10 +92,8 @@ public partial class VeniceProvider
                 Format = resolvedFormat
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetadata, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(providerMetadata),
             Response = new ResponseData
             {
                 Timestamp = now,

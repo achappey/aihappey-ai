@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
@@ -117,18 +118,11 @@ public partial class OpenRouterProvider
     {
         var cost = ReadOpenRouterTranscriptionDecimal(usage, "cost");
 
-        return new Dictionary<string, JsonElement>
-        {
-            ["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, OpenRouterTranscriptionJsonOptions),
-
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+        return GetIdentifier()
+            .CreatePrimitiveProviderMetadata(new
             {
                 usage
-            }, OpenRouterTranscriptionJsonOptions)
-        };
+            }, cost);
     }
 
     private TranscriptionResponse ConvertOpenRouterTranscriptionResponse(

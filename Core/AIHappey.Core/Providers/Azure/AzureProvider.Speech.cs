@@ -3,6 +3,7 @@ using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using AIHappey.Vercel.Models;
 using System.Text.Json;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -50,13 +51,11 @@ public sealed partial class AzureProvider
                     MimeType = "audio/wav",
                     Format = "wav",
                 },
-                ProviderMetadata = new Dictionary<string, JsonElement>
+                ProviderMetadata = GetIdentifier()
+                    .CreatePrimitiveProviderMetadata(new
                 {
-                    [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                    {
-                        audioDuration = result.AudioDuration
-                    }, JsonSerializerOptions.Web)
-                },
+                    audioDuration = result.AudioDuration
+                }),
                 Response = new()
                 {
                     Timestamp = now,

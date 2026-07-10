@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -111,15 +112,8 @@ public partial class SpaceXAIProvider
             8,
             MidpointRounding.AwayFromZero);
 
-        return new Dictionary<string, JsonElement>
-        {
-            [SpaceXAIRequestExtensions.SpaceXAIIdentifier] = JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web),
-
-            ["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost = inputCost
-            }, JsonSerializerOptions.Web)
-        };
+        return SpaceXAIRequestExtensions.SpaceXAIIdentifier
+            .CreatePrimitiveProviderMetadata(costs: inputCost);
     }
 
     private static XAITtsModelSelection ParseSpeechModel(string model)

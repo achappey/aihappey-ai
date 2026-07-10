@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -91,12 +92,7 @@ public partial class TogetherProvider
         var mime = ResolveSpeechMimeType(responseFormat, resp.Content.Headers.ContentType?.MediaType);
         var audio = Convert.ToBase64String(bytes);
 
-        var providerMetadata = new Dictionary<string, JsonElement>()
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-            {
-            }, JsonSerializerOptions.Web)
-        };
+        var providerMetadata = GetIdentifier().CreatePrimitiveProviderMetadata();
 
         return new SpeechResponse
         {

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Runpod;
@@ -109,10 +110,8 @@ public partial class RunpodProvider
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(runpodMetadata, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(runpodMetadata),
             Response = new()
             {
                 Timestamp = now,

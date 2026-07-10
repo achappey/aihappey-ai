@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Cartesia;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -115,10 +116,8 @@ public partial class CartesiaProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta)
-            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(providerMeta),
             Response = new()
             {
                 Timestamp = now,

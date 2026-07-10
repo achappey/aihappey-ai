@@ -5,6 +5,7 @@ using AIHappey.Common.Model.Providers.SmallestAI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SmallestAI;
 
@@ -108,15 +109,13 @@ public partial class SmallestAIProvider
             DurationInSeconds = duration,
             Segments = segments,
             Warnings = [],
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier()
+            .CreatePrimitiveProviderMetadata(new
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    model = PulseModel,
-                    language,
-                    metadata = metadata,
-                })
-            },
+                model = PulseModel,
+                language,
+                metadata,
+            }),
             Response = new()
             {
                 Timestamp = now,

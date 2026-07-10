@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -313,14 +314,11 @@ public partial class VeniceProvider
             {
                 Images = [dataUrl],
                 Warnings = warnings,
-                ProviderMetadata = new Dictionary<string, JsonElement>
-                {
-                    [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta, JsonSerializerOptions.Web)
-                },
-                Response = new ()
+                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMeta),
+                Response = new()
                 {
                     Timestamp = now,
-                    ModelId = model.ToModelId(GetIdentifier()) 
+                    ModelId = model.ToModelId(GetIdentifier())
                 }
             };
         }
@@ -362,10 +360,7 @@ public partial class VeniceProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetadata, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMetadata),
             Response = new()
             {
                 Timestamp = now,

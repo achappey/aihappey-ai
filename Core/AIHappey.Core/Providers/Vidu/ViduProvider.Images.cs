@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Vidu;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -121,14 +122,12 @@ public partial class ViduProvider
         {
             Images = [Convert.ToBase64String(fileBytes).ToDataUrl(mediaType)],
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = completed.RawRoot.Clone()
-            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(completed.RawRoot.Clone()),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

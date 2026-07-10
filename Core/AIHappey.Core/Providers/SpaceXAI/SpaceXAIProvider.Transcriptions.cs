@@ -4,6 +4,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
@@ -185,27 +186,16 @@ public partial class SpaceXAIProvider
         var language = TryGetString(root, "language");
         var duration = TryGetFloat(root, "duration");
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [SpaceXAIRequestExtensions.SpaceXAIIdentifier] =
-                JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web)
-        };
-
-        if (pricePerSecond is not null && duration is > 0)
-        {
-            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost = pricePerSecond.Value * (decimal)duration.Value
-            }, JsonSerializerOptions.Web);
-        }
-
         return new TranscriptionResponse
         {
             Text = text,
             Language = string.IsNullOrWhiteSpace(language) ? null : language,
             DurationInSeconds = duration,
             Segments = segments,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = SpaceXAIRequestExtensions.SpaceXAIIdentifier
+            .CreatePrimitiveProviderMetadata(costs:
+                pricePerSecond is not null && duration is > 0 ?
+                pricePerSecond.Value * (decimal)duration.Value : null),
             Response = new ResponseData
             {
                 Timestamp = timestamp,

@@ -1,3 +1,4 @@
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -152,10 +153,7 @@ public partial class OpenRouterProvider
             metadata["providerOptions"] = rawOptions.Clone();
         }
 
-        return new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(metadata, OpenRouterSpeechJsonOptions)
-        };
+        return GetIdentifier().CreatePrimitiveProviderMetadata(metadata);
     }
 
     private static string? ReadOpenRouterSpeechString(object? value)

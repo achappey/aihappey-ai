@@ -7,6 +7,7 @@ using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Jina;
 
@@ -98,29 +99,18 @@ public partial class JinaProvider
             cost = totalTokens.Value * modelItem.Pricing.Input;
         }
 
-        var providerMetadata = new Dictionary<string, JsonElement>();
-
-        if (root.TryGetProperty("usage", out var providerUsageEl)
-            && providerUsageEl.ValueKind == JsonValueKind.Object)
-        {
-            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
-            {
-                usage = providerUsageEl.Clone()
-            }, JsonSerializerOptions.Web);
-        }
-
-        if (cost is not null)
-        {
-            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, JsonSerializerOptions.Web);
-        }
-
         return new RerankingResponse
         {
             Ranking = results,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = providerKey
+            .CreatePrimitiveProviderMetadata(
+                root.TryGetProperty("usage", out var providerUsageEl)
+                && providerUsageEl.ValueKind == JsonValueKind.Object ?
+                    new
+                    {
+                        usage = providerUsageEl.Clone()
+                    } : null, cost
+            ),
             Response = new()
             {
                 Timestamp = now,

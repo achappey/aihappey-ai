@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Vercel.Models;
 
@@ -163,12 +164,7 @@ public sealed partial class DeepInfraProvider
             fallbackFormat: outputFormat,
             fallbackMimeType: OpenAIProvider.MapToAudioMimeType(outputFormat));
 
-        var providerMetadata = new Dictionary<string, JsonElement>()
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-            {
-            }, JsonSerializerOptions.Web)
-        };
+        var providerMetadata = GetIdentifier().CreatePrimitiveProviderMetadata();
 
         if (TryGetDeepInfraCost(root, out var cost))
         {

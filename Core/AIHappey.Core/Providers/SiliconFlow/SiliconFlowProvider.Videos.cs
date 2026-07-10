@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
@@ -126,14 +127,12 @@ public partial class SiliconFlowProvider
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier()
+            .CreatePrimitiveProviderMetadata(new Dictionary<string, JsonElement>
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
-                {
-                    ["submit"] = submitDoc.RootElement.Clone(),
-                    ["status"] = completed.Root.Clone()
-                }, JsonSerializerOptions.Web)
-            },
+                ["submit"] = submitDoc.RootElement.Clone(),
+                ["status"] = completed.Root.Clone()
+            }),
             Response = new()
             {
                 Timestamp = now,

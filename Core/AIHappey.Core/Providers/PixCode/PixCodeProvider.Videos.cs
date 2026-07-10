@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.PixCode;
@@ -86,15 +87,13 @@ public partial class PixCodeProvider
         var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
         var mediaType = ResolveVideoMediaType(completed, videoUrl) ?? "video/mp4";
 
-        var providerMetadata = new Dictionary<string, JsonElement>
+        var providerMetadata = GetIdentifier()
+        .CreatePrimitiveProviderMetadata(new
         {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-            {
-                family = "video-task",
-                create = createDoc.RootElement.Clone(),
-                poll = completed
-            }, JsonSerializerOptions.Web)
-        };
+            family = "video-task",
+            create = createDoc.RootElement.Clone(),
+            poll = completed
+        });
 
         return new VideoResponse
         {

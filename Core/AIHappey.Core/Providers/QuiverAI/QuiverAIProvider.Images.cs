@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -66,14 +67,12 @@ public partial class QuiverAIProvider
         {
             Images = distinct,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -152,32 +151,32 @@ public partial class QuiverAIProvider
                 break;
 
             case JsonValueKind.String:
-            {
-                var value = element.GetString();
-                if (string.IsNullOrWhiteSpace(value))
-                    return;
-
-                if (value.StartsWith("data:image", StringComparison.OrdinalIgnoreCase)
-                    || value.StartsWith("data:application/svg+xml", StringComparison.OrdinalIgnoreCase))
                 {
-                    dataUrls.Add(value);
-                    return;
-                }
+                    var value = element.GetString();
+                    if (string.IsNullOrWhiteSpace(value))
+                        return;
 
-                if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-                    || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                {
-                    urls.Add(value);
-                    return;
-                }
+                    if (value.StartsWith("data:image", StringComparison.OrdinalIgnoreCase)
+                        || value.StartsWith("data:application/svg+xml", StringComparison.OrdinalIgnoreCase))
+                    {
+                        dataUrls.Add(value);
+                        return;
+                    }
 
-                if (value.Contains("<svg", StringComparison.OrdinalIgnoreCase))
-                {
-                    dataUrls.Add(Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).ToDataUrl("image/svg+xml"));
-                }
+                    if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                        || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        urls.Add(value);
+                        return;
+                    }
 
-                break;
-            }
+                    if (value.Contains("<svg", StringComparison.OrdinalIgnoreCase))
+                    {
+                        dataUrls.Add(Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).ToDataUrl("image/svg+xml"));
+                    }
+
+                    break;
+                }
         }
     }
 

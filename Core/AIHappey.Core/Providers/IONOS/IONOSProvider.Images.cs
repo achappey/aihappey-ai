@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -162,11 +163,7 @@ public partial class IONOSProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>()
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new { },
-                    JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,

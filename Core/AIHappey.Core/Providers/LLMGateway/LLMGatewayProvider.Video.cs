@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.LLMGateway;
@@ -83,15 +84,13 @@ public partial class LLMGatewayProvider
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier()
+            .CreatePrimitiveProviderMetadata(new
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    create = createRoot,
-                    poll = completed.Root
-                }, LLMGatewayVideoJsonOptions)
-            },
-            Response = new ()
+                create = createRoot,
+                poll = completed.Root
+            }),
+            Response = new()
             {
                 Timestamp = ResolveLLMGatewayVideoTimestamp(completed.Root, now),
                 ModelId = ReadLLMGatewayVideoString(completed.Root, "model")?.ToModelId(GetIdentifier())

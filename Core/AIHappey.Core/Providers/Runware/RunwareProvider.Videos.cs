@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Runware;
@@ -93,18 +94,8 @@ public sealed partial class RunwareProvider
 
         var (videoBytes, mediaType) = await ResolveVideoBytesAsync(completed.root, metadata, cancellationToken);
 
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        try
-        {
-            providerMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = completed.root.Clone()
-            };
-        }
-        catch
-        {
-            // best-effort only
-        }
+        Dictionary<string, JsonElement>? providerMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(completed.root.Clone());
 
         return new VideoResponse
         {

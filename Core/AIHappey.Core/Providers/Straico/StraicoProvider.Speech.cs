@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Vercel.Models;
 
@@ -105,14 +106,12 @@ public partial class StraicoProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier()
+            .CreatePrimitiveProviderMetadata(new
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    audio = audioUrl,
-                    raw = ttsRoot.Clone()
-                })
-            },
+                audio = audioUrl,
+                raw = ttsRoot.Clone()
+            }),
             Response = new ResponseData
             {
                 Timestamp = now,

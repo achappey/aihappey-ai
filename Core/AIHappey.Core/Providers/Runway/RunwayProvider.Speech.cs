@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Providers.Runway;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Runway;
 
@@ -81,14 +82,12 @@ public partial class RunwayProvider
                 MimeType = resolvedMime,
                 Format = MapMimeToAudioFormat(resolvedMime)
             },
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-
-                }, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload,
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
@@ -165,27 +164,21 @@ public partial class RunwayProvider
             ? mimeType!
             : GuessMimeFromUrl(outputUrl) ?? "audio/mpeg";
 
-        return new SpeechResponse
+        return new()
         {
-            Audio = new SpeechAudioResponse
+            Audio = new()
             {
                 Base64 = base64,
                 MimeType = resolvedMime,
                 Format = MapMimeToAudioFormat(resolvedMime)
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-
-                }, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Request = new()
             {
                 Body = payload
             },
-            Response = new ResponseData
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier()),

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.JSON2Video;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -98,24 +99,13 @@ public partial class JSON2VideoProvider
             ?? GuessVideoMediaType(videoUrl)
             ?? "video/mp4";
 
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        try
-        {
-            var meta = new Dictionary<string, JsonElement>
+        Dictionary<string, JsonElement>? providerMetadata =
+            GetIdentifier()
+            .CreatePrimitiveProviderMetadata(new Dictionary<string, JsonElement>
             {
                 ["create"] = createRoot,
                 ["status"] = completed.RawRoot.Clone()
-            };
-
-            providerMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(meta, JsonSerializerOptions.Web)
-            };
-        }
-        catch
-        {
-            // best-effort only
-        }
+            });
 
         return new VideoResponse
         {

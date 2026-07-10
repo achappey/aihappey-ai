@@ -5,6 +5,7 @@ using AIHappey.Vercel.Models;
 using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -62,11 +63,7 @@ public partial class OpenAIProvider
 
     private static Dictionary<string, JsonElement> BuildProviderMetadata(string text, Model? modelItem)
     {
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [Constants.OpenAI] = JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web)
-        };
-
+        var providerMetadata = Constants.OpenAI.CreatePrimitiveProviderMetadata();
         var inputPricePerCharacter = modelItem?.Pricing?.Input;
 
         if (inputPricePerCharacter is null or <= 0m)

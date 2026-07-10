@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.BergetAI;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -71,13 +72,7 @@ public partial class BergetAIProvider
             ? textEl.GetString() ?? string.Empty
             : string.Empty;
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [providerKey] = JsonSerializer.SerializeToElement(new
-            {
-
-            }, JsonSerializerOptions.Web)
-        };
+        var providerMetadata = providerKey.CreatePrimitiveProviderMetadata();
 
         return new TranscriptionResponse
         {

@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -118,10 +119,7 @@ public partial class VeniceProvider
             Language = parsed.Language ?? language,
             Segments = parsed.Segments,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetadata, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMetadata),
             Response = new ResponseData
             {
                 Timestamp = now,

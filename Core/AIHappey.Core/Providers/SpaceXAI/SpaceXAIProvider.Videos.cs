@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
@@ -96,8 +97,6 @@ public partial class SpaceXAIProvider
                 var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
                 var providerKey = GetIdentifier();
 
-                var providerMetadata = new Dictionary<string, JsonElement>();
-
                 JsonElement? usageClone = null;
                 if (root.TryGetProperty("usage", out var usageEl)
                     && usageEl.ValueKind == JsonValueKind.Object)
@@ -122,11 +121,6 @@ public partial class SpaceXAIProvider
                     videoWithoutUrl = JsonSerializer.SerializeToElement(videoMetadata, JsonSerializerOptions.Web);
                 }
 
-                providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
-                {
-                    usage = usageClone,
-                    video = videoWithoutUrl
-                }, JsonSerializerOptions.Web);
 
                 decimal? cost = null;
 
@@ -137,14 +131,6 @@ public partial class SpaceXAIProvider
                     && costTicksEl.TryGetDecimal(out var costTicks))
                 {
                     cost = costTicks / UsdTicksPerDollar;
-                }
-
-                if (cost is not null)
-                {
-                    providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-                    {
-                        cost
-                    }, JsonSerializerOptions.Web);
                 }
 
                 return new VideoResponse
@@ -158,7 +144,12 @@ public partial class SpaceXAIProvider
                         }
                     ],
                     Warnings = warnings,
-                    ProviderMetadata = providerMetadata,
+                    ProviderMetadata = GetIdentifier()
+                        .CreatePrimitiveProviderMetadata(new
+                        {
+                            usage = usageClone,
+                            video = videoWithoutUrl
+                        }, cost),
                     Response = new()
                     {
                         Timestamp = now,

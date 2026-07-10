@@ -5,6 +5,7 @@ using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Zai;
 
@@ -140,17 +141,12 @@ public partial class ZaiProvider
         var b64 = Convert.ToBase64String(imgBytes);
         var dataUrl = $"data:{mediaType};base64,{b64}";
 
-        // Preserve structured response data as providerMetadata
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["zai"] = root.Clone()
-        };
-
         return new ImageResponse
         {
             Images = [dataUrl],
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = now,

@@ -8,6 +8,7 @@ using AIHappey.Common.Model.Providers.Gladia;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Globalization;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Gladia;
 
@@ -317,23 +318,12 @@ public partial class GladiaProvider
             ? billingTime.Value * inputPricePerSecond.Value
             : (decimal?)null;
 
-        var gatewayMetadata = JsonSerializer.SerializeToElement(new Dictionary<string, object?>
-        {
-            ["cost"] = cost
-        });
-
         var gladiaProviderMetadata = JsonSerializer.SerializeToElement(new Dictionary<string, object?>
         {
             ["metadata"] = gladiaMetadata.ValueKind == JsonValueKind.Undefined
                 ? null
                 : gladiaMetadata
         });
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["gateway"] = gatewayMetadata,
-            [providerKey] = gladiaProviderMetadata
-        };
 
         var language = default(string);
 
@@ -371,7 +361,9 @@ public partial class GladiaProvider
             DurationInSeconds = audioDuration is null
                 ? null
                 : (float)audioDuration.Value,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = providerKey.CreatePrimitiveProviderMetadata(
+                    gladiaProviderMetadata, cost
+            ),
             Response = new()
             {
                 Timestamp = timestamp,

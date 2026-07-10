@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -108,10 +109,7 @@ public partial class AgenticsProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [providerKey] = providerMetadata
-            },
+            ProviderMetadata = providerKey.CreatePrimitiveProviderMetadata(providerMetadata),
             Response = new()
             {
                 Timestamp = now,

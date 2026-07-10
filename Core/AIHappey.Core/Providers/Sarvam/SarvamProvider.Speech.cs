@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Providers.Sarvam;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -115,22 +116,6 @@ public partial class SarvamProvider
             cost = inputCharacters * currentModel.Pricing.Input;
         }
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [providerKey] = JsonSerializer.SerializeToElement(new
-            {
-
-            }, JsonSerializerOptions.Web)
-        };
-
-        if (cost is not null)
-        {
-            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, JsonSerializerOptions.Web);
-        }
-
         return new SpeechResponse
         {
             Audio = new()
@@ -139,7 +124,9 @@ public partial class SarvamProvider
                 MimeType = mime,
                 Format = outputAudioCodec ?? "mp3"
             },
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = providerKey.CreatePrimitiveProviderMetadata(
+                    costs: cost
+            ),
             Warnings = warnings,
             Request = new()
             {

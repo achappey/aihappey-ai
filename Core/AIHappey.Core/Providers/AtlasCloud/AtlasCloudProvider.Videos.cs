@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.AtlasCloud;
@@ -88,22 +89,11 @@ public partial class AtlasCloudProvider
         if (videos.Count == 0)
             throw new InvalidOperationException("AtlasCloud video task completed but returned no videos.");
 
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        try
+        Dictionary<string, JsonElement>? providerMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new Dictionary<string, JsonElement>
         {
-            providerMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
-                {
-                    ["create"] = createTask.Root.Clone(),
-                    ["result"] = finalTask.Root.Clone()
-                }, JsonSerializerOptions.Web)
-            };
-        }
-        catch
-        {
-            // best-effort only
-        }
+            ["create"] = createTask.Root.Clone(),
+            ["result"] = finalTask.Root.Clone()
+        });
 
         return new VideoResponse
         {

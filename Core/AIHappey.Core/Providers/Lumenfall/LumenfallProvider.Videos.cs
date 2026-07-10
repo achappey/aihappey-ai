@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Globalization;
@@ -60,14 +61,12 @@ public partial class LumenfallProvider
             {
                 Videos = [],
                 Warnings = warnings,
-                ProviderMetadata = new Dictionary<string, JsonElement>
-                {
-                    [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(
+                    new
                     {
                         endpoint,
                         body = createRoot
-                    }, JsonSerializerOptions.Web)
-                },
+                    }),
                 Response = new()
                 {
                     Timestamp = ResolveVideoTimestamp(createRoot, now),
@@ -105,16 +104,14 @@ public partial class LumenfallProvider
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(new
                 {
                     endpoint,
                     id = videoId,
                     create = createRoot,
                     final = completed.Root
-                }, JsonSerializerOptions.Web)
-            },
+                }),
             Response = new()
             {
                 Timestamp = ResolveVideoTimestamp(completed.Root, now),
