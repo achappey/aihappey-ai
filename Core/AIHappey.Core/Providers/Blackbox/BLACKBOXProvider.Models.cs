@@ -48,12 +48,13 @@ public partial class BLACKBOXProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString()?.Replace("blackboxai/", string.Empty) ?? "";
+                        model.Type = model.Id.GuessModelType();
                     }
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-                    if (!string.IsNullOrEmpty(model.Id))
+                    if (!string.IsNullOrEmpty(model.Id) && model.Type.Equals("language"))
                         models.Add(model);
                 }
 
