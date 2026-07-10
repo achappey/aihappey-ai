@@ -170,25 +170,26 @@ public partial class RimeProvider
 
     private static (string ModelId, string? VoiceId) ParseModelAndVoice(string model)
     {
-        if (!model.StartsWith(RimeModelPrefix, StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException($"{ProviderName} model '{model}' is not supported. Expected '{RimeModelPrefix}[model]' or '{RimeModelPrefix}[model]/[voiceId]'.");
+        if (string.IsNullOrWhiteSpace(model))
+            throw new ArgumentException("Model cannot be empty.", nameof(model));
 
-        var localModel = model[RimeModelPrefix.Length..].Trim();
-        if (string.IsNullOrWhiteSpace(localModel))
-            throw new ArgumentException("Model must include a Rime base model after 'rime/'.", nameof(model));
+        var slashIndex = model.IndexOf('/');
 
-        var slashIndex = localModel.IndexOf('/');
         if (slashIndex < 0)
-            return (localModel, null);
+            return (model.Trim(), null);
 
-        if (slashIndex == 0 || slashIndex >= localModel.Length - 1)
-            throw new ArgumentException("Rime speech model must include both base model id and voice id in the form 'rime/[baseModel]/[voiceId]'.", nameof(model));
+        if (slashIndex == 0 || slashIndex >= model.Length - 1)
+            throw new ArgumentException(
+                "Rime speech model must use the form '[baseModel]' or '[baseModel]/[voiceId]'.",
+                nameof(model));
 
-        var modelId = localModel[..slashIndex].Trim();
-        var voiceId = localModel[(slashIndex + 1)..].Trim();
+        var modelId = model[..slashIndex].Trim();
+        var voiceId = model[(slashIndex + 1)..].Trim();
 
         if (string.IsNullOrWhiteSpace(modelId) || string.IsNullOrWhiteSpace(voiceId))
-            throw new ArgumentException("Rime speech model must include both base model id and voice id in the form 'rime/[baseModel]/[voiceId]'.", nameof(model));
+            throw new ArgumentException(
+                "Rime speech model must include both a base model id and voice id in the form '[baseModel]/[voiceId]'.",
+                nameof(model));
 
         return (modelId, voiceId);
     }
