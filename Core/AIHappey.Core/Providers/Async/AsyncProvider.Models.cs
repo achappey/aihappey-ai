@@ -11,21 +11,23 @@ public partial class AsyncProvider
     {
         var models = GetIdentifier().GetModels();
         var key = keyResolver.Resolve(GetIdentifier());
-        if (string.IsNullOrWhiteSpace(key))
-            return models.WithPricing(GetIdentifier());
+        return models.WithPricing(GetIdentifier());
+        /*        if (string.IsNullOrWhiteSpace(key))
+                    return models.WithPricing(GetIdentifier());
 
-        ApplyAuthHeader();
+        return 
+                ApplyAuthHeader();
 
-        foreach (var speechModelId in AsyncSpeechModelIds)
-        {
-            var voices = await ListVoicesAsync(speechModelId, cancellationToken);
-            models.AddRange(BuildSpeechVoiceModels(speechModelId, voices));
-        }
+                foreach (var speechModelId in AsyncSpeechModelIds)
+                {
+                    var voices = await ListVoicesAsync(speechModelId, cancellationToken);
+                    models.AddRange(BuildSpeechVoiceModels(speechModelId, voices));
+                }
 
-        return models
-            .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .WithPricing(GetIdentifier());
+                return models
+                    .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.First())
+                    .WithPricing(GetIdentifier());*/
     }
 
     private async Task<IReadOnlyList<AsyncVoiceInfo>> ListVoicesAsync(string modelId, CancellationToken cancellationToken)
