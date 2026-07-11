@@ -522,14 +522,14 @@ public class StorageBackedModelProviderResolver(
             var contextWindow = models.FirstOrDefault(m => m.ContextWindow != null)?.ContextWindow;
             var maxTokens = models.FirstOrDefault(m => m.MaxTokens != null && m.MaxTokens != 0)?.MaxTokens;
             var created = models.FirstOrDefault(m => m.Created != null)?.Created;
-            var tags = models.FirstOrDefault(m => m.Tags?.Any() == true)?.Tags;
+            //var tags = models.FirstOrDefault(m => m.Tags?.Any() == true)?.Tags;
 
             foreach (var model in models)
             {
                 model.ContextWindow ??= contextWindow;
                 model.MaxTokens ??= maxTokens;
                 model.Created ??= created;
-                model.Tags ??= tags;
+//                model.Tags ??= tags;
             }
         }
     }
