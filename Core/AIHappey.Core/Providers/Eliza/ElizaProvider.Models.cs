@@ -156,8 +156,7 @@ public partial class ElizaProvider
             Name = "Eleven Multilingual v2",
             Type = "speech",
             OwnedBy = "Eliza",
-            Description = "Text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
-            Tags = ["tts", "voice", "speech"]
+            Description = "Text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list."
         };
 
         yield return new Model
@@ -166,8 +165,7 @@ public partial class ElizaProvider
             Name = "Eleven Turbo v2.5",
             Type = "speech",
             OwnedBy = "Eliza",
-            Description = "Fast text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
-            Tags = ["tts", "voice", "speech"]
+            Description = "Fast text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list."
         };
 
         yield return new Model
@@ -176,8 +174,7 @@ public partial class ElizaProvider
             Name = "Eleven Flash v2.5",
             Type = "speech",
             OwnedBy = "Eliza",
-            Description = "Fast text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
-            Tags = ["tts", "voice", "speech"]
+            Description = "Fast text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list."
         };
 
         yield return new Model
@@ -186,8 +183,7 @@ public partial class ElizaProvider
             Name = "Eleven v3",
             Type = "speech",
             OwnedBy = "Eliza",
-            Description = "High quality text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list.",
-            Tags = ["tts", "voice", "speech"]
+            Description = "High quality text-to-speech via Eliza Voice API. Requires a voice ID from Eliza voice/list."
         };
 
         yield return new Model
@@ -196,8 +192,7 @@ public partial class ElizaProvider
             Name = "Eliza Voice STT",
             Type = "transcription",
             OwnedBy = "Eliza",
-            Description = "Speech-to-text via Eliza Voice API.",
-            Tags = ["stt", "voice", "transcription"]
+            Description = "Speech-to-text via Eliza Voice API."
         };
     }
 }
