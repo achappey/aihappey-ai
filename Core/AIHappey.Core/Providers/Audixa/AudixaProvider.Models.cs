@@ -147,22 +147,12 @@ public partial class AudixaProvider
     {
         var tags = new List<string>
         {
-            $"model:{voice.Model}",
-            $"voice:{voice.VoiceId}"
+            "voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Accent))
-            tags.Add($"accent:{voice.Accent}");
-
-        if (voice.IsCustom is bool isCustom)
-            tags.Add(isCustom ? "custom:true" : "custom:false");
-
-        if (voice.IsFree is bool isFree)
-            tags.Add(isFree ? "free:true" : "free:false");
-
+            tags.Add($"{voice.Gender}");
+       
         return tags;
     }
 

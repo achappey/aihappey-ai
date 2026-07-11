@@ -130,24 +130,14 @@ public partial class AsyncProvider
     {
         var tags = new List<string>
         {
-            $"model:{modelId}",
-            $"voice:{voice.Id}"
+            "voice"
         };
 
-        foreach (var language in SplitCommaSeparated(voice.Language).Take(10))
-            tags.Add($"language:{language}");
+        foreach (var language in SplitCommaSeparated(voice.Language))
+            tags.Add($"{language}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender.Trim()}");
-
-        if (!string.IsNullOrWhiteSpace(voice.VoiceType))
-            tags.Add($"voice-type:{voice.VoiceType.Trim()}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Accent))
-            tags.Add($"accent:{voice.Accent.Trim()}");
-
-        foreach (var style in SplitCommaSeparated(voice.Style).Take(10))
-            tags.Add($"style:{style}");
+            tags.Add($"{voice.Gender.Trim()}");
 
         return tags;
     }
