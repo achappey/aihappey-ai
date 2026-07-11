@@ -156,19 +156,13 @@ public partial class CartesiaProvider
 
     private static IEnumerable<string> BuildVoiceTags(CartesiaVoice voice, string ttsModelId)
     {
-        var tags = new List<string> { $"tts-model:{ttsModelId}" };
+        var tags = new List<string> { $"voice" };
 
         if (!string.IsNullOrWhiteSpace(voice.Language))
-            tags.Add($"language:{voice.Language}");
+            tags.Add($"{voice.Language}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
-
-        if (voice.IsOwner is bool owner)
-            tags.Add(owner ? "owner:true" : "owner:false");
-
-        if (voice.IsPublic is bool isPublic)
-            tags.Add(isPublic ? "public:true" : "public:false");
+            tags.Add($"{voice.Gender}");
 
         return tags;
     }
