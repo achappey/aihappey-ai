@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Vercel.Models;
@@ -115,7 +116,7 @@ public partial class StraicoProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = ttsRoot.Clone()
             }
         };

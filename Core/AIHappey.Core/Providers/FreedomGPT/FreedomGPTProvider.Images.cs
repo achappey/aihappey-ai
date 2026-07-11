@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.FreedomGPT;
@@ -117,10 +118,7 @@ public partial class FreedomGPTProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new ()
             {
                 Timestamp = now,

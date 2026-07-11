@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.UVoiceAI;
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -131,18 +132,18 @@ public partial class UVoiceAIProvider
             },
             Warnings = warnings,
             ProviderMetadata = GetIdentifier()
-            .CreatePrimitiveProviderMetadata(new
-            {
-                voiceId,
-                outputType,
-                outputFormat,
-                audioUrl,
-                remainingCredits = TryReadHeader(resp, "X-Remaining-Credits")
-            }),
+                .CreatePrimitiveProviderMetadata(new
+                {
+                    voiceId,
+                    outputType,
+                    outputFormat,
+                    audioUrl,
+                    remainingCredits = TryReadHeader(resp, "X-Remaining-Credits")
+                }),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
     }

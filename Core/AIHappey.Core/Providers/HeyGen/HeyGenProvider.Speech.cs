@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.HeyGen;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -92,30 +94,16 @@ public partial class HeyGenProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    voiceId,
-                    inputType,
-                    speed,
-                    language,
-                    locale,
-                    audioUrl,
-                    requestId = ReadString(data, "request_id") ?? ReadString(data, "requestId"),
-                    duration = ReadNumberAsDouble(data, "duration"),
-                    tts = JsonSerializer.Deserialize<JsonElement>(ttsJson)
-                })
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(new
-                {
-                    tts = JsonSerializer.Deserialize<JsonElement>(ttsJson),
-                    audioUrl
-                })
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = ttsDoc.RootElement.Clone()
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

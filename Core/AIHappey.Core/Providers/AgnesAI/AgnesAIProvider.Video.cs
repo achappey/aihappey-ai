@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -140,15 +141,13 @@ public partial class AgnesAIProvider
                 }
             ],
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier()
+            .CreatePrimitiveProviderMetadata(new
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    create = createRoot,
-                    retrieve = terminal.Root
-                }, JsonSerializerOptions.Web)
-            },
-            Response = new ()
+                create = createRoot,
+                retrieve = terminal.Root
+            }),
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())

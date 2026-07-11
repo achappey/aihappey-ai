@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Core.Extensions;
 using System.Text;
 using System.Text.Json;
 
@@ -60,14 +61,12 @@ public partial class CallMissedProvider
         {
             Value = token,
             ExpiresAt = expiresAt,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(new
                 {
                     ws_url = wsUrl,
                     response = JsonSerializer.Deserialize<object>(raw, JsonSerializerOptions.Web)
-                })
-            }
+                }),
         };
     }
 }

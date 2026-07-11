@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.ApiAirforce;
@@ -64,10 +65,7 @@ public partial class ApiAirforceProvider
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new ()
             {
                 Timestamp = now,

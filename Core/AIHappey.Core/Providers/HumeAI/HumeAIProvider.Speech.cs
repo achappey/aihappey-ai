@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.HumeAI;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -140,31 +142,8 @@ public partial class HumeAIProvider
             .Select(id => id!)
             .ToArray();
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["request_id"] = JsonSerializer.SerializeToElement(requestId, JsonSerializerOptions.Web),
-            ["generation_id"] = JsonSerializer.SerializeToElement(generationId, JsonSerializerOptions.Web),
-            ["generation_ids"] = JsonSerializer.SerializeToElement(generationIds, JsonSerializerOptions.Web),
-            ["model"] = JsonSerializer.SerializeToElement(baseModelId, JsonSerializerOptions.Web),
-            ["format"] = JsonSerializer.SerializeToElement(outputFormat, JsonSerializerOptions.Web)
-        };
-
-        if (voiceId is not null)
-            providerMetadata["voice_id"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web);
-        if (voiceName is not null)
-            providerMetadata["voice_name"] = JsonSerializer.SerializeToElement(voiceName, JsonSerializerOptions.Web);
-        if (voiceProvider is not null)
-            providerMetadata["voice_provider"] = JsonSerializer.SerializeToElement(voiceProvider, JsonSerializerOptions.Web);
-        if (firstGeneration.TryGetProperty("duration", out var durationEl))
-            providerMetadata["duration"] = durationEl.Clone();
-        if (firstGeneration.TryGetProperty("file_size", out var fileSizeEl))
-            providerMetadata["file_size"] = fileSizeEl.Clone();
-        if (firstGeneration.TryGetProperty("encoding", out var encodingEl))
-            providerMetadata["encoding"] = encodingEl.Clone();
-
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
             Audio = new SpeechAudioResponse
             {
                 Base64 = audio,
@@ -172,19 +151,16 @@ public partial class HumeAIProvider
                 Format = outputFormat
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint = "v0/tts",
-                    status = (int)resp.StatusCode,
-                    request_id = requestId,
-                    generation_id = generationId,
-                    generation_ids = generationIds,
-                    content_type = resp.Content.Headers.ContentType?.MediaType
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = root.Clone()
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

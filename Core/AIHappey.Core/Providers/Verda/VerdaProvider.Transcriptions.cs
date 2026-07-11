@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Verda;
+using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -112,7 +113,7 @@ public partial class VerdaProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             },
             Request = new TranscriptionRequestItem

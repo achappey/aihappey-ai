@@ -97,7 +97,6 @@ public partial class AgenticsProvider
             sanitizedMetadata[property.Name] = property.Value.Clone();
         }
 
-        var providerMetadata = JsonSerializer.SerializeToElement(sanitizedMetadata, JsonSerializerOptions.Web);
         var body = root.Clone();
 
         return new SpeechResponse
@@ -109,7 +108,7 @@ public partial class AgenticsProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = providerKey.CreatePrimitiveProviderMetadata(providerMetadata),
+            ProviderMetadata = providerKey.CreatePrimitiveProviderMetadata(sanitizedMetadata),
             Response = new()
             {
                 Timestamp = now,

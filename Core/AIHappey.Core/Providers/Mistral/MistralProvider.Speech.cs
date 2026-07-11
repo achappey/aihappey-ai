@@ -7,6 +7,7 @@ using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -72,23 +73,9 @@ public partial class MistralProvider
             throw new InvalidOperationException($"{GetName()} speech response did not contain 'audio_data'. Body: {body}");
 
         var resolvedFormat = NormalizeSpeechResponseFormat(root.TryGetString("audio_format") ?? responseFormat) ?? "mp3";
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["model"] = JsonSerializer.SerializeToElement(selection.ModelId, JsonSerializerOptions.Web)
-        };
-
-        if (!string.IsNullOrWhiteSpace(selection.VoiceId))
-            providerMetadata["voice_id"] = JsonSerializer.SerializeToElement(selection.VoiceId, JsonSerializerOptions.Web);
-
-        if (!string.IsNullOrWhiteSpace(selection.VoiceSlug))
-            providerMetadata["voice_slug"] = JsonSerializer.SerializeToElement(selection.VoiceSlug, JsonSerializerOptions.Web);
-
-        if (!string.IsNullOrWhiteSpace(resolvedFormat))
-            providerMetadata["response_format"] = JsonSerializer.SerializeToElement(resolvedFormat, JsonSerializerOptions.Web);
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
             Audio = new SpeechAudioResponse
             {
                 Base64 = audioBase64!,
@@ -96,10 +83,11 @@ public partial class MistralProvider
                 Format = resolvedFormat
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             },
             Request = new SpeechRequestItem

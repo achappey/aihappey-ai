@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.APIpie;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -113,10 +115,12 @@ public partial class APIpieProvider
                 Format = responseFormat
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem
             {

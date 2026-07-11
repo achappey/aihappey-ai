@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.SmallestAI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.SmallestAI;
 
@@ -130,7 +131,7 @@ public partial class SmallestAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = JsonSerializer.SerializeToElement(new
                 {
                     model = LightningV31Model,
@@ -224,7 +225,7 @@ public partial class SmallestAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
     }

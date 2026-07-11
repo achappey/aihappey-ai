@@ -2,6 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Speechmatics;
@@ -66,7 +68,16 @@ public partial class SpeechmaticsProvider
                 Format = audioFormat.Split("_").First(),
             },
             Warnings = [],
-            Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Request = new()
+            {
+                Body = payload
+            },
+            Response = new()
+            {
+                Timestamp = DateTime.UtcNow,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
         };
     }
 

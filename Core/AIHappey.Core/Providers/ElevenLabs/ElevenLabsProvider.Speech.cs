@@ -4,6 +4,7 @@ using AIHappey.Common.Model.Providers.ElevenLabs;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
@@ -99,7 +100,12 @@ public partial class ElevenLabsProvider
                 Format = outputFormat?.Split("_")?.FirstOrDefault() ?? "mp3",
             },
             Warnings = [],
-            Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Response = new()
+            {
+                Timestamp = DateTime.UtcNow,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            },
             Request = new SpeechRequestItem
             {
                 Body = body

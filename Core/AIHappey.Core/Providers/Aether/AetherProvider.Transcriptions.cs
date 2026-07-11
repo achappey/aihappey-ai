@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 
@@ -108,10 +109,8 @@ public partial class AetherProvider
             Language = language,
             DurationInSeconds = duration,
             Segments = segments,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [nameof(Aether).ToLowerInvariant()] = root.Clone()
-            },
+            ProviderMetadata = nameof(Aether).ToLowerInvariant()
+                .CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new ResponseData
             {
                 Timestamp = timestamp,

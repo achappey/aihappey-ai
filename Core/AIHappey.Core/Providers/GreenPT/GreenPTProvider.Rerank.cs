@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.GreenPT;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -77,14 +79,30 @@ public partial class GreenPTProvider
                     .ToList()
                 : [];
 
+        var id = root.TryGetProperty("id", out var idEl)
+            && idEl.ValueKind == JsonValueKind.String
+                ? idEl.GetString()
+                : null;
+
+        var usage = root.TryGetProperty("usage", out var usageEl)
+            && usageEl.ValueKind == JsonValueKind.Object
+                ? usageEl.Clone()
+                : (JsonElement?)null;
+
         return new RerankingResponse
         {
             Ranking = ranking,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(usage != null ? new
+                {
+                    usage
+                } : null),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = raw
+                Id = id,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = root.Clone()
             }
         };
     }

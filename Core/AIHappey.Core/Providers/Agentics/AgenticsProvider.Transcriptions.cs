@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -56,11 +57,11 @@ public partial class AgenticsProvider
             DurationInSeconds = duration,
             Segments = [],
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

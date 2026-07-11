@@ -3,6 +3,8 @@ using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -61,10 +63,11 @@ public partial class NovitaProvider
         return new RerankingResponse
         {
             Ranking = results,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = errText
             }
         };

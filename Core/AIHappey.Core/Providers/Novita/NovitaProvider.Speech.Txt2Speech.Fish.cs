@@ -1,10 +1,12 @@
 using System.Text.Json;
 using System.Text;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
     private const string V4BaseUrl = "https://api.novita.ai/v4beta/txt2speech";
 
@@ -66,10 +68,12 @@ public partial class NovitaProvider
                 Format = audioType ?? "wav"
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

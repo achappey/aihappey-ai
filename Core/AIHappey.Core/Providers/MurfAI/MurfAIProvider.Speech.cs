@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.MurfAI;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -150,10 +152,15 @@ public sealed partial class MurfAIProvider
                 Format = format
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

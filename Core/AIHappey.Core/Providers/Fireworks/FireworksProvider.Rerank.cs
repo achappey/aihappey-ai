@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -88,24 +90,7 @@ public partial class FireworksProvider
 
         if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
         {
-            warnings.Add(new
-            {
-                type = "provider_response_missing_field",
-                feature = "data",
-                details = "Fireworks rerank response did not contain a 'data' array."
-            });
-
-            return new RerankingResponse
-            {
-                Ranking = [],
-                Warnings = warnings,
-                Response = new()
-                {
-                    Timestamp = now,
-                    ModelId = request.Model,
-                    Body = raw
-                }
-            };
+            throw new Exception("Fireworks rerank response did not contain a 'data' array");
         }
 
         var ranked = dataEl
@@ -128,10 +113,12 @@ public partial class FireworksProvider
         {
             Ranking = ranked,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = raw
             }
         };

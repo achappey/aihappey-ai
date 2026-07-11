@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Bytez;
@@ -89,14 +90,11 @@ public partial class BytezProvider
         {
             Images = [Convert.ToBase64String(fileBytes).ToDataUrl(mediaType)],
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
-            Response = new ()
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

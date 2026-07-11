@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Vogent;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -94,16 +96,9 @@ public partial class VogentProvider
             _ => "wav"
         };
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["voiceId"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web),
-            ["outputType"] = JsonSerializer.SerializeToElement(format?.OutputType ?? "WAV_PCM16", JsonSerializerOptions.Web),
-            ["sampleRate"] = JsonSerializer.SerializeToElement(format?.SampleRate ?? 24000, JsonSerializerOptions.Web)
-        };
-
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Audio = new SpeechAudioResponse
             {
                 Base64 = Convert.ToBase64String(bytes),
@@ -111,16 +106,14 @@ public partial class VogentProvider
                 Format = resolvedFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint = "api/tts",
-                    status = (int)resp.StatusCode,
-                    contentType = resp.Content.Headers.ContentType?.MediaType
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

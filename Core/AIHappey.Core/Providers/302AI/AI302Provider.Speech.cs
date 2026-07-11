@@ -1,3 +1,5 @@
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -116,14 +118,11 @@ public partial class AI302Provider
                     Format = responseFormat
                 },
                 Warnings = warnings,
-                ProviderMetadata = new Dictionary<string, JsonElement>
-                {
-                    [GetIdentifier()] = root.Clone()
-                },
+                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
                 Response = new ResponseData
                 {
                     Timestamp = now,
-                    ModelId = request.Model,
+                    ModelId = request.Model.ToModelId(GetIdentifier()),
                     Body = root.Clone()
                 }
             };
@@ -141,7 +140,7 @@ public partial class AI302Provider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = new
                 {
                     statusCode = (int)resp.StatusCode,

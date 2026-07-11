@@ -1,4 +1,6 @@
 using System.Text.Json;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.ApiAirforce;
@@ -46,14 +48,16 @@ public partial class ApiAirforceProvider
         {
             Audio = audio,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
+            Request = new()
             {
-                [GetIdentifier()] = root.Clone()
+                Body = payload
             },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

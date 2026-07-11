@@ -105,7 +105,7 @@ public partial class GoogleAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -3,6 +3,8 @@ using System.Text.Json;
 using System.Text;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
@@ -117,10 +119,12 @@ public partial class NovitaProvider
                 Format = audioType ?? "wav"
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = taskResultJson
             }
         };

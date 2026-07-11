@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.TTSReader;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.TTSReader;
 
@@ -42,9 +44,6 @@ public partial class TTSReaderProvider
         if (string.IsNullOrWhiteSpace(language))
             throw new ArgumentException("Language required", nameof(request));
 
-        // Allow providerOptions override of model if desired.
-        var model = request.Model.Trim();
-
         var payload = new Dictionary<string, object?>
         {
             ["text"] = request.Text,
@@ -70,7 +69,6 @@ public partial class TTSReaderProvider
 
         using var resp = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
-
         var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -88,7 +86,16 @@ public partial class TTSReaderProvider
                 Format = "mp3",
             },
             Warnings = [],
-            Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Request = new()
+            {
+                Body = payload
+            },
+            Response = new()
+            {
+                Timestamp = DateTime.UtcNow,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
         };
     }
 

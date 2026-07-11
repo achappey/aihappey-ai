@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.KlingAI;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -104,11 +105,15 @@ public partial class KlingAIProvider
                 Format = normalizedFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = final.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
@@ -78,13 +79,7 @@ public partial class OpenRouterProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    statusCode = (int)resp.StatusCode,
-                    contentType,
-                    contentLength = bytes.LongLength
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem
             {
@@ -134,26 +129,8 @@ public partial class OpenRouterProvider
         long contentLength,
         HttpResponseMessage response)
     {
-        var metadata = new Dictionary<string, object?>
-        {
-            ["request"] = payload,
-            ["response"] = new
-            {
-                statusCode = (int)response.StatusCode,
-                contentType,
-                contentLength,
-                responseFormat
-            }
-        };
 
-        if (request.ProviderOptions is not null
-            && request.ProviderOptions.TryGetValue("openrouter", out var rawOptions)
-            && rawOptions.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-        {
-            metadata["providerOptions"] = rawOptions.Clone();
-        }
-
-        return GetIdentifier().CreatePrimitiveProviderMetadata(metadata);
+        return GetIdentifier().CreatePrimitiveProviderMetadata();
     }
 
     private static string? ReadOpenRouterSpeechString(object? value)

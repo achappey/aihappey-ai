@@ -3,10 +3,12 @@ using System.Text.Json;
 using System.Text;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
     private async Task<SpeechResponse> SpeechRequestMiniMax(
         SpeechRequest request,
@@ -22,7 +24,7 @@ public partial class NovitaProvider
             throw new InvalidOperationException("MiniMax sync TTS text must be < 10,000 characters."); // :contentReference[oaicite:1]{index=1}
 
         // Endpoint suffix normalization
-        var modelPath = request.Model ?? "minimax-speech-2.5-turbo-preview";
+        var modelPath = request.Model;
         if (modelPath.StartsWith("speech-", StringComparison.OrdinalIgnoreCase))
             modelPath = "minimax-" + modelPath;
 
@@ -62,9 +64,6 @@ public partial class NovitaProvider
             ["audio_setting"] = new Dictionary<string, object?>
             {
                 ["format"] = format,
-                //       ["sample_rate"] = metadata?.SampleRate, // optional :contentReference[oaicite:9]{index=9}
-                //      ["bitrate"] = metadata?.Bitrate,       // optional (mp3 only) :contentReference[oaicite:10]{index=10}
-                //     ["channel"] = metadata?.Channel        // optional :contentReference[oaicite:11]{index=11}
             },
             ["stream"] = false,                 // we implement sync non-streaming
             ["output_format"] = outputFormat,   // url or hex :contentReference[oaicite:12]{index=12}
@@ -117,11 +116,16 @@ public partial class NovitaProvider
                 Format = format ?? "mp3"
             },
             Warnings = [],
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = request.Model!,
-                Body = respJson
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

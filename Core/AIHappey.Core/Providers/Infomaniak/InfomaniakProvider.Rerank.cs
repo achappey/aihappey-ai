@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Infomaniak;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -73,11 +75,12 @@ public partial class InfomaniakProvider
         return new RerankingResponse
         {
             Ranking = results,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = raw
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = root.Clone()
             }
         };
     }

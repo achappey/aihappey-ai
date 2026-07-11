@@ -2,6 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Tensorix;
@@ -65,40 +67,25 @@ public partial class TensorixProvider
         }
 
         var contentType = response.Content.Headers.ContentType?.MediaType;
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(
-                new
-                {
-                    endpoint = "v1/audio/speech",
-                    model = request.Model,
-                    voice = request.Voice.Trim(),
-                    response_format = responseFormat,
-                    speed = request.Speed
-                },
-                SpeechJsonOptions)
-        };
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Audio = new SpeechAudioResponse
             {
                 Base64 = Convert.ToBase64String(bytes),
                 MimeType = OpenAI.OpenAIProvider.MapToAudioMimeType(responseFormat),
                 Format = responseFormat
             },
+            Request = new()
+            {
+                Body = payload
+            },
             Warnings = warnings,
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint = "v1/audio/speech",
-                    status = (int)response.StatusCode,
-                    contentType
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

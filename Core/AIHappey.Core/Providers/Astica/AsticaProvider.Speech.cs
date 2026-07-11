@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Astica;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -84,26 +86,16 @@ public partial class AsticaProvider
                 Format = audioFormat
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Request = new()
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    requestVoice = voiceId,
-                    responseVoice,
-                    engine,
-                    timestamps = metadata?.Timestamps,
-                    prompt = metadata?.Prompt,
-                    response = JsonSerializer.Deserialize<JsonElement>(raw)
-                })
+                Body = payload
             },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(new
-                {
-                    response = JsonSerializer.Deserialize<JsonElement>(raw)
-                })
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = doc.RootElement.Clone()
             }
         };
     }

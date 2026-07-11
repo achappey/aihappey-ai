@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.VoiceAI;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -106,27 +108,10 @@ public partial class VoiceAIProvider
         }
 
         var mediaType = resp.Content.Headers.ContentType?.MediaType;
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["model"] = JsonSerializer.SerializeToElement(baseModelId, JsonSerializerOptions.Web),
-            ["audio_format"] = JsonSerializer.SerializeToElement(outputFormat, JsonSerializerOptions.Web)
-        };
-
-        if (!string.IsNullOrWhiteSpace(voiceId))
-            providerMetadata["voice_id"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web);
-
-        if (!string.IsNullOrWhiteSpace(language))
-            providerMetadata["language"] = JsonSerializer.SerializeToElement(language, JsonSerializerOptions.Web);
-
-        if (temperature is not null)
-            providerMetadata["temperature"] = JsonSerializer.SerializeToElement(temperature.Value, JsonSerializerOptions.Web);
-
-        if (topP is not null)
-            providerMetadata["top_p"] = JsonSerializer.SerializeToElement(topP.Value, JsonSerializerOptions.Web);
 
         return new SpeechResponse
         {
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Audio = new SpeechAudioResponse
             {
                 Base64 = Convert.ToBase64String(bytes),
@@ -134,16 +119,14 @@ public partial class VoiceAIProvider
                 Format = outputFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    endpoint = "api/v1/tts/speech",
-                    status = (int)resp.StatusCode,
-                    contentType = mediaType
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

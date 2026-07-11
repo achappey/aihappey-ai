@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -87,7 +88,6 @@ public partial class ModelsLabProvider
 
         var providerMetadata = new Dictionary<string, JsonElement>
         {
-            [GetIdentifier()] = completed.Clone()
         };
 
         if (completed.TryGetProperty("meta", out var metaEl))
@@ -102,12 +102,16 @@ public partial class ModelsLabProvider
                 Format = MapMimeToAudioFormat(mediaType)
             },
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(providerMetadata),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = completed.Clone()
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

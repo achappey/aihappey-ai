@@ -4,6 +4,8 @@ using System.Text;
 using AIHappey.Common.Model.Providers.StabilityAI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
@@ -95,10 +97,11 @@ public partial class StabilityAIProvider
                 Format = outputFormat ?? "mp3"
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
     }

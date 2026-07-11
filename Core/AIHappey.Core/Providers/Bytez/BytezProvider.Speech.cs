@@ -2,6 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Bytez;
@@ -87,14 +89,15 @@ public partial class BytezProvider
                 Format = MapMimeToAudioFormat(mimeType)
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Request = new()
             {
-                [GetIdentifier()] = root.Clone()
+                Body = payload
             },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

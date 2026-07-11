@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Supertone;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -126,7 +127,7 @@ public partial class SupertoneProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = JsonSerializer.SerializeToElement(providerMetaPayload)
             }
         };

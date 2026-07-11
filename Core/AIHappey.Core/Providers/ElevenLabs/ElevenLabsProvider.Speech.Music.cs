@@ -4,6 +4,8 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.ElevenLabs;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.ElevenLabs;
 
@@ -65,7 +67,16 @@ public partial class ElevenLabsProvider
                 Format = outputFormat?.Split("_")?.FirstOrDefault() ?? "mp3",
             },
             Warnings = warnings,
-            Response = new() { Timestamp = DateTime.UtcNow, ModelId = request.Model }
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Request = new()
+            {
+                Body = body
+            },
+            Response = new()
+            {
+                Timestamp = DateTime.UtcNow,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
         };
     }
 }

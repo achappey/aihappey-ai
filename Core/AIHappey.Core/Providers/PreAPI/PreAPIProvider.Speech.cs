@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.PreAPI;
@@ -43,7 +44,7 @@ public partial class PreAPIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = doc.RootElement.Clone()
             }
         };

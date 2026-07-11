@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
@@ -98,11 +99,8 @@ public partial class BytezProvider
                 }
             ],
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
-            Response = new ()
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
+            Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
@@ -150,7 +148,7 @@ public partial class BytezProvider
                kvp => JsonSerializer.SerializeToElement(kvp.Value, JsonSerializerOptions.Web)
            )
         };
-        
+
         var result = await this.VideoRequest(videoRequest, cancellationToken) ?? throw new Exception("No result.");
         var firstVideo = result.Videos?.FirstOrDefault() ?? throw new Exception("No video generated.");
 

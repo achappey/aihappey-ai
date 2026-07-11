@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -132,10 +133,8 @@ public partial class AI302Provider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = now,

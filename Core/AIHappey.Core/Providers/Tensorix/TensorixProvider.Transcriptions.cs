@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -118,77 +119,58 @@ public partial class TensorixProvider
         object responseBody;
         string modelId = request.Model;
 
-        try
+
+        using var doc = JsonDocument.Parse(raw);
+        var root = doc.RootElement;
+
+        text = root.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String
+            ? textEl.GetString() ?? string.Empty
+            : string.Empty;
+
+        languageFromResponse = root.TryGetProperty("language", out var languageEl) && languageEl.ValueKind == JsonValueKind.String
+            ? languageEl.GetString()
+            : null;
+
+        if (root.TryGetProperty("duration", out var durationEl) && durationEl.ValueKind == JsonValueKind.Number)
+            duration = (float)durationEl.GetDouble();
+
+        if (root.TryGetProperty("segments", out var segmentsEl) && segmentsEl.ValueKind == JsonValueKind.Array)
         {
-            using var doc = JsonDocument.Parse(raw);
-            var root = doc.RootElement;
-
-            text = root.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String
-                ? textEl.GetString() ?? string.Empty
-                : string.Empty;
-
-            languageFromResponse = root.TryGetProperty("language", out var languageEl) && languageEl.ValueKind == JsonValueKind.String
-                ? languageEl.GetString()
-                : null;
-
-            if (root.TryGetProperty("duration", out var durationEl) && durationEl.ValueKind == JsonValueKind.Number)
-                duration = (float)durationEl.GetDouble();
-
-            if (root.TryGetProperty("segments", out var segmentsEl) && segmentsEl.ValueKind == JsonValueKind.Array)
+            foreach (var segment in segmentsEl.EnumerateArray())
             {
-                foreach (var segment in segmentsEl.EnumerateArray())
+                if (segment.ValueKind != JsonValueKind.Object)
+                    continue;
+
+                var segmentText = segment.TryGetProperty("text", out var segmentTextEl) && segmentTextEl.ValueKind == JsonValueKind.String
+                    ? segmentTextEl.GetString() ?? string.Empty
+                    : string.Empty;
+
+                var start = TryReadFloat(segment, "start", "start_second", "startSecond");
+                var end = TryReadFloat(segment, "end", "end_second", "endSecond");
+
+                if (end < start)
+                    end = start;
+
+                segments.Add(new TranscriptionSegment
                 {
-                    if (segment.ValueKind != JsonValueKind.Object)
-                        continue;
-
-                    var segmentText = segment.TryGetProperty("text", out var segmentTextEl) && segmentTextEl.ValueKind == JsonValueKind.String
-                        ? segmentTextEl.GetString() ?? string.Empty
-                        : string.Empty;
-
-                    var start = TryReadFloat(segment, "start", "start_second", "startSecond");
-                    var end = TryReadFloat(segment, "end", "end_second", "endSecond");
-
-                    if (end < start)
-                        end = start;
-
-                    segments.Add(new TranscriptionSegment
-                    {
-                        Text = segmentText,
-                        StartSecond = start,
-                        EndSecond = end
-                    });
-                }
+                    Text = segmentText,
+                    StartSecond = start,
+                    EndSecond = end
+                });
             }
-
-            if (string.IsNullOrWhiteSpace(text))
-                text = string.Join(" ", segments.Select(s => s.Text));
-
-            if (root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String)
-                modelId = modelEl.GetString() ?? request.Model;
-
-            responseBody = JsonSerializer.Deserialize<object>(raw, JsonSerializerOptions.Web) ?? raw;
-        }
-        catch (JsonException)
-        {
-            text = raw;
-            responseBody = raw;
         }
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-            {
-                endpoint = TensorixTranscriptionsEndpoint,
-                model = request.Model,
-                language = appliedLanguage,
-                response_format = appliedResponseFormat,
-                timestamp_granularities = appliedTimestampGranularities
-            })
-        };
+        if (string.IsNullOrWhiteSpace(text))
+            text = string.Join(" ", segments.Select(s => s.Text));
+
+        if (root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String)
+            modelId = modelEl.GetString() ?? request.Model;
+
+        responseBody = JsonSerializer.Deserialize<object>(raw, JsonSerializerOptions.Web) ?? raw;
 
         return new TranscriptionResponse
         {
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Text = text,
             Language = languageFromResponse,
             DurationInSeconds = duration,
@@ -197,8 +179,8 @@ public partial class TensorixProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = modelId,
-                Body = responseBody
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = root.Clone()
             }
         };
     }

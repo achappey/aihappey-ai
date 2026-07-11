@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Typecast;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -124,16 +126,16 @@ public partial class TypecastProvider
                 MimeType = mimeType,
                 Format = resolvedFormat
             },
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Request = new()
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetaPayload)
+                Body = payload
             },
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(providerMetaPayload)
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

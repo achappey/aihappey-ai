@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Hyperbolic;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
@@ -114,11 +116,17 @@ public partial class HyperbolicProvider
                 Format = format
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
+            },
+            Request = new SpeechRequestItem
+            {
+                Body = payload
             }
         };
     }

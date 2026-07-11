@@ -1,5 +1,6 @@
 using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -134,8 +135,6 @@ public partial class TogetherProvider
 
         var providerKey = GetIdentifier();
 
-        var providerMetadata = new Dictionary<string, JsonElement>();
-
         decimal? cost = null;
 
         if (outputs.ValueKind == JsonValueKind.Object
@@ -144,20 +143,7 @@ public partial class TogetherProvider
             && costEl.TryGetDecimal(out var parsedCost))
         {
             cost = parsedCost;
-        }
-
-        if (cost is not null)
-        {
-            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, JsonSerializerOptions.Web);
-
-            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, JsonSerializerOptions.Web);
-        }
+        }     
 
         return new VideoResponse
         {
@@ -170,11 +156,12 @@ public partial class TogetherProvider
                 }
             ],
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(costs: cost),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

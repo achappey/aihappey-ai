@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
@@ -91,7 +92,7 @@ public partial class ModelsLabProvider
 
         var providerMetadata = new Dictionary<string, JsonElement>
         {
-            [GetIdentifier()] = completed.Clone()
+
         };
 
         if (completed.TryGetProperty("meta", out var metaEl))
@@ -108,7 +109,8 @@ public partial class ModelsLabProvider
                 }
             ],
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(providerMetadata),
             Response = new()
             {
                 Timestamp = now,

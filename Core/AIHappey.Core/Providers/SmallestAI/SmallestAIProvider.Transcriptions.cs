@@ -6,6 +6,7 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.SmallestAI;
 
@@ -119,7 +120,7 @@ public partial class SmallestAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

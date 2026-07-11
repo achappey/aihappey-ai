@@ -127,7 +127,7 @@ public partial class SpeechactorsProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = JsonSerializer.SerializeToElement(providerMeta, JsonSerializerOptions.Web)
             }
         };

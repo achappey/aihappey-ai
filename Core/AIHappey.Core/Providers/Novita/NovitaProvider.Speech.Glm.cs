@@ -3,10 +3,12 @@ using System.Text.Json;
 using System.Text;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
     private async Task<SpeechResponse> SpeechRequestGlmTts(
          SpeechRequest request,
@@ -87,10 +89,15 @@ public partial class NovitaProvider
                 Format = responseFormat ?? "pcm"
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = request.Model ?? "glm-tts",
+                ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
     }

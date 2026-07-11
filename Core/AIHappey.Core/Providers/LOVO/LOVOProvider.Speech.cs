@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.LOVO;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -93,27 +95,16 @@ public partial class LOVOProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Request = new()
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    speakerId,
-                    speakerStyle,
-                    sync = JsonSerializer.Deserialize<JsonElement>(syncJson),
-                    asyncResult = finalJson is null ? (JsonElement?)null : JsonSerializer.Deserialize<JsonElement>(finalJson),
-                    audioUrl
-                })
+                Body = payload
             },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(new
-                {
-                    sync = JsonSerializer.Deserialize<JsonElement>(syncJson),
-                    asyncResult = finalJson is null ? (JsonElement?)null : JsonSerializer.Deserialize<JsonElement>(finalJson),
-                    audioUrl
-                })
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = syncDoc.RootElement.Clone()
             }
         };
     }
@@ -196,40 +187,40 @@ public partial class LOVOProvider
         switch (node.ValueKind)
         {
             case JsonValueKind.String:
-            {
-                var s = node.GetString();
-                if (!string.IsNullOrWhiteSpace(s))
-                    yield return s;
-                yield break;
-            }
-            case JsonValueKind.Array:
-            {
-                foreach (var item in node.EnumerateArray())
                 {
-                    foreach (var value in EnumerateUrls(item))
-                        yield return value;
+                    var s = node.GetString();
+                    if (!string.IsNullOrWhiteSpace(s))
+                        yield return s;
+                    yield break;
                 }
-
-                yield break;
-            }
-            case JsonValueKind.Object:
-            {
-                foreach (var prop in node.EnumerateObject())
+            case JsonValueKind.Array:
                 {
-                    if (prop.Name.Contains("url", StringComparison.OrdinalIgnoreCase)
-                        || prop.Name.Contains("audio", StringComparison.OrdinalIgnoreCase)
-                        || prop.Name.Contains("file", StringComparison.OrdinalIgnoreCase)
-                        || prop.Name.Contains("result", StringComparison.OrdinalIgnoreCase)
-                        || prop.Name.Contains("output", StringComparison.OrdinalIgnoreCase)
-                        || prop.Name.Contains("data", StringComparison.OrdinalIgnoreCase))
+                    foreach (var item in node.EnumerateArray())
                     {
-                        foreach (var value in EnumerateUrls(prop.Value))
+                        foreach (var value in EnumerateUrls(item))
                             yield return value;
                     }
-                }
 
-                yield break;
-            }
+                    yield break;
+                }
+            case JsonValueKind.Object:
+                {
+                    foreach (var prop in node.EnumerateObject())
+                    {
+                        if (prop.Name.Contains("url", StringComparison.OrdinalIgnoreCase)
+                            || prop.Name.Contains("audio", StringComparison.OrdinalIgnoreCase)
+                            || prop.Name.Contains("file", StringComparison.OrdinalIgnoreCase)
+                            || prop.Name.Contains("result", StringComparison.OrdinalIgnoreCase)
+                            || prop.Name.Contains("output", StringComparison.OrdinalIgnoreCase)
+                            || prop.Name.Contains("data", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (var value in EnumerateUrls(prop.Value))
+                                yield return value;
+                        }
+                    }
+
+                    yield break;
+                }
             default:
                 yield break;
         }

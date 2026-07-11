@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Vidu;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -135,10 +136,14 @@ public partial class ViduProvider
             {
                 [GetIdentifier()] = completed.RawRoot.Clone()
             },
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = startDoc.RootElement.Clone()
             }
         };
@@ -231,10 +236,7 @@ public partial class ViduProvider
                 Format = MapMimeToAudioFormat(mediaType)
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,

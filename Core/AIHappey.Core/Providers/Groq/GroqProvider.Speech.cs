@@ -3,10 +3,12 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Groq;
 
-public partial class GroqProvider 
+public partial class GroqProvider
 {
     public async Task<SpeechResponse> SpeechRequest(
           SpeechRequest request,
@@ -76,10 +78,12 @@ public partial class GroqProvider
                 Format = format ?? "wav"
             },
             Warnings = [],
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem
             {

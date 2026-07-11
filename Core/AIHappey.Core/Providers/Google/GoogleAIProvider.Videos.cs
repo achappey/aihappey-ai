@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Google;
@@ -105,16 +106,7 @@ public partial class GoogleAIProvider
 
         var videoBytes = await downloadResp.Content.ReadAsByteArrayAsync(cancellationToken);
         var mediaType = downloadResp.Content.Headers.ContentType?.MediaType ?? "video/mp4";
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [GoogleExtensions.Identifier()] = JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
-            {
-                ["operation"] = createRoot.Clone(),
-                ["result"] = final.Clone()
-            }, JsonSerializerOptions.Web)
-        };
-
+     
         return new VideoResponse
         {
             Videos =
@@ -126,11 +118,12 @@ public partial class GoogleAIProvider
                 }
             ],
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GoogleExtensions.Identifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

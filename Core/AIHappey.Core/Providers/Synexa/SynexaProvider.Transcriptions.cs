@@ -3,6 +3,8 @@ using AIHappey.Common.Model.Providers.Synexa;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Synexa;
 
@@ -50,21 +52,15 @@ public partial class SynexaProvider
             Language = metadata?.Language,
             Segments = [],
             Warnings = [],
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Request = new()
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    predictionId = completed.Id,
-                    status = completed.Status,
-                    output = completed.Output.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
-                        ? default(object)
-                        : completed.Output.Clone()
-                })
+                Body = JsonSerializer.Serialize(input, JsonSerializerOptions.Web)
             },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = completed.Output.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
                     ? null
                     : completed.Output.Clone()

@@ -6,6 +6,8 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.VoyageAI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.VoyageAI;
 
@@ -68,10 +70,11 @@ public partial class VoyageAIProvider
         return new RerankingResponse
         {
             Ranking = results,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = errText
             }
         };

@@ -6,10 +6,11 @@ using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider 
+public partial class OpenAIProvider
 {
     public async Task<TranscriptionResponse> TranscribeWithDiarization(
         TranscriptionRequest request,
@@ -190,10 +191,12 @@ public partial class OpenAIProvider
                 StartSecond = (float)a.StartTime.TotalSeconds,
                 EndSecond = (float)a.EndTime.TotalSeconds
             }),
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = result.GetRawResponse().Content.ToString(),
             },
             Language = result.Value.Language,
@@ -239,10 +242,12 @@ public partial class OpenAIProvider
                 StartSecond = (float)a.StartTime.TotalSeconds,
                 EndSecond = (float)a.EndTime.TotalSeconds
             }),
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = result.GetRawResponse().Content.ToString(),
             },
             Language = result.Value.Language,

@@ -106,7 +106,7 @@ public partial class PixCodeProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = completed
             }
         };

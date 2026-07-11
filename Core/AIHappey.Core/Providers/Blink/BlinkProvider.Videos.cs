@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
@@ -70,10 +71,7 @@ public partial class BlinkProvider
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = root.Clone()
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = startedAt,

@@ -2,6 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.MiniMax;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -110,17 +112,22 @@ public partial class MiniMaxProvider
 
         return new SpeechResponse
         {
-            Audio = new ()
+            Audio = new()
             {
                 Base64 = audioDataUrl,
                 MimeType = mime,
                 Format = format
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = doc.RootElement.Clone()
             }
         };
