@@ -126,25 +126,10 @@ public partial class AgenticsProvider
                 OwnedBy = string.IsNullOrWhiteSpace(provider) ? nameof(Agentics) : provider,
                 Description = el.TryGetProperty("description", out var descriptionEl)
                     ? descriptionEl.GetString() ?? string.Empty
-                    : string.Empty,
-                Tags = BuildImageModelTags(category, provider, el.TryGetProperty("internal", out var internalEl) && internalEl.ValueKind == JsonValueKind.True)
+                    : string.Empty
             });
         }
-    }
-
-    private static string[]? BuildImageModelTags(string? category, string? provider, bool isInternal)
-    {
-        var tags = new List<string>();
-
-        if (!string.IsNullOrWhiteSpace(category))
-            tags.Add(category);
-        if (!string.IsNullOrWhiteSpace(provider))
-            tags.Add(provider);
-        if (isInternal)
-            tags.Add("internal");
-
-        return tags.Count == 0 ? null : [.. tags];
-    }
+    }  
 
     private async Task AddSpeechVoiceModelsAsync(List<Model> models, CancellationToken cancellationToken)
     {
