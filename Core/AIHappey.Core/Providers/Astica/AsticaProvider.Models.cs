@@ -163,17 +163,11 @@ public partial class AsticaProvider
     {
         var tags = new List<string>
         {
-            $"voice:{voice.Id}"
+            $"voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender.Trim().ToLowerInvariant()}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Age))
-            tags.Add($"age:{voice.Age.Trim().ToLowerInvariant()}");
-
-        foreach (var useCase in voice.UseCases.Take(10))
-            tags.Add($"use_case:{useCase.Trim().ToLowerInvariant().Replace(' ', '-')}");
+            tags.Add($"{voice.Gender.Trim().ToLowerInvariant()}");
 
         return tags;
     }

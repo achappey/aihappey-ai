@@ -358,25 +358,11 @@ public partial class InworldProvider
     {
         var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "tts",
-            "voice-shortcut",
-            $"model:{NormalizeTagValue(baseModelId)}",
-            $"voice:{NormalizeTagValue(voice.VoiceId)}"
+            "voice"
         };
 
-        AddTag(tags, "source", voice.Source);
         AddTag(tags, "gender", voice.Gender);
-        AddTag(tags, "age-group", voice.AgeGroup);
         AddTag(tags, "language", voice.LanguageCode);
-
-        foreach (var language in voice.PromptLanguages.Take(10))
-            AddTag(tags, "prompt-language", language);
-
-        foreach (var category in voice.Categories.Take(10))
-            AddTag(tags, "category", category);
-
-        foreach (var tag in voice.Tags.Take(20))
-            AddTag(tags, "tag", tag);
 
         return tags;
     }

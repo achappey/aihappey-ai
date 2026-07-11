@@ -230,7 +230,6 @@ public sealed class GoogleSpeechPayloadTests
 
         Assert.Equal(30, shortcuts.Count);
         Assert.Contains(shortcuts, model => model.Id == "google/gemini-3.1-flash-tts-preview/Kore" && model.Name == "gemini-3.1-flash-tts-preview/Kore" && model.Type == "speech");
-        Assert.Contains(shortcuts, model => model.Id == "google/gemini-3.1-flash-tts-preview/Puck" && model.Tags!.Contains("voice:Puck"));
         Assert.DoesNotContain(shortcuts, model => model.Id.Contains("gemini-3.5-flash", StringComparison.OrdinalIgnoreCase));
     }
 

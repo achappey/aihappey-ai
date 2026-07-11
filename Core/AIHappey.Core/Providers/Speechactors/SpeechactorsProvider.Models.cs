@@ -166,15 +166,12 @@ public partial class SpeechactorsProvider
     {
         var tags = new List<string>
         {
-            $"voice:{voice.Vid}",
-            $"locale:{locale}"
+            $"voice",
+            $"{locale}"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender.Trim()}");
-
-        if (!string.IsNullOrWhiteSpace(style))
-            tags.Add($"style:{style.Trim()}");
+            tags.Add($"{voice.Gender.Trim()}");
 
         return tags;
     }

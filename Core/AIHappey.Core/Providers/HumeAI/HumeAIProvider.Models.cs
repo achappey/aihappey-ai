@@ -179,20 +179,10 @@ public partial class HumeAIProvider
     {
         var tags = new List<string>
         {
-            "tts",
-            "speech",
-            "octave",
-            "voice",
-            $"provider:{voice.Provider.ToLowerInvariant()}",
-            $"voice:{voice.Id}"
+            "voice"
         };
 
-        foreach (var compatibleModel in voice.CompatibleOctaveModels.Take(10))
-        {
-            if (!string.IsNullOrWhiteSpace(compatibleModel))
-                tags.Add($"octave-version:{compatibleModel.Trim()}");
-        }
-
+        
         return tags;
     }
 

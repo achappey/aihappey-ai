@@ -263,16 +263,10 @@ public partial class SpeechifyProvider
 
     private static IEnumerable<string> BuildSpeechifyModelTags(SpeechifyModelInfo model)
     {
-        var tags = new List<string> { $"model:{model.Id}" };
-
-        if (model.IsDefault is bool isDefault)
-            tags.Add(isDefault ? "default:true" : "default:false");
-
-        if (model.IsRecommended is bool isRecommended)
-            tags.Add(isRecommended ? "recommended:true" : "recommended:false");
+        var tags = new List<string> { };
 
         foreach (var language in model.Languages.Take(100))
-            tags.Add($"language:{language}");
+            tags.Add($"{language}");
 
         return tags;
     }
@@ -289,17 +283,17 @@ public partial class SpeechifyProvider
         var displayName = string.IsNullOrWhiteSpace(voice.DisplayName) ? voice.Id : voice.DisplayName;
         var parts = new List<string>
         {
-            $"{ProviderName} voice {displayName} ({voice.Id}) on {modelId}."
+            $"{ProviderName} voice {displayName}."
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Locale))
-            parts.Add($"Locale: {voice.Locale}.");
+            parts.Add($"{voice.Locale}.");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            parts.Add($"Gender: {voice.Gender}.");
+            parts.Add($"{voice.Gender}.");
 
         if (!string.IsNullOrWhiteSpace(voice.Type))
-            parts.Add($"Type: {voice.Type}.");
+            parts.Add($"{voice.Type}.");
 
         if (!string.IsNullOrWhiteSpace(model?.Description))
             parts.Add(model.Description!);
@@ -316,7 +310,7 @@ public partial class SpeechifyProvider
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
             tags.Add($"{voice.Gender}");
-    
+
 
         foreach (var language in voiceModel.Languages.Take(100))
             tags.Add($"{language}");

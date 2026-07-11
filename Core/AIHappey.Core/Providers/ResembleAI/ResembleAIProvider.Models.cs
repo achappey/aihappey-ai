@@ -117,7 +117,7 @@ public partial class ResembleAIProvider
         };
 
         if (!string.IsNullOrWhiteSpace(voice.DefaultLanguage))
-            tags.Add($"language:{voice.DefaultLanguage}");
+            tags.Add($"{voice.DefaultLanguage}");
 
         return tags;
     }

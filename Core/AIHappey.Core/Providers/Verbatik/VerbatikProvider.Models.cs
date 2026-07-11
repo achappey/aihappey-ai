@@ -52,16 +52,17 @@ public partial class VerbatikProvider
         VerbatikVoice voice)
     {
         var tags = new HashSet<string>(
-            baseModel.Tags ?? [],
-            StringComparer.OrdinalIgnoreCase);
-
-        tags.Add($"voice:{voice.Id}");
+            [],
+            StringComparer.OrdinalIgnoreCase)
+        {
+            $"voice"
+        };
 
         if (!string.IsNullOrWhiteSpace(voice.LanguageCode))
-            tags.Add($"language:{voice.LanguageCode.Trim()}");
+            tags.Add($"{voice.LanguageCode.Trim()}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender.Trim()}");
+            tags.Add($"{voice.Gender.Trim()}");
 
         return tags;
     }
@@ -82,7 +83,7 @@ public partial class VerbatikProvider
             OwnedBy = baseModel.OwnedBy ?? ProviderName,
             Type = baseModel.Type ?? "speech",
             Name = $"{baseModel.Name ?? baseModelId} · {BuildVoiceDisplayName(voice)}",
-            Description = $"{baseModel.Description ?? $"{ProviderName} TTS model {baseModelId}"} Voice: {voice.Id}.",
+            Description = $"{baseModel.Description ?? $"{ProviderName} TTS model {baseModelId}"} Voice: {voice.Name}.",
             Pricing = baseModel.Pricing,
             Tags = BuildVoiceTags(baseModel, voice)
         };

@@ -127,21 +127,11 @@ public partial class TypecastProvider
     {
         var tags = new List<string>
         {
-            $"model:{model.Version}",
-            $"voice:{voice.VoiceId}"
+            $"voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Age))
-            tags.Add($"age:{voice.Age}");
-
-        foreach (var uc in voice.UseCases.Take(10))
-            tags.Add($"usecase:{uc}");
-
-        foreach (var emotion in model.Emotions.Take(12))
-            tags.Add($"emotion:{emotion}");
+            tags.Add($"{voice.Gender}");
 
         return tags;
     }

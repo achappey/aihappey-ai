@@ -155,16 +155,13 @@ public partial class LOVOProvider
 
     private static IEnumerable<string> BuildSpeakerTags(LovoSpeaker speaker)
     {
-        var tags = new List<string>();
+        var tags = new List<string>() { "voice" };
 
         if (!string.IsNullOrWhiteSpace(speaker.Locale))
-            tags.Add($"locale:{speaker.Locale}");
+            tags.Add($"{speaker.Locale}");
 
         if (!string.IsNullOrWhiteSpace(speaker.Gender))
-            tags.Add($"gender:{speaker.Gender}");
-
-        foreach (var styleId in speaker.StyleIds.Take(20))
-            tags.Add($"style:{styleId}");
+            tags.Add($"{speaker.Gender}");
 
         return tags;
     }

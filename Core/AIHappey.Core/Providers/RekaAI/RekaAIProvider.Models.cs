@@ -34,7 +34,7 @@ public partial class RekaAIProvider
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-                    var models = new List<Model>();
+                var models = new List<Model>();
                 var root = doc.RootElement;
 
                 if (!root.TryGetProperty("data", out var dataEl) ||

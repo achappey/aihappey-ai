@@ -145,7 +145,7 @@ public partial class SmallestAIProvider
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
+            tags.Add($"{voice.Gender}");
 
         foreach (var language in voice.Languages)
             tags.Add($"{language}");

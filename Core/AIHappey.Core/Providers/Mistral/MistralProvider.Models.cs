@@ -160,6 +160,7 @@ public partial class MistralProvider
                     continue;
 
                 var shortcut = $"{baseModel}/{voice.Slug}";
+
                 AddModelIfMissing(models, new Model
                 {
                     Id = shortcut.ToModelId(GetIdentifier()),
@@ -167,7 +168,7 @@ public partial class MistralProvider
                     OwnedBy = GetName(),
                     Type = "speech",
                     Description = $"{GetName()} text-to-speech model '{baseModel}' with preset voice slug '{voice.Slug}' (voice_id: {voice.Id}).",
-                    Tags = ["tts", $"model:{baseModel}", $"voice:{voice.Slug}", "shortcut"]
+                    Tags = ["voice"]
                 });
             }
         }

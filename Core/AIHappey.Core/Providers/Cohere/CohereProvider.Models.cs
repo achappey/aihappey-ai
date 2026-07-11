@@ -65,7 +65,6 @@ public partial class CohereProvider
                         {
                             Id = name!.ToModelId(GetIdentifier()),
                             Name = name!,
-                            Tags = tags,
                             ContextWindow = contextLength,
                             OwnedBy = nameof(Cohere),
                             Type = modelType

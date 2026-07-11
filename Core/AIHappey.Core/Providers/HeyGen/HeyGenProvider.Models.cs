@@ -196,16 +196,13 @@ public partial class HeyGenProvider
 
     private static IEnumerable<string> BuildVoiceTags(HeyGenVoice voice)
     {
-        var tags = new List<string>();
+        var tags = new List<string>() { "voice" };
 
         if (!string.IsNullOrWhiteSpace(voice.Language))
-            tags.Add($"language:{voice.Language}");
+            tags.Add($"{voice.Language}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
-
-        if (!string.IsNullOrWhiteSpace(voice.CatalogType))
-            tags.Add($"catalog:{voice.CatalogType}");
+            tags.Add($"{voice.Gender}");
 
         return tags;
     }
@@ -224,9 +221,8 @@ public partial class HeyGenProvider
         var name = string.IsNullOrWhiteSpace(voice.Name) ? voice.Id : voice.Name.Trim();
         var language = string.IsNullOrWhiteSpace(voice.Language) ? "unknown" : voice.Language.Trim();
         var gender = string.IsNullOrWhiteSpace(voice.Gender) ? "unknown" : voice.Gender.Trim();
-        var catalog = string.IsNullOrWhiteSpace(voice.CatalogType) ? "unknown" : voice.CatalogType.Trim();
 
-        return $"{ProviderName} Starfish voice '{name}' (voice_id: {voice.Id}, language: {language}, gender: {gender}, catalog: {catalog}).";
+        return $"{ProviderName} Starfish voice '{name}' ({language}, {gender}).";
     }
 
     private static string? FirstNonWhiteSpace(IEnumerable<string?> values)
