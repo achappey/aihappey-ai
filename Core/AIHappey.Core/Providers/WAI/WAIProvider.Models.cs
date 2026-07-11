@@ -69,28 +69,6 @@ public partial class WAIProvider
                         model.MaxTokens = maxEl.GetInt32();
                     }
 
-                    // Tags (supported_features + quantization)
-                    var tags = new List<string>();
-
-                    if (el.TryGetProperty("supported_features", out var featEl) &&
-                        featEl.ValueKind == JsonValueKind.Array)
-                    {
-                        tags.AddRange(
-                            featEl.EnumerateArray()
-                                  .Select(x => x.GetString())
-                                  .Where(x => !string.IsNullOrWhiteSpace(x))!
-                        );
-                    }
-
-                    if (el.TryGetProperty("quantization", out var quantEl) &&
-                        quantEl.ValueKind == JsonValueKind.String)
-                    {
-                        tags.Add(quantEl.GetString()!);
-                    }
-
-                    if (tags.Count > 0)
-                        model.Tags = tags;
-
                     // Pricing mapping
                     if (el.TryGetProperty("pricing", out var pricingEl) &&
                         pricingEl.ValueKind == JsonValueKind.Object)

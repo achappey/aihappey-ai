@@ -185,12 +185,10 @@ public partial class AgenticsProvider
 
     private static string[]? BuildSpeechVoiceTags(string? gender, bool isDefaultVoice)
     {
-        var tags = new List<string>();
+        var tags = new List<string>() {"voice"};
 
         if (!string.IsNullOrWhiteSpace(gender))
             tags.Add(gender);
-        if (isDefaultVoice)
-            tags.Add("default-voice");
 
         return tags.Count == 0 ? null : [.. tags];
     }

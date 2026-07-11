@@ -131,29 +131,6 @@ public partial class MergeProvider
         var status = ReadString(el, "availability_status");
         var vendorInfos = ReadVendorInfos(el);
 
-        var tags = new SortedSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "merge-model",
-            $"merge-model:{mergeModelId}"
-        };
-
-        if (!string.IsNullOrWhiteSpace(provider))
-            tags.Add($"provider:{provider}");
-
-        if (!string.IsNullOrWhiteSpace(status))
-            tags.Add($"status:{status}");
-
-        foreach (var vendor in vendorInfos)
-        {
-            tags.Add($"vendor:{vendor.Name}");
-
-            if (!string.IsNullOrWhiteSpace(vendor.AvailabilityStatus))
-                tags.Add($"vendor-status:{vendor.AvailabilityStatus}");
-
-            foreach (var capability in vendor.CapabilityTags)
-                tags.Add(capability);
-        }
-
         var pricing = vendorInfos
             .Where(vendor => vendor.Pricing is not null)
             .OrderBy(vendor => vendor.Pricing!.Input + vendor.Pricing.Output)
@@ -168,7 +145,6 @@ public partial class MergeProvider
             ContextWindow = vendorInfos.Select(vendor => vendor.ContextWindow).Where(value => value.HasValue).Max(),
             MaxTokens = vendorInfos.Select(vendor => vendor.MaxOutputTokens).Where(value => value.HasValue).Max(),
             Type = GuessMergeModelType(vendorInfos.SelectMany(vendor => vendor.InputCapabilities)),
-            Tags = tags,
             Pricing = pricing
         };
     }
@@ -183,44 +159,13 @@ public partial class MergeProvider
         var strategy = ReadString(policyEl, "strategy");
         var description = ReadString(policyEl, "description");
 
-        var tags = new SortedSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "routing-policy",
-            $"routing-policy:{id}"
-        };
-
-        if (!string.IsNullOrWhiteSpace(strategy))
-            tags.Add($"strategy:{strategy}");
-
-        if (ReadBool(policyEl, "is_intelligent") == true)
-            tags.Add("intelligent");
-
-        if (ReadBool(policyEl, "is_active") == true)
-            tags.Add("active");
-
-        if (policyEl.TryGetProperty("providers", out var providersEl) && providersEl.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var providerEl in providersEl.EnumerateArray())
-            {
-                var provider = ReadString(providerEl, "provider");
-                var model = ReadString(providerEl, "model");
-
-                if (!string.IsNullOrWhiteSpace(provider))
-                    tags.Add($"provider:{provider}");
-
-                if (!string.IsNullOrWhiteSpace(model))
-                    tags.Add($"member:{provider}/{model}".Replace("member:/", "member:"));
-            }
-        }
-
         return new Model
         {
             Id = (RoutingPolicyModelPrefix + id).ToModelId(GetIdentifier()),
             Name = name,
             OwnedBy = nameof(Merge),
             Type = "language",
-            Description = description,
-            Tags = tags
+            Description = description
         };
     }
 

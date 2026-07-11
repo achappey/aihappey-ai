@@ -97,8 +97,7 @@ public partial class InworldProvider
                 OwnedBy = ReadString(modelElement, "modelCreator") ?? provider,
                 ContextWindow = ReadInt32(specElement, "contextLength"),
                 MaxTokens = ReadInt32(specElement, "maxCompletionTokens"),
-                Pricing = BuildPricing(pricingElement),
-                Tags = BuildApiModelTags(provider, ReadString(modelElement, "modelCreator"), specElement, ReadBoolean(modelElement, "isSupported"))
+                Pricing = BuildPricing(pricingElement)
             });
         }
 
@@ -145,8 +144,7 @@ public partial class InworldProvider
                         Name = string.IsNullOrWhiteSpace(displayName) ? routerName : displayName,
                         Type = "language",
                         OwnedBy = "Inworld",
-                        Description = BuildRouterShortcutDescription(routerName, displayName, routerElement),
-                        Tags = BuildRouterShortcutTags(routerName, routerElement)
+                        Description = BuildRouterShortcutDescription(routerName, displayName, routerElement)
                     });
                 }
             }
@@ -370,7 +368,7 @@ public partial class InworldProvider
     private static void AddTag(HashSet<string> tags, string prefix, string? value)
     {
         if (!string.IsNullOrWhiteSpace(value))
-            tags.Add($"{prefix}:{NormalizeTagValue(value)}");
+            tags.Add($"{NormalizeTagValue(value)}");
     }
 
     private static bool IsValidSpeechVoice(InworldVoice voice)
@@ -435,50 +433,6 @@ public partial class InworldProvider
         };
     }
 
-    private static IEnumerable<string>? BuildApiModelTags(string provider, string? modelCreator, JsonElement specElement, bool? isSupported)
-    {
-        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            $"provider:{NormalizeTagValue(provider)}"
-        };
-
-        if (!string.IsNullOrWhiteSpace(modelCreator))
-            tags.Add($"creator:{NormalizeTagValue(modelCreator)}");
-
-        foreach (var modality in ReadStringArray(specElement, "inputModalities"))
-            tags.Add($"input:{NormalizeTagValue(modality)}");
-
-        foreach (var modality in ReadStringArray(specElement, "outputModalities"))
-            tags.Add($"output:{NormalizeTagValue(modality)}");
-
-        foreach (var parameter in ReadStringArray(specElement, "supportedParameters"))
-            tags.Add($"parameter:{NormalizeTagValue(parameter)}");
-
-        if (TryGetProperty(specElement, "capabilities", out var capabilitiesElement))
-        {
-            if (ReadBoolean(capabilitiesElement, "functionCalling") == true)
-            {
-                tags.Add("tools");
-                tags.Add("capability:function-calling");
-            }
-
-            if (ReadBoolean(capabilitiesElement, "webSearch") == true)
-                tags.Add("web-search");
-            if (ReadBoolean(capabilitiesElement, "reasoning") == true)
-                tags.Add("reasoning");
-            if (ReadBoolean(capabilitiesElement, "promptCaching") == true)
-                tags.Add("prompt-caching");
-            if (ReadBoolean(capabilitiesElement, "responseSchema") == true)
-                tags.Add("structured-outputs");
-            if (ReadBoolean(capabilitiesElement, "vision") == true)
-                tags.Add("vision");
-        }
-
-        tags.Add(isSupported is false ? "unsupported" : "supported");
-
-        return tags.Count == 0 ? null : [.. tags];
-    }
-
     private static string BuildRouterShortcutDescription(string routerName, string? displayName, JsonElement routerElement)
     {
         var routeCount = 0;
@@ -490,51 +444,6 @@ public partial class InworldProvider
 
         var label = string.IsNullOrWhiteSpace(displayName) ? routerName : displayName;
         return $"Inworld router shortcut model for predefined route policy '{label}' (router id: {routerName}, conditional routes: {routeCount}, default route: {(hasDefaultRoute ? "yes" : "no")}).";
-    }
-
-    private static IEnumerable<string>? BuildRouterShortcutTags(string routerName, JsonElement routerElement)
-    {
-        var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "router",
-            "shortcut",
-            "routing-policy",
-            $"router:{NormalizeTagValue(routerName)}"
-        };
-
-        if (TryGetProperty(routerElement, "routes", out var routesElement) && routesElement.ValueKind == JsonValueKind.Array)
-        {
-            if (routesElement.GetArrayLength() > 0)
-                tags.Add("conditional-routing");
-
-            foreach (var routeElement in routesElement.EnumerateArray())
-            {
-                if (TryGetProperty(routeElement, "route", out var innerRoute)
-                    && TryGetProperty(innerRoute, "route_id", out var routeIdElement)
-                    && routeIdElement.ValueKind == JsonValueKind.String)
-                {
-                    var routeId = routeIdElement.GetString();
-                    if (!string.IsNullOrWhiteSpace(routeId))
-                        tags.Add($"route:{NormalizeTagValue(routeId)}");
-                }
-            }
-        }
-
-        if (TryGetProperty(routerElement, "defaultRoute", out var defaultRouteElement)
-            && defaultRouteElement.ValueKind == JsonValueKind.Object)
-        {
-            tags.Add("default-route");
-
-            if (TryGetProperty(defaultRouteElement, "route_id", out var routeIdElement)
-                && routeIdElement.ValueKind == JsonValueKind.String)
-            {
-                var routeId = routeIdElement.GetString();
-                if (!string.IsNullOrWhiteSpace(routeId))
-                    tags.Add($"route:{NormalizeTagValue(routeId)}");
-            }
-        }
-
-        return tags.Count == 0 ? null : [.. tags];
     }
 
     private static string NormalizeTagValue(string value)

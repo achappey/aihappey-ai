@@ -38,7 +38,7 @@ public partial class OrqAgentRuntimeProvider
                         OwnedBy = ProviderName,
                         Created = ParseUnixTime(deployment.Created),
                         Type = MapDeploymentModelType(deployment.PromptConfig?.ModelType),
-                        Tags = BuildDeploymentTags(deployment)
+                        Tags = ["agent"]
                     });
                 }
 

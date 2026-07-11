@@ -123,43 +123,11 @@ public partial class VeniceProvider
                         }
                     }
 
-                    // ------------------------
-                    // Tags (capabilities + traits + quantization)
-                    // ------------------------
-                    var tags = new List<string>();
-
-                    if (spec.TryGetProperty("traits", out var traitsEl) &&
-                        traitsEl.ValueKind == JsonValueKind.Array)
-                    {
-                        tags.AddRange(
-                            traitsEl.EnumerateArray()
-                                    .Select(x => x.GetString())
-                                    .Where(x => !string.IsNullOrWhiteSpace(x))!
-                        );
-                    }
-
-                    if (spec.TryGetProperty("capabilities", out var capsEl) &&
-                        capsEl.ValueKind == JsonValueKind.Object)
-                    {
-                        foreach (var cap in capsEl.EnumerateObject())
-                        {
-                            if (cap.Value.ValueKind == JsonValueKind.True)
-                                tags.Add(cap.Name.Replace("supports", string.Empty).ToLowerInvariant());
-                            else if (cap.Name == "quantization" &&
-                                     cap.Value.ValueKind == JsonValueKind.String)
-                                tags.Add(cap.Value.GetString()!);
-                        }
-                    }
-
-                    if (tags.Count > 0)
-                        model.Tags = [.. tags.Distinct()];
-
                     if (!string.IsNullOrWhiteSpace(model.Id))
                         models.Add(model);
                 }
 
                 models.AddRange(await ListCharacterModels(cancellationToken));
-
                 models.AddRange(GetIdentifier().GetModels());
 
                 return models
@@ -228,22 +196,6 @@ public partial class VeniceProvider
                 {
                     "persona"
                 };
-
-                if (el.TryGetProperty("webEnabled", out var webEnabledEl) && webEnabledEl.ValueKind == JsonValueKind.True)
-                    tags.Add("web-enabled");
-
-                if (el.TryGetProperty("adult", out var adultEl) && adultEl.ValueKind == JsonValueKind.True)
-                    tags.Add("adult");
-
-                if (el.TryGetProperty("tags", out var apiTagsEl) && apiTagsEl.ValueKind == JsonValueKind.Array)
-                {
-                    tags.AddRange(
-                        apiTagsEl.EnumerateArray()
-                            .Select(a => a.GetString())
-                            .Where(a => !string.IsNullOrWhiteSpace(a))!
-                            .Select(a => $"character_tag:{a}")
-                    );
-                }
 
                 models.Add(new Model
                 {

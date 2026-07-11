@@ -74,18 +74,8 @@ public partial class JulesProvider
 
                     var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     {
-                        "agent",
-                        "shortcut",
-                        "source",
-                        $"source:{sourceName}"
+                        "agent"
                     };
-
-                    if (!string.IsNullOrWhiteSpace(owner))
-                        tags.Add($"owner:{owner}");
-                    if (!string.IsNullOrWhiteSpace(repo))
-                        tags.Add($"repo:{repo}");
-                    if (source.TryGetProperty("githubRepo", out _))
-                        tags.Add("github");
 
                     models.Add(new Model
                     {

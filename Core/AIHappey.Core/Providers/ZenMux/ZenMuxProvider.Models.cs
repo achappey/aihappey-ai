@@ -58,23 +58,6 @@ public partial class ZenMuxProvider
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-                    if (el.TryGetProperty("capabilities", out var capsEl) &&
-                        capsEl.ValueKind == JsonValueKind.Object)
-                    {
-                        var tags = new List<string>();
-
-                        foreach (var prop in capsEl.EnumerateObject())
-                        {
-                            if (prop.Value.ValueKind == JsonValueKind.True)
-                            {
-                                tags.Add(prop.Name);
-                            }
-                        }
-
-                        if (tags.Count > 0)
-                            model.Tags = tags;
-                    }
-
                     if (el.TryGetProperty("pricings", out var pricingsEl) &&
               pricingsEl.ValueKind == JsonValueKind.Object)
                     {

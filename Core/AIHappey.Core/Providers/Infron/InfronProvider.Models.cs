@@ -115,21 +115,6 @@ public partial class InfronProvider
                         };
                     }
 
-                    List<string> tags = [];
-                    // Extract supports_* flags → Tags
-                    foreach (var prop in el.EnumerateObject())
-                    {
-                        if (prop.Name.StartsWith("supports_", StringComparison.OrdinalIgnoreCase) &&
-                            prop.Value.ValueKind == JsonValueKind.True)
-                        {
-                            var tag = prop.Name.Replace("supports_", "");
-                            tags.Add(tag);
-                        }
-                    }
-
-                    if (tags.Count > 0)
-                        model.Tags = tags;
-
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }

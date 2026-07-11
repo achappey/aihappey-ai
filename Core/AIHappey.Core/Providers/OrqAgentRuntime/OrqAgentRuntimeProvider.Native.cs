@@ -1297,20 +1297,6 @@ public partial class OrqAgentRuntimeProvider
         => deployment.PromptConfig?.ModelType is { } modelType
            && ChatCapableModelTypes.Contains(modelType);
 
-    private static IEnumerable<string> BuildDeploymentTags(OrqDeployment deployment)
-    {
-        var tags = new List<string> { "agent", "deployment" };
-
-        if (!string.IsNullOrWhiteSpace(deployment.PromptConfig?.ModelType))
-            tags.Add(deployment.PromptConfig.ModelType!);
-        if (!string.IsNullOrWhiteSpace(deployment.PromptConfig?.Provider))
-            tags.Add(deployment.PromptConfig.Provider!);
-        if (!string.IsNullOrWhiteSpace(deployment.Version))
-            tags.Add($"version:{deployment.Version}");
-
-        return tags;
-    }
-
     private static string MapDeploymentModelType(string? modelType)
         => modelType?.ToLowerInvariant() switch
         {
