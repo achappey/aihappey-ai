@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "evidencemd/evidencemd-fast",
+      "object": "model",
+      "owned_by": "EvidenceMD",
+      "name": "evidencemd-fast",
+      "type": "language",
+      "description": "Fast model for quick medical answers with peer-reviewed citations. Optimized for low latency. Does not support thinking mode."
+    },
+    {
+      "id": "evidencemd/evidencemd-pro",
+      "object": "model",
+      "owned_by": "EvidenceMD",
+      "name": "evidencemd-pro",
+      "type": "language",
+      "description": "Advanced model for deep medical analysis with comprehensive peer-reviewed citations. Supports thinking mode."
+    },
+    {
+      "id": "evidencemd/evidencemd-deep",
+      "object": "model",
+      "owned_by": "EvidenceMD",
+      "name": "evidencemd-deep",
+      "type": "language",
+      "description": "Highest-capability clinical reasoning model with up to 64k reasoning tokens and 97% GPQA Diamond benchmark performance. Best suited for complex clinical analysis."
+    }
+  ]
+}

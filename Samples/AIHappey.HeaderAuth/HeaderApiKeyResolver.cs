@@ -561,7 +561,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["rebytemodels"] = "X-ReByteModels-Key",
             ["rebytetasks"] = "X-ReByteTasks-Key",
             ["wayscloud"] = "X-WAYSCloud-Key",
-            ["tierup"] = "X-TierUp-Key"
+            ["tierup"] = "X-TierUp-Key",
+            ["evidencemd"] = "X-EvidenceMD-Key"
 
         };
 

@@ -560,6 +560,7 @@ public class AIServiceConfig
     public ProviderConfig? ReByteModels { get; set; }
     public ProviderConfig? WAYSCloud { get; set; }
     public ProviderConfig? TierUp { get; set; }
+    public ProviderConfig? EvidenceMD { get; set; }
 
 
 }
