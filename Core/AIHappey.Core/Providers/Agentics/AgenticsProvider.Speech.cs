@@ -112,6 +112,7 @@ public partial class AgenticsProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = body
             },

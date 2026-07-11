@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.ARKLabs;
@@ -77,10 +78,12 @@ public partial class ARKLabsProvider
                 Format = responseFormat
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

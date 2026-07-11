@@ -114,6 +114,7 @@ public partial class JinaProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(providerKey),
                 Body = root.Clone()
             }

@@ -1,3 +1,5 @@
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
@@ -80,20 +82,16 @@ public partial class CallMissedProvider
                 Format = responseFormat
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Request = new()
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    endpoint = "v1/audio/speech",
-                    statusCode = (int)resp.StatusCode,
-                    contentType,
-                    responseFormat
-                })
+                Body = payload
             },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

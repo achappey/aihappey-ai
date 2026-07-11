@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -123,6 +124,7 @@ public partial class OpenRouterProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 Id = ReadOpenRouterRerankString(root, "id"),
                 ModelId = ReadOpenRouterRerankString(root, "model")?.ToModelId(GetIdentifier())
                     ?? request.Model.ToModelId(GetIdentifier()),

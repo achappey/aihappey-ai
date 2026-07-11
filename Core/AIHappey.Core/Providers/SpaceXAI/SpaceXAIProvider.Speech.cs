@@ -93,6 +93,7 @@ public partial class SpaceXAIProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem

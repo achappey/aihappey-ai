@@ -2,6 +2,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Cartesia;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -132,12 +133,6 @@ public partial class CartesiaProvider
             }
         }
 
-        var providerMeta = new
-        {
-            model = normalizedModel,
-            hasWordTimestamps = segments.Count > 0
-        };
-
         return new TranscriptionResponse
         {
             Text = text,
@@ -145,14 +140,12 @@ public partial class CartesiaProvider
             DurationInSeconds = duration,
             Segments = segments,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

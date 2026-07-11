@@ -108,6 +108,7 @@ public partial class CohereProvider
             {
                 Timestamp = now,
                 Id = responseId,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }

@@ -85,6 +85,7 @@ public partial class ARKLabsProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };

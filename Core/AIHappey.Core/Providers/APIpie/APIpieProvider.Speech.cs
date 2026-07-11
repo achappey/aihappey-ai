@@ -120,6 +120,7 @@ public partial class APIpieProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem

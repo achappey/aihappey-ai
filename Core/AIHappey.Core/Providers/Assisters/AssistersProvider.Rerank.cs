@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Assisters;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -88,24 +90,7 @@ public partial class AssistersProvider
 
         if (!root.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
         {
-            warnings.Add(new
-            {
-                type = "provider_response_missing_field",
-                feature = "results",
-                details = "Assisters rerank response did not contain a 'results' array."
-            });
-
-            return new RerankingResponse
-            {
-                Ranking = [],
-                Warnings = warnings,
-                Response = new()
-                {
-                    Timestamp = now,
-                    ModelId = request.Model,
-                    Body = raw
-                }
-            };
+            throw new Exception("Assisters rerank response did not contain a 'results' array");
         }
 
         var ranked = resultsEl
@@ -121,10 +106,12 @@ public partial class AssistersProvider
         {
             Ranking = ranked,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = raw
             }
         };

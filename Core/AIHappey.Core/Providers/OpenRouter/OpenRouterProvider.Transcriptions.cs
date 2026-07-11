@@ -50,7 +50,8 @@ public partial class OpenRouterProvider
                 ? $"OpenRouter transcription request failed ({(int)resp.StatusCode})."
                 : $"OpenRouter transcription request failed ({(int)resp.StatusCode}): {raw}");
 
-        return ConvertOpenRouterTranscriptionResponse(raw, request.Model, now, requestBody);
+        return ConvertOpenRouterTranscriptionResponse(raw, request.Model,
+            now, requestBody, resp.GetHeaders());
     }
 
     private static Dictionary<string, object?> BuildOpenRouterTranscriptionPayload(TranscriptionRequest request)
@@ -129,7 +130,8 @@ public partial class OpenRouterProvider
         string raw,
         string model,
         DateTime timestamp,
-        string requestBody)
+        string requestBody,
+        IDictionary<string, string> headers)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement.Clone();
@@ -148,6 +150,7 @@ public partial class OpenRouterProvider
             Response = new ResponseData
             {
                 Timestamp = timestamp,
+                Headers = headers,
                 ModelId = model.ToModelId(GetIdentifier()),
                 Body = root
             },

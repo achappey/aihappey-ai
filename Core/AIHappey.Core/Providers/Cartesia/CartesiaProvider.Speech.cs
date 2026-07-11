@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Cartesia;
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -99,14 +100,6 @@ public partial class CartesiaProvider
         var mime = ResolveSpeechMimeType(container, resp.Content.Headers.ContentType?.MediaType);
         var format = ResolveSpeechFormat(container, mime);
 
-        var providerMeta = new
-        {
-            voiceId,
-            ttsModelId,
-            container,
-            language
-        };
-
         return new SpeechResponse
         {
             Audio = new SpeechAudioResponse
@@ -117,12 +110,12 @@ public partial class CartesiaProvider
             },
             Warnings = warnings,
             ProviderMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(providerMeta),
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(providerMeta)
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem
             {

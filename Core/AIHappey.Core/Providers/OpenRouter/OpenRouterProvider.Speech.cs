@@ -79,6 +79,7 @@ public partial class OpenRouterProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem
