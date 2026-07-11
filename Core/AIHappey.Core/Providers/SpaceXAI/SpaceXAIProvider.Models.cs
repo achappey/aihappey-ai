@@ -151,6 +151,7 @@ public partial class SpaceXAIProvider
                 OwnedBy = ProviderName,
                 Pricing = ttsPricing,
                 Type = "speech",
+                Tags = language.Code != "auto" ? [language.Code] : null,
                 Name = $"SpaceXAI TTS {language.DisplayName}",
                 Description = $"SpaceXAI text-to-speech with {language.DisplayName} language."
             };
@@ -163,6 +164,8 @@ public partial class SpaceXAIProvider
                     OwnedBy = ProviderName,
                     Pricing = ttsPricing,
                     Type = "speech",
+                    Tags = language.Code != "auto" ? [language.Code, "voice"] 
+                        : ["voice"],
                     Name = $"SpaceXAI TTS {language.DisplayName} {voice.Name}",
                     Description = $"SpaceXAI text-to-speech with {language.DisplayName} language and {voice.Name} voice."
                 };
