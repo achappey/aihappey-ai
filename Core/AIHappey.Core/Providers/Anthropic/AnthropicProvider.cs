@@ -1,7 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
-using ANT = Anthropic.SDK;
+
 using AIHappey.Common.Model;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
@@ -53,70 +53,7 @@ public partial class AnthropicProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.anthropic.com/");
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var standardModels = (await ListStandardModelsAsync(cancellationToken)).ToList();
-        var managedAgentModels = (await ListManagedAgentModelsSafeAsync(cancellationToken)).ToList();
-
-        return standardModels
-            .Concat(managedAgentModels)
-            .GroupBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First())
-            .OrderByDescending(model => model.Created ?? 0);
-    }
-
-    private async Task<IEnumerable<Model>> ListStandardModelsAsync(CancellationToken cancellationToken)
-    {
-        var client = new ANT.AnthropicClient(GetKey());
-
-        var models = await client.Models.ListModelsAsync(ctx: cancellationToken);
-        var pricing = GetIdentifier().GetPricing();
-
-        return models.Models.Select(a =>
-        {
-            var modelId = a.Id.ToModelId(GetIdentifier());
-
-            var contextWindow =
-                ContextSize.TryGetValue(a.Id, out int value)
-                    ? value : (int?)null;
-
-            var maxTokens =
-                MaxOutput.TryGetValue(a.Id, out int maxTokensValue)
-                    ? maxTokensValue : (int?)null;
-
-            var modelPricing =
-                pricing != null && pricing.ContainsKey(modelId)
-                    ? pricing[modelId]
-                    : null;
-
-            return new Model
-            {
-                Id = modelId,
-                Name = a.Id,
-                ContextWindow = contextWindow,
-                MaxTokens = maxTokens,
-                Pricing = modelPricing,
-                Created = new DateTimeOffset(a.CreatedAt.ToUniversalTime())
-                    .ToUnixTimeSeconds(),
-                OwnedBy = nameof(Anthropic),
-            };
-        });
-    }
-
-    private readonly Dictionary<string, int> ContextSize = new() {
-        {"claude-sonnet-4-5-20250929", 200_000},
-        {"claude-haiku-4-5-20251001", 200_000},
-        {"claude-opus-4-5-20251101", 200_000}
-      };
-
-    private readonly Dictionary<string, int> MaxOutput = new() {
-        {"claude-sonnet-4-5-20250929", 64_000},
-        {"claude-haiku-4-5-20251001", 64_000},
-        {"claude-opus-4-5-20251101", 64_000}
-      };
+ 
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
