@@ -23,8 +23,7 @@
       "owned_by": "Kirha",
       "name": "Kirha Insurance Search",
       "type": "language",
-      "description": "Kirha Search shortcut for the insurance vertical. Automatically sends vertical_id=insurance while preserving metadata overrides for all other Search API options.",
-      "tags": [ "search", "vertical", "shortcut", "insurance" ]
+      "description": "Kirha Search shortcut for the insurance vertical. Automatically sends vertical_id=insurance while preserving metadata overrides for all other Search API options."
     },
     {
       "id": "kirha/search/news",
@@ -32,8 +31,7 @@
       "owned_by": "Kirha",
       "name": "Kirha News Search",
       "type": "language",
-      "description": "Kirha Search shortcut for the news vertical. Automatically sends vertical_id=news while preserving metadata overrides for all other Search API options.",
-      "tags": [ "search", "vertical", "shortcut", "news" ]
+      "description": "Kirha Search shortcut for the news vertical. Automatically sends vertical_id=news while preserving metadata overrides for all other Search API options."
     },
     {
       "id": "kirha/search/dev",
@@ -41,8 +39,7 @@
       "owned_by": "Kirha",
       "name": "Kirha Dev Search",
       "type": "language",
-      "description": "Kirha Search shortcut for the dev vertical. Automatically sends vertical_id=dev while preserving metadata overrides for all other Search API options.",
-      "tags": [ "search", "vertical", "shortcut", "dev" ]
+      "description": "Kirha Search shortcut for the dev vertical. Automatically sends vertical_id=dev while preserving metadata overrides for all other Search API options."
     },
     {
       "id": "kirha/search/adtech",
@@ -50,8 +47,7 @@
       "owned_by": "Kirha",
       "name": "Kirha Adtech Search",
       "type": "language",
-      "description": "Kirha Search shortcut for the adtech vertical. Automatically sends vertical_id=adtech while preserving metadata overrides for all other Search API options.",
-      "tags": [ "search", "vertical", "shortcut", "adtech" ]
+      "description": "Kirha Search shortcut for the adtech vertical. Automatically sends vertical_id=adtech while preserving metadata overrides for all other Search API options."
     },
     {
       "id": "kirha/search/crypto",
@@ -59,8 +55,7 @@
       "owned_by": "Kirha",
       "name": "Kirha Crypto Search",
       "type": "language",
-      "description": "Kirha Search shortcut for the crypto vertical. Automatically sends vertical_id=crypto while preserving metadata overrides for all other Search API options.",
-      "tags": [ "search", "vertical", "shortcut", "crypto" ]
+      "description": "Kirha Search shortcut for the crypto vertical. Automatically sends vertical_id=crypto while preserving metadata overrides for all other Search API options."
     },
     {
       "id": "kirha/search/medical",
@@ -68,8 +63,7 @@
       "owned_by": "Kirha",
       "name": "Kirha Medical Search",
       "type": "language",
-      "description": "Kirha Search shortcut for the medical vertical. Automatically sends vertical_id=medical while preserving metadata overrides for all other Search API options.",
-      "tags": [ "search", "vertical", "shortcut", "medical" ]
+      "description": "Kirha Search shortcut for the medical vertical. Automatically sends vertical_id=medical while preserving metadata overrides for all other Search API options."
     },
     {
       "id": "kirha/search/company",
@@ -77,8 +71,7 @@
       "owned_by": "Kirha",
       "name": "Kirha Company Search",
       "type": "language",
-      "description": "Kirha Search shortcut for the company vertical. Automatically sends vertical_id=company while preserving metadata overrides for all other Search API options.",
-      "tags": [ "search", "vertical", "shortcut", "company" ]
+      "description": "Kirha Search shortcut for the company vertical. Automatically sends vertical_id=company while preserving metadata overrides for all other Search API options."
     },
     {
       "id": "kirha/kirha-tasks",

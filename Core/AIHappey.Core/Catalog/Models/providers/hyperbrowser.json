@@ -8,7 +8,9 @@
       "name": "HyperAgent",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut. Runs an async browser agent task and uses gpt-4o unless overridden with provider metadata.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-5.2",
@@ -17,7 +19,9 @@
       "name": "HyperAgent - gpt-5.2",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-5.2.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5.2" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-5.1",
@@ -26,7 +30,9 @@
       "name": "HyperAgent - gpt-5.1",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-5.1.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5.1" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-5",
@@ -35,7 +41,9 @@
       "name": "HyperAgent - gpt-5",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-5.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-5-mini",
@@ -44,7 +52,9 @@
       "name": "HyperAgent - gpt-5-mini",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-5-mini.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-5-mini" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-4o",
@@ -53,7 +63,9 @@
       "name": "HyperAgent - gpt-4o",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-4o.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4o" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-4o-mini",
@@ -62,7 +74,9 @@
       "name": "HyperAgent - gpt-4o-mini",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-4o-mini.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4o-mini" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-4.1",
@@ -71,7 +85,9 @@
       "name": "HyperAgent - gpt-4.1",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-4.1.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4.1" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gpt-4.1-mini",
@@ -80,7 +96,9 @@
       "name": "HyperAgent - gpt-4.1-mini",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gpt-4.1-mini.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gpt-4.1-mini" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/claude-sonnet-4-6",
@@ -89,7 +107,9 @@
       "name": "HyperAgent - claude-sonnet-4-6",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using claude-sonnet-4-6.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "claude-sonnet-4-6" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/claude-sonnet-4-5",
@@ -98,7 +118,9 @@
       "name": "HyperAgent - claude-sonnet-4-5",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using claude-sonnet-4-5.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "claude-sonnet-4-5" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gemini-2.5-flash",
@@ -107,7 +129,9 @@
       "name": "HyperAgent - gemini-2.5-flash",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gemini-2.5-flash.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gemini-2.5-flash" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/hyper-agent/gemini-3-flash-preview",
@@ -116,7 +140,9 @@
       "name": "HyperAgent - gemini-3-flash-preview",
       "type": "language",
       "description": "Hyperbrowser HyperAgent shortcut using gemini-3-flash-preview.",
-      "tags": [ "agent", "browser", "async", "shortcut", "hyper-agent", "gemini-3-flash-preview" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use",
@@ -125,7 +151,9 @@
       "name": "BrowserUse",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut. Runs an async BrowserUse task and uses gemini-2.0-flash unless overridden with provider metadata.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/gpt-4o",
@@ -134,7 +162,9 @@
       "name": "BrowserUse - gpt-4o",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using gpt-4o.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4o" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/gpt-4o-mini",
@@ -143,7 +173,9 @@
       "name": "BrowserUse - gpt-4o-mini",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using gpt-4o-mini.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4o-mini" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/gpt-4.1",
@@ -152,7 +184,9 @@
       "name": "BrowserUse - gpt-4.1",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using gpt-4.1.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4.1" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/gpt-4.1-mini",
@@ -161,7 +195,9 @@
       "name": "BrowserUse - gpt-4.1-mini",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using gpt-4.1-mini.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gpt-4.1-mini" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/claude-sonnet-4-6",
@@ -170,7 +206,9 @@
       "name": "BrowserUse - claude-sonnet-4-6",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using claude-sonnet-4-6.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "claude-sonnet-4-6" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/claude-sonnet-4-5",
@@ -179,7 +217,9 @@
       "name": "BrowserUse - claude-sonnet-4-5",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using claude-sonnet-4-5.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "claude-sonnet-4-5" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/claude-sonnet-4-20250514",
@@ -188,7 +228,9 @@
       "name": "BrowserUse - claude-sonnet-4-20250514",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using claude-sonnet-4-20250514.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "claude-sonnet-4-20250514" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/gemini-2.0-flash",
@@ -197,7 +239,9 @@
       "name": "BrowserUse - gemini-2.0-flash",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using gemini-2.0-flash.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gemini-2.0-flash" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/browser-use/gemini-2.5-flash",
@@ -206,7 +250,9 @@
       "name": "BrowserUse - gemini-2.5-flash",
       "type": "language",
       "description": "Hyperbrowser BrowserUse shortcut using gemini-2.5-flash.",
-      "tags": [ "agent", "browser", "async", "shortcut", "browser-use", "gemini-2.5-flash" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use",
@@ -215,7 +261,9 @@
       "name": "Claude Computer Use",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut. Runs an async Claude computer-use browser task and uses claude-opus-4-8 unless overridden with provider metadata.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-opus-4-5",
@@ -224,7 +272,9 @@
       "name": "Claude Computer Use - claude-opus-4-5",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-opus-4-5.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-opus-4-5" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-opus-4-6",
@@ -233,7 +283,9 @@
       "name": "Claude Computer Use - claude-opus-4-6",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-opus-4-6.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-opus-4-6" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-opus-4-7",
@@ -242,7 +294,9 @@
       "name": "Claude Computer Use - claude-opus-4-7",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-opus-4-7.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-opus-4-7" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-opus-4-8",
@@ -251,7 +305,9 @@
       "name": "Claude Computer Use - claude-opus-4-8",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-opus-4-8.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-opus-4-8" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-haiku-4-5-20251001",
@@ -260,7 +316,9 @@
       "name": "Claude Computer Use - claude-haiku-4-5-20251001",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-haiku-4-5-20251001.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-haiku-4-5-20251001" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-sonnet-4-6",
@@ -269,7 +327,9 @@
       "name": "Claude Computer Use - claude-sonnet-4-6",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-sonnet-4-6.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-sonnet-4-6" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-sonnet-4-5",
@@ -278,7 +338,9 @@
       "name": "Claude Computer Use - claude-sonnet-4-5",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-sonnet-4-5.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-sonnet-4-5" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/claude-computer-use/claude-sonnet-4-20250514",
@@ -287,7 +349,9 @@
       "name": "Claude Computer Use - claude-sonnet-4-20250514",
       "type": "language",
       "description": "Hyperbrowser Claude Computer Use shortcut using claude-sonnet-4-20250514.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "claude-computer-use", "claude-sonnet-4-20250514" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/gemini-computer-use",
@@ -296,7 +360,9 @@
       "name": "Gemini Computer Use",
       "type": "language",
       "description": "Hyperbrowser Gemini Computer Use shortcut. Runs an async Gemini computer-use browser task and uses gemini-3-flash-preview unless overridden with provider metadata.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "gemini-computer-use" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/gemini-computer-use/gemini-3-flash-preview",
@@ -305,7 +371,9 @@
       "name": "Gemini Computer Use - gemini-3-flash-preview",
       "type": "language",
       "description": "Hyperbrowser Gemini Computer Use shortcut using gemini-3-flash-preview.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "gemini-computer-use", "gemini-3-flash-preview" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/gemini-computer-use/gemini-2.5-computer-use-preview-10-2025",
@@ -314,7 +382,9 @@
       "name": "Gemini Computer Use - gemini-2.5-computer-use-preview-10-2025",
       "type": "language",
       "description": "Hyperbrowser Gemini Computer Use shortcut using gemini-2.5-computer-use-preview-10-2025.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "gemini-computer-use", "gemini-2.5-computer-use-preview-10-2025" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/cua",
@@ -323,7 +393,9 @@
       "name": "CUA",
       "type": "language",
       "description": "Hyperbrowser CUA shortcut. Runs an async CUA browser task and uses computer-use-preview unless overridden with provider metadata.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "cua" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/cua/computer-use-preview",
@@ -332,7 +404,9 @@
       "name": "CUA - computer-use-preview",
       "type": "language",
       "description": "Hyperbrowser CUA shortcut using computer-use-preview.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "cua", "computer-use-preview" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/cua/gpt-5.4",
@@ -341,7 +415,9 @@
       "name": "CUA - gpt-5.4",
       "type": "language",
       "description": "Hyperbrowser CUA shortcut using gpt-5.4.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "cua", "gpt-5.4" ]
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "hyperbrowser/cua/gpt-5.4-mini",
@@ -350,7 +426,9 @@
       "name": "CUA - gpt-5.4-mini",
       "type": "language",
       "description": "Hyperbrowser CUA shortcut using gpt-5.4-mini.",
-      "tags": [ "agent", "browser", "async", "shortcut", "computer-use", "cua", "gpt-5.4-mini" ]
+      "tags": [
+        "agent"
+      ]
     }
   ]
 }

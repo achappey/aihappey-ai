@@ -30,8 +30,8 @@ public partial class OhMyGPTProvider
                 var root = doc.RootElement;
 
                 var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-           ? dataEl.EnumerateArray()
-           : Enumerable.Empty<JsonElement>();
+                    ? dataEl.EnumerateArray()
+                    : Enumerable.Empty<JsonElement>();
 
                 foreach (var el in arr)
                 {
