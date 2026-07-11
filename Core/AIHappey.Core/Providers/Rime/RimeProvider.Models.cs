@@ -128,10 +128,8 @@ public partial class RimeProvider
     private static IEnumerable<string> BuildVoiceTags(RimeVoice voice)
         =>
         [
-            $"model:{voice.ModelId}",
-            $"voice:{voice.VoiceId}",
-            $"language:{voice.Language}",
-            "tts"
+            $"{voice.Language}",
+            "voice"
         ];
 
     private sealed class RimeVoice

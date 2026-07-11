@@ -47,42 +47,42 @@ public partial class WAYSCloudProvider
 
     private async Task AddChatCompletionModelsAsync(List<Model> models, CancellationToken cancellationToken)
     {
-                    
-                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-                 using var resp = await _client.SendAsync(req, cancellationToken);
 
-                if (!resp.IsSuccessStatusCode)
-                {
-                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"WAYSCloud API error: {err}");
-                }
+        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+        using var resp = await _client.SendAsync(req, cancellationToken);
 
-                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new Exception($"WAYSCloud API error: {err}");
+        }
 
-                 var root = doc.RootElement;
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-               
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                        ? dataEl.EnumerateArray()
-                        : Enumerable.Empty<JsonElement>();
+        var root = doc.RootElement;
 
-                foreach (var el in arr)
-                {
-                    Model model = new();
 
-                    if (el.TryGetProperty("id", out var idEl))
-                    {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
-                    }                 
+        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                ? dataEl.EnumerateArray()
+                : Enumerable.Empty<JsonElement>();
 
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
+        foreach (var el in arr)
+        {
+            Model model = new();
 
-                     if (!string.IsNullOrEmpty(model.Id))
-                         models.Add(model);
-                 }
+            if (el.TryGetProperty("id", out var idEl))
+            {
+                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
+                model.Name = idEl.GetString() ?? "";
+            }
+
+            if (el.TryGetProperty("owned_by", out var orgEl))
+                model.OwnedBy = orgEl.GetString() ?? "";
+
+            if (!string.IsNullOrEmpty(model.Id))
+                models.Add(model);
+        }
     }
 
     private async Task AddChatbotModelsAsync(List<Model> models, CancellationToken cancellationToken)
@@ -133,7 +133,7 @@ public partial class WAYSCloudProvider
                 Description = $"WAYSCloud chatbot{(string.IsNullOrWhiteSpace(slug) ? string.Empty : $" '{slug}'")}.",
                 OwnedBy = nameof(WAYSCloud),
                 Type = "language",
-                Tags = ["chatbot", .. new[] { status, language }.Where(static value => !string.IsNullOrWhiteSpace(value))!]
+                Tags = ["persona", .. new[] { language }.Where(static value => !string.IsNullOrWhiteSpace(value))!]
             });
         }
     }

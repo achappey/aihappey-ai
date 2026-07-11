@@ -28,8 +28,7 @@ public partial class VoiceAIProvider
             OwnedBy = ProviderName,
             Type = "speech",
             Name = model,
-            Description = $"{ProviderName} base TTS model. Voice and language may be supplied via request, provider options, or model id.",
-            Tags = ["tts", $"model:{model}", "base"]
+            Description = $"{ProviderName} base TTS model."
         }));
 
         var voices = await GetVoicesAsync(cancellationToken);
@@ -112,17 +111,9 @@ public partial class VoiceAIProvider
     {
         var tags = new List<string>
         {
-            "tts",
-            $"model:{baseModel}",
-            $"voice:{voice.VoiceId}",
-            $"language:{language}"
+            "voice",
+            $"{language}"
         };
-
-        if (!string.IsNullOrWhiteSpace(voice.Status))
-            tags.Add($"status:{voice.Status.Trim().ToLowerInvariant()}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Visibility))
-            tags.Add($"visibility:{voice.Visibility.Trim().ToLowerInvariant()}");
 
         return tags;
     }

@@ -141,18 +141,14 @@ public partial class SmallestAIProvider
     {
         var tags = new List<string>
         {
-            $"model:{model}",
-            $"voice:{voice.VoiceId}"
+            $"voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
             tags.Add($"gender:{voice.Gender}");
 
-        if (!string.IsNullOrWhiteSpace(voice.Accent))
-            tags.Add($"accent:{voice.Accent}");
-
-        foreach (var language in voice.Languages.Take(10))
-            tags.Add($"language:{language}");
+        foreach (var language in voice.Languages)
+            tags.Add($"{language}");
 
         return tags;
     }

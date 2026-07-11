@@ -226,9 +226,7 @@ public partial class VeniceProvider
 
                 var tags = new List<string>
                 {
-                    "character",
-                    $"character_slug:{characterSlug}",
-                    $"base_model:{baseModelId}"
+                    "persona"
                 };
 
                 if (el.TryGetProperty("webEnabled", out var webEnabledEl) && webEnabledEl.ValueKind == JsonValueKind.True)

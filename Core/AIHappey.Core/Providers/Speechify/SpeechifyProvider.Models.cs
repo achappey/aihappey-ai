@@ -311,30 +311,15 @@ public partial class SpeechifyProvider
     {
         var tags = new List<string>
         {
-            $"model:{modelId}",
-            $"voice:{voice.Id}"
+            $"voice"
         };
 
-        if (!string.IsNullOrWhiteSpace(voice.Locale))
-            tags.Add($"locale:{voice.Locale}");
-
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Type))
-            tags.Add($"voice-type:{voice.Type}");
-
-        if (!string.IsNullOrWhiteSpace(voice.PreviewAudio))
-            tags.Add("preview-audio:true");
-
-        if (!string.IsNullOrWhiteSpace(voice.AvatarImage))
-            tags.Add("avatar-image:true");
+            tags.Add($"{voice.Gender}");
+    
 
         foreach (var language in voiceModel.Languages.Take(100))
-            tags.Add($"language:{language}");
-
-        foreach (var tag in voice.Tags.Where(t => !string.IsNullOrWhiteSpace(t)).Take(100))
-            tags.Add(tag.Trim());
+            tags.Add($"{language}");
 
         return tags.Distinct(StringComparer.OrdinalIgnoreCase);
     }

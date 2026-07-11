@@ -115,16 +115,13 @@ public partial class EverypixelLabsProvider
 
     private static IEnumerable<string> BuildVoiceTags(EverypixelVoice voice)
     {
-        var tags = new List<string>();
+        var tags = new List<string>() { "voice" };
 
         if (!string.IsNullOrWhiteSpace(voice.Language))
-            tags.Add($"language:{voice.Language}");
+            tags.Add($"{voice.Language}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Age))
-            tags.Add($"age:{voice.Age}");
+            tags.Add($"{voice.Gender}");
 
         return tags;
     }

@@ -31,8 +31,7 @@ public partial class GradiumProvider
                         OwnedBy = ProviderName,
                         Type = "speech",
                         Name = BaseSpeechModel,
-                        Description = $"{ProviderName} base TTS model. Voice may be supplied via request.voice, providerOptions.gradium.voice_id, or model id.",
-                        Tags = ["tts", $"model:{BaseSpeechModel}", "base"]
+                        Description = $"{ProviderName} base TTS model."
                     }
                 };
 
@@ -181,25 +180,11 @@ public partial class GradiumProvider
     {
         var tags = new List<string>
         {
-            "tts",
-            $"model:{BaseSpeechModel}",
-            $"voice:{voice.VoiceId}"
+            "voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Language))
-            tags.Add($"language:{voice.Language.Trim()}");
-
-        if (voice.IsCatalog is not null)
-            tags.Add($"catalog:{voice.IsCatalog.Value.ToString().ToLowerInvariant()}");
-
-        if (voice.IsProClone is not null)
-            tags.Add($"pro_clone:{voice.IsProClone.Value.ToString().ToLowerInvariant()}");
-
-        foreach (var tag in voice.Tags.Take(10))
-        {
-            if (!string.IsNullOrWhiteSpace(tag))
-                tags.Add($"tag:{tag.Trim().ToLowerInvariant().Replace(' ', '-')}");
-        }
+            tags.Add($"{voice.Language.Trim()}");
 
         return tags;
     }

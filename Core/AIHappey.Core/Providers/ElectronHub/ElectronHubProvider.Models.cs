@@ -104,22 +104,6 @@ public partial class ElectronHubProvider
                         }
                     }
 
-                    // ---- metadata → tags ----
-                    if (el.TryGetProperty("metadata", out var metaEl) &&
-                        metaEl.ValueKind == JsonValueKind.Object)
-                    {
-                        var tags = new List<string>();
-
-                        foreach (var prop in metaEl.EnumerateObject())
-                        {
-                            if (prop.Value.ValueKind == JsonValueKind.True)
-                                tags.Add(prop.Name);
-                        }
-
-                        if (tags.Count > 0)
-                            model.Tags = tags;
-                    }
-
                     if (!string.IsNullOrWhiteSpace(model.Id))
                         models.Add(model);
                 }

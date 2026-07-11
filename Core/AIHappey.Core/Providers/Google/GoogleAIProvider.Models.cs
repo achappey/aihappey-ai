@@ -118,7 +118,7 @@ public partial class GoogleAIProvider
                     Type = "speech",
                     Created = baseModel.Created,
                     Description = $"Google Gemini text-to-speech model '{baseModelId}' with preset voice '{voice.Name}' ({voice.Style}).",
-                    Tags = ["tts", "speech", $"model:{baseModelId}", $"voice:{voice.Name}", $"voice-style:{voice.Style}", "shortcut"]
+                    Tags = ["voice"]
                 };
             }
         }

@@ -64,8 +64,7 @@ public partial class VogentProvider
                     Name = BaseSpeechModel,
                     OwnedBy = ProviderName,
                     Type = "speech",
-                    Description = $"{ProviderName} base TTS model. Voice may be supplied via request.voice, providerOptions.{GetIdentifier()}.voiceId, or model id.",
-                    Tags = ["tts", $"model:{BaseSpeechModel}", "base"]
+                    Description = $"{ProviderName} base TTS model."
                 });
 
                 var voices = await GetVoicesAsync(cancellationToken);
@@ -160,16 +159,8 @@ public partial class VogentProvider
     {
         var tags = new List<string>
         {
-            "tts",
-            $"model:{BaseSpeechModel}",
-            $"voice:{voice.Id}"
+            "voice"
         };
-
-        if (!string.IsNullOrWhiteSpace(voice.VoiceType))
-            tags.Add($"voice_type:{voice.VoiceType}");
-
-        if (!string.IsNullOrWhiteSpace(voice.VoiceTier))
-            tags.Add($"voice_tier:{voice.VoiceTier}");
 
         return tags;
     }

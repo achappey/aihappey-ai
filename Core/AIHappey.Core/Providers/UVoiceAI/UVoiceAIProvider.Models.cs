@@ -151,17 +151,14 @@ public partial class UVoiceAIProvider
     {
         var tags = new List<string>
         {
-            $"voice:{voice.VoiceId}"
+            $"voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.LanguageCode))
-            tags.Add($"lang:{voice.LanguageCode.Trim().ToLowerInvariant()}");
+            tags.Add($"{voice.LanguageCode.Trim().ToLowerInvariant()}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender.Trim().ToLowerInvariant()}");
-
-        if (!string.IsNullOrWhiteSpace(voice.VoiceType))
-            tags.Add($"tier:{voice.VoiceType.Trim().ToLowerInvariant()}");
+            tags.Add($"{voice.Gender.Trim().ToLowerInvariant()}");
 
         return tags;
     }

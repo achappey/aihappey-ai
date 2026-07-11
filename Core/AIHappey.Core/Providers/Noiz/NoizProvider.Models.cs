@@ -32,8 +32,7 @@ public partial class NoizProvider
                             OwnedBy = ProviderName,
                             Type = "speech",
                             Name = BaseSpeechModel,
-                            Description = $"{ProviderName} base TTS model. Voice may be supplied via request.voice, providerOptions.noiz.voice_id, or model id.",
-                            Tags = ["tts", $"model:{BaseSpeechModel}", "base"]
+                            Description = $"{ProviderName} base TTS model."
                         }
                     };
 
@@ -154,16 +153,8 @@ public partial class NoizProvider
     {
         var tags = new List<string>
         {
-            "tts",
-            $"model:{BaseSpeechModel}",
-            $"voice:{voice.VoiceId}"
+            "voice"
         };
-
-        if (!string.IsNullOrWhiteSpace(voice.VoiceType))
-            tags.Add($"voice_type:{voice.VoiceType}");
-
-        if (!string.IsNullOrWhiteSpace(voice.Labels))
-            tags.Add($"labels:{voice.Labels}");
 
         return tags;
     }
