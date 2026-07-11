@@ -101,47 +101,6 @@ public partial class RekaAIProvider
                         }
                     }
 
-                    var tags = new List<string>();
-
-                    // ---- capabilities ----
-                    if (el.TryGetProperty("supported_features", out var featuresEl) &&
-                        featuresEl.ValueKind == JsonValueKind.Array)
-                    {
-                        foreach (var feat in featuresEl.EnumerateArray())
-                        {
-                            var value = feat.GetString();
-                            if (!string.IsNullOrWhiteSpace(value))
-                                tags.Add(value);
-                        }
-                    }
-
-                    // ---- input modalities ----
-                    if (el.TryGetProperty("input_modalities", out var inMods) &&
-                        inMods.ValueKind == JsonValueKind.Array)
-                    {
-                        foreach (var mod in inMods.EnumerateArray())
-                        {
-                            var value = mod.GetString();
-                            if (!string.IsNullOrWhiteSpace(value))
-                                tags.Add($"input:{value}");
-                        }
-                    }
-
-                    // ---- output modalities ----
-                    if (el.TryGetProperty("output_modalities", out var outMods) &&
-                        outMods.ValueKind == JsonValueKind.Array)
-                    {
-                        foreach (var mod in outMods.EnumerateArray())
-                        {
-                            var value = mod.GetString();
-                            if (!string.IsNullOrWhiteSpace(value))
-                                tags.Add($"output:{value}");
-                        }
-                    }
-
-                    // assign once
-                    model.Tags = tags;
-
                     models.Add(model);
                 }
 

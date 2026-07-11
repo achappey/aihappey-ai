@@ -131,9 +131,8 @@ public partial class RunwayProvider : IModelProvider
 
     private static IEnumerable<string> BuildAvatarModelTags(string? status)
     {
-        List<string> tags = ["avatar", "custom-avatar"];
-        if (!string.IsNullOrWhiteSpace(status))
-            tags.Add(status.ToLowerInvariant());
+        List<string> tags = ["persona"];
+
         return tags;
     }
 

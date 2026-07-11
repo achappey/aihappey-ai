@@ -104,26 +104,6 @@ public partial class TetrateProvider
                 };
             }
 
-            // ensure tags list exists
-            var tags = new List<string>();
-
-            foreach (var prop in el.EnumerateObject())
-            {
-                if (prop.Name.StartsWith("supports_", StringComparison.OrdinalIgnoreCase) &&
-                    prop.Value.ValueKind == JsonValueKind.True)
-                {
-                    var tag = prop.Name["supports_".Length..];
-
-                    if (!string.IsNullOrWhiteSpace(tag))
-                        tags.Add(tag);
-                }
-            }
-
-            if (tags.Count != 0)
-            {
-                model.Tags = tags;
-            }
-
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);
         }

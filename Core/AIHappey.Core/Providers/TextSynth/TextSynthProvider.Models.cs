@@ -27,8 +27,7 @@ public partial class TextSynthProvider
                     Name = $"{SpeechBaseModel} · {voice}",
                     Description = $"TextSynth text-to-speech voice {voice} on {SpeechBaseModel}.",
                     Tags = [
-                        $"model:{SpeechBaseModel}",
-                        $"voice:{voice.ToLowerInvariant()}"
+                        $"voice"
                     ]
                 });
             }

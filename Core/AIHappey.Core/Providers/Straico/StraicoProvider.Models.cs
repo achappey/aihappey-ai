@@ -133,13 +133,6 @@ public partial class StraicoProvider
 
             var name = agent.TryGetString("name") ?? id;
             var defaultLlm = agent.TryGetString("default_llm");
-            var tags = new List<string> { "agent", "shortcut", $"agent:{id}" };
-            if (!string.IsNullOrWhiteSpace(defaultLlm))
-                tags.Add($"model:{defaultLlm}");
-            if (!string.IsNullOrWhiteSpace(agent.TryGetString("status")))
-                tags.Add($"status:{agent.TryGetString("status")}");
-            if (!string.IsNullOrWhiteSpace(agent.TryGetString("visibility")))
-                tags.Add($"visibility:{agent.TryGetString("visibility")}");
 
             models.Add(new Model
             {
@@ -152,7 +145,7 @@ public partial class StraicoProvider
                 OwnedBy = nameof(Straico),
                 Type = "language",
                 Created = TryGetUnixTimestamp(agent, "createdAt"),
-                Tags = [.. tags.Distinct(StringComparer.OrdinalIgnoreCase)]
+                Tags = ["agent"]
             });
         }
 

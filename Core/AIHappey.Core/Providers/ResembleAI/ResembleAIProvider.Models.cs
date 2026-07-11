@@ -27,7 +27,7 @@ public partial class ResembleAIProvider
                     .GetModels()
                     .WithPricing(GetIdentifier())
                     .ToList();
-                    
+
                 var models = new List<Model>(staticModels);
 
                 var voices = await GetVoicesAsync(cancellationToken);
@@ -113,8 +113,7 @@ public partial class ResembleAIProvider
     {
         var tags = new List<string>
         {
-            $"model:{baseModelId}",
-            $"voice:{voice.Uuid}"
+            $"voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.DefaultLanguage))

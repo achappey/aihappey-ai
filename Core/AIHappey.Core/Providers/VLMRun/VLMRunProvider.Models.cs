@@ -110,13 +110,7 @@ public partial class VLMRunProvider
 
     private static string[] BuildVLMRunAgentModelTags(string? status, string? id)
     {
-        var tags = new List<string> { "agent", "non-streaming", "synthetic-stream" };
-
-        if (!string.IsNullOrWhiteSpace(status))
-            tags.Add($"status:{status}");
-
-        if (!string.IsNullOrWhiteSpace(id))
-            tags.Add($"agent-id:{id}");
+        var tags = new List<string> { "agent" };
 
         return [.. tags];
     }

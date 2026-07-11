@@ -163,24 +163,14 @@ public partial class SupertoneProvider
     {
         var tags = new List<string>
         {
-            $"model:{modelId}",
-            $"voice:{voice.VoiceId}"
+            $"voice"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
-            tags.Add($"gender:{voice.Gender.Trim()}");
+            tags.Add($"{voice.Gender.Trim()}");
 
-        if (!string.IsNullOrWhiteSpace(voice.Age))
-            tags.Add($"age:{voice.Age.Trim()}");
-
-        foreach (var uc in voice.UseCases.Take(10).Where(uc => !string.IsNullOrWhiteSpace(uc)))
-            tags.Add($"usecase:{uc.Trim()}");
-
-        foreach (var lang in voice.Languages.Take(12).Where(l => !string.IsNullOrWhiteSpace(l)))
-            tags.Add($"lang:{lang.Trim()}");
-
-        foreach (var style in voice.Styles.Take(12).Where(s => !string.IsNullOrWhiteSpace(s)))
-            tags.Add($"style:{style.Trim()}");
+        foreach (var lang in voice.Languages.Where(l => !string.IsNullOrWhiteSpace(l)))
+            tags.Add($"{lang.Trim()}");
 
         return tags;
     }

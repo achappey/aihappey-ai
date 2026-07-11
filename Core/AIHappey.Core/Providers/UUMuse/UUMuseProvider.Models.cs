@@ -157,17 +157,9 @@ public partial class UUMuseProvider
     {
         var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "rag",
-            "ask",
-            "knowledge",
-            "workspace-required"
+          
         };
-
-        if (!string.IsNullOrWhiteSpace(nativeModel.Provider))
-            tags.Add($"provider:{nativeModel.Provider}");
-        if (!string.IsNullOrWhiteSpace(nativeModel.Tier))
-            tags.Add($"tier:{nativeModel.Tier}");
-
+       
         return [.. tags];
     }
 
@@ -175,13 +167,8 @@ public partial class UUMuseProvider
     {
         var tags = new HashSet<string>(BuildNativeModelTags(nativeModel), StringComparer.OrdinalIgnoreCase)
         {
-            "shortcut",
-            "workspace",
-            $"workspace:{workspace.Id}"
+          
         };
-
-        if (!string.IsNullOrWhiteSpace(workspace.Name))
-            tags.Add($"workspace-name:{workspace.Name}");
 
         return [.. tags];
     }
