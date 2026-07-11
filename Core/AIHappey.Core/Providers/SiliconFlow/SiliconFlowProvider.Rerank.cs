@@ -4,6 +4,7 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
@@ -55,14 +56,30 @@ public partial class SiliconFlowProvider
                     .ToList()
                 : [];
 
+        var id = root.TryGetProperty("id", out var idEl)
+            && idEl.ValueKind == JsonValueKind.String
+                ? idEl.GetString()
+                : null;
+
+        var tokens = root.TryGetProperty("tokens", out var tokensEl)
+            && tokensEl.ValueKind == JsonValueKind.Object
+                ? tokensEl.Clone()
+                : (JsonElement?)null;
+
         return new RerankingResponse
         {
             Ranking = results,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(tokens != null ? new
+                {
+                    tokens
+                } : null),
             Response = new()
             {
                 Timestamp = now,
+                Id = id,
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = errText
+                Body = root.Clone()
             }
         };
     }

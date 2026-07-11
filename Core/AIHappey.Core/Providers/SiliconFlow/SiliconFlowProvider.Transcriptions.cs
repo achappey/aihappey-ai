@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
@@ -32,10 +33,10 @@ public partial class SiliconFlowProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"SiliconFlow STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertTranscriptionResponse(json, request.Model);
+        return ConvertTranscriptionResponse(json, request.Model, GetIdentifier());
     }
 
-    private static TranscriptionResponse ConvertTranscriptionResponse(string json, string model)
+    private static TranscriptionResponse ConvertTranscriptionResponse(string json, string model, string providerId)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -45,11 +46,12 @@ public partial class SiliconFlowProvider
             Text = root.TryGetProperty("text", out var text)
                 ? text.GetString() ?? string.Empty
                 : string.Empty,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = model,
-                Body = json
+                ModelId = model.ToModelId(providerId),
+                Body = root.Clone()
             }
         };
     }

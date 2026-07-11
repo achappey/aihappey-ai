@@ -128,11 +128,11 @@ public partial class SiliconFlowProvider
             Videos = videos,
             Warnings = warnings,
             ProviderMetadata = GetIdentifier()
-            .CreatePrimitiveProviderMetadata(new Dictionary<string, JsonElement>
-            {
-                ["submit"] = submitDoc.RootElement.Clone(),
-                ["status"] = completed.Root.Clone()
-            }),
+                .CreatePrimitiveProviderMetadata(new Dictionary<string, JsonElement>
+                {
+                    ["submit"] = submitDoc.RootElement.Clone(),
+                    ["status"] = completed.Root.Clone()
+                }),
             Response = new()
             {
                 Timestamp = now,

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
@@ -122,10 +123,11 @@ public partial class SiliconFlowProvider
         {
             Images = images,
             Warnings = warnings,
-            Response = new ()
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
+                ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
     }

@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net.Http.Headers;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
@@ -99,13 +101,18 @@ public partial class SiliconFlowProvider
             {
                 MimeType = mime,
                 Base64 = audio,
-                Format = responseFormat ?? "mp3"
+                Format = !string.IsNullOrEmpty(responseFormat) ? responseFormat : "mp3"
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Request = new()
+            {
+                Body = payload,
+            },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
