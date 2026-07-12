@@ -76,13 +76,7 @@ public partial class ApertisProvider
             {
                 Timestamp = now,
                 Headers = response.GetHeaders(),
-                ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = new
-                {
-                    statusCode = (int)response.StatusCode,
-                    contentType,
-                    contentLength = responseBytes.LongLength
-                }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             },
             Request = new SpeechRequestItem
             {
