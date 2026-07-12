@@ -9,24 +9,31 @@
       "type": "transcription"
     },
     {
+      "id": "fishaudio/s2.1-pro",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "Fish Audio S2.1-Pro",
+      "type": "speech"
+    },
+    {
+      "id": "fishaudio/s2.1-pro-free",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "Fish Audio S2.1-Pro Free",
+      "type": "speech"
+    },
+    {
+      "id": "fishaudio/s2-pro",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "Fish Audio S2-Pro",
+      "type": "speech"
+    },
+    {
       "id": "fishaudio/s1",
       "object": "model",
       "owned_by": "FishAudio",
       "name": "s1",
-      "type": "speech"
-    },
-    {
-      "id": "fishaudio/speech-1.6",
-      "object": "model",
-      "owned_by": "FishAudio",
-      "name": "speech-1.6",
-      "type": "speech"
-    },
-    {
-      "id": "fishaudio/speech-1.5",
-      "object": "model",
-      "owned_by": "FishAudio",
-      "name": "speech-1.5",
       "type": "speech"
     }
   ]
