@@ -48,6 +48,9 @@ public partial class IonRouterProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                        model.Type = model.Id.StartsWith("dia-") ?
+                            "speech" :
+                            model.Id.GuessModelType();
                     }
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
