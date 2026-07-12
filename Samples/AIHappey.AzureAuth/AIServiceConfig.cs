@@ -562,6 +562,7 @@ public class AIServiceConfig
     public ProviderConfig? TierUp { get; set; }
     public ProviderConfig? EvidenceMD { get; set; }
     public ProviderConfig? Agen { get; set; }
+    public ProviderConfig? ChatQT { get; set; }
 
 
 }

@@ -561,6 +561,7 @@ using AIHappey.Core.Providers.WAYSCloud;
 using AIHappey.Core.Providers.TierUp;
 using AIHappey.Core.Providers.EvidenceMD;
 using AIHappey.Core.Providers.Agen;
+using AIHappey.Core.Providers.ChatQT;
 
 namespace AIHappey.Core.AI;
 
@@ -1148,6 +1149,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TierUpProvider>();
         services.AddSingleton<IModelProvider, EvidenceMDProvider>();
         services.AddSingleton<IModelProvider, AgenProvider>();
+        services.AddSingleton<IModelProvider, ChatQTProvider>();
 
 
     }
