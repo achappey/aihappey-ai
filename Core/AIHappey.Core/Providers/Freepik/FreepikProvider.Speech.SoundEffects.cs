@@ -5,6 +5,7 @@ using AIHappey.Common.Model.Providers.Freepik;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Freepik;
 
@@ -120,20 +121,16 @@ public sealed partial class FreepikProvider
                 Format = "mp3"
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = startPayload
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = finalDoc.RootElement.Clone()
-            },
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                ["freepik"] = JsonSerializer.SerializeToElement(new
-                {
-                    task_id = taskId,
-                    status = final.Status,
-                    generated = final.Generated
-                }, JsonSerializerOptions.Web)
+                Headers = fileResp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

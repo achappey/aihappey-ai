@@ -2,6 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Cirrascale;
@@ -55,11 +57,13 @@ public partial class CirrascaleProvider
         return new RerankingResponse
         {
             Ranking = results,
-            Response = new ()
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = raw
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = root.Clone()
             }
         };
     }

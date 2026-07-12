@@ -2,6 +2,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -93,15 +95,6 @@ public partial class BinericProvider
         var responseFormat = ResolveResponseFormat(root);
         var mime = OpenAI.OpenAIProvider.MapToAudioMimeType(responseFormat);
 
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        if (root.TryGetProperty("_bineric", out var binericMeta))
-        {
-            providerMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = binericMeta.Clone()
-            };
-        }
-
         return new SpeechResponse
         {
             Audio = new SpeechAudioResponse
@@ -111,11 +104,16 @@ public partial class BinericProvider
                 Format = responseFormat
             },
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

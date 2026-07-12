@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.DeepInfra;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -118,11 +120,13 @@ public sealed partial class DeepInfraProvider
         {
             Ranking = [.. ranked],
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = raw
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Body = root.Clone()
             }
         };
     }

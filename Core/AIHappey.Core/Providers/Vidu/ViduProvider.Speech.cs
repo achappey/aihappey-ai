@@ -240,7 +240,8 @@ public partial class ViduProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
+                Headers = fileResp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };

@@ -84,24 +84,7 @@ public partial class BergetAIProvider
 
         if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
         {
-            warnings.Add(new
-            {
-                type = "provider_response_missing_field",
-                feature = "data",
-                details = "Berget rerank response did not contain a 'data' array."
-            });
-
-            return new RerankingResponse
-            {
-                Ranking = [],
-                Warnings = warnings,
-                Response = new()
-                {
-                    Timestamp = now,
-                    ModelId = request.Model,
-                    Body = raw
-                }
-            };
+            throw new Exception("Berget rerank response did not contain a 'data' array");
         }
 
         var ranked = dataEl

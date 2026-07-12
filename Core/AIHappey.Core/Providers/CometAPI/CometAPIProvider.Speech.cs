@@ -3,6 +3,8 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Vercel.Models;
 
@@ -77,16 +79,16 @@ public partial class CometAPIProvider
                 Format = outputFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new
-                {
-                    statusCode = (int)resp.StatusCode,
-                    contentType = mime,
-                    contentLength = bytes.LongLength
-                }
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

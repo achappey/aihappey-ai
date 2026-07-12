@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -101,8 +102,7 @@ public partial class DeAPIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = new { requestId, endpoint, status = "done" }
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

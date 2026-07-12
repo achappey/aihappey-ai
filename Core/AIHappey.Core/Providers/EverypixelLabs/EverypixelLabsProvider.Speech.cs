@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.EverypixelLabs;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -41,9 +42,13 @@ public partial class EverypixelLabsProvider
         if (!string.IsNullOrWhiteSpace(metadata?.Title))
             form.Add(new KeyValuePair<string, string>("title", metadata.Title.Trim()));
 
+
+        using var formContent = new FormUrlEncodedContent(form);
+        var requestBody = await formContent.ReadAsStringAsync(cancellationToken);
+
         using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/tts/create")
         {
-            Content = new FormUrlEncodedContent(form)
+            Content = formContent
         };
 
         using var createResp = await _client.SendAsync(createRequest, cancellationToken);
@@ -100,6 +105,10 @@ public partial class EverypixelLabsProvider
                 Format = format
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = requestBody
+            },
             ProviderMetadata = new Dictionary<string, JsonElement>
             {
                 [GetIdentifier()] = JsonSerializer.SerializeToElement(providerBody)
@@ -107,8 +116,8 @@ public partial class EverypixelLabsProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model,
-                Body = JsonSerializer.SerializeToElement(providerBody)
+                Headers = audioResp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

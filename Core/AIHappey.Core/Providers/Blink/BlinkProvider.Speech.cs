@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Text;
@@ -105,7 +106,8 @@ public partial class BlinkProvider
             Response = new ResponseData
             {
                 Timestamp = startedAt,
-                ModelId = request.Model,
+                Headers = response.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };
