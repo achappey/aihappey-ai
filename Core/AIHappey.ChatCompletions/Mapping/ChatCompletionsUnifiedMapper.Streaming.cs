@@ -169,6 +169,9 @@ public static partial class ChatCompletionsUnifiedMapper
         if (chunk.TryGetProperty("search_results", out var searchResults))
             metadata["chatcompletions.stream.provider.search_results"] = searchResults.Clone();
 
+        if (chunk.TryGetProperty("web_sources", out var webSources))
+            metadata["chatcompletions.stream.provider.web_sources"] = webSources.Clone();
+
         if (chunk.TryGetProperty("citations", out var citations))
             metadata["chatcompletions.stream.provider.citations"] = citations.Clone();
 
@@ -240,7 +243,10 @@ public static partial class ChatCompletionsUnifiedMapper
             if (state is not null && !state.SeenSourceUrls.Add(url))
                 continue;
 
-            var title = ExtractValue<string>(source, "title") ?? url;
+            var title = ExtractValue<string>(source, "title");
+            if (string.IsNullOrWhiteSpace(title))
+                title = url;
+
             var providerMetadata = new Dictionary<string, Dictionary<string, object>>
             {
                 [providerId] = new Dictionary<string, object>
@@ -291,6 +297,13 @@ public static partial class ChatCompletionsUnifiedMapper
                 yield return source;
         }
 
+        if (chunk.TryGetProperty("web_sources", out var webSources)
+            && webSources.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var source in webSources.EnumerateArray())
+                yield return source;
+        }
+
         if (chunk.TryGetProperty("citations", out var topLevelCitations)
             && topLevelCitations.ValueKind == JsonValueKind.Array)
         {
@@ -328,6 +341,12 @@ public static partial class ChatCompletionsUnifiedMapper
 
         if (chunk.TryGetProperty("search_results", out var searchResults)
             && searchResults.ValueKind == JsonValueKind.Array)
+        {
+            return true;
+        }
+
+        if (chunk.TryGetProperty("web_sources", out var webSources)
+            && webSources.ValueKind == JsonValueKind.Array)
         {
             return true;
         }
@@ -617,17 +636,28 @@ public static partial class ChatCompletionsUnifiedMapper
         var model = ExtractValue<string>(chunk, "model");
         var created = ExtractValue<long?>(chunk, "created") ?? 0;
         var hasUsage = chunk.TryGetProperty("usage", out var usage) && usage.ValueKind != JsonValueKind.Null;
+        var hasSourcePayload = HasTopLevelProviderSourcePayload(chunk);
 
         var hasChoices = chunk.TryGetProperty("choices", out var choices)
-                         && choices.ValueKind == JsonValueKind.Array
-                         && choices.EnumerateArray().Any();
+                          && choices.ValueKind == JsonValueKind.Array
+                          && choices.EnumerateArray().Any();
 
         return string.IsNullOrWhiteSpace(id)
                && string.IsNullOrWhiteSpace(model)
                && created <= 0
                && !hasUsage
+               && !hasSourcePayload
                && !hasChoices;
     }
+
+    private static bool HasTopLevelProviderSourcePayload(JsonElement chunk)
+        => HasArrayProperty(chunk, "search_results")
+           || HasArrayProperty(chunk, "web_sources")
+           || HasArrayProperty(chunk, "citations")
+           || HasArrayProperty(chunk, "readURLs");
+
+    private static bool HasArrayProperty(JsonElement element, string propertyName)
+        => element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Array;
 
     private static bool HasToolCallDelta(JsonElement chunk)
     {

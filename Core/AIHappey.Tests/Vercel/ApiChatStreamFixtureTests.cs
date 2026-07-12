@@ -44,6 +44,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string RelaxAiProviderId = "relaxai";
     private const string BraveProviderId = "brave";
     private const string ApekeyProviderId = "apekey";
+    private const string ApertisProviderId = "apertis";
 
     [Fact]
     public void Download_file_tool_outputs_emit_file_ui_parts_when_payload_is_wrapped_under_structured_content()
@@ -1019,6 +1020,56 @@ public sealed class ApiChatStreamFixtureTests
     }
 
     [Fact]
+    public async Task Apertis_chat_completions_top_level_web_sources_emit_source_url_events_and_ui_parts()
+    {
+        var provider = new FixtureChatCompletionStreamModelProvider(ApertisProviderId, CreateApertisWebSourcesFixture());
+        var request = new AIRequest
+        {
+            ProviderId = ApertisProviderId,
+            Model = "gpt-5.5",
+            Stream = true
+        };
+
+        var unifiedEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedViaChatCompletionsAsync(request));
+        var eventTypes = unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList();
+
+        FixtureAssertions.AssertContainsSubsequence(eventTypes, "text-start", "text-delta", "text-end", "source-url", "source-url", "finish");
+
+        var sourceEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "source-url")
+            .ToList();
+
+        Assert.Equal(2, sourceEvents.Count);
+
+        var firstSource = Assert.IsType<AISourceUrlEventData>(sourceEvents[0].Event.Data);
+        Assert.Equal("https://www.practitest.com/assets/pdf/stot-2024.pdf", firstSource.Url);
+        Assert.Equal("https://www.practitest.com/assets/pdf/stot-2024.pdf", firstSource.Title);
+        Assert.Equal("url_citation", firstSource.Type);
+
+        var firstProviderMetadata = Assert.Contains(ApertisProviderId, firstSource.ProviderMetadata ?? []);
+        Assert.Contains("STATE OF TESTING", Assert.IsType<string>(firstProviderMetadata["snippet"]));
+        Assert.True(sourceEvents[0].Metadata?.ContainsKey("chatcompletions.stream.provider.web_sources") == true);
+
+        var secondSource = Assert.IsType<AISourceUrlEventData>(sourceEvents[1].Event.Data);
+        Assert.Equal("https://doi.org/10.17148/ijarcce.2024.131103", secondSource.Url);
+        Assert.Equal("Advances in Software Testing in 2024: Experimental Insights, Frameworks, and Future Directions", secondSource.Title);
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is "source-url" or "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ApertisProviderId))
+            .ToList();
+
+        FixtureAssertions.AssertAllSourceUrlsAreValid(uiParts);
+
+        var sourceUiParts = uiParts.OfType<SourceUIPart>().ToList();
+        Assert.Equal(2, sourceUiParts.Count);
+        Assert.Equal([firstSource.Url, secondSource.Url], sourceUiParts.Select(part => part.Url).ToArray());
+        Assert.Equal(firstSource.Title, sourceUiParts[0].Title);
+        Assert.Equal(secondSource.Title, sourceUiParts[1].Title);
+        Assert.Single(uiParts.OfType<FinishUIPart>());
+    }
+
+    [Fact]
     public async Task Groq_error_chat_completions_fixture_maps_to_unified_error_and_finish_events()
     {
         var provider = new FixtureChatCompletionStreamModelProvider(GroqProviderId, LoadChatCompletionRawFixture(GroqErrorRawFixturePath));
@@ -1262,6 +1313,23 @@ public sealed class ApiChatStreamFixtureTests
             """),
             DeserializeChatCompletionUpdate("""
             {"model":"brave-pro","system_fingerprint":"","choices":[{"delta":{"role":"assistant","content":""},"finish_reason":"stop"}],"created":1777966764,"id":"15c21ebe-01f6-4050-891e-413186385f31","object":"chat.completion.chunk","usage":{"completion_tokens":316,"prompt_tokens":8290,"total_tokens":8606,"completion_tokens_details":{"reasoning_tokens":0}}}
+            """)
+        ];
+
+    private static IReadOnlyList<ChatCompletionUpdate> CreateApertisWebSourcesFixture()
+        =>
+        [
+            DeserializeChatCompletionUpdate("""
+            {"id":"resp_08139a7ccf44e8fe016a5386a10a2c8191b9ed0ceb32b620d2","created":1783858849,"model":"gpt-5.5","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Software testing trends"},"finish_reason":null}]}
+            """),
+            DeserializeChatCompletionUpdate("""
+            {"id":"resp_08139a7ccf44e8fe016a5386a10a2c8191b9ed0ceb32b620d2","created":1783858849,"model":"gpt-5.5","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"completion_tokens":7,"prompt_tokens":788,"total_tokens":795}}
+            """),
+            DeserializeChatCompletionUpdate("""
+            {"id":"resp_08139a7ccf44e8fe016a5386a10a2c8191b9ed0ceb32b620d2","object":"chat.completion.chunk","created":1783858849,"model":"gpt-5.5","choices":[],"usage":{"prompt_tokens":788,"completion_tokens":7,"total_tokens":795,"completion_tokens_details":{}}}
+            """),
+            DeserializeChatCompletionUpdate("""
+            {"web_sources":[{"title":"","url":"https://www.practitest.com/assets/pdf/stot-2024.pdf","snippet":"STATE OF TESTING™ REPORT 2024\n\n#1 Demographics and Background #4"},{"title":"Advances in Software Testing in 2024: Experimental Insights, Frameworks, and Future Directions","url":"https://doi.org/10.17148/ijarcce.2024.131103","snippet":"# Advances in Software Testing in 2024: Experimental Insights, Frameworks, and Future Directions"},{"title":"Duplicate ignored","url":"https://doi.org/10.17148/ijarcce.2024.131103","snippet":"duplicate"},{"title":"Missing URL ignored","snippet":"missing url"}]}
             """)
         ];
 
