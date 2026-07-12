@@ -59,11 +59,9 @@ public partial class ApertisProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Apertis).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -130,8 +128,8 @@ public partial class ApertisProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }
