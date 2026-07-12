@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -174,36 +175,22 @@ public partial class MiniMaxProvider
         if (images.Count == 0)
             throw new Exception("MiniMax returned no images.");
 
-        // ---- providerMetadata (small + structured; avoids copying large base64 arrays twice) ----
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        try
-        {
-            var meta = new Dictionary<string, JsonElement>();
-            if (doc.RootElement.TryGetProperty("id", out var id)) meta["id"] = id.Clone();
-            if (doc.RootElement.TryGetProperty("metadata", out var md)) meta["metadata"] = md.Clone();
-            if (doc.RootElement.TryGetProperty("base_resp", out var br)) meta["base_resp"] = br.Clone();
+        var meta = new Dictionary<string, JsonElement>();
 
-            if (meta.Count > 0)
-            {
-                providerMetadata = new Dictionary<string, JsonElement>
-                {
-                    [GetIdentifier()] = JsonSerializer.SerializeToElement(meta, JsonSerializerOptions.Web)
-                };
-            }
-        }
-        catch
-        {
-            // best-effort only
-        }
+        if (doc.RootElement.TryGetProperty("id", out var id)) meta["id"] = id.Clone();
+        if (doc.RootElement.TryGetProperty("metadata", out var md)) meta["metadata"] = md.Clone();
+        if (doc.RootElement.TryGetProperty("base_resp", out var br)) meta["base_resp"] = br.Clone();
 
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(meta),
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };

@@ -11,6 +11,10 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using System.Globalization;
 using System.Text.Json;
+using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
+using System.Text;
+using System.Net.Mime;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -284,5 +288,58 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         value = default;
         return false;
     }
+
+    private async Task<ImageResponse> ImageGenerateAsync(
+        ImageRequest req,
+        CancellationToken ct)
+    {
+        ApplyAuthHeader();
+
+        var now = DateTime.UtcNow;
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["prompt"] = req.Prompt,
+            ["num_results"] = req.N ?? 1,
+        };
+
+        if (!string.IsNullOrEmpty(req.AspectRatio))
+        {
+            payload["aspect_ratio"] = req.AspectRatio;
+        }
+
+        if (req.Seed is not null)
+        {
+            payload["seed"] = req.Seed;
+        }
+
+        var json = JsonSerializer.Serialize(payload, ImageJson);
+
+        using var resp = await _client.PostAsync(
+            $"v1/inference/{req.Model}",
+            new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json),
+            ct);
+
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"{resp.StatusCode}: {raw}");
+
+        var images = await ExtractImagesAsDataUrlsAsync(raw, ct);
+        if (images.Count == 0)
+            throw new Exception("DeepInfra returned no images.");
+
+        return new ImageResponse
+        {
+            Images = images,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Response = new()
+            {
+                Timestamp = now,
+                Headers = resp.GetHeaders(),
+                ModelId = req.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
 }
 

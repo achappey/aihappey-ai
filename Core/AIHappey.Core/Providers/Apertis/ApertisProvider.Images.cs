@@ -67,11 +67,7 @@ public partial class ApertisProvider
             Images = images,
             Warnings = warnings,
             Usage = ExtractApertisImageUsage(root),
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
-            {
-                endpoint,
-                body = root
-            }),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
             Response = new()
             {
                 Timestamp = ReadApertisUnixTimestamp(root, "created") ?? now,

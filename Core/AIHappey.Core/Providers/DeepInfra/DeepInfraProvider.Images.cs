@@ -100,7 +100,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model.ToModelId(GetIdentifier()) 
+                ModelId = req.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -173,7 +173,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model.ToModelId(GetIdentifier()) 
+                ModelId = req.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -242,7 +242,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model.ToModelId(GetIdentifier()) 
+                ModelId = req.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -292,7 +292,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model.ToModelId(GetIdentifier()) 
+                ModelId = req.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -341,7 +341,7 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model.ToModelId(GetIdentifier()) 
+                ModelId = req.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -401,60 +401,11 @@ public sealed partial class DeepInfraProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = req.Model.ToModelId(GetIdentifier()) 
+                ModelId = req.Model.ToModelId(GetIdentifier())
             }
         };
     }
 
-    private async Task<ImageResponse> ImageGenerateAsync(
-        ImageRequest req,
-        CancellationToken ct)
-    {
-        ApplyAuthHeader();
-
-        var now = DateTime.UtcNow;
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["prompt"] = req.Prompt,
-            ["num_results"] = req.N ?? 1,
-        };
-
-        if (!string.IsNullOrEmpty(req.AspectRatio))
-        {
-            payload["aspect_ratio"] = req.AspectRatio;
-        }
-
-        if (req.Seed is not null)
-        {
-            payload["seed"] = req.Seed;
-        }
-
-        var json = JsonSerializer.Serialize(payload, ImageJson);
-
-        using var resp = await _client.PostAsync(
-            $"v1/inference/{req.Model}",
-            new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json),
-            ct);
-
-        var raw = await resp.Content.ReadAsStringAsync(ct);
-        if (!resp.IsSuccessStatusCode)
-            throw new Exception($"{resp.StatusCode}: {raw}");
-
-        var images = await ExtractImagesAsDataUrlsAsync(raw, ct);
-        if (images.Count == 0)
-            throw new Exception("DeepInfra returned no images.");
-
-        return new ImageResponse
-        {
-            Images = images,
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = req.Model.ToModelId(GetIdentifier()) 
-            }
-        };
-    }
 
     public async Task<ImageResponse> ImageRequest(
         ImageRequest imageRequest,
@@ -464,9 +415,6 @@ public sealed partial class DeepInfraProvider
 
         if (string.IsNullOrWhiteSpace(imageRequest.Model))
             throw new ArgumentException("Model is required.", nameof(imageRequest));
-
-        //  if (string.IsNullOrWhiteSpace(imageRequest.Prompt))
-        //     throw new ArgumentException("Prompt is required.", nameof(imageRequest));
 
         var isOAIEdit = imageRequest.Model.EndsWith("Qwen/Qwen-Image-Edit")
             || imageRequest.Model.EndsWith("black-forest-labs/FLUX.1-Kontext-dev");
