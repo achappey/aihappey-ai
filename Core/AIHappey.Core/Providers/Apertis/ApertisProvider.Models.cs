@@ -49,6 +49,7 @@ public partial class ApertisProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                        model.Type = model.Id.GuessModelType();
                     }
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
@@ -58,13 +59,15 @@ public partial class ApertisProvider
                     {
                         models.Add(model);
 
-                        if (!model.Id.EndsWith(":free"))
+                        if (model.Type.Equals("language")
+                            && !model.Id.EndsWith(":free"))
                         {
                             models.Add(new Model()
                             {
                                 Id = $"{model.Id}:web",
                                 Name = $"{model.Name} Web Search",
                                 OwnedBy = model.OwnedBy
+                                
                             });
                         }
                     }
