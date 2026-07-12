@@ -112,6 +112,7 @@ public partial class SiliconFlowProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
