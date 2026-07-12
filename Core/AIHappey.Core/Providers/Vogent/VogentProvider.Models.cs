@@ -21,51 +21,17 @@ public partial class VogentProvider
             {
                 ApplyAuthHeader();
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "api/models");
-                using var resp = await _client.SendAsync(req, cancellationToken);
-
-                if (!resp.IsSuccessStatusCode)
+                var models = new List<Model>
                 {
-                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"Vogent API error: {err}");
-                }
-
-                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-                var models = new List<Model>();
-                var root = doc.RootElement;
-
-
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                        ? dataEl.EnumerateArray()
-                        : Enumerable.Empty<JsonElement>();
-
-                foreach (var el in arr)
-                {
-                    Model model = new();
-
-                    if (el.TryGetProperty("id", out var idEl))
+                    new Model
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        Id = BaseSpeechModel.ToModelId(GetIdentifier()),
+                        Name = BaseSpeechModel,
+                        OwnedBy = ProviderName,
+                        Type = "speech",
+                        Description = $"{ProviderName} TTS."
                     }
-
-                    if (el.TryGetProperty("name", out var orgEl))
-                        model.Name = orgEl.GetString() ?? model.Name;
-
-                    if (!string.IsNullOrEmpty(model.Id))
-                        models.Add(model);
-                }
-
-                models.Add(new Model
-                {
-                    Id = BaseSpeechModel.ToModelId(GetIdentifier()),
-                    Name = BaseSpeechModel,
-                    OwnedBy = ProviderName,
-                    Type = "speech",
-                    Description = $"{ProviderName} base TTS model."
-                });
+                };
 
                 var voices = await GetVoicesAsync(cancellationToken);
                 models.AddRange(BuildDynamicVoiceModels(voices));
@@ -139,9 +105,9 @@ public partial class VogentProvider
                 Id = $"{BaseSpeechModel}/{v.Id}".ToModelId(nameof(Vogent).ToLowerInvariant()),
                 OwnedBy = ProviderName,
                 Type = "speech",
-                Name = $"{BaseSpeechModel} · {BuildVoiceDisplayName(v)}",
+                Name = $"{BaseSpeechModel}, {BuildVoiceDisplayName(v)}",
                 Description = string.IsNullOrWhiteSpace(v.Description)
-                    ? $"{ProviderName} voice '{v.Id}'."
+                    ? $"{ProviderName} {v.Name}."
                     : v.Description,
                 Tags = BuildVoiceTags(v)
             });
@@ -152,7 +118,7 @@ public partial class VogentProvider
         if (string.IsNullOrWhiteSpace(voice.VoiceType))
             return name;
 
-        return $"{name} ({voice.VoiceType})";
+        return $"{name}";
     }
 
     private static IEnumerable<string> BuildVoiceTags(VogentVoice voice)
