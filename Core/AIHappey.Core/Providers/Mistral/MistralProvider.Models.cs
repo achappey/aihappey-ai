@@ -147,9 +147,7 @@ public partial class MistralProvider
     {
         var speechBaseModels = models
             .Where(m => string.Equals(m.Type, "speech", StringComparison.OrdinalIgnoreCase))
-            .Select(m => m.Name)
-            .Where(static name => !string.IsNullOrWhiteSpace(name))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(static name => !string.IsNullOrWhiteSpace(name.Name))
             .ToList();
 
         foreach (var baseModel in speechBaseModels)
@@ -159,13 +157,14 @@ public partial class MistralProvider
                 if (string.IsNullOrWhiteSpace(voice.Slug))
                     continue;
 
-                var shortcut = $"{baseModel}/{voice.Slug}";
+                var shortcut = $"{baseModel.Id}/{voice.Slug}";
 
                 AddModelIfMissing(models, new Model
                 {
-                    Id = shortcut.ToModelId(GetIdentifier()),
+                    Id = shortcut,
                     Name = shortcut,
-                    OwnedBy = GetName(),
+                    OwnedBy = $"{baseModel} {voice.Name}",
+                    Pricing = baseModel.Pricing,
                     Type = "speech",
                     Description = $"{GetName()} text-to-speech model '{baseModel}' with preset voice slug '{voice.Slug}' (voice_id: {voice.Id}).",
                     Tags = ["voice"]

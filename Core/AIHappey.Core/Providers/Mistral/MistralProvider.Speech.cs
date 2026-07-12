@@ -74,6 +74,16 @@ public partial class MistralProvider
 
         var resolvedFormat = NormalizeSpeechResponseFormat(root.TryGetString("audio_format") ?? responseFormat) ?? "mp3";
 
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+
+        var characterCount = response.TryGetHeaderInt64(
+            "x-ratelimit-input-characters-query-cost")
+            ?? request.Text.Length;
+
+        decimal? cost = modelItem.Pricing?.Input is decimal inputPrice
+            ? inputPrice * characterCount
+            : null;
+
         return new SpeechResponse
         {
             Audio = new SpeechAudioResponse
@@ -83,7 +93,7 @@ public partial class MistralProvider
                 Format = resolvedFormat
             },
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(costs: cost),
             Response = new ResponseData
             {
                 Timestamp = now,

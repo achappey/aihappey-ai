@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace AIHappey.Core.Extensions;
@@ -38,6 +39,25 @@ public static class ResponseExtensions
         }
 
         return providerMetadata;
+    }
+
+    public static long? TryGetHeaderInt64(this HttpResponseMessage response, string headerName)
+    {
+        if (!response.Headers.TryGetValues(headerName, out var values)
+            && !response.Content.Headers.TryGetValues(headerName, out values))
+        {
+            return null;
+        }
+
+        var value = values.FirstOrDefault();
+
+        return long.TryParse(
+            value,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var result)
+                ? result
+                : null;
     }
 
 }
