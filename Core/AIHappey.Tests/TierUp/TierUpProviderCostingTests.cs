@@ -4,7 +4,6 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.TierUp;
 using AIHappey.Messages.Mapping;
-using AIHappey.Messages;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
