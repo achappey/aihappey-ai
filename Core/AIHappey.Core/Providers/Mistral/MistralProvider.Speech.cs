@@ -87,6 +87,7 @@ public partial class MistralProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             },

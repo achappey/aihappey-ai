@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Mistral;
@@ -73,7 +74,7 @@ public partial class MistralProvider
         var outputs = json?["outputs"]?.AsArray();
 
         // Defaults
-        string resolvedModel = imageRequest.Model ?? "mistral";
+        string resolvedModel = imageRequest.Model;
         string accumulatedText = string.Empty;
         List<string> images = [];
 
@@ -144,12 +145,8 @@ public partial class MistralProvider
                                 var base64 = Convert.ToBase64String(bytes);
 
                                 images.Add(base64.ToDataUrl(mime));
-                                // If we got a file, prefer returning it (you can still keep text in meta if you want)
                             }
                         }
-
-                        // Optional: surface tool/document references in accumulatedText (skip for now)
-                        // if (ctype == "tool_reference" || ctype == "document_url") { ... }
                     }
                 }
             }
@@ -172,10 +169,18 @@ public partial class MistralProvider
         return new()
         {
             Images = images,
+            Usage = new ImageUsageData()
+            {
+                InputTokens = promptTokens,
+                OutputTokens = completionTokens,
+                TotalTokens = totalTokens
+            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = resolvedModel
+                Headers = resp.GetHeaders(),
+                ModelId = resolvedModel.ToModelId(GetIdentifier())
             }
         };
     }

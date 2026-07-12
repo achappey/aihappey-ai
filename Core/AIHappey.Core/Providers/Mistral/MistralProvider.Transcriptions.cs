@@ -5,6 +5,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -48,12 +49,14 @@ public partial class MistralProvider
 
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
 
-        return ConvertTranscriptionResponse(json, request.Model);
+        return ConvertTranscriptionResponse(json, request.Model, GetIdentifier(), resp.GetHeaders());
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
        string json,
-       string model)
+       string model,
+       string providerId,
+       IDictionary<string, string>? headers = null)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -82,12 +85,15 @@ public partial class MistralProvider
             Segments = segments,
             Language = root.TryGetProperty("language", out var languageEl)
                     ? languageEl.GetString() ?? null : null,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
+                Headers = headers,
                 ModelId = root.TryGetProperty("model", out var modelEl)
-                    ? modelEl.GetString() ?? model : model,
-                Body = json
+                    ? modelEl.GetString()?.ToModelId(providerId)
+                        ?? model.ToModelId(providerId) : model.ToModelId(providerId),
+                Body = root.Clone()
             }
         };
     }
