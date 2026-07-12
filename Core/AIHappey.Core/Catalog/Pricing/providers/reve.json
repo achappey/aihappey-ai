@@ -1,0 +1,37 @@
+{
+  "reve/latest": {
+    "pricing": {
+      "output": "0.0013333333333333"
+    }
+  },
+  "reve/latest-fast": {
+    "pricing": {
+      "output": "0.0013333333333333"
+    }
+  },
+  "reve/reve-remix@20250915": {
+    "pricing": {
+      "output": "0.0013333333333333"
+    }
+  },
+  "reve/reve-remix-fast@20251030": {
+    "pricing": {
+      "output": "0.0013333333333333"
+    }
+  },
+  "reve/reve-edit@20250915": {
+    "pricing": {
+      "output": "0.0013333333333333"
+    }
+  },
+  "reve/reve-edit-fast@20251030": {
+    "pricing": {
+      "output": "0.0013333333333333"
+    }
+  },
+  "reve/reve-create@20250915": {
+    "pricing": {
+      "output": "0.0013333333333333"
+    }
+  }
+}
