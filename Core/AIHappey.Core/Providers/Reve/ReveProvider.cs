@@ -35,7 +35,7 @@ public partial class ReveProvider : IModelProvider
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+        => (await this.ListModels(_keyResolver.Resolve(GetIdentifier()))).WithPricing(GetIdentifier());
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -49,9 +49,8 @@ public partial class ReveProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Reve).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ImageSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -5,6 +6,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Reve;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -72,16 +74,51 @@ public partial class ReveProvider
         if (string.IsNullOrWhiteSpace(image))
             throw new Exception("Reve response contained empty image data.");
 
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+
+        var providerRoot = root.EnumerateObject()
+            .Where(p => !p.NameEquals("image"))
+            .ToDictionary(
+                p => p.Name,
+                p => p.Value.Clone());
+
         return new ImageResponse
         {
             Images = [image.ToDataUrl(MediaTypeNames.Image.Png)],
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(providerRoot,
+                costs: CalculateReveCosts(root, modelItem.Pricing?.Output)),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private static decimal? CalculateReveCosts(JsonElement root, decimal? outputPrice)
+    {
+        if (!root.TryGetProperty("credits_used", out var creditsEl))
+            return 0m;
+
+        decimal creditsUsed = creditsEl.ValueKind switch
+        {
+            JsonValueKind.Number when creditsEl.TryGetDecimal(out var d) => d,
+            JsonValueKind.String when decimal.TryParse(
+                creditsEl.GetString(),
+                NumberStyles.Any,
+                CultureInfo.InvariantCulture,
+                out var d) => d,
+            _ => 0m
+        };
+
+        if (creditsUsed <= 0)
+            return 0m;
+
+        return outputPrice.HasValue ?
+            creditsUsed * outputPrice : null;
     }
 
     private static (string Endpoint, object Payload) BuildRevePayload(
