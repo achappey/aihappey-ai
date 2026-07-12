@@ -69,10 +69,10 @@ public partial class MegaNovaProvider : IModelProvider
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => TranscriptionRequestMegaNova(imageRequest, cancellationToken);
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => SpeechRequestMegaNova(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -94,9 +94,7 @@ public partial class MegaNovaProvider : IModelProvider
         => ImageRequestMegaNova(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+        => VideoRequestMegaNova(request, cancellationToken);
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
