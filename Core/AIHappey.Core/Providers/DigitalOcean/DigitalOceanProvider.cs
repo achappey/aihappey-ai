@@ -105,7 +105,7 @@ public partial class DigitalOceanProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => ImageRequestDigitalOcean(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
