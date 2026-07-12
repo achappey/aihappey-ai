@@ -61,19 +61,6 @@ public partial class NovitaProvider
                         model.Created = unix;
                     }
 
-                    if (el.TryGetProperty("input_token_price_per_m", out var inputPrice)
-                     && inputPrice.ValueKind == JsonValueKind.Number
-                     && el.TryGetProperty("output_token_price_per_m", out var outputPrice)
-                     && outputPrice.ValueKind == JsonValueKind.Number)
-                    {
-                        /*  model.Pricing = new ModelPricing
-                          {
-                              Input = inputPrice.GetInt32().ToString(),
-                              Output = outputPrice.GetInt32().ToString(),
-                          };*/
-                    }
-
-
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }

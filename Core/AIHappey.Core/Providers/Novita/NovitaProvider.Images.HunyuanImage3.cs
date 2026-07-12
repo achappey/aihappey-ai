@@ -5,10 +5,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
      private static readonly JsonSerializerOptions HunyuanImage3Json = new(JsonSerializerDefaults.Web)
      {
@@ -139,20 +140,15 @@ public partial class NovitaProvider
           foreach (var url in imageUrls)
                images.Add(await DownloadAsDataUrlAsync(url, cancellationToken));
 
-          Dictionary<string, JsonElement>? providerMetadata = new()
-          {
-               [GetIdentifier()] = JsonSerializer.SerializeToElement(new { task_id = taskId }, JsonSerializerOptions.Web)
-          };
-
           return new ImageResponse
           {
                Images = images,
                Warnings = warnings,
-               ProviderMetadata = providerMetadata,
+               ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
                Response = new()
                {
                     Timestamp = now,
-                    ModelId = request.Model.ToModelId(GetIdentifier()) 
+                    ModelId = request.Model.ToModelId(GetIdentifier())
                }
           };
      }

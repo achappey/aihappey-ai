@@ -119,13 +119,16 @@ public partial class NovitaProvider
                 Format = audioType ?? "wav"
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = submitPayload
+            },
             ProviderMetadata = GetIdentifier()
                 .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = taskResultJson
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

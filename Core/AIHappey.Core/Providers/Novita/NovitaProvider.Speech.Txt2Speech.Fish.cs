@@ -67,6 +67,10 @@ public partial class NovitaProvider
                 MimeType = mime,
                 Format = audioType ?? "wav"
             },
+            Request = new()
+            {
+                Body = submitPayload
+            },
             Warnings = warnings,
             ProviderMetadata = GetIdentifier()
                 .CreatePrimitiveProviderMetadata(),

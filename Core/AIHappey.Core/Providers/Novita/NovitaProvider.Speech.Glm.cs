@@ -97,6 +97,7 @@ public partial class NovitaProvider
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };

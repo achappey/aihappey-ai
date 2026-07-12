@@ -67,8 +67,10 @@ public partial class NovitaProvider
             Response = new()
             {
                 Timestamp = now,
+                Id = root.TryGetId(),
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = errText
+                Body = root.Clone()
             }
         };
     }

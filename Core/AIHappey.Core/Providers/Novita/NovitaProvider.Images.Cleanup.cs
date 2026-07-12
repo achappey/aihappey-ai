@@ -7,10 +7,11 @@ using AIHappey.Common.Model.Providers.Novita;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
     private static readonly JsonSerializerOptions CleanupTextJson = new(JsonSerializerDefaults.Web)
     {
@@ -145,10 +146,11 @@ public partial class NovitaProvider
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

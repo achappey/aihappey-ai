@@ -87,8 +87,9 @@ public partial class NovitaProvider
         }
 
         var respJson = Encoding.UTF8.GetString(respBytes);
+        using var document = JsonDocument.Parse(respJson);
+        var root = document.RootElement;
 
-        // Response: { "audio": "<string>" } :contentReference[oaicite:14]{index=14}
         var audioField = ReadJsonString(respJson, "audio")
             ?? throw new InvalidOperationException($"MiniMax TTS: missing audio field: {respJson}");
 
@@ -125,7 +126,9 @@ public partial class NovitaProvider
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = request.Model.ToModelId(GetIdentifier())
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Headers = resp.GetHeaders(),
+                Body = root.Clone()
             }
         };
     }

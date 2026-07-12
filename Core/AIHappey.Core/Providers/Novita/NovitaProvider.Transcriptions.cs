@@ -4,10 +4,12 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Novita;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Novita;
 
-public partial class NovitaProvider 
+public partial class NovitaProvider
 {
     public async Task<TranscriptionResponse> TranscriptionRequest(
            TranscriptionRequest request,
@@ -52,14 +54,16 @@ public partial class NovitaProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Novita STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertNovitaResponse(json, requestBody);
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+
+        return ConvertNovitaResponse(root, requestBody,
+            GetIdentifier(), request.Model, resp.GetHeaders());
     }
 
-    private static TranscriptionResponse ConvertNovitaResponse(string json, string requestBody)
+    private static TranscriptionResponse ConvertNovitaResponse(JsonElement root,
+        string requestBody, string providerId, string model, IDictionary<string, string>? headers = null)
     {
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
         return new TranscriptionResponse
         {
             Text = root.TryGetProperty("text", out var t)
@@ -68,12 +72,14 @@ public partial class NovitaProvider
 
             // Novita returns no segments
             Segments = [],
-
+            ProviderMetadata = providerId
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = "glm-asr-2512",
-                Body = json
+                Headers = headers,
+                ModelId = model.ToModelId(providerId),
+                Body = root.Clone()
             },
             Request = new TranscriptionRequestItem
             {
