@@ -153,8 +153,8 @@ public partial class SupertoneProvider
             Id = id,
             OwnedBy = ProviderName,
             Type = "speech",
-            Name = $"{modelId} / {displayName} ({age}, {gender}, use cases: {useCases})",
-            Description = $"{ProviderName} voice '{displayName}' (voice_id={voice.VoiceId}) on model '{modelId}' with age={age}, gender={gender}, use_cases={useCases}.{descriptionDetail}",
+            Name = $"{modelId}, {displayName}",
+            Description = $"{displayName}, {age}, {gender}, {useCases}",
             Tags = BuildVoiceTags(voice, modelId)
         };
     }

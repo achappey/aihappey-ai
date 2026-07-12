@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Supertone;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -120,15 +121,16 @@ public partial class SupertoneProvider
                 Format = resolvedFormat
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Request = new()
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetaPayload)
+                Body = payload
             },
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = JsonSerializer.SerializeToElement(providerMetaPayload)
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
