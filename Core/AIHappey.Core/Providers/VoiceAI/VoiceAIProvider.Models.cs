@@ -59,7 +59,7 @@ public partial class VoiceAIProvider
                 Id = BuildCompositeModelId(model, voice.VoiceId, language).ToModelId(GetIdentifier()),
                 OwnedBy = ProviderName,
                 Type = "speech",
-                Name = $"{model} · {BuildVoiceDisplayName(voice)} · {language.ToUpperInvariant()}",
+                Name = $"{model}, {BuildVoiceDisplayName(voice)} · {language.ToUpperInvariant()}",
                 Description = BuildVoiceDescription(model, voice, language),
                 Tags = BuildVoiceTags(model, voice, language)
             })));
@@ -102,10 +102,10 @@ public partial class VoiceAIProvider
         => $"{baseModel}/{voiceId}/{language}";
 
     private static string BuildVoiceDisplayName(VoiceAIVoice voice)
-        => string.IsNullOrWhiteSpace(voice.Name) ? voice.VoiceId : $"{voice.Name.Trim()} ({voice.VoiceId})";
+        => string.IsNullOrWhiteSpace(voice.Name) ? voice.VoiceId : $"{voice.Name.Trim()}";
 
     private static string BuildVoiceDescription(string baseModel, VoiceAIVoice voice, string language)
-        => $"{ProviderName} TTS model '{baseModel}' with voice '{voice.VoiceId}' and language '{language}'.";
+        => $"{ProviderName} {baseModel}, {voice.Name}, {language}.";
 
     private static IEnumerable<string> BuildVoiceTags(string baseModel, VoiceAIVoice voice, string language)
     {
