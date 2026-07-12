@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Messages;
 
@@ -67,6 +68,7 @@ public sealed class MessagesRequest
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+  
 }
 
 public sealed class MessagesResponse
