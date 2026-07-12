@@ -113,6 +113,7 @@ public partial class VogentProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
