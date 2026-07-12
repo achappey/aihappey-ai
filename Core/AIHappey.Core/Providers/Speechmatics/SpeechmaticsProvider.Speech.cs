@@ -76,6 +76,7 @@ public partial class SpeechmaticsProvider
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };

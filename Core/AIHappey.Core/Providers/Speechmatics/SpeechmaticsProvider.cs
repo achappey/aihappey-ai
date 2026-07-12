@@ -31,7 +31,7 @@ public partial class SpeechmaticsProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(Speechmatics)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", $"UAPI-{key}");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", $"{key}");
     }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)

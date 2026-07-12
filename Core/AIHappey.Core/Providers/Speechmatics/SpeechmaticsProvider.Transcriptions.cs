@@ -3,6 +3,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Model.Providers.Speechmatics;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Speechmatics;
 
@@ -30,7 +31,8 @@ public partial class SpeechmaticsProvider
         var finalJobJson = await PollUntilTerminalAsync(jobId, cancellationToken);
         var transcriptJson = await GetTranscriptAsync(jobId, cancellationToken);
 
-        return ConvertSpeechmaticsResponse(transcriptJson, finalJobJson, request.Model);
+        return ConvertSpeechmaticsResponse(transcriptJson, finalJobJson,
+            request.Model, GetIdentifier());
     }
 
     private async Task<string> CreateJobAsync(
@@ -112,7 +114,8 @@ public partial class SpeechmaticsProvider
         return json;
     }
 
-    private static TranscriptionResponse ConvertSpeechmaticsResponse(string transcriptJson, string finalJobJson, string model)
+    private static TranscriptionResponse ConvertSpeechmaticsResponse(string transcriptJson, string finalJobJson,
+        string model, string providerId)
     {
         using var transcriptDoc = JsonDocument.Parse(transcriptJson);
         using var jobDoc = JsonDocument.Parse(finalJobJson);
@@ -178,10 +181,11 @@ public partial class SpeechmaticsProvider
             Segments = segments,
             Language = language,
             DurationInSeconds = duration,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = model,
+                ModelId = model.ToModelId(providerId),
                 Body = transcriptJson
             }
         };

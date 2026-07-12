@@ -7,7 +7,10 @@
             "owned_by": "Speechmatics",
             "name": "Sarah: English Female (UK)",
             "type": "speech",
-            "description": "Text-to-speech voice"
+            "description": "Text-to-speech voice",
+            "tags": [
+                "voice"
+            ]
         },
         {
             "id": "speechmatics/theo",
@@ -15,7 +18,10 @@
             "owned_by": "Speechmatics",
             "name": "Theo: English Male (UK)",
             "type": "speech",
-            "description": "Text-to-speech voice"
+            "description": "Text-to-speech voice",
+            "tags": [
+                "voice"
+            ]
         },
         {
             "id": "speechmatics/megan",
@@ -23,7 +29,10 @@
             "owned_by": "Speechmatics",
             "name": "Megan: English Female (US)",
             "type": "speech",
-            "description": "Text-to-speech voice"
+            "description": "Text-to-speech voice",
+            "tags": [
+                "voice"
+            ]
         },
         {
             "id": "speechmatics/jack",
@@ -31,7 +40,10 @@
             "owned_by": "Speechmatics",
             "name": "Jack: English Male (US)",
             "type": "speech",
-            "description": "Text-to-speech voice"
+            "description": "Text-to-speech voice",
+            "tags": [
+                "voice"
+            ]
         },
         {
             "id": "speechmatics/standard",
