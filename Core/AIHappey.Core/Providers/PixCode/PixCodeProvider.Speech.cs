@@ -103,6 +103,10 @@ public partial class PixCodeProvider
             },
             ProviderMetadata = providerMetadata,
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new()
             {
                 Timestamp = now,
