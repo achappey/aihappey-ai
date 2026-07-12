@@ -71,9 +71,6 @@ public static class RequestExtensions
             ]
     };
 
-    //  public static string ToDataUrl(
-    //     this string data, string mimeType) => $"data:{mimeType};base64,{data}";
-
     public static string ToDataUrl(
         this BinaryData data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data)}";
 
@@ -85,20 +82,5 @@ public static class RequestExtensions
         };
 
     public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
-
-    /*   public static string RemoveDataUrlPrefix(this string input)
-       {
-           if (string.IsNullOrWhiteSpace(input))
-               return input;
-
-           var commaIndex = input.IndexOf(',');
-
-           // not a data URL → return as-is
-           if (!input.StartsWith("data:", StringComparison.OrdinalIgnoreCase) || commaIndex < 0)
-               return input;
-
-           return input[(commaIndex + 1)..];
-       }*/
-
 
 }
