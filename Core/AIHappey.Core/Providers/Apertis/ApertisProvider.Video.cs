@@ -104,11 +104,7 @@ public partial class ApertisProvider
                 }
             ],
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
-            {
-                create = createRoot,
-                poll = completed.root
-            }),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = ReadApertisUnixTimestamp(completed.root, "status_update_time") ?? now,
