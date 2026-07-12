@@ -157,15 +157,6 @@ public partial class MistralProvider
         var completionTokens = usage?["completion_tokens"]?.GetValue<int?>() ?? 0;
         var totalTokens = usage?["total_tokens"]?.GetValue<int?>() ?? (promptTokens + completionTokens);
 
-        var meta = new JsonObject
-        {
-            ["inputTokens"] = promptTokens,
-            ["totalTokens"] = totalTokens
-        };
-
-        if (!string.IsNullOrWhiteSpace(conversationId))
-            meta["conversationId"] = conversationId;
-
         return new()
         {
             Images = images,
