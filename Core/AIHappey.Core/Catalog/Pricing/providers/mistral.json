@@ -76,5 +76,15 @@
       "input": "0.0000003",
       "output": "0.0000009"
     }
+  },
+  "mistral/voxtral-mini-tts-2603": {
+    "pricing": {
+      "input": "0.000016"
+    }
+  },
+  "mistral/voxtral-mini-tts-latest": {
+    "pricing": {
+      "input": "0.000016"
+    }
   }
 }
