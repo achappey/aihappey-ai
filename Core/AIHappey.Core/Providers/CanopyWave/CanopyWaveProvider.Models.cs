@@ -2,6 +2,7 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 using System.Globalization;
+using Anthropic.SDK.Models;
 
 namespace AIHappey.Core.Providers.CanopyWave;
 
@@ -43,7 +44,10 @@ public partial class CanopyWaveProvider
 
                 foreach (var el in arr)
                 {
-                    Model model = new();
+                    Model model = new()
+                    {
+                        Type = "language"
+                    };
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
