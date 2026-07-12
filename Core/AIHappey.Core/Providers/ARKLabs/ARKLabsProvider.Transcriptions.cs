@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.ARKLabs;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -23,15 +24,6 @@ public partial class ARKLabsProvider
         var metadata = request.GetProviderMetadata<ARKLabsTranscriptionProviderMetadata>(GetIdentifier());
 
         var model = request.Model;
-        if (!string.IsNullOrWhiteSpace(model) && model.Contains('/'))
-        {
-            var split = model.SplitModelId();
-            model = split.Model;
-        }
-
-        if (string.IsNullOrWhiteSpace(model))
-            model = "whisper-1";
-
         var audioString = request.Audio switch
         {
             JsonElement je when je.ValueKind == JsonValueKind.String => je.GetString(),
@@ -88,10 +80,13 @@ public partial class ARKLabsProvider
         if (string.Equals(responseFormat, "srt", StringComparison.OrdinalIgnoreCase))
             return ConvertSrtResponse(body, request.Model, now);
 
-        return ConvertJsonResponse(body, request.Model, now);
+        return ConvertJsonResponse(body, request.Model, now, GetIdentifier(), resp.GetHeaders());
     }
 
-    private static TranscriptionResponse ConvertJsonResponse(string json, string modelId, DateTime timestamp)
+    private static TranscriptionResponse ConvertJsonResponse(string json,
+        string modelId, DateTime timestamp,
+        string providerId,
+        Dictionary<string, string> headers)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -127,11 +122,14 @@ public partial class ARKLabsProvider
                 ? (float)duration.GetDouble()
                 : null,
             Segments = segments,
+            ProviderMetadata = providerId
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = timestamp,
-                ModelId = modelId,
-                Body = json
+                ModelId = modelId.ToModelId(providerId),
+                Headers = headers,
+                Body = root.Clone()
             }
         };
     }
