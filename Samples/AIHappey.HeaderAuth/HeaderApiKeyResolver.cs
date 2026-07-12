@@ -562,7 +562,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["rebytetasks"] = "X-ReByteTasks-Key",
             ["wayscloud"] = "X-WAYSCloud-Key",
             ["tierup"] = "X-TierUp-Key",
-            ["evidencemd"] = "X-EvidenceMD-Key"
+            ["evidencemd"] = "X-EvidenceMD-Key",
+            ["agen"] = "X-Agen-Key"
 
         };
 

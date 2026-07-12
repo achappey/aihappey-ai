@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "agen/agent",
+      "object": "model",
+      "owned_by": "Agen",
+      "name": "Coding Agent",
+      "type": "language",
+      "description": "Assign a task. Autonomous agents clone your repo, write the code, fix the pipelines, and show you the running app. Before you merge. No IDE. No local setup. No babysitting."
+    }
+  ]
+}

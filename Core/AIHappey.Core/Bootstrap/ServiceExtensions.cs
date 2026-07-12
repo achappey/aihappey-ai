@@ -560,6 +560,7 @@ using AIHappey.Core.Providers.ReByteModels;
 using AIHappey.Core.Providers.WAYSCloud;
 using AIHappey.Core.Providers.TierUp;
 using AIHappey.Core.Providers.EvidenceMD;
+using AIHappey.Core.Providers.Agen;
 
 namespace AIHappey.Core.AI;
 
@@ -1146,6 +1147,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, WAYSCloudProvider>();
         services.AddSingleton<IModelProvider, TierUpProvider>();
         services.AddSingleton<IModelProvider, EvidenceMDProvider>();
+        services.AddSingleton<IModelProvider, AgenProvider>();
 
 
     }
