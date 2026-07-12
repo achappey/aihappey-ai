@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Text;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -76,6 +77,7 @@ public partial class AIMLProvider
         var providerMetadata = new Dictionary<string, JsonElement>();
 
         decimal? cost = null;
+        object? metadata = null;
 
         if (root.TryGetProperty("meta", out var metaEl)
              && metaEl.ValueKind == JsonValueKind.Object)
@@ -102,23 +104,17 @@ public partial class AIMLProvider
                 metricsClone = metricsEl.Clone();
             }
 
-            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
+            metadata = new
             {
                 usage = usageClone,
                 metrics = metricsClone
-            }, JsonSerializerOptions.Web);
-        }
-
-        if (cost is not null)
-        {
-            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, JsonSerializerOptions.Web);
+            };
         }
 
         return CreateSpeechResponse(request, payload, warnings, now, audioBytes,
-            mime, GetIdentifier(), format, root.Clone(), providerMetadata);
+            mime, GetIdentifier(), format, root.Clone(),
+            GetIdentifier().CreatePrimitiveProviderMetadata(metadata, cost),
+            audioResp.GetHeaders());
     }
 
     private static SpeechResponse CreateSpeechResponse(
@@ -131,7 +127,8 @@ public partial class AIMLProvider
      string providerId,
      string format,
      object? responseBody,
-     Dictionary<string, JsonElement>? providerMetadata = null)
+     Dictionary<string, JsonElement>? providerMetadata = null,
+     IDictionary<string, string>? headers = null)
      => new()
      {
          Audio = new()
@@ -145,6 +142,7 @@ public partial class AIMLProvider
          Response = new()
          {
              Timestamp = timestamp,
+             Headers = headers,
              ModelId = request.Model.ToModelId(providerId),
              Body = responseBody
          },
