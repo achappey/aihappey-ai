@@ -73,11 +73,7 @@ public partial class MegaNovaProvider
                 Timestamp = timestamp,
                 Headers = headers,
                 ModelId = model.ToModelId(GetIdentifier()),
-                Body = raw
-            },
-            Request = new TranscriptionRequestItem
-            {
-                Body = string.Join("&", form.Select(content => content.Headers.ContentDisposition?.Name?.Trim('"')).Where(name => !string.IsNullOrWhiteSpace(name)))
+                Body = root.Clone()
             }
         };
     }

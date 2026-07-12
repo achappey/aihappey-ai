@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MegaNova;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -120,9 +121,11 @@ public partial class MegaNovaProvider
             Images = images,
             Warnings = warnings,
             Usage = ExtractUsage(doc.RootElement),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
