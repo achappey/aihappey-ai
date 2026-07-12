@@ -21,6 +21,7 @@ public static class UIMessagePartExtensions
 
         if (modelId.Contains("tts")
         || modelId.Contains("canopy")
+        || modelId.Contains("orpheus")
         || modelId.Contains("Kokoro", StringComparison.OrdinalIgnoreCase)
         || modelId.Contains("chatterbox"))
             return "speech";
