@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.RegoloAI;
@@ -74,24 +75,7 @@ public partial class RegoloAIProvider
 
         if (!root.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
         {
-            warnings.Add(new
-            {
-                type = "provider_response_missing_field",
-                feature = "results",
-                details = "Regolo rerank response did not contain a 'results' array."
-            });
-
-            return new RerankingResponse
-            {
-                Ranking = [],
-                Warnings = warnings,
-                Response = new()
-                {
-                    Timestamp = now,
-                    ModelId = request.Model.ToModelId(GetIdentifier()),
-                    Body = raw
-                }
-            };
+            throw new Exception("Regolo rerank response did not contain a 'results' array");
         }
 
         var rankings = new List<RerankingRanking>();
@@ -120,11 +104,14 @@ public partial class RegoloAIProvider
         {
             Ranking = rankings,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
+                Id = root.TryGetId(),
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = raw
+                Body = root.Clone()
             }
         };
     }

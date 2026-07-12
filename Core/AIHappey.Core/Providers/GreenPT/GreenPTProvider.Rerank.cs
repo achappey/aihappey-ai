@@ -77,12 +77,7 @@ public partial class GreenPTProvider
                         RelevanceScore = (float)r.GetProperty("relevance_score").GetDouble(),
                     })
                     .ToList()
-                : [];
-
-        var id = root.TryGetProperty("id", out var idEl)
-            && idEl.ValueKind == JsonValueKind.String
-                ? idEl.GetString()
-                : null;
+                : [];    
 
         var usage = root.TryGetProperty("usage", out var usageEl)
             && usageEl.ValueKind == JsonValueKind.Object
@@ -100,7 +95,7 @@ public partial class GreenPTProvider
             Response = new()
             {
                 Timestamp = now,
-                Id = id,
+                Id = root.TryGetId(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }

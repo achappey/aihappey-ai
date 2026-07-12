@@ -79,6 +79,8 @@ public partial class InfomaniakProvider
             Response = new()
             {
                 Timestamp = now,
+                Id = root.TryGetId(),
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }

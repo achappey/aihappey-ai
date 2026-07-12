@@ -76,6 +76,7 @@ public partial class OhMyGPTProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = ReadOhMyGptImageString(root, "model")?.ToModelId(GetIdentifier())
                     ?? request.Model.ToModelId(GetIdentifier())
             }

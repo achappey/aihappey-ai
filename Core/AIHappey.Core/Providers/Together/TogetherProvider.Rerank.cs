@@ -7,6 +7,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -73,11 +74,14 @@ public partial class TogetherProvider
         return new RerankingResponse
         {
             Ranking = results,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
+                Id = root.TryGetId(),
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = errText
+                Body = root.Clone()
             }
         };
 

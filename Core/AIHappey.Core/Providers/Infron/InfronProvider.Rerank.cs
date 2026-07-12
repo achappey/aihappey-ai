@@ -6,6 +6,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Infron;
 
@@ -97,9 +98,13 @@ public partial class InfronProvider
         {
             Ranking = ranked,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = ResolveInfronTimestamp(root, now),
+                Id = root.TryGetId(),
+                Headers = response.GetHeaders(),
                 ModelId = root.TryGetString("model")?.ToModelId(GetIdentifier())
                     ?? request.Model.ToModelId(GetIdentifier()),
                 Body = root

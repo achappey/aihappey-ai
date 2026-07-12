@@ -87,11 +87,6 @@ public partial class CohereProvider
             cost = searchUnits.Value * rerankModel.Pricing.Input;
         }
 
-        var responseId = root.TryGetProperty("id", out var idEl)
-            && idEl.ValueKind == JsonValueKind.String
-                ? idEl.GetString()
-                : null;
-
         return new RerankingResponse
         {
             Ranking = results,
@@ -107,7 +102,7 @@ public partial class CohereProvider
             Response = new()
             {
                 Timestamp = now,
-                Id = responseId,
+                Id = root.TryGetId(),
                 Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()

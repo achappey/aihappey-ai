@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OrqRouter;
@@ -70,7 +71,7 @@ public partial class OrqRouterProvider
             Response = new()
             {
                 Timestamp = now,
-                Id = ReadOrqRouterString(root, "id"),
+                Id = root.TryGetId(),
                 ModelId = ReadOrqRouterString(root, "model")?.ToModelId(GetIdentifier())
                     ?? request.Model.ToModelId(GetIdentifier()),
                 Body = root

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.BergetAI;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -105,16 +106,13 @@ public partial class BergetAIProvider
             ? modelEl.GetString() ?? request.Model
             : request.Model;
 
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = root.TryGetProperty("usage", out var usageEl) &&
-                          usageEl.ValueKind == JsonValueKind.Object
-          ? JsonSerializer.SerializeToElement(new
-          {
-              usage = usageEl.Clone()
-          }, JsonSerializerOptions.Web)
-          : JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web)
-        };
+        var providerMetadata = root.TryGetProperty("usage", out var usageEl) &&
+                          usageEl.ValueKind == JsonValueKind.Object ?
+                          GetIdentifier().CreatePrimitiveProviderMetadata(new
+                          {
+                              usage = usageEl.Clone()
+                          })
+                          : GetIdentifier().CreatePrimitiveProviderMetadata();
 
         return new RerankingResponse
         {
@@ -124,6 +122,7 @@ public partial class BergetAIProvider
             Response = new()
             {
                 Timestamp = now,
+                Id = root.TryGetId(),
                 ModelId = modelId.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }

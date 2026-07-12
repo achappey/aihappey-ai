@@ -56,11 +56,6 @@ public partial class SiliconFlowProvider
                     .ToList()
                 : [];
 
-        var id = root.TryGetProperty("id", out var idEl)
-            && idEl.ValueKind == JsonValueKind.String
-                ? idEl.GetString()
-                : null;
-
         var tokens = root.TryGetProperty("tokens", out var tokensEl)
             && tokensEl.ValueKind == JsonValueKind.Object
                 ? tokensEl.Clone()
@@ -77,7 +72,7 @@ public partial class SiliconFlowProvider
             Response = new()
             {
                 Timestamp = now,
-                Id = id,
+                Id = root.TryGetId(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }

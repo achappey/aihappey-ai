@@ -125,7 +125,7 @@ public partial class OpenRouterProvider
             {
                 Timestamp = now,
                 Headers = resp.GetHeaders(),
-                Id = ReadOpenRouterRerankString(root, "id"),
+                Id = root.TryGetId(),
                 ModelId = ReadOpenRouterRerankString(root, "model")?.ToModelId(GetIdentifier())
                     ?? request.Model.ToModelId(GetIdentifier()),
                 Body = root
