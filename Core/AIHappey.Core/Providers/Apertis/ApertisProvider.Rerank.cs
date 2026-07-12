@@ -18,7 +18,7 @@ public partial class ApertisProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<RerankingResponse> ApertisRerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+    public async Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

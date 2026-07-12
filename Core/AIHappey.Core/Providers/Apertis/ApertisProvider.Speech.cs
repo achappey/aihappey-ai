@@ -16,7 +16,7 @@ public partial class ApertisProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<SpeechResponse> ApertisSpeechRequest(
+    public async Task<SpeechResponse> SpeechRequest(
         SpeechRequest request,
         CancellationToken cancellationToken = default)
     {

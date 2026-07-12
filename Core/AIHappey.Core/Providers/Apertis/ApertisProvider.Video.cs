@@ -18,7 +18,7 @@ public partial class ApertisProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<VideoResponse> ApertisVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

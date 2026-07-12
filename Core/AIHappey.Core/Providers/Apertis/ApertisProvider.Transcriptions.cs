@@ -11,7 +11,7 @@ namespace AIHappey.Core.Providers.Apertis;
 
 public partial class ApertisProvider
 {
-    private async Task<TranscriptionResponse> ApertisTranscriptionRequest(
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {

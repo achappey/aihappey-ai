@@ -18,7 +18,7 @@ public partial class ApertisProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<ImageResponse> ApertisImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 

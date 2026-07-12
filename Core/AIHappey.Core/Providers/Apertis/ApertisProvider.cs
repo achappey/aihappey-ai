@@ -63,16 +63,6 @@ public partial class ApertisProvider : IModelProvider
     {
         throw new NotSupportedException();
     }
-
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => ApertisTranscriptionRequest(request, cancellationToken);
-
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
-        => ApertisSpeechRequest(request, cancellationToken);
-
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => ApertisRerankingRequest(request, cancellationToken);
-
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -92,12 +82,6 @@ public partial class ApertisProvider : IModelProvider
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => ApertisImageRequest(request, cancellationToken);
-
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => ApertisVideoRequest(request, cancellationToken);
 
     public async Task<MessagesResponse> MessagesAsync(
        MessagesRequest request,
