@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -34,15 +35,6 @@ public partial class SpeechactorsProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var normalizedModel = NormalizeSpeechactorsModel(request.Model);
-        var (vid, locale, style) = ParseSpeechactorsTtsModel(normalizedModel);
-
-        if (!string.IsNullOrWhiteSpace(request.Voice))
-            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
-
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            warnings.Add(new { type = "ignored", feature = "language", reason = "language/locale is derived from model id" });
-
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
@@ -50,6 +42,21 @@ public partial class SpeechactorsProvider
             warnings.Add(new { type = "ignored", feature = "speed", reason = "use providerOptions.speechactors.speakingRate instead" });
 
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var modelRef = ParseSpeechactorsTtsModel(request.Model);
+        var primitiveVid = request.Voice;
+        var primitiveLocale = request.Language;
+
+        var metadataVid = metadata.TryGetString("vid");
+        var metadataLocale = metadata.TryGetString("locale");
+
+        var resolvedVid = modelRef.Vid ?? primitiveVid ?? metadataVid;
+        var resolvedLocale = modelRef.Locale ?? primitiveLocale ?? metadataLocale;
+
+        if (string.IsNullOrWhiteSpace(resolvedVid))
+            throw new ArgumentException("Voice is required. Use model 'tts/{voiceId}', request.Voice, or providerOptions.speechactors.vid.", nameof(request));
+
+        if (string.IsNullOrWhiteSpace(resolvedLocale))
+            throw new ArgumentException("Locale is required. Use model 'tts/{voiceId}/{locale}', request.Language, or providerOptions.speechactors.locale.", nameof(request));
 
         int? speakingRate = null;
         if (TryGetIntPropertyIgnoreCase(metadata, "speakingRate", out var speakingRateCandidate))
@@ -68,16 +75,20 @@ public partial class SpeechactorsProvider
             else
                 warnings.Add(new { type = "ignored", feature = "pitch", reason = $"out of range [{MinPitch},{MaxPitch}]" });
         }
-
         var payload = new Dictionary<string, object?>
         {
-            ["locale"] = locale,
-            ["vid"] = vid,
             ["text"] = request.Text,
-            ["style"] = style,
             ["speakingRate"] = speakingRate,
+            ["vid"] = resolvedVid,
+            ["locale"] = resolvedLocale,
             ["pitch"] = pitch
         };
+
+        string? style = metadata.TryGetString("style");
+        if (!string.IsNullOrEmpty(style))
+        {
+            payload["style"] = style;
+        }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/generate")
         {
@@ -98,19 +109,6 @@ public partial class SpeechactorsProvider
         var mimeType = ResolveSpeechactorsMimeType(response.Content.Headers.ContentType?.MediaType);
         var format = ResolveSpeechactorsFormat(mimeType);
 
-        var providerMeta = new
-        {
-            endpoint = "v1/generate",
-            locale,
-            vid,
-            style,
-            speakingRate,
-            pitch,
-            status = (int)response.StatusCode,
-            contentType = response.Content.Headers.ContentType?.MediaType,
-            bytes = bytes.Length
-        };
-
         return new SpeechResponse
         {
             Audio = new SpeechAudioResponse
@@ -120,56 +118,43 @@ public partial class SpeechactorsProvider
                 Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Request = new()
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta, JsonSerializerOptions.Web)
+                Body = payload
             },
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = JsonSerializer.SerializeToElement(providerMeta, JsonSerializerOptions.Web)
+                Headers = response.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
-
-    private static string NormalizeSpeechactorsModel(string model)
+    
+    private static SpeechactorsTtsModelRef ParseSpeechactorsTtsModel(string model)
     {
         if (string.IsNullOrWhiteSpace(model))
             throw new ArgumentException("Model is required.", nameof(model));
 
-        var trimmed = model.Trim();
-        var prefix = "speechactors/";
-        return trimmed.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-            ? trimmed.SplitModelId().Model
-            : trimmed;
+        var parts = model.Split('/', StringSplitOptions.TrimEntries);
+
+        if (parts.Any(string.IsNullOrWhiteSpace))
+            throw new ArgumentException("Speechactors TTS model must not contain empty path segments.", nameof(model));
+
+        if (!string.Equals(parts[0], "tts", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Speechactors TTS model must be 'tts', 'tts/{voiceId}', or 'tts/{voiceId}/{locale}'.", nameof(model));
+
+        if (parts.Length > 3)
+            throw new ArgumentException("Speechactors TTS model must be 'tts', 'tts/{voiceId}', or 'tts/{voiceId}/{locale}'.", nameof(model));
+
+        return new SpeechactorsTtsModelRef(
+            Vid: parts.Length >= 2 ? parts[1] : null,
+            Locale: parts.Length >= 3 ? parts[2] : null
+        );
     }
 
-    private static (string Vid, string Locale, string? Style) ParseSpeechactorsTtsModel(string model)
-    {
-        if (!model.StartsWith(SpeechactorsTtsModelPrefix, StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException($"{nameof(Speechactors)} speech model '{model}' is not supported. Expected '{SpeechactorsTtsModelPrefix}[vid]/[locale]' with optional '/style/[style]'.");
-
-        var tail = model[SpeechactorsTtsModelPrefix.Length..].Trim();
-        var parts = tail.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (parts.Length < 2)
-            throw new ArgumentException("Model must include both voice id and locale after 'tts/'.", nameof(model));
-
-        var vid = parts[0];
-        var locale = parts[1];
-        string? style = null;
-
-        if (parts.Length == 4 && string.Equals(parts[2], "style", StringComparison.OrdinalIgnoreCase))
-            style = parts[3];
-        else if (parts.Length != 2)
-            throw new ArgumentException("Model must match 'tts/{vid}/{locale}' or 'tts/{vid}/{locale}/style/{style}'.", nameof(model));
-
-        if (string.IsNullOrWhiteSpace(vid) || string.IsNullOrWhiteSpace(locale))
-            throw new ArgumentException("Model must include non-empty voice id and locale.", nameof(model));
-
-        return (vid.Trim(), locale.Trim(), string.IsNullOrWhiteSpace(style) ? null : style.Trim());
-    }
+    private sealed record SpeechactorsTtsModelRef(string? Vid, string? Locale);
 
     private static bool TryGetIntPropertyIgnoreCase(JsonElement metadata, string propertyName, out int value)
     {
@@ -198,9 +183,6 @@ public partial class SpeechactorsProvider
 
     private static string ResolveSpeechactorsMimeType(string? contentType)
     {
-        if (!string.IsNullOrWhiteSpace(contentType))
-            return contentType;
-
         return "audio/mpeg";
     }
 

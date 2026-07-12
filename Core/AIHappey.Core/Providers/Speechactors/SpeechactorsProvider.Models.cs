@@ -19,7 +19,13 @@ public partial class SpeechactorsProvider
         var voices = await GetVoicesAsync(cancellationToken);
         var languages = await GetLanguagesAsync(cancellationToken);
 
-        return [.. BuildDynamicVoiceModels(voices, languages)
+        return [new Model() {
+            Id = "tts".ToModelId(GetIdentifier()),
+            Name = "tts",
+            OwnedBy = "Speechactors",
+            Description = "Speechactors TTS"
+        },
+            .. BuildDynamicVoiceModels(voices, languages)
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())];
     }
@@ -118,18 +124,9 @@ public partial class SpeechactorsProvider
             var languageDisplay = ResolveLanguageDisplay(locale, voice, languages);
             var displayName = string.IsNullOrWhiteSpace(voice.Name) ? voice.Vid : voice.Name.Trim();
             var genderDisplay = string.IsNullOrWhiteSpace(voice.Gender) ? "Unknown" : voice.Gender.Trim();
-            var styles = ParseStyles(voice.Style);
 
-            if (styles.Count == 0)
-            {
-                yield return BuildVoiceModel(voice, locale, languageDisplay, displayName, genderDisplay, style: null);
-                continue;
-            }
-
-            foreach (var style in styles)
-            {
-                yield return BuildVoiceModel(voice, locale, languageDisplay, displayName, genderDisplay, style);
-            }
+            yield return BuildVoiceModel(voice, locale, languageDisplay, displayName, genderDisplay);
+            continue;
         }
     }
 
@@ -138,31 +135,22 @@ public partial class SpeechactorsProvider
         string locale,
         string languageDisplay,
         string displayName,
-        string genderDisplay,
-        string? style)
+        string genderDisplay)
     {
         var normalizedBaseId = $"{SpeechactorsTtsModelPrefix}{voice.Vid}/{locale}";
-        var normalizedId = string.IsNullOrWhiteSpace(style)
-            ? normalizedBaseId
-            : $"{normalizedBaseId}/style/{style.Trim()}";
-
-        var hasStyle = !string.IsNullOrWhiteSpace(style);
-        var styleSuffix = hasStyle ? $", style: {style!.Trim()}" : string.Empty;
 
         return new Model
         {
-            Id = normalizedId.ToModelId(GetIdentifier()),
+            Id = normalizedBaseId.ToModelId(GetIdentifier()),
             OwnedBy = nameof(Speechactors),
             Type = "speech",
-            Name = $"{displayName} ({genderDisplay}, {languageDisplay}{styleSuffix})",
-            Description = hasStyle
-                ? $"{nameof(Speechactors)} TTS voice '{displayName}' (vid={voice.Vid}, locale={locale}) with style='{style!.Trim()}'."
-                : $"{nameof(Speechactors)} TTS voice '{displayName}' (vid={voice.Vid}, locale={locale}) with no style parameter required.",
-            Tags = BuildVoiceTags(voice, locale, style)
+            Name = $"{displayName}, {genderDisplay}, {languageDisplay}",
+            Description = $"{nameof(Speechactors)} TTS.",
+            Tags = BuildVoiceTags(voice, locale)
         };
     }
 
-    private static IEnumerable<string> BuildVoiceTags(SpeechactorsVoice voice, string locale, string? style)
+    private static IEnumerable<string> BuildVoiceTags(SpeechactorsVoice voice, string locale)
     {
         var tags = new List<string>
         {
