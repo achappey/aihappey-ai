@@ -2,11 +2,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -121,39 +119,6 @@ public partial class SarvamProvider
 
         var parsed = JsonSerializer.Deserialize<SarvamTranslateResponse>(body, JsonSerializerOptions.Web);
         return parsed?.TranslatedText ?? string.Empty;
-    }
-
-    internal async Task<CreateMessageResult> TranslateSamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var modelId = chatRequest.GetModel();
-        ArgumentNullException.ThrowIfNull(modelId);
-
-        var texts = chatRequest.Messages
-            .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(m => m.Content.OfType<TextContentBlock>())
-            .Select(b => b.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
-
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translated = new List<string>(texts.Count);
-
-        foreach (var text in texts)
-            translated.Add(await TranslateAsync(text, modelId, cancellationToken));
-
-        return new CreateMessageResult
-        {
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            Model = modelId,
-            StopReason = "stop",
-            Content = [.. translated.Select(a => a.ToTextContentBlock())]
-        };
     }
 
     internal async Task<ResponseResult> TranslateResponsesAsync(

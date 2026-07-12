@@ -6,6 +6,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -19,19 +20,7 @@ public partial class SarvamProvider
 
         ArgumentNullException.ThrowIfNull(request);
 
-        // Model: strip provider prefix if present.
         var model = request.Model;
-        if (!string.IsNullOrWhiteSpace(model) && model.Contains('/'))
-        {
-            var split = model.SplitModelId();
-            model = string.Equals(split.Provider, GetIdentifier(), StringComparison.OrdinalIgnoreCase)
-                ? split.Model
-                : request.Model;
-        }
-
-        if (string.IsNullOrWhiteSpace(model))
-            model = "saarika:v2.5";
-
         var now = DateTime.UtcNow;
 
         var metadata = request.GetProviderMetadata<SarvamTranscriptionProviderMetadata>(GetIdentifier());
@@ -91,13 +80,19 @@ public partial class SarvamProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Sarvam STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertSarvamTranscriptionResponse(json, metadata?.Model ?? model, now);
+        return ConvertSarvamTranscriptionResponse(json,
+            request.Model.ToModelId(GetIdentifier()),
+            GetIdentifier(),
+            now,
+            resp.GetHeaders());
     }
 
     private static TranscriptionResponse ConvertSarvamTranscriptionResponse(
         string json,
         string model,
-        DateTime timestamp)
+        string providerId,
+        DateTime timestamp,
+        IDictionary<string, string>? headers = null)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -143,9 +138,11 @@ public partial class SarvamProvider
             Text = transcript,
             Language = language,
             Segments = segments,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = timestamp,
+                Headers = headers,
                 ModelId = model,
                 Body = json
             }

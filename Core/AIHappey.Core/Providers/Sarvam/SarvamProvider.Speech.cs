@@ -135,6 +135,7 @@ public partial class SarvamProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = parsed
             }
