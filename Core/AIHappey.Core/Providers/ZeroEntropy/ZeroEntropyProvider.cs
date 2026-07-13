@@ -1,0 +1,107 @@
+using AIHappey.Core.AI;
+using ModelContextProtocol.Protocol;
+using System.Net.Http.Headers;
+using AIHappey.ChatCompletions.Models;
+using AIHappey.Common.Model;
+using AIHappey.Messages.Mapping;
+using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Responses.Mapping;
+using AIHappey.Core.Contracts;
+using AIHappey.Messages;
+using AIHappey.Unified.Models;
+using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
+
+namespace AIHappey.Core.Providers.ZeroEntropy;
+
+public partial class ZeroEntropyProvider : IModelProvider
+{
+    private readonly IApiKeyResolver _keyResolver;
+    private readonly HttpClient _client;
+
+    public ZeroEntropyProvider(IApiKeyResolver keyResolver,
+        IHttpClientFactory httpClientFactory)
+    {
+        _keyResolver = keyResolver;
+        _client = httpClientFactory.CreateClient();
+        _client.BaseAddress = new Uri("https://api.zeroentropy.dev/");
+    }
+
+    private void ApplyAuthHeader()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException($"No {nameof(ZeroEntropy)} API key.");
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+
+    public string GetIdentifier() => nameof(ZeroEntropy).ToLowerInvariant();
+
+    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+
+
+    public Task<Responses.ResponseResult> ResponsesAsync(
+        Responses.ResponseRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        Responses.ResponseRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+        => throw new NotSupportedException();
+
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+
+}

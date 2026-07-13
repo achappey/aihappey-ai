@@ -564,7 +564,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tierup"] = "X-TierUp-Key",
             ["evidencemd"] = "X-EvidenceMD-Key",
             ["agen"] = "X-Agen-Key",
-            ["chatqt"] = "X-ChatQT-Key"
+            ["chatqt"] = "X-ChatQT-Key",
+            ["zeroentropy"] = "X-ZeroEntropy-Key"
 
         };
 

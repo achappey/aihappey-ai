@@ -1,0 +1,26 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "zeroentropy/zerank-2",
+      "object": "model",
+      "owned_by": "ZeroEntropy",
+      "name": "zerank-2",
+      "type": "reranking"
+    },
+    {
+      "id": "zeroentropy/zerank-1",
+      "object": "model",
+      "owned_by": "ZeroEntropy",
+      "name": "zerank-1",
+      "type": "reranking"
+    },
+    {
+      "id": "zeroentropy/zerank-1-small",
+      "object": "model",
+      "owned_by": "ZeroEntropy",
+      "name": "zerank-1-small",
+      "type": "reranking"
+    }
+  ]
+}

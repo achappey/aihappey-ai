@@ -563,6 +563,7 @@ public class AIServiceConfig
     public ProviderConfig? EvidenceMD { get; set; }
     public ProviderConfig? Agen { get; set; }
     public ProviderConfig? ChatQT { get; set; }
+    public ProviderConfig? ZeroEntropy { get; set; }
 
 
 }
