@@ -565,7 +565,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["evidencemd"] = "X-EvidenceMD-Key",
             ["agen"] = "X-Agen-Key",
             ["chatqt"] = "X-ChatQT-Key",
-            ["zeroentropy"] = "X-ZeroEntropy-Key"
+            ["zeroentropy"] = "X-ZeroEntropy-Key",
+            ["beastlabai"] = "X-BeastLabAI-Key"
 
         };
 

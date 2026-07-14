@@ -563,6 +563,7 @@ using AIHappey.Core.Providers.EvidenceMD;
 using AIHappey.Core.Providers.Agen;
 using AIHappey.Core.Providers.ChatQT;
 using AIHappey.Core.Providers.ZeroEntropy;
+using AIHappey.Core.Providers.BeastLabAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1152,6 +1153,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AgenProvider>();
         services.AddSingleton<IModelProvider, ChatQTProvider>();
         services.AddSingleton<IModelProvider, ZeroEntropyProvider>();
+        services.AddSingleton<IModelProvider, BeastLabAIProvider>();
 
 
     }
