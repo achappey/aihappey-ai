@@ -57,16 +57,6 @@ public partial class NeosantaraProvider
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? "";
 
-                    if (el.TryGetProperty("capabilities", out var capsEl) &&
-                        capsEl.ValueKind == JsonValueKind.Array)
-                    {
-                        model.Tags = [.. capsEl
-                    .EnumerateArray()
-                    .Where(x => x.ValueKind == JsonValueKind.String)
-                    .Select(x => x.GetString()!)
-                    .Where(x => !string.IsNullOrWhiteSpace(x))];
-                    }
-
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }

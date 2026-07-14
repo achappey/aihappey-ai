@@ -72,38 +72,6 @@ public partial class NEARAIProvider
                 }
             }
 
-            List<string> tags = [];
-
-            // ---- modalities → tags ----
-            if (el.TryGetProperty("architecture", out var archEl) &&
-                archEl.ValueKind == JsonValueKind.Object)
-            {
-                if (archEl.TryGetProperty("inputModalities", out var inMods) &&
-                    inMods.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var mod in inMods.EnumerateArray())
-                    {
-                        var v = mod.GetString();
-                        if (!string.IsNullOrWhiteSpace(v))
-                            tags.Add($"input:{v}");
-                    }
-                }
-
-                if (archEl.TryGetProperty("outputModalities", out var outMods) &&
-                    outMods.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var mod in outMods.EnumerateArray())
-                    {
-                        var v = mod.GetString();
-                        if (!string.IsNullOrWhiteSpace(v))
-                            tags.Add($"output:{v}");
-                    }
-                }
-            }
-
-            if (tags.Count > 0)
-                model.Tags = tags;
-
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);
         }

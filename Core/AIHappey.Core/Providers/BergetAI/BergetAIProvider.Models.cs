@@ -57,24 +57,6 @@ public partial class BergetAIProvider
                     .ToUnixTimeSeconds();
             }
 
-            if (el.TryGetProperty("capabilities", out var capsEl) &&
-                capsEl.ValueKind == JsonValueKind.Object)
-            {
-                var tags = new List<string>();
-
-                foreach (var prop in capsEl.EnumerateObject())
-                {
-                    if (prop.Value.ValueKind == JsonValueKind.True)
-                    {
-                        tags.Add(prop.Name);
-                    }
-                }
-
-                if (tags.Count > 0)
-                    model.Tags = [.. tags];
-            }
-
-
             if (el.TryGetProperty("pricing", out var pricingEl) &&
         pricingEl.ValueKind == JsonValueKind.Object)
             {
