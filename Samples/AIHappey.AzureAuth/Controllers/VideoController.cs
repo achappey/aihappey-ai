@@ -7,7 +7,7 @@ using AIHappey.Core.Contracts;
 namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
-[Route("v1/videos")]
+[Route("api/videos")]
 public class VideoController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]

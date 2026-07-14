@@ -24,7 +24,7 @@ Access 160k+ models and provider-native capabilities from your favorite client.
 | AI SDK Speech | `POST /api/speech` |
 | Transcriptions | `POST /v1/audio/transcriptions` |
 | Realtime tokens | `POST /v1/realtime/client_secrets` |
-| Video | `POST /v1/videos` |
+| Video | `POST /api/videos` |
 | MCP server discovery | `GET /v0.1/servers` |
 
 ## Request model
@@ -323,12 +323,12 @@ curl "$BASE_URL/v1/realtime/client_secrets" \
   }'
 ```
 
-### POST /v1/videos
+### POST /api/videos
 
 Generate videos.
 
 ```bash
-curl "$BASE_URL/v1/videos" \
+curl "$BASE_URL/api/videos" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
