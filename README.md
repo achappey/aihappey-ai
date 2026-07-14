@@ -22,7 +22,8 @@ Access 160k+ models and provider-native capabilities from your favorite client.
 | Images | `POST /v1/images/generations` |
 | OpenAI Speech | `POST /v1/audio/speech` |
 | AI SDK Speech | `POST /api/speech` |
-| Transcriptions | `POST /v1/audio/transcriptions` |
+| OpenAI Transcriptions | `POST /v1/audio/transcriptions` |
+| AI SDK Transcriptions | `POST /api/transcriptions` |
 | Realtime tokens | `POST /v1/realtime/client_secrets` |
 | Video | `POST /api/videos` |
 | MCP server discovery | `GET /v0.1/servers` |
@@ -288,12 +289,12 @@ curl "$BASE_URL/api/speech" \
 jq -r '.audio.base64' speech.json | base64 --decode > speech.mp3
 ```
 
-### POST /v1/audio/transcriptions
+### POST /api/transcriptions
 
 Transcribe audio.
 
 ```bash
-curl "$BASE_URL/v1/audio/transcriptions" \
+curl "$BASE_URL/api/transcriptions" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{
