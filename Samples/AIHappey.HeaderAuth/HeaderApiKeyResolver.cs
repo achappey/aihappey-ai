@@ -106,7 +106,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["bytez"] = "X-Bytez-Key",
             ["sunoapi"] = "X-SunoAPI-Key",
             ["horayai"] = "X-HorayAI-Key",
-            ["horayai"] = "X-Synexa-Key",
+            ["synexa"] = "X-Synexa-Key",
             ["recraft"] = "X-Recraft-Key",
             ["atlascloud"] = "X-AtlasCloud-Key",
             ["bineric"] = "X-Bineric-Key",
@@ -566,7 +566,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agen"] = "X-Agen-Key",
             ["chatqt"] = "X-ChatQT-Key",
             ["zeroentropy"] = "X-ZeroEntropy-Key",
-            ["beastlabai"] = "X-BeastLabAI-Key"
+            ["beastlabai"] = "X-BeastLabAI-Key",
+            ["lelapaai"] = "X-LelapaAI-Key"
 
         };
 

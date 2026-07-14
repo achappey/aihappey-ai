@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "lelapaai/vulavula",
+      "object": "model",
+      "owned_by": "LelapaAI",
+      "name": "Vulavula Speech To Text",
+      "type": "transcription"
+    },
+    {
+      "id": "lelapaai/vulavula",
+      "object": "model",
+      "owned_by": "LelapaAI",
+      "name": "Vulavula Translate",
+      "type": "language"
+    }
+  ]
+}

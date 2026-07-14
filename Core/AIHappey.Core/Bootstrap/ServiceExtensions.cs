@@ -564,6 +564,7 @@ using AIHappey.Core.Providers.Agen;
 using AIHappey.Core.Providers.ChatQT;
 using AIHappey.Core.Providers.ZeroEntropy;
 using AIHappey.Core.Providers.BeastLabAI;
+using AIHappey.Core.Providers.LelapaAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1154,6 +1155,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ChatQTProvider>();
         services.AddSingleton<IModelProvider, ZeroEntropyProvider>();
         services.AddSingleton<IModelProvider, BeastLabAIProvider>();
+        services.AddSingleton<IModelProvider, LelapaAIProvider>();
 
 
     }
