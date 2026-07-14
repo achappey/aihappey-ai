@@ -45,16 +45,25 @@ public partial class BeastLabAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return EnrichChatCompletionWithBeastLabAICost(response);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        decimal? latestStreamCost = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                         options,
+                         cancellationToken: cancellationToken))
+        {
+            yield return EnrichChatCompletionUpdateWithBeastLabAIStreamCost(update, ref latestStreamCost);
+        }
     }
 
     public string GetIdentifier() => nameof(BeastLabAI).ToLowerInvariant();
@@ -129,8 +138,11 @@ public partial class BeastLabAIProvider : IModelProvider
         }
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return EnrichUnifiedResponseWithBeastLabAICost(response);
+    }
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
