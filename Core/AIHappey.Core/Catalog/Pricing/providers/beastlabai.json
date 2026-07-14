@@ -1,0 +1,23 @@
+{
+  "beastlabai/beast-nano": {
+    "pricing": {
+      "input": "0.000008",
+      "input_cache_read": "0.0000008",
+      "output": "0.00001"
+    }
+  },
+  "beastlabai/beast-mini": {
+    "pricing": {
+      "input": "0.000012",
+      "input_cache_read": "0.0000012",
+      "output": "0.000015"
+    }
+  },
+  "beastlabai/beast-max": {
+    "pricing": {
+      "input": "0.00007",
+      "input_cache_read": "0.000007",
+      "output": "0.00009"
+    }
+  }
+}
