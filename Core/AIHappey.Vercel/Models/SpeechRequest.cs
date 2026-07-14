@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace AIHappey.Vercel.Models;
 
 /// <summary>
-/// Vercel Model Gateway v3 compatible request DTO for <c>POST /v1/audio/speech</c>.
+/// Vercel Model Gateway v3 compatible request DTO for <c>POST /api/speech</c>.
 /// <para>
 /// This JSON shape is a public, contract-locked surface. Do not rename properties, change casing,
 /// alter types, or restructure this DTO.

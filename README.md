@@ -20,7 +20,8 @@ Access 160k+ models and provider-native capabilities from your favorite client.
 | Skills | `GET /v1/skills` |
 | Rerank | `POST /api/rerank` |
 | Images | `POST /v1/images/generations` |
-| Speech | `POST /v1/audio/speech` |
+| OpenAI Speech | `POST /v1/audio/speech` |
+| AI SDK Speech | `POST /api/speech` |
 | Transcriptions | `POST /v1/audio/transcriptions` |
 | Realtime tokens | `POST /v1/realtime/client_secrets` |
 | Video | `POST /v1/videos` |
@@ -259,6 +260,22 @@ Generate speech.
 
 ```bash
 curl "$BASE_URL/v1/audio/speech" \
+  -H "Content-Type: application/json" \
+  -H "X-OpenAI-Key: $API_KEY" \
+  -d '{
+    "model": "openai/tts-1",
+    "voice": "alloy",
+    "response_format": "mp3",
+    "input": "AIHappey makes it easy to route across providers."
+  }' > speech.mp3
+```
+
+### POST /api/speech
+
+Generate speech.
+
+```bash
+curl "$BASE_URL/api/speech" \
   -H "Content-Type: application/json" \
   -H "X-OpenAI-Key: $API_KEY" \
   -d '{

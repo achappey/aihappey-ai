@@ -6,7 +6,7 @@ using AIHappey.Core.Contracts;
 namespace AIHappey.HeaderAuth.Controllers;
 
 [ApiController]
-[Route("v1/audio/speech")]
+[Route("api/speech")]
 public class SpeechController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]
