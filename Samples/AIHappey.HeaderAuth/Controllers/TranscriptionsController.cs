@@ -6,7 +6,7 @@ using AIHappey.Core.Contracts;
 namespace AIHappey.HeaderAuth.Controllers;
 
 [ApiController]
-[Route("v1/audio/transcriptions")]
+[Route("api/transcriptions")]
 public class TranscriptionsController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]
@@ -30,4 +30,3 @@ public class TranscriptionsController(IAIModelProviderResolver resolver) : Contr
         }
     }
 }
-
