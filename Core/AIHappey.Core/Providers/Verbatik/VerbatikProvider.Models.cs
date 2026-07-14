@@ -59,7 +59,7 @@ public partial class VerbatikProvider
         };
 
         if (!string.IsNullOrWhiteSpace(voice.LanguageCode))
-            tags.Add($"{voice.LanguageCode.Trim()}");
+            tags.Add($"{voice.LanguageCode.Trim().NormalizeLanguageCode()}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
             tags.Add($"{voice.Gender.Trim()}");

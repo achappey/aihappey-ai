@@ -158,7 +158,7 @@ public partial class LOVOProvider
         var tags = new List<string>() { "voice" };
 
         if (!string.IsNullOrWhiteSpace(speaker.Locale))
-            tags.Add($"{speaker.Locale}");
+            tags.Add($"{speaker.Locale.NormalizeLanguageCode()}");
 
         if (!string.IsNullOrWhiteSpace(speaker.Gender))
             tags.Add($"{speaker.Gender}");

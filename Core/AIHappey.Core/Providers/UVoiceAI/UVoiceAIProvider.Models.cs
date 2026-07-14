@@ -155,7 +155,7 @@ public partial class UVoiceAIProvider
         };
 
         if (!string.IsNullOrWhiteSpace(voice.LanguageCode))
-            tags.Add($"{voice.LanguageCode.Trim().ToLowerInvariant()}");
+            tags.Add($"{voice.LanguageCode.Trim().NormalizeLanguageCode()}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
             tags.Add($"{voice.Gender.Trim().ToLowerInvariant()}");

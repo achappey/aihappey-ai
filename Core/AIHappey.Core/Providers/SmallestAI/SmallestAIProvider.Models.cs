@@ -148,7 +148,7 @@ public partial class SmallestAIProvider
             tags.Add($"{voice.Gender}");
 
         foreach (var language in voice.Languages)
-            tags.Add($"{language}");
+            tags.Add($"{language.NormalizeLanguageCode()}");
 
         return tags;
     }

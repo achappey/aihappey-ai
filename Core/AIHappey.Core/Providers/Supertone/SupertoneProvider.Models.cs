@@ -170,7 +170,7 @@ public partial class SupertoneProvider
             tags.Add($"{voice.Gender.Trim()}");
 
         foreach (var lang in voice.Languages.Where(l => !string.IsNullOrWhiteSpace(l)))
-            tags.Add($"{lang.Trim()}");
+            tags.Add($"{lang.Trim().NormalizeLanguageCode()}");
 
         return tags;
     }

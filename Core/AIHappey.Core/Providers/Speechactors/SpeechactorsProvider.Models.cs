@@ -155,7 +155,7 @@ public partial class SpeechactorsProvider
         var tags = new List<string>
         {
             $"voice",
-            $"{locale}"
+            $"{locale.NormalizeLanguageCode()}"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))

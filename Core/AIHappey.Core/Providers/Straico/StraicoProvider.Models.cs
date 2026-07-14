@@ -191,15 +191,6 @@ public partial class StraicoProvider
             foreach (var baseModel in bases)
             {
                 var baseModelId = baseModel.Name;
-                var tags = new List<string>
-                {
-                    "rag",
-                    "shortcut",
-                    $"rag:{ragId}",
-                    $"model:{baseModelId}"
-                };
-                if (!string.IsNullOrWhiteSpace(chunkingMethod))
-                    tags.Add($"chunking:{chunkingMethod}");
 
                 models.Add(new Model
                 {
@@ -213,8 +204,7 @@ public partial class StraicoProvider
                     Created = created,
                     ContextWindow = baseModel.ContextWindow,
                     MaxTokens = baseModel.MaxTokens,
-                    Pricing = baseModel.Pricing,
-                    Tags = [.. tags.Distinct(StringComparer.OrdinalIgnoreCase)]
+                    Pricing = baseModel.Pricing
                 });
             }
         }

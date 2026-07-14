@@ -184,7 +184,7 @@ public partial class GradiumProvider
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Language))
-            tags.Add($"{voice.Language.Trim()}");
+            tags.Add($"{voice.Language.Trim().NormalizeLanguageCode()}");
 
         return tags;
     }

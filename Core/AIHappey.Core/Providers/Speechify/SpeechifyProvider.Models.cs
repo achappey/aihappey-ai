@@ -265,8 +265,8 @@ public partial class SpeechifyProvider
     {
         var tags = new List<string> { };
 
-        foreach (var language in model.Languages.Take(100))
-            tags.Add($"{language}");
+        foreach (var language in model.Languages)
+            tags.Add($"{language.NormalizeLanguageCode()}");
 
         return tags;
     }
@@ -313,7 +313,7 @@ public partial class SpeechifyProvider
 
 
         foreach (var language in voiceModel.Languages.Take(100))
-            tags.Add($"{language}");
+            tags.Add($"{language.NormalizeLanguageCode()}");
 
         return tags.Distinct(StringComparer.OrdinalIgnoreCase);
     }

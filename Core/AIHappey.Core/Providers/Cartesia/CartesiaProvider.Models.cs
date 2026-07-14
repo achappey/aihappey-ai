@@ -159,7 +159,7 @@ public partial class CartesiaProvider
         var tags = new List<string> { $"voice" };
 
         if (!string.IsNullOrWhiteSpace(voice.Language))
-            tags.Add($"{voice.Language}");
+            tags.Add($"{voice.Language.NormalizeLanguageCode()}");
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))
             tags.Add($"{voice.Gender}");
