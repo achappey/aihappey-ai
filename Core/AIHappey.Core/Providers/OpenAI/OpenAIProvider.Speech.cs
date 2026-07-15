@@ -1,4 +1,3 @@
-using OpenAI.Audio;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -6,41 +5,71 @@ using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using System.Net.Mime;
+using System.Text;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
+    private static readonly JsonSerializerOptions OpenAiSpeechJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
-        var audioClient = new AudioClient(
-               request.Model,
-               GetKey()
-           );
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+
+        if (string.IsNullOrWhiteSpace(request.Text))
+            throw new ArgumentException("Text is required.", nameof(request));
+
+        ApplyAuthHeader();
 
         var metadata = request.GetProviderMetadata<OpenAiSpeechProviderMetadata>(GetIdentifier());
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
-        var voice = !string.IsNullOrEmpty(request.Voice) ? new GeneratedSpeechVoice(request.Voice)
+        var voice = !string.IsNullOrEmpty(request.Voice) ? request.Voice
             : !string.IsNullOrEmpty(metadata?.Voice)
-            ? new GeneratedSpeechVoice(metadata?.Voice) : GeneratedSpeechVoice.Alloy;
+            ? metadata.Voice : "alloy";
 
         var formatString = request.OutputFormat ?? metadata?.ResponseFormat ?? "mp3";
-        var format = new GeneratedSpeechFormat(formatString);
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = request.Model,
+            ["input"] = request.Text,
+            ["voice"] = voice,
+            ["response_format"] = formatString,
+            ["speed"] = request.Speed ?? metadata?.Speed,
+            ["instructions"] = request.Instructions ?? metadata?.Instructions
+        };
 
-        var result = await audioClient.GenerateSpeechAsync(request.Text,
-            voice,
-            new SpeechGenerationOptions()
-            {
-                SpeedRatio = request.Speed ?? metadata?.Speed,
-                Instructions = request.Instructions ?? metadata?.Instructions,
-                ResponseFormat = format
-            },
-            cancellationToken);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
+        {
+            Content = new StringContent(
+                JsonSerializer.Serialize(payload, OpenAiSpeechJsonOptions),
+                Encoding.UTF8,
+                MediaTypeNames.Application.Json)
+        };
 
-        var base64 = Convert.ToBase64String(result.Value.ToArray());
-        var modelItem = await this.GetModel(request.Model, cancellationToken);
+        using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var audioBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var raw = Encoding.UTF8.GetString(audioBytes);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(raw)
+                ? $"OpenAI speech request failed ({(int)response.StatusCode})."
+                : $"OpenAI speech request failed ({(int)response.StatusCode}): {raw}");
+        }
+
+        var base64 = Convert.ToBase64String(audioBytes);
+        var modelItem = GetOpenAiSpeechCatalogModel(request.Model);
         var providerMetadata = BuildProviderMetadata(request.Text, modelItem);
 
         return new SpeechResponse()
@@ -49,10 +78,14 @@ public partial class OpenAIProvider
             Audio = new SpeechAudioResponse()
             {
                 Base64 = base64,
-                MimeType = MapToAudioMimeType(formatString),
+                MimeType = response.Content.Headers.ContentType?.MediaType ?? MapToAudioMimeType(formatString),
                 Format = formatString
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload
+            },
             Response = new()
             {
                 Timestamp = now,
@@ -76,13 +109,12 @@ public partial class OpenAIProvider
             8,
             MidpointRounding.AwayFromZero);
 
-        providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-        {
-            cost = inputCost
-        }, JsonSerializerOptions.Web);
-
-        return providerMetadata;
+        return Constants.OpenAI.CreatePrimitiveProviderMetadata(costs: inputCost);
     }
+
+    private static Model? GetOpenAiSpeechCatalogModel(string model)
+        => Constants.OpenAI.GetModels()
+            .FirstOrDefault(item => item.Id.EndsWith(model, StringComparison.OrdinalIgnoreCase));
 
     public static string MapToAudioMimeType(string? value)
     {
@@ -96,6 +128,7 @@ public partial class OpenAIProvider
             "aac" => "audio/aac",
             "flac" => "audio/flac",
             "wav" => "audio/wav",
+            "pcm" => "audio/pcm",
             _ => "application/octet-stream"
         };
     }
