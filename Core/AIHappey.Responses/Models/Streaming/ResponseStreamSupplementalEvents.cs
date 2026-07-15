@@ -147,6 +147,11 @@ public sealed class ResponseImageGenerationCallPartialImage : ResponseStreamText
     public string OutputFormat { get; init; } = default!;
 }
 
+public sealed class ResponseImageGenerationCallCompleted : ResponseStreamTextEvent
+{
+    [JsonPropertyName("type")]
+    public override string Type { get; init; } = "response.image_generation_call.completed";
+}
 
 public sealed class ResponseImageGenerationCallGenerating : ResponseStreamTextEvent
 {
