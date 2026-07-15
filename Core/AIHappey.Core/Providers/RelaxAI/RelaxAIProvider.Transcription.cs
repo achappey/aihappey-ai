@@ -7,6 +7,7 @@ using AIHappey.Common.Model.Providers.RelaxAI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.RelaxAI;
 
@@ -103,10 +104,12 @@ public partial class RelaxAIProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"RelaxAI STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertTranscriptionResponse(json, request.Model, now);
+        return ConvertTranscriptionResponse(json, request.Model, now, resp.GetHeaders());
     }
 
-    private static TranscriptionResponse ConvertTranscriptionResponse(string json, string model, DateTime timestamp)
+    private static TranscriptionResponse ConvertTranscriptionResponse(
+            string json, string model, DateTime timestamp,
+            Dictionary<string, string> headers)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -164,6 +167,7 @@ public partial class RelaxAIProvider
             Response = new()
             {
                 Timestamp = timestamp,
+                Headers = headers,
                 ModelId = root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String
                     ? modelEl.GetString() ?? model
                     : model,
