@@ -90,12 +90,26 @@ public static class ModelCostMetadataEnricher
             && !TryGetUsageInt(usage, "cachedInputTokens", out cachedInputReadTokens))
         {
             TryGetNestedUsageInt(usage, "input_tokens_details", "cached_tokens", out cachedInputReadTokens);
+
+            if (cachedInputReadTokens == 0)
+                TryGetNestedUsageInt(usage, "prompt_tokens_details", "cached_tokens", out cachedInputReadTokens);
+        }
+
+        if (!TryGetUsageInt(usage, "cache_write_input_tokens", out int cachedInputWriteTokens)
+            && !TryGetUsageInt(usage, "cached_input_write_tokens", out cachedInputWriteTokens)
+            && !TryGetUsageInt(usage, "cacheWriteInputTokens", out cachedInputWriteTokens)
+            && !TryGetUsageInt(usage, "cachedInputWriteTokens", out cachedInputWriteTokens))
+        {
+            TryGetNestedUsageInt(usage, "input_tokens_details", "cache_write_tokens", out cachedInputWriteTokens);
+
+            if (cachedInputWriteTokens == 0)
+                TryGetNestedUsageInt(usage, "prompt_tokens_details", "cache_write_tokens", out cachedInputWriteTokens);
         }
 
         if (outputTokens == 0 && totalTokens > 0)
             outputTokens = Math.Max(0, totalTokens - inputTokens - cachedInputReadTokens);
 
-        var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, 0);
+        var cost = ComputeCost(pricing, inputTokens, outputTokens, cachedInputReadTokens, cachedInputWriteTokens);
         return AddCost(existingMetadata, cost);
     }
 

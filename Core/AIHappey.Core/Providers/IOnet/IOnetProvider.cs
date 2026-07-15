@@ -44,16 +44,25 @@ public partial class IOnetProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return await EnrichChatCompletionWithGatewayCostAsync(response, options.Model, cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken))
+        {
+            NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+            yield return await EnrichChatCompletionUpdateWithGatewayCostAsync(update, options.Model, cancellationToken);
+        }
     }
 
     public string GetIdentifier() => nameof(IOnet).ToLowerInvariant();
@@ -131,9 +140,21 @@ public partial class IOnetProvider : IModelProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return await EnrichUnifiedResponseWithGatewayCostAsync(response, request.Model, cancellationToken);
+    }
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+            request,
+            cancellationToken: cancellationToken))
+        {
+            yield return await EnrichUnifiedStreamEventWithGatewayCostAsync(streamEvent, request.Model, cancellationToken);
+        }
+    }
 }

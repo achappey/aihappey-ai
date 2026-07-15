@@ -18,7 +18,7 @@ public partial class IOnetProvider
         {
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                yield return uiPart;
+                yield return await EnrichFinishPartWithGatewayCostAsync(uiPart, chatRequest.Model, cancellationToken);
             }
         }
 
