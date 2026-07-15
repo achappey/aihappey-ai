@@ -565,8 +565,7 @@ public class AIServiceConfig
     public ProviderConfig? LelapaAI { get; set; }
     public ProviderConfig? SailResearch { get; set; }
     public ProviderConfig? Darkbloom { get; set; }
-
-
+    public ProviderConfig? Crusoe { get; set; }
 }
 
 public class ProviderConfig

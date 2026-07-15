@@ -566,7 +566,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["beastlabai"] = "X-BeastLabAI-Key",
             ["lelapaai"] = "X-LelapaAI-Key",
             ["sailresearch"] = "X-SailResearch-Key",
-            ["darkbloom"] = "X-Darkbloom-Key"
+            ["darkbloom"] = "X-Darkbloom-Key",
+            ["crusoe"] = "X-Crusoe-Key"
 
         };
 
