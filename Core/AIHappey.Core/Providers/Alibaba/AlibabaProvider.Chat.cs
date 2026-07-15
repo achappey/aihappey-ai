@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Alibaba;
 
@@ -36,16 +38,16 @@ public partial class AlibabaProvider
             yield break;
         }
 
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        // DashScope OpenAI-compatible endpoint:
-        // POST https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions
-        await foreach (var update in _client.CompletionsStreamAsync(
-            chatRequest,
-            url: "compatible-mode/v1/chat/completions",
-            cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            yield return update;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
     }
 }
