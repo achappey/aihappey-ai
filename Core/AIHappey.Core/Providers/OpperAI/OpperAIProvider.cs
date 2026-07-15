@@ -79,22 +79,29 @@ public partial class OpperAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetResponse(
+        var response = await this.GetResponse(
                     _client,
                    options,
                    relativeUrl: "v3/compat/responses",
                    cancellationToken: cancellationToken);
+
+        return EnrichResponseResultWithGatewayCost(response);
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetResponses(
+        await foreach (var part in this.GetResponses(
            _client,
            options,
            relativeUrl: "v3/compat/responses",
-           cancellationToken: cancellationToken);
+           cancellationToken: cancellationToken))
+        {
+            yield return EnrichResponseStreamPartWithGatewayCost(part);
+        }
     }
 
 

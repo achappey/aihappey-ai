@@ -5,8 +5,11 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.OpperAI;
+using AIHappey.Responses.Mapping;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.OpperAI;
@@ -112,7 +115,72 @@ public sealed class OpperAIRoundtableTests
         });
 
         Assert.Equal("opperai", response.ProviderId);
-        Assert.Equal("gpt-4o-mini", response.Model);
+        Assert.Equal("opperai/gpt-4o-mini", response.Model);
+    }
+
+    [Fact]
+    public async Task ExecuteUnifiedAsync_non_roundtable_maps_opper_total_usage_cost_to_gateway_metadata()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("/v3/compat/responses", request.RequestUri?.AbsolutePath);
+            return CreateJsonResponse(OpperAIResponseWithCostJson);
+        });
+
+        var response = await provider.ExecuteUnifiedAsync(new AIRequest
+        {
+            ProviderId = "opperai",
+            Model = "alibaba:global/qwen3.7-plus",
+            Input = new AIInput { Text = "test" }
+        });
+
+        Assert.Equal("opperai", response.ProviderId);
+        Assert.Equal("opperai/alibaba:global/qwen3.7-plus", response.Model);
+
+        var gateway = Assert.IsType<Dictionary<string, object?>>(response.Metadata?["gateway"]);
+        Assert.Equal(0.0007403998m, Assert.IsType<decimal>(gateway["cost"]));
+
+        var usage = Assert.IsType<JsonElement>(response.Usage);
+        Assert.Equal(0.0007403998m, usage.GetProperty("opper").GetProperty("cost").GetProperty("total").GetDecimal());
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_non_roundtable_maps_opper_total_usage_cost_to_api_chat_finish_metadata()
+    {
+        var responseJson = JsonSerializer.Serialize(JsonSerializer.Deserialize<JsonElement>(OpperAIResponseWithCostJson));
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("/v3/compat/responses", request.RequestUri?.AbsolutePath);
+            return CreateStreamingResponse($$"""
+                event: response.output_item.done
+                data: {"item":{"content":[{"annotations":[],"text":"Test geslaagd! 🟢","type":"output_text"}],"id":"msg_resp_1784139352946542176_1","role":"assistant","status":"completed","type":"message"},"output_index":1,"sequence_number":149,"type":"response.output_item.done"}
+
+                event: response.completed
+                data: {"response":{{responseJson}},"sequence_number":150,"type":"response.completed"}
+
+                """);
+        });
+
+        var events = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(new AIRequest
+        {
+            ProviderId = "opperai",
+            Model = "alibaba:global/qwen3.7-plus",
+            Input = new AIInput { Text = "test" }
+        }));
+
+        var finishEvent = Assert.Single(events, e => e.Event.Type == "finish");
+        var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
+        Assert.Equal(0.0007403998m, finishData.MessageMetadata?.Gateway?.Cost);
+
+        var finishPart = Assert.IsType<FinishUIPart>(finishEvent.Event.ToUIMessagePart("opperai").Single());
+        Assert.Equal("stop", finishPart.FinishReason);
+        Assert.Equal(530, finishPart.MessageMetadata?.Usage.PromptTokens);
+        Assert.Equal(495, finishPart.MessageMetadata?.Usage.CompletionTokens);
+        Assert.Equal(1025, finishPart.MessageMetadata?.Usage.TotalTokens);
+        Assert.Equal(0.0007403998m, finishPart.MessageMetadata?.Gateway?.Cost);
+
+        var providerUsage = Assert.Contains("opperai", finishPart.MessageMetadata?.ProviderMetadata ?? []);
+        Assert.Equal(0.0007403998m, providerUsage.GetProperty("usage").GetProperty("opper").GetProperty("cost").GetProperty("total").GetDecimal());
     }
 
     [Fact]
@@ -184,6 +252,49 @@ public sealed class OpperAIRoundtableTests
                 }, JsonSerializerOptions.Web)
             }
         };
+
+    private const string OpperAIResponseWithCostJson =
+        """
+        {
+          "id": "resp_1784139352946542176",
+          "object": "response",
+          "created_at": 1784139352,
+          "completed_at": 1784139363,
+          "status": "completed",
+          "model": "alibaba:global/qwen3.7-plus",
+          "output": [
+            {
+              "id": "msg_resp_1784139352946542176_1",
+              "role": "assistant",
+              "status": "completed",
+              "type": "message",
+              "content": [
+                {
+                  "annotations": [],
+                  "text": "Test geslaagd! 🟢",
+                  "type": "output_text"
+                }
+              ]
+            }
+          ],
+          "output_text": "Test geslaagd! 🟢",
+          "usage": {
+            "cost": 0.0007403998,
+            "input_tokens": 530,
+            "opper": {
+              "cost": {
+                "tokens": 0.0007403998,
+                "total": 0.0007403998
+              }
+            },
+            "output_tokens": 495,
+            "output_tokens_details": {
+              "reasoning_tokens": 471
+            },
+            "total_tokens": 1025
+          }
+        }
+        """;
 
     private static OpperAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {

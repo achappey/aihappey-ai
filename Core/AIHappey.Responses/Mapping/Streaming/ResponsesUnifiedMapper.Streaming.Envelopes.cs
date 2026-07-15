@@ -171,6 +171,7 @@ public static partial class ResponsesUnifiedMapper
                 InputTokens = inputTokens,
                 OutputTokens = outputTokens,
                 TotalTokens = totalTokens,
+                MessageMetadata = CreateFinishMessageMetadata(response, usage, inputTokens, outputTokens, totalTokens),
                 FinishReason = response.Status == "failed" ? "error"
                     : response.Output.Any(a => a is ResponseFunctionCallItem) ? "tool-calls"
                     : response.Status == "completed" ? "stop"
@@ -178,6 +179,40 @@ public static partial class ResponsesUnifiedMapper
             },
             Metadata = response.Metadata
         };
+    }
+
+    private static AIFinishMessageMetadata CreateFinishMessageMetadata(
+        ResponseResult response,
+        JsonElement usage,
+        int? inputTokens,
+        int? outputTokens,
+        int? totalTokens)
+    {
+        var metadata = response.Metadata is not null
+            ? response.Metadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            : [];
+
+        metadata["model"] = response.Model;
+        metadata["usage"] = usage.ValueKind == JsonValueKind.Object
+            ? usage.Clone()
+            : response.Usage;
+        metadata["inputTokens"] = inputTokens;
+        metadata["outputTokens"] = outputTokens;
+        metadata["totalTokens"] = totalTokens;
+
+        if (response.Temperature is not null)
+            metadata["temperature"] = response.Temperature;
+
+        var fallbackTimestamp = response.CompletedAt.HasValue
+            ? DateTimeOffset.FromUnixTimeSeconds(response.CompletedAt.Value)
+            : DateTimeOffset.UtcNow;
+
+        return AIFinishMessageMetadata.FromDictionary(
+            metadata
+                .Where(kvp => kvp.Value is not null)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!),
+            fallbackModel: response.Model,
+            fallbackTimestamp: fallbackTimestamp);
     }
 
     private static AIEventEnvelope CreateDataEnvelope(string type, object? data)
