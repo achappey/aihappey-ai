@@ -51,18 +51,9 @@ public partial class FireworksProvider : IModelProvider
     public string GetIdentifier() => nameof(Fireworks).ToLowerInvariant();
 
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var modelId = chatRequest.GetModel();
-        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(modelId!))
-             ?? throw new ArgumentException(modelId);
-
-        return model.Type switch
-        {
-            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
-            "language" => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken),
-            _ => throw new NotImplementedException(),
-        };
+        throw new NotSupportedException();
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)

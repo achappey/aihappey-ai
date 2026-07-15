@@ -49,20 +49,10 @@ public partial class ImageRouterProvider : IModelProvider
     public string GetIdentifier() => nameof(ImageRouter).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => this.SamplingAsyncImageOnly(chatRequest, cancellationToken);
-
-    private async Task<CreateMessageResult> SamplingAsyncImageOnly(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-
-        throw new NotSupportedException($"ImageRouter sampling is only supported for image models. Model type '{model.Type}' is not supported.");
-    }
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+      => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

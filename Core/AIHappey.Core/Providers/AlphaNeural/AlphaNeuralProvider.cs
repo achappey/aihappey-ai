@@ -61,20 +61,9 @@ public partial class AlphaNeuralProvider : IModelProvider
 
     public string GetIdentifier() => nameof(AlphaNeural).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
-        {
-            return await this.ImageSamplingAsync(chatRequest,
-                    cancellationToken: cancellationToken);
-        }
-
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
