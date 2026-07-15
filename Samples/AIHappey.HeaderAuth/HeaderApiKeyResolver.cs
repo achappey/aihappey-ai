@@ -160,7 +160,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["inceptionlabs"] = "X-InceptionLabs-Key",
             ["daglo"] = "X-Daglo-Key",
             ["opeai"] = "X-OPEAI-Key",
-            ["forefront"] = "X-Forefront-Key",
             ["aicc"] = "X-AICC-Key",
             ["yourvoic"] = "X-YourVoic-Key",
             ["fishaudio"] = "X-FishAudio-Key",

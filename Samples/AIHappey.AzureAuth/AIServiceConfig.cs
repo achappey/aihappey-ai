@@ -158,7 +158,6 @@ public class AIServiceConfig
     public ProviderConfig? InceptionLabs { get; set; }
     public ProviderConfig? Daglo { get; set; }
     public ProviderConfig? OPEAI { get; set; }
-    public ProviderConfig? Forefront { get; set; }
     public ProviderConfig? AICC { get; set; }
     public ProviderConfig? YourVoic { get; set; }
     public ProviderConfig? FishAudio { get; set; }

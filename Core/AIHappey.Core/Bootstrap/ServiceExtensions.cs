@@ -160,7 +160,6 @@ using AIHappey.Core.Providers.Infraxa;
 using AIHappey.Core.Providers.InceptionLabs;
 using AIHappey.Core.Providers.Daglo;
 using AIHappey.Core.Providers.OPEAI;
-using AIHappey.Core.Providers.Forefront;
 using AIHappey.Core.Providers.AICC;
 using AIHappey.Core.Providers.YourVoic;
 using AIHappey.Core.Providers.FishAudio;
@@ -747,7 +746,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, InceptionLabsProvider>();
         services.AddSingleton<IModelProvider, DagloProvider>();
         services.AddSingleton<IModelProvider, OPEAIProvider>();
-        services.AddSingleton<IModelProvider, ForefrontProvider>();
         services.AddSingleton<IModelProvider, AICCProvider>();
         services.AddSingleton<IModelProvider, YourVoicProvider>();
         services.AddSingleton<IModelProvider, FishAudioProvider>();
