@@ -382,7 +382,6 @@ using AIHappey.Core.Providers.Ollama;
 using AIHappey.Core.Providers.Vivgrid;
 using AIHappey.Core.Providers.Ambient;
 using AIHappey.Core.Providers.Relace;
-using AIHappey.Core.Providers.Inflection;
 using AIHappey.Core.Providers.Baidu;
 using AIHappey.Core.Providers.Morph;
 using AIHappey.Core.Providers.StreamLake;
@@ -975,7 +974,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, VivgridProvider>();
         services.AddSingleton<IModelProvider, AmbientProvider>();
         services.AddSingleton<IModelProvider, RelaceProvider>();
-        services.AddSingleton<IModelProvider, InflectionProvider>();
         services.AddSingleton<IModelProvider, BaiduProvider>();
         services.AddSingleton<IModelProvider, MorphProvider>();
         services.AddSingleton<IModelProvider, StreamLakeProvider>();
