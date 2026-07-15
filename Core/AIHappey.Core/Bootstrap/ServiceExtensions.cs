@@ -397,7 +397,7 @@ using AIHappey.Core.Providers.OpenPipe;
 using AIHappey.Core.Providers.NONKYCAI;
 using AIHappey.Core.Providers.ModelBridge;
 using AIHappey.Core.Providers.SimpleLLM;
-using AIHappey.Core.Providers.Tensorix;
+using AIHappey.Core.Providers.TensorX;
 using AIHappey.Core.Providers.SchatziAI;
 using AIHappey.Core.Providers.Nodebyt;
 using AIHappey.Core.Providers.GPTsAPI;
@@ -988,7 +988,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, NONKYCAIProvider>();
         services.AddSingleton<IModelProvider, ModelBridgeProvider>();
         services.AddSingleton<IModelProvider, SimpleLLMProvider>();
-        services.AddSingleton<IModelProvider, TensorixProvider>();
+        services.AddSingleton<IModelProvider, TensorXProvider>();
         services.AddSingleton<IModelProvider, SchatziAIProvider>();
         services.AddSingleton<IModelProvider, NodebytProvider>();
         services.AddSingleton<IModelProvider, GPTsAPIProvider>();

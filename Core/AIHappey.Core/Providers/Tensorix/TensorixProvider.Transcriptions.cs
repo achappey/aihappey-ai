@@ -6,11 +6,11 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.Tensorix;
+namespace AIHappey.Core.Providers.TensorX;
 
-public partial class TensorixProvider
+public partial class TensorXProvider
 {
-    private const string TensorixTranscriptionsEndpoint = "v1/audio/transcriptions";
+    private const string TensorXTranscriptionsEndpoint = "v1/audio/transcriptions";
 
     private async Task<TranscriptionResponse> TranscriptionRequestCore(
         TranscriptionRequest request,
@@ -106,11 +106,11 @@ public partial class TensorixProvider
             }
         }
 
-        using var resp = await _client.PostAsync(TensorixTranscriptionsEndpoint, form, cancellationToken);
+        using var resp = await _client.PostAsync(TensorXTranscriptionsEndpoint, form, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Tensorix transcription request failed ({(int)resp.StatusCode}): {raw}");
+            throw new InvalidOperationException($"TensorX transcription request failed ({(int)resp.StatusCode}): {raw}");
 
         string text;
         string? languageFromResponse = null;

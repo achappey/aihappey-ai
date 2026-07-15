@@ -39,7 +39,7 @@ public class EUrouterProviderModelsTests
         {
             Id = "gen-1",
             Created = 1777285265,
-            Model = "tensorix/gpt-oss-20b",
+            Model = "tensorx/gpt-oss-20b",
             Usage = UsageElement("""
             {
                 "prompt_tokens": 444,
@@ -63,7 +63,7 @@ public class EUrouterProviderModelsTests
         {
             Id = "gen-2",
             Created = 1777285265,
-            Model = "tensorix/gpt-oss-20b",
+            Model = "tensorx/gpt-oss-20b",
             Usage = UsageElement("""
             {
                 "prompt_tokens": 444,

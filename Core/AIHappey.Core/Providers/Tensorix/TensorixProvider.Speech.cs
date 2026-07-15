@@ -6,9 +6,9 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.Tensorix;
+namespace AIHappey.Core.Providers.TensorX;
 
-public partial class TensorixProvider
+public partial class TensorXProvider
 {
     private static readonly JsonSerializerOptions SpeechJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -63,7 +63,7 @@ public partial class TensorixProvider
         if (!response.IsSuccessStatusCode)
         {
             var body = Encoding.UTF8.GetString(bytes);
-            throw new InvalidOperationException($"Tensorix TTS failed ({(int)response.StatusCode}): {body}");
+            throw new InvalidOperationException($"TensorX TTS failed ({(int)response.StatusCode}): {body}");
         }
 
         var contentType = response.Content.Headers.ContentType?.MediaType;

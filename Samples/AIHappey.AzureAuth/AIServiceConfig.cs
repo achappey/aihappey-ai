@@ -398,7 +398,7 @@ public class AIServiceConfig
     public ProviderConfig? NONKYCAI { get; set; }
     public ProviderConfig? ModelBridge { get; set; }
     public ProviderConfig? SimpleLLM { get; set; }
-    public ProviderConfig? Tensorix { get; set; }
+    public ProviderConfig? TensorX { get; set; }
     public ProviderConfig? SchatziAI { get; set; }
     public ProviderConfig? Nodebyt { get; set; }
     public ProviderConfig? GPTsAPI { get; set; }

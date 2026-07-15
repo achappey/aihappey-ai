@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.Tensorix;
+namespace AIHappey.Core.Providers.TensorX;
 
-public partial class TensorixProvider
+public partial class TensorXProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -27,7 +27,7 @@ public partial class TensorixProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"Tensorix API error: {err}");
+                    throw new Exception($"TensorX API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);

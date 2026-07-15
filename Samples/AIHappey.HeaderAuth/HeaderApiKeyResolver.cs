@@ -400,7 +400,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["nonkycai"] = "X-NONKYCAI-Key",
             ["modelbridge"] = "X-ModelBridge-Key",
             ["simplellm"] = "X-SimpleLLM-Key",
-            ["tensorix"] = "X-Tensorix-Key",
+            ["tensorx"] = "X-TensorX-Key",
             ["schatziai"] = "X-SchatziAI-Key",
             ["nodebyt"] = "X-Nodebyt-Key",
             ["gptsapi"] = "X-GPTsAPI-Key",

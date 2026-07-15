@@ -7,9 +7,9 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 
-namespace AIHappey.Core.Providers.Tensorix;
+namespace AIHappey.Core.Providers.TensorX;
 
-public partial class TensorixProvider : IModelProvider
+public partial class TensorXProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -17,13 +17,13 @@ public partial class TensorixProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public TensorixProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public TensorXProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.tensorix.ai/");
+        _client.BaseAddress = new Uri("https://api.tensorx.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -31,7 +31,7 @@ public partial class TensorixProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Tensorix)} API key.");
+            throw new InvalidOperationException($"No {nameof(TensorX)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -52,7 +52,7 @@ public partial class TensorixProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(Tensorix).ToLowerInvariant();
+    public string GetIdentifier() => nameof(TensorX).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {

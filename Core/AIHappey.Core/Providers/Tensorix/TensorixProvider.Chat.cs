@@ -2,7 +2,7 @@ using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.Tensorix;
+namespace AIHappey.Core.Providers.TensorX;
 
 public partial class TensorixProvider
 {
