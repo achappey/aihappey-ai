@@ -1,6 +1,5 @@
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
@@ -58,27 +57,9 @@ public partial class CortecsProvider : IModelProvider
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
     }
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        if (model?.Type == "language")
-        {
-            var result = await ExecuteUnifiedAsync(
-                chatRequest.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken);
-
-            return result.ToSamplingResult();
-        }
-
-        return (model?.Type) switch
-        {
-            "transcription" => await this.TranscriptionSamplingAsync(
-                chatRequest,
-                cancellationToken: cancellationToken),
-
-            _ => throw new NotImplementedException(),
-        };
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -99,46 +80,6 @@ public partial class CortecsProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
-    }
-
-    private async Task<CreateMessageResult> TranscriptionSamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken = default)
-    {
-        var model = chatRequest.GetModel();
-        if (string.IsNullOrWhiteSpace(model))
-            throw new Exception("No model provided.");
-
-        var audio = chatRequest.Messages
-            .Where(a => a.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(a => a.Content.OfType<AudioContentBlock>())
-            .LastOrDefault();
-
-        if (audio is null)
-            throw new Exception("No audio input provided.");
-
-        var request = new TranscriptionRequest
-        {
-            Model = model,
-            MediaType = audio.MimeType,
-            Audio = Convert.ToBase64String(audio.Data.ToArray()),
-            ProviderOptions = chatRequest.Metadata?
-                .ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => JsonSerializer.SerializeToElement(kvp.Value)
-                )
-        };
-
-        var result = await this.TranscriptionRequest(request, cancellationToken)
-            ?? throw new Exception("No result.");
-
-        return new CreateMessageResult
-        {
-            Model = result.Response?.ModelId ?? model,
-            StopReason = "stop",
-            Content = [(result.Text ?? string.Empty).ToTextContentBlock()],
-            Role = ModelContextProtocol.Protocol.Role.Assistant
-        };
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
