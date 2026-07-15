@@ -39,7 +39,7 @@ public partial class VapiProvider : IModelProvider
         => await ListModelsInternal(cancellationToken);
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

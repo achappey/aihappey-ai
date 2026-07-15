@@ -43,8 +43,7 @@ public partial class OrqAgentRuntimeProvider : IModelProvider
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
         CancellationToken cancellationToken = default)
-        => this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
-
+        => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -57,7 +57,7 @@ public partial class ValyuProvider : IModelProvider
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        return this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

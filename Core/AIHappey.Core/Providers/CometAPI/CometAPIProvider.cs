@@ -119,7 +119,7 @@ public partial class CometAPIProvider : IModelProvider
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        return this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        throw new NotImplementedException();
     }
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
