@@ -155,7 +155,6 @@ using AIHappey.Core.Providers.LumaAI;
 using AIHappey.Core.Providers.TrueFoundry;
 using AIHappey.Core.Providers.Databricks;
 using AIHappey.Core.Providers.BrowserUse;
-using AIHappey.Core.Providers.Inferencesh;
 using AIHappey.Core.Providers.Crazyrouter;
 using AIHappey.Core.Providers.Infraxa;
 using AIHappey.Core.Providers.InceptionLabs;
@@ -744,7 +743,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TrueFoundryProvider>();
         services.AddSingleton<IModelProvider, DatabricksProvider>();
         services.AddSingleton<IModelProvider, BrowserUseProvider>();
-        services.AddSingleton<IModelProvider, InferenceshProvider>();
         services.AddSingleton<IModelProvider, CrazyrouterProvider>();
         services.AddSingleton<IModelProvider, InfraxaProvider>();
         services.AddSingleton<IModelProvider, InceptionLabsProvider>();

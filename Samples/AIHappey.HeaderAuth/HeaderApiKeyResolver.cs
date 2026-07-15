@@ -155,7 +155,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["truefoundry"] = "X-TrueFoundry-Key",
             ["databricks"] = "X-Databricks-Key",
             ["browseruse"] = "X-BrowserUse-Key",
-            ["inferencesh"] = "X-Inferencesh-Key",
             ["crazyrouter"] = "X-Crazyrouter-Key",
             ["infraxa"] = "X-Infraxa-Key",
             ["inceptionlabs"] = "X-InceptionLabs-Key",
