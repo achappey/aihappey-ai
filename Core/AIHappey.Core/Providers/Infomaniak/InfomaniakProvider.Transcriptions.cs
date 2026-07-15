@@ -5,6 +5,8 @@ using AIHappey.Common.Model.Providers.Infomaniak;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Infomaniak;
 
@@ -47,7 +49,8 @@ public partial class InfomaniakProvider
         var batchId = createBatch.BatchId;
         var resultRoot = await PollBatchResultUntilDoneAsync(productId, batchId, cancellationToken);
 
-        return ConvertTranscriptionResult(resultRoot, request.Model, now, warnings, createBatch.RequestBody);
+        return ConvertTranscriptionResult(resultRoot, request.Model.ToModelId(GetIdentifier()),
+            now, warnings, createBatch.RequestBody, GetIdentifier());
     }
 
     private async Task<(string BatchId, string RequestBody)> CreateTranscriptionBatchAsync(
@@ -174,7 +177,8 @@ public partial class InfomaniakProvider
         string model,
         DateTime now,
         IEnumerable<object> warnings,
-        string requestBody)
+        string requestBody,
+        string providerId)
     {
         if (!batchResultRoot.TryGetProperty("data", out var dataEl))
             throw new InvalidOperationException("Infomaniak transcription result does not contain 'data'.");
@@ -188,6 +192,7 @@ public partial class InfomaniakProvider
                 DurationInSeconds = structured.DurationInSeconds,
                 Segments = structured.Segments,
                 Warnings = warnings,
+                ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
                 Response = new ResponseData
                 {
                     Timestamp = now,
@@ -212,6 +217,7 @@ public partial class InfomaniakProvider
             DurationInSeconds = null,
             Segments = [],
             Warnings = warnings,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
