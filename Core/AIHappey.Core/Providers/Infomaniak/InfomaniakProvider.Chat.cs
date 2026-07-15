@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Infomaniak;
 
@@ -8,13 +10,17 @@ public partial class InfomaniakProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
 
-        var relativeUrl = await GetChatCompletionsRelativeUrlAsync(cancellationToken);
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var update in StreamCustomAsync(chatRequest,
-            relativeUrl,
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
             cancellationToken))
-            yield return update;
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
     }
 }
