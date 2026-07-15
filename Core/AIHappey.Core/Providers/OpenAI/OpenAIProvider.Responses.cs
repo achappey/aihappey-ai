@@ -21,6 +21,11 @@ public partial class OpenAIProvider
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(options.Model, cancellationToken);
+
+        if (model.Type.Equals("image"))
+            return await this.ImageResponseAsync(options, cancellationToken);
+
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
@@ -62,6 +67,19 @@ public partial class OpenAIProvider
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(options.Model, cancellationToken);
+        
+        if (model.Type.Equals("image"))
+        {
+            await foreach (var part in this.ImageResponsesStreamingAsync(options, cancellationToken)
+                .WithCancellation(cancellationToken))
+            {
+                yield return part;
+            }
+
+            yield break;
+        }
+
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
