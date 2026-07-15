@@ -52,79 +52,11 @@ public partial class PollinationsProvider : IModelProvider
         Output = 0
     };
 
-    public async Task<CreateMessageResult> SamplingAsync(
+    public Task<CreateMessageResult> SamplingAsync(
      CreateMessageRequestParams chatRequest,
      CancellationToken cancellationToken = default)
     {
-        var modelItem = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        switch (modelItem?.Type)
-        {
-            case "image":
-                {
-                    return await this.ImageSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-
-            default:
-                break;
-        }
-
-        ApplyAuthHeader();
-
-        var messages = chatRequest.Messages
-            .SelectMany(m => m.Content.OfType<TextContentBlock>().Select(a => new
-            {
-                role = m.Role.ToString().ToLowerInvariant(),
-                content = a.Text
-            }))
-            .ToArray();
-
-        var payload = new
-        {
-            model = chatRequest.GetModel(),
-            stream = false,
-            temperature = chatRequest.Temperature,
-            max_tokens = chatRequest.MaxTokens,
-            messages
-        };
-
-        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, "openai")
-        {
-            Content = new StringContent(json, Encoding.UTF8, "application/json")
-        };
-
-        var resp = await _client.SendAsync(req, cancellationToken);
-        var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-        {
-            throw new Exception(raw);
-        }
-
-        using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement;
-
-        var content = root
-            .GetProperty("choices")[0]
-            .GetProperty("message")
-            .GetProperty("content")
-            .GetString() ?? "";
-
-        var model = root
-                  .GetProperty("model")
-                  .GetString() ?? "";
-
-        return new()
-        {
-            Model = model,
-            Content = [new TextContentBlock()
-            {
-                Text = content
-            }]
-        };
+        throw new NotSupportedException();
     }
 
 

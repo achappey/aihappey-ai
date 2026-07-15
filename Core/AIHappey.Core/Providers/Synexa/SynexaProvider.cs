@@ -35,17 +35,9 @@ public partial class SynexaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Synexa).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        return model.Type switch
-        {
-            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
-            "language" => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken),
-            "video" => throw new NotSupportedException("Sampling is not supported for Synexa video models."),
-            _ => throw new NotSupportedException($"Unsupported Synexa model type '{model.Type}'.")
-        };
+       throw new NotSupportedException();
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

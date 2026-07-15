@@ -57,15 +57,9 @@ public partial class MegaNovaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(MegaNova).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken: cancellationToken);
-
-        return model.Type switch
-        {
-            "image" => await this.ImageSamplingAsync(chatRequest, cancellationToken),
-            _ => throw new NotSupportedException(),
-        };
+      throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
