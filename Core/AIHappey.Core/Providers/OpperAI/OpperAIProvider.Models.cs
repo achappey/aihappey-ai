@@ -8,36 +8,57 @@ public partial class OpperAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
 
-        if (string.IsNullOrWhiteSpace(key))
-            return [];
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync<List<Model>>(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
+                var models = new Dictionary<string, Model>(StringComparer.OrdinalIgnoreCase);
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v3/models");
-                using var resp = await _client.SendAsync(req, ct);
+                AddModels(models, await ListCatalogModels("v3/images/models", "image", ct));
+                AddModels(models, await ListCatalogModels("v3/videos/models", "video", ct));
+                AddModels(models, await ListCatalogModels("v3/audio/models", null, ct));
+                AddModels(models, await ListCatalogModels("v3/models?type=llm", "language", ct));
+                AddModels(models, GetIdentifier().GetModels());
 
-                if (!resp.IsSuccessStatusCode)
-                    throw new Exception($"OpperAI API error: {await resp.Content.ReadAsStringAsync(ct)}");
-
-                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-
-                return [.. ParseModels(doc.RootElement), .. GetIdentifier().GetModels()];
+                return [.. models.Values];
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
 
-    private IEnumerable<Model> ParseModels(JsonElement root)
+    private async Task<IEnumerable<Model>> ListCatalogModels(
+        string relativeUrl,
+        string? modelType,
+        CancellationToken cancellationToken)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, relativeUrl);
+        using var resp = await _client.SendAsync(req, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+            throw new Exception($"OpperAI API error: {await resp.Content.ReadAsStringAsync(cancellationToken)}");
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        return ParseModels(doc.RootElement, modelType).ToList();
+    }
+
+    private static void AddModels(
+        IDictionary<string, Model> models,
+        IEnumerable<Model> modelsToAdd)
+    {
+        foreach (var model in modelsToAdd)
+        {
+            if (!string.IsNullOrEmpty(model.Id) && !models.ContainsKey(model.Id))
+                models.Add(model.Id, model);
+        }
+    }
+
+    private IEnumerable<Model> ParseModels(JsonElement root, string? modelType = null)
     {
         var models = new List<Model>();
 
@@ -60,13 +81,14 @@ public partial class OpperAIProvider
             if (el.TryGetProperty("provider_display_name", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
 
-            // type: rerank
             if (el.TryGetProperty("type", out var typeEl))
             {
                 var type = typeEl.GetString();
-
-                if (string.Equals(type, "rerank", StringComparison.OrdinalIgnoreCase))
-                    model.Type = "reranking";
+                model.Type = modelType ?? MapModelType(type);
+            }
+            else if (!string.IsNullOrWhiteSpace(modelType))
+            {
+                model.Type = modelType;
             }
 
             // pricing
@@ -107,4 +129,15 @@ public partial class OpperAIProvider
 
         return models;
     }
+
+    private static string MapModelType(string? type)
+        => type?.ToLowerInvariant() switch
+        {
+            "llm" => "language",
+            "tts" => "speech",
+            "stt" => "transcription",
+            "rerank" => "reranking",
+            null or "" => "language",
+            _ => type.ToLowerInvariant()
+        };
 }
