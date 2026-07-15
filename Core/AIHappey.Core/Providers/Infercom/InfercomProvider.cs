@@ -59,12 +59,9 @@ public partial class InfercomProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Infercom).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -136,7 +133,7 @@ public partial class InfercomProvider : IModelProvider
 
         yield break;
     }
-    
+
     private static bool UseResponsesApi(AIRequest request)
         => request.Model?.Contains("MiniMax-M2.5", StringComparison.OrdinalIgnoreCase) == true
         || request.Model?.Contains("gpt-oss-120b", StringComparison.OrdinalIgnoreCase) == true;
