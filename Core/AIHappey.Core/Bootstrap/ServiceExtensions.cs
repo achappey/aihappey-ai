@@ -564,6 +564,7 @@ using AIHappey.Core.Providers.LelapaAI;
 using AIHappey.Core.Providers.SailResearch;
 using AIHappey.Core.Providers.Darkbloom;
 using AIHappey.Core.Providers.Crusoe;
+using AIHappey.Core.Providers.ILMU;
 
 namespace AIHappey.Core.AI;
 
@@ -1154,6 +1155,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SailResearchProvider>();
         services.AddSingleton<IModelProvider, DarkbloomProvider>();
         services.AddSingleton<IModelProvider, CrusoeProvider>();
+        services.AddSingleton<IModelProvider, ILMUProvider>();
 
 
     }
