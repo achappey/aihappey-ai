@@ -567,7 +567,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sailresearch"] = "X-SailResearch-Key",
             ["darkbloom"] = "X-Darkbloom-Key",
             ["crusoe"] = "X-Crusoe-Key",
-            ["ilmu"] = "X-ILMU-Key"
+            ["ilmu"] = "X-ILMU-Key",
+            ["lyceum"] = "X-Lyceum-Key"
 
         };
 

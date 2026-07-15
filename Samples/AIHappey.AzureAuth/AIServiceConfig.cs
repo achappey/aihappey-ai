@@ -566,6 +566,7 @@ public class AIServiceConfig
     public ProviderConfig? Darkbloom { get; set; }
     public ProviderConfig? Crusoe { get; set; }
     public ProviderConfig? ILMU { get; set; }
+    public ProviderConfig? Lyceum { get; set; }
 }
 
 public class ProviderConfig
