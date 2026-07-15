@@ -460,7 +460,7 @@ public static class ModelProviderImageExtensions
              * so emitting the final image as a fake partial image would be wrong.
              */
 
-            yield return new ResponseImageGenerationCallCompleted
+            yield return new ResponseImageGenerationCallGenerating
             {
                 SequenceNumber = sequenceNumber++,
                 OutputIndex = outputIndex,
