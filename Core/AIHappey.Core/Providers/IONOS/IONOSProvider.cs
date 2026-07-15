@@ -42,17 +42,9 @@ public partial class IONOSProvider : IModelProvider
 
     public string GetIdentifier() => nameof(IONOS).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        if (chatRequest.GetModel()?.Contains("black-forest-labs") == true)
-        {
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)

@@ -51,16 +51,9 @@ public partial class NscaleProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Nscale).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = chatRequest.GetModel();
-
-        if (IsImageMode(model))
-        {
-            return await this.ImageSamplingAsync(chatRequest, cancellationToken);
-        }
-
-        return await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

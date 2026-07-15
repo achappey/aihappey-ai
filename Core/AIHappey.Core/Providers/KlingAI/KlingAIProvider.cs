@@ -54,8 +54,8 @@ public partial class KlingAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(KlingAI).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ImageSamplingAsync(chatRequest, cancellationToken: cancellationToken);
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
         => SpeechRequestInternal(request, cancellationToken);

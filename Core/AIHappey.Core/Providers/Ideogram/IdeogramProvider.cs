@@ -48,8 +48,8 @@ public partial class IdeogramProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Ideogram).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => await this.ImageSamplingAsync(chatRequest, cancellationToken);
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -73,7 +73,7 @@ public partial class IdeogramProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-  
+
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
