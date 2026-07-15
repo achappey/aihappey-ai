@@ -93,6 +93,7 @@ public partial class AetherProvider
         if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
             throw new InvalidOperationException("No image data returned from Aether image API.");
 
+
         List<string> images = [];
 
         foreach (var item in dataEl.EnumerateArray())
@@ -139,15 +140,23 @@ public partial class AetherProvider
             };
         }
 
+        var metadata = root
+          .EnumerateObject()
+          .Where(x => x.Name != "data")
+          .ToDictionary(
+              x => x.Name,
+              x => x.Value.Clone());
+
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
             Usage = usage,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(metadata),
             Response = new()
             {
                 Timestamp = now,
+                Headers = httpResponse.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };

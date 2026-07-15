@@ -105,10 +105,11 @@ public partial class AgnesAIProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };

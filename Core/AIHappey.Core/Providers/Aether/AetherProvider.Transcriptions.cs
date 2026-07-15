@@ -53,10 +53,11 @@ public partial class AetherProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"Aether transcription failed ({(int)response.StatusCode}): {raw}");
 
-        return ConvertAetherTranscriptionResponse(raw, request.Model, now);
+        return ConvertAetherTranscriptionResponse(raw, request.Model, now, response.GetHeaders());
     }
 
-    private static TranscriptionResponse ConvertAetherTranscriptionResponse(string raw, string model, DateTime timestamp)
+    private static TranscriptionResponse ConvertAetherTranscriptionResponse(string raw,
+        string model, DateTime timestamp, IDictionary<string, string>? headers)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
@@ -114,6 +115,7 @@ public partial class AetherProvider
             Response = new ResponseData
             {
                 Timestamp = timestamp,
+                Headers = headers,
                 ModelId = root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String
                     ? modelEl.GetString() ?? model
                     : model,
