@@ -568,7 +568,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["zeroentropy"] = "X-ZeroEntropy-Key",
             ["beastlabai"] = "X-BeastLabAI-Key",
             ["lelapaai"] = "X-LelapaAI-Key",
-            ["sailresearch"] = "X-SailResearch-Key"
+            ["sailresearch"] = "X-SailResearch-Key",
+            ["darkbloom"] = "X-Darkbloom-Key"
 
         };
 
