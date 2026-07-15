@@ -72,6 +72,8 @@ public partial class CrazyrouterProvider
                         models.Add(model);
                 }
 
+                models.AddRange(GetIdentifier().GetModels());
+                
                 return models;
 
             },

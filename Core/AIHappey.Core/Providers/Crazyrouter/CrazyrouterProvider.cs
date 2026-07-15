@@ -24,7 +24,7 @@ public partial class CrazyrouterProvider : IModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://crazyrouter.com/");
+        _client.BaseAddress = new Uri("https://api.crazyrouter.com/");
     }
 
     private void ApplyAuthHeader()
@@ -64,10 +64,10 @@ public partial class CrazyrouterProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => CrazyrouterSpeechRequest(imageRequest, cancellationToken);
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => CrazyrouterRerankingRequest(request, cancellationToken);
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {

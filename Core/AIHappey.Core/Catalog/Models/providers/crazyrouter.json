@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "crazyrouter/suno",
+      "object": "model",
+      "owned_by": "Crazyrouter",
+      "name": "Suno Generate Song",
+      "type": "speech",
+      "description": "Generate songs, supporting inspiration mode, custom mode, continuation, and singer style."
+    }
+  ]
+}
