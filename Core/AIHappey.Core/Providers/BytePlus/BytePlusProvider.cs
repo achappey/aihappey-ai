@@ -69,28 +69,9 @@ public partial class BytePlusProvider : IModelProvider
 
     public string GetIdentifier() => nameof(BytePlus).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.GetModel(), cancellationToken);
-
-        switch (model?.Type)
-        {
-            case "image":
-                {
-                    return await this.ImageSamplingAsync(chatRequest,
-                            cancellationToken: cancellationToken);
-                }
-            case "language":
-                {
-                    var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-                    cancellationToken);
-
-                    return result.ToSamplingResult();
-                }
-
-            default:
-                throw new NotImplementedException();
-        }
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
