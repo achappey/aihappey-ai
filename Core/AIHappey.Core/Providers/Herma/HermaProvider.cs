@@ -22,7 +22,7 @@ public partial class HermaProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public HermaProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public HermaProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
@@ -58,15 +58,12 @@ public partial class HermaProvider : IModelProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
             => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-            
+
     public string GetIdentifier() => nameof(Herma).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)

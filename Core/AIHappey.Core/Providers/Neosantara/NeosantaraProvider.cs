@@ -58,7 +58,7 @@ public partial class NeosantaraProvider : IModelProvider
     public string GetIdentifier() => nameof(Neosantara).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-         => await this.ChatCompletionsSamplingAsync(chatRequest, cancellationToken);
+         => throw new NotSupportedException();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
