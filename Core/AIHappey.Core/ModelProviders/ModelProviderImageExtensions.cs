@@ -5,6 +5,8 @@ using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Core.AI;
 
@@ -180,4 +182,351 @@ public static class ModelProviderImageExtensions
 
         return (string.IsNullOrWhiteSpace(mimeType) ? null : mimeType, payload.Trim());
     }
+
+    public static async Task<ResponseResult> ImageResponseAsync(
+       this IModelProvider modelProvider,
+       ResponseRequest chatRequest,
+       CancellationToken cancellationToken = default)
+    {
+        var input = chatRequest.Input?.IsText == true ?
+            chatRequest.Input.Text : chatRequest.Input?.Items?
+            .OfType<ResponseInputMessage>()
+            .LastOrDefault()?.Content.Text;
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            throw new Exception("No prompt provided.");
+        }
+
+        var imageRequest = new ImageRequest
+        {
+            Model = chatRequest.Model!,
+            Prompt = input
+        };
+
+        ImageResponse? result;
+        try
+        {
+            result = await modelProvider.ImageRequest(imageRequest, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            return new ResponseResult()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Error = new ResponseResultError()
+                {
+                    Code = "500",
+                    Message = e.Message
+                }
+            };
+        }
+
+        if (result == null)
+        {
+            return new ResponseResult()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Error = new ResponseResultError()
+                {
+                    Code = "500",
+                    Message = "No response"
+                }
+            };
+
+        }
+
+        //var audio = result?.Audio as string;
+        if (result?.Images?.Any() != true)
+        {
+            return new ResponseResult()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Error = new ResponseResultError()
+                {
+                    Code = "500",
+                    Message = "No images"
+                }
+            };
+        }
+
+        return new ResponseResult()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Model = result.Response.ModelId,
+            CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            CreatedAt = new DateTimeOffset(result.Response.Timestamp)
+                .ToUnixTimeSeconds(),
+            Output =
+             [
+                 .. result.Images.Select(image =>
+                     new ResponseImageGenerationCallItem
+                     {
+                         Id = $"ig_{Guid.NewGuid():N}",
+                         Status = "completed",
+                         Result = NormalizeImageBase64(image)
+                     })
+             ]
+        };
+    }
+
+    private static string NormalizeImageBase64(string image)
+    {
+        if (string.IsNullOrWhiteSpace(image))
+            throw new InvalidOperationException("Image result was empty.");
+
+        // OpenAI expects raw base64 in image_generation_call.result,
+        // not a data:image/png;base64,... URL.
+        if (image.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var commaIndex = image.IndexOf(',');
+
+            if (commaIndex < 0 || commaIndex == image.Length - 1)
+                throw new InvalidOperationException("Invalid image data URL.");
+
+            return image[(commaIndex + 1)..];
+        }
+
+        return image;
+    }
+
+
+
+    public static async IAsyncEnumerable<ResponseStreamPart>
+        ImageResponsesStreamingAsync(
+            this IModelProvider modelProvider,
+            ResponseRequest options,
+            [EnumeratorCancellation]
+        CancellationToken cancellationToken = default)
+    {
+        var prompt = options.Input?.IsText == true
+            ? options.Input.Text
+            : options.Input?.Items?
+                .OfType<ResponseInputMessage>()
+                .LastOrDefault()?
+                .Content.Text;
+
+        if (string.IsNullOrWhiteSpace(prompt))
+            throw new InvalidOperationException("No prompt provided.");
+
+        if (string.IsNullOrWhiteSpace(options.Model))
+            throw new InvalidOperationException("No model provided.");
+
+        var responseId = $"resp_{Guid.NewGuid():N}";
+        var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var sequenceNumber = 0;
+
+        var inProgressResponse = new ResponseResult
+        {
+            Id = responseId,
+            Model = options.Model,
+            CreatedAt = createdAt,
+            Status = "in_progress",
+            Output = []
+        };
+
+        yield return new ResponseCreated
+        {
+            SequenceNumber = sequenceNumber++,
+            Response = inProgressResponse
+        };
+
+        yield return new ResponseInProgress
+        {
+            SequenceNumber = sequenceNumber++,
+            Response = inProgressResponse
+        };
+
+        var imageRequest = new ImageRequest
+        {
+            Model = options.Model,
+            Prompt = prompt
+        };
+
+        ImageResponse? result = null;
+        Exception? exception = null;
+
+        try
+        {
+            result = await modelProvider.ImageRequest(
+                imageRequest,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            exception = e;
+        }
+
+        if (exception != null)
+        {
+            yield return new ResponseFailed
+            {
+                SequenceNumber = sequenceNumber++,
+                Response = CreateFailedImageResponse(
+                    responseId,
+                    options.Model,
+                    createdAt,
+                    exception.Message)
+            };
+
+            yield break;
+        }
+
+        if (result == null)
+        {
+            yield return new ResponseFailed
+            {
+                SequenceNumber = sequenceNumber++,
+                Response = CreateFailedImageResponse(
+                    responseId,
+                    options.Model,
+                    createdAt,
+                    "No response")
+            };
+
+            yield break;
+        }
+
+        var images = result.Images?
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(NormalizeImageBase64)
+            .ToArray();
+
+        if (images?.Length is not > 0)
+        {
+            yield return new ResponseFailed
+            {
+                SequenceNumber = sequenceNumber++,
+                Response = CreateFailedImageResponse(
+                    responseId,
+                    options.Model,
+                    createdAt,
+                    "No images")
+            };
+
+            yield break;
+        }
+
+        var outputItems = images
+            .Select(image => new ResponseImageGenerationCallItem
+            {
+                Id = $"ig_{Guid.NewGuid():N}",
+                Status = "completed",
+                Result = image
+            })
+            .ToArray();
+
+        for (var outputIndex = 0;
+             outputIndex < outputItems.Length;
+             outputIndex++)
+        {
+            var outputItem = outputItems[outputIndex];
+
+            yield return new ResponseOutputItemAdded
+            {
+                SequenceNumber = sequenceNumber++,
+                OutputIndex = outputIndex,
+                Item = new ResponseStreamItem
+                {
+                    Id = outputItem.Id,
+                    Type = "image_generation_call",
+                    Status = "in_progress"
+                }
+            };
+
+            yield return new ResponseImageGenerationCallInProgress
+            {
+                SequenceNumber = sequenceNumber++,
+                OutputIndex = outputIndex,
+                ItemId = outputItem.Id!
+            };
+
+            yield return new ResponseImageGenerationCallGenerating
+            {
+                SequenceNumber = sequenceNumber++,
+                OutputIndex = outputIndex,
+                ItemId = outputItem.Id!
+            };
+
+            /*
+             * No partial_image event here.
+             *
+             * modelProvider.ImageRequest currently returns complete images,
+             * so emitting the final image as a fake partial image would be wrong.
+             */
+
+            yield return new ResponseImageGenerationCallCompleted
+            {
+                SequenceNumber = sequenceNumber++,
+                OutputIndex = outputIndex,
+                ItemId = outputItem.Id!
+            };
+
+            yield return new ResponseOutputItemDone
+            {
+                SequenceNumber = sequenceNumber++,
+                OutputIndex = outputIndex,
+                Item = new ResponseStreamItem
+                {
+                    Id = outputItem.Id!,
+                    Type = "image_generation_call",
+                    Status = "completed",
+                    AdditionalProperties = new Dictionary<string, JsonElement>()
+                    {
+                        {"result", JsonSerializer.SerializeToElement(outputItem.Result,
+                            JsonSerializerOptions.Web)}
+                    }
+                }
+            };
+        }
+
+        var completedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        var completedResponse = new ResponseResult
+        {
+            Id = responseId,
+            Model = string.IsNullOrWhiteSpace(result.Response.ModelId)
+                ? options.Model
+                : result.Response.ModelId,
+            CreatedAt = createdAt,
+            CompletedAt = completedAt,
+            Status = "completed",
+            Output = outputItems
+        };
+
+        yield return new ResponseCompleted
+        {
+            SequenceNumber = sequenceNumber++,
+            Response = completedResponse
+        };
+    }
+
+    private static ResponseResult CreateFailedImageResponse(
+        string responseId,
+        string model,
+        long createdAt,
+        string message)
+    {
+        return new ResponseResult
+        {
+            Id = responseId,
+            Model = model,
+            CreatedAt = createdAt,
+            CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Status = "failed",
+            Output = [],
+            Error = new ResponseResultError
+            {
+                Code = "image_generation_error",
+                Message = message
+            }
+        };
+    }
+
+
 }
