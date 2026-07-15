@@ -33,11 +33,17 @@ public class AudioSpeechRequest
     public string? StreamFormat { get; set; }
 }
 
-
-public class AudioSpeechStreamDelta
+public interface IAudioSpeechStreamEvent
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = "speech.audio.delta";
+    string Type { get; }
+}
+
+public class AudioSpeechStreamDelta : IAudioSpeechStreamEvent
+{
+    [JsonPropertyName("type")]
+    public string Type => "speech.audio.delta";
+
 
     [JsonPropertyName("audio")]
     public required string Audio { get; set; }
@@ -45,10 +51,10 @@ public class AudioSpeechStreamDelta
 }
 
 
-public class AudioSpeechStreamDone
+public class AudioSpeechStreamDone : IAudioSpeechStreamEvent
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = "speech.audio.done";
+    public string Type => "speech.audio.done";
 
     [JsonPropertyName("usage")]
     public AudioSpeechUsage? Usage { get; set; }

@@ -50,19 +50,25 @@ public class AudioTranscriptionRequest
     public string[]? KnownSpeakerReferences { get; set; }
 }
 
-public class AudioTranscriptionTextDelta
+public interface IAudioTranscriptionStreamEvent
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = "transcript.text.delta";
+    string Type { get; }
+}
+
+public class AudioTranscriptionTextDelta : IAudioTranscriptionStreamEvent
+{
+    [JsonPropertyName("type")]
+    public string Type => "transcript.text.delta";
 
     [JsonPropertyName("delta")]
     public required string Delta { get; set; }
 }
 
-public class AudioTranscriptionTextDone
+public class AudioTranscriptionTextDone : IAudioTranscriptionStreamEvent
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = "transcript.text.done";
+    public string Type => "transcript.text.done";
 
     [JsonPropertyName("text")]
     public required string Text { get; set; }
