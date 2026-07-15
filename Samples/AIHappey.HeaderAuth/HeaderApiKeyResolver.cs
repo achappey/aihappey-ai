@@ -567,7 +567,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["chatqt"] = "X-ChatQT-Key",
             ["zeroentropy"] = "X-ZeroEntropy-Key",
             ["beastlabai"] = "X-BeastLabAI-Key",
-            ["lelapaai"] = "X-LelapaAI-Key"
+            ["lelapaai"] = "X-LelapaAI-Key",
+            ["sailresearch"] = "X-SailResearch-Key"
 
         };
 

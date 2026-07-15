@@ -566,6 +566,7 @@ public class AIServiceConfig
     public ProviderConfig? ZeroEntropy { get; set; }
     public ProviderConfig? BeastLabAI { get; set; }
     public ProviderConfig? LelapaAI { get; set; }
+    public ProviderConfig? SailResearch { get; set; }    
 
 
 }
