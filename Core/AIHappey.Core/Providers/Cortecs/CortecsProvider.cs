@@ -46,16 +46,25 @@ public partial class CortecsProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return EnrichChatCompletionWithGatewayCost(response);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                     options, cancellationToken: cancellationToken))
+        {
+            CatalogPricingCostingExtensions.NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+            yield return EnrichChatCompletionUpdateWithGatewayCost(update);
+        }
     }
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
