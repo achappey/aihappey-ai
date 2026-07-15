@@ -75,6 +75,7 @@ public partial class BlinkProvider
             Response = new()
             {
                 Timestamp = startedAt,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
