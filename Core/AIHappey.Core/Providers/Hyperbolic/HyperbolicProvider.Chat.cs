@@ -11,9 +11,7 @@ public partial class HyperbolicProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        var model = GetIdentifier().GetModels().FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
+        var model = await this.GetModel(chatRequest.Model, cancellationToken)
             ?? throw new ArgumentException(chatRequest.Model);
 
         if (model.Type == "image")

@@ -5,6 +5,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Hyperbolic;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Hyperbolic;
 
@@ -110,9 +111,12 @@ public partial class HyperbolicProvider
         return new ImageResponse
         {
             Images = images,
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 ModelId = imageRequest.Model,
+                Headers = resp.GetHeaders(),
                 Timestamp = now
             }
         };
