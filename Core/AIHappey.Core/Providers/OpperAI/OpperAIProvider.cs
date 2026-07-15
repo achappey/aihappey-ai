@@ -69,11 +69,11 @@ public partial class OpperAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
+        => OpperAITranscriptionRequest(request, cancellationToken);
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+        => OpperAISpeechRequest(request, cancellationToken);
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -102,12 +102,10 @@ public partial class OpperAIProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => OpperAIImageRequest(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+        => OpperAIVideoRequest(request, cancellationToken);
 
 
     public async Task<MessagesResponse> MessagesAsync(
