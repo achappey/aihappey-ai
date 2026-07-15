@@ -1,10 +1,18 @@
 using System.Text.Json;
+using AIHappey.Common.Model;
+using AIHappey.Core.AI;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Providers.Cortecs;
+using AIHappey.Messages;
+using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Tests.Cortecs;
 
@@ -143,6 +151,62 @@ public class CortecsProviderCostingTests
         Assert.Null(response.AdditionalProperties);
     }
 
+    [Fact]
+    public async Task Synthetic_api_chat_finish_metadata_scales_raw_cortecs_usage_cost()
+    {
+        var provider = new RawCortecsStreamProvider(
+            new ChatCompletionUpdate
+            {
+                Id = "yD4etAZzBCsMFyOQ",
+                Created = 1784122854,
+                Model = "cortecs/gemini-3.5-flash",
+                Choices =
+                [
+                    new
+                    {
+                        index = 0,
+                        delta = new { },
+                        finish_reason = "stop"
+                    }
+                ]
+            },
+            new ChatCompletionUpdate
+            {
+                Id = "yD4etAZzBCsMFyOQ",
+                Created = 1784122854,
+                Model = "cortecs/gemini-3.5-flash",
+                Usage = UsageElement("""
+                {
+                    "completion_tokens": 55,
+                    "prompt_tokens": 554,
+                    "total_tokens": 609,
+                    "cost": 1178.0
+                }
+                """)
+            });
+
+        FinishUIPart? finishPart = null;
+        await foreach (var streamEvent in provider.StreamUnifiedViaChatCompletionsAsync(new AIRequest
+        {
+            ProviderId = "cortecs",
+            Model = "cortecs/gemini-3.5-flash"
+        }))
+        {
+            if (streamEvent.Event.Type != "finish")
+                continue;
+
+            finishPart = Assert.IsType<FinishUIPart>(
+                VercelUnifiedMapper.ToUIMessagePart(streamEvent.Event, "cortecs").Single());
+        }
+
+        Assert.NotNull(finishPart);
+        Assert.Equal(0.001178m, finishPart.MessageMetadata?.Gateway?.Cost);
+
+        Assert.NotNull(finishPart.MessageMetadata?.ProviderMetadata);
+        Assert.True(finishPart.MessageMetadata.ProviderMetadata.TryGetValue("gateway", out var gatewayMetadata));
+        Assert.Equal(0.001178m, gatewayMetadata.GetProperty("cost").GetDecimal());
+    }
+
     private static JsonElement CortecsSampleUsage()
         => UsageElement("""
         {
@@ -170,6 +234,63 @@ public class CortecsProviderCostingTests
     {
         using var doc = JsonDocument.Parse(json);
         return doc.RootElement.Clone();
+    }
+
+    private sealed class RawCortecsStreamProvider(params ChatCompletionUpdate[] updates) : IModelProvider
+    {
+        public string GetIdentifier() => "cortecs";
+
+        public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            foreach (var update in updates)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                yield return update;
+                await Task.Yield();
+            }
+        }
+
+        public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 }
 

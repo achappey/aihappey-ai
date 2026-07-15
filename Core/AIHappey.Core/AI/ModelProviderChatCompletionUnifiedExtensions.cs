@@ -188,12 +188,12 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                     model: finishData?.Model
                         ?? activeModel
                          ?? responseRequest.Model?.ToModelId(modelProvider.GetIdentifier()),
-                    inputTokens: finishData?.InputTokens ?? inputTokens,
-                    outputTokens: finishData?.OutputTokens ?? outputTokens,
-                    totalTokens: finishData?.TotalTokens ?? totalTokens,
-                    completedAt: finishData?.CompletedAt,
-                    rawUsage: rawUsage,
-                    messageMetadata: finishData?.MessageMetadata);
+                        inputTokens: finishData?.InputTokens ?? inputTokens,
+                        outputTokens: finishData?.OutputTokens ?? outputTokens,
+                        totalTokens: finishData?.TotalTokens ?? totalTokens,
+                        completedAt: finishData?.CompletedAt,
+                        rawUsage: rawUsage,
+                        messageMetadata: finishData?.MessageMetadata);
 
                 yield break;
             }
@@ -526,7 +526,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
                         rawUsage,
                         inputTokens,
                         outputTokens,
-                        totalTokens)
+                        totalTokens,
+                        providerId)
                 }
             },
             Metadata = metadata
@@ -539,7 +540,8 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         object? rawUsage,
         int? inputTokens,
         int? outputTokens,
-        int? totalTokens)
+        int? totalTokens,
+        string? providerId = null)
     {
         if (existingMessageMetadata is null
             && rawUsage is null
@@ -561,7 +563,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         if (rawUsage is not null)
             metadata["usage"] = CloneUsageObject(rawUsage);
 
-        if (!HasGatewayCost(metadata) && TryGetUsageCost(rawUsage, out var usageCost))
+        if (!HasGatewayCost(metadata) && TryGetUsageCost(rawUsage, out var usageCost, providerId))
         {
             metadata["gateway"] = new Dictionary<string, object?>
             {
@@ -604,7 +606,7 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             && TryGetDecimal(costElement, out _);
     }
 
-    private static bool TryGetUsageCost(object? rawUsage, out decimal cost)
+    private static bool TryGetUsageCost(object? rawUsage, out decimal cost, string? providerId = null)
     {
         cost = 0m;
 
@@ -620,7 +622,13 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         if (!TryGetProperty(usageElement, "cost", out var costElement))
             return false;
 
-        return TryGetDecimal(costElement, out cost);
+        if (!TryGetDecimal(costElement, out cost))
+            return false;
+
+        if (string.Equals(providerId, "cortecs", StringComparison.OrdinalIgnoreCase))
+            cost /= 1_000_000m;
+
+        return true;
     }
 
     private static bool TryGetDecimal(JsonElement element, out decimal value)
