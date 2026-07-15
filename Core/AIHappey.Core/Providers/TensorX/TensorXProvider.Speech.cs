@@ -85,6 +85,7 @@ public partial class TensorXProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
