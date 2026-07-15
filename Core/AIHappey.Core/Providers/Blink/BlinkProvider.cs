@@ -46,7 +46,9 @@ public partial class BlinkProvider : IModelProvider
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+             options,
+             relativeUrl: "v1/ai/chat/completions",
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -54,17 +56,16 @@ public partial class BlinkProvider : IModelProvider
         ApplyAuthHeader();
 
         return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+                    options,
+                    relativeUrl: "v1/ai/chat/completions",
+                    cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Blink).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
