@@ -566,6 +566,7 @@ using AIHappey.Core.Providers.Darkbloom;
 using AIHappey.Core.Providers.Crusoe;
 using AIHappey.Core.Providers.ILMU;
 using AIHappey.Core.Providers.Lyceum;
+using AIHappey.Core.Providers.Depaza;
 
 namespace AIHappey.Core.AI;
 
@@ -1158,6 +1159,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CrusoeProvider>();
         services.AddSingleton<IModelProvider, ILMUProvider>();
         services.AddSingleton<IModelProvider, LyceumProvider>();
+        services.AddSingleton<IModelProvider, DepazaProvider>();
 
 
     }
