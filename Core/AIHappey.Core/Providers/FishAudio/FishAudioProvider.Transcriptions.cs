@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -76,14 +77,17 @@ public partial class FishAudioProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"FishAudio STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertTranscriptionResponse(json, request.Model, now, warnings);
+        return ConvertTranscriptionResponse(json, request.Model,
+            now, warnings, resp.GetHeaders(), GetIdentifier());
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
         string json,
         string model,
         DateTime now,
-        IEnumerable<object> warnings)
+        IEnumerable<object> warnings,
+        IDictionary<string, string> headers,
+        string providerId)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -131,10 +135,12 @@ public partial class FishAudioProvider
             DurationInSeconds = duration,
             Segments = segments,
             Warnings = warnings,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = model,
+                ModelId = model.ToModelId(providerId),
+                Headers = headers,
                 Body = json,
             }
         };

@@ -26,6 +26,6 @@ public partial class FishAudioProvider
             yield break;
         }
 
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
