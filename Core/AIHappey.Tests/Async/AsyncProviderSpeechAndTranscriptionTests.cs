@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Async;
 using AIHappey.Vercel.Models;
 
@@ -48,52 +49,218 @@ public sealed class AsyncProviderSpeechAndTranscriptionTests
     }
 
     [Fact]
-    public async Task ListModels_filters_voices_by_each_speech_model_and_ignores_failed_models()
+    public async Task OpenAISpeechRequestAsync_uses_existing_async_speech_request_mapping()
     {
-        var requestedModelIds = new List<string>();
+        HttpRequestMessage? capturedRequest = null;
+        string? capturedBody = null;
+
         var provider = CreateProvider(async request =>
         {
-            Assert.Equal("/voices", request.RequestUri?.AbsolutePath);
+            capturedRequest = request;
+            capturedBody = await request.Content!.ReadAsStringAsync();
 
-            var body = await request.Content!.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(body);
-            var modelId = doc.RootElement.GetProperty("model_id").GetString()!;
-            requestedModelIds.Add(modelId);
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("wav-audio"))
+            };
 
-            if (modelId == "async_flash_v1.5")
-                return JsonResponse("{\"detail\":{\"message\":\"not supported\"}}", HttpStatusCode.BadRequest);
-
-            return JsonResponse(
-                $$"""
-                {
-                  "voices": [
-                    {
-                      "voice_id": "{{modelId}}-voice",
-                      "voice_type": "PREDEFINED",
-                      "name": "Voice for {{modelId}}",
-                      "description": "Test voice",
-                      "language": "en,fr",
-                      "gender": "Female",
-                      "accent": "US",
-                      "style": "calm",
-                      "created_at": "2025-03-30T11:15:32Z",
-                      "updated_at": "2025-03-30T11:15:32Z"
-                    }
-                  ],
-                  "next_cursor": ""
-                }
-                """);
+            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("audio/wav");
+            return response;
         });
 
-        var models = (await provider.ListModels()).ToList();
+        var (audio, mimeType) = await provider.OpenAISpeechRequestAsync(new AudioSpeechRequest
+        {
+            Model = "async_flash_v1.0/voice-shortcut",
+            Voice = "explicit-voice",
+            Input = "hello openai",
+            ResponseFormat = "wav"
+        });
 
-        Assert.Contains("async_pro_v1.0", requestedModelIds);
-        Assert.Contains("async_flash_v1.5", requestedModelIds);
-        Assert.Contains("async_flash_v1.0", requestedModelIds);
-        Assert.Contains(models, m => m.Id == "async/async_pro_v1.0/async_pro_v1.0-voice" && m.Type == "speech");
-        Assert.Contains(models, m => m.Id == "async/async_flash_v1.0/async_flash_v1.0-voice" && m.Type == "speech");
-        Assert.DoesNotContain(models, m => m.Id == "async/async_flash_v1.5/async_flash_v1.5-voice");
-        Assert.Contains(models, m => m.Id == "async/async_asr_v1.0" && m.Type == "transcription");
+        Assert.Equal(Encoding.UTF8.GetBytes("wav-audio"), audio);
+        Assert.Equal("audio/wav", mimeType);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("/text_to_speech", capturedRequest!.RequestUri?.AbsolutePath);
+
+        using var doc = JsonDocument.Parse(capturedBody!);
+        Assert.Equal("async_flash_v1.0", doc.RootElement.GetProperty("model_id").GetString());
+        Assert.Equal("voice-shortcut", doc.RootElement.GetProperty("voice").GetProperty("id").GetString());
+        Assert.Equal("hello openai", doc.RootElement.GetProperty("transcript").GetString());
+        Assert.Equal("wav", doc.RootElement.GetProperty("output_format").GetProperty("container").GetString());
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_posts_native_streaming_request_and_maps_bytes_to_openai_events()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        string? capturedBody = null;
+        var audioChunk = Encoding.UTF8.GetBytes("streamed-audio");
+
+        var provider = CreateProvider(async request =>
+        {
+            capturedRequest = request;
+            capturedBody = await request.Content!.ReadAsStringAsync();
+
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(audioChunk)
+            };
+
+            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            return response;
+        });
+
+        var events = new List<IAudioSpeechStreamEvent>();
+        await foreach (var streamEvent in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                       {
+                           Model = "async_flash_v1.5",
+                           Voice = "voice-id",
+                           Input = "hello streamed async",
+                           ResponseFormat = "pcm",
+                           Speed = 1.2f
+                       }))
+        {
+            events.Add(streamEvent);
+        }
+
+        Assert.Collection(
+            events,
+            first =>
+            {
+                var delta = Assert.IsType<AudioSpeechStreamDelta>(first);
+                Assert.Equal("speech.audio.delta", delta.Type);
+                Assert.Equal(Convert.ToBase64String(audioChunk), delta.Audio);
+            },
+            second =>
+            {
+                var done = Assert.IsType<AudioSpeechStreamDone>(second);
+                Assert.Equal("speech.audio.done", done.Type);
+                Assert.Null(done.Usage);
+            });
+
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("/text_to_speech/streaming", capturedRequest!.RequestUri?.AbsolutePath);
+        Assert.Contains("application/octet-stream", capturedRequest.Headers.Accept.ToString());
+
+        using var doc = JsonDocument.Parse(capturedBody!);
+        Assert.Equal("async_flash_v1.5", doc.RootElement.GetProperty("model_id").GetString());
+        Assert.Equal("voice-id", doc.RootElement.GetProperty("voice").GetProperty("id").GetString());
+        Assert.Equal("hello streamed async", doc.RootElement.GetProperty("transcript").GetString());
+        Assert.Equal("raw", doc.RootElement.GetProperty("output_format").GetProperty("container").GetString());
+        Assert.Equal("pcm_s16le", doc.RootElement.GetProperty("output_format").GetProperty("encoding").GetString());
+        Assert.Equal(44100, doc.RootElement.GetProperty("output_format").GetProperty("sample_rate").GetInt32());
+        Assert.Equal(1.2f, doc.RootElement.GetProperty("speed_control").GetSingle(), precision: 2);
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_uses_non_streaming_fallback_for_unsupported_streaming_format()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        string? capturedBody = null;
+        var provider = CreateProvider(async request =>
+        {
+            capturedRequest = request;
+            capturedBody = await request.Content!.ReadAsStringAsync();
+
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("wav-audio"))
+            };
+
+            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("audio/wav");
+            return response;
+        });
+
+        var events = new List<IAudioSpeechStreamEvent>();
+        await foreach (var streamEvent in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                       {
+                           Model = "async_flash_v1.0/voice-shortcut",
+                           Input = "hello wav fallback",
+                           ResponseFormat = "wav"
+                       }))
+        {
+            events.Add(streamEvent);
+        }
+
+        Assert.Collection(
+            events,
+            first =>
+            {
+                var delta = Assert.IsType<AudioSpeechStreamDelta>(first);
+                Assert.Equal(Convert.ToBase64String(Encoding.UTF8.GetBytes("wav-audio")), delta.Audio);
+            },
+            second => Assert.IsType<AudioSpeechStreamDone>(second));
+
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("/text_to_speech", capturedRequest!.RequestUri?.AbsolutePath);
+
+        using var doc = JsonDocument.Parse(capturedBody!);
+        Assert.Equal("wav", doc.RootElement.GetProperty("output_format").GetProperty("container").GetString());
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_requires_voice_for_native_streaming_base_model()
+    {
+        var provider = CreateProvider((Func<HttpRequestMessage, HttpResponseMessage>)(_ => throw new InvalidOperationException("HTTP should not be called.")));
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                           {
+                               Model = "async_flash_v1.0",
+                               Input = "hello",
+                               ResponseFormat = "mp3"
+                           }))
+            {
+            }
+        });
+
+        Assert.Contains("voice", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_throws_with_async_error_body()
+    {
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("invalid voice", Encoding.UTF8, "text/plain")
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                           {
+                               Model = "async_flash_v1.0/voice-shortcut",
+                               Input = "hello",
+                               ResponseFormat = "mp3"
+                           }))
+            {
+            }
+        });
+
+        Assert.Contains("asyncAI streaming TTS failed (400): invalid voice", exception.Message);
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_throws_when_async_reports_quota_exceeded_mid_stream()
+    {
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(Encoding.ASCII.GetBytes("--ERROR:QUOTA_EXCEEDED--"))
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                           {
+                               Model = "async_flash_v1.0/voice-shortcut",
+                               Input = "hello",
+                               ResponseFormat = "mp3"
+                           }))
+            {
+            }
+        });
+
+        Assert.Contains("quota exceeded", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
