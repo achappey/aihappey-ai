@@ -1,0 +1,32 @@
+{
+  "depaza/lite": {
+    "pricing": {
+      "input": "0.00000056",
+      "output": "0.00000056"
+    }
+  },
+  "depaza/core": {
+    "pricing": {
+      "input": "0.00000164",
+      "output": "0.00000219"
+    }
+  },
+  "depaza/max": {
+    "pricing": {
+      "input": "0.00000556",
+      "output": "0.00001667"
+    }
+  },
+  "depaza/advanced": {
+    "pricing": {
+      "input": "0.00000667",
+      "output": "0.00001833"
+    }
+  },
+  "depaza/boss": {
+    "pricing": {
+      "input": "0.00000164",
+      "output": "0.00000219"
+    }
+  }
+}

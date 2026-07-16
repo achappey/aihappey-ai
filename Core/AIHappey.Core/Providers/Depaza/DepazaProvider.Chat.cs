@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Depaza;
 
@@ -18,7 +19,7 @@ public partial class DepazaProvider
         {
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                yield return uiPart;
+                yield return this.EnrichFinishPartWithCatalogGatewayCost(uiPart, chatRequest.Model);
             }
         }
     }

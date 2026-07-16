@@ -71,7 +71,7 @@ public partial class DepazaProvider
 
                 models.AddRange(GetIdentifier().GetModels());
                 
-                return models;
+                return models.WithPricing(GetIdentifier());
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
