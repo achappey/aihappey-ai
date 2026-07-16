@@ -67,10 +67,7 @@ public partial class RequestyProvider
 
     public async Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
     {
-        var imageRequest = await options.ToImageRequest(options.Model!, GetIdentifier(), cancellationToken);
-        var imageResult = await this.ImageRequest(imageRequest, cancellationToken);
-
-        return imageResult.ToOpenAIImagesResponse(options);
+        return await this.FromImageRequest(options, cancellationToken: cancellationToken);
     }
 
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)

@@ -3,13 +3,24 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.AI;
 
 public static class ModelProviderImageCompatibilityExtensions
 {
+    public static async Task<OpenAIImagesResponse> FromImageRequest(this IModelProvider modelProvider,
+      OpenAIImageVariationRequest options,
+      CancellationToken cancellationToken = default)
+    {
+        var imageRequest = await options.ToImageRequest(options.Model!, modelProvider.GetIdentifier(), cancellationToken);
+        var imageResult = await modelProvider.ImageRequest(imageRequest, cancellationToken);
+
+        return imageResult.ToOpenAIImagesResponse(options);
+    }
+
     private static readonly JsonSerializerOptions OpenAIImageCompatibilityJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
