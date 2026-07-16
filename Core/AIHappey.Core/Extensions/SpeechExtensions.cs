@@ -19,6 +19,47 @@ public static class SpeechExtensions
             Text = request.Input
         };
 
+    public static (byte[] Audio, string MimeType) ToOpenAISpeechAudio(
+        this SpeechResponse response)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+        ArgumentNullException.ThrowIfNull(response.Audio);
+
+        var base64 = response.Audio.Base64;
+        var mimeType = response.Audio.MimeType;
+
+        if (string.IsNullOrWhiteSpace(base64))
+            throw new InvalidOperationException("Speech response did not include audio data.");
+
+        var commaIndex = base64.IndexOf(',');
+        if (base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase) && commaIndex >= 0)
+        {
+            if (string.IsNullOrWhiteSpace(mimeType))
+            {
+                var semicolonIndex = base64.IndexOf(';');
+                if (semicolonIndex > "data:".Length)
+                    mimeType = base64["data:".Length..semicolonIndex];
+            }
+
+            base64 = base64[(commaIndex + 1)..];
+        }
+
+        return (Convert.FromBase64String(base64), string.IsNullOrWhiteSpace(mimeType) ? "application/octet-stream" : mimeType);
+    }
+
+    public static IEnumerable<IAudioSpeechStreamEvent> ToOpenAISpeechStreamEvents(
+        this SpeechResponse response)
+    {
+        var (audio, _) = response.ToOpenAISpeechAudio();
+
+        yield return new AudioSpeechStreamDelta
+        {
+            Audio = Convert.ToBase64String(audio)
+        };
+
+        yield return new AudioSpeechStreamDone();
+    }
+
     public static async Task<TranscriptionRequest> ToTranscriptionRequest(
        this AudioTranscriptionRequest request,
        string model,
