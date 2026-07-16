@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Agentics;
 
@@ -144,4 +145,14 @@ public partial class AgenticsProvider : IModelProvider
         => IsAgenticsAgentModel(request.Model)
             ? StreamAgentUnifiedAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

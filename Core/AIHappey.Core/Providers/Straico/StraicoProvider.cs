@@ -12,6 +12,7 @@ using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Straico;
 
@@ -167,4 +168,14 @@ public partial class StraicoProvider : IModelProvider
             : IsStraicoRagModel(request.Model)
                 ? StreamStraicoRagUnifiedAsync(request, cancellationToken)
                 : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

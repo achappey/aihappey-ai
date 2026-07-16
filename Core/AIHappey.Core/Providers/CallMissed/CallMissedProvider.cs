@@ -1,6 +1,7 @@
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
@@ -124,4 +125,14 @@ public partial class CallMissedProvider : IModelProvider
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

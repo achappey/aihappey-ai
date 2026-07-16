@@ -172,4 +172,14 @@ public partial class TierUpProvider : IModelProvider
             yield return this.EnrichUnifiedStreamEventWithCatalogGatewayCost(streamEvent, request.Model);
         }
     }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

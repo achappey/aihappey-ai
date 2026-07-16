@@ -13,6 +13,7 @@ using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.RegoloAI;
 
@@ -144,4 +145,14 @@ public partial class RegoloAIProvider : IModelProvider
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

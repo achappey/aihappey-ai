@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.TigerCity;
 
@@ -142,4 +143,13 @@ public partial class TigerCityProvider : IModelProvider
         yield break;
     }
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

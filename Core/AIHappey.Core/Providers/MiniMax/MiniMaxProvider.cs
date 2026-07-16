@@ -9,6 +9,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -165,5 +166,15 @@ public partial class MiniMaxProvider : IModelProvider
         {
             yield return this.EnrichUnifiedStreamEventWithCatalogGatewayCost(streamEvent, request.Model);
         }
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -12,6 +12,7 @@ using System.Globalization;
 using AIHappey.Unified.Models;
 using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Perplexity;
 
@@ -492,6 +493,16 @@ public partial class PerplexityProvider : IModelProvider
         if (lower.Contains(".svg")) return "image/svg+xml";
 
         return null;
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     private sealed class PerplexityDownloadedImage

@@ -8,6 +8,7 @@ using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Apertis;
 
@@ -112,4 +113,14 @@ public partial class ApertisProvider : IModelProvider
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

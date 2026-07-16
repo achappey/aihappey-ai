@@ -8,6 +8,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Rime;
 
@@ -86,6 +87,16 @@ public partial class RimeProvider : IModelProvider
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

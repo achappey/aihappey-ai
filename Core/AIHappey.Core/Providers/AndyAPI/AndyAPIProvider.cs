@@ -10,6 +10,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AndyAPI;
 
@@ -134,4 +135,14 @@ public partial class AndyAPIProvider : IModelProvider
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken, enforceFlatContent: true);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

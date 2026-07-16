@@ -48,4 +48,8 @@ public interface IModelProvider
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default);
 
+    Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
+
+
 }

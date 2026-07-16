@@ -11,6 +11,7 @@ using AIHappey.Sampling.Mapping;
 using AIHappey.Responses;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Infercom;
 
@@ -149,4 +150,14 @@ public partial class InfercomProvider : IModelProvider
         => UseResponsesApi(request)
             ? this.StreamUnifiedViaResponsesAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -120,6 +120,16 @@ public partial class KlingAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     // ImageRequest implementation lives in KlingAIProvider.Images.cs
     // VideoRequest implementation lives in KlingAIProvider.Videos.cs
 }

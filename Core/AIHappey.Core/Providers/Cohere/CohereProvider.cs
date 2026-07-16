@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Responses.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Sampling.Mapping;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Cohere;
 
@@ -134,5 +135,15 @@ public partial class CohereProvider : IModelProvider, IUnifiedModelProvider
             foreach (var result in update.ToMessageStreamParts())
                 yield return result;
         }
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

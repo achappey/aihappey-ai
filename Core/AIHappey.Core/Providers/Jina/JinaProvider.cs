@@ -11,6 +11,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using ModelContextProtocol.Protocol;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Jina;
 
@@ -133,4 +134,13 @@ public partial class JinaProvider : IModelProvider
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

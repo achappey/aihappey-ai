@@ -11,6 +11,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.DedalusLabs;
 
@@ -139,4 +140,14 @@ public partial class DedalusLabsProvider : IModelProvider
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

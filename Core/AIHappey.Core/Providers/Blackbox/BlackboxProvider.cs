@@ -10,6 +10,7 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.BLACKBOX;
 
@@ -147,6 +148,16 @@ public partial class BLACKBOXProvider : IModelProvider
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
 
     /*  public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)

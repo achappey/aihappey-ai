@@ -9,6 +9,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.EUrouter;
 
@@ -106,5 +107,15 @@ public partial class EUrouterProvider : IModelProvider
 
         await foreach (var part in stream.WithCancellation(cancellationToken))
             yield return part;
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -6,6 +6,7 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.ModelMax;
 
@@ -114,5 +115,15 @@ public partial class ModelMaxProvider : IModelProvider
             request,
             headers: headers,
             cancellationToken: cancellationToken);
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

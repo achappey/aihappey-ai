@@ -33,30 +33,83 @@ public class AudioSpeechController(IAIModelProviderResolver resolver) : Controll
 
         try
         {
-            var speechRequest = requestDto.ToSpeechRequest();
-            var content = await provider.SpeechRequest(speechRequest, cancellationToken);
-
-            var audioBytes = Convert.FromBase64String(content.Audio.Base64);
-
             if (requestDto.StreamFormat == "sse")
             {
                 Response.ContentType = "text/event-stream";
+                Response.Headers.CacheControl = "no-cache";
 
-                await using var writer = new StreamWriter(Response.Body);
-
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new AudioSpeechStreamDelta
+                try
                 {
-                    Audio = content.Audio.Base64
-                })}\n\n");
+                    await foreach (var streamEvent in
+                        provider.OpenAISpeechStreamingAsync(
+                            requestDto,
+                            cancellationToken))
+                    {
+                        var json = JsonSerializer.Serialize(
+                            streamEvent,
+                            streamEvent.GetType());
 
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new AudioSpeechStreamDone())}\n\n");
-                await writer.WriteAsync("data: [DONE]\n\n");
-                await writer.FlushAsync(CancellationToken.None);
+                        await Response.WriteAsync(
+                            $"data: {json}\n\n",
+                            cancellationToken);
+
+                        await Response.Body.FlushAsync(cancellationToken);
+                    }
+                }
+                catch (NotImplementedException) when (!Response.HasStarted)
+                {
+                    var speechRequest = requestDto.ToSpeechRequest();
+
+                    var content = await provider.SpeechRequest(
+                        speechRequest,
+                        cancellationToken);
+
+                    await Response.WriteAsync(
+                        $"data: {JsonSerializer.Serialize(new AudioSpeechStreamDelta
+                        {
+                            Audio = content.Audio.Base64
+                        })}\n\n",
+                        cancellationToken);
+
+                    await Response.WriteAsync(
+                        $"data: {JsonSerializer.Serialize(new AudioSpeechStreamDone())}\n\n",
+                        cancellationToken);
+
+                    await Response.Body.FlushAsync(cancellationToken);
+                }
+
+                await Response.WriteAsync(
+                    "data: [DONE]\n\n",
+                    cancellationToken);
+
+                await Response.Body.FlushAsync(cancellationToken);
 
                 return new EmptyResult();
             }
 
-            return File(audioBytes, content.Audio.MimeType);
+            try
+            {
+                var (audio, mimeType) = await provider.OpenAISpeechRequestAsync(
+                    requestDto,
+                    cancellationToken);
+
+                return File(audio, mimeType);
+            }
+            catch (NotImplementedException)
+            {
+                var speechRequest = requestDto.ToSpeechRequest();
+
+                var content = await provider.SpeechRequest(
+                    speechRequest,
+                    cancellationToken);
+
+                var audioBytes = Convert.FromBase64String(
+                    content.Audio.Base64);
+
+                return File(
+                    audioBytes,
+                    content.Audio.MimeType);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -77,11 +130,14 @@ public class AudioSpeechController(IAIModelProviderResolver resolver) : Controll
                                 type = "server_error",
                                 code = (string?)null
                             }
-                        })}\n\n");
+                        })}\n\n",
+                        CancellationToken.None);
+
+                    await Response.Body.FlushAsync(CancellationToken.None);
                 }
                 catch
                 {
-                    // socket already gone
+                    // Socket already gone.
                 }
 
                 return new EmptyResult();

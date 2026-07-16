@@ -112,5 +112,15 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
         => IsMaestroModel(request.Model)
             ? StreamMaestroUnifiedAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken, enforceFlatContent: true);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

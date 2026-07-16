@@ -11,6 +11,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -176,5 +177,15 @@ public partial class GoogleAIProvider
                     yield return part;
             }
         }
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

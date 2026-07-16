@@ -11,6 +11,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.LelapaAI;
 
@@ -184,4 +185,13 @@ public partial class LelapaAIProvider : IModelProvider
         }
     }
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

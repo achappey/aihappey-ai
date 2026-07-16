@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
@@ -1077,5 +1078,13 @@ public partial class MistralProvider : IModelProvider
     private static List<JsonNode> ResolveProviderConversationTools(MistralProviderMetadata? metadata)
         => MistralExtensions.ResolveProviderConversationTools(metadata);
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

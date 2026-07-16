@@ -6,6 +6,7 @@ using AIHappey.Messages;
 using AIHappey.Vercel.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -81,6 +82,16 @@ public sealed partial class AzureProvider(
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

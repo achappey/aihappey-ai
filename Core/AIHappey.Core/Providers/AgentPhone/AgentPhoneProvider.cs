@@ -10,6 +10,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AgentPhone;
 
@@ -133,6 +134,16 @@ public partial class AgentPhoneProvider : IModelProvider
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }
 

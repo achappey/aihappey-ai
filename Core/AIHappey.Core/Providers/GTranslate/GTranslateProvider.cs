@@ -1,5 +1,6 @@
 using AIHappey.Common.Model;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Vercel.Models;
 
@@ -35,6 +36,16 @@ public partial class GTranslateProvider : IModelProvider
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -10,6 +10,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.IOnet;
 
@@ -156,5 +157,15 @@ public partial class IOnetProvider : IModelProvider
         {
             yield return await EnrichUnifiedStreamEventWithGatewayCostAsync(streamEvent, request.Model, cancellationToken);
         }
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

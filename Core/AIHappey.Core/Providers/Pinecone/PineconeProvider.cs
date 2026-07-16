@@ -5,6 +5,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.AI;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Pinecone;
 
@@ -91,6 +92,16 @@ public partial class PineconeProvider : IModelProvider
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

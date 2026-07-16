@@ -9,6 +9,7 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Responses;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.HyperRouter;
 
@@ -140,4 +141,13 @@ public partial class HyperRouterProvider : IModelProvider
             cancellationToken: cancellationToken);
     }
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

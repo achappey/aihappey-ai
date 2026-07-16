@@ -8,6 +8,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OpenCode;
 
@@ -142,4 +143,14 @@ public partial class OpenCodeProvider : IModelProvider
         request.Model?.StartsWith("claude") == true || request.Model?.StartsWith("qwen") == true ?
         this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken)
         : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

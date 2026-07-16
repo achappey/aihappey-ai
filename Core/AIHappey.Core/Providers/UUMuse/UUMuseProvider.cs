@@ -12,6 +12,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Sampling.Mapping;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.UUMuse;
 
@@ -140,5 +141,13 @@ public partial class UUMuseProvider : IModelProvider
         yield break;
     }
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

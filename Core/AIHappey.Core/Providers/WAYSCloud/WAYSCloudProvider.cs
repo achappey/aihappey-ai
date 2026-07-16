@@ -11,6 +11,7 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using System.Net.Http.Headers;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.WAYSCloud;
 
@@ -140,4 +141,14 @@ public partial class WAYSCloudProvider : IModelProvider
         => IsChatbotModel(request.Model)
             ? StreamChatbotUnifiedAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

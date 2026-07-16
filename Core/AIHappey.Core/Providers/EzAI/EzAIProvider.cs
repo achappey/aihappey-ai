@@ -8,6 +8,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.EzAI;
 
@@ -126,5 +127,15 @@ public partial class EzAIProvider : IModelProvider
             request,
             headers: headers,
             cancellationToken: cancellationToken);
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

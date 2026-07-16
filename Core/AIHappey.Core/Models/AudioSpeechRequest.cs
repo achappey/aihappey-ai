@@ -18,18 +18,23 @@ public class AudioSpeechRequest
     public string Input { get; set; } = null!;
 
     [JsonPropertyName("voice")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Voice { get; set; }
 
     [JsonPropertyName("response_format")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ResponseFormat { get; set; }
 
     [JsonPropertyName("instructions")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Instructions { get; set; }
 
     [JsonPropertyName("speed")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public float? Speed { get; set; }
 
     [JsonPropertyName("stream_format")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? StreamFormat { get; set; }
 }
 

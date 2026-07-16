@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.ArceeAI;
 
@@ -158,5 +159,15 @@ public partial class ArceeAIProvider : IModelProvider
         {
             yield return await EnrichUnifiedStreamEventWithGatewayCostAsync(streamEvent, request.Model, cancellationToken);
         }
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

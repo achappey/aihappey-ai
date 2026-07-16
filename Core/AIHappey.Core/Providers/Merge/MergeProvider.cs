@@ -15,6 +15,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Responses;
 using System.Text.Json;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Merge;
 
@@ -206,5 +207,15 @@ public partial class MergeProvider : IModelProvider
 
         routingPolicyId = value[RoutingPolicyModelPrefix.Length..].Trim();
         return !string.IsNullOrWhiteSpace(routingPolicyId);
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

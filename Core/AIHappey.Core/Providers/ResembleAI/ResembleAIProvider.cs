@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.ResembleAI;
 
@@ -121,6 +122,16 @@ public partial class ResembleAIProvider : IModelProvider
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
