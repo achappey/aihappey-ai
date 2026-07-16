@@ -106,9 +106,6 @@ public static class ChatCompletionsExtensions
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
-        options.StreamOptions ??= new StreamOptions();
-        options.StreamOptions.IncludeUsage = true;
-
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.ApplyRequestHeaders(headers);
 
@@ -274,9 +271,6 @@ public static class ChatCompletionsExtensions
     {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
-
-        options.StreamOptions ??= new StreamOptions();
-        options.StreamOptions.IncludeUsage = true;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
 
