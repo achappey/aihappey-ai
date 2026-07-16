@@ -46,16 +46,24 @@ public partial class AugureProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return this.EnrichChatCompletionWithCatalogGatewayCost(response, options.Model);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken))
+        {
+            CatalogPricingCostingExtensions.NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+            yield return this.EnrichChatCompletionUpdateWithCatalogGatewayCost(update, options.Model);
+        }
     }
 
     public string GetIdentifier() => nameof(Augure).ToLowerInvariant();
@@ -79,7 +87,7 @@ public partial class AugureProvider : IModelProvider
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
            cancellationToken);
 
-        return result.ToResponseResult();
+        return this.EnrichResponseWithCatalogGatewayCost(result.ToResponseResult(), options.Model);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
@@ -113,7 +121,7 @@ public partial class AugureProvider : IModelProvider
         var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 
-        return result.ToMessagesResponse();
+        return this.EnrichMessagesResponseWithCatalogGatewayCost(result.ToMessagesResponse(), request.Model);
     }
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
@@ -127,17 +135,28 @@ public partial class AugureProvider : IModelProvider
             cancellationToken))
         {
             foreach (var item in part.ToMessageStreamParts())
-                yield return item;
+                yield return this.EnrichMessageStreamPartWithCatalogGatewayCost(item, request.Model);
         }
 
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return this.EnrichUnifiedResponseWithCatalogGatewayCost(response, request.Model);
+    }
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+            request,
+            cancellationToken: cancellationToken))
+        {
+            yield return this.EnrichUnifiedStreamEventWithCatalogGatewayCost(streamEvent, request.Model);
+        }
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {

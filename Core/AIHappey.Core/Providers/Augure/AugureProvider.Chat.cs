@@ -2,6 +2,7 @@ using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Augure;
 
@@ -18,7 +19,7 @@ public partial class AugureProvider
         {
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                yield return uiPart;
+                yield return this.EnrichFinishPartWithCatalogGatewayCost(uiPart, chatRequest.Model);
             }
         }
 

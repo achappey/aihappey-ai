@@ -53,12 +53,11 @@ public partial class AugureProvider
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
-                return models;
+                return models.WithPricing(GetIdentifier());
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,

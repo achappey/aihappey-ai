@@ -1,0 +1,32 @@
+{
+  "augure/ossington-4": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000005"
+    }
+  },
+  "augure/ossington-4-1": {
+    "pricing": {
+      "input": "0.0000025",
+      "output": "0.000008"
+    }
+  },
+  "augure/rosedale-1": {
+    "pricing": {
+      "input": "0.0000035",
+      "output": "0.000011"
+    }
+  },
+  "augure/ossington-3": {
+    "pricing": {
+      "input": "0.000001",
+      "output": "0.000003"
+    }
+  },
+  "augure/tofino-2.5": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  }
+}
