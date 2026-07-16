@@ -64,7 +64,9 @@ public partial class GoogleAIProvider
                     });
                 }
 
-                var omniModels = rawModels.Where(a => a.Id.Contains("omni"));
+                var omniModels = rawModels
+                    .Where(a => a.Id.Contains("omni", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
 
                 foreach (var omniModel in omniModels ?? [])
                 {
