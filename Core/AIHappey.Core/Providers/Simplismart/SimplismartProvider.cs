@@ -6,7 +6,11 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Responses.Mapping;
+using AIHappey.Messages.Mapping;
 using AIHappey.Core.Models;
+using System.Runtime.CompilerServices;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Simplismart;
 
@@ -37,20 +41,20 @@ public partial class SimplismartProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await _client.GetChatCompletion(
-             options, 
+        return await this.GetChatCompletion(_client,
+             options,
              relativeUrl: "chat/completions",
-             ct: cancellationToken);
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return _client.GetChatCompletionUpdates(
-                    options, 
+        return this.GetChatCompletions(_client,
+                    options,
                     relativeUrl: "chat/completions",
-                    ct: cancellationToken);
+                    cancellationToken: cancellationToken);
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -93,13 +97,32 @@ public partial class SimplismartProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }
