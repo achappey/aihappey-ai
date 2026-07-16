@@ -5,7 +5,7 @@ using AIHappey.Core.Contracts;
 
 namespace AIHappey.Core.AI;
 
-public static class ModelProviderSpeechExtensions
+public static class ModelProviderSpeechResponsesExtensions
 {
     public static async Task<ResponseResult> SpeechResponseAsync(
        this IModelProvider modelProvider,
