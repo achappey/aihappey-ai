@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;

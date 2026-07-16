@@ -8,7 +8,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Sampling.Mapping;
-using AIHappey.Responses.Extensions;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;

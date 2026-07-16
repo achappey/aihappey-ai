@@ -10,7 +10,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Requesty;
 

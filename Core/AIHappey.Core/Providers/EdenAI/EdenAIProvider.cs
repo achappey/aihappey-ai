@@ -9,7 +9,6 @@ using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
-using AIHappey.Sampling.Mapping;
 using System.Text.Json;
 using AIHappey.Responses.Streaming;
 using System.Runtime.CompilerServices;

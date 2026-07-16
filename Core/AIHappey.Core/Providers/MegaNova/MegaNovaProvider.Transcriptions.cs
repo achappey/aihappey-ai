@@ -1,7 +1,6 @@
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
 

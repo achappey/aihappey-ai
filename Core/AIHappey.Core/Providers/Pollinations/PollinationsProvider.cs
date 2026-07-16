@@ -1,10 +1,7 @@
-using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
-using System.Text.Json;
-using System.Text;
 using AIHappey.ChatCompletions.Models;
 using Microsoft.AspNetCore.Http;
 using AIHappey.Vercel.Models;

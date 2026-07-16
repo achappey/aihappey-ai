@@ -1,4 +1,3 @@
-using System.Net.Mime;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;

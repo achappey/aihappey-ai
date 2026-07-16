@@ -1,9 +1,7 @@
-using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses.Streaming;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.QuiverAI;
 

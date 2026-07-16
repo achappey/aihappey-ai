@@ -1,9 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Core.AI;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.LelapaAI;

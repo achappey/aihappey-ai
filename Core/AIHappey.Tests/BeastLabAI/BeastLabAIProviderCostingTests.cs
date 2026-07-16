@@ -1,5 +1,4 @@
 using System.Text.Json;
-using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Providers.BeastLabAI;
 using AIHappey.Messages.Mapping;
