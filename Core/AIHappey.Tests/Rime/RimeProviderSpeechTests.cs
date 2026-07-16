@@ -4,6 +4,7 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.Rime;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Rime;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -12,6 +13,142 @@ namespace AIHappey.Tests.Rime;
 
 public sealed class RimeProviderSpeechTests
 {
+    [Fact]
+    public async Task OpenAISpeechRequestAsync_uses_existing_rime_speech_request_mapping()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("wav-audio"))
+            };
+            response.Content.Headers.ContentType = new("audio/wav");
+            return response;
+        });
+
+        var (audio, mimeType) = await provider.OpenAISpeechRequestAsync(new AudioSpeechRequest
+        {
+            Model = "rime/mistv3/cove",
+            Input = "Hello from OpenAI compatibility!",
+            ResponseFormat = "wav"
+        });
+
+        Assert.Equal(Encoding.UTF8.GetBytes("wav-audio"), audio);
+        Assert.Equal("audio/wav", mimeType);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
+        Assert.Equal("/v1/rime-tts", capturedRequest.RequestUri?.AbsolutePath);
+        Assert.Equal("audio/wav", capturedRequest.Headers.Accept.ToString());
+
+        using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.Equal("mistv3", root.GetProperty("modelId").GetString());
+        Assert.Equal("cove", root.GetProperty("speaker").GetString());
+        Assert.Equal("Hello from OpenAI compatibility!", root.GetProperty("text").GetString());
+        Assert.Equal("en", root.GetProperty("lang").GetString());
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_posts_rime_streaming_request_and_maps_raw_audio_to_openai_events()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var audioChunk = Encoding.UTF8.GetBytes("streamed-audio");
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(audioChunk)
+            };
+            response.Content.Headers.ContentType = new("audio/webm");
+            return response;
+        });
+
+        var events = new List<IAudioSpeechStreamEvent>();
+        await foreach (var streamEvent in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                       {
+                           Model = "mistv3",
+                           Voice = "cove",
+                           Input = "Hello streamed Rime!",
+                           ResponseFormat = "webm"
+                       }))
+        {
+            events.Add(streamEvent);
+        }
+
+        Assert.Collection(
+            events,
+            first =>
+            {
+                var delta = Assert.IsType<AudioSpeechStreamDelta>(first);
+                Assert.Equal("speech.audio.delta", delta.Type);
+                Assert.Equal(Convert.ToBase64String(audioChunk), delta.Audio);
+            },
+            second =>
+            {
+                var done = Assert.IsType<AudioSpeechStreamDone>(second);
+                Assert.Equal("speech.audio.done", done.Type);
+                Assert.Null(done.Usage);
+            });
+
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
+        Assert.Equal("/v1/rime-tts", capturedRequest.RequestUri?.AbsolutePath);
+        Assert.Contains("audio/webm", capturedRequest.Headers.Accept.ToString());
+        Assert.Contains("codecs=opus", capturedRequest.Headers.Accept.ToString());
+
+        using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.Equal("mistv3", root.GetProperty("modelId").GetString());
+        Assert.Equal("cove", root.GetProperty("speaker").GetString());
+        Assert.Equal("Hello streamed Rime!", root.GetProperty("text").GetString());
+        Assert.Equal("en", root.GetProperty("lang").GetString());
+        Assert.Equal(24000, root.GetProperty("samplingRate").GetInt32());
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_throws_with_rime_error_body()
+    {
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("invalid voice", Encoding.UTF8, "text/plain")
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                           {
+                               Model = "coda/astra",
+                               Input = "Hello!"
+                           }))
+            {
+            }
+        });
+
+        Assert.Contains("Rime streaming TTS failed (400): invalid voice", exception.Message);
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_requires_voice_for_base_model()
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                           {
+                               Model = "coda",
+                               Input = "Hello!"
+                           }))
+            {
+            }
+        });
+
+        Assert.Contains("Rime voice is required", exception.Message);
+    }
+
     [Fact]
     public async Task Coda_uses_streaming_accept_header_time_scale_factor_and_base64_response()
     {

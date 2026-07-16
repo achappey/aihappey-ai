@@ -178,6 +178,9 @@ public partial class RimeProvider
         if (string.IsNullOrWhiteSpace(model))
             throw new ArgumentException("Model cannot be empty.", nameof(model));
 
+        if (model.StartsWith(RimeModelPrefix, StringComparison.OrdinalIgnoreCase))
+            model = model[RimeModelPrefix.Length..];
+
         var slashIndex = model.IndexOf('/');
 
         if (slashIndex < 0)
