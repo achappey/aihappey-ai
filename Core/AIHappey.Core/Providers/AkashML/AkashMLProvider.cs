@@ -42,9 +42,6 @@ public partial class AkashMLProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -63,12 +60,9 @@ public partial class AkashMLProvider : IModelProvider
 
     public string GetIdentifier() => nameof(AkashML).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -115,46 +109,49 @@ public partial class AkashMLProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToMessagesResponse();
+        return await this.GetMessage(_client,
+            request,
+            relativeUrl: "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
-
-        yield break;
+        return this.GetMessages(_client,
+            request,
+            relativeUrl: "anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-    => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
