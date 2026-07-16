@@ -7,7 +7,7 @@ using AIHappey.Core.Contracts;
 namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
-[Route("v1/images/generations")]
+[Route("api/images")]
 public class ImageController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]

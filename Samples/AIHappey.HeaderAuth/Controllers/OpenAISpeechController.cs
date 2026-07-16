@@ -1,19 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using AIHappey.Core.AI;
-using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Extensions;
 using System.Text.Json;
 
-namespace AIHappey.AzureAuth.Controllers;
+namespace AIHappey.HeaderAuth.Controllers;
 
 [ApiController]
 [Route("v1/audio/speech")]
-public class AudioSpeechController(IAIModelProviderResolver resolver) : ControllerBase
+public class OpenAISpeechController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Post([FromBody] AudioSpeechRequest requestDto, CancellationToken cancellationToken)
     {
         if (requestDto == null ||
@@ -23,6 +21,8 @@ public class AudioSpeechController(IAIModelProviderResolver resolver) : Controll
         {
             return BadRequest(new { error = "'input', 'model' and 'voice' are required fields" });
         }
+
+        HeaderAuthModelContext.SetActiveProvider(HttpContext, requestDto.Model);
 
         var provider = await resolver.Resolve(requestDto.Model, cancellationToken);
         if (provider == null)
