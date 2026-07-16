@@ -76,7 +76,9 @@ public class OpenAIImageEditsController(IAIModelProviderResolver resolver) : Con
                 await foreach (var streamEvent in provider.OpenAIImageEditStreamingAsync(requestDto, cancellationToken))
                     await WriteStreamEvent(streamEvent, cancellationToken);
             }
-            catch (NotImplementedException) when (!Response.HasStarted)
+            catch (Exception ex) when (
+                    !Response.HasStarted &&
+                    ex is NotImplementedException or NotSupportedException)
             {
                 var imageRequest = await requestDto.ToImageRequest(requestDto.Model!, provider.GetIdentifier(), cancellationToken);
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);

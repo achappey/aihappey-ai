@@ -35,7 +35,7 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
                 var content = await provider.OpenAIImageGenerationRequestAsync(requestDto, cancellationToken);
                 return Ok(content);
             }
-            catch (NotImplementedException)
+            catch (Exception ex) when (ex is NotImplementedException or NotSupportedException)
             {
                 var imageRequest = requestDto.ToImageRequest(requestDto.Model, provider.GetIdentifier());
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);

@@ -40,7 +40,7 @@ public class OpenAIImageEditsController(IAIModelProviderResolver resolver) : Con
                 var content = await provider.OpenAIImageEditRequestAsync(requestDto, cancellationToken);
                 return Ok(content);
             }
-            catch (NotImplementedException)
+           catch (Exception ex) when (ex is NotImplementedException or NotSupportedException)
             {
                 var imageRequest = await requestDto.ToImageRequest(requestDto.Model, provider.GetIdentifier(), cancellationToken);
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);

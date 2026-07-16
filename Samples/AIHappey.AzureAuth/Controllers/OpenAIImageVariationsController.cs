@@ -35,7 +35,7 @@ public class OpenAIImageVariationsController(IAIModelProviderResolver resolver) 
                 var content = await provider.OpenAIImageVariationRequestAsync(requestDto, cancellationToken);
                 return Ok(content);
             }
-            catch (NotImplementedException)
+            catch (Exception ex) when (ex is NotImplementedException or NotSupportedException)
             {
                 var imageRequest = await requestDto.ToImageRequest(requestDto.Model, provider.GetIdentifier(), cancellationToken);
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);
