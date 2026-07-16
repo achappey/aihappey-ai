@@ -35,7 +35,7 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
                 var content = await provider.OpenAIImageGenerationRequestAsync(requestDto, cancellationToken);
                 return Ok(content);
             }
-            catch (Exception ex) when (ex is NotImplementedException or NotSupportedException)
+            catch (NotImplementedException)
             {
                 var imageRequest = requestDto.ToImageRequest(requestDto.Model, provider.GetIdentifier());
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);
@@ -64,7 +64,9 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
                 await foreach (var streamEvent in provider.OpenAIImageGenerationStreamingAsync(requestDto, cancellationToken))
                     await WriteStreamEvent(streamEvent, cancellationToken);
             }
-            catch (NotImplementedException) when (!Response.HasStarted)
+           catch (Exception ex) when (
+                    !Response.HasStarted &&
+                    ex is NotImplementedException or NotSupportedException)
             {
                 var imageRequest = requestDto.ToImageRequest(requestDto.Model!, provider.GetIdentifier());
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);
