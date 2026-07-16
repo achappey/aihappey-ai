@@ -17,7 +17,7 @@ public class OpenAIImageGenerationRequest
 
     [JsonPropertyName("model")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Model { get; set; }
+    public string Model { get; set; } = null!;
 
     [JsonPropertyName("moderation")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -97,7 +97,7 @@ public class OpenAIImageEditRequest
 
     [JsonPropertyName("model")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Model { get; set; }
+    public string Model { get; set; } = null!;
 
     [JsonPropertyName("moderation")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -150,7 +150,7 @@ public class OpenAIImageVariationRequest
 
     [JsonPropertyName("model")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Model { get; set; }
+    public string Model { get; set; } = null!;
 
     [JsonPropertyName("n")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
