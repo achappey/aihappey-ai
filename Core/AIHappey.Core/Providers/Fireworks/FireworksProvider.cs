@@ -9,6 +9,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -44,8 +45,8 @@ public partial class FireworksProvider : IModelProvider
         ApplyAuthHeader();
         options.ToolChoice ??= "auto";
 
-        return await _client.GetChatCompletion(
-           options, ct: cancellationToken);
+        return await this.GetChatCompletion(_client,
+           options, cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Fireworks).ToLowerInvariant();
@@ -66,8 +67,8 @@ public partial class FireworksProvider : IModelProvider
         ApplyAuthHeader();
         options.ToolChoice ??= "auto";
 
-        return _client.GetChatCompletionUpdates(
-            options, ct: cancellationToken);
+        return this.GetChatCompletions(_client,
+            options, cancellationToken: cancellationToken);
     }
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
@@ -122,4 +123,10 @@ public partial class FireworksProvider : IModelProvider
             headers: headers,
             cancellationToken: cancellationToken);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 }

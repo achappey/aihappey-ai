@@ -1,12 +1,12 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Fireworks;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
-public partial class FireworksProvider 
+public partial class FireworksProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -30,22 +30,16 @@ public partial class FireworksProvider
             yield break;
         }
 
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        var metadata = chatRequest.GetProviderMetadata<FireworksProviderMetadata>(GetIdentifier());
-
-        Dictionary<string, object?> payload = [];
-
-        if (!string.IsNullOrEmpty(metadata?.ReasoningEffort))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            payload["reasoning_effort"] = metadata?.ReasoningEffort;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
-
-        chatRequest.ToolChoice ??= "auto";
-
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            payload,
-            cancellationToken: cancellationToken))
-            yield return update;
     }
 }

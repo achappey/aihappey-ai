@@ -1,12 +1,12 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Telnyx;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Telnyx;
 
-public partial class TelnyxProvider 
+public partial class TelnyxProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,
@@ -22,55 +22,16 @@ public partial class TelnyxProvider
             yield break;
         }
 
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        var metadata = chatRequest.GetProviderMetadata<TelnyxProviderMetadata>(GetIdentifier());
-
-        Dictionary<string, object?> payload = [];
-
-        if (metadata?.GuidedJson is not null)
-            payload["guided_json"] = metadata.GuidedJson;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.GuidedRegex))
-            payload["guided_regex"] = metadata.GuidedRegex;
-
-        if (metadata?.GuidedChoice?.Any() == true)
-            payload["guided_choice"] = metadata.GuidedChoice.ToArray();
-
-        if (metadata?.MinP is not null)
-            payload["min_p"] = metadata.MinP;
-
-        if (metadata?.UseBeamSearch is not null)
-            payload["use_beam_search"] = metadata.UseBeamSearch;
-
-        if (metadata?.BestOf is not null)
-            payload["best_of"] = metadata.BestOf;
-
-        if (metadata?.LengthPenalty is not null)
-            payload["length_penalty"] = metadata.LengthPenalty;
-
-        if (metadata?.EarlyStopping is not null)
-            payload["early_stopping"] = metadata.EarlyStopping;
-
-        if (metadata?.Logprobs is not null)
-            payload["logprobs"] = metadata.Logprobs;
-
-        if (metadata?.TopLogprobs is not null)
-            payload["top_logprobs"] = metadata.TopLogprobs;
-
-        if (metadata?.FrequencyPenalty is not null)
-            payload["frequency_penalty"] = metadata.FrequencyPenalty;
-
-        if (metadata?.PresencePenalty is not null)
-            payload["presence_penalty"] = metadata.PresencePenalty;
-
-        await foreach (var update in _client.CompletionsStreamAsync(
-            chatRequest,
-            payload.Count > 0 ? payload : null,
-            url: "ai/chat/completions",
-            cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            yield return update;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
     }
 
