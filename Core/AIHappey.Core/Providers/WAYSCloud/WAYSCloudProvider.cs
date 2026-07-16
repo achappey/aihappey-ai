@@ -10,6 +10,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.WAYSCloud;
 
@@ -37,13 +38,15 @@ public partial class WAYSCloudProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(WAYSCloud)} API key.");
 
-        _client.DefaultRequestHeaders.Remove("X-API-Key");
-        _client.DefaultRequestHeaders.Add("X-API-Key", key);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        options.Store = null!;
+        options.StreamOptions = null!;
 
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
@@ -52,6 +55,9 @@ public partial class WAYSCloudProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        options.Store = null!;
+        options.StreamOptions = null!;
 
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
@@ -62,7 +68,7 @@ public partial class WAYSCloudProvider : IModelProvider
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
-    } 
+    }
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
