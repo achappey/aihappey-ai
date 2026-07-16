@@ -38,47 +38,10 @@ public partial class SarvamProvider
 
         var metadata = request.GetProviderMetadata<SarvamSpeechProviderMetadata>(GetIdentifier());
 
-        // Sarvam requires target_language_code.
-        var targetLanguageCode =
-            request.Language
-            ?? metadata?.TargetLanguageCode
-            ?? "en-IN";
-
-        var speaker = request.Voice ?? metadata?.Speaker;
-
         // Map unified outputFormat -> Sarvam output_audio_codec.
         var outputAudioCodec = NormalizeSarvamCodec(request.OutputFormat ?? metadata?.OutputAudioCodec);
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["target_language_code"] = targetLanguageCode
-        };
-
-        // optional Sarvam inputs
-        if (!string.IsNullOrWhiteSpace(speaker))
-            payload["speaker"] = speaker;
-
-        if (metadata?.Pitch != null)
-            payload["pitch"] = metadata.Pitch;
-
-        if (metadata?.Pace != null)
-            payload["pace"] = metadata.Pace;
-
-        if (metadata?.Loudness != null)
-            payload["loudness"] = metadata.Loudness;
-
-        if (metadata?.SpeechSampleRate != null)
-            payload["speech_sample_rate"] = metadata.SpeechSampleRate;
-
-        if (metadata?.EnablePreprocessing != null)
-            payload["enable_preprocessing"] = metadata.EnablePreprocessing;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.Model))
-            payload["model"] = metadata.Model;
-
-        if (!string.IsNullOrWhiteSpace(outputAudioCodec))
-            payload["output_audio_codec"] = outputAudioCodec;
+        var payload = BuildSarvamSpeechPayload(request, metadata);
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "text-to-speech")
         {
@@ -159,6 +122,63 @@ public partial class SarvamProvider
             "mp3" or "linear16" or "mulaw" or "alaw" or "opus" or "flac" or "aac" or "wav" => c,
             _ => codec.Trim() // pass-through unknowns to let Sarvam validate (and surface their error)
         };
+    }
+
+    private Dictionary<string, object?> BuildSarvamSpeechPayload(
+        SpeechRequest request,
+        SarvamSpeechProviderMetadata? metadata)
+    {
+        var targetLanguageCode =
+            request.Language
+            ?? metadata?.TargetLanguageCode
+            ?? "en-IN";
+
+        var speaker = request.Voice ?? metadata?.Speaker;
+        var model = ResolveSarvamSpeechModel(request.Model, metadata?.Model);
+        var outputAudioCodec = NormalizeSarvamCodec(request.OutputFormat ?? metadata?.OutputAudioCodec);
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["text"] = request.Text,
+            ["target_language_code"] = targetLanguageCode,
+            ["model"] = model
+        };
+
+        // optional Sarvam inputs
+        if (!string.IsNullOrWhiteSpace(speaker))
+            payload["speaker"] = speaker;
+
+        if (metadata?.Pitch != null)
+            payload["pitch"] = metadata.Pitch;
+
+        if (metadata?.Pace != null)
+            payload["pace"] = metadata.Pace;
+
+        if (metadata?.Loudness != null)
+            payload["loudness"] = metadata.Loudness;
+
+        if (metadata?.SpeechSampleRate != null)
+            payload["speech_sample_rate"] = metadata.SpeechSampleRate;
+
+        if (metadata?.EnablePreprocessing != null)
+            payload["enable_preprocessing"] = metadata.EnablePreprocessing;
+
+        if (!string.IsNullOrWhiteSpace(outputAudioCodec))
+            payload["output_audio_codec"] = outputAudioCodec;
+
+        return payload;
+    }
+
+    private string ResolveSarvamSpeechModel(string requestModel, string? metadataModel)
+    {
+        var model = !string.IsNullOrWhiteSpace(metadataModel)
+            ? metadataModel.Trim()
+            : requestModel.Trim();
+
+        var providerPrefix = GetIdentifier() + "/";
+        return model.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)
+            ? model[providerPrefix.Length..]
+            : model;
     }
 
     private static string? GuessMimeType(string? codec)
