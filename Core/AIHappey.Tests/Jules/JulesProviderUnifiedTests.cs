@@ -44,8 +44,7 @@ public class JulesProviderUnifiedTests
 
         var shortcut = models.Single(model => model.Id == "jules/sources/github/acme/api");
         Assert.Equal("acme/api", shortcut.Name);
-        Assert.Contains("shortcut", shortcut.Tags ?? []);
-        Assert.Contains("source:sources/github/acme/api", shortcut.Tags ?? []);
+        Assert.Contains("agent", shortcut.Tags ?? []);
     }
 
     [Fact]

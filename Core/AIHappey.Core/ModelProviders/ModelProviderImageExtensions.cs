@@ -13,35 +13,35 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderImageExtensions
 {
-    public static Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
-        this IModelProvider modelProvider,
-        OpenAIImageGenerationRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    /*  public static Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
+          this IModelProvider modelProvider,
+          OpenAIImageGenerationRequest options,
+          CancellationToken cancellationToken = default)
+          => throw new NotImplementedException();
 
-    public static IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
-        this IModelProvider modelProvider,
-        OpenAIImageGenerationRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+      public static IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+          this IModelProvider modelProvider,
+          OpenAIImageGenerationRequest options,
+          CancellationToken cancellationToken = default)
+          => throw new NotImplementedException();
 
-    public static Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
-        this IModelProvider modelProvider,
-        OpenAIImageEditRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+      public static Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
+          this IModelProvider modelProvider,
+          OpenAIImageEditRequest options,
+          CancellationToken cancellationToken = default)
+          => throw new NotImplementedException();
 
-    public static IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
-        this IModelProvider modelProvider,
-        OpenAIImageEditRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+      public static IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+          this IModelProvider modelProvider,
+          OpenAIImageEditRequest options,
+          CancellationToken cancellationToken = default)
+          => throw new NotImplementedException();
 
-    public static Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
-        this IModelProvider modelProvider,
-        OpenAIImageVariationRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+      public static Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
+          this IModelProvider modelProvider,
+          OpenAIImageVariationRequest options,
+          CancellationToken cancellationToken = default)
+          => throw new NotImplementedException();*/
 
     public static async IAsyncEnumerable<UIMessagePart> StreamImageAsync(this IModelProvider modelProvider,
       ChatRequest chatRequest,

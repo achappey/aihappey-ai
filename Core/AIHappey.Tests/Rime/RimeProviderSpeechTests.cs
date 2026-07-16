@@ -29,7 +29,7 @@ public sealed class RimeProviderSpeechTests
 
         var response = await provider.SpeechRequest(new SpeechRequest
         {
-            Model = "rime/coda/astra",
+            Model = "coda/astra",
             Text = "Hello from Rime!",
             OutputFormat = null,
             ProviderOptions = ProviderOptions(new RimeSpeechProviderMetadata

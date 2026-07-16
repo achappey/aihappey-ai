@@ -2,8 +2,10 @@ using System.Net;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Vercel.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.OpenAI;
@@ -152,6 +154,148 @@ public sealed class OpenAIProviderImageTests
         Assert.Equal(["data:image/png;base64,edit-base64"], result.Images);
     }
 
+    [Fact]
+    public async Task OpenAIImageGenerationRequestAsync_UsesReusableOpenAICompatibleHelper()
+    {
+        string? requestedPath = null;
+        string? requestJson = null;
+        var provider = CreateProvider(request =>
+        {
+            requestedPath = request.RequestUri?.PathAndQuery;
+            requestJson = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            return JsonResponse("""
+            {
+              "created": 1748372400,
+              "data": [ { "b64_json": "native-base64" } ],
+              "usage": { "input_tokens": 1, "output_tokens": 2, "total_tokens": 3 }
+            }
+            """);
+        });
+
+        var result = await provider.OpenAIImageGenerationRequestAsync(new OpenAIImageGenerationRequest
+        {
+            Model = "gpt-image-1.5",
+            Prompt = "native generation",
+            N = 1,
+            Size = "1024x1024"
+        });
+
+        Assert.Equal("/v1/images/generations", requestedPath);
+        Assert.Contains("\"prompt\":\"native generation\"", requestJson);
+        Assert.Equal("native-base64", result.Data!.Single().B64Json);
+        Assert.Equal(3, result.Usage!.TotalTokens);
+    }
+
+    [Fact]
+    public async Task OpenAIImageGenerationStreamingAsync_ParsesSseEvents()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("/v1/images/generations", request.RequestUri?.PathAndQuery);
+            var requestJson = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+            Assert.Contains("\"stream\":true", requestJson);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                event: image_generation.partial_image
+                data: {"type":"image_generation.partial_image","b64_json":"partial","created_at":1,"partial_image_index":0}
+
+                event: image_generation.completed
+                data: {"type":"image_generation.completed","b64_json":"final","created_at":2,"usage":{"total_tokens":3}}
+
+                """)
+            };
+        });
+
+        var events = new List<IOpenAIImageStreamEvent>();
+        await foreach (var streamEvent in provider.OpenAIImageGenerationStreamingAsync(new OpenAIImageGenerationRequest
+        {
+            Model = "gpt-image-1.5",
+            Prompt = "stream this"
+        }))
+        {
+            events.Add(streamEvent);
+        }
+
+        var partial = Assert.IsType<OpenAIImageGenerationPartialImage>(events[0]);
+        var completed = Assert.IsType<OpenAIImageGenerationCompleted>(events[1]);
+        Assert.Equal("partial", partial.B64Json);
+        Assert.Equal("final", completed.B64Json);
+        Assert.Equal(3, completed.Usage!.TotalTokens);
+    }
+
+    [Fact]
+    public async Task OpenAIImageEditRequestAsync_PostsMultipartWhenFilesArePresent()
+    {
+        string? requestedPath = null;
+        string? contentType = null;
+        string? body = null;
+        var provider = CreateProvider(request =>
+        {
+            requestedPath = request.RequestUri?.PathAndQuery;
+            contentType = request.Content?.Headers.ContentType?.MediaType;
+            body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            return JsonResponse("""
+            {
+              "created": 1748372400,
+              "data": [ { "b64_json": "edit-native" } ]
+            }
+            """);
+        });
+
+        var result = await provider.OpenAIImageEditRequestAsync(new OpenAIImageEditRequest
+        {
+            Model = "gpt-image-1.5",
+            Prompt = "edit native",
+            ImageFiles = [FormImage("image", "image.png", "image/png")],
+            Stream = false
+        });
+
+        Assert.Equal("/v1/images/edits", requestedPath);
+        Assert.Equal("multipart/form-data", contentType);
+        Assert.Contains("name=model", body);
+        Assert.Contains("gpt-image-1.5", body);
+        Assert.Contains("name=image[]", body);
+        Assert.Equal("edit-native", result.Data!.Single().B64Json);
+    }
+
+    [Fact]
+    public async Task OpenAIImageVariationRequestAsync_PostsMultipartImage()
+    {
+        string? requestedPath = null;
+        string? contentType = null;
+        string? body = null;
+        var provider = CreateProvider(request =>
+        {
+            requestedPath = request.RequestUri?.PathAndQuery;
+            contentType = request.Content?.Headers.ContentType?.MediaType;
+            body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            return JsonResponse("""
+            {
+              "created": 1748372400,
+              "data": [ { "url": "https://example.com/image.png" } ]
+            }
+            """);
+        });
+
+        var result = await provider.OpenAIImageVariationRequestAsync(new OpenAIImageVariationRequest
+        {
+            Model = "dall-e-2",
+            ImageFile = FormImage("image", "image.png", "image/png"),
+            N = 1,
+            ResponseFormat = "url"
+        });
+
+        Assert.Equal("/v1/images/variations", requestedPath);
+        Assert.Equal("multipart/form-data", contentType);
+        Assert.Contains("name=image", body);
+        Assert.Equal("https://example.com/image.png", result.Data!.Single().Url);
+    }
+
     private static OpenAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => new(
             new StaticApiKeyResolver(),
@@ -171,6 +315,16 @@ public sealed class OpenAIProviderImageTests
             MediaType = mediaType,
             Data = data
         };
+
+    private static IFormFile FormImage(string name, string fileName, string contentType)
+    {
+        var bytes = new byte[] { 1, 2, 3 };
+        return new FormFile(new MemoryStream(bytes), 0, bytes.Length, name, fileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = contentType
+        };
+    }
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {

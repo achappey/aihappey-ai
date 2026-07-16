@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -18,6 +19,51 @@ public partial class OpenAIProvider
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleImageGenerationRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleImageGenerationStreamingAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleImageEditRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleImageEditStreamingAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleImageVariationRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
 
     private const string DefaultOpenAiImageOutputFormat = "png";
 

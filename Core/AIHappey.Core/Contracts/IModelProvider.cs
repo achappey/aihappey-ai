@@ -48,8 +48,35 @@ public interface IModelProvider
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default);
 
-    Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
-    IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
+    Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
 
+    IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
+            OpenAIImageGenerationRequest options,
+           CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+       OpenAIImageGenerationRequest options,
+       CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
+       OpenAIImageEditRequest options,
+       CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+       OpenAIImageEditRequest options,
+       CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
+       OpenAIImageVariationRequest options,
+       CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
 
 }
