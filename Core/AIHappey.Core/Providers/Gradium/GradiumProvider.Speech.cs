@@ -62,14 +62,12 @@ public partial class GradiumProvider
             warnings.Add(new { type = "ignored", feature = "language", reason = "language is voice-dependent in Gradium" });
 
         var outputFormat = NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat) ?? "wav";
-        var onlyAudio = metadata?.OnlyAudio ?? true;
-
         var payload = new Dictionary<string, object?>
         {
             ["text"] = request.Text,
             ["voice_id"] = voiceId,
             ["output_format"] = outputFormat,
-            ["only_audio"] = onlyAudio
+            ["only_audio"] = true
         };
 
         if (!string.Equals(modelName, BaseSpeechModel, StringComparison.OrdinalIgnoreCase))
@@ -93,24 +91,11 @@ public partial class GradiumProvider
         }
 
         var mediaType = resp.Content.Headers.ContentType?.MediaType;
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["model"] = JsonSerializer.SerializeToElement(baseModelId, JsonSerializerOptions.Web),
-            ["voice_id"] = JsonSerializer.SerializeToElement(voiceId, JsonSerializerOptions.Web),
-            ["output_format"] = JsonSerializer.SerializeToElement(outputFormat, JsonSerializerOptions.Web),
-            ["only_audio"] = JsonSerializer.SerializeToElement(onlyAudio, JsonSerializerOptions.Web)
-        };
-
-        if (!string.Equals(modelName, BaseSpeechModel, StringComparison.OrdinalIgnoreCase))
-            providerMetadata["model_name"] = JsonSerializer.SerializeToElement(modelName, JsonSerializerOptions.Web);
-
-        if (!string.IsNullOrWhiteSpace(metadata?.JsonConfig))
-            providerMetadata["json_config"] = JsonSerializer.SerializeToElement(metadata.JsonConfig, JsonSerializerOptions.Web);
 
         return new SpeechResponse
         {
             ProviderMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(providerMetadata),
+                .CreatePrimitiveProviderMetadata(),
             Audio = new SpeechAudioResponse
             {
                 Base64 = Convert.ToBase64String(bytes),
@@ -125,6 +110,7 @@ public partial class GradiumProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
