@@ -9,30 +9,18 @@ namespace AIHappey.Core.Providers.QuiverAI;
 
 public partial class QuiverAIProvider
 {
-    private async IAsyncEnumerable<UIMessagePart> StreamChatCoreAsync(
-        ChatRequest chatRequest,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        ApplyAuthHeader();
-
-        await foreach (var update in _client.CompletionsStreamAsync(
-                           chatRequest,
-                           cancellationToken: cancellationToken))
-        {
-            yield return update;
-        }
-    }
-
     private async Task<ResponseResult> ResponsesCoreAsync(ResponseRequest options, CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
-        return await _client.GetResponses(options, ct: cancellationToken);
+
+        return await this.GetResponse(_client, options, cancellationToken: cancellationToken);
     }
 
     private IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingCoreAsync(ResponseRequest options, CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
-        return _client.GetResponsesUpdates(options, ct: cancellationToken);
+
+        return this.GetResponses(_client, options, cancellationToken: cancellationToken);
     }
 }
 

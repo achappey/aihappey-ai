@@ -1,4 +1,5 @@
-using AIHappey.Core.AI;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
@@ -9,14 +10,16 @@ public partial class CortexProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        var route = ResolveRoute(chatRequest.Model);
-        var request = CloneWithModel(chatRequest, route.ModelId);
-
-        await foreach (var update in _client.CompletionsStreamAsync(request,
-            url: GetBackendUrl(route.Backend, "v1/chat/completions"),
-            cancellationToken: cancellationToken))
-            yield return update;
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
     }
 }
