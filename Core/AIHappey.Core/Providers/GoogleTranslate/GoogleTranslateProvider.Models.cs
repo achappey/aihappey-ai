@@ -55,6 +55,7 @@ public sealed partial class GoogleTranslateProvider
                     Type = "language",
                     Id = $"translate/{languageCode}".ToModelId(GetIdentifier()),
                     Name = $"Translate to {display}",
+                    Tags = [languageCode, "translate"],
                     Description = languageCode,
                 };
             })

@@ -55,6 +55,7 @@ public sealed partial class LingvanexProvider
                 {
                     OwnedBy = "Lingvanex",
                     Type = "language",
+                    Tags = [fullCode, "translate"],
                     Id = $"translate/{fullCode}".ToModelId(GetIdentifier()),
                     Name = $"Translate to {display}",
                     Description = l.CodeName

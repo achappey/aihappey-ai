@@ -18,6 +18,7 @@ public partial class GTranslateProvider
         {
             OwnedBy = nameof(GTranslate),
             Type = "language",
+            Tags = [a.Key, "translate"],
             Id = $"yandex/translate-to/{a.Key}".ToModelId(GetIdentifier()),
             Name = $"Yandex Translate to {a.Value.Name}",
             Description = a.Value.NativeName,
@@ -27,6 +28,7 @@ public partial class GTranslateProvider
         {
             OwnedBy = nameof(GTranslate),
             Type = "language",
+            Tags = [a.Key, "translate"],
             Id = $"bing/translate-to/{a.Key}".ToModelId(GetIdentifier()),
             Name = $"Bing Translate to {a.Value.Name}",
             Description = a.Value.NativeName,
@@ -36,6 +38,7 @@ public partial class GTranslateProvider
         {
             OwnedBy = nameof(GTranslate),
             Type = "language",
+            Tags = [a.Key, "translate"],
             Id = $"microsoft/translate-to/{a.Key}".ToModelId(GetIdentifier()),
             Name = $"Microsoft Translate to {a.Value.Name}",
             Description = a.Value.NativeName,
@@ -45,6 +48,7 @@ public partial class GTranslateProvider
         {
             OwnedBy = nameof(GTranslate),
             Type = "language",
+            Tags = [a.Key, "translate"],
             Id = $"google/v1/translate-to/{a.Key}".ToModelId(GetIdentifier()),
             Name = $"Google Translate to {a.Value.Name}",
             Description = a.Value.NativeName,
@@ -54,6 +58,7 @@ public partial class GTranslateProvider
         {
             OwnedBy = nameof(GTranslate),
             Type = "language",
+            Tags = [a.Key, "translate"],
             Id = $"google/v2/translate-to/{a.Key}".ToModelId(GetIdentifier()),
             Name = $"Google Translate to {a.Value.Name}",
             Description = a.Value.NativeName,
