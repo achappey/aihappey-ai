@@ -55,8 +55,10 @@ public class OpenAISpeechController(IAIModelProviderResolver resolver) : Control
                         await Response.Body.FlushAsync(cancellationToken);
                     }
                 }
-                catch (NotImplementedException) when (!Response.HasStarted)
-                {
+                  catch (Exception ex) when (
+                !Response.HasStarted &&
+                ex is NotImplementedException or NotSupportedException)
+                        {
                     var speechRequest = requestDto.ToSpeechRequest();
 
                     var content = await provider.SpeechRequest(

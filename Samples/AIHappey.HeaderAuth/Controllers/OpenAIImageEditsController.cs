@@ -40,7 +40,7 @@ public class OpenAIImageEditsController(IAIModelProviderResolver resolver) : Con
                 var content = await provider.OpenAIImageEditRequestAsync(requestDto, cancellationToken);
                 return Ok(content);
             }
-           catch (Exception ex) when (ex is NotImplementedException or NotSupportedException)
+            catch (NotImplementedException)
             {
                 var imageRequest = await requestDto.ToImageRequest(requestDto.Model, provider.GetIdentifier(), cancellationToken);
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);
@@ -75,7 +75,9 @@ public class OpenAIImageEditsController(IAIModelProviderResolver resolver) : Con
                 await foreach (var streamEvent in provider.OpenAIImageEditStreamingAsync(requestDto, cancellationToken))
                     await WriteStreamEvent(streamEvent, cancellationToken);
             }
-            catch (NotImplementedException) when (!Response.HasStarted)
+            catch (Exception ex) when (
+               !Response.HasStarted &&
+               ex is NotImplementedException or NotSupportedException)
             {
                 var imageRequest = await requestDto.ToImageRequest(requestDto.Model!, provider.GetIdentifier(), cancellationToken);
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);
