@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.DeepL;
 
@@ -14,9 +15,13 @@ public partial class DeepLProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public DeepLProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public DeepLProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api-free.deepl.com/");
     }
@@ -32,7 +37,7 @@ public partial class DeepLProvider : IModelProvider
     }
 
 
-    public string GetIdentifier() => nameof(DeepL).ToLowerInvariant();  
+    public string GetIdentifier() => nameof(DeepL).ToLowerInvariant();
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -42,7 +47,7 @@ public partial class DeepLProvider : IModelProvider
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
-   
+
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 

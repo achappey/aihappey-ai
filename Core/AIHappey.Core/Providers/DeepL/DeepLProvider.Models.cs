@@ -9,46 +9,58 @@ public partial class DeepLProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
 
-        // Avoid throwing during model discovery when the key is not configured.
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return [];
+        var key = _keyResolver.Resolve(GetIdentifier());
 
-        ApplyAuthHeader();
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        using var resp = await _client.GetAsync("v2/languages?type=target", cancellationToken);
-        var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+        var cacheKey = this.GetCacheKey(key);
 
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"{nameof(DeepL)} languages failed ({(int)resp.StatusCode}): {body}");
-
-        var languages = JsonSerializer.Deserialize<List<DeepLLanguage>>(body, JsonSerializerOptions.Web) ?? [];
-
-        var models = languages
-            .Where(l => !string.IsNullOrWhiteSpace(l.Language))
-            .Select(l =>
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                var code = l.Language!.Trim();
-                var display = string.IsNullOrWhiteSpace(l.Name) ? code : l.Name!.Trim();
+                ApplyAuthHeader();
 
-                return new Model
+                using var resp = await _client.GetAsync("v2/languages?type=target", cancellationToken);
+                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+
+                if (!resp.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"{nameof(DeepL)} languages failed ({(int)resp.StatusCode}): {body}");
+
+                var languages = JsonSerializer.Deserialize<List<DeepLLanguage>>(body, JsonSerializerOptions.Web) ?? [];
+
+                var models = languages
+                    .Where(l => !string.IsNullOrWhiteSpace(l.Language))
+                    .Select(l =>
+                    {
+                        var code = l.Language!.Trim();
+                        var display = string.IsNullOrWhiteSpace(l.Name) ? code : l.Name!.Trim();
+
+                        return new Model
+                        {
+                            OwnedBy = nameof(DeepL),
+                            Type = "language",
+                            Tags = ["translate", code],
+                            Id = $"translate-to/{code}".ToModelId(GetIdentifier()),
+                            Name = $"{nameof(DeepL)} Translate to {display}",
+                            Description = code
+                        };
+                    })
+                    .ToList();
+
+                models.Add(new Model()
                 {
                     OwnedBy = nameof(DeepL),
                     Type = "language",
-                    Id = $"translate-to/{code}".ToModelId(GetIdentifier()),
-                    Name = $"{nameof(DeepL)} Translate to {display}",
-                    Description = code
-                };
-            })
-            .ToList();
+                    Id = $"rephrase".ToModelId(GetIdentifier()),
+                    Name = $"Improve text"
+                });
 
-        models.Add(new Model()
-        {
-            OwnedBy = nameof(DeepL),
-            Type = "language",
-            Id = $"rephrase".ToModelId(GetIdentifier()),
-            Name = $"Improve text"
-        });
-
-        return models;
+                return models;
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 }
