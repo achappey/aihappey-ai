@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
@@ -124,6 +125,7 @@ public partial class RequestyProvider
                 Format = responseFormat
             },
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Request = new()
             {
                 Body = payload
@@ -131,6 +133,7 @@ public partial class RequestyProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };

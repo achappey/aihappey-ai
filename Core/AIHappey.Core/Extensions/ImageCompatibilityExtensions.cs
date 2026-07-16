@@ -61,7 +61,7 @@ public static class ImageCompatibilityExtensions
             N = request.N,
             ProviderOptions = BuildProviderOptions(providerIdentifier, new()
             {
-                ["background"] = request.Background,
+            /*    ["background"] = request.Background,
                 ["moderation"] = request.Moderation,
                 ["output_compression"] = request.OutputCompression,
                 ["output_format"] = request.OutputFormat,
@@ -70,7 +70,7 @@ public static class ImageCompatibilityExtensions
                 ["response_format"] = request.ResponseFormat,
                 ["stream"] = request.Stream,
                 ["style"] = request.Style,
-                ["user"] = request.User
+                ["user"] = request.User*/
             })
         };
 
@@ -85,7 +85,7 @@ public static class ImageCompatibilityExtensions
             Mask = await ResolveImageFile(request.MaskFile, request.Mask, cancellationToken),
             ProviderOptions = BuildProviderOptions(providerIdentifier, new()
             {
-                ["background"] = request.Background,
+            /*    ["background"] = request.Background,
                 ["input_fidelity"] = request.InputFidelity,
                 ["moderation"] = request.Moderation,
                 ["output_compression"] = request.OutputCompression,
@@ -93,7 +93,7 @@ public static class ImageCompatibilityExtensions
                 ["partial_images"] = request.PartialImages,
                 ["quality"] = request.Quality,
                 ["stream"] = request.Stream,
-                ["user"] = request.User
+                ["user"] = request.User*/
             })
         };
 
@@ -107,8 +107,8 @@ public static class ImageCompatibilityExtensions
             Files = [await ResolveRequiredImageFile(request.ImageFile, request.Image, cancellationToken)],
             ProviderOptions = BuildProviderOptions(providerIdentifier, new()
             {
-                ["response_format"] = request.ResponseFormat,
-                ["user"] = request.User
+               // ["response_format"] = request.ResponseFormat,
+               // ["user"] = request.User
             })
         };
 

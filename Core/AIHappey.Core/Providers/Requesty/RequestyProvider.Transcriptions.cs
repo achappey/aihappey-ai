@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using System.Globalization;
@@ -74,10 +75,11 @@ public partial class RequestyProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"Requesty STT failed ({(int)response.StatusCode}): {json}");
 
-        return ConvertRequestyTranscriptionResponse(json, request.Model, now);
+        return ConvertRequestyTranscriptionResponse(json, request.Model, now, GetIdentifier());
     }
 
-    private static TranscriptionResponse ConvertRequestyTranscriptionResponse(string json, string model, DateTime timestamp)
+    private static TranscriptionResponse ConvertRequestyTranscriptionResponse(string json,
+        string model, DateTime timestamp, string providerId)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -132,12 +134,13 @@ public partial class RequestyProvider
             Language = language,
             DurationInSeconds = duration,
             Segments = segments,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = timestamp,
                 ModelId = root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String
-                    ? modelEl.GetString() ?? model
-                    : model,
+                    ? modelEl.GetString()?.ToModelId(providerId) ?? model.ToModelId(providerId)
+                    : model.ToModelId(providerId),
                 Body = json
             }
         };

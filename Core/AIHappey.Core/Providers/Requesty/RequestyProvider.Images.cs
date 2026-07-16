@@ -1,9 +1,11 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -17,7 +19,6 @@ public partial class RequestyProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -27,9 +28,18 @@ public partial class RequestyProvider
             cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
+        ApplyAuthHeader();
+
+        await foreach (var streamEvent in _client
+        .OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(
+            options,
+            cancellationToken: cancellationToken))
+        {
+            yield return streamEvent;
+        }
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
@@ -41,14 +51,26 @@ public partial class RequestyProvider
             cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
+        ApplyAuthHeader();
+
+        await foreach (var streamEvent in _client
+        .OpenAICompatibleImageEditNonStreamingAsStreamAsync(
+            options,
+            cancellationToken: cancellationToken))
+        {
+            yield return streamEvent;
+        }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
+        var imageRequest = await options.ToImageRequest(options.Model!, GetIdentifier(), cancellationToken);
+        var imageResult = await this.ImageRequest(imageRequest, cancellationToken);
+
+        return imageResult.ToOpenAIImagesResponse(options);
     }
 
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
@@ -103,7 +125,9 @@ public partial class RequestyProvider
                 cancellationToken);
 
             var editMediaType = ToImageMediaType(outputFormat);
-            var editImages = ExtractB64ImagesAsDataUrls(rawEdit, editMediaType);
+            using var editDoc = JsonDocument.Parse(rawEdit);
+
+            var editImages = ExtractB64ImagesAsDataUrls(editDoc, editMediaType);
             if (editImages.Count == 0)
                 throw new Exception("Requesty returned no edited images.");
 
@@ -111,6 +135,7 @@ public partial class RequestyProvider
             {
                 Images = editImages,
                 Warnings = warnings,
+                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(editDoc.RootElement.Clone()),
                 Response = new()
                 {
                     Timestamp = now,
@@ -143,17 +168,22 @@ public partial class RequestyProvider
             throw new Exception($"{response.StatusCode}: {raw}");
 
         var mediaType = ToImageMediaType(outputFormat);
-        var images = ExtractB64ImagesAsDataUrls(raw, mediaType);
+        using var doc = JsonDocument.Parse(raw);
+
+        var images = ExtractB64ImagesAsDataUrls(doc, mediaType);
         if (images.Count == 0)
             throw new Exception("Requesty returned no images.");
+
 
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(doc.RootElement.Clone()),
             Response = new()
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
@@ -234,9 +264,8 @@ public partial class RequestyProvider
             _ => "image/png"
         };
 
-    private static List<string> ExtractB64ImagesAsDataUrls(string rawJson, string mediaType)
+    private static List<string> ExtractB64ImagesAsDataUrls(JsonDocument doc, string mediaType)
     {
-        using var doc = JsonDocument.Parse(rawJson);
         if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
             return [];
 

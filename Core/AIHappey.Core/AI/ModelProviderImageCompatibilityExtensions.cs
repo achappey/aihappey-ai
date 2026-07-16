@@ -15,6 +15,71 @@ public static class ModelProviderImageCompatibilityExtensions
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
+    public static async IAsyncEnumerable<IOpenAIImageStreamEvent>
+        OpenAICompatibleImageEditNonStreamingAsStreamAsync(
+            this HttpClient httpClient,
+            OpenAIImageEditRequest options,
+            string? endpoint = "v1/images/edits",
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.OpenAICompatibleImageEditRequestAsync(
+            options,
+            endpoint,
+            cancellationToken);
+
+        foreach (var image in response.Data ?? [])
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(image.B64Json))
+                continue;
+
+            yield return new OpenAIImageEditCompleted
+            {
+                B64Json = image.B64Json,
+                CreatedAt = response.Created,
+                Size = response.Size ?? options.Size,
+                Quality = response.Quality ?? options.Quality,
+                Background = response.Background ?? options.Background,
+                OutputFormat = response.OutputFormat ?? options.OutputFormat,
+                Usage = response.Usage
+            };
+        }
+    }
+
+    public static async IAsyncEnumerable<IOpenAIImageStreamEvent>
+     OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(
+         this HttpClient httpClient,
+         OpenAIImageGenerationRequest options,
+         string? endpoint = "v1/images/generations",
+         [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.OpenAICompatibleImageGenerationRequestAsync(
+            options,
+            endpoint,
+            cancellationToken);
+
+        foreach (var image in response.Data ?? [])
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(image.B64Json))
+                continue;
+
+            yield return new OpenAIImageGenerationCompleted
+            {
+                B64Json = image.B64Json,
+                CreatedAt = response.Created,
+                Size = response.Size ?? options.Size,
+                Quality = response.Quality ?? options.Quality,
+                Background = response.Background ?? options.Background,
+                OutputFormat = response.OutputFormat ?? options.OutputFormat,
+                Usage = response.Usage
+            };
+        }
+    }
+
+
     public static async Task<OpenAIImagesResponse>
         OpenAICompatibleImageGenerationRequestAsync(
             this HttpClient httpClient,
