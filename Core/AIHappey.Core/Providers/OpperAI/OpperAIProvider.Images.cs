@@ -3,6 +3,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Common.Extensions;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OpperAI;
 
@@ -39,17 +40,26 @@ public partial class OpperAIProvider
         var root = document.RootElement.Clone();
         var images = await ExtractOpperAIImagesAsync(root, cancellationToken);
 
+        JsonElement? usage = root.TryGetProperty("usage", out var usageElement)
+            && usageElement.ValueKind == JsonValueKind.Object
+                ? usageElement.Clone()
+                : null;
+
+        decimal? cost = usage is { } rawUsage
+            && rawUsage.TryGetProperty("cost", out var costElement)
+            && costElement.ValueKind == JsonValueKind.Number
+            && costElement.TryGetDecimal(out var parsedCost)
+                ? parsedCost
+                : null;
+
         return new ImageResponse
         {
             Images = images,
             Warnings = [],
-            Usage = ExtractOpperAIImageUsage(root),
-            ProviderMetadata = CreateOpperAIMediaMetadata(new
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(usage != null ? new
             {
-                endpoint = "v3/images",
-                payload,
-                response = root
-            }),
+                usage
+            } : null, cost),
             Response = new()
             {
                 Timestamp = ResolveOpperAITimestamp(root, now),
@@ -122,16 +132,4 @@ public partial class OpperAIProvider
         return images;
     }
 
-    private static ImageUsageData? ExtractOpperAIImageUsage(System.Text.Json.JsonElement root)
-    {
-        if (!TryGetOpperAIProperty(root, "usage", out var usage) || usage.ValueKind != System.Text.Json.JsonValueKind.Object)
-            return null;
-
-        return new ImageUsageData
-        {
-            InputTokens = TryGetOpperAIDouble(usage, "input_tokens", "inputTokens") is { } input ? (int?)Convert.ToInt32(input) : null,
-            OutputTokens = TryGetOpperAIDouble(usage, "output_tokens", "outputTokens", "images") is { } output ? (int?)Convert.ToInt32(output) : null,
-            TotalTokens = TryGetOpperAIDouble(usage, "total_tokens", "totalTokens") is { } total ? (int?)Convert.ToInt32(total) : null
-        };
-    }
 }

@@ -3,6 +3,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Common.Extensions;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.OpperAI;
 
@@ -36,15 +37,30 @@ public partial class OpperAIProvider
                 ? $"OpperAI speech generation failed ({(int)response.StatusCode})."
                 : $"OpperAI speech generation failed ({(int)response.StatusCode}): {raw}");
 
-        using var document = System.Text.Json.JsonDocument.Parse(raw);
+        using var document = JsonDocument.Parse(raw);
         var root = document.RootElement.Clone();
         var audio = ExtractOpperAISpeechAudio(root, request.OutputFormat);
+
+        JsonElement? usage = root.TryGetProperty("usage", out var usageElement)
+                  && usageElement.ValueKind == JsonValueKind.Object
+                      ? usageElement.Clone()
+                      : null;
+
+        decimal? cost = usage is { } rawUsage
+            && rawUsage.TryGetProperty("cost", out var costElement)
+            && costElement.ValueKind == JsonValueKind.Number
+            && costElement.TryGetDecimal(out var parsedCost)
+                ? parsedCost
+                : null;
 
         return new SpeechResponse
         {
             Audio = audio,
             Warnings = [],
-            ProviderMetadata = CreateOpperAIMediaMetadata(null),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(usage != null ? new
+            {
+                usage
+            } : null, cost),
             Response = new()
             {
                 Timestamp = ResolveOpperAITimestamp(root, now),
