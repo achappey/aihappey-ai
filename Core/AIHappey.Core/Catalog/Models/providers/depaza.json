@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "depaza/transcribe",
+      "object": "model",
+      "owned_by": "depaza",
+      "name": "transcribe",
+      "type": "transcription",
+      "description": "Audio → text (EU-hosted Whisper large-v3)."
+    }
+  ]
+}
