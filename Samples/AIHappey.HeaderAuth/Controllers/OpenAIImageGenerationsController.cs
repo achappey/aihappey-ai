@@ -63,10 +63,9 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
                 await foreach (var streamEvent in provider.OpenAIImageGenerationStreamingAsync(requestDto, cancellationToken))
                     await WriteStreamEvent(streamEvent, cancellationToken);
             }
-            catch (Exception ex) when (
-                !Response.HasStarted &&
-                ex is NotImplementedException or NotSupportedException)
-                        {
+            catch (NotImplementedException) when (
+                !Response.HasStarted)
+            {
                 var imageRequest = requestDto.ToImageRequest(requestDto.Model!, provider.GetIdentifier());
                 var content = await provider.ImageRequest(imageRequest, cancellationToken);
 
