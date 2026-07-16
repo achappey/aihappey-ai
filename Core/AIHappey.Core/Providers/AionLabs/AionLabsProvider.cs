@@ -9,6 +9,7 @@ using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Responses.Extensions;
+using AIHappey.Responses.Mapping;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
@@ -47,16 +48,26 @@ public partial class AionLabsProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return await EnrichChatCompletionWithGatewayCostAsync(response, options.Model, cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                           options,
+                           cancellationToken: cancellationToken))
+        {
+            NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+            yield return await EnrichChatCompletionUpdateWithGatewayCostAsync(update, options.Model, cancellationToken);
+        }
     }
 
     public string GetIdentifier() => nameof(AionLabs).ToLowerInvariant();
@@ -77,19 +88,24 @@ public partial class AionLabsProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+           cancellationToken);
 
-        return await this.GetResponse(_client,
-                   options, cancellationToken: cancellationToken);
+        return result.ToResponseResult();
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        return this.GetResponses(_client,
-           options,
-           cancellationToken: cancellationToken);
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            yield return part.ToResponseStreamPart();
+        }
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -128,44 +144,56 @@ public partial class AionLabsProvider : IModelProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return await EnrichUnifiedResponseWithGatewayCostAsync(response, request.Model, cancellationToken);
+    }
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+                           request,
+                           cancellationToken: cancellationToken))
+        {
+            yield return await EnrichUnifiedStreamEventWithGatewayCostAsync(streamEvent, request.Model, cancellationToken);
+        }
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
