@@ -1,6 +1,5 @@
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
@@ -29,11 +28,8 @@ public partial class UltraSafeProvider : IModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://app.us.inc/api/");
+        _client.BaseAddress = new Uri("https://api.us.tech/");
     }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-          => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     private void ApplyAuthHeader()
     {
@@ -42,7 +38,8 @@ public partial class UltraSafeProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(UltraSafe)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        _client.DefaultRequestHeaders.Remove("x-api-key");
+        _client.DefaultRequestHeaders.Add("x-api-key", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -51,7 +48,6 @@ public partial class UltraSafeProvider : IModelProvider
 
         return await this.GetChatCompletion(_client,
              options,
-             relativeUrl: "v2/chat/completions",
              cancellationToken: cancellationToken);
     }
 
@@ -61,18 +57,14 @@ public partial class UltraSafeProvider : IModelProvider
 
         return this.GetChatCompletions(_client,
                     options,
-                    relativeUrl: "v2/chat/completions",
                     cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(UltraSafe).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -111,7 +103,7 @@ public partial class UltraSafeProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
@@ -151,12 +143,12 @@ public partial class UltraSafeProvider : IModelProvider
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
@@ -186,11 +178,11 @@ public partial class UltraSafeProvider : IModelProvider
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
