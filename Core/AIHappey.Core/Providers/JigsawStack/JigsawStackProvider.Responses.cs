@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 
@@ -20,7 +21,7 @@ public partial class JigsawStackProvider
         var executed = await ExecuteModelAsync(modelId, texts, metadata: null, cancellationToken);
         var now = DateTimeOffset.UtcNow;
 
-        return BuildResponseResult(modelId, executed.Text, now);
+        return BuildResponseResult(modelId.ToModelId(GetIdentifier()), executed.Text, now);
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
@@ -46,7 +47,7 @@ public partial class JigsawStackProvider
             Response = new ResponseResult
             {
                 Id = responseId,
-                Model = modelId,
+                Model = modelId.ToModelId(GetIdentifier()),
                 CreatedAt = createdAt,
                 Output = []
             }
@@ -101,7 +102,7 @@ public partial class JigsawStackProvider
             Response = new ResponseResult
             {
                 Id = responseId,
-                Model = modelId,
+                Model = modelId.ToModelId(GetIdentifier()),
                 CreatedAt = createdAt,
                 CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Output =
