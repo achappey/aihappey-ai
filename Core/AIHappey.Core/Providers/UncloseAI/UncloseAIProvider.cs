@@ -238,6 +238,16 @@ public partial class UncloseAIProvider(IApiKeyResolver keyResolver, AsyncCacheHe
         throw new NotImplementedException();
     }
 
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private sealed class UncloseAiModelsResponse
     {
         [JsonPropertyName("data")]

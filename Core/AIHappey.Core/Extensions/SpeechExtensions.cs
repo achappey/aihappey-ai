@@ -126,37 +126,41 @@ public static class SpeechExtensions
             KnownSpeakerReferences = ReadFormArray(form, "known_speaker_references", "known_speaker_references[]")
         };
 
-    public static object ToOpenAITranscriptionResponse(
-        this TranscriptionResponse response,
-        string responseFormat)
-        => responseFormat switch
+   public static IOpenAITranscriptionResponse ToOpenAITranscriptionResponse(
+    this TranscriptionResponse response,
+    string responseFormat)
+{
+    return responseFormat switch
+    {
+        "verbose_json" => new OpenAITranscriptionVerboseResponse
         {
-            "verbose_json" => new
-            {
-                task = "transcribe",
-                language = response.Language,
-                duration = response.DurationInSeconds,
-                text = response.Text,
-                segments = response.Segments.Select((segment, index) => new
+            Language = response.Language ?? string.Empty,
+            Duration = response.DurationInSeconds ?? 0,
+            Text = response.Text,
+            Segments = response.Segments?
+                .Select((segment, index) => new OpenAITranscriptionSegment
                 {
-                    id = index,
-                    seek = 0,
-                    start = segment.StartSecond,
-                    end = segment.EndSecond,
-                    text = segment.Text,
-                    tokens = Array.Empty<int>(),
-                    temperature = 0,
-                    avg_logprob = 0,
-                    compression_ratio = 0,
-                    no_speech_prob = 0
-                }),
-                words = Array.Empty<object>()
-            },
-            _ => new
-            {
-                text = response.Text
-            }
-        };
+                    Id = index,
+                    Seek = 0,
+                    Start = segment.StartSecond,
+                    End = segment.EndSecond,
+                    Text = segment.Text,
+                    Tokens = [],
+                    Temperature = 0,
+                    AverageLogprob = 0,
+                    CompressionRatio = 0,
+                    NoSpeechProbability = 0
+                })
+                .ToArray(),
+            Words = []
+        },
+
+        _ => new OpenAITranscriptionResponse
+        {
+            Text = response.Text
+        }
+    };
+}
 
     public static string ResolveOpenAITranscriptionResponseFormat(this OpenAITranscriptionRequest request)
         => string.IsNullOrWhiteSpace(request.ResponseFormat)

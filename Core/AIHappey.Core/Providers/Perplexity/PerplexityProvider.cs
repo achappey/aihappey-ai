@@ -530,6 +530,16 @@ public partial class PerplexityProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private sealed class PerplexityDownloadedImage
     {
         public required string DataUrl { get; init; }

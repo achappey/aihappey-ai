@@ -21,46 +21,136 @@ public class OpenAITranscriptionsController(IAIModelProviderResolver resolver) :
 
         try
         {
-            requestDto = (await Request.ReadFormAsync(cancellationToken)).ToAudioTranscriptionRequest();
+            requestDto = (
+                await Request.ReadFormAsync(cancellationToken))
+                .ToAudioTranscriptionRequest();
+
             requestDto.ValidateOpenAITranscriptionRequest();
 
-            var provider = await resolver.Resolve(requestDto.Model, cancellationToken);
-            if (provider == null)
-                return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
-
-            var responseFormat = requestDto.ResolveOpenAITranscriptionResponseFormat();
-            var transcriptionRequest = await requestDto.ToTranscriptionRequest(
-                requestDto.Model.SplitModelId().Model,
-                provider.GetIdentifier(),
+            var provider = await resolver.Resolve(
+                requestDto.Model,
                 cancellationToken);
 
-            var content = await provider.TranscriptionRequest(transcriptionRequest, cancellationToken);
+            if (provider == null)
+            {
+                return BadRequest(new
+                {
+                    error = $"Model '{requestDto.Model}' is not available."
+                });
+            }
+
+            var responseFormat =
+                requestDto.ResolveOpenAITranscriptionResponseFormat();
+
+            requestDto.Model = requestDto.Model.SplitModelId().Model;
 
             if (requestDto.Stream == true)
             {
                 Response.ContentType = "text/event-stream";
+                Response.Headers.CacheControl = "no-cache";
 
-                await using var writer = new StreamWriter(Response.Body);
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new OpenAITranscriptionTextDelta
+                try
                 {
-                    Delta = content.Text
-                })}\n\n");
+                    await foreach (var streamEvent in
+                        provider.OpenAITranscriptionStreamingAsync(
+                            requestDto,
+                            cancellationToken))
+                    {
+                        var json = JsonSerializer.Serialize(
+                            streamEvent,
+                            streamEvent.GetType());
 
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new OpenAITranscriptionTextDone
+                        await Response.WriteAsync(
+                            $"data: {json}\n\n",
+                            cancellationToken);
+
+                        await Response.Body.FlushAsync(
+                            cancellationToken);
+                    }
+                }
+                catch (NotImplementedException) when (!Response.HasStarted)
                 {
-                    Text = content.Text
-                })}\n\n");
+                    var transcriptionRequest =
+                        await requestDto.ToTranscriptionRequest(
+                            requestDto.Model,
+                            provider.GetIdentifier(),
+                            cancellationToken);
 
-                await writer.WriteAsync("data: [DONE]\n\n");
-                await writer.FlushAsync(CancellationToken.None);
+                    var content = await provider.TranscriptionRequest(
+                        transcriptionRequest,
+                        cancellationToken);
+
+                    await Response.WriteAsync(
+                        $"data: {JsonSerializer.Serialize(
+                            new OpenAITranscriptionTextDelta
+                            {
+                                Delta = content.Text
+                            })}\n\n",
+                        cancellationToken);
+
+                    await Response.WriteAsync(
+                        $"data: {JsonSerializer.Serialize(
+                            new OpenAITranscriptionTextDone
+                            {
+                                Text = content.Text
+                            })}\n\n",
+                        cancellationToken);
+
+                    await Response.Body.FlushAsync(
+                        cancellationToken);
+                }
+
+                await Response.WriteAsync(
+                    "data: [DONE]\n\n",
+                    cancellationToken);
+
+                await Response.Body.FlushAsync(
+                    cancellationToken);
 
                 return new EmptyResult();
             }
 
-            if (responseFormat == "text")
-                return Content(content.Text, "text/plain");
+            IOpenAITranscriptionResponse response;
 
-            return Ok(content.ToOpenAITranscriptionResponse(responseFormat));
+            try
+            {
+                response =
+                    await provider.OpenAITranscriptionRequestAsync(
+                        requestDto,
+                        cancellationToken);
+            }
+            catch (NotImplementedException)
+            {
+                var transcriptionRequest =
+                    await requestDto.ToTranscriptionRequest(
+                        requestDto.Model,
+                        provider.GetIdentifier(),
+                        cancellationToken);
+
+                var content = await provider.TranscriptionRequest(
+                    transcriptionRequest,
+                    cancellationToken);
+
+                response = content.ToOpenAITranscriptionResponse(
+                    responseFormat);
+            }
+
+            return responseFormat switch
+            {
+                "text" => Content(
+                    response.Text,
+                    "text/plain"),
+
+                "srt" => Content(
+                    response.Text,
+                    "application/x-subrip"),
+
+                "vtt" => Content(
+                    response.Text,
+                    "text/vtt"),
+
+                _ => Ok(response)
+            };
         }
         catch (OperationCanceledException)
         {
@@ -93,17 +183,21 @@ public class OpenAITranscriptionsController(IAIModelProviderResolver resolver) :
                                 type = "server_error",
                                 code = (string?)null
                             }
-                        })}\n\n");
+                        })}\n\n",
+                        CancellationToken.None);
+
+                    await Response.Body.FlushAsync(
+                        CancellationToken.None);
                 }
                 catch
                 {
-                    // socket already gone
+                    // Socket already gone.
                 }
 
                 return new EmptyResult();
             }
 
-            return BadRequest(new
+            return StatusCode(500, new
             {
                 error = new
                 {

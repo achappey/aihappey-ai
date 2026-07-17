@@ -132,5 +132,4 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedMo
         yield break;
     }
 
-   
 }

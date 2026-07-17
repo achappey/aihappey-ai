@@ -7,11 +7,30 @@ using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionStreamingAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
     public async Task<TranscriptionResponse> TranscribeWithDiarization(
         TranscriptionRequest request,
         CancellationToken ct = default)
