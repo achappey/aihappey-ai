@@ -34,9 +34,6 @@ public partial class JigsawStackProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("x-api-key", key);
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
     public string GetIdentifier() => nameof(JigsawStack).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
