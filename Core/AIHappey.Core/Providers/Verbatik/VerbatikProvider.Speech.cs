@@ -151,23 +151,6 @@ public partial class VerbatikProvider
         };
     }
 
-
-    private static string ParseVoiceIdFromModel(string model)
-    {
-        if (!model.StartsWith(VerbatikTtsModelPrefix, StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException($"{ProviderName} model '{model}' is not supported. Expected '{VerbatikTtsModelPrefix}[voiceId]'.");
-
-        var voiceId = model[VerbatikTtsModelPrefix.Length..].Trim();
-        if (string.IsNullOrWhiteSpace(voiceId))
-            throw new ArgumentException("Model must contain a voice id after 'tts/'.", nameof(model));
-
-        return voiceId;
-    }
-
-    private static bool IsJsonContentType(string? contentType)
-        => !string.IsNullOrWhiteSpace(contentType)
-            && contentType.Contains("json", StringComparison.OrdinalIgnoreCase);
-
     private static string ResolveRequestContentType(string? contentTypeMetadata, string text)
     {
         if (!string.IsNullOrWhiteSpace(contentTypeMetadata))
