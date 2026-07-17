@@ -101,7 +101,7 @@ public partial class UVoiceAIProvider
         string? audioUrl = null;
         byte[] audioBytes = bytes;
         var contentType = resp.Content.Headers.ContentType?.MediaType;
-
+        JsonElement? body = null;
         if (string.Equals(outputType, "url", StringComparison.OrdinalIgnoreCase)
             || IsLikelyJson(contentType, bytes))
         {
@@ -117,6 +117,7 @@ public partial class UVoiceAIProvider
 
             audioBytes = audioUrlBytes;
             contentType = audioResp.Content.Headers.ContentType?.MediaType;
+            body = doc.RootElement.Clone();
         }
 
         var mimeType = ResolveSpeechMimeType(contentType, outputFormat);
@@ -132,17 +133,16 @@ public partial class UVoiceAIProvider
             },
             Warnings = warnings,
             ProviderMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(new
-                {
-                    voiceId,
-                    outputType,
-                    outputFormat,
-                    audioUrl,
-                    remainingCredits = TryReadHeader(resp, "X-Remaining-Credits")
-                }),
+                .CreatePrimitiveProviderMetadata(),
+            Request = new()
+            {
+                Body = payload,
+            },
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
+                Body = body,
                 ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };

@@ -12,23 +12,36 @@ public partial class UVoiceAIProvider
     private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        var voices = await GetVoicesAsync(cancellationToken);
+        var cacheKey = this.GetCacheKey(key);
 
-        return [.. voices
-            .Select(v => new Model
+        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+            cacheKey,
+            async ct =>
             {
-                Id = BuildModelId(v.VoiceId),
-                OwnedBy = ProviderName,
-                Type = "speech",
-                Name = BuildVoiceDisplayName(v),
-                Description = $"{ProviderName} TTS voice {v.VoiceId}.",
-                Tags = BuildVoiceTags(v)
-            })
-            .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())];
+
+                var voices = await GetVoicesAsync(cancellationToken);
+
+                return [.. voices
+                    .Select(v => new Model
+                    {
+                        Id = BuildModelId(v.VoiceId),
+                        OwnedBy = ProviderName,
+                        Type = "speech",
+                        Name = BuildVoiceDisplayName(v),
+                        Description = $"{ProviderName} TTS voice {v.VoiceId}.",
+                        Tags = BuildVoiceTags(v)
+                    })
+                    .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.First())];
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<IReadOnlyList<UVoiceVoice>> GetVoicesAsync(CancellationToken cancellationToken)
