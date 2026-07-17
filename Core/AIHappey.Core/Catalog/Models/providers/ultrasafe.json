@@ -1,0 +1,20 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "ultrasafe/usf-rerank-v1",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-rerank-v1",
+      "type": "reranking",
+      "description": "Score and reorder a list of text passages by relevance to a query."
+    },
+    {
+      "id": "ultrasafe/usf-whisper-v1",
+      "object": "model",
+      "owned_by": "UltraSafe",
+      "name": "usf-whisper-v1",
+      "type": "transcription"
+    }
+  ]
+}
