@@ -1,3 +1,4 @@
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -72,17 +73,6 @@ public partial class VeniceProvider
         var resolvedFormat = ResolveSpeechFormat(payload, response.Content.Headers.ContentType?.MediaType);
         var mimeType = ResolveSpeechMimeType(resolvedFormat, response.Content.Headers.ContentType?.MediaType);
 
-        var providerMetadata = new JsonObject
-        {
-            ["endpoint"] = "v1/audio/speech",
-            ["status"] = (int)response.StatusCode,
-            ["contentType"] = response.Content.Headers.ContentType?.MediaType,
-            ["request"] = JsonNode.Parse(payload.ToJsonString(JsonSerializerOptions.Web))
-        };
-
-        if (metadata.ValueKind == JsonValueKind.Object)
-            providerMetadata["passthrough"] = JsonNode.Parse(metadata.GetRawText());
-
         return new SpeechResponse
         {
             Audio = new SpeechAudioResponse
@@ -92,19 +82,19 @@ public partial class VeniceProvider
                 Format = resolvedFormat
             },
             Warnings = warnings,
+            Request = new()
+            {
+                Body = payload,
+            },
             ProviderMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(providerMetadata),
+                .CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = payload.TryGetPropertyValue("model", out var modelNode) && modelNode is JsonValue modelValue && modelValue.TryGetValue<string>(out var model)
-                    ? model
-                    : request.Model,
-                Body = new
-                {
-                    endpoint = "v1/audio/speech",
-                    contentType = response.Content.Headers.ContentType?.MediaType
-                }
+                    ? model.ToModelId(GetIdentifier())
+                    : request.Model.ToModelId(GetIdentifier())
             }
         };
     }

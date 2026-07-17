@@ -53,9 +53,7 @@ public partial class VeniceProvider
 
         var model = !string.IsNullOrWhiteSpace(TryGetString(metadata, "model"))
             ? TryGetString(metadata, "model")!.Trim()
-            : !string.IsNullOrWhiteSpace(request.Model)
-                ? request.Model.Trim()
-                : "nvidia/parakeet-tdt-0.6b-v3";
+            : request.Model.Trim();
 
         var responseFormat = !string.IsNullOrWhiteSpace(TryGetString(metadata, "response_format"))
             ? TryGetString(metadata, "response_format")!.Trim().ToLowerInvariant()
@@ -89,7 +87,8 @@ public partial class VeniceProvider
             throw new InvalidOperationException($"Venice transcription request failed ({(int)response.StatusCode}): {raw}");
 
         var contentType = response.Content.Headers.ContentType?.MediaType?.ToLowerInvariant();
-        var isPlainText = contentType == "text/plain" || string.Equals(responseFormat, "text", StringComparison.OrdinalIgnoreCase);
+        var isPlainText = contentType == "text/plain" 
+            || string.Equals(responseFormat, "text", StringComparison.OrdinalIgnoreCase);
 
         var parsed = isPlainText
             ? ParseTextTranscription(raw)
@@ -123,10 +122,12 @@ public partial class VeniceProvider
             Response = new ResponseData
             {
                 Timestamp = now,
-                ModelId = model,
+                Headers = response.GetHeaders(),
+                ModelId = model.ToModelId(GetIdentifier()),
                 Body = isPlainText
                     ? raw
-                    : JsonSerializer.Deserialize<object>(raw, JsonSerializerOptions.Web) ?? raw
+                    : JsonSerializer.Deserialize<object>(raw, JsonSerializerOptions.Web) 
+                        ?? raw
             }
         };
     }

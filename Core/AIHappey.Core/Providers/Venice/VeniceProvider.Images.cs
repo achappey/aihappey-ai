@@ -4,6 +4,7 @@ using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
@@ -42,7 +43,8 @@ public partial class VeniceProvider
             httpRequest.Content = BuildJsonContent(endpoint, request, files, metadata, warnings);
 
         using var response = await _client.SendAsync(httpRequest, cancellationToken);
-        return await ParseImageResponseAsync(response, endpoint, request.Model, warnings, now, cancellationToken);
+        return await ParseImageResponseAsync(response, endpoint, 
+            request.Model, warnings, now, cancellationToken);
     }
 
     private static string ResolveImageEndpoint(string model, int incomingImageCount, List<object> warnings)
@@ -303,21 +305,15 @@ public partial class VeniceProvider
             var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
             var dataUrl = Convert.ToBase64String(bytes).ToDataUrl(mediaType);
 
-            var providerMeta = new JsonObject
-            {
-                ["endpoint"] = endpoint,
-                ["status"] = (int)response.StatusCode,
-                ["contentType"] = mediaType
-            };
-
             return new ImageResponse
             {
                 Images = [dataUrl],
                 Warnings = warnings,
-                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMeta),
+                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
                 Response = new()
                 {
                     Timestamp = now,
+                    Headers = response.GetHeaders(),
                     ModelId = model.ToModelId(GetIdentifier())
                 }
             };
@@ -349,21 +345,15 @@ public partial class VeniceProvider
         if (images.Count == 0)
             throw new InvalidOperationException($"Venice image response did not contain images for endpoint [{endpoint}].");
 
-        var providerMetadata = new JsonObject
-        {
-            ["endpoint"] = endpoint,
-            ["status"] = (int)response.StatusCode,
-            ["body"] = JsonNode.Parse(root.GetRawText())
-        };
-
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMetadata),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = model.ToModelId(GetIdentifier())
             }
         };
