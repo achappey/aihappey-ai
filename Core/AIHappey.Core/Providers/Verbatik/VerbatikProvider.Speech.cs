@@ -1,8 +1,10 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using AIHappey.Common.Model.Providers.Verbatik;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -10,6 +12,28 @@ namespace AIHappey.Core.Providers.Verbatik;
 
 public partial class VerbatikProvider
 {
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        var req = options.ToSpeechRequest();
+        var result = await this.SpeechRequest(req, cancellationToken);
+
+        return result.ToOpenAISpeechAudio();
+    }
+
+    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, 
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var req = options.ToSpeechRequest();
+        
+        var result = await this.SpeechRequest(req, cancellationToken);
+
+        foreach (var streamEvent in result.ToOpenAISpeechStreamEvents())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
+    }
+
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request,
         CancellationToken cancellationToken = default)
     {

@@ -6,8 +6,6 @@ namespace AIHappey.Core.Providers.Verbatik;
 
 public partial class VerbatikProvider
 {
-    private const string VerbatikTtsModelPrefix = "tts/";
-
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -46,18 +44,7 @@ public partial class VerbatikProvider
 
         return baseModels.SelectMany(baseModel =>
             validVoices.Select(voice => CreateVoiceModel(baseModel, voice)));
-    }
-
-    private string GetLocalModelId(string modelId)
-    {
-        var providerPrefix = $"{GetIdentifier()}/";
-
-        return modelId.StartsWith(
-                providerPrefix,
-                StringComparison.OrdinalIgnoreCase)
-            ? modelId[providerPrefix.Length..]
-            : modelId;
-    }
+    }   
 
     private static IEnumerable<string> BuildVoiceTags(
         Model baseModel,
@@ -87,7 +74,7 @@ public partial class VerbatikProvider
         Model baseModel,
         VerbatikVoice voice)
     {
-        var baseModelId = GetLocalModelId(baseModel.Id);
+        var baseModelId = baseModel.Id;
 
         return new Model
         {
