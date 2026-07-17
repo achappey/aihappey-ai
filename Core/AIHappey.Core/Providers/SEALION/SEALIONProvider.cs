@@ -42,6 +42,9 @@ public partial class SEALIONProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (!options.Tools.Any())
+            options.Tools = null!;
+
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
     }
@@ -50,18 +53,18 @@ public partial class SEALIONProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (!options.Tools.Any())
+            options.Tools = null!;
+
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(SEALION).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
