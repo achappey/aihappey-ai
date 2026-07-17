@@ -1,0 +1,32 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "fikra/fikra-fast-8b",
+      "object": "model",
+      "owned_by": "Fikra",
+      "name": "Fikra Fast 8B",
+      "type": "language",
+      "description": "Fast, efficient model optimized for real-time chat, basic request routing, and summarization with low to moderate reasoning depth.",
+      "context_window": 8192
+    },
+    {
+      "id": "fikra/fikra-pro-20b",
+      "object": "model",
+      "owned_by": "Fikra",
+      "name": "Fikra Pro 20B",
+      "type": "language",
+      "description": "Production-grade model optimized for agentic workflows, retrieval-augmented generation, and tasks requiring strong reasoning capabilities.",
+      "context_window": 32768
+    },
+    {
+      "id": "fikra/fikra-pro-120b",
+      "object": "model",
+      "owned_by": "Fikra",
+      "name": "Fikra Pro 120B",
+      "type": "language",
+      "description": "Fikra's most capable model, designed for complex coding, deep analysis, logical deduction, and tasks requiring maximum reasoning depth.",
+      "context_window": 128000
+    }
+  ]
+}
