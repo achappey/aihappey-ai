@@ -5,6 +5,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.APIpie;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -13,6 +14,25 @@ namespace AIHappey.Core.Providers.APIpie;
 public partial class APIpieProvider
 {
     private const string ApiPieTranscriptionEndpoint = "v1/audio/transcriptions";
+
+
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionStreamingAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
 
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,

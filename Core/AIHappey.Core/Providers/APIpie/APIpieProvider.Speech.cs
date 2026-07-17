@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.APIpie;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -17,6 +18,29 @@ public partial class APIpieProvider
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
+       AudioSpeechRequest options,
+       CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleSpeechRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent>
+        OpenAISpeechStreamingAsync(
+            AudioSpeechRequest options,
+            CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleStreamingSpeechAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
 
     public async Task<SpeechResponse> SpeechRequest(
         SpeechRequest request,
