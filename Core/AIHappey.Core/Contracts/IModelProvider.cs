@@ -48,35 +48,33 @@ public interface IModelProvider
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default);
 
-    Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
 
     Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
             OpenAIImageGenerationRequest options,
-           CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+           CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
        OpenAIImageGenerationRequest options,
-       CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+       CancellationToken cancellationToken = default);
 
     Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
        OpenAIImageEditRequest options,
-       CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+       CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
        OpenAIImageEditRequest options,
-       CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+       CancellationToken cancellationToken = default);
 
     Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
        OpenAIImageVariationRequest options,
-       CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+       CancellationToken cancellationToken = default);
+
+    //Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
+
+    //IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
+
 
 }

@@ -61,7 +61,7 @@ public static class SpeechExtensions
     }
 
     public static async Task<TranscriptionRequest> ToTranscriptionRequest(
-       this AudioTranscriptionRequest request,
+       this OpenAITranscriptionRequest request,
        string model,
        string providerIdentifier,
        CancellationToken cancellationToken = default)
@@ -82,7 +82,33 @@ public static class SpeechExtensions
         };
     }
 
-    public static AudioTranscriptionRequest ToAudioTranscriptionRequest(this IFormCollection form)
+    private static object? ReadChunkingStrategy(IFormCollection form)
+    {
+        var strategy = ReadFormString(form, "chunking_strategy");
+
+        if (!string.IsNullOrWhiteSpace(strategy))
+            return strategy;
+
+        var type = ReadFormString(
+            form,
+            "chunking_strategy[type]");
+
+        if (string.IsNullOrWhiteSpace(type))
+            return null;
+
+        return new AudioTranscriptionServerVadChunkingStrategy
+        {
+            Type = type,
+            PrefixPaddingMs = ReadFormInt(
+                form,
+                "chunking_strategy[prefix_padding_ms]"),
+            SilenceDurationMs = ReadFormInt(
+                form,
+                "chunking_strategy[silence_duration_ms]")
+        };
+    }
+
+    public static OpenAITranscriptionRequest ToAudioTranscriptionRequest(this IFormCollection form)
         => new()
         {
             File = form.Files.GetFile("file")!,
@@ -94,7 +120,8 @@ public static class SpeechExtensions
             TimestampGranularities = ReadFormArray(form, "timestamp_granularities", "timestamp_granularities[]"),
             Stream = ReadFormBool(form, "stream"),
             Include = ReadFormArray(form, "include", "include[]"),
-            ChunkingStrategy = ReadFormString(form, "chunking_strategy"),
+            // ChunkingStrategy = ReadFormString(form, "chunking_strategy"),
+            ChunkingStrategy = ReadChunkingStrategy(form),
             KnownSpeakerNames = ReadFormArray(form, "known_speaker_names", "known_speaker_names[]"),
             KnownSpeakerReferences = ReadFormArray(form, "known_speaker_references", "known_speaker_references[]")
         };
@@ -131,12 +158,12 @@ public static class SpeechExtensions
             }
         };
 
-    public static string ResolveOpenAITranscriptionResponseFormat(this AudioTranscriptionRequest request)
+    public static string ResolveOpenAITranscriptionResponseFormat(this OpenAITranscriptionRequest request)
         => string.IsNullOrWhiteSpace(request.ResponseFormat)
             ? "json"
             : request.ResponseFormat.Trim().ToLowerInvariant();
 
-    public static void ValidateOpenAITranscriptionRequest(this AudioTranscriptionRequest request)
+    public static void ValidateOpenAITranscriptionRequest(this OpenAITranscriptionRequest request)
     {
         if (request == null)
             throw new ArgumentException("Request is required.");
@@ -154,7 +181,7 @@ public static class SpeechExtensions
         if (responseFormat is not "json" and not "text" and not "verbose_json")
             throw new NotSupportedException($"OpenAI transcription response_format '{responseFormat}' is not supported.");
 
-        if (!string.IsNullOrWhiteSpace(request.ChunkingStrategy))
+        if (request.ChunkingStrategy != null)
             throw new NotSupportedException("OpenAI transcription 'chunking_strategy' is not supported by this compatibility endpoint yet.");
 
         if (request.Include?.Any() == true)
@@ -165,7 +192,7 @@ public static class SpeechExtensions
     }
 
     private static Dictionary<string, JsonElement>? BuildTranscriptionProviderOptions(
-        AudioTranscriptionRequest request,
+        OpenAITranscriptionRequest request,
         string providerIdentifier)
     {
         var options = new Dictionary<string, object?>();
@@ -206,6 +233,15 @@ public static class SpeechExtensions
 
         return values.Length == 0 ? null : values;
     }
+
+    private static int? ReadFormInt(IFormCollection form, string name)
+     => int.TryParse(
+         ReadFormString(form, name),
+         System.Globalization.NumberStyles.Integer,
+         System.Globalization.CultureInfo.InvariantCulture,
+         out var value)
+         ? value
+         : null;
 
     private static float? ReadFormFloat(IFormCollection form, string name)
         => float.TryParse(

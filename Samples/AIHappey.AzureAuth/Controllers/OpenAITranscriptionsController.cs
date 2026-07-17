@@ -10,14 +10,14 @@ namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
 [Route("v1/audio/transcriptions")]
-public class AudioTranscriptionsController(IAIModelProviderResolver resolver) : ControllerBase
+public class OpenAITranscriptionsController(IAIModelProviderResolver resolver) : ControllerBase
 {
     [HttpPost]
     [Authorize]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Post(CancellationToken cancellationToken)
     {
-        AudioTranscriptionRequest? requestDto = null;
+        OpenAITranscriptionRequest? requestDto = null;
 
         try
         {
@@ -41,12 +41,12 @@ public class AudioTranscriptionsController(IAIModelProviderResolver resolver) : 
                 Response.ContentType = "text/event-stream";
 
                 await using var writer = new StreamWriter(Response.Body);
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new AudioTranscriptionTextDelta
+                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new OpenAITranscriptionTextDelta
                 {
                     Delta = content.Text
                 })}\n\n");
 
-                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new AudioTranscriptionTextDone
+                await writer.WriteAsync($"data: {JsonSerializer.Serialize(new OpenAITranscriptionTextDone
                 {
                     Text = content.Text
                 })}\n\n");

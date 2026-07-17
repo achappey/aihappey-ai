@@ -11,7 +11,7 @@ namespace AIHappey.Core.Models;
 /// contract are modeled here.
 /// </para>
 /// </summary>
-public class AudioTranscriptionRequest
+public class OpenAITranscriptionRequest
 {
     [JsonPropertyName("file")]
     public IFormFile File { get; set; } = null!;
@@ -41,7 +41,7 @@ public class AudioTranscriptionRequest
     public string[]? Include { get; set; }
 
     [JsonPropertyName("chunking_strategy")]
-    public string? ChunkingStrategy { get; set; }
+    public object? ChunkingStrategy { get; set; }
 
     [JsonPropertyName("known_speaker_names")]
     public string[]? KnownSpeakerNames { get; set; }
@@ -50,26 +50,16 @@ public class AudioTranscriptionRequest
     public string[]? KnownSpeakerReferences { get; set; }
 }
 
-public interface IAudioTranscriptionStreamEvent
+public sealed class AudioTranscriptionServerVadChunkingStrategy
 {
     [JsonPropertyName("type")]
-    string Type { get; }
-}
+    public string Type { get; set; } = "server_vad";
 
-public class AudioTranscriptionTextDelta : IAudioTranscriptionStreamEvent
-{
-    [JsonPropertyName("type")]
-    public string Type => "transcript.text.delta";
+    [JsonPropertyName("prefix_padding_ms")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? PrefixPaddingMs { get; set; }
 
-    [JsonPropertyName("delta")]
-    public required string Delta { get; set; }
-}
-
-public class AudioTranscriptionTextDone : IAudioTranscriptionStreamEvent
-{
-    [JsonPropertyName("type")]
-    public string Type => "transcript.text.done";
-
-    [JsonPropertyName("text")]
-    public required string Text { get; set; }
+    [JsonPropertyName("silence_duration_ms")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? SilenceDurationMs { get; set; }
 }
