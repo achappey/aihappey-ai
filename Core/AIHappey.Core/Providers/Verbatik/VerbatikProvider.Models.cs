@@ -82,7 +82,8 @@ public partial class VerbatikProvider
             OwnedBy = baseModel.OwnedBy ?? ProviderName,
             Type = baseModel.Type ?? "speech",
             Name = $"{baseModel.Name ?? baseModelId} · {BuildVoiceDisplayName(voice)}",
-            Description = $"{baseModel.Description ?? $"{ProviderName} TTS model {baseModelId}"} Voice: {voice.Name}.",
+            Description = $"{baseModel.Description 
+                ?? $"{ProviderName} TTS model {baseModelId}"} Voice: {voice.Name}.",
             Pricing = baseModel.Pricing,
             Tags = BuildVoiceTags(baseModel, voice)
         };
