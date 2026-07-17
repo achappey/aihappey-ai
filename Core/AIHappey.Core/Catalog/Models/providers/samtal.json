@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "samtal/llm",
+      "object": "model",
+      "owned_by": "Samtal",
+      "name": "Samtal LLM",
+      "type": "language",
+      "description": "Samtal-tier and EU-tier route to Berget google/gemma-4-31B-it, US-tier routes to OpenAI."
+    }
+  ]
+}
