@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using System.Globalization;
 
 namespace AIHappey.Core.Providers.PrimeIntellect;
 
@@ -36,11 +35,8 @@ public partial class PrimeIntellectProvider
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
-
-                // ✅ root is already an array
-                var arr = root.ValueKind == JsonValueKind.Array
-                    ? root.EnumerateArray()
-                    : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -54,32 +50,20 @@ public partial class PrimeIntellectProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
-                        v.ValueKind == JsonValueKind.Number
-                            ? v.GetInt32()
-                            : null;
-
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
-
                     if (el.TryGetProperty("pricing", out var pricingEl) &&
-                        pricingEl.ValueKind == JsonValueKind.Object)
+                            pricingEl.ValueKind == JsonValueKind.Object &&
+                            pricingEl.TryGetProperty("input_usd_per_mtok", out var inputEl) &&
+                            pricingEl.TryGetProperty("output_usd_per_mtok", out var outputEl) &&
+                            inputEl.TryGetDecimal(out var inputPerMillion) &&
+                            outputEl.TryGetDecimal(out var outputPerMillion) &&
+                            inputPerMillion > 0 &&
+                            outputPerMillion > 0)
                     {
-                        var inputPrice = pricingEl.TryGetProperty("input", out var inEl)
-                                ? inEl.GetRawText() : null;
-
-                        var outputPrice = pricingEl.TryGetProperty("output", out var outEl)
-                                ? outEl.GetRawText() : null;
-
-                        if (!string.IsNullOrEmpty(outputPrice)
-                            && !string.IsNullOrEmpty(inputPrice)
-                            && !outputPrice.Equals("0")
-                            && !inputPrice.Equals("0"))
-                            model.Pricing = new ModelPricing
-                            {
-                                Input = decimal.Parse(inputPrice, CultureInfo.InvariantCulture),
-                                Output = decimal.Parse(outputPrice, CultureInfo.InvariantCulture)
-                            };
+                        model.Pricing = new ModelPricing
+                        {
+                            Input = inputPerMillion / 1_000_000m,
+                            Output = outputPerMillion / 1_000_000m
+                        };
                     }
 
                     if (!string.IsNullOrEmpty(model.Id))
