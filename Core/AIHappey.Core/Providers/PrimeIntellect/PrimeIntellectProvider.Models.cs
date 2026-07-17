@@ -8,19 +8,12 @@ public partial class PrimeIntellectProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
-
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
@@ -35,7 +28,7 @@ public partial class PrimeIntellectProvider
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
-                
+
                 var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
