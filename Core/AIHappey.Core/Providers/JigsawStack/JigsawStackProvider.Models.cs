@@ -1,9 +1,4 @@
-using AIHappey.Common.Extensions;
-using System.Runtime.CompilerServices;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
-using AIHappey.Messages;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.JigsawStack;

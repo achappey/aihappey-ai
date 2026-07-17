@@ -1,9 +1,7 @@
-using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using AIHappey.Messages;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.JigsawStack;

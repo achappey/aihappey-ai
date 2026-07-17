@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.Extensions;
-using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
