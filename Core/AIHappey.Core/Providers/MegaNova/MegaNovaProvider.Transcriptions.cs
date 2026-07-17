@@ -3,11 +3,32 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.MegaNova;
 
 public partial class MegaNovaProvider
 {
+
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionStreamingAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+
     private async Task<TranscriptionResponse> TranscriptionRequestMegaNova(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

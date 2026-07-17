@@ -6,6 +6,7 @@ using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.MegaNova;
 
@@ -15,6 +16,29 @@ public partial class MegaNovaProvider
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
+              AudioSpeechRequest options,
+              CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleSpeechRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent>
+        OpenAISpeechStreamingAsync(
+            AudioSpeechRequest options,
+            CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleStreamingSpeechAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
 
     private async Task<SpeechResponse> SpeechRequestMegaNova(SpeechRequest request, CancellationToken cancellationToken = default)
     {
