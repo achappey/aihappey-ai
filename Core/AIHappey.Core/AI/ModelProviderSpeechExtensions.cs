@@ -2,12 +2,33 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.AI;
 
 public static class ModelProviderSpeechExtensions
 {
+
+    public static async IAsyncEnumerable<IAudioSpeechStreamEvent> SpeechStreamingAsync(
+       this IModelProvider modelProvider,
+       AudioSpeechRequest options,
+       [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var request = options.ToSpeechRequest();
+
+        var result = await modelProvider.SpeechRequest(
+            request,
+            cancellationToken);
+
+        foreach (var streamEvent in result.ToOpenAISpeechStreamEvents())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
+    }
+
     public static async Task<(byte[] Audio, string MimeType)>
         OpenAICompatibleSpeechRequestAsync(
             this HttpClient httpClient,
