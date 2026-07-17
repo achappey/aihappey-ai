@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Portkey;
@@ -14,6 +15,29 @@ public partial class PortkeyProvider
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
+             AudioSpeechRequest options,
+             CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleSpeechRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent>
+        OpenAISpeechStreamingAsync(
+            AudioSpeechRequest options,
+            CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleStreamingSpeechAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
 
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {

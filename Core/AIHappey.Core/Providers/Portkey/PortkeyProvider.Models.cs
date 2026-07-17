@@ -21,7 +21,7 @@ public partial class PortkeyProvider
             {
                 ApplyAuthHeader();
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?offset=10000");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -36,10 +36,8 @@ public partial class PortkeyProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                // ✅ root is already an array
-                var arr = root.ValueKind == JsonValueKind.Array
-                    ? root.EnumerateArray()
-                    : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 
@@ -52,6 +50,9 @@ public partial class PortkeyProvider
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
                     }
+
+                    if (el.TryGetProperty("slug", out var slugEl))
+                        model.Name = slugEl.GetString() ?? model.Name;
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
