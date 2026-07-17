@@ -569,7 +569,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ilmu"] = "X-ILMU-Key",
             ["lyceum"] = "X-Lyceum-Key",
             ["depaza"] = "X-Depaza-Key",
-            ["samtal"] = "X-Samtal-Key"
+            ["samtal"] = "X-Samtal-Key",
+            ["fikra"] = "X-Fikra-Key"
 
         };
 

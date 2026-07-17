@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Text;
 using AIHappey.Common.Model.Providers.Verbatik;
 using AIHappey.Core.AI;
@@ -34,6 +33,9 @@ public partial class VerbatikProvider
             throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
+
+        if (IsTextToMusicModel(request.Model))
+            return await MusicRequest(request, cancellationToken);
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
@@ -271,6 +273,9 @@ public partial class VerbatikProvider
 
         return value.Trim();
     }
+
+    private static bool IsTextToMusicModel(string model)
+        => string.Equals(NormalizeLocalModelId(model), "text-to-music", StringComparison.OrdinalIgnoreCase);
 
     private static string ResolveVoiceId(
         string model,

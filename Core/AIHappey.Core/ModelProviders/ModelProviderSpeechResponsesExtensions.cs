@@ -26,7 +26,8 @@ public static class ModelProviderSpeechResponsesExtensions
         {
             Model = chatRequest.Model!,
             Text = input,
-            //      ProviderOptions = chatRequest.Metadata,
+            Instructions = chatRequest.Instructions,
+            ProviderOptions = ToProviderOptions(chatRequest.Metadata),
         };
 
         SpeechResponse? result;
@@ -97,5 +98,17 @@ public static class ModelProviderSpeechResponsesExtensions
                 }
             }]
         };
+    }
+
+    private static Dictionary<string, JsonElement>? ToProviderOptions(Dictionary<string, object?>? metadata)
+    {
+        if (metadata is null || metadata.Count == 0)
+            return null;
+
+        return metadata.ToDictionary(
+            static kvp => kvp.Key,
+            static kvp => kvp.Value is JsonElement json
+                ? json.Clone()
+                : JsonSerializer.SerializeToElement(kvp.Value, JsonSerializerOptions.Web));
     }
 }

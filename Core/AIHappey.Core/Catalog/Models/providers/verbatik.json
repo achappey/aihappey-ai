@@ -2,6 +2,14 @@
   "object": "list",
   "data": [
     {
+      "id": "verbatik/text-to-music",
+      "object": "model",
+      "owned_by": "Verbatik",
+      "name": "Verbatik Text to Music",
+      "type": "speech",
+      "description": "Generate AI-powered music from text prompts, style tags, and lyrics."
+    },
+    {
       "id": "verbatik/tts",
       "object": "model",
       "owned_by": "Verbatik",
