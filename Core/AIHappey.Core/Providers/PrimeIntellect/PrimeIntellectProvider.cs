@@ -8,6 +8,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
+using AIHappey.Responses.Streaming;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
@@ -48,16 +49,30 @@ public partial class PrimeIntellectProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return await this.EnrichChatCompletionWithModelListingGatewayCostAsync(
+            response,
+            options.Model,
+            cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken))
+        {
+            CatalogPricingCostingExtensions.NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+            yield return await this.EnrichChatCompletionUpdateWithModelListingGatewayCostAsync(
+                update,
+                options.Model,
+                cancellationToken);
+        }
     }
 
     public string GetIdentifier() => nameof(PrimeIntellect).ToLowerInvariant();
@@ -84,7 +99,10 @@ public partial class PrimeIntellectProvider : IModelProvider
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
            cancellationToken);
 
-        return result.ToResponseResult();
+        return await this.EnrichResponseWithModelListingGatewayCostAsync(
+            result.ToResponseResult(),
+            options.Model,
+            cancellationToken);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
@@ -96,7 +114,17 @@ public partial class PrimeIntellectProvider : IModelProvider
             unifiedRequest,
             cancellationToken))
         {
-            yield return part.ToResponseStreamPart();
+            var responsePart = part.ToResponseStreamPart();
+
+            if (responsePart is ResponseCompleted completed)
+            {
+                await this.EnrichResponseWithModelListingGatewayCostAsync(
+                    completed.Response,
+                    options.Model,
+                    cancellationToken);
+            }
+
+            yield return responsePart;
         }
 
         yield break;
@@ -118,7 +146,10 @@ public partial class PrimeIntellectProvider : IModelProvider
         var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 
-        return result.ToMessagesResponse();
+        return await this.EnrichMessagesResponseWithModelListingGatewayCostAsync(
+            result.ToMessagesResponse(),
+            request.Model,
+            cancellationToken);
     }
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
@@ -132,18 +163,40 @@ public partial class PrimeIntellectProvider : IModelProvider
             cancellationToken))
         {
             foreach (var item in part.ToMessageStreamParts())
-                yield return item;
+            {
+                yield return await this.EnrichMessageStreamPartWithModelListingGatewayCostAsync(
+                    item,
+                    request.Model,
+                    cancellationToken);
+            }
         }
 
         yield break;
     }
 
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-     => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return await this.EnrichUnifiedResponseWithModelListingGatewayCostAsync(
+            response,
+            request.Model,
+            cancellationToken);
+    }
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+            request,
+            cancellationToken: cancellationToken))
+        {
+            yield return await this.EnrichUnifiedStreamEventWithModelListingGatewayCostAsync(
+                streamEvent,
+                request.Model,
+                cancellationToken);
+        }
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {

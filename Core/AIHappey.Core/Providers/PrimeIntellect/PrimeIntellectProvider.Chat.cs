@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
@@ -18,7 +19,10 @@ public partial class PrimeIntellectProvider
         {
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                yield return uiPart;
+                yield return await this.EnrichFinishPartWithModelListingGatewayCostAsync(
+                    uiPart,
+                    chatRequest.Model,
+                    cancellationToken);
             }
         }
 
