@@ -8,20 +8,32 @@ public partial class VerbatikProvider
 {
     private const string VerbatikTtsModelPrefix = "tts/";
 
-    private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var baseModels = GetIdentifier().GetModels();
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
 
-        var voices = await GetVoicesAsync(cancellationToken);
-        var voiceModels = BuildDynamicVoiceModels(baseModels, voices);
+                var baseModels = GetIdentifier().GetModels();
 
-        return baseModels.Concat(voiceModels);
+                var voices = await GetVoicesAsync(cancellationToken);
+                var voiceModels = BuildDynamicVoiceModels(baseModels, voices);
+
+                return baseModels.Concat(voiceModels);
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
+
     }
 
     private IEnumerable<Model> BuildDynamicVoiceModels(

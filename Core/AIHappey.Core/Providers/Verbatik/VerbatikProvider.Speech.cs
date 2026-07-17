@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using AIHappey.Common.Model.Providers.Verbatik;
 using AIHappey.Core.AI;
@@ -54,15 +55,15 @@ public partial class VerbatikProvider
         synthRequest.Headers.Add("X-Store-Audio", "false");
 
         if (request.Speed is { } requestSpeed)
-            synthRequest.Headers.Add("X-Speed", requestSpeed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Speed", requestSpeed.ToString(CultureInfo.InvariantCulture));
         else if (metadata?.Speed is { } metadataSpeed)
-            synthRequest.Headers.Add("X-Speed", metadataSpeed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Speed", metadataSpeed.ToString(CultureInfo.InvariantCulture));
 
         if (metadata?.Volume is { } volume)
-            synthRequest.Headers.Add("X-Volume", volume.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Volume", volume.ToString(CultureInfo.InvariantCulture));
 
         if (metadata?.Pitch is { } pitch)
-            synthRequest.Headers.Add("X-Pitch", pitch.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Pitch", pitch.ToString(CultureInfo.InvariantCulture));
 
         if (!string.IsNullOrWhiteSpace(metadata?.Emotion))
             synthRequest.Headers.Add("X-Emotion", metadata.Emotion.Trim());
@@ -71,10 +72,10 @@ public partial class VerbatikProvider
             synthRequest.Headers.Add("X-English-Normalization", englishNormalization ? "true" : "false");
 
         if (metadata?.SampleRate is { } sampleRate)
-            synthRequest.Headers.Add("X-Sample-Rate", sampleRate.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Sample-Rate", sampleRate.ToString(CultureInfo.InvariantCulture));
 
         if (metadata?.Bitrate is { } bitrate)
-            synthRequest.Headers.Add("X-Bitrate", bitrate.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Bitrate", bitrate.ToString(CultureInfo.InvariantCulture));
 
         if (!string.IsNullOrWhiteSpace(format))
             synthRequest.Headers.Add("X-Format", format);
@@ -83,13 +84,13 @@ public partial class VerbatikProvider
             synthRequest.Headers.Add("X-Language-Boost", metadata.LanguageBoost.Trim());
 
         if (metadata?.VoiceModifyPitch is { } voiceModifyPitch)
-            synthRequest.Headers.Add("X-Voice-Modify-Pitch", voiceModifyPitch.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Voice-Modify-Pitch", voiceModifyPitch.ToString(CultureInfo.InvariantCulture));
 
         if (metadata?.VoiceModifyIntensity is { } voiceModifyIntensity)
-            synthRequest.Headers.Add("X-Voice-Modify-Intensity", voiceModifyIntensity.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Voice-Modify-Intensity", voiceModifyIntensity.ToString(CultureInfo.InvariantCulture));
 
         if (metadata?.VoiceModifyTimbre is { } voiceModifyTimbre)
-            synthRequest.Headers.Add("X-Voice-Modify-Timbre", voiceModifyTimbre.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            synthRequest.Headers.Add("X-Voice-Modify-Timbre", voiceModifyTimbre.ToString(CultureInfo.InvariantCulture));
 
         using var synthResp = await _client.SendAsync(synthRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
@@ -108,11 +109,26 @@ public partial class VerbatikProvider
         mimeType = ResolveMimeType(responseContentType, null, format);
         resolvedFormat = ResolveFormat(mimeType, null, format);
 
-        var charCount = request.Text.Length;
-        var modelItem = await this.GetModel(request.Model, cancellationToken);
-        decimal? cost = modelItem.Pricing?.Input is { } inputPrice && charCount > 0
-            ? inputPrice * (decimal)charCount
-            : null;
+        decimal? cost = null;
+
+        if (synthResp.Headers.TryGetValues("X-Cost-Cents", out var costValues)
+            && decimal.TryParse(
+                costValues.FirstOrDefault(),
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out var costCents))
+        {
+            cost = costCents / 100m;
+        }
+        else
+        {
+            var charCount = request.Text.Length;
+            var modelItem = await this.GetModel(request.Model, cancellationToken);
+
+            cost = modelItem.Pricing?.Input is { } inputPrice && charCount > 0
+                ? inputPrice * charCount
+                : null;
+        }
 
         return new SpeechResponse
         {
@@ -129,6 +145,7 @@ public partial class VerbatikProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = synthResp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
