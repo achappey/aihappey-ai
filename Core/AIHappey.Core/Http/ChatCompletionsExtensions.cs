@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using AIHappey.Abstractions.Http;
 using AIHappey.ChatCompletions.Models;
 using System.Text.Json.Serialization;
+using System.Globalization;
 
 namespace AIHappey.Core.AI;
 
@@ -163,7 +164,164 @@ public static class ChatCompletionsExtensions
         }
     }
 
+
     private static string NormalizeChatCompletionChunkJson(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+
+        if (root.ValueKind != JsonValueKind.Object)
+            return json;
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var hasCreated = root.TryGetProperty("created", out var createdElement);
+
+        long normalizedCreated;
+
+        if (!hasCreated || createdElement.ValueKind == JsonValueKind.Null)
+        {
+            normalizedCreated = now;
+        }
+        else if (createdElement.ValueKind == JsonValueKind.Number)
+        {
+            if (!createdElement.TryGetDecimal(out var value))
+                return json;
+
+            normalizedCreated = NormalizeUnixTimestamp(value);
+        }
+        else if (createdElement.ValueKind == JsonValueKind.String &&
+                 decimal.TryParse(
+                     createdElement.GetString(),
+                     NumberStyles.Number,
+                     CultureInfo.InvariantCulture,
+                     out var value))
+        {
+            normalizedCreated = NormalizeUnixTimestamp(value);
+        }
+        else
+        {
+            normalizedCreated = now;
+        }
+
+        // Al correct als Unix-seconden: herschrijven is niet nodig.
+        if (hasCreated &&
+            createdElement.ValueKind == JsonValueKind.Number &&
+            createdElement.TryGetInt64(out var originalCreated) &&
+            originalCreated == normalizedCreated)
+        {
+            return json;
+        }
+
+        using var stream = new MemoryStream();
+
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+
+            var createdWritten = false;
+
+            foreach (var property in root.EnumerateObject())
+            {
+                if (property.NameEquals("created"))
+                {
+                    writer.WriteNumber("created", normalizedCreated);
+                    createdWritten = true;
+                }
+                else
+                {
+                    property.WriteTo(writer);
+                }
+            }
+
+            if (!createdWritten)
+                writer.WriteNumber("created", normalizedCreated);
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(stream.ToArray());
+
+        static long NormalizeUnixTimestamp(decimal value)
+        {
+            // Provider levert Unix milliseconds.
+            if (decimal.Abs(value) >= 1_000_000_000_000m)
+                value /= 1000m;
+
+            return checked((long)decimal.Truncate(value));
+        }
+    }
+
+    private static string NormalizeChatCompletionChunkJson111(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        if (root.ValueKind != JsonValueKind.Object)
+            return json;
+
+        var hasCreated = root.TryGetProperty("created", out var createdEl);
+
+        long? normalizedCreated = null;
+        var rewriteCreated = false;
+
+        if (!hasCreated || createdEl.ValueKind == JsonValueKind.Null)
+        {
+            normalizedCreated = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            rewriteCreated = true;
+        }
+        else if (createdEl.ValueKind == JsonValueKind.Number)
+        {
+            if (createdEl.TryGetInt64(out _))
+                return json;
+
+            if (!createdEl.TryGetDecimal(out var createdDecimal) ||
+                createdDecimal != decimal.Truncate(createdDecimal))
+            {
+                return json;
+            }
+
+            normalizedCreated = checked((long)createdDecimal);
+            rewriteCreated = true;
+        }
+        else
+        {
+            return json;
+        }
+
+        if (!rewriteCreated)
+            return json;
+
+        using var ms = new MemoryStream();
+
+        using (var writer = new Utf8JsonWriter(ms))
+        {
+            writer.WriteStartObject();
+
+            var createdWritten = false;
+
+            foreach (var prop in root.EnumerateObject())
+            {
+                if (prop.NameEquals("created"))
+                {
+                    writer.WriteNumber("created", normalizedCreated!.Value);
+                    createdWritten = true;
+                }
+                else
+                {
+                    prop.WriteTo(writer);
+                }
+            }
+
+            if (!createdWritten)
+                writer.WriteNumber("created", normalizedCreated!.Value);
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(ms.ToArray());
+    }
+
+    private static string NormalizeChatCompletionChunkJson2(string json)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
