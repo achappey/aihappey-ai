@@ -2,6 +2,7 @@ using AIHappey.Common.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.JigsawStack;
 
@@ -50,6 +51,6 @@ public partial class JigsawStackProvider
         yield return id.ToTextStartUIMessageStreamPart();
         yield return new TextDeltaUIMessageStreamPart { Id = id, Delta = executed!.Text };
         yield return id.ToTextEndUIMessageStreamPart();
-        yield return "stop".ToFinishUIPart(modelId, 0, 0, 0, chatRequest.Temperature);
+        yield return "stop".ToFinishUIPart(modelId.ToModelId(GetIdentifier()), 0, 0, 0, chatRequest.Temperature);
     }
 }

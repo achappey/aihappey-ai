@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.JigsawStack;
 
@@ -30,7 +31,7 @@ public partial class JigsawStackProvider
         {
             Id = Guid.NewGuid().ToString("n"),
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Model = modelId,
+            Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
                 new
@@ -69,7 +70,7 @@ public partial class JigsawStackProvider
         {
             Id = id,
             Created = created,
-            Model = modelId,
+            Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
                 new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
@@ -82,7 +83,7 @@ public partial class JigsawStackProvider
         {
             Id = id,
             Created = created,
-            Model = modelId,
+            Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
                 new { index = 0, delta = new { content = executed.Text }, finish_reason = (string?)null }
@@ -93,7 +94,7 @@ public partial class JigsawStackProvider
         {
             Id = id,
             Created = created,
-            Model = modelId,
+            Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
                 new { index = 0, delta = new { }, finish_reason = "stop" }
