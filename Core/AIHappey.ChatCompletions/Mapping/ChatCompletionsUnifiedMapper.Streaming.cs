@@ -521,7 +521,10 @@ public static partial class ChatCompletionsUnifiedMapper
     {
         textDelta = null;
 
-        if (!delta.TryGetProperty("content", out var contentEl))
+        var deltaType = ExtractValue<string>(delta, "type");
+        var isReasoningDelta = string.Equals(deltaType, "think", StringComparison.OrdinalIgnoreCase);
+
+        if (isReasoningDelta || !delta.TryGetProperty("content", out var contentEl))
             return false;
 
         textDelta = contentEl.ValueKind == JsonValueKind.String
