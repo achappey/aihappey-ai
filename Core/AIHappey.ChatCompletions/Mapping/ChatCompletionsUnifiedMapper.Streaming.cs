@@ -479,7 +479,8 @@ public static partial class ChatCompletionsUnifiedMapper
 
         if (!isReasoningDelta
             && delta.TryGetProperty("reasoning", out var reasoningEl)
-            && reasoningEl.ValueKind == JsonValueKind.String)
+            && reasoningEl.ValueKind == JsonValueKind.String
+            && !string.IsNullOrWhiteSpace(reasoningEl.GetString()))
         {
             isReasoningDelta = true;
         }
