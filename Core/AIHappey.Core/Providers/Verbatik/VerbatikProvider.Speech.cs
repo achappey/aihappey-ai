@@ -20,19 +20,9 @@ public partial class VerbatikProvider
         return result.ToOpenAISpeechAudio();
     }
 
-    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, 
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var req = options.ToSpeechRequest();
-        
-        var result = await this.SpeechRequest(req, cancellationToken);
-
-        foreach (var streamEvent in result.ToOpenAISpeechStreamEvents())
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            yield return streamEvent;
-        }
-    }
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options,
+        CancellationToken cancellationToken = default)
+        => this.SpeechStreamingAsync(options, cancellationToken);
 
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request,
         CancellationToken cancellationToken = default)
