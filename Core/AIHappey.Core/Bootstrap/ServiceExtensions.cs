@@ -568,6 +568,7 @@ using AIHappey.Core.Providers.Lyceum;
 using AIHappey.Core.Providers.Depaza;
 using AIHappey.Core.Providers.Samtal;
 using AIHappey.Core.Providers.Fikra;
+using AIHappey.Core.Providers.Cencori;
 
 namespace AIHappey.Core.AI;
 
@@ -1162,6 +1163,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, DepazaProvider>();
         services.AddSingleton<IModelProvider, SamtalProvider>();
         services.AddSingleton<IModelProvider, FikraProvider>();
+        services.AddSingleton<IModelProvider, CencoriProvider>();
 
 
     }

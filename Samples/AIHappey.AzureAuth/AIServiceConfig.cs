@@ -569,6 +569,7 @@ public class AIServiceConfig
     public ProviderConfig? Depaza { get; set; }
     public ProviderConfig? Samtal { get; set; }
     public ProviderConfig? Fikra { get; set; }
+    public ProviderConfig? Cencori { get; set; }
 }
 
 public class ProviderConfig

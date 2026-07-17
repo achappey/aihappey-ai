@@ -570,7 +570,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["lyceum"] = "X-Lyceum-Key",
             ["depaza"] = "X-Depaza-Key",
             ["samtal"] = "X-Samtal-Key",
-            ["fikra"] = "X-Fikra-Key"
+            ["fikra"] = "X-Fikra-Key",
+            ["cencori"] = "X-Cencori-Key"
 
         };
 
