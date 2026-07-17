@@ -568,7 +568,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["crusoe"] = "X-Crusoe-Key",
             ["ilmu"] = "X-ILMU-Key",
             ["lyceum"] = "X-Lyceum-Key",
-            ["depaza"] = "X-Depaza-Key"
+            ["depaza"] = "X-Depaza-Key",
+            ["samtal"] = "X-Samtal-Key"
 
         };
 

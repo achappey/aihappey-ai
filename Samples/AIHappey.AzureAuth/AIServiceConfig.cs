@@ -567,6 +567,7 @@ public class AIServiceConfig
     public ProviderConfig? ILMU { get; set; }
     public ProviderConfig? Lyceum { get; set; }
     public ProviderConfig? Depaza { get; set; }
+    public ProviderConfig? Samtal { get; set; }
 }
 
 public class ProviderConfig
