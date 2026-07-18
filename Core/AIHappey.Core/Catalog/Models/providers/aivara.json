@@ -1,0 +1,33 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "aivara/deepseek-chat",
+      "object": "model",
+      "owned_by": "deepseek",
+      "name": "Deepseek Chat",
+      "type": "language"
+    },
+    {
+      "id": "aivara/deepseek-coder",
+      "object": "model",
+      "owned_by": "deepseek",
+      "name": "Deepseek Coder",
+      "type": "language"
+    },
+    {
+      "id": "aivara/gpt-4o",
+      "object": "model",
+      "owned_by": "openai",
+      "name": "OpenAI GPT-4o-mini",
+      "type": "language"
+    },
+    {
+      "id": "aivara/gemini-1.5-flash-latest",
+      "object": "model",
+      "owned_by": "gemini",
+      "name": "Google Gemini 1.5 Flash",
+      "type": "language"
+    }
+  ]
+}
