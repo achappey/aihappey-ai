@@ -178,6 +178,7 @@ public sealed partial class MurfAIProvider
             Response = new ResponseData
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
