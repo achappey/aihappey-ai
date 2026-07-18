@@ -55,7 +55,7 @@ public partial class GoogleAIProvider
                 {
                     rawModels.Add(new Model()
                     {
-                        Name = transcriptionModel.Name,
+                        Name = transcriptionModel.Name + " Transcribe",
                         Id = transcriptionModel.Id,
                         OwnedBy = transcriptionModel.OwnedBy,
                         Description = transcriptionModel.Description,
@@ -72,7 +72,7 @@ public partial class GoogleAIProvider
                 {
                     rawModels.Add(new Model()
                     {
-                        Name = omniModel.Name,
+                        Name = omniModel.Name + " Video",
                         Id = omniModel.Id,
                         OwnedBy = omniModel.OwnedBy,
                         Description = omniModel.Description,
