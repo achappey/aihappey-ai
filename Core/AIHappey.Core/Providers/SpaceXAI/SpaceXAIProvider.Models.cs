@@ -8,6 +8,7 @@ public partial class SpaceXAIProvider
 {
     private const string ProviderName = nameof(SpaceXAI);
     private const string BaseSpeechModel = "tts";
+    private const string BaseTranscriptionModel = "stt";
 
     private static readonly XAITtsLanguage[] SupportedTtsLanguages =
     [
@@ -87,6 +88,7 @@ public partial class SpaceXAIProvider
                 }
 
                 models.AddRange(BuildSpeechModels(voices));
+                models.Add(BuildTranscriptionModel());
                 models.AddRange(GetIdentifier().GetModels());
 
                 return [.. models
@@ -172,6 +174,16 @@ public partial class SpaceXAIProvider
             }
         }
     }
+
+    private static Model BuildTranscriptionModel()
+        => new()
+        {
+            Id = BaseTranscriptionModel.ToModelId(SpaceXAIRequestExtensions.SpaceXAIIdentifier),
+            OwnedBy = ProviderName,
+            Type = "transcription",
+            Name = "SpaceXAI Speech-to-Text",
+            Description = "SpaceXAI speech-to-text transcription."
+        };
 
     private static bool IsValidTtsVoice(XAITtsVoice voice)
         => !string.IsNullOrWhiteSpace(voice.VoiceId);

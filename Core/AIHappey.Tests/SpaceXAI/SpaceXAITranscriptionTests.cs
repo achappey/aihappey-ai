@@ -3,8 +3,10 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.SpaceXAI;
 using AIHappey.Vercel.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.SpaceXAI;
@@ -95,7 +97,7 @@ public sealed class SpaceXAITranscriptionTests
             Model = "spacexai/stt",
             ProviderOptions = new Dictionary<string, JsonElement>
             {
-                ["xspacexaiai"] = JsonSerializer.SerializeToElement(new
+                ["spacexai"] = JsonSerializer.SerializeToElement(new
                 {
                     url = "https://example.com/audio.mp3",
                     language = "en"
@@ -130,6 +132,78 @@ public sealed class SpaceXAITranscriptionTests
             }
         }));
     }
+
+    [Fact]
+    public async Task OpenAI_transcription_request_wraps_native_stt_and_maps_verbose_response()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            return JsonResponse("""
+                {
+                  "text": "hello world",
+                  "language": "en",
+                  "duration": 1.25,
+                  "words": [
+                    { "text": "hello", "start": 0, "end": 0.5 },
+                    { "text": "world", "start": 0.5, "end": 1.25 }
+                  ]
+                }
+                """);
+        });
+
+        var response = await provider.OpenAITranscriptionRequestAsync(new OpenAITranscriptionRequest
+        {
+            Model = "stt",
+            File = CreateAudioFile(Encoding.UTF8.GetBytes("fake audio")),
+            ResponseFormat = "verbose_json",
+            Language = "en"
+        });
+
+        var verbose = Assert.IsType<OpenAITranscriptionVerboseResponse>(response);
+        Assert.Equal("hello world", verbose.Text);
+        Assert.Equal("en", verbose.Language);
+        Assert.Equal(1.25, verbose.Duration);
+        Assert.Equal(2, verbose.Segments?.Length);
+
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("/v1/stt", capturedRequest!.RequestUri?.AbsolutePath);
+        var body = await capturedRequest.Content!.ReadAsStringAsync();
+        Assert.Contains("name=language", body);
+        Assert.Contains("en", body);
+        Assert.True(body.LastIndexOf("name=file", StringComparison.Ordinal) > body.LastIndexOf("name=language", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task OpenAI_transcription_stream_emulates_delta_then_done_from_native_stt()
+    {
+        var provider = CreateProvider(_ => JsonResponse("""
+            { "text": "hello world", "language": "en", "duration": 1.25 }
+            """));
+        var events = new List<IOpenAITranscriptionStreamEvent>();
+
+        await foreach (var streamEvent in provider.OpenAITranscriptionStreamingAsync(new OpenAITranscriptionRequest
+                       {
+                           Model = "stt",
+                           File = CreateAudioFile(Encoding.UTF8.GetBytes("fake audio"))
+                       }))
+        {
+            events.Add(streamEvent);
+        }
+
+        Assert.Collection(
+            events,
+            first => Assert.Equal("hello world", Assert.IsType<OpenAITranscriptionTextDelta>(first).Delta),
+            second => Assert.Equal("hello world", Assert.IsType<OpenAITranscriptionTextDone>(second).Text));
+    }
+
+    private static IFormFile CreateAudioFile(byte[] audio)
+        => new FormFile(new MemoryStream(audio, writable: false), 0, audio.Length, "file", "audio.wav")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "audio/wav"
+        };
 
     private static SpaceXAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {

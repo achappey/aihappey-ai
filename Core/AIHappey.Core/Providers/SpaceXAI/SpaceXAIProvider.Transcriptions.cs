@@ -73,11 +73,9 @@ public partial class SpaceXAIProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"{ProviderName} transcription failed ({(int)response.StatusCode}): {raw}");
 
-        var model = await this.GetModel(request.Model, cancellationToken);
-
         return ConvertXAISttResponse(raw, request.Model.ToModelId(GetIdentifier()),
             now,
-            model.Pricing?.Input);
+            pricePerSecond: null);
     }
 
     private static void AddXAISttProviderOptions(MultipartFormDataContent form, JsonElement providerOptions)

@@ -162,10 +162,46 @@ public partial class SpaceXAIProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-     => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => ExecuteSpaceXAIUnifiedAsync(request, cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => StreamSpaceXAIUnifiedAsync(request, cancellationToken);
+
+    private async Task<AIResponse> ExecuteSpaceXAIUnifiedAsync(
+        AIRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    }
+
+    private async IAsyncEnumerable<AIStreamEvent> StreamSpaceXAIUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                yield return streamEvent;
+            }
+
+            yield break;
+        }
+
+        await foreach (var streamEvent in this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken)
+                           .WithCancellation(cancellationToken))
+        {
+            yield return streamEvent;
+        }
+    }
 
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
@@ -193,13 +229,5 @@ public partial class SpaceXAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
