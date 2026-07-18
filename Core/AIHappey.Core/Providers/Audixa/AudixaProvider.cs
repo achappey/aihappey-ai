@@ -15,23 +15,35 @@ public partial class AudixaProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly IAudixaSpeechWebSocketFactory _speechWebSocketFactory;
 
-    public AudixaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    public AudixaProvider(
+        IApiKeyResolver keyResolver,
+        IHttpClientFactory httpClientFactory,
+        IAudixaSpeechWebSocketFactory? speechWebSocketFactory = null)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.audixa.ai/");
+        _speechWebSocketFactory = speechWebSocketFactory ?? new AudixaSpeechWebSocketFactory();
     }
 
     private void ApplyAuthHeader()
+    {
+        var key = ResolveApiKey();
+
+        _client.DefaultRequestHeaders.Remove("x-api-key");
+        _client.DefaultRequestHeaders.Add("x-api-key", key);
+    }
+
+    private string ResolveApiKey()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(Audixa)} API key.");
 
-        _client.DefaultRequestHeaders.Remove("x-api-key");
-        _client.DefaultRequestHeaders.Add("x-api-key", key);
+        return key;
     }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -98,48 +110,40 @@ public partial class AudixaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+  
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
