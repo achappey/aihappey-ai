@@ -571,6 +571,8 @@ public class AIServiceConfig
     public ProviderConfig? Fikra { get; set; }
     public ProviderConfig? Cencori { get; set; }
     public ProviderConfig? Aivara { get; set; }
+    public ProviderConfig? CondenseChat { get; set; }
+    
 }
 
 public class ProviderConfig
