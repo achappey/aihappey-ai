@@ -3,6 +3,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.YourVoic;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -137,169 +138,147 @@ public partial class YourVoicProvider
             throw new InvalidOperationException($"YourVoic STT failed ({(int)resp.StatusCode}): {responseText}");
 
         var mediaType = resp.Content.Headers.ContentType?.MediaType;
-        return ConvertTranscriptionResponse(responseText, mediaType, request.Model, now, warnings);
+        return ConvertTranscriptionResponse(responseText, GetIdentifier(), resp.GetHeaders(),
+            request.Model, now, warnings);
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
         string responseBody,
-        string? contentType,
+        string providerId,
+        Dictionary<string, string>? headers,
         string model,
         DateTime now,
         IEnumerable<object> warnings)
     {
-        try
+
+        using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
+
+        var text = root.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String
+            ? textEl.GetString() ?? string.Empty
+            : string.Empty;
+
+        var language = root.TryGetProperty("language", out var langEl) && langEl.ValueKind == JsonValueKind.String
+            ? langEl.GetString()
+            : null;
+
+        float? duration = null;
+        if (root.TryGetProperty("duration", out var durEl) && durEl.ValueKind == JsonValueKind.Number)
+            duration = (float)durEl.GetDouble();
+
+        var segments = new List<TranscriptionSegment>();
+
+        if (root.TryGetProperty("utterances", out var utterancesEl) && utterancesEl.ValueKind == JsonValueKind.Array)
         {
-            using var doc = JsonDocument.Parse(responseBody);
-            var root = doc.RootElement;
-
-            var text = root.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String
-                ? textEl.GetString() ?? string.Empty
-                : string.Empty;
-
-            var language = root.TryGetProperty("language", out var langEl) && langEl.ValueKind == JsonValueKind.String
-                ? langEl.GetString()
-                : null;
-
-            float? duration = null;
-            if (root.TryGetProperty("duration", out var durEl) && durEl.ValueKind == JsonValueKind.Number)
-                duration = (float)durEl.GetDouble();
-
-            var segments = new List<TranscriptionSegment>();
-
-            if (root.TryGetProperty("utterances", out var utterancesEl) && utterancesEl.ValueKind == JsonValueKind.Array)
+            foreach (var utterance in utterancesEl.EnumerateArray())
             {
-                foreach (var utterance in utterancesEl.EnumerateArray())
+                var segmentText = utterance.TryGetProperty("text", out var ut) && ut.ValueKind == JsonValueKind.String
+                    ? ut.GetString() ?? string.Empty
+                    : string.Empty;
+
+                if (utterance.TryGetProperty("speaker", out var speakerEl))
                 {
-                    var segmentText = utterance.TryGetProperty("text", out var ut) && ut.ValueKind == JsonValueKind.String
-                        ? ut.GetString() ?? string.Empty
-                        : string.Empty;
+                    var speaker = speakerEl.ValueKind == JsonValueKind.String
+                        ? speakerEl.GetString()
+                        : speakerEl.ValueKind == JsonValueKind.Number
+                            ? speakerEl.GetInt32().ToString()
+                            : null;
 
-                    if (utterance.TryGetProperty("speaker", out var speakerEl))
+                    if (!string.IsNullOrWhiteSpace(speaker) && !string.IsNullOrWhiteSpace(segmentText))
+                        segmentText = $"speaker_{speaker}: {segmentText}";
+                }
+
+                var start = utterance.TryGetProperty("start", out var us) && us.ValueKind == JsonValueKind.Number
+                    ? (float)us.GetDouble()
+                    : 0f;
+
+                var end = utterance.TryGetProperty("end", out var ue) && ue.ValueKind == JsonValueKind.Number
+                    ? (float)ue.GetDouble()
+                    : start;
+
+                if (!string.IsNullOrWhiteSpace(segmentText))
+                {
+                    segments.Add(new TranscriptionSegment
                     {
-                        var speaker = speakerEl.ValueKind == JsonValueKind.String
-                            ? speakerEl.GetString()
-                            : speakerEl.ValueKind == JsonValueKind.Number
-                                ? speakerEl.GetInt32().ToString()
-                                : null;
-
-                        if (!string.IsNullOrWhiteSpace(speaker) && !string.IsNullOrWhiteSpace(segmentText))
-                            segmentText = $"speaker_{speaker}: {segmentText}";
-                    }
-
-                    var start = utterance.TryGetProperty("start", out var us) && us.ValueKind == JsonValueKind.Number
-                        ? (float)us.GetDouble()
-                        : 0f;
-
-                    var end = utterance.TryGetProperty("end", out var ue) && ue.ValueKind == JsonValueKind.Number
-                        ? (float)ue.GetDouble()
-                        : start;
-
-                    if (!string.IsNullOrWhiteSpace(segmentText))
-                    {
-                        segments.Add(new TranscriptionSegment
-                        {
-                            Text = segmentText,
-                            StartSecond = start,
-                            EndSecond = end
-                        });
-                    }
+                        Text = segmentText,
+                        StartSecond = start,
+                        EndSecond = end
+                    });
                 }
             }
-            else if (root.TryGetProperty("segments", out var segmentsEl) && segmentsEl.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var segment in segmentsEl.EnumerateArray())
-                {
-                    var segmentText = segment.TryGetProperty("text", out var st) && st.ValueKind == JsonValueKind.String
-                        ? st.GetString() ?? string.Empty
-                        : string.Empty;
-
-                    var start = segment.TryGetProperty("start", out var ss) && ss.ValueKind == JsonValueKind.Number
-                        ? (float)ss.GetDouble()
-                        : 0f;
-
-                    var end = segment.TryGetProperty("end", out var se) && se.ValueKind == JsonValueKind.Number
-                        ? (float)se.GetDouble()
-                        : start;
-
-                    if (!string.IsNullOrWhiteSpace(segmentText))
-                    {
-                        segments.Add(new TranscriptionSegment
-                        {
-                            Text = segmentText,
-                            StartSecond = start,
-                            EndSecond = end
-                        });
-                    }
-                }
-            }
-            else if (root.TryGetProperty("words", out var wordsEl) && wordsEl.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var word in wordsEl.EnumerateArray())
-                {
-                    var segmentText = word.TryGetProperty("word", out var wt) && wt.ValueKind == JsonValueKind.String
-                        ? wt.GetString() ?? string.Empty
-                        : string.Empty;
-
-                    var start = word.TryGetProperty("start", out var ws) && ws.ValueKind == JsonValueKind.Number
-                        ? (float)ws.GetDouble()
-                        : 0f;
-
-                    var end = word.TryGetProperty("end", out var we) && we.ValueKind == JsonValueKind.Number
-                        ? (float)we.GetDouble()
-                        : start;
-
-                    if (!string.IsNullOrWhiteSpace(segmentText))
-                    {
-                        segments.Add(new TranscriptionSegment
-                        {
-                            Text = segmentText,
-                            StartSecond = start,
-                            EndSecond = end
-                        });
-                    }
-                }
-            }
-
-            return new TranscriptionResponse
-            {
-                Text = text,
-                Language = language,
-                DurationInSeconds = duration,
-                Segments = segments,
-                Warnings = warnings,
-                Response = new()
-                {
-                    Timestamp = now,
-                    ModelId = model,
-                    Body = doc.RootElement.Clone()
-                }
-            };
         }
-        catch (JsonException)
+        else if (root.TryGetProperty("segments", out var segmentsEl) && segmentsEl.ValueKind == JsonValueKind.Array)
         {
-            var isSubtitle = string.Equals(contentType, "text/vtt", StringComparison.OrdinalIgnoreCase)
-                             || responseBody.StartsWith("WEBVTT", StringComparison.OrdinalIgnoreCase)
-                             || responseBody.Contains("-->", StringComparison.Ordinal);
-
-            var subtitleWarning = isSubtitle
-                ? new[] { new { type = "subtitle_format", contentType } }
-                : Array.Empty<object>();
-
-            return new TranscriptionResponse
+            foreach (var segment in segmentsEl.EnumerateArray())
             {
-                Text = responseBody,
-                Language = null,
-                DurationInSeconds = null,
-                Segments = [],
-                Warnings = warnings.Concat(subtitleWarning),
-                Response = new()
+                var segmentText = segment.TryGetProperty("text", out var st) && st.ValueKind == JsonValueKind.String
+                    ? st.GetString() ?? string.Empty
+                    : string.Empty;
+
+                var start = segment.TryGetProperty("start", out var ss) && ss.ValueKind == JsonValueKind.Number
+                    ? (float)ss.GetDouble()
+                    : 0f;
+
+                var end = segment.TryGetProperty("end", out var se) && se.ValueKind == JsonValueKind.Number
+                    ? (float)se.GetDouble()
+                    : start;
+
+                if (!string.IsNullOrWhiteSpace(segmentText))
                 {
-                    Timestamp = now,
-                    ModelId = model,
-                    Body = responseBody
+                    segments.Add(new TranscriptionSegment
+                    {
+                        Text = segmentText,
+                        StartSecond = start,
+                        EndSecond = end
+                    });
                 }
-            };
+            }
         }
+        else if (root.TryGetProperty("words", out var wordsEl) && wordsEl.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var word in wordsEl.EnumerateArray())
+            {
+                var segmentText = word.TryGetProperty("word", out var wt) && wt.ValueKind == JsonValueKind.String
+                    ? wt.GetString() ?? string.Empty
+                    : string.Empty;
+
+                var start = word.TryGetProperty("start", out var ws) && ws.ValueKind == JsonValueKind.Number
+                    ? (float)ws.GetDouble()
+                    : 0f;
+
+                var end = word.TryGetProperty("end", out var we) && we.ValueKind == JsonValueKind.Number
+                    ? (float)we.GetDouble()
+                    : start;
+
+                if (!string.IsNullOrWhiteSpace(segmentText))
+                {
+                    segments.Add(new TranscriptionSegment
+                    {
+                        Text = segmentText,
+                        StartSecond = start,
+                        EndSecond = end
+                    });
+                }
+            }
+        }
+
+        return new TranscriptionResponse
+        {
+            Text = text,
+            Language = language,
+            DurationInSeconds = duration,
+            Segments = segments,
+            Warnings = warnings,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = model.ToModelId(providerId),
+                Headers = headers,
+                Body = doc.RootElement.Clone()
+            }
+        };
+
     }
 }
 
