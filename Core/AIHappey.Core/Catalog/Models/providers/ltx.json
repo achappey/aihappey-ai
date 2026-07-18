@@ -2,20 +2,6 @@
   "object": "list",
   "data": [
     {
-      "id": "ltx/ltx-2-fast",
-      "object": "model",
-      "owned_by": "LTX",
-      "name": "ltx-2-fast",
-      "type": "video"
-    },
-    {
-      "id": "ltx/ltx-2-pro",
-      "object": "model",
-      "owned_by": "LTX",
-      "name": "ltx-2-pro",
-      "type": "video"
-    },
-    {
       "id": "ltx/ltx-2-3-fast",
       "object": "model",
       "owned_by": "LTX",
