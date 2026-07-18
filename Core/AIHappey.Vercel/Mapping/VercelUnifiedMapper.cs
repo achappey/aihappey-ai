@@ -1124,7 +1124,13 @@ public static class VercelUnifiedMapper
             .ToDictionary(a => a.Key, a => a.Value)
             ?? [];
 
-        metadata["model"] = typedData?.Model ?? (metadata.TryGetValue("model", out var modelValue) ? modelValue : null);
+        var foundModel = typedData?.Model
+                    ?? (metadata.TryGetValue("model", out var modelValue) ? modelValue?.ToString() : null);
+
+        var ensuredModel = foundModel?.StartsWith($"{providerId}/") == true ?
+        foundModel : $"{providerId}/{foundModel}";
+
+        metadata["model"] = ensuredModel;
         metadata["timestamp"] = ResolveFinishTimestamp(metadata.TryGetValue("timestamp", out var timestampValue) ? timestampValue : null, typedData?.CompletedAt ?? GetValue<object>(data, "completed_at"));
 
         var rawUsage = ResolveRawFinishUsage(typedData, metadata);
