@@ -11,6 +11,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
+using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 using ModelContextProtocol.Protocol;
 using OpenAI.Containers;
@@ -22,6 +23,15 @@ public partial class OpenAIProvider
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
+
+        if (model.Type.Equals("transcription", StringComparison.OrdinalIgnoreCase))
+        {
+            var unified = await this.ExecuteUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken);
+
+            return unified.ToResponseResult();
+        }
 
         if (model.Type.Equals("image"))
             return await this.ImageResponseAsync(options, cancellationToken);
@@ -68,7 +78,19 @@ public partial class OpenAIProvider
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
-        
+
+        if (model.Type.Equals("transcription", StringComparison.OrdinalIgnoreCase))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken).WithCancellation(cancellationToken))
+            {
+                yield return streamEvent.ToResponseStreamPart();
+            }
+
+            yield break;
+        }
+
         if (model.Type.Equals("image"))
         {
             await foreach (var part in this.ImageResponsesStreamingAsync(options, cancellationToken)
