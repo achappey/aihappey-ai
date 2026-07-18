@@ -12,6 +12,7 @@ using AIHappey.Messages;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -60,6 +61,16 @@ public partial class GoogleAIProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(options.Model, cancellationToken);
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        {
+            var response = await this.ExecuteUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken);
+
+            return response.ToChatCompletion();
+        }
+
         var result = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
             cancellationToken);
 
@@ -78,6 +89,20 @@ public partial class GoogleAIProvider
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        var model = await this.GetModel(options.Model, cancellationToken);
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedAsync(
+                               options.ToUnifiedRequest(GetIdentifier()),
+                               cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                yield return streamEvent.ToChatCompletionUpdate();
+            }
+
+            yield break;
+        }
+
         var interactionRequest = options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
         interactionRequest.Stream = true;
         interactionRequest.Store = false;
@@ -96,6 +121,16 @@ public partial class GoogleAIProvider
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(options.Model, cancellationToken);
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        {
+            var tResponse = await this.ExecuteUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken);
+
+            return tResponse.ToResponseResult();
+        }
+
         var interaction = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
             cancellationToken);
 
@@ -106,6 +141,20 @@ public partial class GoogleAIProvider
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(options.Model, cancellationToken);
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedAsync(
+                               options.ToUnifiedRequest(GetIdentifier()),
+                               cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                yield return streamEvent.ToResponseStreamPart();
+            }
+
+            yield break;
+        }
+
         var interactionRequest = options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
         interactionRequest.Stream = true;
         interactionRequest.Store = false;
@@ -151,31 +200,23 @@ public partial class GoogleAIProvider
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        var result = await this.GetInteraction(request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
+        var result = await this.ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 
-        return result.ToUnifiedResponse(GetIdentifier()).ToMessagesResponse();
+        return result.ToMessagesResponse();
     }
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var interactionRequest = request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
-        interactionRequest.Stream = true;
-        interactionRequest.Store = false;
-        this.SetDefaultInteractionProperties(interactionRequest);
-
-        await foreach (var update in GetInteractions(
-                                  interactionRequest,
-                                  cancellationToken: cancellationToken))
+        await foreach (var streamEvent in this.StreamUnifiedAsync(
+                           request.ToUnifiedRequest(GetIdentifier()),
+                           cancellationToken)
+                           .WithCancellation(cancellationToken))
         {
-            foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
-            {
-                var mappedItem = MarkGoogleAgentUnifiedToolEventProviderExecuted(item);
-                foreach (var part in mappedItem.ToMessageStreamParts())
-                    yield return part;
-            }
+            foreach (var part in streamEvent.ToMessageStreamParts())
+                yield return part;
         }
     }
 

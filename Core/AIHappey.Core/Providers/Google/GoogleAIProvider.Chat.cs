@@ -41,20 +41,14 @@ public partial class GoogleAIProvider
                 break;
         }
 
-        var interactionRequest = request.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
-        interactionRequest.Stream = true;
-        interactionRequest.Store = false;
-        this.SetDefaultInteractionProperties(interactionRequest);
-
-        await foreach (var update in GetInteractions(
-                                 interactionRequest,
-                                  cancellationToken: cancellationToken))
+        await foreach (var streamEvent in this.StreamUnifiedAsync(
+                           request.ToUnifiedRequest(GetIdentifier()),
+                           cancellationToken)
+                           .WithCancellation(cancellationToken))
         {
-            foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
+            foreach (var result in streamEvent.Event.ToUIMessagePart(GetIdentifier()))
             {
-                var mappedItem = MarkGoogleAgentUnifiedToolEventProviderExecuted(item);
-                foreach (var result in mappedItem.Event.ToUIMessagePart(GetIdentifier()))
-                    yield return result;
+                yield return result;
             }
         }
     }
