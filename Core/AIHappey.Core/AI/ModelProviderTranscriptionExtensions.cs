@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.AI;
@@ -17,6 +18,18 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
               PropertyNameCaseInsensitive = true,
               DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
           };
+
+    public static async Task<bool> IsTranscriptionModelAsync(
+     this IModelProvider modelProvider,
+         string? modelId,
+         CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(modelId))
+            return false;
+
+        var model = await modelProvider.GetModel(modelId, cancellationToken);
+        return string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase);
+    }
 
     public static async Task<IOpenAITranscriptionResponse>
         OpenAICompatibleTranscriptionRequestAsync(

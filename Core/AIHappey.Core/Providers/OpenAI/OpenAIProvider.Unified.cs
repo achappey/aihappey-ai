@@ -9,7 +9,7 @@ public partial class OpenAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (await IsTranscriptionModelAsync(request.Model, cancellationToken))
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
         {
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
         }
@@ -25,7 +25,7 @@ public partial class OpenAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (await IsTranscriptionModelAsync(request.Model, cancellationToken))
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
         {
             await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
                 .WithCancellation(cancellationToken))
@@ -44,14 +44,5 @@ public partial class OpenAIProvider
             yield return streamEvent;
     }
 
-    private async Task<bool> IsTranscriptionModelAsync(
-        string? modelId,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(modelId))
-            return false;
 
-        var model = await this.GetModel(modelId, cancellationToken);
-        return string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase);
-    }
 }
