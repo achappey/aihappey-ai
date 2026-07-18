@@ -1,10 +1,4 @@
-using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
-using AIHappey.Core.AI;
-using AIHappey.Core.MCP.Media;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 

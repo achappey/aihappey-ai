@@ -12,7 +12,6 @@ using AIHappey.Messages;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
-using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Google;
 

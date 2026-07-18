@@ -4,7 +4,6 @@ using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;

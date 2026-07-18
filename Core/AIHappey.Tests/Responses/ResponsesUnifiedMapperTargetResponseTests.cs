@@ -6,7 +6,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Tests.Responses;
 

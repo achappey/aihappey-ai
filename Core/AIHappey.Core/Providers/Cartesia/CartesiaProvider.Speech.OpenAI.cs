@@ -1,12 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model.Providers.Cartesia;
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Cartesia;
 
