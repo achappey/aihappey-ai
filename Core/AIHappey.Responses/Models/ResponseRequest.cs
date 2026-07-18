@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Runtime.Serialization;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Responses;
 
@@ -87,7 +88,6 @@ public sealed class ResponseRequest
 
     [JsonPropertyName("background")]
     public bool? Background { get; set; }
-
 }
 
 public sealed class Reasoning

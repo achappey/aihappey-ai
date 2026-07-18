@@ -1,26 +1,28 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
-using System.Text;
 
 namespace AIHappey.Core.Providers.ModelsLab;
 
 public partial class ModelsLabProvider
 {
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var cacheKey = this.GetCacheKey();
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
+
+        var cacheKey = this.GetCacheKey(key);
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
 
-                using var req = new HttpRequestMessage(HttpMethod.Post, "api/v4/dreambooth/model_list")
-                {
-                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
-                };
-
+                using var req = new HttpRequestMessage(HttpMethod.Get, "api/v7/llm/v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -35,34 +37,29 @@ public partial class ModelsLabProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.EnumerateArray();
+
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                        ? dataEl.EnumerateArray()
+                        : Enumerable.Empty<JsonElement>();
 
                 foreach (var el in arr)
                 {
                     Model model = new();
 
-                    if (el.TryGetProperty("model_id", out var idEl))
+                    if (el.TryGetProperty("id", out var idEl))
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("model_name", out var nameEl))
-                        model.Name = nameEl.GetString() ?? model.Id;
-
-                    if (el.TryGetProperty("description", out var descriptionEl))
-                        model.Description = descriptionEl.GetString() ?? string.Empty;
-
-                    model.Type = "image";
+                    if (el.TryGetProperty("owned_by", out var orgEl))
+                        model.OwnedBy = orgEl.GetString() ?? "";
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-
                 return models;
-
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
