@@ -89,6 +89,7 @@ public partial class OpperAIProvider
         };
 
         AddOpperAIParameters(payload, providerOptions);
+        payload["store"] = false;
         return payload;
     }
 
