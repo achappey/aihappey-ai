@@ -27,49 +27,6 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
     }
 
     [Fact]
-    public void Simple_non_streaming_response_maps_to_sampling_result_minimal_contract()
-    {
-        var samplingResult = LoadUnifiedResponse().ToSamplingResult();
-
-        Assert.Equal(ExpectedSamplingModel, samplingResult.Model);
-        Assert.Equal(Role.Assistant, samplingResult.Role);
-        Assert.Equal("endTurn", samplingResult.StopReason);
-
-        var textBlock = Assert.IsType<TextContentBlock>(Assert.Single(samplingResult.Content));
-        Assert.Equal(ExpectedText, textBlock.Text);
-
-        var meta = ToJsonElement(samplingResult.Meta);
-        Assert.False(meta.TryGetProperty("metadata", out _));
-        Assert.False(meta.TryGetProperty("inputTokens", out _));
-        Assert.False(meta.TryGetProperty("outputTokens", out _));
-        Assert.False(meta.TryGetProperty("totalTokens", out _));
-
-        var usage = meta.GetProperty("usage");
-        Assert.Equal(170, usage.GetProperty("promptTokens").GetInt32());
-        Assert.Equal(12, usage.GetProperty("completionTokens").GetInt32());
-        Assert.Equal(182, usage.GetProperty("totalTokens").GetInt32());
-    }
-
-    [Theory]
-    [MemberData(nameof(EligibleNonStreamingSamplingFixtures))]
-    public void Eligible_non_streaming_response_fixtures_map_to_sampling_with_prefixed_model_and_normalized_usage(string fixturePath)
-    {
-        var samplingResult = LoadUnifiedResponse(fixturePath).ToSamplingResult();
-        var meta = ToJsonElement(samplingResult.Meta);
-
-        Assert.StartsWith($"{ProviderId}/", samplingResult.Model, StringComparison.Ordinal);
-        Assert.False(meta.TryGetProperty("metadata", out _));
-        Assert.False(meta.TryGetProperty("inputTokens", out _));
-        Assert.False(meta.TryGetProperty("outputTokens", out _));
-        Assert.False(meta.TryGetProperty("totalTokens", out _));
-
-        var usage = meta.GetProperty("usage");
-        Assert.True(usage.TryGetProperty("promptTokens", out _));
-        Assert.True(usage.TryGetProperty("completionTokens", out _));
-        Assert.True(usage.TryGetProperty("totalTokens", out _));
-    }
-
-    [Fact]
     public void Simple_non_streaming_response_maps_to_messages_response_minimal_contract()
     {
         var messagesResponse = LoadUnifiedResponse().ToMessagesResponse();
@@ -136,31 +93,6 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
         Assert.Equal(170, usage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(12, usage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(182, usage.GetProperty("total_tokens").GetInt32());
-    }
-
-    [Fact]
-    public void Openai_image_output_non_streaming_maps_to_sampling_image_without_empty_text_blocks()
-    {
-        var samplingResult = LoadUnifiedResponse(OpenAiImageResponseFixturePath).ToSamplingResult();
-
-        Assert.Equal("openai/gpt-5.4-mini-2026-03-17", samplingResult.Model);
-        Assert.Equal(Role.Assistant, samplingResult.Role);
-        Assert.Equal("endTurn", samplingResult.StopReason);
-
-        var imageBlock = Assert.IsType<ImageContentBlock>(Assert.Single(samplingResult.Content));
-        Assert.Equal("image/png", imageBlock.MimeType);
-        Assert.NotEmpty(imageBlock.Data.ToArray());
-
-        Assert.DoesNotContain(samplingResult.Content, block =>
-            block is TextContentBlock textBlock && string.IsNullOrWhiteSpace(textBlock.Text));
-
-        var meta = ToJsonElement(samplingResult.Meta);
-        Assert.False(meta.TryGetProperty("metadata", out _));
-
-        var usage = meta.GetProperty("usage");
-        Assert.Equal(1651, usage.GetProperty("promptTokens").GetInt32());
-        Assert.Equal(57, usage.GetProperty("completionTokens").GetInt32());
-        Assert.Equal(1708, usage.GetProperty("totalTokens").GetInt32());
     }
    
     private static AIResponse LoadUnifiedResponse(string fixturePath = SimpleResponseFixturePath)

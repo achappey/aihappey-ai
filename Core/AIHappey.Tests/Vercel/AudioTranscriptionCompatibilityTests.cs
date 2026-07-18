@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -88,12 +89,12 @@ public sealed class AudioTranscriptionCompatibilityTests
     [Fact]
     public void Naive_streaming_events_match_openai_transcription_event_names()
     {
-        var delta = JsonSerializer.Serialize(new AudioTranscriptionTextDelta
+        var delta = JsonSerializer.Serialize(new OpenAITranscriptionTextDelta
         {
             Delta = "hello world"
         }, JsonSerializerOptions.Web);
 
-        var done = JsonSerializer.Serialize(new AudioTranscriptionTextDone
+        var done = JsonSerializer.Serialize(new OpenAITranscriptionTextDone
         {
             Text = "hello world"
         }, JsonSerializerOptions.Web);

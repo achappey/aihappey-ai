@@ -198,7 +198,6 @@ public sealed class ResponsesStreamFixtureTests
     [Fact]
     public void Reasoning_stream_events_preserve_provider_reasoning_item_id_in_unified_and_ui_metadata()
     {
-        const string expectedReasoningItemId = "rs_04c8e0b6f86052560169e0881be7c881a39d84fb7b82c27880";
         const string reasoningProviderId = "openai";
 
         var parts = FixtureFileLoader.LoadResponseRawFixture(ReasoningAndProviderToolsRawFixturePath);
