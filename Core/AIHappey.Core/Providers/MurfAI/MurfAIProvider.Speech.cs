@@ -36,13 +36,31 @@ public sealed partial class MurfAIProvider
 
         var metadata = request.GetProviderMetadata<MurfAISpeechProviderMetadata>(GetIdentifier());
 
-        // ---- required: voiceId ----
-        var voiceId = (metadata?.VoiceId ?? request.Voice)?.Trim();
-        if (string.IsNullOrWhiteSpace(voiceId))
-            throw new ArgumentException("MurfAI requires a voiceId. Provide providerOptions.murfai.voiceId or SpeechRequest.voice.", nameof(request));
+        var (modelVersionFromModel, voiceIdFromModel) = ParseSpeechModelAndVoice(request.Model);
 
-        // Murf defaults to GEN2; our default model is murfai/gen2.
-        var modelVersion = (metadata?.ModelVersion ?? "GEN2").Trim();
+        // A voice selected from the model catalogue is authoritative. The legacy explicit
+        // voice fields remain supported for base Murf model identifiers.
+        var voiceId = (voiceIdFromModel ?? metadata?.VoiceId ?? request.Voice)?.Trim();
+        if (string.IsNullOrWhiteSpace(voiceId))
+            throw new ArgumentException("MurfAI requires a voiceId. Provide a MurfAI voice shortcut model, providerOptions.murfai.voiceId, or SpeechRequest.voice.", nameof(request));
+
+        if (!string.IsNullOrWhiteSpace(voiceIdFromModel))
+        {
+            if (!string.IsNullOrWhiteSpace(request.Voice)
+                && !string.Equals(request.Voice.Trim(), voiceIdFromModel, StringComparison.OrdinalIgnoreCase))
+            {
+                warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
+                && !string.Equals(metadata.VoiceId.Trim(), voiceIdFromModel, StringComparison.OrdinalIgnoreCase))
+            {
+                warnings.Add(new { type = "ignored", feature = "providerOptions.murfai.voiceId", reason = "voice is derived from model id" });
+            }
+        }
+
+        // Murf defaults to GEN2; catalogue model identifiers additionally select GEN2 or Falcon 2.
+        var modelVersion = (modelVersionFromModel ?? metadata?.ModelVersion ?? "GEN2").Trim();
 
         // Output format: default WAV (Murf default).
         var format = NormalizeMurfFormat(request.OutputFormat ?? metadata?.Format) ?? "wav";
@@ -202,6 +220,29 @@ public sealed partial class MurfAIProvider
             "alaw" or "ulaw" or "pcm" => "application/octet-stream",
             _ => "application/octet-stream"
         };
+    }
+
+    private static (string? ModelVersion, string? VoiceId) ParseSpeechModelAndVoice(string model)
+    {
+        var localModel = model.Trim();
+        var providerPrefix = "murfai/";
+        if (localModel.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            localModel = localModel[providerPrefix.Length..];
+
+        var parts = localModel.Split('/', StringSplitOptions.TrimEntries);
+        if (parts.Length is < 1 or > 2 || string.IsNullOrWhiteSpace(parts[0]))
+            throw new ArgumentException("MurfAI speech model must be 'gen2', 'falcon-2', 'gen2/{voiceId}', or 'falcon-2/{voiceId}'.", nameof(model));
+
+        if (!MurfSpeechModelVersions.Contains(parts[0], StringComparer.OrdinalIgnoreCase))
+            return (null, null);
+
+        if (parts.Length == 1)
+            return (parts[0], null);
+
+        if (string.IsNullOrWhiteSpace(parts[1]))
+            throw new ArgumentException("MurfAI speech model shortcut must include a voice id after the model version.", nameof(model));
+
+        return (parts[0], parts[1]);
     }
 }
 
