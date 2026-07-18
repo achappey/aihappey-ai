@@ -570,6 +570,7 @@ public class AIServiceConfig
     public ProviderConfig? Samtal { get; set; }
     public ProviderConfig? Fikra { get; set; }
     public ProviderConfig? Cencori { get; set; }
+    public ProviderConfig? Aivara { get; set; }
 }
 
 public class ProviderConfig

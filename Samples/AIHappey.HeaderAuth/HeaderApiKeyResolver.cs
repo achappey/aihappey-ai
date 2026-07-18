@@ -571,7 +571,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["depaza"] = "X-Depaza-Key",
             ["samtal"] = "X-Samtal-Key",
             ["fikra"] = "X-Fikra-Key",
-            ["cencori"] = "X-Cencori-Key"
+            ["cencori"] = "X-Cencori-Key",
+            ["aivara"] = "X-Aivara-Key"
 
         };
 
