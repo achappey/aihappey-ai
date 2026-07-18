@@ -22,14 +22,19 @@ public partial class StepFunProvider : IModelProvider
     private readonly HttpClient _client;
 
     private readonly AsyncCacheHelper _memoryCache;
+    private readonly IStepFunSpeechWebSocketFactory _speechWebSocketFactory;
 
-    public StepFunProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+    public StepFunProvider(
+        IApiKeyResolver keyResolver,
+        AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory,
+        IStepFunSpeechWebSocketFactory? speechWebSocketFactory = null)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.stepfun.ai/");
+        _speechWebSocketFactory = speechWebSocketFactory ?? new StepFunSpeechWebSocketFactory();
     }
 
     private void ApplyAuthHeader()
@@ -139,15 +144,7 @@ public partial class StepFunProvider : IModelProvider
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+ 
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
