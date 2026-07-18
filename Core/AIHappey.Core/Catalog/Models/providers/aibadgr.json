@@ -1,0 +1,26 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "aibadgr/tts",
+      "object": "model",
+      "owned_by": "AIBadgr",
+      "name": "AIBadgr TTS",
+      "type": "speech"
+    },
+    {
+      "id": "aibadgr/stt",
+      "object": "model",
+      "owned_by": "AIBadgr",
+      "name": "AIBadgr STT",
+      "type": "transcription"
+    },
+    {
+      "id": "aibadgr/image",
+      "object": "model",
+      "owned_by": "AIBadgr",
+      "name": "AIBadgr Image",
+      "type": "image"
+    }
+  ]
+}

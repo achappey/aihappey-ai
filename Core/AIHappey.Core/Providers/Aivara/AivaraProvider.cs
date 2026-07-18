@@ -39,7 +39,9 @@ public partial class AivaraProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(Aivara)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+
+        _client.DefaultRequestHeaders.Remove("X-API-Key");
+        _client.DefaultRequestHeaders.Add("X-API-Key", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)

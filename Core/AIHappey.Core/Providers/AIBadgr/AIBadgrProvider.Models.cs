@@ -60,6 +60,17 @@ public partial class AIBadgrProvider
                         models.Add(model);
                 }
 
+                foreach (var catalogModel in GetIdentifier().GetModels())
+                {
+                    if (models.All(model => !string.Equals(
+                            model.Id,
+                            catalogModel.Id,
+                            StringComparison.OrdinalIgnoreCase)))
+                    {
+                        models.Add(catalogModel);
+                    }
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
