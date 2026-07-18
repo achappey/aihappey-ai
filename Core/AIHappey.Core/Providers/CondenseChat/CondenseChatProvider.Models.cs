@@ -17,12 +17,12 @@ public partial class CondenseChatProvider
 
         var cacheKey = this.GetCacheKey(key);
 
-        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+        return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                var oaiprovider = this._serviceProvider.GetService<OpenAIProvider>();
-                var antprovider = this._serviceProvider.GetService<AnthropicProvider>();
+                var oaiprovider = _serviceProvider.GetService<OpenAIProvider>();
+                var antprovider = _serviceProvider.GetService<AnthropicProvider>();
 
                 var openAImodels = oaiprovider != null ? await oaiprovider.ListModels(cancellationToken)
                     : [];
