@@ -27,12 +27,12 @@ public partial class CartesiaProvider
         var warnings = new List<object>();
         var metadata = request.GetProviderMetadata<CartesiaTranscriptionProviderMetadata>(GetIdentifier());
 
-        var normalizedModel = request.Model;
-        if (normalizedModel.StartsWith(CartesiaTranscriptionModelPrefix, StringComparison.OrdinalIgnoreCase))
-            normalizedModel = normalizedModel[CartesiaTranscriptionModelPrefix.Length..].Trim();
 
-        if (!SupportedTranscriptionModelIds.Any(m => string.Equals(m, normalizedModel, StringComparison.OrdinalIgnoreCase)))
-            throw new NotSupportedException($"{ProviderName} transcription model '{normalizedModel}' is not supported.");
+        if (request.Model.StartsWith(CartesiaTranscriptionModelPrefix, StringComparison.OrdinalIgnoreCase))
+            request.Model = request.Model[CartesiaTranscriptionModelPrefix.Length..].Trim();
+
+        if (!SupportedTranscriptionModelIds.Any(m => string.Equals(m, request.Model, StringComparison.OrdinalIgnoreCase)))
+            throw new NotSupportedException($"{ProviderName} transcription model '{request.Model}' is not supported.");
 
         var audioString = request.Audio switch
         {
@@ -65,7 +65,7 @@ public partial class CartesiaProvider
         file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.MediaType);
 
         form.Add(file, "file", fileName);
-        form.Add(new StringContent(normalizedModel), "model");
+        form.Add(new StringContent(request.Model), "model");
 
         if (!string.IsNullOrWhiteSpace(metadata?.Language))
             form.Add(new StringContent(metadata.Language.Trim()), "language");
