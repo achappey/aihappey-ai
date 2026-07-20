@@ -23,22 +23,25 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
         var requestedModelId = chatRequest.Model;
-        var provider = await _resolver.Resolve(requestedModelId, cancellationToken);
-        var startedAt = DateTime.UtcNow;
 
-        Response.ContentType = "text/event-stream";
-        Response.Headers["x-vercel-ai-ui-message-stream"] = "v1";
-        chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
-        chatRequest.Model = chatRequest.Model.SplitModelId().Model;
-        chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
-        chatRequest.Headers = Request.Headers
-            .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
-            .GetProviderPassthroughHeaders(provider.GetIdentifier());
 
         FinishUIPart? finishUIPart = null;
+        IModelProvider? provider = null;
+        var startedAt = DateTime.UtcNow;
 
         try
         {
+            provider = await _resolver.Resolve(requestedModelId, cancellationToken);
+
+            Response.ContentType = "text/event-stream";
+            Response.Headers["x-vercel-ai-ui-message-stream"] = "v1";
+            chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
+            chatRequest.Model = chatRequest.Model.SplitModelId().Model;
+            chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
+            chatRequest.Headers = Request.Headers
+                .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
+                .GetProviderPassthroughHeaders(provider.GetIdentifier());
+
             await foreach (var response in provider.StreamAsync(chatRequest, cancellationToken))
             {
                 var streamPart = response;
@@ -67,7 +70,7 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
             await Response.Body.FlushAsync(cancellationToken);
         }
 
-        if (finishUIPart != null)
+        if (finishUIPart != null && provider != null)
         {
             int inputTokens = finishUIPart.MessageMetadata?.Usage?.PromptTokens ?? 0;
             int totalTokens = finishUIPart.MessageMetadata?.Usage?.TotalTokens ?? 0;
