@@ -30,7 +30,9 @@ public static class ProviderHeaderPassthroughExtensions
         if (string.IsNullOrWhiteSpace(headerName) || string.IsNullOrWhiteSpace(providerKey))
             return false;
 
-        if (headerName.Equals("HTTP-Referer", StringComparison.OrdinalIgnoreCase) || headerName.Equals("X-Title", StringComparison.OrdinalIgnoreCase))
+        if (headerName.Equals("HTTP-Referer", StringComparison.OrdinalIgnoreCase) 
+            || headerName.Equals("OpenAI-Beta", StringComparison.OrdinalIgnoreCase) 
+            || headerName.Equals("X-Title", StringComparison.OrdinalIgnoreCase))
             return true;
 
         var providerPrefix = providerKey + "-";
