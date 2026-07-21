@@ -11,6 +11,8 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using System.Globalization;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Neuralwatt;
 
@@ -49,19 +51,95 @@ public partial class NeuralwattProvider : IModelProvider
              options, cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        ChatCompletionUpdate? pendingUsageUpdate = null;
+        string? lastFinishReason = null;
+
+        await foreach (var streamItem in _client.GetChatCompletionSseEvents(
+            options,
+            GetIdentifier(),
+            capture: options.GetNeuralwattBackendCapture(GetIdentifier()),
+            headers: NeuralwattExtensions.MergeRequestHeaders(
+                this.SetDefaultChatCompletionProperties(options),
+                options.Headers),
+            ct: cancellationToken))
+        {
+            if (streamItem.Comment is { } comment
+                && TryGetRequestCostUsd(comment, out var requestCostUsd))
+            {
+                if (pendingUsageUpdate is not null)
+                {
+                    yield return EnrichStreamingUpdateWithGatewayCost(
+                        pendingUsageUpdate,
+                        requestCostUsd,
+                        lastFinishReason);
+                    pendingUsageUpdate = null;
+                }
+
+                continue;
+            }
+
+            if (streamItem.Data is not { Length: > 0 } data)
+                continue;
+
+            ChatCompletionUpdate? update;
+            try
+            {
+                update = JsonSerializer.Deserialize<ChatCompletionUpdate>(data, JsonSerializerOptions.Web);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to parse Neuralwatt SSE JSON event: {data}", ex);
+            }
+
+            if (update is null)
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(update.Model))
+                update.Model = $"{GetIdentifier()}/{update.Model}";
+
+            if (update.Created == 0)
+                update.Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            var finishReason = TryGetFinishReason(update);
+            if (!string.IsNullOrWhiteSpace(finishReason))
+                lastFinishReason = finishReason;
+
+            if (pendingUsageUpdate is not null)
+            {
+                yield return NormalizeStreamingUpdateForGatewayCost(
+                    pendingUsageUpdate,
+                    lastFinishReason);
+                pendingUsageUpdate = null;
+            }
+
+            if (update.Usage is not null)
+            {
+                pendingUsageUpdate = update;
+                continue;
+            }
+
+            yield return update;
+        }
+
+        if (pendingUsageUpdate is not null)
+        {
+            yield return NormalizeStreamingUpdateForGatewayCost(
+                pendingUsageUpdate,
+                lastFinishReason);
+        }
     }
 
     public string GetIdentifier() => nameof(Neuralwatt).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -140,46 +218,149 @@ public partial class NeuralwattProvider : IModelProvider
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
+
+    private static bool TryGetRequestCostUsd(string payload, out decimal requestCostUsd)
+    {
+        requestCostUsd = 0m;
+
+        if (!payload.StartsWith("cost", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        try
+        {
+            using var document = JsonDocument.Parse(payload["cost".Length..].Trim());
+            return document.RootElement.ValueKind == JsonValueKind.Object
+                   && document.RootElement.TryGetProperty("request_cost_usd", out var cost)
+                   && TryGetDecimal(cost, out requestCostUsd);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static bool TryGetDecimal(JsonElement value, out decimal result)
+    {
+        result = 0m;
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number => value.TryGetDecimal(out result),
+            JsonValueKind.String => decimal.TryParse(
+                value.GetString(),
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out result),
+            _ => false
+        };
+    }
+
+    private static ChatCompletionUpdate EnrichStreamingUpdateWithGatewayCost(
+        ChatCompletionUpdate update,
+        decimal cost,
+        string? lastFinishReason)
+    {
+        NormalizeStreamingUpdateForGatewayCost(update, lastFinishReason);
+
+        var properties = update.AdditionalProperties is not null
+            ? new Dictionary<string, JsonElement>(update.AdditionalProperties, StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+
+        var metadata = properties.TryGetValue("metadata", out var metadataElement)
+                       && metadataElement.ValueKind == JsonValueKind.Object
+            ? JsonSerializer.Deserialize<Dictionary<string, object?>>(metadataElement.GetRawText(), JsonSerializerOptions.Web) ?? []
+            : [];
+
+        metadata["gateway"] = new Dictionary<string, object?>
+        {
+            ["cost"] = cost
+        };
+        properties["metadata"] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web);
+        update.AdditionalProperties = properties;
+
+        return update;
+    }
+
+    private static ChatCompletionUpdate NormalizeStreamingUpdateForGatewayCost(
+        ChatCompletionUpdate update,
+        string? lastFinishReason)
+    {
+        if (update.Usage is null
+            || update.Choices.Any()
+            || string.IsNullOrWhiteSpace(lastFinishReason))
+        {
+            return update;
+        }
+
+        update.Choices =
+        [
+            new
+            {
+                index = 0,
+                delta = new { },
+                finish_reason = lastFinishReason
+            }
+        ];
+
+        return update;
+    }
+
+    private static string? TryGetFinishReason(ChatCompletionUpdate update)
+    {
+        foreach (var choice in update.Choices)
+        {
+            var choiceElement = JsonSerializer.SerializeToElement(choice, JsonSerializerOptions.Web);
+            if (choiceElement.TryGetProperty("finish_reason", out var finishReason)
+                && finishReason.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(finishReason.GetString()))
+            {
+                return finishReason.GetString();
+            }
+        }
+
+        return null;
+    }
+
 }

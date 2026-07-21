@@ -104,43 +104,17 @@ public static class ChatCompletionsExtensions
         IReadOnlyDictionary<string, string>? headers = null,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(client);
-        if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
-        req.ApplyRequestHeaders(headers);
-
-        req.Headers.Accept.Clear();
-        req.Headers.Accept.Add(AcceptSse);
-        req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
-        var payload = BuildPayload(options, providerId, extraRootProperties);
-        req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
-
-        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-        await ThrowIfNotSuccess(resp, ct);
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-        using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("chat-completions", resp, capture);
-
-        string? line;
-        while (!ct.IsCancellationRequested &&
-               (line = await reader.ReadLineAsync(ct)) != null)
+        await foreach (var streamEvent in client.GetChatCompletionSseEvents(
+            options,
+            providerId,
+            relativeUrl,
+            extraRootProperties,
+            capture,
+            headers,
+            ct))
         {
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, ct);
-
-            if (line is null) yield break;
-
-            if (line.Length == 0) continue; // keepalive
-
-            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            if (streamEvent.Data is not { Length: > 0 } data)
                 continue;
-
-            var data = line["data:".Length..].Trim();
-            if (data.Length == 0) continue;
-
-            if (data == "[DONE]") yield break;
 
             ChatCompletionUpdate? evt;
             try
@@ -161,6 +135,70 @@ public static class ChatCompletionsExtensions
 
             if (evt is not null)
                 yield return evt;
+        }
+    }
+
+    /// <summary>
+    /// POST JSON with stream=true and expose raw SSE data and comment fields.
+    /// Comments are normally protocol keepalives, but some providers use them for terminal metadata.
+    /// </summary>
+    public static async IAsyncEnumerable<ChatCompletionSseEvent> GetChatCompletionSseEvents(
+        this HttpClient client,
+        ChatCompletionOptions options,
+        string providerId,
+        string relativeUrl = "v1/chat/completions",
+        JsonElement? extraRootProperties = null,
+        ProviderBackendCaptureRequest? capture = null,
+        IReadOnlyDictionary<string, string>? headers = null,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        if (string.IsNullOrWhiteSpace(relativeUrl))
+            throw new ArgumentNullException(nameof(relativeUrl));
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
+        req.ApplyRequestHeaders(headers);
+        req.Headers.Accept.Clear();
+        req.Headers.Accept.Add(AcceptSse);
+        req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
+        req.Content = new StringContent(
+            BuildPayload(options, providerId, extraRootProperties, stream: true).GetRawText(),
+            Encoding.UTF8,
+            "application/json");
+
+        using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        await ThrowIfNotSuccess(resp, ct);
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
+        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("chat-completions", resp, capture);
+
+        while (!ct.IsCancellationRequested
+               && await reader.ReadLineAsync(ct) is { } line)
+        {
+            if (captureSink is not null)
+                await captureSink.WriteLineAsync(line, ct);
+
+            if (line.Length == 0)
+                continue;
+
+            if (line.StartsWith(':'))
+            {
+                yield return new ChatCompletionSseEvent(Comment: line[1..].TrimStart());
+                continue;
+            }
+
+            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var data = line["data:".Length..].Trim();
+            if (data.Length == 0)
+                continue;
+
+            if (string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
+                yield break;
+
+            yield return new ChatCompletionSseEvent(Data: data);
         }
     }
 
@@ -482,6 +520,8 @@ public static class ChatCompletionsExtensions
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 }
+
+public sealed record ChatCompletionSseEvent(string? Data = null, string? Comment = null);
 
 
 
