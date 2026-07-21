@@ -143,7 +143,7 @@ public static partial class ResponsesUnifiedMapper
             return default!;
         }
     }
-
+/*
     private static TruncationStrategy? ParseTruncation(Dictionary<string, object?>? metadata, string key)
     {
         var raw = ExtractValue<string>(metadata, key);
@@ -156,7 +156,7 @@ public static partial class ResponsesUnifiedMapper
             "disabled" => TruncationStrategy.Disabled,
             _ => null
         };
-    }
+    }*/
 
     private static bool HasMeaningfulValue(object? value)
         => value switch

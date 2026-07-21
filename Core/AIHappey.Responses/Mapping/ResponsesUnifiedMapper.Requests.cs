@@ -47,12 +47,14 @@ public static partial class ResponsesUnifiedMapper
             ToolChoice = request.ToolChoice,
             Tools = request.Tools?.Select(ToResponsesTool).ToList(),
             Headers = request.Headers,
+            PromptCacheKey = request.Id,
             Metadata = request.Metadata,
             Store = ExtractValue<bool?>(metadata, "responses.store"),
             ServiceTier = ExtractValue<string>(metadata, "responses.service_tier"),
             Text = metadata.TryGetValue("responses.text", out var text) ? text : null,
             TopLogprobs = ExtractValue<int?>(metadata, "responses.top_logprobs"),
-            Truncation = ParseTruncation(metadata, "responses.truncation"),
+            PromptCacheOptions = ExtractObject<object>(metadata, "responses.prompt_cache_options"),
+            // Truncation = ParseTruncation(metadata, "responses.truncation"),
             Reasoning = ExtractObject<Reasoning>(metadata, "responses.reasoning"),
             ContextManagement = ExtractObject<JsonElement[]>(metadata, "responses.context_management")
         };

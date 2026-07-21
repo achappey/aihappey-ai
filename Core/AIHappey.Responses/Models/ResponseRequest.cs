@@ -88,6 +88,15 @@ public sealed class ResponseRequest
 
     [JsonPropertyName("background")]
     public bool? Background { get; set; }
+
+    [JsonPropertyName("prompt_cache_key")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PromptCacheKey { get; set; }
+
+    [JsonPropertyName("prompt_cache_options")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? PromptCacheOptions { get; set; }
+
 }
 
 public sealed class Reasoning
