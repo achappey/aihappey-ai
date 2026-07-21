@@ -680,6 +680,18 @@ public static partial class ResponsesUnifiedMapper
             return value.Deserialize<T>();
         }
 
+        // Vercel UI tool invocations preserve provider result metadata under this
+        // transport-specific wrapper. Resolve it as provider-scoped metadata too,
+        // so Responses replay can recover opaque state such as compaction tokens.
+        if (metadata.TryGetValue("messages.provider.metadata", out var nestedProviderMetadata)
+            && TryGetJsonObject(nestedProviderMetadata, out var nestedProviderJson)
+            && nestedProviderJson.TryGetProperty(providerId, out var nestedProvider)
+            && TryGetJsonObject(nestedProvider, out var nestedProviderState)
+            && nestedProviderState.TryGetProperty(key, out value))
+        {
+            return value.Deserialize<T>();
+        }
+
         return default;
     }
 

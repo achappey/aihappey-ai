@@ -11,6 +11,31 @@ namespace AIHappey.Tests.Responses;
 public sealed class ResponsesUnifiedMapperRequestTests
 {
     private const string XaiReasoningFollowUpFixturePath = "Fixtures/api-chat/raw/reasoning-with-signature-follow-up-chatrequest.json";
+    private const string OpenAiCompactionFixturePath = "Fixtures/api-chat/raw/openai-with-compaction-chatrequest.json";
+
+    [Fact]
+    public void Vercel_chat_request_replays_only_the_latest_current_provider_compaction_and_subsequent_messages()
+    {
+        var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(OpenAiCompactionFixturePath));
+        var chatRequest = JsonSerializer.Deserialize<ChatRequest>(json, JsonSerializerOptions.Web)
+            ?? throw new InvalidOperationException($"Could not deserialize fixture chat request from [{OpenAiCompactionFixturePath}](Core/AIHappey.Tests/{OpenAiCompactionFixturePath}).");
+
+        var responseRequest = chatRequest.ToUnifiedRequest("openai").ToResponseRequest("openai");
+        var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(responseRequest.Input?.Items);
+
+        var compaction = Assert.IsType<ResponseCompactionItem>(inputItems[0]);
+        Assert.Equal("cmp_080189eac4c3136b016a5f17a29138819db0d465937f1a249c", compaction.Id);
+        Assert.False(string.IsNullOrWhiteSpace(compaction.EncryptedContent));
+
+        var finalUserMessage = Assert.IsType<ResponseInputMessage>(inputItems[1]);
+        Assert.Equal(ResponseRole.User, finalUserMessage.Role);
+        Assert.Equal("preices dat", Assert.IsType<InputTextPart>(Assert.Single(finalUserMessage.Content.Parts!)).Text);
+
+        Assert.Equal(2, inputItems.Count);
+        Assert.Single(inputItems.OfType<ResponseCompactionItem>());
+        Assert.DoesNotContain(inputItems.OfType<ResponseInputMessage>(), message =>
+            message.Content.IsText && message.Content.Text == "bro");
+    }
 
     [Fact]
     public void Vercel_chat_request_with_xai_encrypted_reasoning_follow_up_maps_to_responses_request_with_only_encrypted_reasoning_items()
