@@ -6,10 +6,13 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
-using AIHappey.Responses;
-using AIHappey.Responses.Streaming;
+using AIHappey.Responses.Mapping;
+using AIHappey.Messages.Mapping;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.SmallestAI;
 
@@ -43,11 +46,22 @@ public partial class SmallestAIProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
+    }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    {
+        ApplyAuthHeader();
+
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
+    }
+
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await ListModelsInternal(cancellationToken);
@@ -71,16 +85,51 @@ public partial class SmallestAIProvider : IModelProvider
 
             yield break;
         }
+        else if (string.Equals(type, "speech", StringComparison.OrdinalIgnoreCase))
+        {
+            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
+                yield return p;
+            yield break;
+        }
+        else
+        {
+            var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-            yield return p;
+            await foreach (var part in this.StreamUnifiedAsync(
+                unifiedRequest,
+                cancellationToken))
+            {
+                foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                {
+                    yield return uiPart;
+                }
+            }
+        }
+
+
     }
 
-    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        => await this.SpeechResponseAsync(options, cancellationToken);
+    public async Task<Responses.ResponseResult> ResponsesAsync(
+      Responses.ResponseRequest options,
+      CancellationToken cancellationToken = default)
+    {
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
+    }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+        {
+            yield return part.ToResponseStreamPart();
+        }
+    }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -94,16 +143,34 @@ public partial class SmallestAIProvider : IModelProvider
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
     }
 
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {

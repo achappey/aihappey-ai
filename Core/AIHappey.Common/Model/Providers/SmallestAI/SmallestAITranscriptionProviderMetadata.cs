@@ -3,13 +3,13 @@ using System.Text.Json.Serialization;
 namespace AIHappey.Common.Model.Providers.SmallestAI;
 
 /// <summary>
-/// Provider options for SmallestAI Pulse (pre-recorded) STT.
+/// Provider options for SmallestAI Pulse and Pulse Pro (pre-recorded) STT.
 /// Consumed via <c>providerOptions.smallestai</c>.
 /// </summary>
 public sealed class SmallestAITranscriptionProviderMetadata
 {
     /// <summary>
-    /// Language code (ISO-639-1) or <c>multi</c> for auto detection.
+    /// Language code accepted by the selected model. Pulse Pro supports <c>en</c> only.
     /// </summary>
     [JsonPropertyName("language")]
     public string? Language { get; set; }
@@ -20,9 +20,6 @@ public sealed class SmallestAITranscriptionProviderMetadata
     [JsonPropertyName("diarize")]
     public bool? Diarize { get; set; }
 
-    [JsonPropertyName("ageDetection")]
-    public bool? AgeDetection { get; set; }
-
     [JsonPropertyName("genderDetection")]
     public bool? GenderDetection { get; set; }
 
@@ -32,7 +29,16 @@ public sealed class SmallestAITranscriptionProviderMetadata
     [JsonPropertyName("webhookUrl")]
     public string? WebhookUrl { get; set; }
 
+    [JsonPropertyName("webhookMethod")]
+    public string? WebhookMethod { get; set; }
+
     [JsonPropertyName("webhookExtra")]
     public string? WebhookExtra { get; set; }
+
+    [JsonPropertyName("redactPii")]
+    public bool? RedactPii { get; set; }
+
+    [JsonPropertyName("redactPci")]
+    public bool? RedactPci { get; set; }
 }
 

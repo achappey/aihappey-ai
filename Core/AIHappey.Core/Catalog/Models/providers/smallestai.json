@@ -1,0 +1,42 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "smallestai/electron",
+      "object": "model",
+      "owned_by": "SmallestAI",
+      "name": "electron",
+      "type": "language"
+    },
+    {
+      "id": "smallestai/lightning_v3.1",
+      "object": "model",
+      "owned_by": "SmallestAI",
+      "name": "lightning_v3.1",
+      "type": "speech"
+    },
+    {
+      "id": "smallestai/lightning_v3.1_pro",
+      "object": "model",
+      "owned_by": "SmallestAI",
+      "name": "lightning_v3.1_pro",
+      "type": "speech"
+    },
+    {
+      "id": "smallestai/pulse",
+      "object": "model",
+      "owned_by": "SmallestAI",
+      "name": "pulse",
+      "type": "transcription",
+      "description": "multilingual"
+    },
+    {
+      "id": "smallestai/pulse-pro",
+      "object": "model",
+      "owned_by": "SmallestAI",
+      "name": "pulse-pro",
+      "type": "transcription",
+      "description": "Leaderboard-ranked English accuracy (5.42% ESB avg WER, tied #2 on the public Open ASR Leaderboard)."
+    }
+  ]
+}

@@ -7,7 +7,9 @@ namespace AIHappey.Core.Providers.SmallestAI;
 public partial class SmallestAIProvider
 {
     private const string TtsModelPrefix = "smallestai/";
-    private const string LightningV31Model = "lightning-v3.1";
+    private const string LightningV31Model = "lightning_v3.1";
+    private const string LightningV31ProModel = "lightning_v3.1_pro";
+    private const string LightningV31VoiceCatalogModel = "lightning-v3.1";
     private const string PulseModel = "pulse";
 
     private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
@@ -25,12 +27,13 @@ public partial class SmallestAIProvider
             {
                 ApplyAuthHeader();
 
-                var models = new List<Model>
-        {
-            BuildTranscriptionModel()
-        };
+                var models = GetIdentifier().GetModels().ToList();
 
-                var v31Voices = await GetVoicesAsync(LightningV31Model, cancellationToken);
+                // The upstream endpoint deliberately returns a union of the standard and
+                // Pro voice catalogs without identifying each voice's pool. Therefore only
+                // expose standard-pool voice shortcuts. The catalog-backed Pro alias remains
+                // available and requires callers to provide an appropriate Pro voice explicitly.
+                var v31Voices = await GetVoicesAsync(LightningV31VoiceCatalogModel, cancellationToken);
 
                 models.AddRange(BuildDynamicVoiceModels(LightningV31Model, v31Voices));
 
@@ -47,7 +50,7 @@ public partial class SmallestAIProvider
 
     private async Task<IReadOnlyList<SmallestAIVoice>> GetVoicesAsync(string model, CancellationToken cancellationToken)
     {
-        using var resp = await _client.GetAsync($"waves/v1/{model}/get_voices", cancellationToken);
+        using var resp = await _client.GetAsync($"v1/{model}/get_voices", cancellationToken);
         var body = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
@@ -162,17 +165,6 @@ public partial class SmallestAIProvider
 
         return tags;
     }
-
-    private Model BuildTranscriptionModel()
-        => new()
-        {
-            Id = PulseModel.ToModelId(GetIdentifier()),
-            OwnedBy = ProviderName,
-            Type = "transcription",
-            Name = "Pulse STT",
-            Description = "SmallestAI Pulse pre-recorded speech-to-text model.",
-            Tags = ["model:pulse", "stt"]
-        };
 
     private static string? ReadString(JsonElement obj, string name)
     {

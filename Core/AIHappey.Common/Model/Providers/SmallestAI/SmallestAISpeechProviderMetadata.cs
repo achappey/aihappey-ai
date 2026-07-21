@@ -9,9 +9,7 @@ namespace AIHappey.Common.Model.Providers.SmallestAI;
 public sealed class SmallestAISpeechProviderMetadata
 {
     /// <summary>
-    /// Target sample rate. Supported values:
-    /// - lightning-v3.1: 8000, 16000, 24000, 44100
-    /// - lightning-v2: 8000..24000
+    /// Target sample rate. Supported values are 8000, 16000, 24000, and 44100.
     /// </summary>
     [JsonPropertyName("sampleRate")]
     public int? SampleRate { get; set; }
@@ -23,7 +21,7 @@ public sealed class SmallestAISpeechProviderMetadata
     public string? Language { get; set; }
 
     /// <summary>
-    /// Output format (pcm, mp3, wav, mulaw).
+    /// Output format (pcm, mp3, wav, ulaw, or alaw).
     /// </summary>
     [JsonPropertyName("outputFormat")]
     public string? OutputFormat { get; set; }
@@ -35,21 +33,31 @@ public sealed class SmallestAISpeechProviderMetadata
     public List<string>? PronunciationDicts { get; set; }
 
     /// <summary>
-    /// lightning-v2 only. Controls word repetition/skipping. Range 0..1.
+    /// Optional language used to normalize numeric content independently of
+    /// <see cref="Language"/>.
     /// </summary>
-    [JsonPropertyName("consistency")]
-    public float? Consistency { get; set; }
+    [JsonPropertyName("numberPronunciationLanguage")]
+    public string? NumberPronunciationLanguage { get; set; }
 
     /// <summary>
-    /// lightning-v2 only. Controls similarity to reference voice. Range 0..1.
+    /// Optional client session correlation identifier. It is echoed by
+    /// SmallestAI in the <c>X-External-Session-Id</c> response header.
     /// </summary>
-    [JsonPropertyName("similarity")]
-    public float? Similarity { get; set; }
+    [JsonPropertyName("sessionId")]
+    public string? SessionId { get; set; }
 
     /// <summary>
-    /// lightning-v2 only. Quality enhancement level. Range 0..2.
+    /// Optional client request correlation identifier. It is echoed by
+    /// SmallestAI in the <c>X-External-Request-Id</c> response header.
     /// </summary>
-    [JsonPropertyName("enhancement")]
-    public float? Enhancement { get; set; }
+    [JsonPropertyName("requestId")]
+    public string? RequestId { get; set; }
+
+    /// <summary>
+    /// Requests word timestamps when using a WebSocket session. This is
+    /// accepted but ignored by the HTTP sync and SSE endpoints.
+    /// </summary>
+    [JsonPropertyName("wordTimestamps")]
+    public bool? WordTimestamps { get; set; }
 }
 

@@ -12,6 +12,9 @@ namespace AIHappey.Core.Providers.SmallestAI;
 
 public partial class SmallestAIProvider
 {
+    private const string PulseProModel = "pulse-pro";
+    private const string TranscriptionPath = "v1/stt/";
+
     public async Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -22,9 +25,7 @@ public partial class SmallestAIProvider
         if (string.IsNullOrWhiteSpace(request.MediaType))
             throw new ArgumentException("MediaType is required.", nameof(request));
 
-        var model = request.Model.Trim();
-        if (!string.Equals(model, PulseModel, StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException($"{ProviderName} transcription model '{request.Model}' is not supported. Use '{PulseModel}'.");
+        var model = NormalizeTranscriptionModel(request.Model);
 
         var audioString = request.Audio switch
         {
@@ -55,30 +56,58 @@ public partial class SmallestAIProvider
             ? metadata!.Language!.Trim()
             : "en";
 
+        if (string.Equals(model, PulseProModel, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(language, "en", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException($"{ProviderName} '{PulseProModel}' supports English only; use language 'en'.", nameof(request));
+        }
+
         var query = new List<string>
         {
-            $"model={Uri.EscapeDataString(PulseModel)}",
+            $"model={Uri.EscapeDataString(model)}",
             $"language={Uri.EscapeDataString(language)}"
         };
 
         AppendBoolQuery(query, "word_timestamps", metadata?.WordTimestamps);
         AppendBoolQuery(query, "diarize", metadata?.Diarize);
-        AppendBoolQuery(query, "age_detection", metadata?.AgeDetection);
         AppendBoolQuery(query, "gender_detection", metadata?.GenderDetection);
         AppendBoolQuery(query, "emotion_detection", metadata?.EmotionDetection);
+        AppendBoolQuery(query, "redact_pii", metadata?.RedactPii);
+        AppendBoolQuery(query, "redact_pci", metadata?.RedactPci);
 
         if (!string.IsNullOrWhiteSpace(metadata?.WebhookUrl))
-            query.Add($"webhook_url={Uri.EscapeDataString(metadata.WebhookUrl)}");
-        if (!string.IsNullOrWhiteSpace(metadata?.WebhookExtra))
-            query.Add($"webhook_extra={Uri.EscapeDataString(metadata.WebhookExtra)}");
+        {
+            if (!string.Equals(model, PulseProModel, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"{ProviderName} webhooks are supported only by '{PulseProModel}'.", nameof(request));
 
-        var endpoint = $"api/v1/pulse/get_text?{string.Join("&", query)}";
+            query.Add($"webhook_url={Uri.EscapeDataString(metadata.WebhookUrl)}");
+        }
+        if (!string.IsNullOrWhiteSpace(metadata?.WebhookMethod))
+        {
+            if (!string.Equals(model, PulseProModel, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"{ProviderName} webhook methods are supported only by '{PulseProModel}'.", nameof(request));
+
+            var webhookMethod = metadata.WebhookMethod.Trim().ToUpperInvariant();
+            if (webhookMethod is not ("GET" or "POST"))
+                throw new ArgumentException($"{ProviderName} webhookMethod must be 'GET' or 'POST'.", nameof(request));
+
+            query.Add($"webhook_method={Uri.EscapeDataString(webhookMethod)}");
+        }
+        if (!string.IsNullOrWhiteSpace(metadata?.WebhookExtra))
+        {
+            if (!string.Equals(model, PulseProModel, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"{ProviderName} webhook metadata is supported only by '{PulseProModel}'.", nameof(request));
+
+            query.Add($"webhook_extra={Uri.EscapeDataString(metadata.WebhookExtra)}");
+        }
+
+        var endpoint = $"{TranscriptionPath}?{string.Join("&", query)}";
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
             Content = new ByteArrayContent(bytes)
         };
-        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
+        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
         using var resp = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var responseText = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -116,10 +145,23 @@ public partial class SmallestAIProvider
             {
                 Timestamp = now,
                 Headers = resp.GetHeaders(),
-                ModelId = request.Model.ToModelId(GetIdentifier()),
+                ModelId = model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
         };
+    }
+
+    private static string NormalizeTranscriptionModel(string model)
+    {
+        var normalized = model.Trim();
+
+        if (string.Equals(normalized, PulseModel, StringComparison.OrdinalIgnoreCase))
+            return PulseModel;
+        if (string.Equals(normalized, PulseProModel, StringComparison.OrdinalIgnoreCase))
+            return PulseProModel;
+
+        throw new NotSupportedException(
+            $"{ProviderName} transcription model '{model}' is not supported. Use '{PulseModel}' or '{PulseProModel}'.");
     }
 
     private static void AppendBoolQuery(List<string> query, string key, bool? value)
