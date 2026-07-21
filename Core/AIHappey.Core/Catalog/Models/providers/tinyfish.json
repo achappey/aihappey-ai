@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tinyfish/agent",
+      "object": "model",
+      "owned_by": "TinyFish",
+      "name": "Browser Agent",
+      "type": "language"
+    },
+    {
+      "id": "tinyfish/fetch",
+      "object": "model",
+      "owned_by": "TinyFish",
+      "name": "Web fetch",
+      "type": "language"
+    }
+  ]
+}

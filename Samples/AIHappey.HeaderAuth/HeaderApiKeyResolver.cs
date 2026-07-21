@@ -572,7 +572,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["cencori"] = "X-Cencori-Key",
             ["aivara"] = "X-Aivara-Key",
             ["condensechat"] = "X-CondenseChat-Key",
-            ["ecoia"] = "X-Ecoia-Key"
+            ["ecoia"] = "X-Ecoia-Key",
+            ["tinyfish"] = "X-TinyFish-Key"
 
         };
 

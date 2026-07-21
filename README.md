@@ -6,7 +6,7 @@ No smart routing fairy. No shiny admin portal. No hidden logic maze.
 Just provider capabilities flattened, normalized hard and exposed through open contracts.
 Stateless. Boring on purpose.
 
-Access 160k+ models and provider-native capabilities from your favorite client.
+Access 130k+ models and provider-native capabilities from your favorite client.
 
 ## Endpoints
 
@@ -891,6 +891,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | TigerCity | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | TikHubAI | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Tinfoil | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| TinyFish | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ToAPIs | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Together | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ |
 | Token360 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ❌ | ➖ |

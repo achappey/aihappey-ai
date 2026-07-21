@@ -571,6 +571,7 @@ public class AIServiceConfig
     public ProviderConfig? Aivara { get; set; }
     public ProviderConfig? CondenseChat { get; set; }
     public ProviderConfig? Ecoia { get; set; }
+    public ProviderConfig? TinyFish { get; set; }
     
 }
 
