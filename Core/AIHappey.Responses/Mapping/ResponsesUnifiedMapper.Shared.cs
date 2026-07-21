@@ -271,7 +271,6 @@ public static partial class ResponsesUnifiedMapper
         => JsonSerializer.SerializeToElement(
             new Dictionary<string, object?>
             {
-                ["encrypted_content"] = GetValueAsString(encryptedContent)
             },
             Json);
 
