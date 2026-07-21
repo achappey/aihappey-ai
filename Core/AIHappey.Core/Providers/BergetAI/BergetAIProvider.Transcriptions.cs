@@ -5,6 +5,7 @@ using AIHappey.Common.Model.Providers.BergetAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -12,6 +13,17 @@ namespace AIHappey.Core.Providers.BergetAI;
 
 public partial class BergetAIProvider
 {
+
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
