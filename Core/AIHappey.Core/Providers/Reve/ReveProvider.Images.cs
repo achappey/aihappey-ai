@@ -45,14 +45,10 @@ public partial class ReveProvider
         if (request.Seed is not null)
             warnings.Add(new { type = "unsupported", feature = "seed" });
 
-        var files = request.Files?.ToList() ?? [];
-        var hasFiles = files.Count > 0;
-        var isMultiFile = files.Count > 1;
-
-        var (endpoint, payload) = BuildRevePayload(request, metadata, warnings, hasFiles, isMultiFile);
+        var payload = BuildReveV2CreatePayload(request, metadata);
 
         var json = JsonSerializer.Serialize(payload, ReveJson);
-        using var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        using var req = new HttpRequestMessage(HttpMethod.Post, "v2/image/create")
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
@@ -121,118 +117,37 @@ public partial class ReveProvider
             creditsUsed * outputPrice : null;
     }
 
-    private static (string Endpoint, object Payload) BuildRevePayload(
+    private static object BuildReveV2CreatePayload(
         ImageRequest request,
-        ReveImageProviderMetadata? metadata,
-        List<object> warnings,
-        bool hasFiles,
-        bool isMultiFile)
+        ReveImageProviderMetadata? metadata)
     {
-        var model = request.Model.Trim();
-        var isLatest = model.Equals("latest", StringComparison.OrdinalIgnoreCase)
-            || model.Equals("latest-fast", StringComparison.OrdinalIgnoreCase);
-
-        if (isLatest)
-        {
-            if (isMultiFile)
-                return ("v1/image/remix", BuildRemixPayload(request, metadata, versionOverride: model));
-
-            if (hasFiles)
-                return ("v1/image/edit", BuildEditPayload(request, metadata, warnings, versionOverride: model));
-
-            return ("v1/image/create", BuildCreatePayload(request, metadata, versionOverride: model));
-        }
-
-        if (model.StartsWith("reve-create@", StringComparison.OrdinalIgnoreCase))
-            return ("v1/image/create", BuildCreatePayload(request, metadata, versionOverride: model));
-
-        if (model.StartsWith("reve-edit@", StringComparison.OrdinalIgnoreCase)
-            || model.StartsWith("reve-edit-fast@", StringComparison.OrdinalIgnoreCase))
-            return ("v1/image/edit", BuildEditPayload(request, metadata, warnings, versionOverride: model));
-
-        if (model.StartsWith("reve-remix@", StringComparison.OrdinalIgnoreCase)
-            || model.StartsWith("reve-remix-fast@", StringComparison.OrdinalIgnoreCase))
-            return ("v1/image/remix", BuildRemixPayload(request, metadata, versionOverride: model));
-
-        return ("v1/image/create", BuildCreatePayload(request, metadata, versionOverride: model));
-    }
-
-    private static object BuildCreatePayload(
-        ImageRequest request,
-        ReveImageProviderMetadata? metadata,
-        string? versionOverride)
-        => new
-        {
-            prompt = request.Prompt,
-            aspect_ratio = request.AspectRatio,
-            version = versionOverride,
-            test_time_scaling = metadata?.TestTimeScaling,
-            postprocessing = metadata?.Postprocessing
-        };
-
-    private static object BuildEditPayload(
-        ImageRequest request,
-        ReveImageProviderMetadata? metadata,
-        List<object> warnings,
-        string? versionOverride)
-    {
-        var file = request.Files?.FirstOrDefault();
-        if (file is null)
-            throw new ArgumentException("reference image is required for Reve edit.", nameof(request));
-
-        if (request.Files?.Skip(1).Any() == true)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "files",
-                details = "Multiple input images not supported for edit; used files[0]."
-            });
-        }
-
-        var imageData = file.Data;
-        if (imageData.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            imageData = imageData.RemoveDataUrlPrefix();
-
-        return new
-        {
-            edit_instruction = request.Prompt,
-            reference_image = imageData,
-            aspect_ratio = request.AspectRatio,
-            version = versionOverride,
-            test_time_scaling = metadata?.TestTimeScaling,
-            postprocessing = metadata?.Postprocessing
-        };
-    }
-
-    private static object BuildRemixPayload(
-        ImageRequest request,
-        ReveImageProviderMetadata? metadata,
-        string? versionOverride)
-    {
-        var files = request.Files?.ToList() ?? [];
-        if (files.Count == 0)
-            throw new ArgumentException("reference_images are required for Reve remix.", nameof(request));
-
-        var images = files
+        var references = request.Files?
             .Select(file =>
             {
                 var data = file.Data;
-                return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                    ? data.RemoveDataUrlPrefix()
-                    : data;
+                return new
+                {
+                    data = data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                        ? data.RemoveDataUrlPrefix()
+                        : data
+                };
             })
             .ToArray();
 
         return new
         {
             prompt = request.Prompt,
-            reference_images = images,
+            references,
             aspect_ratio = request.AspectRatio,
-            version = versionOverride,
-            test_time_scaling = metadata?.TestTimeScaling,
+            version = ResolveV2Version(request.Model),
             postprocessing = metadata?.Postprocessing
         };
     }
+
+    private static string ResolveV2Version(string model)
+        => model.Equals("latest", StringComparison.OrdinalIgnoreCase)
+            || model.Equals("reve-v2-create@20260601", StringComparison.OrdinalIgnoreCase)
+            ? "reve-v2-create@260601"
+            : model;
 }
 

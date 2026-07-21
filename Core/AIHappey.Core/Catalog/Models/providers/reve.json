@@ -9,45 +9,10 @@
             "type": "image"
         },
         {
-            "id": "reve/latest-fast",
+            "id": "reve/reve-v2-create@260601",
             "object": "model",
             "owned_by": "Reve",
-            "name": "latest-fast",
-            "type": "image"
-        },
-        {
-            "id": "reve/reve-remix@20250915",
-            "object": "model",
-            "owned_by": "Reve",
-            "name": "reve-remix@20250915",
-            "type": "image"
-        },
-        {
-            "id": "reve/reve-remix-fast@20251030",
-            "object": "model",
-            "owned_by": "Reve",
-            "name": "reve-remix-fast@20251030",
-            "type": "image"
-        },
-        {
-            "id": "reve/reve-edit@20250915",
-            "object": "model",
-            "owned_by": "Reve",
-            "name": "reve-edit@20250915",
-            "type": "image"
-        },
-        {
-            "id": "reve/reve-edit-fast@20251030",
-            "object": "model",
-            "owned_by": "Reve",
-            "name": "reve-edit-fast@20251030",
-            "type": "image"
-        },
-        {
-            "id": "reve/reve-create@20250915",
-            "object": "model",
-            "owned_by": "Reve",
-            "name": "reve-create@20250915",
+            "name": "reve-v2-create@260601",
             "type": "image"
         }
     ]
