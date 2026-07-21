@@ -21,11 +21,15 @@ public partial class SmallestAIProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
 
-    public SmallestAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public SmallestAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://waves-api.smallest.ai/");
+        _client.BaseAddress = new Uri("https://api.smallest.ai/waves/");
     }
 
     public string GetIdentifier() => ProviderId;
@@ -50,7 +54,7 @@ public partial class SmallestAIProvider : IModelProvider
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-       throw new NotSupportedException();
+        throw new NotSupportedException();
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
@@ -100,15 +104,6 @@ public partial class SmallestAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
@@ -135,14 +130,6 @@ public partial class SmallestAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
 

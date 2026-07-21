@@ -111,15 +111,11 @@ public partial class SmallestAIProvider
             Segments = segments,
             Warnings = [],
             ProviderMetadata = GetIdentifier()
-            .CreatePrimitiveProviderMetadata(new
-            {
-                model = PulseModel,
-                language,
-                metadata,
-            }),
+            .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }

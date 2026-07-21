@@ -17,7 +17,6 @@ public partial class SmallestAIProvider
     };
 
     private const string LightningV31StreamPath = "api/v1/lightning-v3.1/stream";
-    private const string LightningV2Path = "api/v1/lightning-v2/get_speech";
 
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
@@ -54,9 +53,6 @@ public partial class SmallestAIProvider
 
         if (string.Equals(modelId, LightningV31Model, StringComparison.OrdinalIgnoreCase))
             return await LightningV31SseSpeechAsync(request, metadata, warnings, now, voiceId, speed, language, outputFormat, cancellationToken);
-
-        if (string.Equals(modelId, LightningV2Model, StringComparison.OrdinalIgnoreCase))
-            return await LightningV2SpeechAsync(request, metadata, warnings, now, voiceId, speed, language, outputFormat, cancellationToken);
 
         throw new NotSupportedException($"{ProviderName} model '{request.Model}' is not supported. Expected '{TtsModelPrefix}[model]/[voiceId]'.");
     }
@@ -142,90 +138,6 @@ public partial class SmallestAIProvider
                     outputFormat,
                     bytes = audioBytes.Length
                 })
-            }
-        };
-    }
-
-    private async Task<SpeechResponse> LightningV2SpeechAsync(
-        SpeechRequest request,
-        SmallestAISpeechProviderMetadata? metadata,
-        List<object> warnings,
-        DateTime now,
-        string voiceId,
-        float speed,
-        string language,
-        string outputFormat,
-        CancellationToken cancellationToken)
-    {
-        var sampleRate = metadata?.SampleRate ?? 24000;
-        if (sampleRate < 8000 || sampleRate > 24000)
-            throw new ArgumentOutOfRangeException(nameof(SmallestAISpeechProviderMetadata.SampleRate), "SmallestAI lightning-v2 sampleRate must be between 8000 and 24000.");
-
-        var consistency = metadata?.Consistency ?? 0.5f;
-        var similarity = metadata?.Similarity ?? 0f;
-        var enhancement = metadata?.Enhancement ?? 1f;
-
-        if (consistency is < 0f or > 1f)
-            throw new ArgumentOutOfRangeException(nameof(SmallestAISpeechProviderMetadata.Consistency), "SmallestAI consistency must be between 0 and 1.");
-        if (similarity is < 0f or > 1f)
-            throw new ArgumentOutOfRangeException(nameof(SmallestAISpeechProviderMetadata.Similarity), "SmallestAI similarity must be between 0 and 1.");
-        if (enhancement is < 0f or > 2f)
-            throw new ArgumentOutOfRangeException(nameof(SmallestAISpeechProviderMetadata.Enhancement), "SmallestAI enhancement must be between 0 and 2.");
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["voice_id"] = voiceId,
-            ["sample_rate"] = sampleRate,
-            ["speed"] = speed,
-            ["consistency"] = consistency,
-            ["similarity"] = similarity,
-            ["enhancement"] = enhancement,
-            ["language"] = language,
-            ["output_format"] = outputFormat,
-            ["pronunciation_dicts"] = metadata?.PronunciationDicts
-        };
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, LightningV2Path)
-        {
-            Content = new StringContent(JsonSerializer.Serialize(payload, SmallestAiSpeechJson), Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        using var resp = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"{ProviderName} lightning-v2 speech failed ({(int)resp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
-
-        var mime = resp.Content.Headers.ContentType?.MediaType ?? ResolveMimeType(outputFormat, sampleRate);
-
-        return new SpeechResponse
-        {
-            Audio = new SpeechAudioResponse
-            {
-                Base64 = Convert.ToBase64String(bytes),
-                MimeType = mime,
-                Format = outputFormat
-            },
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    model = LightningV2Model,
-                    voiceId,
-                    sampleRate,
-                    speed,
-                    language,
-                    outputFormat,
-                    consistency,
-                    similarity,
-                    enhancement
-                })
-            },
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
     }

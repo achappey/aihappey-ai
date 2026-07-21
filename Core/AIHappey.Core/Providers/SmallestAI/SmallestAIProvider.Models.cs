@@ -8,36 +8,46 @@ public partial class SmallestAIProvider
 {
     private const string TtsModelPrefix = "smallestai/";
     private const string LightningV31Model = "lightning-v3.1";
-    private const string LightningV2Model = "lightning-v2";
     private const string PulseModel = "pulse";
 
     private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var models = new List<Model>
+        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
+
+                var models = new List<Model>
         {
             BuildTranscriptionModel()
         };
 
-        var v31Voices = await GetVoicesAsync(LightningV31Model, cancellationToken);
-        var v2Voices = await GetVoicesAsync(LightningV2Model, cancellationToken);
+                var v31Voices = await GetVoicesAsync(LightningV31Model, cancellationToken);
 
-        models.AddRange(BuildDynamicVoiceModels(LightningV31Model, v31Voices));
-        models.AddRange(BuildDynamicVoiceModels(LightningV2Model, v2Voices));
+                models.AddRange(BuildDynamicVoiceModels(LightningV31Model, v31Voices));
 
-        return [.. models
+                return [.. models
             .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())];
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
+
     }
 
     private async Task<IReadOnlyList<SmallestAIVoice>> GetVoicesAsync(string model, CancellationToken cancellationToken)
     {
-        using var resp = await _client.GetAsync($"api/v1/{model}/get_voices", cancellationToken);
+        using var resp = await _client.GetAsync($"waves/v1/{model}/get_voices", cancellationToken);
         var body = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
