@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Providers.Groq;
 using System.Globalization;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -17,9 +18,7 @@ public partial class GroqProvider
     {
         ApplyAuthHeader();
 
-        var model = string.IsNullOrWhiteSpace(request.Model)
-            ? "whisper-large-v3"
-            : request.Model;
+        var model = request.Model;
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
         var metadata = request.GetProviderMetadata<GroqTranscriptionProviderMetadata>(GetIdentifier());
@@ -76,12 +75,13 @@ public partial class GroqProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Groq STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertTranscriptionResponse(json, model);
+        return ConvertTranscriptionResponse(json, model.ToModelId(GetIdentifier()), resp.GetHeaders());
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
         string json,
-        string model)
+        string model,
+        Dictionary<string, string> headers)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -117,6 +117,7 @@ public partial class GroqProvider
             {
                 Timestamp = DateTime.UtcNow,
                 ModelId = model,
+                Headers = headers,
                 Body = json
             }
         };

@@ -5,11 +5,8 @@ namespace AIHappey.Core.Providers.Groq;
 
 public partial class GroqProvider
 {
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 }
