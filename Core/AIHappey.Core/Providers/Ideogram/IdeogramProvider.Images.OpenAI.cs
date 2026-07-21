@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using System.Runtime.CompilerServices;
-using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Ideogram;

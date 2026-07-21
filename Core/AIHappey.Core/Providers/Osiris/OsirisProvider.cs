@@ -3,15 +3,11 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
-using AIHappey.Messages.Mapping;
 using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Responses.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Responses;
 using AIHappey.Core.Models;
 

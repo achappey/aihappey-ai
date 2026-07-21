@@ -8,7 +8,6 @@ using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Lingvanex;
 
