@@ -53,6 +53,18 @@ public sealed class IdeogramImageProviderMetadata
     [JsonPropertyName("image_weight")]
     public int? ImageWeight { get; set; }
 
+    /// <summary>
+    /// Structured prompt accepted by Ideogram 4.0. This is mutually exclusive with the regular text prompt.
+    /// </summary>
+    [JsonPropertyName("json_prompt")]
+    public JsonElement? JsonPrompt { get; set; }
+
+    [JsonPropertyName("enable_copyright_detection")]
+    public bool? EnableCopyrightDetection { get; set; }
+
+    [JsonPropertyName("transparent_background")]
+    public bool? TransparentBackground { get; set; }
+
     [JsonPropertyName("upscale")]
     public IdeogramUpscaleOptions? Upscale { get; set; }
 }

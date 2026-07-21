@@ -24,15 +24,40 @@ public partial class IdeogramProvider
 
         return model switch
         {
-            "ideogram/ideogram-v3/generate" => GenerateV3Async(request, cancellationToken),
+            "ideogram/ideogram-v3" => RouteV3Async(request, cancellationToken),
+            "ideogram/ideogram-v4" => RouteV4Async(request, cancellationToken),
             "ideogram/ideogram-v3/generate-transparent" => GenerateTransparentV3Async(request, cancellationToken),
-            "ideogram/ideogram-v3/edit" => EditV3Async(request, cancellationToken),
-            "ideogram/ideogram-v3/remix" => RemixV3Async(request, cancellationToken),
             "ideogram/ideogram-v3/reframe" => ReframeV3Async(request, cancellationToken),
             "ideogram/ideogram-v3/replace-background" => ReplaceBackgroundV3Async(request, cancellationToken),
             "ideogram/upscale" => UpscaleAsync(request, cancellationToken),
             _ => throw new NotSupportedException($"Ideogram image model '{model}' is not supported.")
         };
+    }
+
+    private Task<ImageResponse> RouteV3Async(ImageRequest request, CancellationToken ct)
+    {
+        var hasSourceImage = request.Files?.Any() == true;
+        if (!hasSourceImage && request.Mask is not null)
+            throw new ArgumentException("Ideogram image edit requires at least one source image.", nameof(request));
+
+        return request.Mask is not null
+            ? EditV3Async(request, ct)
+            : hasSourceImage
+                ? RemixV3Async(request, ct)
+                : GenerateV3Async(request, ct);
+    }
+
+    private Task<ImageResponse> RouteV4Async(ImageRequest request, CancellationToken ct)
+    {
+        if (request.Mask is not null)
+        {
+            throw new NotSupportedException(
+                "Ideogram 4.0 does not provide a masked edit endpoint. Use ideogram/ideogram-v3 for image edits.");
+        }
+
+        return request.Files?.Any() == true
+            ? RemixV4Async(request, ct)
+            : GenerateV4Async(request, ct);
     }
 
     private async Task<ImageResponse> GenerateV3Async(ImageRequest request, CancellationToken ct)
@@ -72,7 +97,7 @@ public partial class IdeogramProvider
         return await SendV3FormAsync(
             request,
             warnings,
-            endpoint: "v1/ideogram-v3/edit",
+            endpoint: "v1/edit",
             form,
             ct);
     }
@@ -89,6 +114,24 @@ public partial class IdeogramProvider
             endpoint: "v1/ideogram-v3/remix",
             form,
             ct);
+    }
+
+    private async Task<ImageResponse> GenerateV4Async(ImageRequest request, CancellationToken ct)
+    {
+        var warnings = new List<object>();
+        var metadata = request.GetProviderMetadata<IdeogramImageProviderMetadata>(GetIdentifier());
+        var form = BuildGenerateV4Form(request, metadata, warnings);
+
+        return await SendV3FormAsync(request, warnings, "v1/ideogram-v4/generate", form, ct);
+    }
+
+    private async Task<ImageResponse> RemixV4Async(ImageRequest request, CancellationToken ct)
+    {
+        var warnings = new List<object>();
+        var metadata = request.GetProviderMetadata<IdeogramImageProviderMetadata>(GetIdentifier());
+        var form = BuildRemixV4Form(request, metadata, warnings);
+
+        return await SendV3FormAsync(request, warnings, "v1/ideogram-v4/remix", form, ct);
     }
 
     private async Task<ImageResponse> ReframeV3Async(ImageRequest request, CancellationToken ct)
@@ -194,10 +237,94 @@ public partial class IdeogramProvider
 
         var files = request.Files?.ToList() ?? [];
         if (files.Count == 0)
-            throw new ArgumentException("Edit requires input image in files[0].", nameof(request));
+            throw new ArgumentException("Edit requires at least one source image.", nameof(request));
 
-        if (request.Mask is null)
-            throw new ArgumentException("Edit requires mask image.", nameof(request));
+        var form = new MultipartFormDataContent
+        {
+            "prompt".NamedField(request.Prompt)
+        };
+        AddSeed(request, form);
+
+        var resolution = ResolveResolution(request, metadata, warnings, allowResolution: true);
+        if (!string.IsNullOrWhiteSpace(resolution))
+            form.Add("resolution".NamedField(resolution));
+
+        var aspect = ResolveAspectRatio(request, metadata, warnings);
+        if (!string.IsNullOrWhiteSpace(aspect))
+            form.Add("aspect_ratio".NamedField(aspect));
+
+        if (!string.IsNullOrWhiteSpace(metadata?.MagicPrompt))
+            form.Add("magic_prompt".NamedField(metadata.MagicPrompt));
+
+        var numImages = metadata?.NumImages ?? request.N;
+        if (numImages is not null)
+            form.Add("num_images".NamedField(numImages.Value.ToString(CultureInfo.InvariantCulture)));
+
+        if (metadata?.TransparentBackground is not null)
+        {
+            form.Add("transparent_background".NamedField(
+                metadata.TransparentBackground.Value.ToString().ToLowerInvariant()));
+        }
+
+        foreach (var file in files)
+            form.Add(CreateImageContent(file), "images", "image");
+
+        if (request.Mask is not null)
+        {
+            warnings.Add(new
+            {
+                type = "unsupported",
+                feature = "mask",
+                details = "Ideogram v1/edit does not accept masks; the mask selected the edit route but was not sent."
+            });
+        }
+
+        return form;
+    }
+
+    private static MultipartFormDataContent BuildGenerateV4Form(
+        ImageRequest request,
+        IdeogramImageProviderMetadata? metadata,
+        List<object> warnings)
+    {
+        var form = new MultipartFormDataContent();
+        if (metadata?.JsonPrompt is { } jsonPrompt
+            && jsonPrompt.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        {
+            form.Add("json_prompt".NamedField(jsonPrompt.GetRawText()));
+            if (!string.IsNullOrWhiteSpace(request.Prompt))
+            {
+                warnings.Add(new
+                {
+                    type = "unsupported",
+                    feature = "prompt",
+                    details = "Ignored text prompt because providerOptions.json_prompt is mutually exclusive with text_prompt."
+                });
+            }
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(request.Prompt))
+                throw new ArgumentException("Prompt is required unless providerOptions.json_prompt is provided.", nameof(request));
+
+            form.Add("text_prompt".NamedField(request.Prompt));
+        }
+
+        AddV4Options(form, request, metadata, warnings, includeImageWeight: false);
+        return form;
+    }
+
+    private static MultipartFormDataContent BuildRemixV4Form(
+        ImageRequest request,
+        IdeogramImageProviderMetadata? metadata,
+        List<object> warnings)
+    {
+        if (string.IsNullOrWhiteSpace(request.Prompt))
+            throw new ArgumentException("Prompt is required for Ideogram 4.0 remix.", nameof(request));
+
+        var files = request.Files?.ToList() ?? [];
+        if (files.Count == 0)
+            throw new ArgumentException("Remix requires input image in files[0].", nameof(request));
 
         if (files.Count > 1)
         {
@@ -205,23 +332,49 @@ public partial class IdeogramProvider
             {
                 type = "unsupported",
                 feature = "files",
-                details = "Multiple input images not supported for edit; used files[0]."
+                details = "Ideogram 4.0 remix supports one input image; used files[0]."
             });
         }
 
         var form = new MultipartFormDataContent
         {
-            "prompt".NamedField(request.Prompt)
+            "text_prompt".NamedField(request.Prompt),
+            { CreateImageContent(files[0]), "image", "image" }
         };
-        AddSeed(request, form);
-        AddCommonIdeogramOptions(form, request, metadata, warnings, includeStyleSettings: true, includeColorPalette: true);
 
-        form.Add(CreateImageContent(files[0]), "image", "image");
-        form.Add(CreateImageContent(request.Mask), "mask", "mask");
-
-        AddReferenceImages(form, metadata, warnings);
-
+        AddV4Options(form, request, metadata, warnings, includeImageWeight: true);
         return form;
+    }
+
+    private static void AddV4Options(
+        MultipartFormDataContent form,
+        ImageRequest request,
+        IdeogramImageProviderMetadata? metadata,
+        List<object> warnings,
+        bool includeImageWeight)
+    {
+        var resolution = ResolveResolution(request, metadata, warnings, allowResolution: true);
+        if (!string.IsNullOrWhiteSpace(resolution))
+            form.Add("resolution".NamedField(resolution));
+
+        if (!string.IsNullOrWhiteSpace(metadata?.RenderingSpeed))
+            form.Add("rendering_speed".NamedField(metadata.RenderingSpeed));
+
+        if (metadata?.EnableCopyrightDetection is not null)
+        {
+            form.Add("enable_copyright_detection".NamedField(
+                metadata.EnableCopyrightDetection.Value.ToString().ToLowerInvariant()));
+        }
+
+        if (includeImageWeight && metadata?.ImageWeight is not null)
+            form.Add("image_weight".NamedField(metadata.ImageWeight.Value.ToString(CultureInfo.InvariantCulture)));
+
+        if (request.Seed is not null)
+            warnings.Add(new { type = "unsupported", feature = "seed", details = "Ideogram 4.0 does not accept a seed in the request." });
+        if (request.N is not null || metadata?.NumImages is not null)
+            warnings.Add(new { type = "unsupported", feature = "n", details = "Ideogram 4.0 does not expose a number-of-images request parameter." });
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio) || !string.IsNullOrWhiteSpace(metadata?.AspectRatio))
+            warnings.Add(new { type = "unsupported", feature = "aspectRatio", details = "Ideogram 4.0 requires a supported resolution rather than an aspect ratio." });
     }
 
     private static MultipartFormDataContent BuildRemixForm(

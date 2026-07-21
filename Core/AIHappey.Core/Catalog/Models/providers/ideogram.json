@@ -2,27 +2,21 @@
     "object": "list",
     "data": [
         {
-            "id": "ideogram/ideogram-v3/generate",
+            "id": "ideogram/ideogram-v4",
             "object": "model",
-            "owned_by": "Ideogram 3.0 Generate",
+            "owned_by": "Ideogram 4.0",
+            "type": "image"
+        },
+        {
+            "id": "ideogram/ideogram-v3",
+            "object": "model",
+            "owned_by": "Ideogram 3.0",
             "type": "image"
         },
         {
             "id": "ideogram/ideogram-v3/generate-transparent",
             "object": "model",
             "owned_by": "Ideogram 3.0 Generate (Transparent Background)",
-            "type": "image"
-        },
-        {
-            "id": "ideogram/ideogram-v3/edit",
-            "object": "model",
-            "owned_by": "Ideogram 3.0 Edit",
-            "type": "image"
-        },
-        {
-            "id": "ideogram/ideogram-v3/remix",
-            "object": "model",
-            "owned_by": "Ideogram 3.0 Remix",
             "type": "image"
         },
         {
