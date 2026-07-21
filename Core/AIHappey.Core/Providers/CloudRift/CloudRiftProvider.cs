@@ -46,12 +46,9 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
 
