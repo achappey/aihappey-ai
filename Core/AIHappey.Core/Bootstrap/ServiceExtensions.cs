@@ -404,7 +404,6 @@ using AIHappey.Core.Providers.EmberCloud;
 using AIHappey.Core.Providers.Fortytwo;
 using AIHappey.Core.Providers.Oraicle;
 using AIHappey.Core.Providers.Foureverland;
-using AIHappey.Core.Providers.DistributeAI;
 using AIHappey.Core.Providers.Key4U;
 using AIHappey.Core.Providers.FiveDock;
 using AIHappey.Core.Providers.Magisterium;
@@ -1002,7 +1001,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FortytwoProvider>();
         services.AddSingleton<IModelProvider, OraicleProvider>();
         services.AddSingleton<IModelProvider, FoureverlandProvider>();
-        services.AddSingleton<IModelProvider, DistributeAIProvider>();
         services.AddSingleton<IModelProvider, Key4UProvider>();
         services.AddSingleton<IModelProvider, FiveDockProvider>();
         services.AddSingleton<IModelProvider, MagisteriumProvider>();
