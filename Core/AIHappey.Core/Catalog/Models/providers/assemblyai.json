@@ -9,28 +9,14 @@
       "type": "audio"
     },
     {
-      "id": "assemblyai/u3-rt-pro",
+      "id": "assemblyai/universal-3-5-pro",
       "object": "model",
       "owned_by": "AssemblyAI",
-      "name": "Universal-3 Pro Streaming",
+      "name": "Universal-3 Pro",
       "type": "transcription",
       "tags": [
         "real-time"
       ]
-    },
-    {
-      "id": "assemblyai/universal-3-pro",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "Universal-3 Pro",
-      "type": "transcription"
-    },
-    {
-      "id": "assemblyai/universal-2",
-      "object": "model",
-      "owned_by": "AssemblyAI",
-      "name": "universal-2",
-      "type": "transcription"
     },
     {
       "id": "assemblyai/universal-streaming-english",
