@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
-using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
@@ -64,25 +63,15 @@ public sealed partial class LingvanexProvider : IModelProvider
     {
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return await Task.FromResult<IEnumerable<Model>>([]);
-            
+
         ApplyAuthHeader();
 
         return await ListTranslationModelsAsync(cancellationToken);
     }
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var modelId = chatRequest.GetModel();
-        ArgumentException.ThrowIfNullOrEmpty(modelId);
-
-        var model = await this.GetModel(modelId, cancellationToken: cancellationToken);
-        if (!string.Equals(model.Type, "language", StringComparison.OrdinalIgnoreCase))
-            throw new NotImplementedException();
-
-        return await TranslateSamplingAsync(chatRequest, modelId, cancellationToken);
+        throw new NotSupportedException();
     }
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
@@ -108,7 +97,7 @@ public sealed partial class LingvanexProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
@@ -133,27 +122,27 @@ public sealed partial class LingvanexProvider : IModelProvider
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
