@@ -9,21 +9,34 @@ public partial class CartesiaProvider
     private const string CartesiaTtsModelPrefix = "tts/";
     private const string CartesiaTranscriptionModelPrefix = "transcription/";
 
-    private async Task<IEnumerable<Model>> ListModelsInternal(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var voices = await GetVoicesAsync(cancellationToken);
-        var models = new List<Model>();
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
 
-        models.AddRange(BuildDynamicVoiceModels(voices));
-        models.AddRange(BuildTranscriptionModels());
 
-        return models;
+                var voices = await GetVoicesAsync(cancellationToken);
+                var models = new List<Model>();
+
+                models.AddRange(BuildDynamicVoiceModels(voices));
+                models.AddRange(BuildTranscriptionModels());
+
+                return models;
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<IReadOnlyList<CartesiaVoice>> GetVoicesAsync(CancellationToken cancellationToken)

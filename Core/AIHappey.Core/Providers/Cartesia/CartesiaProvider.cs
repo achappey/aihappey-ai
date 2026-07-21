@@ -18,21 +18,13 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
 {
     private const string ProviderId = "cartesia";
     private const string ProviderName = "Cartesia";
-    private const string DefaultApiVersion = "2025-04-16";
+    private const string DefaultApiVersion = "2026-03-01";
 
     private static readonly string[] SupportedTtsModelIds =
     [
-        "sonic-3-2026-01-12",
-        "sonic-3-2025-10-27",
+        "sonic-3.5",
         "sonic-3",
-        "sonic-3-latest",
-        "sonic-2-2025-06-11",
-        "sonic-2-2025-05-08",
-        "sonic-2-2025-04-16",
-        "sonic-2-2025-03-07",
-        "sonic-turbo-2025-03-07",
-        "sonic-2024-12-12",
-        "sonic-2024-10-19"
+        "sonic-latest"
     ];
 
     private static readonly string[] SupportedTranscriptionModelIds =
@@ -44,9 +36,13 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
 
-    public CartesiaProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public CartesiaProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.cartesia.ai/");
     }
@@ -70,22 +66,12 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
 
     private bool IsTranscriptionModel(string model)
     {
-        var normalized = model;
-        var modelId = model.SplitModelId();
-        if (string.Equals(modelId.Provider, GetIdentifier(), StringComparison.OrdinalIgnoreCase)
-            && !string.IsNullOrWhiteSpace(modelId.Model))
-        {
-            normalized = modelId.Model;
-        }
-
-        if (normalized.StartsWith("transcription/", StringComparison.OrdinalIgnoreCase))
+        if (model.StartsWith("transcription/", StringComparison.OrdinalIgnoreCase))
             return true;
 
-        return SupportedTranscriptionModelIds.Any(m => string.Equals(m, normalized, StringComparison.OrdinalIgnoreCase));
+        return SupportedTranscriptionModelIds.Any(m =>
+            string.Equals(m, model, StringComparison.OrdinalIgnoreCase));
     }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await ListModelsInternal(cancellationToken);
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
@@ -99,7 +85,7 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (IsTranscriptionModel(request.Model))
+        if (IsTranscriptionModel(request.Model!))
             return this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
         throw new NotSupportedException("Cartesia supports only transcription models on Unified AI conversations.");
@@ -111,7 +97,7 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (!IsTranscriptionModel(request.Model))
+        if (!IsTranscriptionModel(request.Model!))
             throw new NotSupportedException("Cartesia supports only transcription models on Unified AI conversations.");
 
         await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
@@ -173,7 +159,7 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
         throw new NotImplementedException();
     }
 
-    
+
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
