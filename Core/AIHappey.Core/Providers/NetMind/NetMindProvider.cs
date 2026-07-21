@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using System.Reflection;
 
 namespace AIHappey.Core.Providers.NetMind;
 
@@ -20,9 +21,13 @@ public partial class NetMindProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public NetMindProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public NetMindProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.netmind.ai/inference-api/openai/");
     }
@@ -35,10 +40,14 @@ public partial class NetMindProvider : IModelProvider
             throw new InvalidOperationException($"No {nameof(NetMind)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-    }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+        var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+        var assemblyName = assembly.GetName();
+        var userAgent = $"{assemblyName.Name}/{assemblyName.Version}";
+
+        _client.DefaultRequestHeaders.Remove("User-Agent");
+        _client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
+    }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
