@@ -193,9 +193,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["netmind"] = "X-NetMind-Key",
             ["apiyi"] = "X-APIyi-Key",
             ["thaura"] = "X-Thaura-Key",
-            ["modal"] = "X-Modal-Key",          
+            ["modal"] = "X-Modal-Key",
             ["modelslab"] = "X-ModelsLab-Key",
-            ["hicap"] = "X-Hicap-Key",          
+            ["hicap"] = "X-Hicap-Key",
             ["megallm"] = "X-MegaLLM-Key",
             ["infron"] = "X-Infron-Key",
             ["longcat"] = "X-LongCat-Key",
@@ -381,7 +381,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ambient"] = "X-Ambient-Key",
             ["ollama"] = "X-Ollama-Key",
             ["vivgrid"] = "X-Vivgrid-Key",
-            ["relace"] = "X-Relace-Key",         
+            ["relace"] = "X-Relace-Key",
             ["baidu"] = "X-Baidu-Key",
             ["morph"] = "X-Morph-Key",
             ["streamlake"] = "X-StreamLake-Key",
@@ -406,7 +406,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["embercloud"] = "X-EmberCloud-Key",
             ["fortytwo"] = "X-Fortytwo-Key",
             ["oraicle"] = "X-Oraicle-Key",
-            ["foureverland"] = "X-Foureverland-Key",           
+            ["foureverland"] = "X-Foureverland-Key",
             ["key4u"] = "X-Key4U-Key",
             ["fivedock"] = "X-FiveDock-Key",
             ["magisterium"] = "X-Magisterium-Key",
@@ -573,7 +573,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["aivara"] = "X-Aivara-Key",
             ["condensechat"] = "X-CondenseChat-Key",
             ["ecoia"] = "X-Ecoia-Key",
-            ["tinyfish"] = "X-TinyFish-Key"
+            ["tinyfish"] = "X-TinyFish-Key",
+            ["trustedrouter"] = "X-TrustedRouter-Key"
 
         };
 

@@ -572,6 +572,7 @@ public class AIServiceConfig
     public ProviderConfig? CondenseChat { get; set; }
     public ProviderConfig? Ecoia { get; set; }
     public ProviderConfig? TinyFish { get; set; }
+    public ProviderConfig? TrustedRouter { get; set; }
     
 }
 
