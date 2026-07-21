@@ -1,0 +1,61 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "ecoia/claude-opus-4-8",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "claude-opus-4-8",
+      "type": "language"
+    },
+    {
+      "id": "ecoia/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "claude-sonnet-4-6",
+      "type": "language"
+    },
+    {
+      "id": "ecoia/claude-haiku-4-5",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "claude-haiku-4-5",
+      "type": "language"
+    },
+    {
+      "id": "ecoia/gpt-5.5",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "gpt-5.5",
+      "type": "language"
+    },
+    {
+      "id": "ecoia/gpt-5.4-mini",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "gpt-5.4-mini",
+      "type": "language"
+    },
+    {
+      "id": "ecoia/gpt-image-2",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "gpt-image-2",
+      "type": "image"
+    },
+    {
+      "id": "ecoia/gemini-3.1-flash-image",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "gemini-3.1-flash-image",
+      "type": "image"
+    },
+    {
+      "id": "ecoia/gemini-3.1-pro-image",
+      "object": "model",
+      "owned_by": "Ecoia",
+      "name": "gemini-3.1-pro-image",
+      "type": "image"
+    }
+  ]
+}

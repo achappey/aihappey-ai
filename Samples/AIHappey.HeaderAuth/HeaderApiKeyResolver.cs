@@ -571,7 +571,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["fikra"] = "X-Fikra-Key",
             ["cencori"] = "X-Cencori-Key",
             ["aivara"] = "X-Aivara-Key",
-            ["condensechat"] = "X-CondenseChat-Key"
+            ["condensechat"] = "X-CondenseChat-Key",
+            ["ecoia"] = "X-Ecoia-Key"
 
         };
 

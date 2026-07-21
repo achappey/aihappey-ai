@@ -569,6 +569,7 @@ using AIHappey.Core.Providers.Fikra;
 using AIHappey.Core.Providers.Cencori;
 using AIHappey.Core.Providers.Aivara;
 using AIHappey.Core.Providers.CondenseChat;
+using AIHappey.Core.Providers.Ecoia;
 
 namespace AIHappey.Core.AI;
 
@@ -1164,6 +1165,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CencoriProvider>();
         services.AddSingleton<IModelProvider, AivaraProvider>();
         services.AddSingleton<IModelProvider, CondenseChatProvider>();
+        services.AddSingleton<IModelProvider, EcoiaProvider>();
     }
 }
 
