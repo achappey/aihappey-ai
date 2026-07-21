@@ -73,6 +73,14 @@ public partial class BinericProvider
                         models.Add(model);
                 }
 
+                if (!models.Any(a => a.Type == "speech"))
+                    models.Add(new Model()
+                    {
+                        Type = "speech",
+                        Id = "text-to-speech".ToModelId(GetIdentifier()),
+                        Name = "Text to Speech"
+                    });
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
