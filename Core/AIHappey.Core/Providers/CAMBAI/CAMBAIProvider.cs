@@ -3,6 +3,8 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.Core.AI;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.CAMBAI;
 
@@ -12,9 +14,13 @@ public partial class CAMBAIProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public CAMBAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public CAMBAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://client.camb.ai/apis/");
     }
@@ -45,6 +51,9 @@ public partial class CAMBAIProvider : IModelProvider
     {
         throw new NotSupportedException();
     }
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    => throw new NotSupportedException();
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {

@@ -9,22 +9,35 @@ public partial class CAMBAIProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
+
         if (string.IsNullOrWhiteSpace(key))
-            return [];
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        var models = new List<Model>(await this.ListModels(key));
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
+            {
+                ApplyAuthHeader();
 
-        var sourceLanguages = await GetSourceLanguagesAsync(cancellationToken);
-        var targetLanguages = await GetTargetLanguagesAsync(cancellationToken);
+                var models = new List<Model>(await this.ListModels(key));
 
-        models.AddRange(BuildTtsModels(sourceLanguages));
-        models.AddRange(BuildTranscriptionModels(sourceLanguages));
-        models.AddRange(BuildTranslationModels(sourceLanguages, targetLanguages));
-        models.AddRange(BuildTranslatedTtsModels(sourceLanguages, targetLanguages));
+                var sourceLanguages = await GetSourceLanguagesAsync(cancellationToken);
+                var targetLanguages = await GetTargetLanguagesAsync(cancellationToken);
 
-        return models;
+                models.AddRange(BuildTtsModels(sourceLanguages));
+                models.AddRange(BuildTranscriptionModels(sourceLanguages));
+                models.AddRange(BuildTranslationModels(sourceLanguages, targetLanguages));
+                models.AddRange(BuildTranslatedTtsModels(sourceLanguages, targetLanguages));
+
+                return models;
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
+
+
     }
 
     private async Task<IReadOnlyList<CambaiLanguage>> GetSourceLanguagesAsync(CancellationToken cancellationToken)
