@@ -194,7 +194,6 @@ using AIHappey.Core.Providers.NetMind;
 using AIHappey.Core.Providers.APIyi;
 using AIHappey.Core.Providers.Thaura;
 using AIHappey.Core.Providers.Modal;
-using AIHappey.Core.Providers.APIFree;
 using AIHappey.Core.Providers.ModelsLab;
 using AIHappey.Core.Providers.Hicap;
 using AIHappey.Core.Providers.MegaLLM;
@@ -787,7 +786,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, APIyiProvider>();
         services.AddSingleton<IModelProvider, ThauraProvider>();
         services.AddSingleton<IModelProvider, ModalProvider>();
-        services.AddSingleton<IModelProvider, APIFreeProvider>();
         services.AddSingleton<IModelProvider, ModelsLabProvider>();
         services.AddSingleton<IModelProvider, HicapProvider>();
         services.AddSingleton<IModelProvider, MegaLLMProvider>();
