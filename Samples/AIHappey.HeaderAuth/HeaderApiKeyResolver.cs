@@ -576,7 +576,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["monstergaming"] = "X-MonsterGaming-Key",
             ["mljunction"] = "X-MLJunction-Key",
             ["sunbirdai"] = "X-SunbirdAI-Key",
-            ["addisai"] = "X-AddisAI-Key"
+            ["addisai"] = "X-AddisAI-Key",
+            ["akumi"] = "X-Akumi-Key"
 
         };
 
