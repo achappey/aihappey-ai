@@ -573,6 +573,7 @@ using AIHappey.Core.Providers.TrustedRouter;
 using AIHappey.Core.Providers.Secrypt;
 using AIHappey.Core.Providers.MonsterGaming;
 using AIHappey.Core.Providers.MLJunction;
+using AIHappey.Core.Providers.SunbirdAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1172,6 +1173,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SecryptProvider>();
         services.AddSingleton<IModelProvider, MonsterGamingProvider>();
         services.AddSingleton<IModelProvider, MLJunctionProvider>();
+        services.AddSingleton<IModelProvider, SunbirdAIProvider>();
     }
 }
 

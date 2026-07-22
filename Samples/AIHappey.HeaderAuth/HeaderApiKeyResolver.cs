@@ -575,7 +575,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["trustedrouter"] = "X-TrustedRouter-Key",
             ["secrypt"] = "X-Secrypt-Key",
             ["monstergaming"] = "X-MonsterGaming-Key",
-            ["mljunction"] = "X-MLJunction-Key"
+            ["mljunction"] = "X-MLJunction-Key",
+            ["sunbirdai"] = "X-SunbirdAI-Key"
 
         };
 

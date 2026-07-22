@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "sunbirdai/sunflower-14b",
+      "object": "model",
+      "owned_by": "SunbirdAI",
+      "name": "Sunflower 14B",
+      "type": "language"
+    },
+    {
+      "id": "sunbirdai/sunflower-32b",
+      "object": "model",
+      "owned_by": "SunbirdAI",
+      "name": "Sunflower 32B",
+      "type": "language"
+    }
+  ]
+}
