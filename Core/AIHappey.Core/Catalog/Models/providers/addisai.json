@@ -1,0 +1,88 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "addisai/addis-1-alef",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "Addis 1 Alef",
+      "type": "language"
+    },
+    {
+      "id": "addisai/tts/am",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Text to Speech (Amharic)",
+      "type": "speech"
+    },
+    {
+      "id": "addisai/tts/om",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Text to Speech (Afan Oromo)",
+      "type": "speech"
+    },
+    {
+      "id": "addisai/stt/am",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Speech to Text (Amharic)",
+      "type": "transcription"
+    },
+    {
+      "id": "addisai/stt/om",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Speech to Text (Afan Oromo)",
+      "type": "transcription"
+    },
+    {
+      "id": "addisai/translate/am/om",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Translate Amharic to Afan Oromo",
+      "type": "language",
+      "tags": ["translate", "am", "om"]
+    },
+    {
+      "id": "addisai/translate/am/en",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Translate Amharic to English",
+      "type": "language",
+      "tags": ["translate", "en", "am"]
+    },
+    {
+      "id": "addisai/translate/om/am",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Translate Afan Oromo to Amharic",
+      "type": "language",
+      "tags": ["translate", "am", "om"]
+    },
+    {
+      "id": "addisai/translate/om/en",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Translate Afan Oromo to English",
+      "type": "language",
+      "tags": ["translate", "en", "om"]
+    },
+    {
+      "id": "addisai/translate/en/am",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Translate English to Amharic",
+      "type": "language",
+      "tags": ["translate", "en", "am"]
+    },
+    {
+      "id": "addisai/translate/en/om",
+      "object": "model",
+      "owned_by": "AddisAI",
+      "name": "AddisAI Translate English to Afan Oromo",
+      "type": "language",
+      "tags": ["translate", "en", "om"]
+    }
+  ]
+}

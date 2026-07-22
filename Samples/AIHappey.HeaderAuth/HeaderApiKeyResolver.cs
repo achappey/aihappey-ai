@@ -235,7 +235,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["eachlabs"] = "X-Eachlabs-Key",
             ["valyu"] = "X-Valyu-Key",
             ["laozhang"] = "X-LaoZhang-Key",
-            ["jiekouai"] = "X-JiekouAI-Key",            
+            ["jiekouai"] = "X-JiekouAI-Key",
             ["literouter"] = "X-LiteRouter-Key",
             ["arwriter"] = "X-ARWriter-Key",
             ["qiniu"] = "X-Qiniu-Key",
@@ -496,7 +496,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["doubleword"] = "X-Doubleword-Key",
             ["openhands"] = "X-OpenHands-Key",
             ["poolside"] = "X-Poolside-Key",
-            ["antbase"] = "X-Antbase-Key",          
+            ["antbase"] = "X-Antbase-Key",
             ["nodion"] = "X-Nodion-Key",
             ["generalcompute"] = "X-GeneralCompute-Key",
             ["libertai"] = "X-LibertAI-Key",
@@ -576,7 +576,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["secrypt"] = "X-Secrypt-Key",
             ["monstergaming"] = "X-MonsterGaming-Key",
             ["mljunction"] = "X-MLJunction-Key",
-            ["sunbirdai"] = "X-SunbirdAI-Key"
+            ["sunbirdai"] = "X-SunbirdAI-Key",
+            ["addisai"] = "X-AddisAI-Key"
 
         };
 

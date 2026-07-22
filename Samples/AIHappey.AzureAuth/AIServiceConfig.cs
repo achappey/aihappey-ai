@@ -575,6 +575,7 @@ public class AIServiceConfig
     public ProviderConfig? MonsterGaming { get; set; }
     public ProviderConfig? MLJunction { get; set; }
     public ProviderConfig? SunbirdAI { get; set; }
+    public ProviderConfig? AddisAI { get; set; }
     
 }
 
