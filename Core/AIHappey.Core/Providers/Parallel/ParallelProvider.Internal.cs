@@ -6,7 +6,7 @@ namespace AIHappey.Core.Providers.Parallel;
 
 public partial class ParallelProvider
 {
-    private const string ChatCompletionsPath = "v1beta/chat/completions";
+    private const string ChatCompletionsPath = "chat/completions";
     private const string TaskRunsPath = "v1/tasks/runs";
     private const string ParallelInteractionToolName = "parallel_interaction_context";
 
@@ -18,39 +18,16 @@ public partial class ParallelProvider
         "core"
     };
 
+    private static readonly HashSet<string> ResponsesModels = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "parallel"
+    };
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerOptions.Web)
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
-    private static List<object> NormalizeCompletionMessages(IEnumerable<ChatMessage>? messages)
-    {
-        var normalized = new List<object>();
-
-        foreach (var message in messages ?? [])
-        {
-            var role = NormalizeRole(message.Role);
-            var content = FlattenCompletionMessageContent(message.Content);
-
-            if (!string.IsNullOrWhiteSpace(message.ToolCallId))
-                content = $"[tool_call_id:{message.ToolCallId}]\n{content}";
-
-            if (message.ToolCalls is not null)
-            {
-                var toolCallsJson = JsonSerializer.Serialize(message.ToolCalls, Json);
-                content = $"{content}\n[tool_calls]{toolCallsJson}";
-            }
-
-            normalized.Add(new
-            {
-                role,
-                content = content ?? string.Empty,
-                name = (string?)null
-            });
-        }
-
-        return normalized;
-    }
 
     private static string NormalizeRole(string? role)
     {
@@ -133,6 +110,15 @@ public partial class ParallelProvider
         return !string.IsNullOrWhiteSpace(processor)
                && ChatCompletionModels.Contains(processor);
     }
+
+    private bool IsResponsesModel(string? model)
+    {
+        var processor = NormalizeParallelModel(model);
+
+        return !string.IsNullOrWhiteSpace(processor)
+               && ResponsesModels.Contains(processor);
+    }
+
 
     private string NormalizeParallelModel(string? model)
     {

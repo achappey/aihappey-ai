@@ -83,9 +83,7 @@ public partial class ParallelProvider : IModelProvider, IUnifiedModelProvider
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -110,19 +108,27 @@ public partial class ParallelProvider : IModelProvider, IUnifiedModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToResponseResult();
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
+
+        return response;
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
-            yield return part.ToResponseStreamPart();
+        await foreach (var update in this.GetResponses(_client,
+           options,
+           cancellationToken: cancellationToken))
+        {
+
+            yield return update;
+        }
     }
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
@@ -162,11 +168,15 @@ public partial class ParallelProvider : IModelProvider, IUnifiedModelProvider
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => IsChatCompletionModel(request.Model)
             ? ExecuteParallelChatCompletionUnifiedAsync(request, cancellationToken)
-            : ExecuteParallelTaskUnifiedAsync(request, cancellationToken);
+            : IsResponsesModel(request.Model)
+            ? this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken)
+                : ExecuteParallelTaskUnifiedAsync(request, cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => IsChatCompletionModel(request.Model)
             ? StreamParallelChatCompletionUnifiedAsync(request, cancellationToken)
+               : IsResponsesModel(request.Model)
+                ? this.StreamUnifiedViaResponsesAsync(request, cancellationToken)
             : StreamParallelTaskUnifiedAsync(request, cancellationToken);
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)

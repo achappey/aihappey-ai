@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "parallel/parallel",
+      "object": "model",
+      "owned_by": "Parallel",
+      "name": "Parallel",
+      "type": "language"
+    },
+    {
       "id": "parallel/speed",
       "object": "model",
       "owned_by": "Parallel",
