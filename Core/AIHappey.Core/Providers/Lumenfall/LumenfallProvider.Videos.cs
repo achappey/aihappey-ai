@@ -105,13 +105,7 @@ public partial class LumenfallProvider
             Videos = videos,
             Warnings = warnings,
             ProviderMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(new
-                {
-                    endpoint,
-                    id = videoId,
-                    create = createRoot,
-                    final = completed.Root
-                }),
+                .CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = ResolveVideoTimestamp(completed.Root, now),

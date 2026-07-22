@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
@@ -24,8 +25,7 @@ public partial class LumenfallProvider
         "output_format",
         "output_compression",
         "style",
-        "user",
-        "dryRun"
+        "user"
     ];
 
     private static readonly HashSet<string> LumenfallEditMetadataFields =
@@ -34,8 +34,7 @@ public partial class LumenfallProvider
         "response_format",
         "output_format",
         "output_compression",
-        "user",
-        "dryRun"
+        "user"
     ];
 
     private async Task<ImageResponse> ImageRequestLumenfall(ImageRequest request, CancellationToken cancellationToken = default)
@@ -74,7 +73,6 @@ public partial class LumenfallProvider
         }
 
         var requestedOutputFormat = LumenfallTryGetString(metadata, "output_format");
-        var dryRun = LumenfallTryGetBool(metadata, "dryRun") == true;
 
         HttpResponseMessage httpResponse;
         string endpoint;
@@ -94,7 +92,7 @@ public partial class LumenfallProvider
             }
 
             var payload = BuildGenerationPayload(request, metadata, warnings);
-            endpoint = dryRun ? "v1/images/generations?dryRun=true" : "v1/images/generations";
+            endpoint = "v1/images/generations";
 
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
@@ -117,7 +115,7 @@ public partial class LumenfallProvider
                 });
             }
 
-            endpoint = dryRun ? "v1/images/edits?dryRun=true" : "v1/images/edits";
+            endpoint = "v1/images/edits";
             using var form = BuildEditForm(request, files, metadata, warnings);
             httpResponse = await _client.PostAsync(endpoint, form, cancellationToken);
         }
@@ -130,52 +128,65 @@ public partial class LumenfallProvider
         var root = doc.RootElement;
 
         var images = await ParseImagesAsync(root, requestedOutputFormat, cancellationToken);
-        if (!dryRun && images.Count == 0)
+        if (images.Count == 0)
             throw new InvalidOperationException("Lumenfall image response did not contain images.");
 
         var usage = ParseUsage(root);
         var timestamp = ResolveTimestamp(root, now);
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-            {
-                endpoint,
-                body = root.Clone()
-            }, JsonSerializerOptions.Web)
-        };
+        var cost = root.TryGetProperty("metadata", out var metadataEl) &&
+                   metadataEl.ValueKind == JsonValueKind.Object &&
+                   metadataEl.TryGetProperty("cost", out var costEl) &&
+                   costEl.ValueKind == JsonValueKind.Number &&
+                   costEl.TryGetDecimal(out var parsedCost)
+            ? (decimal?)parsedCost
+            : null;
 
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
             Usage = usage,
-            ProviderMetadata = providerMetadata,
-            Response = new ()
+            ProviderMetadata = GetIdentifier()
+                .CreatePrimitiveProviderMetadata(root.Clone(), costs: cost),
+            Response = new()
             {
                 Timestamp = timestamp,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                Headers = httpResponse.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
 
-    private static Dictionary<string, object?> BuildGenerationPayload(ImageRequest request, JsonElement metadata, List<object> warnings)
+    private static Dictionary<string, object?> BuildGenerationPayload(
+      ImageRequest request,
+      JsonElement metadata,
+      List<object> warnings)
     {
         var payload = new Dictionary<string, object?>
         {
             ["model"] = request.Model,
             ["prompt"] = request.Prompt,
-            ["n"] = NormalizeN(request.N, warnings),
-            ["size"] = request.Size,
-            ["quality"] = LumenfallTryGetString(metadata, "quality"),
-            ["response_format"] = LumenfallTryGetString(metadata, "response_format"),
-            ["output_format"] = LumenfallTryGetString(metadata, "output_format"),
-            ["output_compression"] = LumenfallTryGetInt(metadata, "output_compression"),
-            ["style"] = LumenfallTryGetString(metadata, "style"),
-            ["user"] = LumenfallTryGetString(metadata, "user")
+            ["n"] = NormalizeN(request.N, warnings)
         };
 
+        AddIfNotNull(payload, "size", request.Size);
+        AddIfNotNull(payload, "quality", LumenfallTryGetString(metadata, "quality"));
+        AddIfNotNull(payload, "response_format", LumenfallTryGetString(metadata, "response_format"));
+        AddIfNotNull(payload, "output_format", LumenfallTryGetString(metadata, "output_format"));
+        AddIfNotNull(payload, "output_compression", LumenfallTryGetInt(metadata, "output_compression"));
+        AddIfNotNull(payload, "style", LumenfallTryGetString(metadata, "style"));
+        AddIfNotNull(payload, "user", LumenfallTryGetString(metadata, "user"));
+
         return payload;
+    }
+
+    private static void AddIfNotNull(
+        Dictionary<string, object?> payload,
+        string key,
+        object? value)
+    {
+        if (value is not null)
+            payload[key] = value;
     }
 
     private static MultipartFormDataContent BuildEditForm(
