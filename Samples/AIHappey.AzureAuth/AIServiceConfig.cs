@@ -234,8 +234,7 @@ public class AIServiceConfig
     public ProviderConfig? Eachlabs { get; set; }
     public ProviderConfig? Valyu { get; set; }
     public ProviderConfig? LaoZhang { get; set; }
-    public ProviderConfig? JiekouAI { get; set; }
-    public ProviderConfig? Syllogy { get; set; }
+    public ProviderConfig? JiekouAI { get; set; }    
     public ProviderConfig? LiteRouter { get; set; }
     public ProviderConfig? ARWriter { get; set; }
     public ProviderConfig? Qiniu { get; set; }

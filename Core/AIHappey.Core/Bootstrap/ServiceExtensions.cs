@@ -237,7 +237,6 @@ using AIHappey.Core.Providers.Eachlabs;
 using AIHappey.Core.Providers.Valyu;
 using AIHappey.Core.Providers.LaoZhang;
 using AIHappey.Core.Providers.JiekouAI;
-using AIHappey.Core.Providers.Syllogy;
 using AIHappey.Core.Providers.LiteRouter;
 using AIHappey.Core.Providers.ARWriter;
 using AIHappey.Core.Providers.Qiniu;
@@ -831,7 +830,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ValyuProvider>();
         services.AddSingleton<IModelProvider, LaoZhangProvider>();
         services.AddSingleton<IModelProvider, JiekouAIProvider>();
-        services.AddSingleton<IModelProvider, SyllogyProvider>();
         services.AddSingleton<IModelProvider, LiteRouterProvider>();
         services.AddSingleton<IModelProvider, ARWriterProvider>();
         services.AddSingleton<IModelProvider, QiniuProvider>();
