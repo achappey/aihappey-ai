@@ -2,7 +2,7 @@
   "object": "list",
   "data": [
     {
-      "id": "trustedrouter/auto",
+      "id": "trustedrouter/trustedrouter/auto",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "auto",
@@ -10,7 +10,7 @@
       "description": "Automatic provider failover and routing preset."
     },
     {
-      "id": "trustedrouter/eu",
+      "id": "trustedrouter/trustedrouter/eu",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "eu",
@@ -18,7 +18,7 @@
       "description": "Europe-focused routing preset using the TrustedRouter EU regional API."
     },
     {
-      "id": "trustedrouter/socrates",
+      "id": "trustedrouter/trustedrouter/socrates",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "socrates",
@@ -26,7 +26,7 @@
       "description": "Rolling Socrates advisor preset that automatically tracks the latest available version."
     },
     {
-      "id": "trustedrouter/socrates-1.1",
+      "id": "trustedrouter/trustedrouter/socrates-1.1",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "socrates-1.1",
@@ -34,7 +34,7 @@
       "description": "Pinned version 1.1 of the Socrates advisor preset."
     },
     {
-      "id": "trustedrouter/iris-2.0",
+      "id": "trustedrouter/trustedrouter/iris-2.0",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "iris-2.0",
@@ -42,7 +42,7 @@
       "description": "Version 2.0 of the Iris Synth preset."
     },
     {
-      "id": "trustedrouter/prometheus-2.0",
+      "id": "trustedrouter/trustedrouter/prometheus-2.0",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "prometheus-2.0",
@@ -50,7 +50,7 @@
       "description": "Version 2.0 of the Prometheus Synth preset."
     },
     {
-      "id": "trustedrouter/zeus-1.0",
+      "id": "trustedrouter/trustedrouter/zeus-1.0",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "zeus-1.0",
@@ -58,7 +58,7 @@
       "description": "Version 1.0 of the Zeus Synth preset."
     },
     {
-      "id": "trustedrouter/openpatcher-s2",
+      "id": "trustedrouter/trustedrouter/openpatcher-s2",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "openpatcher-s2",
@@ -66,7 +66,7 @@
       "description": "Synthesis preset combining Kimi K3 with GLM 5.2."
     },
     {
-      "id": "trustedrouter/openpatcher-g2",
+      "id": "trustedrouter/trustedrouter/openpatcher-g2",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "openpatcher-g2",
@@ -74,7 +74,7 @@
       "description": "Kimi K3 worker preset using Gemma 4 and Prometheus 2.0 as parallel advisors."
     },
     {
-      "id": "trustedrouter/plato-pro-2.0",
+      "id": "trustedrouter/trustedrouter/plato-pro-2.0",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "plato-pro-2.0",
@@ -82,7 +82,7 @@
       "description": "GLM 5.2 preset advised by Prometheus 2.0."
     },
     {
-      "id": "trustedrouter/iris-code-1.0",
+      "id": "trustedrouter/trustedrouter/iris-code-1.0",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "iris-code-1.0",
@@ -90,7 +90,7 @@
       "description": "Version 1.0 of the Iris code-focused preset."
     },
     {
-      "id": "trustedrouter/prometheus-code-1.0",
+      "id": "trustedrouter/trustedrouter/prometheus-code-1.0",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "prometheus-code-1.0",
@@ -98,7 +98,7 @@
       "description": "Version 1.0 of the Prometheus code-focused preset."
     },
     {
-      "id": "trustedrouter/zeus-code-1.0",
+      "id": "trustedrouter/trustedrouter/zeus-code-1.0",
       "object": "model",
       "owned_by": "TrustedRouter",
       "name": "zeus-code-1.0",
