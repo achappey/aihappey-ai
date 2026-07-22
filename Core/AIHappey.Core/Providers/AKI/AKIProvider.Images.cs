@@ -115,6 +115,7 @@ public partial class AKIProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
