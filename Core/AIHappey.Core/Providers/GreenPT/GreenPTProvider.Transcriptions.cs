@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.GreenPT;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -10,12 +11,17 @@ public partial class GreenPTProvider
 {
     private const string GreenPtListenEndpoint = "v1/listen";
 
-    public Task<TranscriptionResponse> TranscriptionRequest(
-        TranscriptionRequest request,
-        CancellationToken cancellationToken = default)
-        => TranscriptionRequestInternal(request, cancellationToken);
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
-    private async Task<TranscriptionResponse> TranscriptionRequestInternal(
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken)
     {
