@@ -20,7 +20,7 @@ public partial class CortecsProvider
             async ct =>
             {
                 ApplyAuthHeader();
-                
+
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
@@ -60,6 +60,8 @@ public partial class CortecsProvider
                         models.Add(model);
                 }
 
+                models.AddRange(GetIdentifier().GetModels());
+                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

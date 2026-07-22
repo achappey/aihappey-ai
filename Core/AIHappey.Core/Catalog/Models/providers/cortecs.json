@@ -1,0 +1,12 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cortecs/chatterbox-turbo",
+      "object": "model",
+      "owned_by": "Cortecs",
+      "name": "chatterbox-turbo",
+      "type": "speech"
+    }
+  ]
+}

@@ -26,7 +26,6 @@ public sealed class GoogleDeepResearchAgentTests
             Store = false,
             GenerationConfig = new InteractionGenerationConfig
             {
-                Temperature = 0.2f
             }
         };
 
@@ -52,7 +51,7 @@ public sealed class GoogleDeepResearchAgentTests
             Store = false,
             GenerationConfig = new InteractionGenerationConfig
             {
-                Temperature = 0.2f
+
             }
         };
 
@@ -81,7 +80,7 @@ public sealed class GoogleDeepResearchAgentTests
             Background = true,
             GenerationConfig = new InteractionGenerationConfig
             {
-                Temperature = 0.2f
+
             },
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
@@ -278,11 +277,11 @@ public sealed class GoogleDeepResearchAgentTests
         var provider = CreateProvider(handler);
         var parts = new List<InteractionStreamEventPart>();
         await foreach (var part in provider.GetInteractions(new InteractionRequest
-                       {
-                           Model = "deep-research-preview-04-2026",
-                           Input = new InteractionsInput("research this"),
-                           Stream = true
-                       }))
+        {
+            Model = "deep-research-preview-04-2026",
+            Input = new InteractionsInput("research this"),
+            Stream = true
+        }))
         {
             parts.Add(part);
         }
@@ -350,11 +349,11 @@ public sealed class GoogleDeepResearchAgentTests
         var provider = CreateProvider(handler);
         var parts = new List<InteractionStreamEventPart>();
         await foreach (var part in provider.GetInteractions(new InteractionRequest
-                       {
-                           Model = "gemini-3.5-flash",
-                           Input = new InteractionsInput("test"),
-                           Stream = true
-                       }))
+        {
+            Model = "gemini-3.5-flash",
+            Input = new InteractionsInput("test"),
+            Stream = true
+        }))
         {
             parts.Add(part);
         }
@@ -486,10 +485,10 @@ public sealed class GoogleDeepResearchAgentTests
         var provider = CreateProvider(handler);
         var parts = new List<InteractionStreamEventPart>();
         await foreach (var part in provider.GetInteractions(new InteractionRequest
-                       {
-                           Model = "deep-research-preview-04-2026",
-                           Input = new InteractionsInput("research this")
-                       }))
+        {
+            Model = "deep-research-preview-04-2026",
+            Input = new InteractionsInput("research this")
+        }))
         {
             parts.Add(part);
         }
@@ -543,7 +542,6 @@ public sealed class GoogleDeepResearchAgentTests
             Background = true,
             GenerationConfig = new InteractionGenerationConfig
             {
-                Temperature = 0.7f
             }
         });
 
@@ -623,14 +621,14 @@ public sealed class GoogleDeepResearchAgentTests
         var provider = CreateProvider(handler);
         var parts = new List<InteractionStreamEventPart>();
         await foreach (var part in provider.GetInteractions(new InteractionRequest
-                       {
-                           Model = "google/antigravity-preview-05-2026",
-                           Input = new InteractionsInput("work in the sandbox"),
-                           AdditionalProperties = new Dictionary<string, JsonElement>
-                           {
-                               ["environment"] = JsonSerializer.SerializeToElement("env_abc123", JsonSerializerOptions.Web)
-                           }
-                       }))
+        {
+            Model = "google/antigravity-preview-05-2026",
+            Input = new InteractionsInput("work in the sandbox"),
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["environment"] = JsonSerializer.SerializeToElement("env_abc123", JsonSerializerOptions.Web)
+            }
+        }))
         {
             parts.Add(part);
         }
