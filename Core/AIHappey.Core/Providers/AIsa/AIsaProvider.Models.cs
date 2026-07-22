@@ -48,7 +48,7 @@ public partial class AIsaProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
-                        model.Name = "language";
+                        model.Type = "language";
                     }
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
