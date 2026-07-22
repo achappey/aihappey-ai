@@ -578,6 +578,7 @@ public class AIServiceConfig
     public ProviderConfig? Akumi { get; set; }
     public ProviderConfig? Impossibl { get; set; }
     public ProviderConfig? Sluis { get; set; }
+    public ProviderConfig? NeuralRing { get; set; }
     
 }
 

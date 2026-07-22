@@ -419,7 +419,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["shengsuanyun"] = "X-Shengsuanyun-Key",
             ["opensourceaihub"] = "X-OpenSourceAIHub-Key",
             ["citadelis"] = "X-Citadelis-Key",
-            ["finora"] = "X-Finora-Key",            
+            ["finora"] = "X-Finora-Key",
             ["geekai"] = "X-GeekAI-Key",
             ["aimagicx"] = "X-AIMagicx-Key",
             ["octagon"] = "X-Octagon-Key",
@@ -579,7 +579,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["addisai"] = "X-AddisAI-Key",
             ["akumi"] = "X-Akumi-Key",
             ["impossibl"] = "X-Impossibl-Key",
-            ["sluis"] = "X-Sluis-Key"
+            ["sluis"] = "X-Sluis-Key",
+            ["neuralring"] = "X-NeuralRing-Key"
 
         };
 
