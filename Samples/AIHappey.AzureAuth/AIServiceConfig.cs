@@ -417,8 +417,7 @@ public class AIServiceConfig
     public ProviderConfig? Shengsuanyun { get; set; }
     public ProviderConfig? OpenSourceAIHub { get; set; }
     public ProviderConfig? Citadelis { get; set; }
-    public ProviderConfig? Finora { get; set; }
-    public ProviderConfig? CairoCoder { get; set; }
+    public ProviderConfig? Finora { get; set; }    
     public ProviderConfig? GeekAI { get; set; }
     public ProviderConfig? AIMagicx { get; set; }
     public ProviderConfig? Octagon { get; set; }

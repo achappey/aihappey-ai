@@ -416,7 +416,6 @@ using AIHappey.Core.Providers.Shengsuanyun;
 using AIHappey.Core.Providers.OpenSourceAIHub;
 using AIHappey.Core.Providers.Citadelis;
 using AIHappey.Core.Providers.Finora;
-using AIHappey.Core.Providers.CairoCoder;
 using AIHappey.Core.Providers.GeekAI;
 using AIHappey.Core.Providers.AIMagicx;
 using AIHappey.Core.Providers.Octagon;
@@ -1017,8 +1016,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ShengsuanyunProvider>();
         services.AddSingleton<IModelProvider, OpenSourceAIHubProvider>();
         services.AddSingleton<IModelProvider, CitadelisProvider>();
-        services.AddSingleton<IModelProvider, FinoraProvider>();
-        services.AddSingleton<IModelProvider, CairoCoderProvider>();
+        services.AddSingleton<IModelProvider, FinoraProvider>();        
         services.AddSingleton<IModelProvider, GeekAIProvider>();
         services.AddSingleton<IModelProvider, AIMagicxProvider>();
         services.AddSingleton<IModelProvider, OctagonProvider>();
