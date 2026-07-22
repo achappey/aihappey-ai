@@ -578,7 +578,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sunbirdai"] = "X-SunbirdAI-Key",
             ["addisai"] = "X-AddisAI-Key",
             ["akumi"] = "X-Akumi-Key",
-            ["impossibl"] = "X-Impossibl-Key"
+            ["impossibl"] = "X-Impossibl-Key",
+            ["sluis"] = "X-Sluis-Key"
 
         };
 

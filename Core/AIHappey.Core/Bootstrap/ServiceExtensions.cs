@@ -576,6 +576,7 @@ using AIHappey.Core.Providers.SunbirdAI;
 using AIHappey.Core.Providers.AddisAI;
 using AIHappey.Core.Providers.Akumi;
 using AIHappey.Core.Providers.Impossibl;
+using AIHappey.Core.Providers.Sluis;
 
 namespace AIHappey.Core.AI;
 
@@ -1178,6 +1179,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AddisAIProvider>();
         services.AddSingleton<IModelProvider, AkumiProvider>();
         services.AddSingleton<IModelProvider, ImpossiblProvider>();
+        services.AddSingleton<IModelProvider, SluisProvider>();
     }
 }
 
