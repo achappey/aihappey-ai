@@ -497,7 +497,6 @@ using AIHappey.Core.Providers.SovrGPT;
 using AIHappey.Core.Providers.Doubleword;
 using AIHappey.Core.Providers.Poolside;
 using AIHappey.Core.Providers.Antbase;
-using AIHappey.Core.Providers.Slancha;
 using AIHappey.Core.Providers.Nodion;
 using AIHappey.Core.Providers.GeneralCompute;
 using AIHappey.Core.Providers.LibertAI;
@@ -1094,7 +1093,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, DoublewordProvider>();
         services.AddSingleton<IModelProvider, PoolsideProvider>();
         services.AddSingleton<IModelProvider, AntbaseProvider>();
-        services.AddSingleton<IModelProvider, SlanchaProvider>();
         services.AddSingleton<IModelProvider, NodionProvider>();
         services.AddSingleton<IModelProvider, GeneralComputeProvider>();
         services.AddSingleton<IModelProvider, LibertAIProvider>();
