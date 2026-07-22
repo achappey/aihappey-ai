@@ -75,8 +75,7 @@ public partial class OpenRouterProvider
 
         foreach (var type in ResolveModelTypes(
             inputModalities,
-            outputModalities,
-            architectureModality))
+            outputModalities))
         {
             if (type != "embeddings")
                 yield return new Model
@@ -97,11 +96,8 @@ public partial class OpenRouterProvider
 
     private static IEnumerable<string> ResolveModelTypes(
     IReadOnlySet<string> inputModalities,
-    IReadOnlySet<string> outputModalities,
-    string? architectureModality)
+    IReadOnlySet<string> outputModalities)
     {
-        var modality = architectureModality ?? "";
-
         var hasTextInput = inputModalities.Contains("text");
         var hasAudioInput =
             inputModalities.Contains("audio") ||
@@ -192,6 +188,9 @@ public partial class OpenRouterProvider
         var inputCacheWrite = ReadNullableDecimal(pricing, "input_cache_write");
 
         if (input is null && output is null && inputCacheRead is null && inputCacheWrite is null)
+            return null;
+
+        if (input < 0 || output < 0)
             return null;
 
         return new ModelPricing
