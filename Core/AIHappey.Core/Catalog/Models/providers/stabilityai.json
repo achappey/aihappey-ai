@@ -56,6 +56,13 @@
             "owned_by": "StabilityAI",
             "name": "Stable Audio 2.5",
             "type": "speech"
+        },
+        {
+            "id": "stabilityai/stable-audio-3",
+            "object": "model",
+            "owned_by": "StabilityAI",
+            "name": "Stable Audio 3.0",
+            "type": "speech"
         }
     ]
 }

@@ -101,6 +101,7 @@ public partial class StabilityAIProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };

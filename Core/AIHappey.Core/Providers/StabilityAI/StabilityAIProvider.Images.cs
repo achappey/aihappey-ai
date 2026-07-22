@@ -5,6 +5,7 @@ using System.Globalization;
 using AIHappey.Common.Model.Providers.StabilityAI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.StabilityAI;
 
@@ -84,9 +85,11 @@ public partial class StabilityAIProvider
         {
             Images = [dataUrl],
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = imageRequest.Model
             }
         };
