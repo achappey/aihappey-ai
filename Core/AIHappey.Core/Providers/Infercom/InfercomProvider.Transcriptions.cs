@@ -5,6 +5,7 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using System.Globalization;
 using System.Text.Json;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Infercom;
 
@@ -14,6 +15,18 @@ public partial class InfercomProvider
     {
         "file", "model", "stream"
     };
+
+
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
 
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
