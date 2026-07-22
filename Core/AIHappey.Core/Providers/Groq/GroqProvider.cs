@@ -11,6 +11,7 @@ using AIHappey.Core.Models;
 using AIHappey.Responses.Extensions;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -40,6 +41,11 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
             throw new InvalidOperationException($"No {nameof(Groq)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
     }
 
     public string GetIdentifier() => nameof(Groq).ToLowerInvariant();
