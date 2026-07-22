@@ -1,0 +1,109 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "sluis/sluis/auto",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "auto",
+      "type": "language",
+      "description": "Per-request routing. Sluis picks the best compliant target for the prompt."
+    },
+    {
+      "id": "sluis/sluis/code",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "code",
+      "type": "language",
+      "description": "Coding and code review."
+    },
+    {
+      "id": "sluis/sluis/chat",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "chat",
+      "type": "language",
+      "description": "General conversation."
+    },
+    {
+      "id": "sluis/sluis/support",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "support",
+      "type": "language",
+      "description": "Customer-support answers."
+    },
+    {
+      "id": "sluis/sluis/fast",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "fast",
+      "type": "language",
+      "description": "Low latency."
+    },
+    {
+      "id": "sluis/sluis/cheap",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "cheap",
+      "type": "language",
+      "description": "Best value for bulk work."
+    },
+    {
+      "id": "sluis/sluis/agents",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "agents",
+      "type": "language",
+      "description": "Tool use and agentic workflows."
+    },
+    {
+      "id": "sluis/sluis/extract",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "extract",
+      "type": "language",
+      "description": "Structured extraction."
+    },
+    {
+      "id": "sluis/sluis/docs",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "docs",
+      "type": "language",
+      "description": "Document extraction and parsing."
+    },
+    {
+      "id": "sluis/sluis/longcontext",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "longcontext",
+      "type": "language",
+      "description": "Long-context analysis."
+    },
+    {
+      "id": "sluis/sluis/vision",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "vision",
+      "type": "language",
+      "description": "Image input."
+    },
+    {
+      "id": "sluis/sluis/translate",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "translate",
+      "type": "language",
+      "description": "Multilingual translation."
+    },
+    {
+      "id": "sluis/sluis/sovereign",
+      "object": "model",
+      "owned_by": "Sluis",
+      "name": "sovereign",
+      "type": "language",
+      "description": "Open-weights only."
+    }
+  ]
+}
