@@ -573,6 +573,7 @@ public class AIServiceConfig
     public ProviderConfig? TrustedRouter { get; set; }
     public ProviderConfig? Secrypt { get; set; }
     public ProviderConfig? MonsterGaming { get; set; }
+    public ProviderConfig? MLJunction { get; set; }
     
 }
 

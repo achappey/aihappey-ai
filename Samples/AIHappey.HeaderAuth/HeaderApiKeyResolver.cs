@@ -574,7 +574,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tinyfish"] = "X-TinyFish-Key",
             ["trustedrouter"] = "X-TrustedRouter-Key",
             ["secrypt"] = "X-Secrypt-Key",
-            ["monstergaming"] = "X-MonsterGaming-Key"
+            ["monstergaming"] = "X-MonsterGaming-Key",
+            ["mljunction"] = "X-MLJunction-Key"
 
         };
 

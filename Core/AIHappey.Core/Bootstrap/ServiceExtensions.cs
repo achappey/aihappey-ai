@@ -572,6 +572,7 @@ using AIHappey.Core.Providers.TinyFish;
 using AIHappey.Core.Providers.TrustedRouter;
 using AIHappey.Core.Providers.Secrypt;
 using AIHappey.Core.Providers.MonsterGaming;
+using AIHappey.Core.Providers.MLJunction;
 
 namespace AIHappey.Core.AI;
 
@@ -1170,6 +1171,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TrustedRouterProvider>();
         services.AddSingleton<IModelProvider, SecryptProvider>();
         services.AddSingleton<IModelProvider, MonsterGamingProvider>();
+        services.AddSingleton<IModelProvider, MLJunctionProvider>();
     }
 }
 
