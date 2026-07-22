@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.LelapaAI;
@@ -208,7 +209,9 @@ public partial class LelapaAIProvider
                     OwnedBy = "LelapaAI",
                     Name = $"Vulavula Translate {sourceLanguage} to {targetLanguage}",
                     Type = "language",
-                    Tags = ["translation", sourceLanguage, targetLanguage]
+                    Tags = ["translate", 
+                        sourceLanguage.NormalizeLanguageCode(), 
+                        targetLanguage.NormalizeLanguageCode()]
                 };
             }
         }
