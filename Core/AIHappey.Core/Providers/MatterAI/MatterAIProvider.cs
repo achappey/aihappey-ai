@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.MatterAI;
 
@@ -77,27 +78,29 @@ public partial class MatterAIProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToResponseResult();
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
+
+        return response;
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
+        await foreach (var update in this.GetResponses(_client,
+           options,
+           cancellationToken: cancellationToken))
         {
-            yield return part.ToResponseStreamPart();
-        }
 
-        yield break;
+            yield return update;
+        }
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
