@@ -24,44 +24,58 @@ public sealed partial class GoogleTranslateProvider
         public string? Name { get; set; }
     }
 
-    private async Task<IEnumerable<Model>> ListTranslationModelsAsync(CancellationToken cancellationToken)
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = GetKeyOrThrow();
+        var key = _keyResolver.Resolve(GetIdentifier());
 
-        // Request localized names so the UI can show something friendly.
-        // docs: GET https://translation.googleapis.com/language/translate/v2/languages?target=en&key=...
-        var url = $"{TranslationV2BaseUrl}/languages?target=en&key={Uri.EscapeDataString(key)}";
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        using var resp = await _client.GetAsync(url, cancellationToken);
-        var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+        var cacheKey = this.GetCacheKey(key);
 
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"GoogleTranslate languages failed ({(int)resp.StatusCode}): {body}");
-
-        var parsed = JsonSerializer.Deserialize<SupportedLanguagesResponse>(body, JsonSerializerOptions.Web);
-        var langs = parsed?.Data?.Languages ?? [];
-
-        var models = langs
-            .Where(l => !string.IsNullOrWhiteSpace(l.Language))
-            .Select(l =>
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                var languageCode = l.Language!.Trim();
-                var name = l.Name?.Trim();
-                var display = string.IsNullOrWhiteSpace(name) ? languageCode : name;
+                // Request localized names so the UI can show something friendly.
+                // docs: GET https://translation.googleapis.com/language/translate/v2/languages?target=en&key=...
+                var url = $"{TranslationV2BaseUrl}/languages?target=en&key={Uri.EscapeDataString(key)}";
 
-                return new Model
-                {
-                    OwnedBy = "Google Translate",
-                    Type = "language",
-                    Id = $"translate/{languageCode}".ToModelId(GetIdentifier()),
-                    Name = $"Translate to {display}",
-                    Tags = [languageCode, "translate"],
-                    Description = languageCode,
-                };
-            })
-            .ToList();
+                using var resp = await _client.GetAsync(url, cancellationToken);
+                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
 
-        return models;
+                if (!resp.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"GoogleTranslate languages failed ({(int)resp.StatusCode}): {body}");
+
+                var parsed = JsonSerializer.Deserialize<SupportedLanguagesResponse>(body, JsonSerializerOptions.Web);
+                var langs = parsed?.Data?.Languages ?? [];
+
+                var models = langs
+                    .Where(l => !string.IsNullOrWhiteSpace(l.Language))
+                    .Select(l =>
+                    {
+                        var languageCode = l.Language!.Trim();
+                        var name = l.Name?.Trim();
+                        var display = string.IsNullOrWhiteSpace(name) ? languageCode : name;
+
+                        return new Model
+                        {
+                            OwnedBy = "Google Translate",
+                            Type = "language",
+                            Id = $"translate/{languageCode}".ToModelId(GetIdentifier()),
+                            Name = $"Translate to {display}",
+                            Tags = [languageCode.NormalizeLanguageCode(), "translate"],
+                            Description = languageCode,
+                        };
+                    })
+                    .ToList();
+
+                return models;
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 }
 

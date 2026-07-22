@@ -1,11 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Core.AI;
-using AIHappey.Responses;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.GoogleTranslate;
 
@@ -46,38 +42,23 @@ public sealed partial class GoogleTranslateProvider
         public string? Model { get; set; }
     }
 
-    private static List<string> ExtractResponseRequestTexts(ResponseRequest options)
+    private static string ExtractLatestUserText(AIRequest request)
     {
-        var texts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(request.Input?.Text))
+            return request.Input.Text;
 
-        if (options.Input?.IsText == true)
-        {
-            if (!string.IsNullOrWhiteSpace(options.Input.Text))
-                texts.Add(options.Input.Text!);
-            return texts;
-        }
+        var latestUserMessage = request.Input?.Items?
+            .LastOrDefault(item => string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase));
+        var textParts = latestUserMessage?.Content?
+            .OfType<AITextContentPart>()
+            .Select(part => part.Text)
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .ToList() ?? [];
 
-        var items = options.Input?.Items;
-        if (items is null) return texts;
+        if (textParts.Count == 0)
+            throw new ArgumentException("Google Translate requires text in the latest user message.", nameof(request));
 
-        foreach (var msg in items.OfType<ResponseInputMessage>().Where(m => m.Role == ResponseRole.User))
-        {
-            if (msg.Content.IsText)
-            {
-                if (!string.IsNullOrWhiteSpace(msg.Content.Text))
-                    texts.Add(msg.Content.Text!);
-            }
-            else if (msg.Content.IsParts)
-            {
-                foreach (var p in msg.Content.Parts!.OfType<InputTextPart>())
-                {
-                    if (!string.IsNullOrWhiteSpace(p.Text))
-                        texts.Add(p.Text);
-                }
-            }
-        }
-
-        return texts;
+        return string.Join("\n", textParts);
     }
 
     private async Task<IReadOnlyList<string>> TranslateAsync(
@@ -130,133 +111,95 @@ public sealed partial class GoogleTranslateProvider
         return result;
     }
 
-    internal async Task<CreateMessageResult> TranslateSamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        string modelId,
-        CancellationToken cancellationToken)
+    public async Task<AIResponse> ExecuteUnifiedAsync(
+        AIRequest request,
+        CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(chatRequest);
+        ArgumentNullException.ThrowIfNull(request);
+        _ = GetKeyOrThrow();
 
+        var modelId = request.Model ?? throw new ArgumentException("Model is required.", nameof(request));
         var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
+        var translated = await TranslateAsync([ExtractLatestUserText(request)], targetLanguage, cancellationToken);
+        var text = translated.Single();
 
-        var texts = chatRequest.Messages
-            .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(m => m.Content.OfType<TextContentBlock>())
-            .Select(b => b.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
-
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        var joined = string.Join("\n", translated);
-
-        return new CreateMessageResult
+        return new AIResponse
         {
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
+            ProviderId = GetIdentifier(),
             Model = modelId,
-            StopReason = "stop",
-            Content = [joined.ToTextContentBlock()]
-        };
-    }
-
-    internal async Task<ResponseResult> TranslateResponsesAsync(
-        ResponseRequest options,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        var modelId = options.Model ?? throw new ArgumentException(nameof(options.Model));
-        var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
-
-        var texts = ExtractResponseRequestTexts(options);
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        var joined = string.Join("\n", translated);
-
-        var now = DateTimeOffset.UtcNow;
-        return new ResponseResult
-        {
-            Id = Guid.NewGuid().ToString("n"),
-            Model = modelId,
-            CreatedAt = now.ToUnixTimeSeconds(),
-            CompletedAt = now.ToUnixTimeSeconds(),
+            Status = "completed",
+            Usage = new Dictionary<string, object?>(),
+            Metadata = new Dictionary<string, object?>
+            {
+                ["finishReason"] = "stop",
+                ["targetLanguage"] = targetLanguage
+            },
             Output =
+           new AIOutput
+           {
+               Items =
             [
-                new
+                new AIOutputItem
                 {
-                    type = "message",
-                    id = Guid.NewGuid().ToString("n"),
-                    status = "completed",
-                    role = "assistant",
-                    content = new[]
-                    {
-                        new
+                    Type = "message",
+                    Role = "assistant",
+                    Content =
+                    [
+                        new AITextContentPart
                         {
-                            type = "output_text",
-                            text = joined,
-                            annotations = Array.Empty<string>()
+                            Text = text,
+                            Type = "text"
                         }
-                    }
+                    ]
                 }
             ]
+           }
         };
     }
 
-    internal async IAsyncEnumerable<UIMessagePart> StreamTranslateAsync(
-        ChatRequest chatRequest,
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(chatRequest);
+        var response = await ExecuteUnifiedAsync(request, cancellationToken);
+        var text = response.Output?.Items?
+            .SelectMany(item => item.Content ?? [])
+            .OfType<AITextContentPart>()
+            .Select(part => part.Text)
+            .FirstOrDefault() ?? string.Empty;
+        var eventId = Guid.NewGuid().ToString("n");
+        var timestamp = DateTimeOffset.UtcNow;
 
-        var targetLanguage = GetTranslateTargetLanguageFromModel(chatRequest.Model);
-
-        // Translate each incoming text part from the last user message.
-        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == Vercel.Models.Role.user);
-        var texts = lastUser?.Parts?.OfType<TextUIPart>()
-            .Select(p => p.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList() ?? [];
-
-        if (texts.Count == 0)
+        yield return CreateStreamEvent(eventId, "text-start", new AITextStartEventData(), timestamp, response.Metadata);
+        if (!string.IsNullOrEmpty(text))
+            yield return CreateStreamEvent(eventId, "text-delta", new AITextDeltaEventData { Delta = text }, timestamp, response.Metadata);
+        yield return CreateStreamEvent(eventId, "text-end", new AITextEndEventData(), timestamp, response.Metadata);
+        yield return CreateStreamEvent(eventId, "finish", new AIFinishEventData
         {
-            yield return "No prompt provided.".ToErrorUIPart();
-            yield break;
-        }
-
-        IReadOnlyList<string>? translated = null;
-        string? error = null;
-
-        try
-        {
-            translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-
-        if (!string.IsNullOrWhiteSpace(error))
-        {
-            yield return error!.ToErrorUIPart();
-            yield break;
-        }
-
-        var id = Guid.NewGuid().ToString("n");
-        yield return id.ToTextStartUIMessageStreamPart();
-
-        for (var i = 0; i < translated!.Count; i++)
-        {
-            var text = translated[i];
-            var delta = (i == translated.Count - 1) ? text : (text + "\n");
-            yield return new TextDeltaUIMessageStreamPart { Id = id, Delta = delta };
-        }
-
-        yield return id.ToTextEndUIMessageStreamPart();
-        yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, chatRequest.Temperature);
+            FinishReason = "stop",
+            Model = response.Model,
+            CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            MessageMetadata = AIFinishMessageMetadata.Create(
+                response.Model ?? string.Empty,
+                DateTimeOffset.UtcNow,
+                response.Usage as Dictionary<string, object?>,
+                temperature: request.Temperature)
+        }, DateTimeOffset.UtcNow, response.Metadata);
     }
+
+    private AIStreamEvent CreateStreamEvent(string eventId, string type, object data, DateTimeOffset timestamp, Dictionary<string, object?>? metadata)
+        => new()
+        {
+            ProviderId = GetIdentifier(),
+            Metadata = metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = type,
+                Id = eventId,
+                Timestamp = timestamp,
+                Data = data,
+                Metadata = metadata
+            }
+        };
 }
 
