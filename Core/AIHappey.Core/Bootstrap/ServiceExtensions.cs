@@ -571,6 +571,7 @@ using AIHappey.Core.Providers.CondenseChat;
 using AIHappey.Core.Providers.Ecoia;
 using AIHappey.Core.Providers.TinyFish;
 using AIHappey.Core.Providers.TrustedRouter;
+using AIHappey.Core.Providers.Secrypt;
 
 namespace AIHappey.Core.AI;
 
@@ -1168,6 +1169,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, EcoiaProvider>();
         services.AddSingleton<IModelProvider, TinyFishProvider>();
         services.AddSingleton<IModelProvider, TrustedRouterProvider>();
+        services.AddSingleton<IModelProvider, SecryptProvider>();
     }
 }
 

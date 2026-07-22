@@ -572,6 +572,7 @@ public class AIServiceConfig
     public ProviderConfig? Ecoia { get; set; }
     public ProviderConfig? TinyFish { get; set; }
     public ProviderConfig? TrustedRouter { get; set; }
+    public ProviderConfig? Secrypt { get; set; }
     
 }
 

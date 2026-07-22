@@ -573,7 +573,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["condensechat"] = "X-CondenseChat-Key",
             ["ecoia"] = "X-Ecoia-Key",
             ["tinyfish"] = "X-TinyFish-Key",
-            ["trustedrouter"] = "X-TrustedRouter-Key"
+            ["trustedrouter"] = "X-TrustedRouter-Key",
+            ["secrypt"] = "X-Secrypt-Key"
 
         };
 
