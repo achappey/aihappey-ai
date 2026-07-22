@@ -37,10 +37,8 @@ public partial class GMICloudProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                // ✅ root is already an array
-                var arr = root.ValueKind == JsonValueKind.Array
-                    ? root.EnumerateArray()
-                    : root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
                         ? dataEl.EnumerateArray()
                         : Enumerable.Empty<JsonElement>();
 

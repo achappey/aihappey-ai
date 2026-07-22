@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.GMICloud;
@@ -118,6 +119,7 @@ public partial class GMICloudProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = videoResp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
