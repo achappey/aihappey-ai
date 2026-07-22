@@ -41,7 +41,7 @@ public partial class DeepLProvider
                         {
                             OwnedBy = nameof(DeepL),
                             Type = "language",
-                            Tags = ["translate", code],
+                            Tags = ["translate", code.NormalizeLanguageCode()],
                             Id = $"translate-to/{code}".ToModelId(GetIdentifier()),
                             Name = $"{nameof(DeepL)} Translate to {display}",
                             Description = code
