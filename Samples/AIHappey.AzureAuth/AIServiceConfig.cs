@@ -576,6 +576,7 @@ public class AIServiceConfig
     public ProviderConfig? SunbirdAI { get; set; }
     public ProviderConfig? AddisAI { get; set; }
     public ProviderConfig? Akumi { get; set; }
+    public ProviderConfig? Impossibl { get; set; }
     
 }
 
