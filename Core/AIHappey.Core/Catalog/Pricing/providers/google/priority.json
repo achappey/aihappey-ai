@@ -6,6 +6,20 @@
       "output": "0.0000162"
     }
   },
+  "google/gemini-3.6-flash": {
+    "pricing": {
+      "input": "0.0000027",
+      "input_cache_read": "0.00000027",
+      "output": "0.0000135"
+    }
+  },
+  "google/gemini-3.5-flash-lite": {
+    "pricing": {
+      "input": "0.00000054",
+      "input_cache_read": "0.00000005",
+      "output": "0.0000045"
+    }
+  },
   "google/gemini-3.1-flash-lite": {
     "pricing": {
       "input": "0.00000045",
