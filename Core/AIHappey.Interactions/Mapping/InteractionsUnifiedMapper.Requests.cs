@@ -16,8 +16,6 @@ public static partial class InteractionsUnifiedMapper
             Model = request.Model ?? request.Agent,
             Instructions = request.SystemInstruction,
             Input = request.Input is null ? null : ToUnifiedInput(request.Input, providerId),
-            Temperature = request.GenerationConfig?.Temperature,
-            TopP = request.GenerationConfig?.TopP,
             MaxOutputTokens = request.GenerationConfig?.MaxOutputTokens,
             Stream = request.Stream,
             ToolChoice = CloneIfJsonElement(request.GenerationConfig?.ToolChoice),
@@ -39,8 +37,6 @@ public static partial class InteractionsUnifiedMapper
             "generation_config") : new InteractionGenerationConfig();
         generationConfig ??= new InteractionGenerationConfig();
 
-        generationConfig.Temperature = request.Temperature ?? generationConfig.Temperature;
-        generationConfig.TopP = request.TopP ?? generationConfig.TopP;
         generationConfig.MaxOutputTokens = request.MaxOutputTokens ?? generationConfig.MaxOutputTokens;
         generationConfig.ToolChoice = CloneIfJsonElement(request.ToolChoice) ?? generationConfig.ToolChoice;
         var responseFormat = NormalizeInteractionResponseFormat(

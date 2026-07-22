@@ -995,12 +995,6 @@ public sealed class InteractionVertexAiSearchConfig
 
 public sealed class InteractionGenerationConfig
 {
-    [JsonPropertyName("temperature")]
-    public float? Temperature { get; set; }
-
-    [JsonPropertyName("top_p")]
-    public double? TopP { get; set; }
-
     [JsonPropertyName("seed")]
     public int? Seed { get; set; }
 
