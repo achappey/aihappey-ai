@@ -98,14 +98,14 @@ public partial class TinyFishProvider
 
         var run = ParseAgentRun(body);
         var text = run.Status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase)
-            ? ToDisplayText(run.Result)
+            ? run.Result.HasValue ? ToDisplayText(run.Result.Value) : "No result"
             : run.Error ?? $"TinyFish agent run ended with status '{run.Status}'.";
         var responseMetadata = CreateAgentMetadata(request, metadata, payload, run);
         var items = new List<AIOutputItem>
         {
-            CreateMessageItem(text, new Dictionary<string, object?> { ["tinyfish.agent.result"] = run.Result })
+            CreateMessageItem(text, new Dictionary<string, object?> { ["tinyfish.agent.result"] = run.Result }),
+            CreateSourceOutputItem(metadata.Url!, metadata.Url!, "target_url")
         };
-        items.Add(CreateSourceOutputItem(metadata.Url!, metadata.Url!, "target_url"));
 
         return new AIResponse
         {
@@ -228,7 +228,7 @@ public partial class TinyFishProvider
 
         var finalMetadata = CreateAgentMetadata(request, metadata, payload, completed);
         var text = completed.Status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase)
-            ? ToDisplayText(completed.Result)
+            ? completed.Result.HasValue ? ToDisplayText(completed.Result.Value) : "No result"
             : completed.Error ?? $"TinyFish agent run ended with status '{completed.Status}'.";
         var timestampFinal = DateTimeOffset.UtcNow;
         if (completed.Status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase))
@@ -398,7 +398,11 @@ public partial class TinyFishProvider
 
     private static string GuessImageMediaType(string url) => Path.GetExtension(new Uri(url).AbsolutePath).ToLowerInvariant() switch
     {
-        ".jpg" or ".jpeg" => "image/jpeg", ".gif" => "image/gif", ".webp" => "image/webp", ".svg" => "image/svg+xml", _ => "image/png"
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".gif" => "image/gif",
+        ".webp" => "image/webp",
+        ".svg" => "image/svg+xml",
+        _ => "image/png"
     };
 
     private static string GuessFilename(string url, string mediaType)
@@ -423,7 +427,7 @@ public partial class TinyFishProvider
         {
             Type = "message",
             Role = "assistant",
-            Content = [new AIFileContentPart { Type = "file", 
+            Content = [new AIFileContentPart { Type = "file",
                 MediaType = image.MediaType, Filename = image.Filename, Data = image.Base64 }],
             Metadata = CreateImageMetadata(image)
         };
@@ -453,7 +457,8 @@ public partial class TinyFishProvider
             FinishReason = finishReason,
             Model = request.Model ?? ToUnifiedModel(FetchModel),
             CompletedAt = timestamp.ToUnixTimeSeconds(),
-            MessageMetadata = AIFinishMessageMetadata.Create(request.Model ?? ToUnifiedModel(FetchModel), timestamp, usage: new Dictionary<string, object?>())
+            MessageMetadata = AIFinishMessageMetadata.Create(request.Model ?? ToUnifiedModel(FetchModel), timestamp,
+                usage: new Dictionary<string, object?>())
         }, timestamp, metadata);
 
     private AIStreamEvent CreateStreamEvent(string type, string id, object data, DateTimeOffset timestamp, Dictionary<string, object?> metadata)
@@ -467,53 +472,40 @@ public partial class TinyFishProvider
     private Dictionary<string, object?> CreateAgentMetadata(AIRequest request, TinyFishProviderMetadata metadata, Dictionary<string, object?> payload, TinyFishAgentRun run)
         => new()
         {
-            ["tinyfish.target.url"] = metadata.Url,
-            ["tinyfish.request.payload"] = payload,
-            ["tinyfish.run.id"] = run.RunId,
-            ["tinyfish.run.status"] = run.Status,
-            ["tinyfish.run.steps"] = run.NumOfSteps,
-            ["tinyfish.run.result"] = run.Result,
-            ["tinyfish.run.error"] = run.Error,
-            ["tinyfish.response.raw"] = run.Raw
+
         };
 
     private static Dictionary<string, object?> CreateFetchMetadata(AIRequest request, TinyFishProviderMetadata metadata, TinyFishFetchExecution execution)
         => new()
         {
-            ["tinyfish.request.payload"] = execution.Payload,
-            ["tinyfish.request.urls"] = metadata.Urls,
-            ["tinyfish.fetch.results"] = execution.Results.Select(result => result.Raw).ToList(),
-            ["tinyfish.fetch.errors"] = execution.Errors.Select(error => error.Raw).ToList(),
-            ["tinyfish.response.raw"] = execution.Raw
+
         };
 
     private static Dictionary<string, object?> CreateResultMetadata(Dictionary<string, object?> metadata, TinyFishFetchResult result)
     {
-        var resultMetadata = new Dictionary<string, object?>(metadata) { ["tinyfish.fetch.result"] = result.Raw };
+        var resultMetadata = new Dictionary<string, object?>(metadata)
+        {
+
+        };
         return resultMetadata;
     }
 
     private static Dictionary<string, object?> CreateFetchResultPartMetadata(TinyFishFetchResult result)
-        => new() { ["tinyfish.fetch.result"] = result.Raw, ["tinyfish.source.url"] = result.FinalUrl ?? result.Url, ["tinyfish.source.title"] = result.Title };
+        => new()
+        {
+
+        };
 
     private Dictionary<string, object?> CreateSourceMetadata(string url, string title, string type, TinyFishFetchResult? result)
         => new()
         {
-            ["chatcompletions.source.url"] = url,
-            ["chatcompletions.source.title"] = title,
-            ["messages.source.url"] = url,
-            ["messages.source.title"] = title,
-            ["tinyfish.source.type"] = type,
-            ["tinyfish.fetch.result"] = result?.Raw
+
         };
 
     private Dictionary<string, object?> CreateImageMetadata(TinyFishDownloadedImage image)
         => new()
         {
-            ["tinyfish.image.url"] = image.Url,
-            ["tinyfish.source.url"] = image.Result.FinalUrl ?? image.Result.Url,
-            ["tinyfish.source.title"] = image.Result.Title,
-            ["tinyfish.fetch.result"] = image.Result.Raw
+
         };
 
     private Dictionary<string, Dictionary<string, object>> CreateScopedMetadata(Dictionary<string, object?> values)
@@ -536,12 +528,27 @@ public partial class TinyFishProvider
     }
 
     private static string ToDisplayText(JsonElement result)
-        => result.ValueKind switch
+    {
+        if (result.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return string.Empty;
+
+        if (result.ValueKind == JsonValueKind.String)
+            return result.GetString() ?? string.Empty;
+
+        if (result.ValueKind == JsonValueKind.Object &&
+            result.TryGetProperty("result", out var resultValue) &&
+            resultValue.ValueKind == JsonValueKind.String)
         {
-            JsonValueKind.String => result.GetString() ?? string.Empty,
-            JsonValueKind.Undefined or JsonValueKind.Null => string.Empty,
-            _ => JsonSerializer.Serialize(result, new JsonSerializerOptions(TinyFishJson) { WriteIndented = true })
-        };
+            return resultValue.GetString() ?? string.Empty;
+        }
+
+        return JsonSerializer.Serialize(
+            result,
+            new JsonSerializerOptions(TinyFishJson)
+            {
+                WriteIndented = true
+            });
+    }
 
     private static string CreateResultId(string eventId, string url) => $"{eventId}_{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(url)))[..12].ToLowerInvariant()}";
     private static string? GetString(JsonElement element, string name) => element.TryGetProperty(name, out var property) && property.ValueKind == JsonValueKind.String ? property.GetString() : null;
@@ -561,8 +568,28 @@ public partial class TinyFishProvider
         [JsonPropertyName("image_links")] public bool? ImageLinks { get; init; }
         [JsonExtensionData] public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
     }
-    private sealed class TinyFishAgentRun { public string? RunId { get; init; } public string Status { get; init; } = "FAILED"; public JsonElement Result { get; init; } public string? Error { get; init; } public int? NumOfSteps { get; init; } public JsonElement Raw { get; init; } }
-    private sealed class TinyFishSseEvent { [JsonPropertyName("type")] public string? Type { get; init; } [JsonPropertyName("run_id")] public string? RunId { get; init; } [JsonPropertyName("status")] public string? Status { get; init; } [JsonPropertyName("result")] public JsonElement Result { get; init; } [JsonPropertyName("error")] public string? Error { get; init; } [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; } }
+    private sealed class TinyFishAgentRun
+    {
+        public string? RunId { get; init; }
+        public string Status { get; init; } = "FAILED";
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public JsonElement? Result { get; init; }
+        public string? Error { get; init; }
+        public int? NumOfSteps { get; init; }
+        public JsonElement Raw { get; init; }
+    }
+    private sealed class TinyFishSseEvent
+    {
+        [JsonPropertyName("type")] public string? Type { get; init; }
+        [JsonPropertyName("run_id")] public string? RunId { get; init; }
+        [JsonPropertyName("status")] public string? Status { get; init; }
+        [JsonPropertyName("result")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public JsonElement? Result { get; init; }
+        [JsonPropertyName("error")] public string? Error { get; init; }
+        [JsonPropertyName("timestamp")] public DateTimeOffset? Timestamp { get; init; }
+    }
     private sealed class TinyFishFetchExecution { public required Dictionary<string, object?> Payload { get; init; } public required JsonElement Raw { get; init; } public List<TinyFishFetchResult> Results { get; init; } = []; public List<TinyFishFetchError> Errors { get; init; } = []; }
     private sealed class TinyFishFetchResult { public string Url { get; init; } = string.Empty; public string? FinalUrl { get; init; } public string? Title { get; init; } public string? Description { get; init; } public JsonElement Text { get; init; } public List<string> ImageLinks { get; init; } = []; public JsonElement Raw { get; init; } }
     private sealed class TinyFishFetchError { public string Url { get; init; } = string.Empty; public string? Error { get; init; } public int? Status { get; init; } public JsonElement Raw { get; init; } }
