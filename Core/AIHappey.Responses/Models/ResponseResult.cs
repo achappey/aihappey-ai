@@ -1,4 +1,5 @@
 
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -13,6 +14,7 @@ public class ResponseResult
     public string Object { get; set; } = "response";
 
     [JsonPropertyName("created_at")]
+    [JsonConverter(typeof(FlexibleUnixTimestampConverter))]
     public long CreatedAt { get; set; }
 
     [JsonPropertyName("completed_at")]
@@ -78,4 +80,48 @@ public class ResponseResultError
 
     [JsonPropertyName("message")]
     public string? Message { get; set; }
+}
+
+
+public sealed class FlexibleUnixTimestampConverter : JsonConverter<long>
+{
+    public override long Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Number)
+        {
+            if (reader.TryGetInt64(out var integer))
+                return integer;
+
+            if (reader.TryGetDouble(out var number))
+                return checked((long)number);
+        }
+
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var value = reader.GetString();
+
+            if (double.TryParse(
+                    value,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var number))
+            {
+                return checked((long)number);
+            }
+        }
+
+        throw new JsonException(
+            $"Invalid Unix timestamp token: {reader.TokenType}.");
+    }
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        long value,
+        JsonSerializerOptions options)
+    {
+        writer.WriteNumberValue(value);
+    }
 }
