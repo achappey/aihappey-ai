@@ -17,7 +17,7 @@ public partial class BlackForestLabsProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record BflResult(string Status, JsonElement Root, string Raw);
+    private sealed record BflResult(string Status, JsonElement Root);
 
     public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
@@ -27,58 +27,39 @@ public partial class BlackForestLabsProvider
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
 
-        var model = request.Model;
+        var model = request.Model.Trim().ToLowerInvariant();
+        if (!IsFlux2Model(model))
+            throw new NotSupportedException($"BlackForestLabs image model '{request.Model}' is not supported. Only FLUX.2 models are available.");
+
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
+        var imageCount = request.N ?? 1;
 
-        if (request.N is > 1)
-            warnings.Add(new { type = "unsupported", feature = "n" });
+        if (imageCount < 1)
+            throw new ArgumentOutOfRangeException(nameof(request.N), "n must be greater than zero.");
 
-        var isFill = string.Equals(model, "flux-pro-1.0-fill", StringComparison.OrdinalIgnoreCase);
-        var isExpand = string.Equals(model, "flux-pro-1.0-expand", StringComparison.OrdinalIgnoreCase);
-
-        if (!isFill && request.Mask is not null)
+        if (request.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        if (!isFill && !isExpand && string.IsNullOrWhiteSpace(request.Prompt))
+        if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
         var payload = BuildPayload(request, model, warnings);
         MergeProviderOptions(payload, request);
 
         var endpoint = ResolveEndpoint(model);
-        var submitJson = JsonSerializer.Serialize(payload, JsonOptions);
-
-        using var submitReq = new HttpRequestMessage(HttpMethod.Post, endpoint)
-        {
-            Content = new StringContent(submitJson, Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        using var submitResp = await _client.SendAsync(submitReq, cancellationToken);
-        var submitRaw = await submitResp.Content.ReadAsStringAsync(cancellationToken);
-        if (!submitResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"BlackForestLabs submit failed ({(int)submitResp.StatusCode}): {submitRaw}");
-
-        using var submitDoc = JsonDocument.Parse(submitRaw);
-        var submitRoot = submitDoc.RootElement.Clone();
-
-        var taskId = submitRoot.TryGetString("id") ?? throw new InvalidOperationException("BlackForestLabs response missing id.");
-
-        var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollResultAsync(taskId, ct),
-            isTerminal: r => IsTerminalStatus(r.Status),
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (!string.Equals(final.Status, "Ready", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"BlackForestLabs task failed (status={final.Status}, id={taskId}).");
-
         var outputFormat = TryGetOutputFormat(payload) ?? "jpeg";
         var mime = MapOutputFormatToMimeType(outputFormat);
+        var images = new List<string>();
+        var results = new List<JsonElement>(imageCount);
+        for (var index = 0; index < imageCount; index++)
+        {
+            var final = await SubmitAndPollAsync(endpoint, payload, cancellationToken);
+            var generatedImages = await ExtractImagesAsync(final.Root, mime, cancellationToken);
+            images.AddRange(generatedImages);
+            results.Add(final.Root);
+        }
 
-        var images = await ExtractImagesAsync(final.Root, mime, cancellationToken);
         if (images.Count == 0)
             throw new InvalidOperationException("BlackForestLabs result did not contain any images.");
 
@@ -86,7 +67,8 @@ public partial class BlackForestLabsProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(final.Root.Clone()),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(
+                results.Count == 1 ? results[0] : JsonSerializer.SerializeToElement(results, JsonOptions)),
             Response = new()
             {
                 Timestamp = now,
@@ -119,100 +101,19 @@ public partial class BlackForestLabsProvider
             }
         }
 
-        if (model is "flux-pro-1.1" or "flux-dev")
-        {
-            if (width is not null)
-                payload["width"] = width;
-            if (height is not null)
-                payload["height"] = height;
-            AddImagePrompt(payload, request.Files, warnings, maxImages: 1, fieldName: "image_prompt");
-            return payload;
-        }
+        if (width is not null)
+            payload["width"] = width;
+        if (height is not null)
+            payload["height"] = height;
 
-        if (model is "flux-pro-1.1-ultra")
-        {
-            var aspectRatio = request.AspectRatio ?? AspectRatioFromSize(normalizedSize);
-            if (!string.IsNullOrWhiteSpace(aspectRatio))
-                payload["aspect_ratio"] = aspectRatio;
-            AddImagePrompt(payload, request.Files, warnings, maxImages: 1, fieldName: "image_prompt");
-            return payload;
-        }
-
-        if (model is "flux-pro-1.0-fill")
-        {
-            var image = request.Files?.FirstOrDefault() ?? throw new ArgumentException("Input image is required.", nameof(request));
-            payload["image"] = NormalizeImageData(image);
-            if (request.Mask is not null)
-                payload["mask"] = NormalizeImageData(request.Mask);
-            return payload;
-        }
-
-        if (model is "flux-pro-1.0-expand")
-        {
-            var image = request.Files?.FirstOrDefault() ?? throw new ArgumentException("Input image is required.", nameof(request));
-            payload["image"] = NormalizeImageData(image);
-            return payload;
-        }
-
-        if (model is "flux-kontext-pro" or "flux-kontext-max")
-        {
-            var aspectRatio = request.AspectRatio ?? AspectRatioFromSize(normalizedSize);
-            if (!string.IsNullOrWhiteSpace(aspectRatio))
-                payload["aspect_ratio"] = aspectRatio;
-            AddInputImages(payload, request.Files, warnings, maxImages: 4);
-            return payload;
-        }
-
-        if (IsFlux2Model(model))
-        {
-            if (width is not null)
-                payload["width"] = width;
-            if (height is not null)
-                payload["height"] = height;
-
-            var maxImages = model is "flux-2-klein-4b" or "flux-2-klein-9b" ? 4 : 8;
-            AddInputImages(payload, request.Files, warnings, maxImages);
-            return payload;
-        }
-
-        throw new NotSupportedException($"BlackForestLabs image model '{request.Model}' is not supported.");
+        var maxImages = IsFlux2KleinModel(model) ? 4 : 8;
+        AddInputImages(payload, request.Files, warnings, maxImages);
+        return payload;
     }
 
     private static (int width, int height)? InferSizeForModel(string model, string aspectRatio)
     {
-        if (model is "flux-pro-1.1" or "flux-dev")
-        {
-            return aspectRatio.InferSizeFromAspectRatio(minWidth: 256, maxWidth: 1440, minHeight: 256, maxHeight: 1440);
-        }
-
-        if (IsFlux2Model(model))
-        {
-            return aspectRatio.InferSizeFromAspectRatio(minWidth: 64, maxWidth: 2048, minHeight: 64, maxHeight: 2048);
-        }
-
-        return aspectRatio.InferSizeFromAspectRatio();
-    }
-
-    private static void AddImagePrompt(
-        Dictionary<string, object?> payload,
-        IEnumerable<ImageFile>? files,
-        List<object> warnings,
-        int maxImages,
-        string fieldName)
-    {
-        if (files is null)
-            return;
-
-        var list = files.ToList();
-        if (list.Count == 0)
-            return;
-
-        if (list.Count > maxImages)
-        {
-            warnings.Add(new { type = "unsupported", feature = "files", details = $"Only {maxImages} input image(s) supported; used files[0]." });
-        }
-
-        payload[fieldName] = NormalizeImageData(list[0]);
+        return aspectRatio.InferSizeFromAspectRatio(minWidth: 64, maxWidth: 2048, minHeight: 64, maxHeight: 2048);
     }
 
     private static void AddInputImages(Dictionary<string, object?> payload, IEnumerable<ImageFile>? files, List<object> warnings, int maxImages)
@@ -251,6 +152,40 @@ public partial class BlackForestLabsProvider
         }
     }
 
+    private async Task<BflResult> SubmitAndPollAsync(
+        string endpoint,
+        Dictionary<string, object?> payload,
+        CancellationToken cancellationToken)
+    {
+        var submitJson = JsonSerializer.Serialize(payload, JsonOptions);
+        using var submitReq = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        {
+            Content = new StringContent(submitJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+        };
+
+        using var submitResp = await _client.SendAsync(submitReq, cancellationToken);
+        var submitRaw = await submitResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!submitResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"BlackForestLabs submit failed ({(int)submitResp.StatusCode}): {submitRaw}");
+
+        using var submitDoc = JsonDocument.Parse(submitRaw);
+        var taskId = submitDoc.RootElement.TryGetString("id")
+                     ?? throw new InvalidOperationException("BlackForestLabs response missing id.");
+
+        var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
+            poll: ct => PollResultAsync(taskId, ct),
+            isTerminal: result => IsTerminalStatus(result.Status),
+            interval: TimeSpan.FromSeconds(2),
+            timeout: TimeSpan.FromMinutes(10),
+            maxAttempts: null,
+            cancellationToken: cancellationToken);
+
+        if (!string.Equals(final.Status, "Ready", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"BlackForestLabs task failed (status={final.Status}, id={taskId}).");
+
+        return final;
+    }
+
     private async Task<BflResult> PollResultAsync(string taskId, CancellationToken cancellationToken)
     {
         var url = $"v1/get_result?id={Uri.EscapeDataString(taskId)}";
@@ -263,7 +198,7 @@ public partial class BlackForestLabsProvider
         var root = pollDoc.RootElement.Clone();
         var status = root.TryGetString("status") ?? "unknown";
 
-        return new BflResult(status, root, pollRaw);
+        return new BflResult(status, root);
     }
 
     private static bool IsTerminalStatus(string? status)
@@ -366,23 +301,27 @@ public partial class BlackForestLabsProvider
     private static string ResolveEndpoint(string model)
         => model switch
         {
-            "flux-pro-1.1" => "v1/flux-pro-1.1",
-            "flux-dev" => "v1/flux-dev",
-            "flux-pro-1.1-ultra" => "v1/flux-pro-1.1-ultra",
-            "flux-pro-1.0-fill" => "v1/flux-pro-1.0-fill",
-            "flux-pro-1.0-expand" => "v1/flux-pro-1.0-expand",
-            "flux-kontext-pro" => "v1/flux-kontext-pro",
-            "flux-kontext-max" => "v1/flux-kontext-max",
             "flux-2-max" => "v1/flux-2-max",
             "flux-2-klein-9b" => "v1/flux-2-klein-9b",
+            "flux-2-klein-9b-preview" => "v1/flux-2-klein-9b-preview",
             "flux-2-klein-4b" => "v1/flux-2-klein-4b",
             "flux-2-pro" => "v1/flux-2-pro",
+            "flux-2-pro-preview" => "v1/flux-2-pro-preview",
             "flux-2-flex" => "v1/flux-2-flex",
             _ => throw new NotSupportedException($"BlackForestLabs image model '{model}' is not supported.")
         };
 
     private static bool IsFlux2Model(string model)
-        => model is "flux-2-max" or "flux-2-klein-9b" or "flux-2-klein-4b" or "flux-2-pro" or "flux-2-flex";
+        => model is "flux-2-max"
+            or "flux-2-klein-9b"
+            or "flux-2-klein-9b-preview"
+            or "flux-2-klein-4b"
+            or "flux-2-pro"
+            or "flux-2-pro-preview"
+            or "flux-2-flex";
+
+    private static bool IsFlux2KleinModel(string model)
+        => model is "flux-2-klein-9b" or "flux-2-klein-9b-preview" or "flux-2-klein-4b";
 
     private static string MapOutputFormatToMimeType(string? format)
         => format?.Trim().ToLowerInvariant() switch
