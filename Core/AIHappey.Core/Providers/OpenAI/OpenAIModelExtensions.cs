@@ -1,21 +1,16 @@
 using System.ClientModel;
 using System.ClientModel.Primitives;
-using System.Net.Mime;
 using System.Text;
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using Microsoft.AspNetCore.StaticFiles;
-using OpenAI.Containers;
 using OpenAI.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
 public static class OpenAIModelExtensions
 {
-    public static Dictionary<string, Dictionary<string, object>> ToProviderMetadata(
-            this Dictionary<string, object> metadata)
-         => metadata.ToProviderMetadata(Constants.OpenAI);
+ 
 
     public static Model ToModel(this OpenAIModel source) => new()
     {
@@ -30,43 +25,6 @@ public static class OpenAIModelExtensions
     public static IEnumerable<Model> ToModels(this IEnumerable<OpenAIModel> source)
         => source.Select(a => a.ToModel());
 
-    // ---- Public API ---------------------------------------------------------
-
-    public static Task<ClientResult> UploadDataUriAsync(
-        this ContainerClient containerClient,
-        string containerId,
-        string dataUri,
-        string? explicitMimeType = null,
-        string partName = "file",
-        RequestOptions? options = null)
-    {
-        if (string.IsNullOrWhiteSpace(containerId)) throw new ArgumentNullException(nameof(containerId));
-        if (string.IsNullOrWhiteSpace(dataUri)) throw new ArgumentNullException(nameof(dataUri));
-
-        // Split header/payload
-        int comma = dataUri.IndexOf(',');
-        if (comma < 0) throw new FormatException("Invalid data URI (no comma).");
-
-        string header = dataUri[..comma];     // e.g. "data:application/pdf;base64"
-        string payload = dataUri[(comma + 1)..];
-
-        // Detect mime
-        string mimeType = explicitMimeType ?? "application/octet-stream";
-        const string prefix = "data:";
-        if (header.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            int semi = header.IndexOf(';');
-            if (semi > prefix.Length)
-                mimeType = header[prefix.Length..semi];
-        }
-
-        // Decode
-        byte[] bytes = header.EndsWith(";base64", StringComparison.OrdinalIgnoreCase)
-            ? Convert.FromBase64String(payload)
-            : Encoding.UTF8.GetBytes(Uri.UnescapeDataString(payload));
-
-        return UploadBytesMultipartAsync(containerClient, containerId, bytes, mimeType, partName, options);
-    }
 
     public static async Task<ClientResult> UploadBytesMultipartAsync(
         dynamic containerClient,
@@ -141,40 +99,4 @@ public static class OpenAIModelExtensions
         }
         return ".bin";
     }
-
-    public static readonly HashSet<string> CodeInterpreterMimeTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "text/x-c",
-        "text/x-csharp",
-        "text/x-c++",
-        MediaTypeNames.Text.Csv,
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        MediaTypeNames.Text.Html,
-        "text/x-java",
-        MediaTypeNames.Application.Json,
-        MediaTypeNames.Text.Markdown,
-        MediaTypeNames.Application.Pdf,
-        "text/x-php",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "text/x-python",
-        "text/x-script.python",
-        "text/x-ruby",
-        "text/x-tex",
-        MediaTypeNames.Text.Plain,
-        MediaTypeNames.Text.Css,
-        MediaTypeNames.Text.JavaScript,
-        "application/x-sh",
-        "application/typescript",
-        "application/csv",
-        MediaTypeNames.Image.Jpeg,
-        MediaTypeNames.Image.Gif,
-        MediaTypeNames.Application.Octet,
-        MediaTypeNames.Image.Png,
-        "application/x-tar",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        MediaTypeNames.Application.Xml,
-        MediaTypeNames.Text.Xml,
-        MediaTypeNames.Application.Zip
-    };
 }

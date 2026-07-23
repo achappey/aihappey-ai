@@ -1,5 +1,4 @@
 using System.Text.Json;
-using AIHappey.ChatCompletions.Models;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Parallel;

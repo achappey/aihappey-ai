@@ -1,8 +1,6 @@
 using System.Runtime.CompilerServices;
-using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 using GTranslate.Translators;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.GTranslate;
 

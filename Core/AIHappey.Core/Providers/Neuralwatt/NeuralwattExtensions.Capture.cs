@@ -1,7 +1,6 @@
 using AIHappey.Abstractions.Http;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Neuralwatt;
 

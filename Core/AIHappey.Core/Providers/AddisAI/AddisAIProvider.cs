@@ -1,6 +1,5 @@
 using AIHappey.Core.AI;
 using ModelContextProtocol.Protocol;
-using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Messages.Mapping;
@@ -12,7 +11,6 @@ using AIHappey.Messages;
 using AIHappey.ChatCompletions.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.AddisAI;
 
