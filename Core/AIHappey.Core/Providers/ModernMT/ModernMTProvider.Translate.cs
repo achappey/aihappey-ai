@@ -8,7 +8,6 @@ using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.ModernMT;
 
@@ -30,20 +29,6 @@ public sealed partial class ModernMTProvider
             throw new ArgumentException("ModernMT translation target language is missing from model id.", nameof(model));
 
         return lang;
-    }
-
-    private static ModernMTProviderMetadata? GetModernMTMetadataFromSampling(
-       CreateMessageRequestParams chatRequest)
-    {
-        if (chatRequest.Metadata is not JsonObject metadata)
-            return null;
-
-        if (metadata["modernmt"] is not JsonObject ln)
-            return null;
-
-        return JsonSerializer.Deserialize<ModernMTProviderMetadata>(
-            ln.ToJsonString(),
-            JsonSerializerOptions.Web);
     }
 
     private static List<string> ExtractResponseRequestTexts(ResponseRequest options)
@@ -192,38 +177,6 @@ public sealed partial class ModernMTProvider
         }
 
         return [.. texts.Select(_ => string.Empty)];
-    }
-
-    internal async Task<CreateMessageResult> TranslateSamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        string modelId,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
-        var metadata = GetModernMTMetadataFromSampling(chatRequest);
-
-        var texts = chatRequest.Messages
-            .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(m => m.Content.OfType<TextContentBlock>())
-            .Select(b => b.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
-
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translated = await TranslateAsync(texts, targetLanguage, metadata, cancellationToken);
-        var joined = string.Join("\n", translated);
-
-        return new CreateMessageResult
-        {
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            Model = modelId,
-            StopReason = "stop",
-            Content = [joined.ToTextContentBlock()]
-        };
     }
 
     internal async Task<ResponseResult> TranslateResponsesAsync(

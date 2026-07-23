@@ -21,7 +21,7 @@ public sealed partial class ModernMTProvider
             async ct =>
             {
                 ApplyAuthHeader();
-                
+
                 return await ListTranslationModelsAsync(cancellationToken);
 
             },
@@ -77,6 +77,7 @@ public sealed partial class ModernMTProvider
                 Id = $"translate/{languageCode}".ToModelId(GetIdentifier()),
                 Name = $"Translate to {languageCode}",
                 Description = languageCode,
+                Tags = ["translate", languageCode.NormalizeLanguageCode()]
             });
         }
 
