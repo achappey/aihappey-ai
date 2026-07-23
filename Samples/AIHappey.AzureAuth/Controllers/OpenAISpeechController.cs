@@ -18,10 +18,9 @@ public class OpenAISpeechController(IAIModelProviderResolver resolver) : Control
     {
         if (requestDto == null ||
             string.IsNullOrWhiteSpace(requestDto.Input) ||
-            string.IsNullOrWhiteSpace(requestDto.Model) ||
-            string.IsNullOrWhiteSpace(requestDto.Voice))
+            string.IsNullOrWhiteSpace(requestDto.Model))
         {
-            return BadRequest(new { error = "'input', 'model' and 'voice' are required fields" });
+            return BadRequest(new { error = "'input' and 'model' are required fields" });
         }
 
         var provider = await resolver.Resolve(requestDto.Model, cancellationToken);
