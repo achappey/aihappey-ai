@@ -579,6 +579,7 @@ public class AIServiceConfig
     public ProviderConfig? Impossibl { get; set; }
     public ProviderConfig? Sluis { get; set; }
     public ProviderConfig? NeuralRing { get; set; }
+    public ProviderConfig? EpisCloud { get; set; }
     
 }
 

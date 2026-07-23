@@ -578,6 +578,7 @@ using AIHappey.Core.Providers.Akumi;
 using AIHappey.Core.Providers.Impossibl;
 using AIHappey.Core.Providers.Sluis;
 using AIHappey.Core.Providers.NeuralRing;
+using AIHappey.Core.Providers.EpisCloud;
 
 namespace AIHappey.Core.AI;
 
@@ -1182,6 +1183,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ImpossiblProvider>();
         services.AddSingleton<IModelProvider, SluisProvider>();
         services.AddSingleton<IModelProvider, NeuralRingProvider>();
+        services.AddSingleton<IModelProvider, EpisCloudProvider>();
     }
 }
 

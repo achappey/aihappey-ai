@@ -580,7 +580,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["akumi"] = "X-Akumi-Key",
             ["impossibl"] = "X-Impossibl-Key",
             ["sluis"] = "X-Sluis-Key",
-            ["neuralring"] = "X-NeuralRing-Key"
+            ["neuralring"] = "X-NeuralRing-Key",
+            ["episcloud"] = "X-EpisCloud-Key"
 
         };
 
