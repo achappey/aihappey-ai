@@ -55,8 +55,24 @@ public static partial class ResponsesUnifiedMapper
 
     private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(ResponseResult response, string providerId)
     {
-        foreach (var item in response.Output ?? [])
+        var outputItems = (response.Output ?? []).Where(static item => item is not null).ToList();
+        var programOutputsByCallId = outputItems
+            .Select((item, index) => new { Item = item!, Map = ToJsonMap(item), Index = index })
+            .Where(entry => string.Equals(GetValue<string>(entry.Map, "type"), "program_output", StringComparison.OrdinalIgnoreCase))
+            .Where(entry => !string.IsNullOrWhiteSpace(GetValue<string>(entry.Map, "call_id")))
+            .GroupBy(entry => GetValue<string>(entry.Map, "call_id"), StringComparer.Ordinal)
+            .ToDictionary(
+                group => group.Key,
+                group =>
+                {
+                    var entry = group.Last();
+                    return (entry.Item, entry.Map, entry.Index);
+                },
+                StringComparer.Ordinal);
+
+        for (var outputIndex = 0; outputIndex < outputItems.Count; outputIndex++)
         {
+            var item = outputItems[outputIndex];
             if (item is null)
                 continue;
 
@@ -64,7 +80,18 @@ public static partial class ResponsesUnifiedMapper
             var role = GetValue<string>(map, "role") ?? "assistant";
             var type = GetValue<string>(map, "type") ?? "message";
 
-            if (TryCreateToolOutputItem(item, map, role, type, providerId, out var toolItem))
+            if (string.Equals(type, "program_output", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (TryCreateToolOutputItem(
+                    item,
+                    map,
+                    role,
+                    type,
+                    providerId,
+                    outputIndex,
+                    programOutputsByCallId,
+                    out var toolItem))
             {
                 yield return toolItem;
                 continue;
@@ -542,8 +569,16 @@ public static partial class ResponsesUnifiedMapper
         string role,
         string type,
         string providerId,
+        int outputIndex,
+        IReadOnlyDictionary<string, (object Item, Dictionary<string, object?> Map, int Index)> programOutputsByCallId,
         out AIOutputItem item)
     {
+        var caller = GetValue<object>(map, "caller");
+        var hasProgramCaller = string.Equals(
+            GetValue<string>(ToJsonMap(caller), "type"),
+            "program",
+            StringComparison.OrdinalIgnoreCase);
+        var metadata = CreateResponsesToolMetadata(providerId, type, rawItem, map, outputIndex);
         var toolPart = type switch
         {
             "compaction" => CreateUnifiedCompactionToolPart(
@@ -559,13 +594,15 @@ public static partial class ResponsesUnifiedMapper
                 Title = GetValue<string>(map, "name"),
                 Input = ParseJsonString(GetValue<string>(map, "arguments")),
                 State = GetValue<string>(map, "status"),
-                ProviderExecuted = false,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["responses.type"] = type,
-                    ["responses.raw_output"] = rawItem
-                }
+                ProviderExecuted = hasProgramCaller,
+                Metadata = metadata
             },
+            "program" => CreateUnifiedProgramToolPart(
+                providerId,
+                rawItem,
+                map,
+                outputIndex,
+                programOutputsByCallId),
             "custom_tool_call" => new AIToolCallContentPart
             {
                 Type = type,
@@ -576,11 +613,7 @@ public static partial class ResponsesUnifiedMapper
                 Output = GetValue<object>(map, "output"),
                 State = GetValue<string>(map, "status"),
                 ProviderExecuted = true,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["responses.type"] = type,
-                    ["responses.raw_output"] = rawItem
-                }
+                Metadata = metadata
             },
             "mcp_call" => new AIToolCallContentPart
             {
@@ -592,11 +625,7 @@ public static partial class ResponsesUnifiedMapper
                 Output = GetValue<object>(map, "output"),
                 State = GetValue<string>(map, "status"),
                 ProviderExecuted = true,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["responses.type"] = type,
-                    ["responses.raw_output"] = rawItem
-                }
+                Metadata = metadata
             },
             "code_interpreter_call" => new AIToolCallContentPart
             {
@@ -608,11 +637,7 @@ public static partial class ResponsesUnifiedMapper
                 Output = GetValue<object>(map, "outputs"),
                 State = GetValue<string>(map, "status"),
                 ProviderExecuted = true,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["responses.type"] = type,
-                    ["responses.raw_output"] = rawItem
-                }
+                Metadata = metadata
             },
             _ => null
         };
@@ -641,6 +666,85 @@ public static partial class ResponsesUnifiedMapper
         };
 
         return true;
+    }
+
+    private static AIToolCallContentPart CreateUnifiedProgramToolPart(
+        string providerId,
+        object rawItem,
+        Dictionary<string, object?> map,
+        int outputIndex,
+        IReadOnlyDictionary<string, (object Item, Dictionary<string, object?> Map, int Index)> programOutputsByCallId)
+    {
+        var callId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N");
+        Dictionary<string, object?>? outputMap = null;
+        int? programOutputIndex = null;
+        object? rawOutput = null;
+
+        if (programOutputsByCallId.TryGetValue(callId, out var matchedOutput))
+        {
+            outputMap = matchedOutput.Map;
+            programOutputIndex = matchedOutput.Index;
+            rawOutput = matchedOutput.Item;
+        }
+
+        var metadata = CreateResponsesToolMetadata(providerId, "program", rawItem, map, outputIndex);
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["fingerprint"] = CloneIfJsonElement(GetValue<object>(map, "fingerprint")) ?? string.Empty;
+
+        if (outputMap is not null)
+        {
+            providerMetadata["program_output_id"] = GetValue<string>(outputMap, "id") ?? string.Empty;
+            providerMetadata["program_output_status"] = GetValue<string>(outputMap, "status") ?? "completed";
+            providerMetadata["program_output_index"] = programOutputIndex!.Value;
+            providerMetadata["program_output_raw"] = rawOutput!;
+        }
+
+        metadata[providerId] = providerMetadata;
+
+        return new AIToolCallContentPart
+        {
+            Type = "tool-program",
+            ToolCallId = callId,
+            ToolName = "program",
+            Title = "program",
+            Input = new { code = GetValue<string>(map, "code") ?? string.Empty },
+            Output = outputMap is null
+                ? null
+                : new
+                {
+                    result = GetValue<string>(outputMap, "result") ?? string.Empty,
+                    status = GetValue<string>(outputMap, "status")
+                },
+            State = outputMap is null ? GetValue<string>(map, "status") : GetValue<string>(outputMap, "status"),
+            ProviderExecuted = true,
+            Metadata = metadata
+        };
+    }
+
+    private static Dictionary<string, object?> CreateResponsesToolMetadata(
+        string providerId,
+        string type,
+        object rawItem,
+        Dictionary<string, object?> map,
+        int outputIndex)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["responses.type"] = type,
+            ["responses.raw_output"] = rawItem
+        };
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["type"] = type;
+        providerMetadata["output_index"] = outputIndex;
+
+        foreach (var key in new[] { "id", "call_id", "status", "caller", "container_id" })
+        {
+            if (map.TryGetValue(key, out var value) && HasMeaningfulValue(value))
+                providerMetadata[key] = CloneIfJsonElement(value)!;
+        }
+
+        metadata[providerId] = providerMetadata;
+        return metadata;
     }
 
     private static bool HasToolOutput(AIToolCallContentPart toolPart)

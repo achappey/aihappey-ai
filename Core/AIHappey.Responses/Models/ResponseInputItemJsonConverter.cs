@@ -42,6 +42,18 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize function_call_output.");
         }
 
+        if (string.Equals(type, "program", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseProgramItem>(options)
+                   ?? throw new JsonException("Could not deserialize program.");
+        }
+
+        if (string.Equals(type, "program_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseProgramOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize program_output.");
+        }
+
         if (string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseReasoningItem>(options)
@@ -75,6 +87,14 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseFunctionCallOutputItem functionCallOutput:
                 JsonSerializer.Serialize(writer, functionCallOutput, options);
+                return;
+
+            case ResponseProgramItem program:
+                JsonSerializer.Serialize(writer, program, options);
+                return;
+
+            case ResponseProgramOutputItem programOutput:
+                JsonSerializer.Serialize(writer, programOutput, options);
                 return;
 
             case ResponseReasoningItem reasoning:

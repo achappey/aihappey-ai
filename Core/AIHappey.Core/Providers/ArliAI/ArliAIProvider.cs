@@ -46,6 +46,9 @@ public partial class ArliAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        if (!options.Tools.Any())
+            options.Tools = null!;
+
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
     }
@@ -53,6 +56,9 @@ public partial class ArliAIProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        if (!options.Tools.Any())
+            options.Tools = null!;
 
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);

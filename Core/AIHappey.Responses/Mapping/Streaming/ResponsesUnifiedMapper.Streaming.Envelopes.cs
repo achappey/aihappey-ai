@@ -25,7 +25,8 @@ public static partial class ResponsesUnifiedMapper
     private static AIEventEnvelope CreateToolInputStartEnvelope(string id,
         string toolname,
         string? title = null,
-        bool? providerExecuted = false)
+        bool? providerExecuted = false,
+        Dictionary<string, Dictionary<string, object>>? providerMetadata = null)
            => new()
            {
                Type = "tool-input-start",
@@ -34,7 +35,8 @@ public static partial class ResponsesUnifiedMapper
                {
                    ProviderExecuted = providerExecuted,
                    ToolName = toolname,
-                   Title = title
+                   Title = title,
+                   ProviderMetadata = providerMetadata
                },
            };
 

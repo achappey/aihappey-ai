@@ -859,6 +859,8 @@ public static class VercelUnifiedMapper
 
     private static UIMessagePart? ToUIMessagePart(AIToolCallContentPart part)
     {
+        var providerMetadata = ToVercelToolProviderMetadata(part.Metadata);
+
         return part.Type.StartsWith("tool-", StringComparison.OrdinalIgnoreCase)
             ? new ToolInvocationPart
             {
@@ -869,10 +871,37 @@ public static class VercelUnifiedMapper
                 State = part.State ?? string.Empty,
                 Output = WrapToolOutputForUi(part.Output, part.ProviderExecuted) ?? new { },
                 ProviderExecuted = part.ProviderExecuted,
-                Approval = ToVercelApproval(part.Approval)
+                Approval = ToVercelApproval(part.Approval),
+                CallProviderMetadata = providerMetadata,
+                ResultProviderMetadata = HasToolInvocationOutput(part.Output) ? providerMetadata : null
             }
             : null;
     }
+
+    private static Dictionary<string, Dictionary<string, object>?>? ToVercelToolProviderMetadata(
+        Dictionary<string, object?>? metadata)
+    {
+        if (metadata is null)
+            return null;
+
+        var result = new Dictionary<string, Dictionary<string, object>?>();
+        foreach (var entry in metadata)
+        {
+            if (entry.Key.Contains('.', StringComparison.Ordinal))
+                continue;
+
+            var providerValues = ToObjectMap(entry.Value);
+            if (providerValues.Count > 0)
+                result[entry.Key] = providerValues.ToDictionary(value => value.Key, value => (object)value.Value!);
+        }
+
+        return result.Count == 0 ? null : result;
+    }
+
+    private static bool HasToolInvocationOutput(object? output)
+        => output is not null
+           && (output is not JsonElement json
+               || json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined);
 
     private static object? WrapToolOutputForUi(object? output, bool? providerExecuted)
     {

@@ -26,6 +26,10 @@ public sealed class ResponseFunctionCallItem : ResponseInputItem
 
     [JsonPropertyName("status")]
     public string? Status { get; set; }
+
+    [JsonPropertyName("caller")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ResponseCaller? Caller { get; set; }
 }
 
 public sealed class ResponseImageGenerationCallItem : ResponseInputItem
@@ -40,6 +44,68 @@ public sealed class ResponseImageGenerationCallItem : ResponseInputItem
 
     [JsonPropertyName("result")]
     public string Result { get; set; } = null!;
+
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("caller")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ResponseCaller? Caller { get; set; }
+}
+
+/// <summary>
+/// Identifies the provider item that invoked a nested response tool call.
+/// </summary>
+public sealed class ResponseCaller
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = default!;
+
+    [JsonPropertyName("caller_id")]
+    public string CallerId { get; set; } = default!;
+}
+
+/// <summary>
+/// Input item for replaying a prior programmatic tool call.
+/// </summary>
+public sealed class ResponseProgramItem : ResponseInputItem
+{
+    public ResponseProgramItem()
+    {
+        Type = "program";
+    }
+
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
+    [JsonPropertyName("call_id")]
+    public string CallId { get; set; } = default!;
+
+    [JsonPropertyName("code")]
+    public string Code { get; set; } = string.Empty;
+
+    [JsonPropertyName("fingerprint")]
+    public string Fingerprint { get; set; } = default!;
+}
+
+/// <summary>
+/// Input item for replaying the result of a prior programmatic tool call.
+/// </summary>
+public sealed class ResponseProgramOutputItem : ResponseInputItem
+{
+    public ResponseProgramOutputItem()
+    {
+        Type = "program_output";
+    }
+
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
+    [JsonPropertyName("call_id")]
+    public string CallId { get; set; } = default!;
+
+    [JsonPropertyName("result")]
+    public string Result { get; set; } = string.Empty;
 
     [JsonPropertyName("status")]
     public string? Status { get; set; }

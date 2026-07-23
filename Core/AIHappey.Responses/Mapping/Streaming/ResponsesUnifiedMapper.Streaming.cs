@@ -316,6 +316,7 @@ public static partial class ResponsesUnifiedMapper
         {
             case ResponseCreated created:
                 ClearShellStreamState();
+                ClearCodeInterpreterStreamState();
                 //    yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response, providerId);
                 yield break;
 
@@ -327,16 +328,21 @@ public static partial class ResponsesUnifiedMapper
                 foreach (var env in CreatePendingShellCompletionEnvelopes(providerId, completed.Response))
                     yield return env;
 
+                foreach (var env in CreatePendingCodeInterpreterCompletionEnvelopes(providerId, completed.Response))
+                    yield return env;
+
                 //   yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
 
                 yield return CreateFinishEnvelope(completed.Type,
                     completed.SequenceNumber, completed.Response);
                 ClearShellStreamState();
+                ClearCodeInterpreterStreamState();
                 yield break;
 
             case ResponseFailed failed:
                 //      yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response, providerId);
                 ClearShellStreamState();
+                ClearCodeInterpreterStreamState();
                 yield break;
 
             case ResponseReasoningSummaryPartAdded added:
@@ -755,6 +761,31 @@ public static partial class ResponsesUnifiedMapper
 
                     yield break;
                 }
+                else if (added.Item.Type == "program")
+                {
+                    var programCallId = added.Item.CallId ?? added.Item.Id ?? string.Empty;
+                    var programMetadata = CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                    {
+                        ["type"] = "program",
+                        ["id"] = added.Item.Id,
+                        ["call_id"] = added.Item.CallId,
+                        ["fingerprint"] = GetAdditionalPropertyValue(added.Item.AdditionalProperties, "fingerprint"),
+                        ["output_index"] = added.OutputIndex
+                    });
+
+                    yield return CreateToolInputStartEnvelope(
+                        programCallId,
+                        "program",
+                        "program",
+                        providerExecuted: true,
+                        providerMetadata: programMetadata);
+
+                    yield break;
+                }
+                else if (added.Item.Type == "program_output")
+                {
+                    yield break;
+                }
                 else if (added.Item.Type == "compaction")
                 {
                     var encryptedContent = GetAdditionalPropertyValue(added.Item.AdditionalProperties, "encrypted_content");
@@ -883,6 +914,59 @@ public static partial class ResponsesUnifiedMapper
                                 break;
                             }
 
+                        case "program":
+                            {
+                                var programCallId = done.Item.CallId ?? done.Item.Id ?? string.Empty;
+                                var code = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "code")?.ToString()
+                                    ?? string.Empty;
+                                var programMetadata = CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                                {
+                                    ["type"] = "program",
+                                    ["id"] = done.Item.Id,
+                                    ["call_id"] = done.Item.CallId,
+                                    ["fingerprint"] = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "fingerprint"),
+                                    ["output_index"] = done.OutputIndex
+                                });
+
+                                yield return CreateToolInputEndEnvelope(
+                                    programCallId,
+                                    "program",
+                                    new { code },
+                                    "program",
+                                    providerExecuted: true,
+                                    providerMetadata: programMetadata);
+
+                                break;
+                            }
+
+                        case "program_output":
+                            {
+                                var programCallId = done.Item.CallId ?? done.Item.Id ?? string.Empty;
+                                var result = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "result")?.ToString()
+                                    ?? string.Empty;
+                                var programOutputMetadata = CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                                {
+                                    ["type"] = "program_output",
+                                    ["id"] = done.Item.Id,
+                                    ["call_id"] = done.Item.CallId,
+                                    ["status"] = done.Item.Status,
+                                    ["output_index"] = done.OutputIndex
+                                });
+
+                                yield return CreateToolOutputEnvelope(
+                                    programCallId,
+                                    new
+                                    {
+                                        result,
+                                        status = done.Item.Status
+                                    },
+                                    toolName: "program",
+                                    providerExecuted: true,
+                                    providerMetadata: programOutputMetadata);
+
+                                break;
+                            }
+
                         case "file_search_call":
                             {
                                 var fileSearchInput = JsonSerializer.SerializeToElement(
@@ -984,30 +1068,8 @@ public static partial class ResponsesUnifiedMapper
 
                         case "code_interpreter_call":
                             {
-                                JsonElement? ciOutput = done.Item.AdditionalProperties?.TryGetValue("outputs", out var output) == true
-                                    ? output.Clone()
-                                    : null;
-
-                                string? ciContainer = done.Item.AdditionalProperties?.TryGetValue("container_id", out var container_id) == true
-                                    ? container_id.ToString()
-                                    : string.Empty;
-
-                                var toolCallResult = new CallToolResult()
-                                {
-                                    StructuredContent = JsonSerializer.SerializeToElement(new
-                                    {
-                                        container_id = ciContainer,
-                                        outputs = ciOutput,
-                                    })
-                                };
-
-                                yield return CreateToolOutputEnvelope(
-                                    done.Item.Id ?? string.Empty,
-                                    toolCallResult,
-                                    providerExecuted: true);
-
-                                foreach (var fileEnvelope in CreateCodeInterpreterOutputFileEnvelopes(providerId, done))
-                                    yield return fileEnvelope;
+                                foreach (var envelope in CreateCodeInterpreterOutputEnvelopes(providerId, done, authoritative: false))
+                                    yield return envelope;
 
                                 break;
                             }
