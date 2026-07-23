@@ -67,9 +67,13 @@ public partial class OpenAIProvider
             ["input"] = request.Text,
             ["voice"] = voice,
             ["response_format"] = formatString,
-            ["speed"] = request.Speed ?? metadata?.Speed,
-            ["instructions"] = request.Instructions ?? metadata?.Instructions
+            ["speed"] = request.Speed ?? metadata?.Speed
         };
+
+        var instructions = request.Instructions ?? metadata?.Instructions;
+
+        if (!string.IsNullOrWhiteSpace(instructions))
+            payload["instructions"] = instructions;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
