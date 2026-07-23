@@ -580,6 +580,7 @@ public class AIServiceConfig
     public ProviderConfig? Sluis { get; set; }
     public ProviderConfig? NeuralRing { get; set; }
     public ProviderConfig? EpisCloud { get; set; }
+    public ProviderConfig? CognitivessAI { get; set; }
     
 }
 
