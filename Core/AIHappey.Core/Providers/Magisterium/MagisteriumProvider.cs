@@ -21,13 +21,10 @@ public partial class MagisteriumProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly AsyncCacheHelper _memoryCache;
-
-    public MagisteriumProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public MagisteriumProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://www.magisterium.com/api/");
     }
@@ -65,7 +62,7 @@ public partial class MagisteriumProvider : IModelProvider
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-       throw new NotSupportedException();
+        throw new NotSupportedException();
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
