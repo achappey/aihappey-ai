@@ -583,7 +583,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["neuralring"] = "X-NeuralRing-Key",
             ["episcloud"] = "X-EpisCloud-Key",
             ["cognitivessai"] = "X-CognitivessAI-Key",
-            ["summa"] = "X-SUMMA-Key"
+            ["summa"] = "X-SUMMA-Key",
+            ["meshapi"] = "X-MeshAPI-Key"
 
         };
 
