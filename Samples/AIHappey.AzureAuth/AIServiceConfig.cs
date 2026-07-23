@@ -581,6 +581,7 @@ public class AIServiceConfig
     public ProviderConfig? NeuralRing { get; set; }
     public ProviderConfig? EpisCloud { get; set; }
     public ProviderConfig? CognitivessAI { get; set; }
+    public ProviderConfig? SUMMA { get; set; }
     
 }
 
