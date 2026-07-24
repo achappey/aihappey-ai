@@ -47,16 +47,16 @@ public static class ImageCompatibilityExtensions
             N = request.N,
             ProviderOptions = BuildProviderOptions(providerIdentifier, new()
             {
-            /*    ["background"] = request.Background,
-                ["moderation"] = request.Moderation,
-                ["output_compression"] = request.OutputCompression,
-                ["output_format"] = request.OutputFormat,
-                ["partial_images"] = request.PartialImages,
-                ["quality"] = request.Quality,
-                ["response_format"] = request.ResponseFormat,
-                ["stream"] = request.Stream,
-                ["style"] = request.Style,
-                ["user"] = request.User*/
+                /*    ["background"] = request.Background,
+                    ["moderation"] = request.Moderation,
+                    ["output_compression"] = request.OutputCompression,
+                    ["output_format"] = request.OutputFormat,
+                    ["partial_images"] = request.PartialImages,
+                    ["quality"] = request.Quality,
+                    ["response_format"] = request.ResponseFormat,
+                    ["stream"] = request.Stream,
+                    ["style"] = request.Style,
+                    ["user"] = request.User*/
             })
         };
 
@@ -71,18 +71,18 @@ public static class ImageCompatibilityExtensions
             Mask = await ResolveImageFile(request.MaskFile, request.Mask, cancellationToken),
             ProviderOptions = BuildProviderOptions(providerIdentifier, new()
             {
-            /*    ["background"] = request.Background,
-                ["input_fidelity"] = request.InputFidelity,
-                ["moderation"] = request.Moderation,
-                ["output_compression"] = request.OutputCompression,
-                ["output_format"] = request.OutputFormat,
-                ["partial_images"] = request.PartialImages,
-                ["quality"] = request.Quality,
-                ["stream"] = request.Stream,
-                ["user"] = request.User*/
+                /*    ["background"] = request.Background,
+                    ["input_fidelity"] = request.InputFidelity,
+                    ["moderation"] = request.Moderation,
+                    ["output_compression"] = request.OutputCompression,
+                    ["output_format"] = request.OutputFormat,
+                    ["partial_images"] = request.PartialImages,
+                    ["quality"] = request.Quality,
+                    ["stream"] = request.Stream,
+                    ["user"] = request.User*/
             })
         };
-  
+
 
     public static OpenAIImageEditRequest ToOpenAIImageEditRequest(this IFormCollection form)
         => new()
@@ -163,15 +163,16 @@ public static class ImageCompatibilityExtensions
             Quality = quality,
             Size = size,
             Usage = response.Usage.ToOpenAIImageUsage(),
-            Data = (response.Images ?? []).Where(image => !string.IsNullOrWhiteSpace(image)).Select(image => ToOpenAIImageData(image, preferUrl)).ToList()
+            Data = (response.Images ?? []).Where(image => !string.IsNullOrWhiteSpace(image)).Select(image => ToOpenAIImageData(image)).ToList()
         };
     }
 
-    private static OpenAIImageData ToOpenAIImageData(string image, bool preferUrl)
+    private static OpenAIImageData ToOpenAIImageData(string image)
     {
-        if (preferUrl && Uri.TryCreate(image, UriKind.Absolute, out var uri) 
+        if (Uri.TryCreate(image, UriKind.Absolute, out var uri)
             && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            return new OpenAIImageData { Url = image };
+            throw new Exception("Http urls not supported. Use base64 encoded images");
+
         var (_, b64) = ExtractImagePayload(image);
         return new OpenAIImageData { B64Json = b64 };
     }
@@ -223,10 +224,8 @@ public static class ImageCompatibilityExtensions
 
     private static ImageFile ToImageFile(OpenAIImageReference reference)
     {
-        if (!string.IsNullOrWhiteSpace(reference.FileId))
-            throw new NotSupportedException("OpenAI image file_id references are not supported by this compatibility fallback yet.");
         if (string.IsNullOrWhiteSpace(reference.ImageUrl))
-            throw new ArgumentException("Image references require either 'image_url' or 'file_id'.");
+            throw new ArgumentException("Image references require either 'image_url'.");
         if (!reference.ImageUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
             throw new NotSupportedException("Only base64 data URL image_url references are supported by this compatibility fallback yet.");
         var (mediaType, data) = ExtractImagePayload(reference.ImageUrl);
