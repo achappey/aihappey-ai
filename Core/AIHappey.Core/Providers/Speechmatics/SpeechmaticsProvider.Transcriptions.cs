@@ -9,7 +9,7 @@ namespace AIHappey.Core.Providers.Speechmatics;
 
 public partial class SpeechmaticsProvider
 {
-    private const string BatchBaseUrl = "https://asr.api.speechmatics.com";
+    private const string BatchBaseUrl = "https://eu1.asr.api.speechmatics.com";
     private const int MaxPollAttempts = 180;
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
@@ -64,12 +64,17 @@ public partial class SpeechmaticsProvider
 
     private static string BuildConfigJson(string model, SpeechmaticsTranscriptionProviderMetadata? metadata)
     {
+        var speechmaticsModel = NormalizeTranscriptionModelId(model);
         var transcriptionConfig = new Dictionary<string, object?>();
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
+        // Melia 1 is multilingual-only and rejects both a selected language and `auto`.
+        // It must always receive the documented `multi` language value.
+        if (string.Equals(speechmaticsModel, "melia-1", StringComparison.OrdinalIgnoreCase))
+            transcriptionConfig["language"] = "multi";
+        else if (!string.IsNullOrWhiteSpace(metadata?.Language))
             transcriptionConfig["language"] = metadata.Language;
 
-        transcriptionConfig["operating_point"] = model;
+        transcriptionConfig["model"] = speechmaticsModel;
 
         var config = new Dictionary<string, object?>
         {
@@ -78,6 +83,16 @@ public partial class SpeechmaticsProvider
         };
 
         return JsonSerializer.Serialize(config);
+    }
+
+    private static string NormalizeTranscriptionModelId(string model)
+    {
+        var value = model.Trim();
+        const string providerPrefix = "speechmatics/";
+
+        return value.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)
+            ? value[providerPrefix.Length..]
+            : value;
     }
 
     private async Task<string> PollUntilTerminalAsync(string jobId, CancellationToken cancellationToken)

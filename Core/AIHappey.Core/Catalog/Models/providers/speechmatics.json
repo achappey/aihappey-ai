@@ -2,7 +2,15 @@
     "object": "list",
     "data": [
         {
-            "id": "speechmatics/sarah",
+            "id": "speechmatics/tts",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Speechmatics Text to Speech",
+            "type": "speech",
+            "description": "Text-to-speech model; provide the voice request property"
+        },
+        {
+            "id": "speechmatics/tts/voice/sarah",
             "object": "model",
             "owned_by": "Speechmatics",
             "name": "Sarah: English Female (UK)",
@@ -13,7 +21,7 @@
             ]
         },
         {
-            "id": "speechmatics/theo",
+            "id": "speechmatics/tts/voice/theo",
             "object": "model",
             "owned_by": "Speechmatics",
             "name": "Theo: English Male (UK)",
@@ -24,7 +32,7 @@
             ]
         },
         {
-            "id": "speechmatics/megan",
+            "id": "speechmatics/tts/voice/megan",
             "object": "model",
             "owned_by": "Speechmatics",
             "name": "Megan: English Female (US)",
@@ -35,7 +43,7 @@
             ]
         },
         {
-            "id": "speechmatics/jack",
+            "id": "speechmatics/tts/voice/jack",
             "object": "model",
             "owned_by": "Speechmatics",
             "name": "Jack: English Male (US)",
@@ -60,6 +68,14 @@
             "name": "Speechmatics Enhanced",
             "type": "transcription",
             "description": "Enhanced speech-to-text transcription model"
+        },
+        {
+            "id": "speechmatics/melia-1",
+            "object": "model",
+            "owned_by": "Speechmatics",
+            "name": "Speechmatics Melia 1",
+            "type": "transcription",
+            "description": "Melia 1 matches the Enhanced and Standard models for core transcription features, including diarization, word timings, punctuation, notifications, and output locale."
         }
     ]
 }

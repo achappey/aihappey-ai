@@ -10,6 +10,8 @@ namespace AIHappey.Core.Providers.Speechmatics;
 
 public partial class SpeechmaticsProvider
 {
+    private const string TtsBaseUrl = "https://preview.tts.speechmatics.com";
+
     private static readonly JsonSerializerOptions SpeechJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -33,16 +35,26 @@ public partial class SpeechmaticsProvider
 
         var audioFormat = request.OutputFormat?.ToLowerInvariant().Contains("pcm",
             StringComparison.InvariantCultureIgnoreCase) == true ? "pcm_16000" : "wav_16000";
+        var (modelId, modelVoice) = ParseSpeechModelAndVoice(request.Model);
+        var voice = modelVoice ?? request.Voice?.Trim();
+
+        if (string.IsNullOrWhiteSpace(voice))
+            throw new ArgumentException("A Speechmatics voice is required. Use a '/voice/[voice]' model id or set Voice.", nameof(request));
+
+        if (!string.IsNullOrWhiteSpace(modelVoice)
+            && !string.IsNullOrWhiteSpace(request.Voice)
+            && !string.Equals(modelVoice, request.Voice.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+        }
 
         var payload = new Dictionary<string, object?>
         {
             ["text"] = request.Text,
         };
 
-        if (!string.IsNullOrWhiteSpace(audioFormat))
-            payload["output_format"] = audioFormat;
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "generate/" + request.Model)
+        var endpoint = $"{TtsBaseUrl}/generate/{Uri.EscapeDataString(voice)}?output_format={audioFormat}";
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
             Content = new StringContent(
                 JsonSerializer.Serialize(payload, SpeechJson),
@@ -56,7 +68,9 @@ public partial class SpeechmaticsProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Speechmatics TTS failed ({(int)resp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
 
-        var mime = audioFormat.StartsWith("pcm") ? "application/octet-stream" : "audio/mpeg";
+        var mime = audioFormat.StartsWith("pcm", StringComparison.OrdinalIgnoreCase)
+            ? "application/octet-stream"
+            : "audio/wav";
         var base64 = Convert.ToBase64String(bytes);
 
         return new SpeechResponse
@@ -65,9 +79,9 @@ public partial class SpeechmaticsProvider
             {
                 Base64 = base64,
                 MimeType = mime,
-                Format = audioFormat.Split("_").First(),
+                Format = audioFormat.StartsWith("pcm", StringComparison.OrdinalIgnoreCase) ? "pcm" : "wav",
             },
-            Warnings = [],
+            Warnings = warnings,
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Request = new()
             {
@@ -77,9 +91,28 @@ public partial class SpeechmaticsProvider
             {
                 Timestamp = DateTime.UtcNow,
                 Headers = resp.GetHeaders(),
-                ModelId = request.Model.ToModelId(GetIdentifier())
+                ModelId = modelId.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private (string Model, string? Voice) ParseSpeechModelAndVoice(string model)
+    {
+        var value = model.Trim();
+        var providerPrefix = GetIdentifier() + "/";
+        if (value.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            value = value[providerPrefix.Length..];
+
+        const string voiceSegment = "/voice/";
+        var voiceIndex = value.LastIndexOf(voiceSegment, StringComparison.OrdinalIgnoreCase);
+        if (voiceIndex < 0)
+            return (value, null);
+
+        var voice = value[(voiceIndex + voiceSegment.Length)..].Trim();
+        if (string.IsNullOrWhiteSpace(voice))
+            throw new ArgumentException("Speech voice model ids must use '[model]/voice/[voice]'.", nameof(model));
+
+        return (value[..voiceIndex].Trim(), voice);
     }
 
 }
