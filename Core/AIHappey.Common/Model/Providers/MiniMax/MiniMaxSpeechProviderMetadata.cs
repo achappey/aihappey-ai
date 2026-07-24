@@ -28,6 +28,18 @@ public sealed class MiniMaxSpeechProviderMetadata
 
     [JsonPropertyName("lyrics")]
     public string? Lyrics { get; set; }
+
+    [JsonPropertyName("lyrics_optimizer")]
+    public bool? LyricsOptimizer { get; set; }
+
+    [JsonPropertyName("is_instrumental")]
+    public bool? IsInstrumental { get; set; }
+
+    [JsonPropertyName("audio_base64")]
+    public string? AudioBase64 { get; set; }
+
+    [JsonPropertyName("cover_feature_id")]
+    public string? CoverFeatureId { get; set; }
 }
 
 public sealed class MiniMaxVoiceSetting

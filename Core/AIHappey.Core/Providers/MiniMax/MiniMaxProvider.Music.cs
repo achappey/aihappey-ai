@@ -31,33 +31,8 @@ public partial class MiniMaxProvider
 
         var metadata = request.GetProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
 
-        if (string.IsNullOrWhiteSpace(metadata?.Lyrics))
-            throw new ArgumentException("Lyrics are required.", nameof(request));
-
-        // ---- audio_setting ----
-        string format = (request.OutputFormat
-            ?? metadata?.AudioSetting?.Format
-            ?? "mp3").Trim().ToLowerInvariant();
-
-        format = format is "mp3" or "wav" or "pcm" ? format : "mp3";
-
-        // Contract choice: we always request hex, then return a data-url.
-        const string outputFormat = "hex";
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["prompt"] = request.Text,
-            ["lyrics"] = metadata?.Lyrics,
-            ["stream"] = false,
-            ["output_format"] = outputFormat,
-            ["audio_setting"] = new Dictionary<string, object?>
-            {
-                ["format"] = format,
-                ["sample_rate"] = metadata?.AudioSetting?.SampleRate,
-                ["bitrate"] = metadata?.AudioSetting?.Bitrate,
-            }
-        };
+        var payload = BuildMusicPayload(request, metadata, stream: false);
+        var format = ((Dictionary<string, object?>)payload["audio_setting"]!)["format"]!.ToString()!;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/music_generation")
         {
@@ -132,6 +107,72 @@ public partial class MiniMaxProvider
             }
         };
 
+    }
+
+    private static Dictionary<string, object?> BuildMusicPayload(
+        SpeechRequest request,
+        MiniMaxSpeechProviderMetadata? metadata,
+        bool stream)
+    {
+        var normalizedModel = request.Model.Trim().ToLowerInvariant();
+        var isCover = normalizedModel.StartsWith("music-cover", StringComparison.Ordinal);
+        var isInstrumental = metadata?.IsInstrumental ?? false;
+        var lyrics = metadata?.Lyrics?.Trim();
+        var prompt = request.Text?.Trim();
+        var audioBase64 = metadata?.AudioBase64?.Trim();
+        var coverFeatureId = metadata?.CoverFeatureId?.Trim();
+
+        if (isCover)
+        {
+            if (!string.IsNullOrWhiteSpace(audioBase64)
+                && Uri.TryCreate(audioBase64, UriKind.Absolute, out var uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                throw new NotSupportedException("MiniMax music cover audio must be base64 encoded; remote audio URLs are not supported.");
+            }
+
+            if (string.IsNullOrWhiteSpace(audioBase64) == string.IsNullOrWhiteSpace(coverFeatureId))
+                throw new ArgumentException("MiniMax music cover requires exactly one of providerOptions.minimax.audio_base64 or providerOptions.minimax.cover_feature_id.", nameof(request));
+
+            if (string.IsNullOrWhiteSpace(prompt) || prompt.Length is < 10 or > 300)
+                throw new ArgumentException("MiniMax music cover prompt must contain 10 to 300 characters.", nameof(request));
+
+            if (!string.IsNullOrWhiteSpace(coverFeatureId) && (string.IsNullOrWhiteSpace(lyrics) || lyrics.Length is < 10 or > 1000))
+                throw new ArgumentException("MiniMax music cover with cover_feature_id requires 10 to 1000 lyric characters.", nameof(request));
+        }
+        else
+        {
+            if (isInstrumental && (string.IsNullOrWhiteSpace(prompt) || prompt.Length > 2000))
+                throw new ArgumentException("Instrumental MiniMax music requires a prompt of 1 to 2000 characters.", nameof(request));
+
+            if (!isInstrumental && string.IsNullOrWhiteSpace(lyrics) && metadata?.LyricsOptimizer != true)
+                throw new ArgumentException("Non-instrumental MiniMax music requires lyrics unless providerOptions.minimax.lyrics_optimizer is true.", nameof(request));
+
+            if (!string.IsNullOrWhiteSpace(lyrics) && lyrics.Length > 3500)
+                throw new ArgumentException("MiniMax music lyrics must not exceed 3500 characters.", nameof(request));
+        }
+
+        var format = (request.OutputFormat ?? metadata?.AudioSetting?.Format ?? "mp3").Trim().ToLowerInvariant();
+        format = format is "mp3" or "wav" or "pcm" ? format : "mp3";
+
+        return new Dictionary<string, object?>
+        {
+            ["model"] = request.Model,
+            ["prompt"] = prompt,
+            ["lyrics"] = lyrics,
+            ["stream"] = stream,
+            ["output_format"] = "hex",
+            ["lyrics_optimizer"] = metadata?.LyricsOptimizer,
+            ["is_instrumental"] = isInstrumental,
+            ["audio_base64"] = audioBase64,
+            ["cover_feature_id"] = coverFeatureId,
+            ["audio_setting"] = new Dictionary<string, object?>
+            {
+                ["format"] = format,
+                ["sample_rate"] = metadata?.AudioSetting?.SampleRate,
+                ["bitrate"] = metadata?.AudioSetting?.Bitrate
+            }
+        };
     }
 
 }

@@ -40,65 +40,8 @@ public partial class MiniMaxProvider
         var metadata = request.GetProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
 
         // ---- voice_setting ----
-        var voiceId = request.Voice
-            ?? metadata?.VoiceSetting?.VoiceId
-            ?? "English_Insightful_Speaker";
-
-        var speed = request.Speed
-            ?? metadata?.VoiceSetting?.Speed
-            ?? 1.0f;
-        speed = Math.Clamp(speed, 0.5f, 2.0f);
-
-        var vol = metadata?.VoiceSetting?.Vol ?? 1.0;
-        if (vol <= 0) vol = 1.0;
-        if (vol > 10) vol = 10;
-
-        var pitch = metadata?.VoiceSetting?.Pitch ?? 0;
-        if (pitch < -12) pitch = -12;
-        if (pitch > 12) pitch = 12;
-
-        // ---- audio_setting ----
-        string format = (request.OutputFormat
-            ?? metadata?.AudioSetting?.Format
-            ?? "mp3").Trim().ToLowerInvariant();
-
-        format = format is "mp3" or "wav" or "flac" or "pcm" ? format : "mp3";
-
-        // Map SpeechRequest.language (usually IETF like en-US) to MiniMax language_boost enum.
-        var languageBoost = metadata?.LanguageBoost ?? MapLanguageToLanguageBoost(request.Language);
-
-        // Contract choice: we always request hex, then return a data-url.
-        const string outputFormat = "hex";
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["text"] = request.Text,
-            ["stream"] = false,
-            ["output_format"] = outputFormat,
-            ["language_boost"] = languageBoost,
-            ["subtitle_enable"] = metadata?.SubtitleEnable,
-            ["pronunciation_dict"] = metadata?.PronunciationDict,
-            ["voice_modify"] = metadata?.VoiceModify,
-            ["voice_setting"] = new Dictionary<string, object?>
-            {
-                ["voice_id"] = voiceId,
-                ["speed"] = speed,
-                ["vol"] = vol,
-                ["pitch"] = pitch,
-                ["emotion"] = metadata?.VoiceSetting?.Emotion,
-                ["text_normalization"] = metadata?.VoiceSetting?.TextNormalization,
-                ["latex_read"] = metadata?.VoiceSetting?.LatexRead,
-            },
-            ["audio_setting"] = new Dictionary<string, object?>
-            {
-                ["format"] = format,
-                ["sample_rate"] = metadata?.AudioSetting?.SampleRate,
-                ["bitrate"] = metadata?.AudioSetting?.Bitrate,
-                ["channel"] = metadata?.AudioSetting?.Channel,
-                ["force_cbr"] = metadata?.AudioSetting?.ForceCbr,
-            }
-        };
+        var payload = BuildSpeechPayload(request, metadata, stream: false);
+        var format = ((Dictionary<string, object?>)payload["audio_setting"]!)["format"]!.ToString()!;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/t2a_v2")
         {
@@ -265,6 +208,49 @@ public partial class MiniMaxProvider
             "ta" => "Tamil",
             "af" => "Afrikaans",
             _ => null
+        };
+    }
+
+    private static Dictionary<string, object?> BuildSpeechPayload(
+        SpeechRequest request,
+        MiniMaxSpeechProviderMetadata? metadata,
+        bool stream)
+    {
+        var voiceId = request.Voice ?? metadata?.VoiceSetting?.VoiceId ?? "English_Insightful_Speaker";
+        var speed = Math.Clamp(request.Speed ?? metadata?.VoiceSetting?.Speed ?? 1.0f, 0.5f, 2.0f);
+        var volume = Math.Clamp(metadata?.VoiceSetting?.Vol ?? 1.0, double.Epsilon, 10);
+        var pitch = Math.Clamp(metadata?.VoiceSetting?.Pitch ?? 0, -12, 12);
+        var format = (request.OutputFormat ?? metadata?.AudioSetting?.Format ?? "mp3").Trim().ToLowerInvariant();
+        format = format is "mp3" or "wav" or "flac" or "pcm" ? format : "mp3";
+
+        return new Dictionary<string, object?>
+        {
+            ["model"] = request.Model,
+            ["text"] = request.Text,
+            ["stream"] = stream,
+            ["output_format"] = "hex",
+            ["language_boost"] = metadata?.LanguageBoost ?? MapLanguageToLanguageBoost(request.Language),
+            ["subtitle_enable"] = metadata?.SubtitleEnable,
+            ["pronunciation_dict"] = metadata?.PronunciationDict,
+            ["voice_modify"] = metadata?.VoiceModify,
+            ["voice_setting"] = new Dictionary<string, object?>
+            {
+                ["voice_id"] = voiceId,
+                ["speed"] = speed,
+                ["vol"] = volume,
+                ["pitch"] = pitch,
+                ["emotion"] = metadata?.VoiceSetting?.Emotion,
+                ["text_normalization"] = metadata?.VoiceSetting?.TextNormalization,
+                ["latex_read"] = metadata?.VoiceSetting?.LatexRead
+            },
+            ["audio_setting"] = new Dictionary<string, object?>
+            {
+                ["format"] = format,
+                ["sample_rate"] = metadata?.AudioSetting?.SampleRate,
+                ["bitrate"] = metadata?.AudioSetting?.Bitrate,
+                ["channel"] = metadata?.AudioSetting?.Channel,
+                ["force_cbr"] = metadata?.AudioSetting?.ForceCbr
+            }
         };
     }
 
