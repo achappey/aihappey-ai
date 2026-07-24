@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -32,7 +31,7 @@ public partial class LumaAIProvider
             warnings.Add(new { type = "unsupported", feature = "seed" });
 
         var model = request.Model;
-        if (model is not ("ray-2" or "ray-flash-2"))
+        if (model is not "ray-3.2")
             throw new NotSupportedException($"Luma video model '{request.Model}' is not supported.");
 
         if (request.Image is not null && !request.Image.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
@@ -41,30 +40,31 @@ public partial class LumaAIProvider
         var payload = new Dictionary<string, object?>
         {
             ["model"] = model,
+            ["type"] = "video",
             ["prompt"] = string.IsNullOrWhiteSpace(request.Prompt) ? null : request.Prompt,
-            ["resolution"] = string.IsNullOrWhiteSpace(request.Resolution) ? null : request.Resolution,
             ["aspect_ratio"] = string.IsNullOrWhiteSpace(request.AspectRatio) ? null : request.AspectRatio,
-            ["duration"] = request.Duration is null ? null : $"{request.Duration.Value}s",
+            ["video"] = new Dictionary<string, object?>
+            {
+                ["resolution"] = string.IsNullOrWhiteSpace(request.Resolution) ? null : request.Resolution,
+                ["duration"] = request.Duration is null ? null : $"{request.Duration.Value}s"
+            }
         };
 
         var providerOptions = GetLumaVideoProviderOptions(request, GetIdentifier());
         if (providerOptions?.Loop is not null)
-            payload["loop"] = providerOptions.Loop.Value;
+            ((Dictionary<string, object?>)payload["video"]!)["loop"] = providerOptions.Loop.Value;
 
         if (request.Image is not null)
         {
-            payload["keyframes"] = new Dictionary<string, object?>
+            ((Dictionary<string, object?>)payload["video"]!)["start_frame"] = new Dictionary<string, object?>
             {
-                ["frame0"] = new Dictionary<string, object?>
-                {
-                    ["type"] = "image",
-                    ["url"] = request.Image.Data.ToDataUrl(request.Image.MediaType)
-                }
+                ["data"] = request.Image.Data,
+                ["media_type"] = request.Image.MediaType
             };
         }
 
         var createJson = JsonSerializer.Serialize(payload, LumaImageJsonOptions);
-        using var createReq = new HttpRequestMessage(HttpMethod.Post, "dream-machine/v1/generations/video")
+        using var createReq = new HttpRequestMessage(HttpMethod.Post, "v1/generations")
         {
             Content = new StringContent(createJson, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
@@ -79,76 +79,57 @@ public partial class LumaAIProvider
         var generationId = TryGetString(createRoot, "id")
             ?? throw new InvalidOperationException("Luma video response missing generation id.");
 
-        LumaGenerationStatus? final = null;
-        string? deleteFailureMessage = null;
+        var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
+            poll: ct => PollGenerationAsync(generationId, ct),
+            isTerminal: r => r.State is "completed" or "failed",
+            interval: TimeSpan.FromSeconds(2),
+            timeout: null,
+            maxAttempts: null,
+            cancellationToken: cancellationToken);
 
-        try
+        if (final.State == "failed")
         {
-            final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-                poll: ct => PollGenerationAsync(generationId, ct),
-                isTerminal: r => r.State is "completed" or "failed",
-                interval: TimeSpan.FromSeconds(2),
-                timeout: TimeSpan.FromMinutes(10),
-                maxAttempts: null,
-                cancellationToken: cancellationToken);
+            var failureReason = TryGetString(final.Root, "failure_reason") ?? "Unknown failure.";
+            throw new InvalidOperationException($"Luma video generation failed (id={generationId}): {failureReason}");
+        }
 
-            if (final.State == "failed")
-            {
-                var failureReason = TryGetString(final.Root, "failure_reason") ?? "Unknown failure.";
-                throw new InvalidOperationException($"Luma video generation failed (id={generationId}): {failureReason}");
-            }
+        var videoUrl = GetGenerationOutputUrl(final.Root, "video");
+        if (string.IsNullOrWhiteSpace(videoUrl))
+            throw new InvalidOperationException($"Luma video generation completed but no video output was found (id={generationId}).");
 
-            var videoUrl = TryGetString(final.Root, "assets", "video");
-            if (string.IsNullOrWhiteSpace(videoUrl))
-                throw new InvalidOperationException($"Luma video generation completed but no assets.video found (id={generationId}).");
+        using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
+        var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!videoResp.IsSuccessStatusCode)
+        {
+            var err = Encoding.UTF8.GetString(videoBytes);
+            throw new InvalidOperationException($"Luma video download failed ({(int)videoResp.StatusCode}): {err}");
+        }
 
-            using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
-            var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
-            if (!videoResp.IsSuccessStatusCode)
-            {
-                var err = Encoding.UTF8.GetString(videoBytes);
-                throw new InvalidOperationException($"Luma video download failed ({(int)videoResp.StatusCode}): {err}");
-            }
+        var mediaType = videoResp.Content.Headers.ContentType?.MediaType
+            ?? GuessVideoMediaType(videoUrl)
+            ?? "video/mp4";
 
-            var mediaType = videoResp.Content.Headers.ContentType?.MediaType
-                ?? GuessVideoMediaType(videoUrl)
-                ?? "video/mp4";
-
-            return new VideoResponse
-            {
-                Videos =
-                [
-                    new VideoResponseFile
-                    {
-                        MediaType = mediaType,
-                        Data = Convert.ToBase64String(videoBytes)
-                    }
-                ],
-                Warnings = warnings,
-                ProviderMetadata = new Dictionary<string, JsonElement>
+        return new VideoResponse
+        {
+            Videos =
+            [
+                new VideoResponseFile
                 {
-                    [GetIdentifier()] = final.Root.Clone()
-                },
-                Response = new()
-                {
-                    Timestamp = now,
-                    ModelId = request.Model.ToModelId(GetIdentifier())
+                    MediaType = mediaType,
+                    Data = Convert.ToBase64String(videoBytes)
                 }
-            };
-        }
-        finally
-        {
-            using var deleteReq = new HttpRequestMessage(HttpMethod.Delete, $"dream-machine/v1/generations/{generationId}");
-            using var deleteResp = await _client.SendAsync(deleteReq, cancellationToken);
-            if (!deleteResp.IsSuccessStatusCode)
+            ],
+            Warnings = warnings,
+            ProviderMetadata = new Dictionary<string, JsonElement>
             {
-                var deleteRaw = await deleteResp.Content.ReadAsStringAsync(cancellationToken);
-                deleteFailureMessage = $"Luma generation delete failed ({(int)deleteResp.StatusCode}) for id={generationId}: {deleteRaw}";
+                [GetIdentifier()] = final.Root.Clone()
+            },
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
-
-            if (!string.IsNullOrWhiteSpace(deleteFailureMessage))
-                throw new InvalidOperationException(deleteFailureMessage);
-        }
+        };
     }
 
     private sealed class LumaVideoProviderOptions

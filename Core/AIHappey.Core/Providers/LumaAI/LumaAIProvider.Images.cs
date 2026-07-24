@@ -42,18 +42,27 @@ public partial class LumaAIProvider
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
         var model = request.Model;
-        if (model is not ("photon-1" or "photon-flash-1"))
+        if (model is not ("uni-1" or "uni-1-max"))
             throw new NotSupportedException($"Luma image model '{request.Model}' is not supported.");
 
         var payload = new Dictionary<string, object?>
         {
             ["prompt"] = request.Prompt,
             ["model"] = model,
-            ["aspect_ratio"] = string.IsNullOrWhiteSpace(request.AspectRatio) ? null : request.AspectRatio
+            ["aspect_ratio"] = string.IsNullOrWhiteSpace(request.AspectRatio) ? null : request.AspectRatio,
+            ["type"] = request.Files?.Any() == true ? "image_edit" : "image"
         };
 
+        var references = request.Files?.Select(ToLumaImageReference).ToList() ?? [];
+        if (references.Count > 0)
+        {
+            payload["source"] = references[0];
+            if (references.Count > 1)
+                payload["image_ref"] = references.Skip(1).ToArray();
+        }
+
         var createJson = JsonSerializer.Serialize(payload, LumaImageJsonOptions);
-        using var createReq = new HttpRequestMessage(HttpMethod.Post, "dream-machine/v1/generations/image")
+        using var createReq = new HttpRequestMessage(HttpMethod.Post, "v1/generations")
         {
             Content = new StringContent(createJson, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
@@ -72,7 +81,7 @@ public partial class LumaAIProvider
             poll: ct => PollGenerationAsync(generationId, ct),
             isTerminal: r => r.State is "completed" or "failed",
             interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
+            timeout: null,
             maxAttempts: null,
             cancellationToken: cancellationToken);
 
@@ -82,9 +91,9 @@ public partial class LumaAIProvider
             throw new InvalidOperationException($"Luma image generation failed (id={generationId}): {failureReason}");
         }
 
-        var imageUrl = TryGetString(final.Root, "assets", "image");
+        var imageUrl = GetGenerationOutputUrl(final.Root, "image");
         if (string.IsNullOrWhiteSpace(imageUrl))
-            throw new InvalidOperationException($"Luma image generation completed but no assets.image found (id={generationId}).");
+            throw new InvalidOperationException($"Luma image generation completed but no image output was found (id={generationId}).");
 
         using var imageResp = await _client.GetAsync(imageUrl, cancellationToken);
         var imageBytes = await imageResp.Content.ReadAsByteArrayAsync(cancellationToken);
@@ -98,14 +107,6 @@ public partial class LumaAIProvider
             ?? GuessImageMediaType(imageUrl)
             ?? MediaTypeNames.Image.Jpeg;
         var imageDataUrl = Convert.ToBase64String(imageBytes).ToDataUrl(mediaType);
-
-        using var deleteReq = new HttpRequestMessage(HttpMethod.Delete, $"dream-machine/v1/generations/{generationId}");
-        using var deleteResp = await _client.SendAsync(deleteReq, cancellationToken);
-        if (!deleteResp.IsSuccessStatusCode)
-        {
-            var deleteRaw = await deleteResp.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException($"Luma generation delete failed ({(int)deleteResp.StatusCode}) for id={generationId}: {deleteRaw}");
-        }
 
         return new ImageResponse
         {
@@ -125,7 +126,7 @@ public partial class LumaAIProvider
 
     private async Task<LumaGenerationStatus> PollGenerationAsync(string generationId, CancellationToken cancellationToken)
     {
-        using var pollResp = await _client.GetAsync($"dream-machine/v1/generations/{generationId}", cancellationToken);
+        using var pollResp = await _client.GetAsync($"v1/generations/{generationId}", cancellationToken);
         var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
         if (!pollResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Luma generation poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
@@ -134,6 +135,42 @@ public partial class LumaAIProvider
         var root = pollDoc.RootElement.Clone();
         var state = (TryGetString(root, "state") ?? "unknown").Trim().ToLowerInvariant();
         return new LumaGenerationStatus(state, root);
+    }
+
+    private static Dictionary<string, object?> ToLumaImageReference(ImageFile image)
+    {
+        if (string.IsNullOrWhiteSpace(image.MediaType) || !image.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Luma image inputs must have an image/* media type.", nameof(image));
+        if (string.IsNullOrWhiteSpace(image.Data))
+            throw new ArgumentException("Luma image input data is required.", nameof(image));
+
+        return new Dictionary<string, object?>
+        {
+            ["data"] = image.Data,
+            ["media_type"] = image.MediaType
+        };
+    }
+
+    private static string? GetGenerationOutputUrl(JsonElement root, string outputType)
+    {
+        if (root.ValueKind != JsonValueKind.Object
+            || !root.TryGetProperty("output", out var output)
+            || output.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var item in output.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var type = TryGetString(item, "type");
+            var url = TryGetString(item, "url");
+            if (!string.IsNullOrWhiteSpace(url)
+                && (string.IsNullOrWhiteSpace(type) || type.Equals(outputType, StringComparison.OrdinalIgnoreCase)))
+                return url;
+        }
+
+        return null;
     }
 
     private static string? TryGetString(JsonElement element, params string[] path)

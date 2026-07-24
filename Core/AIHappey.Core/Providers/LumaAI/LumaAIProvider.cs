@@ -20,7 +20,7 @@ public partial class LumaAIProvider : IModelProvider
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.lumalabs.ai/");
+        _client.BaseAddress = new Uri("https://agents.lumalabs.ai/");
     }
 
     private void ApplyAuthHeader()
@@ -88,43 +88,23 @@ public partial class LumaAIProvider : IModelProvider
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    
+  
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

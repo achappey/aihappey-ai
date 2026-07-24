@@ -2,31 +2,24 @@
   "object": "list",
   "data": [
     {
-      "id": "lumaai/ray-flash-2",
+      "id": "lumaai/ray-3.2",
       "object": "model",
       "owned_by": "Luma AI",
       "name": "Ray 2 Flash",
       "type": "video"
     },
     {
-      "id": "lumaai/ray-2",
+      "id": "lumaai/uni-1",
       "object": "model",
       "owned_by": "Luma AI",
-      "name": "Ray 2",
-      "type": "video"
-    },
-    {
-      "id": "lumaai/photon-1",
-      "object": "model",
-      "owned_by": "Luma AI",
-      "name": "Photon 1",
+      "name": "uni-1",
       "type": "image"
     },
     {
-      "id": "lumaai/photon-flash-1",
+      "id": "lumaai/uni-1-max",
       "object": "model",
       "owned_by": "Luma AI",
-      "name": "Photon Flash 1",
+      "name": "uni-1-max",
       "type": "image"
     }
   ]
