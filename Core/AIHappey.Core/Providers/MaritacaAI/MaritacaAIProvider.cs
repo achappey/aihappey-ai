@@ -8,6 +8,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Unified.Models;
@@ -78,9 +79,14 @@ public partial class MaritacaAIProvider : IModelProvider
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        var headers = this.SetDefaultResponseProperties(options);
+        NormalizeMaritacaIntegratedTools(options);
 
-        var response = await this.GetResponse(_client,
-                   options, cancellationToken: cancellationToken);
+        var response = await _client.GetResponses(
+            options,
+            GetIdentifier(),
+            headers: headers,
+            ct: cancellationToken);
 
         return response;
     }
@@ -90,10 +96,14 @@ public partial class MaritacaAIProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        var headers = this.SetDefaultResponseProperties(options);
+        NormalizeMaritacaIntegratedTools(options);
 
-        await foreach (var update in this.GetResponses(_client,
+        await foreach (var update in _client.GetResponsesUpdates(
            options,
-           cancellationToken: cancellationToken))
+           providerId: GetIdentifier(),
+           headers: headers,
+           ct: cancellationToken))
         {
             yield return update;
         }
@@ -137,10 +147,89 @@ public partial class MaritacaAIProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        => ExecuteMaritacaUnifiedAsync(request, cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+       => StreamMaritacaUnifiedAsync(request, cancellationToken);
+
+    private async Task<AIResponse> ExecuteMaritacaUnifiedAsync(AIRequest request, CancellationToken cancellationToken)
+    {
+        var responseRequest = request.ToResponseRequest(GetIdentifier());
+        responseRequest.Stream = false;
+        responseRequest.Store ??= false;
+        NormalizeResponseInput(responseRequest);
+
+        var response = await ResponsesAsync(responseRequest, cancellationToken);
+        return response.ToUnifiedResponse(GetIdentifier());
+    }
+
+    private async IAsyncEnumerable<AIStreamEvent> StreamMaritacaUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var responseRequest = request.ToResponseRequest(GetIdentifier());
+        responseRequest.Stream = true;
+        responseRequest.Store ??= false;
+        NormalizeResponseInput(responseRequest);
+
+        await foreach (var update in ResponsesStreamingAsync(responseRequest, cancellationToken))
+        {
+            foreach (var streamEvent in update.ToUnifiedStreamEvent(GetIdentifier()))
+                yield return streamEvent;
+        }
+    }
+
+    private static void NormalizeResponseInput(ResponseRequest request)
+    {
+        if (request.Input?.Items is null)
+            return;
+
+        var normalizedItems = request.Input.Items.Select(item =>
+        {
+            if (item is not ResponseInputMessage message
+                || message.Role != ResponseRole.Assistant
+                || !message.Content.IsParts
+                || message.Content.Parts?.All(part => part is OutputTextPart) != true)
+            {
+                return item;
+            }
+
+            return new ResponseInputMessage
+            {
+                Id = message.Id,
+                Role = message.Role,
+                Status = message.Status,
+                Phase = message.Phase,
+                Content = new ResponseMessageContent(string.Concat(
+                    message.Content.Parts.Cast<OutputTextPart>().Select(part => part.Text)))
+            };
+        });
+
+        request.Input = new ResponseInput(normalizedItems);
+    }
+
+    private static void NormalizeMaritacaIntegratedTools(ResponseRequest request)
+    {
+        foreach (var tool in request.Tools ?? [])
+        {
+            var name = tool.Extra is not null && tool.Extra.TryGetValue("name", out var nameElement)
+                ? nameElement.GetString()
+                : null;
+
+            if (string.Equals(name, "web_search", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, "code_interpreter", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, "data_ocean", StringComparison.OrdinalIgnoreCase))
+            {
+                tool.Type = name;
+                tool.Extra = null;
+            }
+            else if (string.Equals(name, "code_execution", StringComparison.OrdinalIgnoreCase))
+            {
+                tool.Type = "code_interpreter";
+                tool.Extra = null;
+            }
+        }
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
