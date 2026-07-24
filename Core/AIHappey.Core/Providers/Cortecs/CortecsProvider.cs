@@ -4,9 +4,11 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Core.AI;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
@@ -45,6 +47,12 @@ public partial class CortecsProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        {
+            var unifiedResponse = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+            return unifiedResponse.ToChatCompletion();
+        }
+
         ApplyAuthHeader();
 
         var response = await this.GetChatCompletion(_client,
@@ -57,6 +65,17 @@ public partial class CortecsProvider : IModelProvider
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                yield return streamEvent.ToChatCompletionUpdate();
+            }
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         string? lastFinishReason = null;
@@ -118,6 +137,12 @@ public partial class CortecsProvider : IModelProvider
      Dictionary<string, string> headers,
      CancellationToken cancellationToken = default)
     {
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        {
+            var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+            return result.ToMessagesResponse();
+        }
+
         ApplyAuthHeader();
 
         return await this.GetMessage(_client,
@@ -126,24 +151,55 @@ public partial class CortecsProvider : IModelProvider
             cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
         MessagesRequest request,
         Dictionary<string, string> headers,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                foreach (var part in streamEvent.ToMessageStreamParts())
+                    yield return part;
+            }
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
-        return this.GetMessages(_client,
-            request,
-            headers: headers,
-            cancellationToken: cancellationToken);
+        await foreach (var part in this.GetMessages(_client, request, headers: headers, cancellationToken: cancellationToken)
+                           .WithCancellation(cancellationToken))
+        {
+            yield return part;
+        }
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
    
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
