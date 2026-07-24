@@ -73,7 +73,7 @@ public partial class EcoiaProvider
     {
         options.ValidateOpenAIImageGenerationRequest();
         var result = await ImageRequest(options.ToImageRequest(
-            options.ResolveOpenAIImageGenerationModel(),
+            options.Model,
             GetIdentifier()), cancellationToken);
         return result.ToOpenAIImagesResponse(options);
     }
@@ -84,7 +84,7 @@ public partial class EcoiaProvider
     {
         options.ValidateOpenAIImageGenerationRequest();
         var result = await ImageRequest(options.ToImageRequest(
-            options.ResolveOpenAIImageGenerationModel(),
+            options.Model,
             GetIdentifier()), cancellationToken);
 
         foreach (var streamEvent in result.ToOpenAIImageGenerationCompletedEvents(options))
@@ -100,7 +100,7 @@ public partial class EcoiaProvider
     {
         options.ValidateOpenAIImageEditRequest();
         var request = await options.ToImageRequest(
-            options.ResolveOpenAIImageEditModel(),
+            options.Model,
             GetIdentifier(),
             cancellationToken);
         var result = await ImageRequest(request, cancellationToken);
@@ -113,7 +113,7 @@ public partial class EcoiaProvider
     {
         options.ValidateOpenAIImageEditRequest();
         var request = await options.ToImageRequest(
-            options.ResolveOpenAIImageEditModel(),
+            options.Model,
             GetIdentifier(),
             cancellationToken);
         var result = await ImageRequest(request, cancellationToken);

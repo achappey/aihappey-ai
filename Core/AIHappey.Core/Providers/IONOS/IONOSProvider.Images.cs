@@ -33,7 +33,7 @@ public partial class IONOSProvider
 
         var payload = new Dictionary<string, object?>
         {
-            ["model"] = options.ResolveOpenAIImageGenerationModel(),
+            ["model"] = options.Model,
             ["prompt"] = options.Prompt,
             ["n"] = options.N,
             ["size"] = NormalizeSize(options.Size),
@@ -90,7 +90,7 @@ public partial class IONOSProvider
                 : await GetImageDataUrlAsync(options.MaskFile, cancellationToken);
 
         return await SendImageEditAsync(
-            options.ResolveOpenAIImageEditModel(),
+            options.Model,
             options.Prompt,
             url,
             maskImage,

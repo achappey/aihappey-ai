@@ -18,7 +18,6 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
     {
         try
         {
-            requestDto.Model = requestDto.ResolveOpenAIImageGenerationModel();
             requestDto.ValidateOpenAIImageGenerationRequest();
 
             var provider = await resolver.Resolve(requestDto.Model, cancellationToken);

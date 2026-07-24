@@ -24,7 +24,6 @@ public class OpenAIImageEditsController(IAIModelProviderResolver resolver) : Con
                 ? (await Request.ReadFormAsync(cancellationToken)).ToOpenAIImageEditRequest()
                 : await Request.ReadFromJsonAsync<OpenAIImageEditRequest>(cancellationToken) ?? new OpenAIImageEditRequest();
 
-            requestDto.Model = requestDto.ResolveOpenAIImageEditModel();
             requestDto.ValidateOpenAIImageEditRequest();
 
             var provider = await resolver.Resolve(requestDto.Model, cancellationToken);

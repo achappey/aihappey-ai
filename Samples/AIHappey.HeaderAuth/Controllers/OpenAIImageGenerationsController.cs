@@ -16,7 +16,6 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
     {
         try
         {
-            requestDto.Model = requestDto.ResolveOpenAIImageGenerationModel();
             requestDto.ValidateOpenAIImageGenerationRequest();
 
             HeaderAuthModelContext.SetActiveProvider(HttpContext, requestDto.Model);

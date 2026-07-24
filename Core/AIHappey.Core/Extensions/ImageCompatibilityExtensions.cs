@@ -8,14 +8,6 @@ namespace AIHappey.Core.Extensions;
 
 public static class ImageCompatibilityExtensions
 {
-    private const string DefaultGenerationModel = "dall-e-2";
-    private const string DefaultEditModel = "gpt-image-1.5";
-    public static string ResolveOpenAIImageGenerationModel(this OpenAIImageGenerationRequest request)
-        => string.IsNullOrWhiteSpace(request.Model) ? DefaultGenerationModel : request.Model.Trim();
-
-    public static string ResolveOpenAIImageEditModel(this OpenAIImageEditRequest request)
-        => string.IsNullOrWhiteSpace(request.Model) ? DefaultEditModel : request.Model.Trim();
-
     public static void ValidateOpenAIImageGenerationRequest(this OpenAIImageGenerationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);

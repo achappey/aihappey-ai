@@ -16,7 +16,7 @@ public partial class LyceumProvider
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
-
+ 
     public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

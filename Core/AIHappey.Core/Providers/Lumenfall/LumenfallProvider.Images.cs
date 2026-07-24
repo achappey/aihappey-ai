@@ -37,6 +37,7 @@ public partial class LumenfallProvider
         "user"
     ];
 
+
     private async Task<ImageResponse> ImageRequestLumenfall(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
