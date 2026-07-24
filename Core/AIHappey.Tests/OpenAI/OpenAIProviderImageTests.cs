@@ -262,40 +262,6 @@ public sealed class OpenAIProviderImageTests
         Assert.Equal("edit-native", result.Data!.Single().B64Json);
     }
 
-    [Fact]
-    public async Task OpenAIImageVariationRequestAsync_PostsMultipartImage()
-    {
-        string? requestedPath = null;
-        string? contentType = null;
-        string? body = null;
-        var provider = CreateProvider(request =>
-        {
-            requestedPath = request.RequestUri?.PathAndQuery;
-            contentType = request.Content?.Headers.ContentType?.MediaType;
-            body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
-
-            return JsonResponse("""
-            {
-              "created": 1748372400,
-              "data": [ { "url": "https://example.com/image.png" } ]
-            }
-            """);
-        });
-
-        var result = await provider.OpenAIImageVariationRequestAsync(new OpenAIImageVariationRequest
-        {
-            Model = "dall-e-2",
-            ImageFile = FormImage("image", "image.png", "image/png"),
-            N = 1,
-            ResponseFormat = "url"
-        });
-
-        Assert.Equal("/v1/images/variations", requestedPath);
-        Assert.Equal("multipart/form-data", contentType);
-        Assert.Contains("name=image", body);
-        Assert.Equal("https://example.com/image.png", result.Data!.Single().Url);
-    }
-
     private static OpenAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => new(
             new StaticApiKeyResolver(),

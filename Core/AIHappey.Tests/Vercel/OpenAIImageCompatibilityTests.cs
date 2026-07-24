@@ -80,33 +80,7 @@ public sealed class OpenAIImageCompatibilityTests
         Assert.Equal("webp", providerOptions.GetProperty("output_format").GetString());
         Assert.True(providerOptions.GetProperty("stream").GetBoolean());
     }
-
-    [Fact]
-    public async Task OpenAI_image_variation_multipart_form_maps_to_vercel_image_request()
-    {
-        var form = CreateForm(new Dictionary<string, StringValues>
-        {
-            ["model"] = "openai/dall-e-2",
-            ["n"] = "2",
-            ["response_format"] = "url",
-            ["size"] = "1024x1024",
-            ["user"] = "user-1234"
-        });
-
-        var request = form.ToOpenAIImageVariationRequest();
-        request.ValidateOpenAIImageVariationRequest();
-        var vercelRequest = await request.ToImageRequest("dall-e-2", "openai");
-
-        Assert.Equal("dall-e-2", vercelRequest.Model);
-        Assert.Equal("Create a variation of the provided image.", vercelRequest.Prompt);
-        Assert.Equal(2, vercelRequest.N);
-        Assert.Single(vercelRequest.Files!);
-
-        var providerOptions = vercelRequest.ProviderOptions!["openai"];
-        Assert.Equal("url", providerOptions.GetProperty("response_format").GetString());
-        Assert.Equal("user-1234", providerOptions.GetProperty("user").GetString());
-    }
-
+  
     [Fact]
     public void Vercel_image_response_projects_to_openai_images_response_and_stream_events()
     {

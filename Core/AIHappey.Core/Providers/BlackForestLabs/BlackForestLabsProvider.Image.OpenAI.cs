@@ -60,19 +60,7 @@ public partial class BlackForestLabsProvider
             cancellationToken.ThrowIfCancellationRequested();
             yield return streamEvent;
         }
-    }
-
-    public async Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        options.ValidateOpenAIImageVariationRequest();
-
-        var request = await options.ToImageRequest(
-            ResolveOpenAIModel(options.Model),
-            GetIdentifier(),
-            cancellationToken);
-        var result = await ImageRequest(request, cancellationToken);
-        return result.ToOpenAIImagesResponse(options);
-    }
+    }   
 
     private static string ResolveOpenAIModel(string? model)
     {

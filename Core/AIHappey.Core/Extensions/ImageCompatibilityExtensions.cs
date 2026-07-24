@@ -10,17 +10,11 @@ public static class ImageCompatibilityExtensions
 {
     private const string DefaultGenerationModel = "dall-e-2";
     private const string DefaultEditModel = "gpt-image-1.5";
-    private const string DefaultVariationModel = "dall-e-2";
-    private const string VariationFallbackPrompt = "Create a variation of the provided image.";
-
     public static string ResolveOpenAIImageGenerationModel(this OpenAIImageGenerationRequest request)
         => string.IsNullOrWhiteSpace(request.Model) ? DefaultGenerationModel : request.Model.Trim();
 
     public static string ResolveOpenAIImageEditModel(this OpenAIImageEditRequest request)
         => string.IsNullOrWhiteSpace(request.Model) ? DefaultEditModel : request.Model.Trim();
-
-    public static string ResolveOpenAIImageVariationModel(this OpenAIImageVariationRequest request)
-        => string.IsNullOrWhiteSpace(request.Model) ? DefaultVariationModel : request.Model.Trim();
 
     public static void ValidateOpenAIImageGenerationRequest(this OpenAIImageGenerationRequest request)
     {
@@ -42,14 +36,6 @@ public static class ImageCompatibilityExtensions
         ValidateImageCount(request.N);
         ValidatePartialImages(request.PartialImages);
         ValidateOutputCompression(request.OutputCompression);
-    }
-
-    public static void ValidateOpenAIImageVariationRequest(this OpenAIImageVariationRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        if (request.ImageFile == null && request.Image == null)
-            throw new ArgumentException("'image' is a required field");
-        ValidateImageCount(request.N);
     }
 
     public static ImageRequest ToImageRequest(this OpenAIImageGenerationRequest request, string model, string providerIdentifier)
@@ -96,21 +82,7 @@ public static class ImageCompatibilityExtensions
                 ["user"] = request.User*/
             })
         };
-
-    public static async Task<ImageRequest> ToImageRequest(this OpenAIImageVariationRequest request, string model, string providerIdentifier, CancellationToken cancellationToken = default)
-        => new()
-        {
-            Model = model,
-            Prompt = VariationFallbackPrompt,
-            Size = request.Size,
-            N = request.N,
-            Files = [await ResolveRequiredImageFile(request.ImageFile, request.Image, cancellationToken)],
-            ProviderOptions = BuildProviderOptions(providerIdentifier, new()
-            {
-               // ["response_format"] = request.ResponseFormat,
-               // ["user"] = request.User
-            })
-        };
+  
 
     public static OpenAIImageEditRequest ToOpenAIImageEditRequest(this IFormCollection form)
         => new()
@@ -120,7 +92,7 @@ public static class ImageCompatibilityExtensions
             Background = ReadFormString(form, "background"),
             InputFidelity = ReadFormString(form, "input_fidelity"),
             MaskFile = form.Files.GetFile("mask"),
-            Model = ReadFormString(form, "model"),
+            Model = ReadFormString(form, "model") ?? throw new Exception("Model required"),
             Moderation = ReadFormString(form, "moderation"),
             N = ReadFormInt(form, "n"),
             OutputCompression = ReadFormInt(form, "output_compression"),
@@ -132,25 +104,11 @@ public static class ImageCompatibilityExtensions
             User = ReadFormString(form, "user")
         };
 
-    public static OpenAIImageVariationRequest ToOpenAIImageVariationRequest(this IFormCollection form)
-        => new()
-        {
-            ImageFile = form.Files.GetFile("image"),
-            Model = ReadFormString(form, "model"),
-            N = ReadFormInt(form, "n"),
-            ResponseFormat = ReadFormString(form, "response_format"),
-            Size = ReadFormString(form, "size"),
-            User = ReadFormString(form, "user")
-        };
-
     public static OpenAIImagesResponse ToOpenAIImagesResponse(this ImageResponse response, OpenAIImageGenerationRequest request)
         => response.ToOpenAIImagesResponse(request.Background, request.OutputFormat, request.Quality, request.Size, request.ResponseFormat);
 
     public static OpenAIImagesResponse ToOpenAIImagesResponse(this ImageResponse response, OpenAIImageEditRequest request)
         => response.ToOpenAIImagesResponse(request.Background, request.OutputFormat, request.Quality, request.Size, null);
-
-    public static OpenAIImagesResponse ToOpenAIImagesResponse(this ImageResponse response, OpenAIImageVariationRequest request)
-        => response.ToOpenAIImagesResponse(null, null, null, request.Size, request.ResponseFormat);
 
     public static IEnumerable<IOpenAIImageStreamEvent> ToOpenAIImageGenerationCompletedEvents(this ImageResponse response, OpenAIImageGenerationRequest request)
     {

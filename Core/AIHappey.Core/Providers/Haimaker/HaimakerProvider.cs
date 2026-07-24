@@ -121,10 +121,7 @@ public partial class HaimakerProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {

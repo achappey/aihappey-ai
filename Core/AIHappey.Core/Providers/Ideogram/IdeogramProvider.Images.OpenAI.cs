@@ -71,15 +71,6 @@ public partial class IdeogramProvider
         }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
-        OpenAIImageVariationRequest options,
-        CancellationToken cancellationToken = default)
-    {
-        options.ValidateOpenAIImageVariationRequest();
-        options.Model = ResolveOpenAIModel(options.Model);
-        return this.FromImageRequest(options, cancellationToken);
-    }
-
     private static string ResolveOpenAIModel(string? model)
         => string.IsNullOrWhiteSpace(model) ? "ideogram/ideogram-v4" : model.Trim();
 }

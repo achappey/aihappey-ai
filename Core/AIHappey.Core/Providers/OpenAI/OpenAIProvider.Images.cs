@@ -55,16 +55,7 @@ public partial class OpenAIProvider
             options,
             cancellationToken: cancellationToken);
     }
-
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return _client.OpenAICompatibleImageVariationRequestAsync(
-            options,
-            cancellationToken: cancellationToken);
-    }
-
+   
     private const string DefaultOpenAiImageOutputFormat = "png";
 
     private static readonly IReadOnlyDictionary<string, OpenAiImageTokenPricing> OpenAiImagePricing =
@@ -106,7 +97,6 @@ public partial class OpenAIProvider
         using var httpRequest = operation switch
         {
             OpenAiImageOperation.Generation => BuildOpenAiImageGenerationRequest(imageRequest, warnings),
-            OpenAiImageOperation.Variation => BuildOpenAiImageVariationRequest(imageRequest, files[0], warnings),
             OpenAiImageOperation.Edit => BuildOpenAiImageEditRequest(imageRequest, files, warnings),
             _ => throw new NotSupportedException($"Unsupported OpenAI image operation {operation}.")
         };
@@ -148,8 +138,7 @@ public partial class OpenAIProvider
     private static OpenAiImageOperation ResolveOpenAiImageOperation(int fileCount)
         => fileCount switch
         {
-            0 => OpenAiImageOperation.Generation,
-            1 => OpenAiImageOperation.Variation,
+            0 => OpenAiImageOperation.Generation,         
             _ => OpenAiImageOperation.Edit
         };
 
@@ -229,65 +218,6 @@ public partial class OpenAIProvider
         };
     }
 
-    private HttpRequestMessage BuildOpenAiImageVariationRequest(ImageRequest request, ImageFile file, List<object> warnings)
-    {
-        if (!string.Equals(NormalizeOpenAiImageModel(request.Model), "dall-e-2", StringComparison.OrdinalIgnoreCase))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "model",
-                details = "OpenAI image variations are only supported by dall-e-2. The request model was forwarded unchanged."
-            });
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Prompt))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "prompt",
-                details = "OpenAI image variations do not accept a prompt. Prompt was omitted."
-            });
-        }
-
-        if (request.Mask is not null)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "mask"
-            });
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.AspectRatio) && string.IsNullOrWhiteSpace(request.Size))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "aspectRatio",
-                details = "OpenAI image variations only accept square size values. Aspect ratio was omitted."
-            });
-        }
-
-        var content = new MultipartFormDataContent();
-        AddOpenAiMultipartString(content, "model", request.Model);
-        AddOpenAiMultipartString(content, "response_format", "b64_json");
-
-        if (request.N.HasValue)
-            AddOpenAiMultipartString(content, "n", request.N.Value.ToString(CultureInfo.InvariantCulture));
-
-        if (!string.IsNullOrWhiteSpace(request.Size))
-            AddOpenAiMultipartString(content, "size", request.Size);
-
-        content.Add(CreateOpenAiImageFileContent(file), "image", GetOpenAiImageFilename(file, 0));
-
-        return new HttpRequestMessage(HttpMethod.Post, "v1/images/variations")
-        {
-            Content = content
-        };
-    }
-
     private static void AddOpenAiImageCommonOptions(
         Dictionary<string, object?> payload,
         ImageRequest request,
@@ -312,9 +242,6 @@ public partial class OpenAIProvider
             return request.Size;
 
         if (string.IsNullOrWhiteSpace(request.AspectRatio))
-            return null;
-
-        if (operation == OpenAiImageOperation.Variation)
             return null;
 
         var size = request.AspectRatio.Trim().ToLowerInvariant() switch
@@ -622,7 +549,6 @@ public partial class OpenAIProvider
     private enum OpenAiImageOperation
     {
         Generation,
-        Variation,
         Edit
     }
 

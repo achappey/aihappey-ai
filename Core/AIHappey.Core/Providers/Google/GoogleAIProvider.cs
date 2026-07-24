@@ -241,10 +241,7 @@ public partial class GoogleAIProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
   
 }

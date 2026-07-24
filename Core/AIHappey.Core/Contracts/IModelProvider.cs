@@ -68,10 +68,6 @@ public interface IModelProvider
        OpenAIImageEditRequest options,
        CancellationToken cancellationToken = default);
 
-    Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
-       OpenAIImageVariationRequest options,
-       CancellationToken cancellationToken = default);
-
     Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);

@@ -105,10 +105,7 @@ public partial class SpeechactorsProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {

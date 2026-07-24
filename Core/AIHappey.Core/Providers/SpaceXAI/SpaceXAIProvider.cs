@@ -224,10 +224,7 @@ public partial class SpaceXAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
 
 }

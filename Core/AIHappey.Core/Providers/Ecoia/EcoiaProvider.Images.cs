@@ -124,20 +124,7 @@ public partial class EcoiaProvider
             yield return streamEvent;
         }
     }
-
-    public async Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
-        OpenAIImageVariationRequest options,
-        CancellationToken cancellationToken = default)
-    {
-        options.ValidateOpenAIImageVariationRequest();
-        var request = await options.ToImageRequest(
-            options.ResolveOpenAIImageVariationModel(),
-            GetIdentifier(),
-            cancellationToken);
-        var result = await ImageRequest(request, cancellationToken);
-        return result.ToOpenAIImagesResponse(options);
-    }
-
+   
     private Dictionary<string, object?> BuildImagePayload(ImageRequest request, List<object> warnings)
     {
         var content = new List<object>

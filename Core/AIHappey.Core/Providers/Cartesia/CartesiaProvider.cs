@@ -180,9 +180,6 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
 }

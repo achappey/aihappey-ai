@@ -148,9 +148,6 @@ public partial class APIpieProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
 }

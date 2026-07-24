@@ -133,11 +133,6 @@ public partial class CommonstackProvider
         }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
-        OpenAIImageVariationRequest options,
-        CancellationToken cancellationToken = default)
-        => this.FromImageRequest(options, cancellationToken);
-
     private OpenAIImageGenerationRequest CreateGenericGenerationRequest(ImageRequest request, JsonElement metadata)
         => new()
         {

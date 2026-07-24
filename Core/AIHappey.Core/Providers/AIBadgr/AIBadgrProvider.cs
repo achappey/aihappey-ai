@@ -129,12 +129,7 @@ public partial class AIBadgrProvider : IModelProvider
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException("AI Badgr documents image generation only; image edits are not supported.");
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("AI Badgr documents image generation only; image variations are not supported.");
-    }
+    }   
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);

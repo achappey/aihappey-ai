@@ -164,9 +164,6 @@ public partial class BergetAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
 }

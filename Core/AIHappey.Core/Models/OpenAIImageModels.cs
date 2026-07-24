@@ -135,40 +135,6 @@ public class OpenAIImageEditRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? User { get; set; }
 }
-
-/// <summary>
-/// OpenAI compatible request DTO for <c>POST /v1/images/variations</c>.
-/// </summary>
-public class OpenAIImageVariationRequest
-{
-    [JsonPropertyName("image")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public OpenAIImageReference? Image { get; set; }
-
-    [JsonIgnore]
-    public IFormFile? ImageFile { get; set; }
-
-    [JsonPropertyName("model")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string Model { get; set; } = null!;
-
-    [JsonPropertyName("n")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public int? N { get; set; }
-
-    [JsonPropertyName("response_format")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ResponseFormat { get; set; }
-
-    [JsonPropertyName("size")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Size { get; set; }
-
-    [JsonPropertyName("user")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? User { get; set; }
-}
-
 public class OpenAIImageReference
 {
     [JsonPropertyName("file_id")]

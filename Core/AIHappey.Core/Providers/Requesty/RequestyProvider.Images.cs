@@ -64,11 +64,7 @@ public partial class RequestyProvider
             yield return streamEvent;
         }
     }
-
-    public async Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        return await this.FromImageRequest(options, cancellationToken: cancellationToken);
-    }
+   
 
     public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {

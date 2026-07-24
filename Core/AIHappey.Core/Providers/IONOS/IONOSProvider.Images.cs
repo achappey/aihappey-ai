@@ -126,11 +126,6 @@ public partial class IONOSProvider
         }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(
-        OpenAIImageVariationRequest options,
-        CancellationToken cancellationToken = default)
-        => this.FromImageRequest(options, cancellationToken);
-
     public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();

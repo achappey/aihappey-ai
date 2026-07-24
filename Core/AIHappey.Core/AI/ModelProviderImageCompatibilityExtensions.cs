@@ -3,23 +3,12 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Core.Contracts;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.AI;
 
 public static class ModelProviderImageCompatibilityExtensions
 {
-    public static async Task<OpenAIImagesResponse> FromImageRequest(this IModelProvider modelProvider,
-      OpenAIImageVariationRequest options,
-      CancellationToken cancellationToken = default)
-    {
-        var imageRequest = await options.ToImageRequest(options.Model!, modelProvider.GetIdentifier(), cancellationToken);
-        var imageResult = await modelProvider.ImageRequest(imageRequest, cancellationToken);
-
-        return imageResult.ToOpenAIImagesResponse(options);
-    }
 
     private static readonly JsonSerializerOptions OpenAIImageCompatibilityJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -187,31 +176,6 @@ public static class ModelProviderImageCompatibilityExtensions
         }
     }
 
-    public static async Task<OpenAIImagesResponse>
-        OpenAICompatibleImageVariationRequestAsync(
-            this HttpClient httpClient,
-            OpenAIImageVariationRequest options,
-            string? endpoint = "v1/images/variations",
-            CancellationToken cancellationToken = default)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
-        {
-            Content = CreateImageVariationContent(options, cancellationToken)
-        };
-
-        using var response = await httpClient.SendAsync(
-            request,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-
-        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-            throw CreateImageRequestException("Image variation", response, raw);
-
-        return DeserializeImagesResponse(raw, "image variation");
-    }
-
     private static async IAsyncEnumerable<IOpenAIImageStreamEvent>
         ReadOpenAICompatibleImageStreamAsync(
             this HttpClient httpClient,
@@ -344,23 +308,6 @@ public static class ModelProviderImageCompatibilityExtensions
         if (options.MaskFile != null)
             content.Add(CreateFileContent(options.MaskFile, cancellationToken), "mask", ResolveFileName(options.MaskFile, "mask.png"));
 
-        return content;
-    }
-
-    private static HttpContent CreateImageVariationContent(
-        OpenAIImageVariationRequest options,
-        CancellationToken cancellationToken)
-    {
-        if (options.ImageFile == null)
-            return CreateJsonContent(options, forceStream: false);
-
-        var content = new MultipartFormDataContent();
-        AddMultipartString(content, "model", options.Model);
-        AddMultipartString(content, "n", options.N?.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        AddMultipartString(content, "response_format", options.ResponseFormat);
-        AddMultipartString(content, "size", options.Size);
-        AddMultipartString(content, "user", options.User);
-        content.Add(CreateFileContent(options.ImageFile, cancellationToken), "image", ResolveFileName(options.ImageFile, "image.png"));
         return content;
     }
 

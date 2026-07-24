@@ -136,12 +136,6 @@ public partial class OrcaRouterProvider
         }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        options.ValidateOpenAIImageVariationRequest();
-        return this.FromImageRequest(options, cancellationToken);
-    }
-
     private static OpenAIImageGenerationRequest CreateGenerationRequest(ImageRequest request, JsonElement metadata)
         => new()
         {

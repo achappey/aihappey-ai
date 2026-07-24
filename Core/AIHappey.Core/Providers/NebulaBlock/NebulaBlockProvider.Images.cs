@@ -201,17 +201,4 @@ public partial class NebulaBlockProvider
         }
     }
 
-    public async Task<OpenAIImagesResponse> OpenAIImageVariationRequestAsync(OpenAIImageVariationRequest options, CancellationToken cancellationToken = default)
-    {
-        options.ValidateOpenAIImageVariationRequest();
-
-        var request = await options.ToImageRequest(
-            options.ResolveOpenAIImageVariationModel(),
-            GetIdentifier(),
-            cancellationToken);
-        var result = await ImageRequest(request, cancellationToken);
-
-        return result.ToOpenAIImagesResponse(options);
-    }
-
 }
