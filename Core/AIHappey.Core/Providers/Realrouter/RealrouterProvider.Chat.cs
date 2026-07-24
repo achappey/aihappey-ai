@@ -3,9 +3,9 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
 
-namespace AIHappey.Core.Providers.Realrouter;
+namespace AIHappey.Core.Providers.RealRouter;
 
-public partial class RealrouterProvider
+public partial class RealRouterProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

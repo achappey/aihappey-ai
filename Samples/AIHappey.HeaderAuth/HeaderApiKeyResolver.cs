@@ -512,7 +512,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["toolrelay"] = "X-ToolRelay-Key",
             ["callmissed"] = "X-CallMissed-Key",
             ["picklyone"] = "X-Picklyone-Key",
-            ["realrouter"] = "X-Realrouter-Key",
+            ["realrouter"] = "X-RealRouter-Key",
             ["opengate"] = "X-OpenGate-Key",
             ["keymeai"] = "X-KeyMeAI-Key",
             ["mycoai"] = "X-MyCoAI-Key",

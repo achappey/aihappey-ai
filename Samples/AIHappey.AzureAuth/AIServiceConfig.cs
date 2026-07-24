@@ -510,7 +510,7 @@ public class AIServiceConfig
     public ProviderConfig? ToolRelay { get; set; }
     public ProviderConfig? CallMissed { get; set; }
     public ProviderConfig? Picklyone { get; set; }
-    public ProviderConfig? Realrouter { get; set; }
+    public ProviderConfig? RealRouter { get; set; }
     public ProviderConfig? OpenGate { get; set; }
     public ProviderConfig? KeyMeAI { get; set; }
     public ProviderConfig? MyCoAI { get; set; }

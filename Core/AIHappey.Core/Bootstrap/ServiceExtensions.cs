@@ -510,7 +510,7 @@ using AIHappey.Core.Providers.ClawLite;
 using AIHappey.Core.Providers.ToolRelay;
 using AIHappey.Core.Providers.CallMissed;
 using AIHappey.Core.Providers.Picklyone;
-using AIHappey.Core.Providers.Realrouter;
+using AIHappey.Core.Providers.RealRouter;
 using AIHappey.Core.Providers.OpenGate;
 using AIHappey.Core.Providers.KeyMeAI;
 using AIHappey.Core.Providers.MyCoAI;
@@ -1116,7 +1116,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ToolRelayProvider>();
         services.AddSingleton<IModelProvider, CallMissedProvider>();
         services.AddSingleton<IModelProvider, PicklyoneProvider>();
-        services.AddSingleton<IModelProvider, RealrouterProvider>();
+        services.AddSingleton<IModelProvider, RealRouterProvider>();
         services.AddSingleton<IModelProvider, OpenGateProvider>();
         services.AddSingleton<IModelProvider, KeyMeAIProvider>();
         services.AddSingleton<IModelProvider, MyCoAIProvider>();

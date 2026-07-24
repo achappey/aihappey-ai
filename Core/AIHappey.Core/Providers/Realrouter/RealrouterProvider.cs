@@ -14,9 +14,9 @@ using System.Runtime.CompilerServices;
 using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.Realrouter;
+namespace AIHappey.Core.Providers.RealRouter;
 
-public partial class RealrouterProvider : IModelProvider
+public partial class RealRouterProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -24,7 +24,7 @@ public partial class RealrouterProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public RealrouterProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public RealRouterProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
@@ -38,7 +38,7 @@ public partial class RealrouterProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Realrouter)} API key.");
+            throw new InvalidOperationException($"No {nameof(RealRouter)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -59,7 +59,7 @@ public partial class RealrouterProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(Realrouter).ToLowerInvariant();
+    public string GetIdentifier() => nameof(RealRouter).ToLowerInvariant();
 
     public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
