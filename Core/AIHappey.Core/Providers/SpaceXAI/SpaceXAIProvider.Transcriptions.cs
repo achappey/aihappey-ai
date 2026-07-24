@@ -5,6 +5,7 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
@@ -73,9 +74,12 @@ public partial class SpaceXAIProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"{ProviderName} transcription failed ({(int)response.StatusCode}): {raw}");
 
+        var modelItem = await this.GetModel(request.Model, cancellationToken);
+
         return ConvertXAISttResponse(raw, request.Model.ToModelId(GetIdentifier()),
             now,
-            pricePerSecond: null);
+            pricePerSecond: modelItem?.Pricing?.Input,
+            response.GetHeaders());
     }
 
     private static void AddXAISttProviderOptions(MultipartFormDataContent form, JsonElement providerOptions)
@@ -87,6 +91,22 @@ public partial class SpaceXAIProvider
         {
             if (string.Equals(property.Name, "file", StringComparison.OrdinalIgnoreCase))
                 continue;
+
+            if (string.Equals(property.Name, "keyterm", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!TryConvertFormScalar(property.Value, out var keyterms))
+                    continue;
+
+                foreach (var keyterm in keyterms.Split(
+                             ',',
+                             StringSplitOptions.RemoveEmptyEntries |
+                             StringSplitOptions.TrimEntries))
+                {
+                    form.Add(new StringContent(keyterm), property.Name);
+                }
+
+                continue;
+            }
 
             if (TryConvertFormScalar(property.Value, out var value))
                 form.Add(new StringContent(value), property.Name);
@@ -172,9 +192,10 @@ public partial class SpaceXAIProvider
 
     private static TranscriptionResponse ConvertXAISttResponse(
       string raw,
-      string? requestModel,
+      string requestModel,
       DateTime timestamp,
-      decimal? pricePerSecond)
+      decimal? pricePerSecond,
+      Dictionary<string, string> headers)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
@@ -197,8 +218,9 @@ public partial class SpaceXAIProvider
             Response = new ResponseData
             {
                 Timestamp = timestamp,
-                ModelId = string.IsNullOrWhiteSpace(requestModel) ? "stt" : requestModel,
-                Body = raw
+                ModelId = requestModel,
+                Headers = headers,
+                Body = root.Clone()
             }
         };
     }
