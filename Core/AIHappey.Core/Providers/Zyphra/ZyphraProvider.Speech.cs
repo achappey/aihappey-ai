@@ -9,6 +9,9 @@ namespace AIHappey.Core.Providers.Zyphra;
 
 public partial class ZyphraProvider
 {
+    private const string ZyphraSpeechEndpoint = "v1/audio/speech";
+    private const string ZyphraSpeechModel = "zyphra/ZONOS2";
+
     private static readonly JsonSerializerOptions ZyphraSpeechJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -17,88 +20,42 @@ public partial class ZyphraProvider
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-
-        if (string.IsNullOrWhiteSpace(request.Model))
-            throw new ArgumentException("Model is required.", nameof(request));
-
-        if (string.IsNullOrWhiteSpace(request.Text))
-            throw new ArgumentException("Text is required.", nameof(request));
+        ValidateZyphraSpeechRequest(request.Model, request.Text, nameof(request));
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var apiKey = _keyResolver.Resolve(GetIdentifier());
-        if (string.IsNullOrWhiteSpace(apiKey))
-            throw new InvalidOperationException($"No {nameof(Zyphra)} API key.");
+        var (model, shortcutVoice) = ParseZyphraSpeechModelAndVoice(request.Model);
+        var payload = BuildZyphraSpeechPayload(
+            model,
+            shortcutVoice,
+            request.Text,
+            request.Voice,
+            request.OutputFormat,
+            request.Speed,
+            TryGetZyphraOptions(request),
+            stream: false,
+            warnings);
 
-        var (model, modelVoice) = ParseZyphraSpeechModelAndVoice(request.Model);
-        var outputMimeType = NormalizeZyphraMimeType(request.OutputFormat);
-        var zyphraOptions = TryGetZyphraOptions(request);
+        using var response = await SendZyphraSpeechRequestAsync(payload, cancellationToken);
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        EnsureZyphraSpeechSuccess(response, bytes);
 
-        var payload = new JsonObject
-        {
-            ["text"] = request.Text,
-            ["model"] = model
-        };
-
-        var requestVoice = string.IsNullOrWhiteSpace(request.Voice) ? null : request.Voice.Trim();
-        var effectiveVoice = modelVoice ?? requestVoice;
-        if (!string.IsNullOrWhiteSpace(effectiveVoice))
-            payload["default_voice_name"] = effectiveVoice;
-
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            payload["language_iso_code"] = request.Language.Trim();
-
-        if (request.Speed is not null)
-            payload["speaking_rate"] = request.Speed;
-
-        if (!string.IsNullOrWhiteSpace(outputMimeType))
-            payload["mime_type"] = outputMimeType;
-
-        MergeZyphraOptions(payload, zyphraOptions);
-
-        // Model shortcut voices (baseModel/voice) are authoritative.
-        // Ensure provider options cannot override the voice selected by model id.
-        if (!string.IsNullOrWhiteSpace(modelVoice))
-        {
-            payload["default_voice_name"] = modelVoice;
-            payload["voice_name"] = modelVoice;
-        }
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/text-to-speech")
-        {
-            Content = new StringContent(payload.ToJsonString(ZyphraSpeechJson), Encoding.UTF8, "application/json")
-        };
-
-        httpRequest.Headers.Add("X-API-Key", apiKey);
-        httpRequest.Headers.Accept.Clear();
-        httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
-
-        using var resp = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = Encoding.UTF8.GetString(bytes);
-            throw new InvalidOperationException($"Zyphra TTS failed ({(int)resp.StatusCode}): {err}");
-        }
-
-        var responseMimeType = resp.Content.Headers.ContentType?.MediaType ?? outputMimeType;
-        var format = ResolveZyphraOutputFormat(request.OutputFormat, responseMimeType, outputMimeType);
+        var mimeType = ResolveZyphraResponseMimeType(response.Content.Headers.ContentType?.MediaType, payload);
+        var format = ResolveZyphraOutputFormat(request.OutputFormat, mimeType, ReadPayloadString(payload, "response_format"));
 
         return new SpeechResponse
         {
             Audio = new()
             {
                 Base64 = Convert.ToBase64String(bytes),
-                MimeType = responseMimeType ?? "application/octet-stream",
-                Format = format ?? "webm"
+                MimeType = mimeType,
+                Format = format
             },
             Warnings = warnings,
-            ProviderMetadata = BuildZyphraProviderMetadata(model, payload, responseMimeType),
+            ProviderMetadata = BuildZyphraProviderMetadata(model, payload, mimeType),
             Response = new()
             {
                 Timestamp = now,
@@ -107,139 +64,217 @@ public partial class ZyphraProvider
         };
     }
 
-    private static (string BaseModelId, string? VoiceName) ParseZyphraSpeechModelAndVoice(string model)
+    private async Task<HttpResponseMessage> SendZyphraSpeechRequestAsync(JsonObject payload, CancellationToken cancellationToken)
+    {
+        var apiKey = _keyResolver.Resolve(GetIdentifier());
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException($"No {nameof(Zyphra)} API key.");
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, ZyphraSpeechEndpoint)
+        {
+            Content = new StringContent(payload.ToJsonString(ZyphraSpeechJson), Encoding.UTF8, "application/json")
+        };
+
+        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+
+        return await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+    }
+
+    private static JsonObject BuildZyphraSpeechPayload(
+        string model,
+        string? shortcutVoice,
+        string input,
+        string? requestedVoice,
+        string? outputFormat,
+        float? speed,
+        JsonElement? providerOptions,
+        bool stream,
+        List<object>? warnings = null)
+    {
+        var payload = new JsonObject
+        {
+            ["input"] = input,
+            ["model"] = model,
+            ["stream"] = stream
+        };
+
+        MergeZyphraOptions(payload, providerOptions);
+
+        var providerVoice = ReadPayloadString(payload, "voice");
+        var requestedVoiceValue = string.IsNullOrWhiteSpace(requestedVoice) ? null : requestedVoice.Trim();
+        var voice = shortcutVoice ?? requestedVoiceValue ?? providerVoice;
+        if (!string.IsNullOrWhiteSpace(voice))
+            payload["voice"] = voice;
+
+        if (!string.IsNullOrWhiteSpace(shortcutVoice))
+        {
+            if (!string.IsNullOrWhiteSpace(requestedVoiceValue)
+                && !string.Equals(shortcutVoice, requestedVoiceValue, StringComparison.OrdinalIgnoreCase))
+            {
+                warnings?.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(providerVoice)
+                && !string.Equals(shortcutVoice, providerVoice, StringComparison.OrdinalIgnoreCase))
+            {
+                warnings?.Add(new { type = "ignored", feature = "providerOptions.zyphra.voice", reason = "voice is derived from model id" });
+            }
+        }
+
+        if (speed is not null)
+            payload["speed"] = speed.Value;
+
+        var responseFormat = NormalizeZyphraResponseFormat(outputFormat);
+        if (!string.IsNullOrWhiteSpace(responseFormat))
+            payload["response_format"] = responseFormat;
+
+        payload["model"] = model;
+        payload["input"] = input;
+        payload["stream"] = stream;
+        return payload;
+    }
+
+    private static (string BaseModelId, string? VoiceId) ParseZyphraSpeechModelAndVoice(string model)
     {
         var localModel = NormalizeZyphraModelId(model);
         if (string.IsNullOrWhiteSpace(localModel))
             throw new ArgumentException("Model is required.", nameof(model));
 
-        var slashIndex = localModel.IndexOf('/');
-        if (slashIndex < 0)
-            return (localModel, null);
+        if (string.Equals(localModel, ZyphraSpeechModel, StringComparison.OrdinalIgnoreCase))
+            return (ZyphraSpeechModel, null);
 
-        if (slashIndex == 0 || slashIndex >= localModel.Length - 1)
-            throw new ArgumentException("Zyphra speech model must include both base model id and voice name in the form '[baseModel]/[voiceName]'.", nameof(model));
+        var prefix = ZyphraSpeechModel + "/";
+        if (!localModel.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            || localModel.Length == prefix.Length)
+        {
+            throw new ArgumentException(
+                $"Zyphra speech model must be '{ZyphraSpeechModel}' or '{ZyphraSpeechModel}/[voice_id]'.",
+                nameof(model));
+        }
 
-        var baseModelId = localModel[..slashIndex].Trim();
-        var voiceName = localModel[(slashIndex + 1)..].Trim();
-
-        if (string.IsNullOrWhiteSpace(baseModelId) || string.IsNullOrWhiteSpace(voiceName))
-            throw new ArgumentException("Zyphra speech model must include both base model id and voice name in the form '[baseModel]/[voiceName]'.", nameof(model));
-
-        return (baseModelId, voiceName);
+        return (ZyphraSpeechModel, localModel[prefix.Length..].Trim());
     }
 
     private static string NormalizeZyphraModelId(string model)
     {
         var trimmed = model.Trim();
-        if (trimmed.StartsWith("zyphra/", StringComparison.OrdinalIgnoreCase))
-            return trimmed["zyphra/".Length..];
-
-        return trimmed;
+        return trimmed.StartsWith("zyphra/", StringComparison.OrdinalIgnoreCase)
+            ? trimmed["zyphra/".Length..]
+            : trimmed;
     }
 
     private static JsonElement? TryGetZyphraOptions(SpeechRequest request)
     {
-        if (request.ProviderOptions is null)
+        if (request.ProviderOptions is null
+            || !request.ProviderOptions.TryGetValue(GetZyphraProviderIdentifier(), out var options)
+            || options.ValueKind != JsonValueKind.Object)
+        {
             return null;
+        }
 
-        if (!request.ProviderOptions.TryGetValue("zyphra", out var zyphra))
-            return null;
-
-        if (zyphra.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return zyphra;
+        return options;
     }
 
-    private static void MergeZyphraOptions(JsonObject payload, JsonElement? zyphraOptions)
+    private static string GetZyphraProviderIdentifier() => nameof(Zyphra).ToLowerInvariant();
+
+    private static void MergeZyphraOptions(JsonObject payload, JsonElement? providerOptions)
     {
-        if (zyphraOptions is null)
+        if (providerOptions is not { ValueKind: JsonValueKind.Object } options)
             return;
 
-        var options = zyphraOptions.Value;
-        if (options.ValueKind != JsonValueKind.Object)
-            return;
-
-        foreach (var prop in options.EnumerateObject())
+        foreach (var property in options.EnumerateObject())
         {
-            switch (prop.Name)
+            if (property.Name is "voice" or "byte_tokenize_all" or "expressive" or "max_tokens"
+                or "min_p" or "prepend_silence" or "quality_buckets" or "quality_enabled"
+                or "quality_values" or "reference_audio_b64" or "repetition_codebooks"
+                or "repetition_penalty" or "repetition_window" or "seed" or "silence_penalty"
+                or "speaker_embedding_base64" or "speaking_rate" or "speaking_rate_bucket"
+                or "speaking_rate_enabled" or "temperature" or "text_norm" or "top_p" or "topk"
+                or "utmos_bucket" or "utmos_enabled" or "utmos_score")
             {
-                case "speaker_audio":
-                case "voice_name":
-                case "default_voice_name":
-                case "emotion":
-                case "vqscore":
-                case "fmax":
-                case "pitchStd":
-                case "speaking_rate":
-                case "language_iso_code":
-                case "mime_type":
-                case "model":
-                case "speaker_noised":
-                    payload[prop.Name] = JsonNode.Parse(prop.Value.GetRawText());
-                    break;
+                payload[property.Name] = JsonNode.Parse(property.Value.GetRawText());
             }
         }
     }
 
-    private static string? NormalizeZyphraMimeType(string? outputFormat)
+    private static void ValidateZyphraSpeechRequest(string? model, string? input, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            throw new ArgumentException("Model is required.", parameterName);
+        if (string.IsNullOrWhiteSpace(input))
+            throw new ArgumentException("Input is required.", parameterName);
+    }
+
+    private static void EnsureZyphraSpeechSuccess(HttpResponseMessage response, byte[] body)
+    {
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Zyphra TTS failed ({(int)response.StatusCode}): {Encoding.UTF8.GetString(body)}");
+    }
+
+    private static string? NormalizeZyphraResponseFormat(string? outputFormat)
     {
         if (string.IsNullOrWhiteSpace(outputFormat))
             return null;
 
-        var trimmed = outputFormat.Trim().ToLowerInvariant();
-        if (trimmed.Contains('/'))
-            return trimmed;
+        var format = outputFormat.Trim().ToLowerInvariant();
+        if (format.Contains('/'))
+            return MapMimeToAudioFormat(format);
 
-        return trimmed switch
+        return format switch
         {
-            "mp3" => "audio/mpeg",
-            "mpeg" => "audio/mpeg",
-            "wav" => "audio/wav",
-            "ogg" => "audio/ogg",
-            "webm" => "audio/webm",
-            "aac" => "audio/aac",
-            "mp4" or "m4a" => "audio/mp4",
+            "mp3" or "opus" or "aac" or "flac" or "wav" or "pcm" or "m4a" => format,
+            "mpeg" => "mp3",
+            "mp4" => "m4a",
             _ => null
         };
     }
 
-    private static string? ResolveZyphraOutputFormat(string? requestFormat, string? responseMimeType, string? requestedMimeType)
+    private static string ResolveZyphraResponseMimeType(string? responseMimeType, JsonObject payload)
+        => !string.IsNullOrWhiteSpace(responseMimeType)
+            ? responseMimeType
+            : MapAudioFormatToMime(ReadPayloadString(payload, "response_format")) ?? "audio/mpeg";
+
+    private static string? ResolveZyphraOutputFormat(string? requestFormat, string? responseMimeType, string? requestedFormat)
     {
-        if (!string.IsNullOrWhiteSpace(requestFormat))
-        {
-            var trimmed = requestFormat.Trim().ToLowerInvariant();
-            return trimmed.Contains('/') ? MapMimeToAudioFormat(trimmed) : trimmed;
-        }
+        var normalizedRequestFormat = NormalizeZyphraResponseFormat(requestFormat);
+        if (!string.IsNullOrWhiteSpace(normalizedRequestFormat))
+            return normalizedRequestFormat;
 
         if (!string.IsNullOrWhiteSpace(responseMimeType))
             return MapMimeToAudioFormat(responseMimeType.Trim().ToLowerInvariant());
 
-        if (!string.IsNullOrWhiteSpace(requestedMimeType))
-            return MapMimeToAudioFormat(requestedMimeType.Trim().ToLowerInvariant());
-
-        return null;
+        return NormalizeZyphraResponseFormat(requestedFormat) ?? "mp3";
     }
 
-    private static string MapMimeToAudioFormat(string mimeType)
+    private static string MapMimeToAudioFormat(string mimeType) => mimeType switch
     {
-        return mimeType switch
-        {
-            "audio/mpeg" or "audio/mp3" => "mp3",
-            "audio/wav" or "audio/wave" or "audio/x-wav" => "wav",
-            "audio/ogg" => "ogg",
-            "audio/webm" => "webm",
-            "audio/aac" => "aac",
-            "audio/mp4" => "m4a",
-            _ => "webm"
-        };
-    }
+        "audio/mpeg" or "audio/mp3" => "mp3",
+        "audio/ogg" or "audio/opus" => "opus",
+        "audio/aac" => "aac",
+        "audio/flac" => "flac",
+        "audio/wav" or "audio/wave" or "audio/x-wav" => "wav",
+        "audio/l16" or "audio/pcm" => "pcm",
+        "audio/mp4" => "m4a",
+        _ => "mp3"
+    };
 
-    private Dictionary<string, JsonElement>? BuildZyphraProviderMetadata(
-        string model,
-        JsonObject payload,
-        string? responseMimeType)
+    private static string? MapAudioFormatToMime(string? format) => format?.Trim().ToLowerInvariant() switch
+    {
+        "mp3" => "audio/mpeg",
+        "opus" => "audio/opus",
+        "aac" => "audio/aac",
+        "flac" => "audio/flac",
+        "wav" => "audio/wav",
+        "pcm" => "audio/pcm",
+        "m4a" => "audio/mp4",
+        _ => null
+    };
+
+    private static string? ReadPayloadString(JsonObject payload, string propertyName)
+        => payload[propertyName]?.GetValue<string>();
+
+    private Dictionary<string, JsonElement> BuildZyphraProviderMetadata(string model, JsonObject payload, string? responseMimeType)
     {
         var metadata = new Dictionary<string, JsonElement>
         {
@@ -255,5 +290,4 @@ public partial class ZyphraProvider
             [GetIdentifier()] = JsonSerializer.SerializeToElement(metadata, ZyphraSpeechJson)
         };
     }
-
 }

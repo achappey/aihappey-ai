@@ -954,4 +954,4 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZenMux | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ❌ | ➖ |
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | ZyloAPI | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| Zyphra | ✅ | ❌ | 🟡 | ❌ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
+| Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
