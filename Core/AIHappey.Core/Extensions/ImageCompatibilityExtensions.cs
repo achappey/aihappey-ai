@@ -169,7 +169,8 @@ public static class ImageCompatibilityExtensions
 
     private static OpenAIImageData ToOpenAIImageData(string image, bool preferUrl)
     {
-        if (preferUrl && Uri.TryCreate(image, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        if (preferUrl && Uri.TryCreate(image, UriKind.Absolute, out var uri) 
+            && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             return new OpenAIImageData { Url = image };
         var (_, b64) = ExtractImagePayload(image);
         return new OpenAIImageData { B64Json = b64 };

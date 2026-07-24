@@ -139,6 +139,7 @@ public class OpenAIImageReference
 {
     [JsonPropertyName("file_id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [Obsolete("Use image_url")]
     public string? FileId { get; set; }
 
     [JsonPropertyName("image_url")]
@@ -188,6 +189,7 @@ public class OpenAIImageData
 
     [JsonPropertyName("url")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [Obsolete("Use b64_json only.")]
     public string? Url { get; set; }
 }
 
