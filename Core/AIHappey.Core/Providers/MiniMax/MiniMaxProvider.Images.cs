@@ -45,6 +45,9 @@ public partial class MiniMaxProvider
         var hasFiles = imageRequest.Files?.Any() == true;
         var firstFile = hasFiles ? imageRequest.Files!.First() : null;
 
+        if (firstFile is not null && IsRemoteUrl(firstFile.Data))
+            throw new NotSupportedException("MiniMax image inputs must be base64 encoded; remote image URLs are not supported.");
+
         if (hasFiles && imageRequest.Files!.Count() > 1)
         {
             warnings.Add(new
@@ -206,6 +209,11 @@ public partial class MiniMaxProvider
         var slash = trimmed.IndexOf('/');
         return slash >= 0 ? trimmed[(slash + 1)..] : trimmed;
     }
+
+    private static bool IsRemoteUrl(string? value)
+        => Uri.TryCreate(value, UriKind.Absolute, out var uri)
+           && (uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+               || uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase));
 
     private static string NearestMiniMaxAspectRatio(int width, int height)
     {
