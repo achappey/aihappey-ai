@@ -479,7 +479,6 @@ using AIHappey.Core.Providers.Runcrate;
 using AIHappey.Core.Providers.MuleRouter;
 using AIHappey.Core.Providers.Mixlayer;
 using AIHappey.Core.Providers.AllToken;
-using AIHappey.Core.Providers.AnLinkAI;
 using AIHappey.Core.Providers.HelyxAI;
 using AIHappey.Core.Providers.AnyRouter;
 using AIHappey.Core.Providers.Fred;
@@ -1085,8 +1084,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RuncrateProvider>();
         services.AddSingleton<IModelProvider, MuleRouterProvider>();
         services.AddSingleton<IModelProvider, MixlayerProvider>();
-        services.AddSingleton<IModelProvider, AllTokenProvider>();
-        services.AddSingleton<IModelProvider, AnLinkAIProvider>();
+        services.AddSingleton<IModelProvider, AllTokenProvider>();        
         services.AddSingleton<IModelProvider, HelyxAIProvider>();
         services.AddSingleton<IModelProvider, AnyRouterProvider>();
         services.AddSingleton<IModelProvider, FredProvider>();

@@ -476,8 +476,7 @@ public class AIServiceConfig
     public ProviderConfig? Runcrate { get; set; }
     public ProviderConfig? MuleRouter { get; set; }
     public ProviderConfig? Mixlayer { get; set; }
-    public ProviderConfig? AllToken { get; set; }
-    public ProviderConfig? AnLinkAI { get; set; }
+    public ProviderConfig? AllToken { get; set; }    
     public ProviderConfig? HelyxAI { get; set; }
     public ProviderConfig? AnyRouter { get; set; }
     public ProviderConfig? Fred { get; set; }
