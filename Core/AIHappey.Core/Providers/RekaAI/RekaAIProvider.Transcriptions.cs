@@ -1,15 +1,17 @@
 using AIHappey.Common.Model.Providers.RekaAI;
 using AIHappey.Vercel.Extensions;
-using System.Globalization;
+using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.RekaAI;
 
 public partial class RekaAIProvider
 {
+    private const string RekaTranscriptionInstruction =
+        "Transcribe the supplied audio faithfully. Return only the transcript, with no preamble, labels, commentary, or formatting.";
+
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
@@ -17,185 +19,46 @@ public partial class RekaAIProvider
         ApplyAuthHeader();
 
         ArgumentNullException.ThrowIfNull(request);
-
-        var audioString = request.Audio switch
-        {
-            JsonElement je when je.ValueKind == JsonValueKind.String => je.GetString(),
-            _ => request.Audio?.ToString()
-        };
-
-        if (string.IsNullOrWhiteSpace(audioString))
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+        if (request.Audio is null)
             throw new ArgumentException("Audio is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.MediaType))
+            throw new ArgumentException("Media type is required.", nameof(request));
 
         var metadata = request.GetProviderMetadata<RekaAITranscriptionProviderMetadata>(GetIdentifier());
-        var now = DateTime.UtcNow;
-        var warnings = new List<object>();
+        var warnings = BuildRekaTranscriptionWarnings(metadata);
+        var model = NormalizeRekaTranscriptionModelId(request.Model);
+        var audioBase64 = NormalizeRekaTranscriptionAudioData(request.Audio);
+        var payload = BuildRekaTranscriptionPayload(model, audioBase64, request.MediaType, metadata, stream: false);
+        var requestBody = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+        var timestamp = DateTime.UtcNow;
 
-        // Reka expects "audio_url" as an http(s) URL or data URI.
-        // Unified request can carry raw base64, so convert that to data URI.
-        var trimmedAudio = audioString.Trim();
-        var audioUrl = trimmedAudio.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || trimmedAudio.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || trimmedAudio.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? trimmedAudio
-            : BuildAudioDataUrl(trimmedAudio, request.MediaType);
+        using var content = new StringContent(requestBody, Encoding.UTF8, MediaTypeNames.Application.Json);
+        using var response = await _client.PostAsync("v1/chat/completions", content, cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["audio_url"] = audioUrl,
-            ["sampling_rate"] = metadata?.SamplingRate is > 0 ? metadata.SamplingRate.Value : 16000
-        };
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"RekaAI transcription failed ({(int)response.StatusCode}): {raw}");
 
-        if (metadata?.SamplingRate is <= 0)
-        {
-            warnings.Add(new
-            {
-                type = "invalid",
-                feature = "sampling_rate",
-                reason = "Must be greater than 0. Defaulted to 16000."
-            });
-        }
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var text = ExtractRekaTranscriptionText(root);
 
-        if (!string.IsNullOrWhiteSpace(metadata?.TargetLanguage))
-            payload["target_language"] = metadata.TargetLanguage;
-
-        if (metadata?.IsTranslate is not null)
-            payload["is_translate"] = metadata.IsTranslate.Value;
-
-        if (metadata?.ReturnTranslationAudio is not null)
-            payload["return_translation_audio"] = metadata.ReturnTranslationAudio.Value;
-
-        if (metadata?.Temperature is not null)
-            payload["temperature"] = metadata.Temperature.Value;
-
-        if (metadata?.MaxTokens is > 0)
-            payload["max_tokens"] = metadata.MaxTokens.Value;
-
-        if (metadata?.MaxTokens is <= 0)
-        {
-            warnings.Add(new
-            {
-                type = "invalid",
-                feature = "max_tokens",
-                reason = "Must be greater than 0. Omitted from request."
-            });
-        }
-
-        var body = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
-
-        using var content = new StringContent(body, Encoding.UTF8, MediaTypeNames.Application.Json);
-        using var resp = await _client.PostAsync("v1/transcription_or_translation", content, cancellationToken);
-        var json = await resp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"RekaAI transcription failed ({(int)resp.StatusCode}): {json}");
-
-        return ConvertRekaTranscriptionResponse(json, request.Model, metadata, now, warnings, body);
-    }
-
-    private static string BuildAudioDataUrl(string base64Audio, string? mediaType)
-    {
-        if (string.IsNullOrWhiteSpace(mediaType))
-            throw new ArgumentException("MediaType is required when audio is raw base64.");
-
-        return $"data:{mediaType};base64,{base64Audio}";
-    }
-
-    private Dictionary<string, JsonElement>? BuildProviderMetadata(string? translation, string? audioBase64)
-    {
-        var providerMeta = new Dictionary<string, object?>();
-
-        if (!string.IsNullOrWhiteSpace(translation))
-            providerMeta["translation"] = translation;
-
-        if (!string.IsNullOrWhiteSpace(audioBase64))
-            providerMeta["audio_base64"] = audioBase64;
-
-        if (providerMeta.Count == 0)
-            return null;
-
-        return new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMeta, JsonSerializerOptions.Web)
-        };
-    }
-
-    private TranscriptionResponse ConvertRekaTranscriptionResponse(
-        string json,
-        string model,
-        RekaAITranscriptionProviderMetadata? metadata,
-        DateTime timestamp,
-        IEnumerable<object> warnings,
-        string requestBody)
-    {
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
-        var segments = new List<TranscriptionSegment>();
-        if (root.TryGetProperty("transcript_translation_with_timestamp", out var segmentsEl)
-            && segmentsEl.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var seg in segmentsEl.EnumerateArray())
-            {
-                var text = seg.TryGetProperty("transcript", out var t) && t.ValueKind == JsonValueKind.String
-                    ? (t.GetString() ?? string.Empty)
-                    : string.Empty;
-
-                var start = seg.TryGetProperty("start", out var s) && TryReadFloat(s, out var sVal)
-                    ? sVal
-                    : 0f;
-
-                var end = seg.TryGetProperty("end", out var e) && TryReadFloat(e, out var eVal)
-                    ? eVal
-                    : 0f;
-
-                if (!string.IsNullOrWhiteSpace(text))
-                {
-                    segments.Add(new TranscriptionSegment
-                    {
-                        Text = text,
-                        StartSecond = start,
-                        EndSecond = end
-                    });
-                }
-            }
-        }
-
-        var transcript = root.TryGetProperty("transcript", out var transcriptEl) && transcriptEl.ValueKind == JsonValueKind.String
-            ? (transcriptEl.GetString() ?? string.Empty)
-            : string.Join(" ", segments.Select(a => a.Text));
-
-        var translation = root.TryGetProperty("translation", out var translationEl) && translationEl.ValueKind == JsonValueKind.String
-            ? translationEl.GetString()
-            : null;
-
-        var audioBase64 = root.TryGetProperty("audio_base64", out var audioBase64El) && audioBase64El.ValueKind == JsonValueKind.String
-            ? audioBase64El.GetString()
-            : null;
-
-        var language = root.TryGetProperty("language", out var languageEl) && languageEl.ValueKind == JsonValueKind.String
-            ? languageEl.GetString()
-            : metadata?.IsTranslate == true
-                ? metadata.TargetLanguage
-                : null;
-
-        var duration = segments.Count > 0
-            ? (float?)segments.Max(a => a.EndSecond)
-            : null;
+        if (string.IsNullOrWhiteSpace(text))
+            throw new InvalidOperationException("RekaAI did not return transcription text.");
 
         return new TranscriptionResponse
         {
-            Text = transcript,
-            Language = language,
-            DurationInSeconds = duration,
-            Segments = segments,
+            Text = text,
+            Segments = [],
             Warnings = warnings,
-            ProviderMetadata = BuildProviderMetadata(translation, audioBase64),
+            ProviderMetadata = BuildRekaTranscriptionProviderMetadata(root),
             Response = new()
             {
                 Timestamp = timestamp,
-                ModelId = string.IsNullOrWhiteSpace(model) ? "reka_transcription_or_translation" : model,
-                Body = json
+                ModelId = request.Model,
+                Body = root
             },
             Request = new TranscriptionRequestItem
             {
@@ -204,22 +67,201 @@ public partial class RekaAIProvider
         };
     }
 
-    private static bool TryReadFloat(JsonElement el, out float value)
+    private static Dictionary<string, object?> BuildRekaTranscriptionPayload(
+        string model,
+        string audioBase64,
+        string mediaType,
+        RekaAITranscriptionProviderMetadata? metadata,
+        bool stream)
     {
-        switch (el.ValueKind)
+        var payload = new Dictionary<string, object?>
         {
-            case JsonValueKind.Number when el.TryGetDouble(out var n):
-                value = (float)n;
-                return true;
+            ["model"] = model,
+            ["messages"] = new[]
+            {
+                new
+                {
+                    role = "user",
+                    content = new object[]
+                    {
+                        new
+                        {
+                            type = "audio_url",
+                            audio_url = $"data:{mediaType};base64,{audioBase64}"
+                        },
+                        new
+                        {
+                            type = "text",
+                            text = BuildRekaTranscriptionInstruction(metadata?.Prompt)
+                        }
+                    }
+                }
+            }
+        };
 
-            case JsonValueKind.String when float.TryParse(el.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var s):
-                value = s;
-                return true;
+        if (metadata?.Temperature is not null)
+            payload["temperature"] = metadata.Temperature.Value;
 
-            default:
-                value = 0f;
-                return false;
+        if (stream)
+            payload["stream"] = true;
+
+        return payload;
+    }
+
+    private static string BuildRekaTranscriptionInstruction(string? prompt)
+        => string.IsNullOrWhiteSpace(prompt)
+            ? RekaTranscriptionInstruction
+            : $"{RekaTranscriptionInstruction}\n\nAdditional transcription instructions: {prompt.Trim()}";
+
+    private static string NormalizeRekaTranscriptionModelId(string model)
+    {
+        var normalized = model.Trim();
+        var providerPrefix = nameof(RekaAI).ToLowerInvariant() + "/";
+
+        return normalized.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)
+            ? normalized[providerPrefix.Length..]
+            : normalized;
+    }
+
+    private static string NormalizeRekaTranscriptionAudioData(object audio)
+    {
+        var audioData = audio switch
+        {
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString() ?? string.Empty,
+            JsonElement json => json.ToString(),
+            _ => audio.ToString() ?? string.Empty
+        };
+
+        audioData = audioData.Trim();
+        if (audioData.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || audioData.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("RekaAI transcription requires base64 audio data; remote audio URLs are not supported.", nameof(audio));
+        }
+
+        if (audioData.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var separatorIndex = audioData.IndexOf(',');
+            var metadata = separatorIndex > 0 ? audioData[..separatorIndex] : string.Empty;
+
+            if (separatorIndex < 0 || !metadata.Contains(";base64", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Audio data URLs must use base64 encoding.", nameof(audio));
+
+            audioData = audioData[(separatorIndex + 1)..];
+        }
+
+        if (string.IsNullOrWhiteSpace(audioData))
+            throw new ArgumentException("Audio data is required.", nameof(audio));
+
+        try
+        {
+            return Convert.ToBase64String(Convert.FromBase64String(audioData));
+        }
+        catch (FormatException exception)
+        {
+            throw new ArgumentException("Audio must be valid base64 data.", nameof(audio), exception);
         }
     }
 
+    private static List<object> BuildRekaTranscriptionWarnings(RekaAITranscriptionProviderMetadata? metadata)
+    {
+        var warnings = new List<object>();
+        if (metadata is null)
+            return warnings;
+
+        if (!string.IsNullOrWhiteSpace(metadata.Language))
+            AddUnsupportedWarning(warnings, "language", "Reka's chat API does not expose a transcription language parameter.");
+
+        if (metadata.TimestampGranularities?.Length > 0)
+            AddUnsupportedWarning(warnings, "timestamp_granularities", "Reka's chat API does not return timestamped transcription segments.");
+
+        if (metadata.SamplingRate is not null)
+            AddUnsupportedWarning(warnings, "sampling_rate", "The retired Reka transcription endpoint's sampling-rate option is not supported by chat completions.");
+
+        if (!string.IsNullOrWhiteSpace(metadata.TargetLanguage))
+            AddUnsupportedWarning(warnings, "target_language", "Translation is not supported by the chat-backed transcription flow.");
+
+        if (metadata.IsTranslate is not null)
+            AddUnsupportedWarning(warnings, "is_translate", "Translation is not supported by the chat-backed transcription flow.");
+
+        if (metadata.ReturnTranslationAudio is not null)
+            AddUnsupportedWarning(warnings, "return_translation_audio", "Translated audio output is not supported by the chat-backed transcription flow.");
+
+        if (metadata.MaxTokens is not null)
+            AddUnsupportedWarning(warnings, "max_tokens", "The retired Reka transcription endpoint's max-tokens option is not supported by chat completions.");
+
+        return warnings;
+    }
+
+    private static void AddUnsupportedWarning(ICollection<object> warnings, string feature, string reason)
+        => warnings.Add(new
+        {
+            type = "unsupported",
+            feature,
+            reason
+        });
+
+    private Dictionary<string, JsonElement>? BuildRekaTranscriptionProviderMetadata(JsonElement root)
+    {
+        if (!root.TryGetProperty("usage", out var usage) || usage.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var rekaMetadata = new Dictionary<string, JsonElement>
+        {
+            ["usage"] = usage.Clone()
+        };
+
+        return new Dictionary<string, JsonElement>
+        {
+            [GetIdentifier()] = JsonSerializer.SerializeToElement(rekaMetadata, JsonSerializerOptions.Web)
+        };
+    }
+
+    private static string ExtractRekaTranscriptionText(JsonElement root)
+    {
+        if (!root.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            return string.Empty;
+
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.TryGetProperty("message", out var message)
+                && message.ValueKind == JsonValueKind.Object
+                && message.TryGetProperty("content", out var content)
+                && TryExtractRekaTextContent(content, out var text))
+            {
+                return text;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static bool TryExtractRekaTextContent(JsonElement content, out string text)
+    {
+        text = content.ValueKind == JsonValueKind.String
+            ? content.GetString() ?? string.Empty
+            : string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(text))
+            return true;
+
+        if (content.ValueKind != JsonValueKind.Array)
+            return false;
+
+        var textParts = new List<string>();
+        foreach (var item in content.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Object
+                && item.TryGetProperty("type", out var type)
+                && string.Equals(type.GetString(), "text", StringComparison.OrdinalIgnoreCase)
+                && item.TryGetProperty("text", out var textProperty)
+                && textProperty.ValueKind == JsonValueKind.String)
+            {
+                textParts.Add(textProperty.GetString() ?? string.Empty);
+            }
+        }
+
+        text = string.Concat(textParts);
+        return !string.IsNullOrWhiteSpace(text);
+    }
 }
