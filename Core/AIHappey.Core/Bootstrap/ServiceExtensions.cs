@@ -59,7 +59,6 @@ using AIHappey.Core.Providers.MurfAI;
 using AIHappey.Core.Providers.Lingvanex;
 using AIHappey.Core.Providers.LTX;
 using AIHappey.Core.Providers.GoogleTranslate;
-using AIHappey.Core.Providers.ModernMT;
 using AIHappey.Core.Providers.LectoAI;
 using AIHappey.Core.Providers.Bria;
 using AIHappey.Core.Providers.Friendli;
@@ -665,7 +664,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MurfAIProvider>();
         services.AddSingleton<IModelProvider, LingvanexProvider>();
         services.AddSingleton<IModelProvider, GoogleTranslateProvider>();
-        services.AddSingleton<IModelProvider, ModernMTProvider>();
         services.AddSingleton<IModelProvider, LectoAIProvider>();
         services.AddSingleton<IModelProvider, BriaProvider>();
         services.AddSingleton<IModelProvider, FriendliProvider>();

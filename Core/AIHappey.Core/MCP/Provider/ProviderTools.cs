@@ -17,7 +17,6 @@ using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Common.Model.Providers.Runware;
 using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Common.Model.Providers.Lingvanex;
-using AIHappey.Common.Model.Providers.ModernMT;
 
 using PollinationsProviderMetadata = AIHappey.Common.Model.Providers.Pollinations.PollinationsProviderMetadata;
 
@@ -76,7 +75,6 @@ public class ProviderTools
                 "alibaba" => generator.Generate(typeof(AlibabaImageProviderMetadata)),
                 "runware" => generator.Generate(typeof(RunwareProviderMetadata)),
                 "lingvanex" => generator.Generate(typeof(LingvanexProviderMetadata)),
-                "modernmt" => generator.Generate(typeof(ModernMTProviderMetadata)),
                 _ => throw new Exception($"Provider {aiProviderId} not supported. Available providers: {JsonSerializer
                     .Serialize(new
                     {
