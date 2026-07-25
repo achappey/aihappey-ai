@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.OpenCode;
+namespace AIHappey.Core.Providers.OpenCodeZen;
 
-public partial class OpenCodeProvider
+public partial class OpenCodeZenProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -21,7 +21,7 @@ public partial class OpenCodeProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"OpenCode API error: {err}");
+                    throw new Exception($"OpenCode Zen API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);

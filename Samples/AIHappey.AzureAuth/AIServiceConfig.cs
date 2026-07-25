@@ -130,7 +130,8 @@ public class AIServiceConfig
     public ProviderConfig? DeAPI { get; set; }
     public ProviderConfig? Infomaniak { get; set; }
     public ProviderConfig? Tavily { get; set; }
-    public ProviderConfig? OpenCode { get; set; }
+    public ProviderConfig? OpenCodeGo { get; set; }
+    public ProviderConfig? OpenCodeZen { get; set; }
     public ProviderConfig? Haimaker { get; set; }   
     public ProviderConfig? Monica { get; set; }
     public ProviderConfig? CAMBAI { get; set; }

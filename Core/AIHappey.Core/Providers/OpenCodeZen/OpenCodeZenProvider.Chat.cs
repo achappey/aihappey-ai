@@ -3,9 +3,9 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 
-namespace AIHappey.Core.Providers.OpenCode;
+namespace AIHappey.Core.Providers.OpenCodeZen;
 
-public partial class OpenCodeProvider
+public partial class OpenCodeZenProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

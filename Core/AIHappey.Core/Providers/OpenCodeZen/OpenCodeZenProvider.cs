@@ -10,16 +10,16 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.OpenCode;
+namespace AIHappey.Core.Providers.OpenCodeZen;
 
-public partial class OpenCodeProvider : IModelProvider
+public partial class OpenCodeZenProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
     private readonly AsyncCacheHelper _memoryCache;
 
-    public OpenCodeProvider(IApiKeyResolver keyResolver,
+    public OpenCodeZenProvider(IApiKeyResolver keyResolver,
         AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
@@ -34,7 +34,7 @@ public partial class OpenCodeProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(OpenCode)} API key.");
+            throw new InvalidOperationException($"No {nameof(OpenCodeZen)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -55,7 +55,7 @@ public partial class OpenCodeProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(OpenCode).ToLowerInvariant();
+    public string GetIdentifier() => nameof(OpenCodeZen).ToLowerInvariant();
 
     public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
