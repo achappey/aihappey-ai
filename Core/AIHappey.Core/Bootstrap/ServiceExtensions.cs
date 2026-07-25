@@ -254,7 +254,6 @@ using AIHappey.Core.Providers.SkillBoss;
 using AIHappey.Core.Providers.Nexusify;
 using AIHappey.Core.Providers.LitAI;
 using AIHappey.Core.Providers.PixCode;
-using AIHappey.Core.Providers.Anannas;
 using AIHappey.Core.Providers.FullAI;
 using AIHappey.Core.Providers.APIPod;
 using AIHappey.Core.Providers.TokenFlux;
@@ -855,8 +854,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SkillBossProvider>();
         services.AddSingleton<IModelProvider, NexusifyProvider>();
         services.AddSingleton<IModelProvider, LitAIProvider>();
-        services.AddSingleton<IModelProvider, PixCodeProvider>();
-        services.AddSingleton<IModelProvider, AnannasProvider>();
+        services.AddSingleton<IModelProvider, PixCodeProvider>();      
         services.AddSingleton<IModelProvider, FullAIProvider>();
         services.AddSingleton<IModelProvider, APIPodProvider>();
         services.AddSingleton<IModelProvider, TokenFluxProvider>();
