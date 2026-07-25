@@ -8,8 +8,6 @@ public partial class RewindAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-
-
         var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
