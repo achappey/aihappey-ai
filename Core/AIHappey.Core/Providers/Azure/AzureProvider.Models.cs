@@ -32,6 +32,7 @@ public sealed partial class AzureProvider
                 OwnedBy = nameof(Azure),
                 Id = ("translate-to-" + a.Key).ToModelId(GetIdentifier()),
                 Type = "language",
+                Tags = ["translate", a.Key.NormalizeLanguageCode()]
             });
 
         return await Task.FromResult<IEnumerable<Model>>([
