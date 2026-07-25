@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.BytePlus;
@@ -29,12 +30,11 @@ public partial class BytePlusProvider
         var warnings = new List<object>();
 
         var model = request.Model;
-        var isSeedream45 = IsSeedream45Model(model);
-        var isSeedream40 = IsSeedream40Model(model);
+        var isSeedream = IsSeedreamModel(model);
         var isSeedream30 = IsSeedream30Model(model);
         var isSeededit30 = IsSeededit30Model(model);
 
-        if (!isSeedream45 && !isSeedream40 && !isSeedream30 && !isSeededit30)
+        if (!isSeedream && !isSeededit30)
             throw new NotSupportedException($"BytePlus image model '{request.Model}' is not supported.");
 
         if (request.N is > 1)
@@ -82,10 +82,11 @@ public partial class BytePlusProvider
             }
         }
 
-        if ((isSeedream45 || isSeedream40) && imageInputs.Count > 14)
+        var maxReferenceImages = IsSeedream5ProModel(model) ? 10 : 14;
+        if (isSeedream && !isSeedream30 && imageInputs.Count > maxReferenceImages)
         {
-            warnings.Add(new { type = "unsupported", feature = "files", details = "seedream-4.x supports up to 14 reference images; extra images were ignored." });
-            imageInputs = [.. imageInputs.Take(14)];
+            warnings.Add(new { type = "unsupported", feature = "files", details = $"{model} supports up to {maxReferenceImages} reference images; extra images were ignored." });
+            imageInputs = [.. imageInputs.Take(maxReferenceImages)];
         }
 
         var payload = new Dictionary<string, object?>
@@ -96,7 +97,7 @@ public partial class BytePlusProvider
             ["response_format"] = "b64_json"
         };
 
-        if ((isSeedream45 || isSeedream40 || isSeededit30) && imageInputs.Count > 0)
+        if ((isSeedream && !isSeedream30 || isSeededit30) && imageInputs.Count > 0)
         {
             payload["image"] = imageInputs.Count == 1 ? imageInputs[0] : imageInputs;
         }
@@ -127,16 +128,23 @@ public partial class BytePlusProvider
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
 
-    private static bool IsSeedream45Model(string model)
-        => model.StartsWith("seedream-4-5", StringComparison.OrdinalIgnoreCase);
+    private static bool IsSeedreamModel(string model)
+        => model.StartsWith("seedream-", StringComparison.OrdinalIgnoreCase);
 
-    private static bool IsSeedream40Model(string model)
-        => model.StartsWith("seedream-4-0", StringComparison.OrdinalIgnoreCase);
+    private static bool IsSeedreamStreamingModel(string model)
+        => (model.StartsWith("seedream-4-0", StringComparison.OrdinalIgnoreCase)
+            || model.StartsWith("seedream-4-5", StringComparison.OrdinalIgnoreCase)
+            || model.StartsWith("seedream-5-0", StringComparison.OrdinalIgnoreCase))
+           && !IsSeedream5ProModel(model);
+
+    private static bool IsSeedream5ProModel(string model)
+        => model.Contains("seedream-5-0-pro", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsSeedream30Model(string model)
         => model.StartsWith("seedream-3-0-t2i", StringComparison.OrdinalIgnoreCase)
