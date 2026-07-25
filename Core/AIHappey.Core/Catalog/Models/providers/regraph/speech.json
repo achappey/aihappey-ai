@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "regraph/tts-1",
+      "object": "model",
+      "owned_by": "ReGraph",
+      "name": "tts-1",
+      "type": "speech",
+      "description": "TTS-1 text-to-speech through ReGraph."
+    }
+  ]
+}

@@ -85,6 +85,14 @@ public partial class ReGraphProvider
                         models.Add(model);
                 }
 
+                foreach (var catalogModel in GetIdentifier().GetModels())
+                {
+                    if (models.Any(model => string.Equals(model.Id, catalogModel.Id, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+
+                    models.Add(catalogModel);
+                }
+
                 return models;
 
             },

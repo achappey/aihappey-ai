@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "regraph/whisper-1",
+      "object": "model",
+      "owned_by": "ReGraph",
+      "name": "whisper-1",
+      "type": "transcription",
+      "description": "OpenAI Whisper v3 audio transcription through ReGraph."
+    },
+    {
+      "id": "regraph/whisper-v3-turbo",
+      "object": "model",
+      "owned_by": "ReGraph",
+      "name": "whisper-v3-turbo",
+      "type": "transcription",
+      "description": "Whisper v3 Turbo audio transcription through ReGraph."
+    },
+    {
+      "id": "regraph/gpt-4o-transcribe",
+      "object": "model",
+      "owned_by": "ReGraph",
+      "name": "gpt-4o-transcribe",
+      "type": "transcription",
+      "description": "GPT-4o audio transcription through ReGraph."
+    },
+    {
+      "id": "regraph/gpt-4o-mini-transcribe",
+      "object": "model",
+      "owned_by": "ReGraph",
+      "name": "gpt-4o-mini-transcribe",
+      "type": "transcription",
+      "description": "GPT-4o Mini audio transcription through ReGraph."
+    }
+  ]
+}

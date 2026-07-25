@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "regraph/dall-e-3",
+      "object": "model",
+      "owned_by": "ReGraph",
+      "name": "dall-e-3",
+      "type": "image",
+      "description": "DALL·E 3 image generation through ReGraph."
+    },
+    {
+      "id": "regraph/sdxl",
+      "object": "model",
+      "owned_by": "ReGraph",
+      "name": "sdxl",
+      "type": "image",
+      "description": "SDXL image generation through ReGraph."
+    }
+  ]
+}
