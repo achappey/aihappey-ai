@@ -4,46 +4,55 @@
     {
       "id": "cline/anthropic/claude-sonnet-4-6",
       "object": "model",
+      "name": "claude-sonnet-4-6",
       "owned_by": "Anthropic"
     },
     {
       "id": "cline/anthropic/claude-sonnet-4-5",
       "object": "model",
+      "name": "claude-sonnet-4-5",
       "owned_by": "Anthropic"
     },
     {
       "id": "cline/openai/gpt-4o",
       "object": "model",
+      "name": "gpt-4o",
       "owned_by": "OpenAI"
     },
     {
       "id": "cline/google/gemini-2.5-pro",
       "object": "model",
+      "name": "gemini-2.5-pro",
       "owned_by": "Google"
     },
     {
       "id": "cline/deepseek/deepseek-chat",
       "object": "model",
+      "name": "deepseek-chat",
       "owned_by": "DeepSeek"
     },
     {
       "id": "cline/x-ai/grok-3",
       "object": "model",
+      "name": "grok-3",
       "owned_by": "xAI"
     },
     {
       "id": "cline/minimax/minimax-m2.5",
       "object": "model",
+      "name": "minimax-m2.5",
       "owned_by": "MiniMax"
     },
     {
       "id": "cline/kwaipilot/kat-coder-pro",
       "object": "model",
+      "name": "kat-coder-pro",
       "owned_by": "Kwaipilot"
     },
     {
       "id": "cline/z-ai/glm-5",
       "object": "model",
+      "name": "glm-5",
       "owned_by": "Z-AI"
     }
   ]
