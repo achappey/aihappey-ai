@@ -30,6 +30,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
     private const string PixserpWithCitationsRawFixturePath = "Fixtures/chat-completions/raw/pixserp-with-citations-stream.jsonl";
     private const string RelaxAiReasoningRawFixturePath = "Fixtures/chat-completions/raw/relaxai-with-reasoning-stream.jsonl";
+    private const string RekaResearchRawFixturePath = "Fixtures/chat-completions/raw/reka-research-chat-completions-stream.jsonl";
     private const string ApekeyRawFixturePath = "Fixtures/chat-completions/raw/apekey-chat-completions-stream.jsonl";
     private const string GitHubProviderId = "github";
     private const string NinjaChatProviderId = "ninjachat";
@@ -42,6 +43,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string PerplexityProviderId = "perplexity";
     private const string PixserpProviderId = "pixserp";
     private const string RelaxAiProviderId = "relaxai";
+    private const string RekaProviderId = "rekaai";
     private const string BraveProviderId = "brave";
     private const string ApekeyProviderId = "apekey";
     private const string ApertisProviderId = "apertis";
@@ -981,6 +983,106 @@ public sealed class ApiChatStreamFixtureTests
     }
 
     [Fact]
+    public async Task Reka_research_reasoning_steps_emit_complete_reasoning_and_provider_executed_tool_ui_parts()
+    {
+        var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
+            RekaResearchRawFixturePath,
+            RekaProviderId,
+            "reka-flash-research");
+
+        FixtureAssertions.AssertContainsSubsequence(
+            unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "tool-input-start",
+            "tool-input-available",
+            "tool-output-available",
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "tool-input-start",
+            "tool-input-available",
+            "tool-output-available",
+            "reasoning-start",
+            "reasoning-delta",
+            "reasoning-end",
+            "text-start",
+            "text-delta",
+            "text-end",
+            "finish");
+
+        var reasoningText = string.Concat(unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "reasoning-delta")
+            .Select(streamEvent => Assert.IsType<AIReasoningDeltaEventData>(streamEvent.Event.Data).Delta));
+
+        Assert.Contains("Zoek actuele nieuwsartikelen over Fakton", reasoningText);
+        Assert.Contains("Selectie van 5 relevante URLs", reasoningText);
+        Assert.Contains("Meest recente nieuws (2025)", reasoningText);
+
+        var toolInputEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "tool-input-available")
+            .ToList();
+        var toolOutputEvents = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
+            .ToList();
+
+        Assert.Equal(2, toolInputEvents.Count);
+        Assert.Equal(2, toolOutputEvents.Count);
+
+        var searchInput = Assert.IsType<AIToolInputAvailableEventData>(toolInputEvents[0].Event.Data);
+        var analyzeInput = Assert.IsType<AIToolInputAvailableEventData>(toolInputEvents[1].Event.Data);
+        Assert.True(searchInput.ProviderExecuted);
+        Assert.True(analyzeInput.ProviderExecuted);
+        Assert.Equal("search_web", searchInput.ToolName);
+        Assert.Equal("analyze", analyzeInput.ToolName);
+
+        var searchInputJson = JsonSerializer.SerializeToElement(searchInput.Input, JsonSerializerOptions.Web);
+        Assert.Equal("Fakton vastgoed advies Rotterdam nieuws laatste updates", searchInputJson.GetProperty("query").GetString());
+
+        var searchOutput = Assert.IsType<AIToolOutputAvailableEventData>(toolOutputEvents[0].Event.Data);
+        var analyzeOutput = Assert.IsType<AIToolOutputAvailableEventData>(toolOutputEvents[1].Event.Data);
+        Assert.True(searchOutput.ProviderExecuted);
+        Assert.True(analyzeOutput.ProviderExecuted);
+        Assert.Equal(searchInput.ToolName, searchOutput.ToolName);
+        Assert.Equal(analyzeInput.ToolName, analyzeOutput.ToolName);
+        Assert.Equal(toolInputEvents[0].Event.Id, toolOutputEvents[0].Event.Id);
+        Assert.Equal(toolInputEvents[1].Event.Id, toolOutputEvents[1].Event.Id);
+
+        var searchOutputJson = JsonSerializer.SerializeToElement(searchOutput.Output, JsonSerializerOptions.Web);
+        var analyzeOutputJson = JsonSerializer.SerializeToElement(analyzeOutput.Output, JsonSerializerOptions.Web);
+        Assert.Equal("Fakton - Nieuws - Vastgoed | Consultancy Nederland", searchOutputJson[0].GetProperty("title").GetString());
+        Assert.Contains("De laatste nieuwsberichten over Fakton", analyzeOutputJson[0].GetProperty("analysis").GetString());
+
+        var uiParts = unifiedEvents
+            .Where(streamEvent => streamEvent.Event.Type is
+                "reasoning-start" or
+                "reasoning-delta" or
+                "reasoning-end" or
+                "tool-input-start" or
+                "tool-input-available" or
+                "tool-output-available" or
+                "text-start" or
+                "text-delta" or
+                "text-end" or
+                "finish")
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(RekaProviderId))
+            .ToList();
+
+        var toolCallParts = uiParts.OfType<ToolCallPart>().ToList();
+        var toolOutputParts = uiParts.OfType<ToolOutputAvailablePart>().ToList();
+        Assert.Equal(2, toolCallParts.Count);
+        Assert.Equal(2, toolOutputParts.Count);
+        Assert.All(toolCallParts, part => Assert.True(part.ProviderExecuted));
+        Assert.All(toolOutputParts, part => Assert.True(part.ProviderExecuted));
+        Assert.Equal(toolCallParts.Select(part => part.ToolCallId), toolOutputParts.Select(part => part.ToolCallId));
+
+        var finalText = string.Concat(uiParts.OfType<TextDeltaUIMessageStreamPart>().Select(part => part.Delta));
+        Assert.Contains("Laatste nieuws over Fakton", finalText);
+        Assert.IsType<FinishUIPart>(uiParts[^1]);
+    }
+
+    [Fact]
     public async Task Pixserp_chat_completions_delta_citations_emit_source_url_events_and_ui_parts()
     {
         var unifiedEvents = await LoadChatCompletionUnifiedEventsAsync(
@@ -1141,7 +1243,7 @@ public sealed class ApiChatStreamFixtureTests
             {
                 var finishPart = Assert.IsType<FinishUIPart>(uiPart);
                 Assert.Equal("error", finishPart.FinishReason);
-                Assert.Equal("openai/gpt-oss-20b", finishPart.MessageMetadata?.Model);
+                Assert.Equal("groq/openai/gpt-oss-20b", finishPart.MessageMetadata?.Model);
                 Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1776280711), finishPart.MessageMetadata?.Timestamp);
             });
     }

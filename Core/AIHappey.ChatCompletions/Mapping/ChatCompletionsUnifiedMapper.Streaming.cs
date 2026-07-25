@@ -36,6 +36,9 @@ public static partial class ChatCompletionsUnifiedMapper
             foreach (var reasoningEvent in MapPerplexityReasoningEvents(chunk, providerId, timestamp, metadata, state))
                 yield return reasoningEvent;
 
+            foreach (var reasoningStepEvent in MapGenericReasoningStepEvents(chunk, providerId, timestamp, metadata, state))
+                yield return reasoningStepEvent;
+
             foreach (var toolEvent in MapToolCallEvents(chunk, providerId, timestamp, metadata, state))
                 yield return toolEvent;
 
@@ -963,6 +966,361 @@ public static partial class ChatCompletionsUnifiedMapper
         }
     }
 
+    private static IEnumerable<AIStreamEvent> MapGenericReasoningStepEvents(
+        JsonElement chunk,
+        string providerId,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?> metadata,
+        ChatCompletionsStreamMappingState state)
+    {
+        if (!chunk.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            yield break;
+
+        var chunkId = ExtractValue<string>(chunk, "id") ?? "chat_completion";
+        var choiceIndex = 0;
+
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.ValueKind != JsonValueKind.Object
+                || !TryGetGenericReasoningSteps(choice, out var reasoningSteps))
+            {
+                choiceIndex++;
+                continue;
+            }
+
+            var stepIndex = 0;
+            foreach (var step in reasoningSteps.EnumerateArray())
+            {
+                if (step.ValueKind != JsonValueKind.Object)
+                {
+                    stepIndex++;
+                    continue;
+                }
+
+                var stepKey = $"{chunkId}:{choiceIndex}:{stepIndex}";
+                if (!state.SeenGenericReasoningSteps.Add(stepKey))
+                {
+                    stepIndex++;
+                    continue;
+                }
+
+                var role = ExtractValue<string>(step, "role");
+                if (string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase))
+                {
+                    var reasoning = ExtractReasoningStepText(step);
+                    var reasoningMetadata = CreateReasoningProviderMetadata(
+                        providerId,
+                        BuildGenericReasoningStepMetadata(step));
+
+                    if (!string.IsNullOrWhiteSpace(reasoning))
+                    {
+                        var reasoningId = $"{chunkId}:reasoning:{choiceIndex}:{stepIndex}";
+
+                        yield return CreateGenericReasoningEvent(
+                            providerId,
+                            "reasoning-start",
+                            reasoningId,
+                            timestamp,
+                            metadata,
+                            new AIReasoningStartEventData { ProviderMetadata = reasoningMetadata });
+
+                        yield return CreateGenericReasoningEvent(
+                            providerId,
+                            "reasoning-delta",
+                            reasoningId,
+                            timestamp,
+                            metadata,
+                            new AIReasoningDeltaEventData
+                            {
+                                Delta = reasoning,
+                                ProviderMetadata = reasoningMetadata
+                            });
+
+                        yield return CreateGenericReasoningEvent(
+                            providerId,
+                            "reasoning-end",
+                            reasoningId,
+                            timestamp,
+                            metadata,
+                            new AIReasoningEndEventData { ProviderMetadata = reasoningMetadata });
+                    }
+
+                    if (step.TryGetProperty("tool_calls", out var toolCalls)
+                        && toolCalls.ValueKind == JsonValueKind.Array)
+                    {
+                        var toolIndex = 0;
+                        foreach (var toolCall in toolCalls.EnumerateArray())
+                        {
+                            if (toolCall.ValueKind != JsonValueKind.Object)
+                            {
+                                toolIndex++;
+                                continue;
+                            }
+
+                            var toolName = ExtractValue<string>(toolCall, "name");
+                            if (string.IsNullOrWhiteSpace(toolName))
+                            {
+                                toolIndex++;
+                                continue;
+                            }
+
+                            var toolCallId = ExtractValue<string>(toolCall, "id")
+                                ?? $"{chunkId}:tool:{choiceIndex}:{stepIndex}:{toolIndex}";
+
+                            if (state.GenericReasoningToolCalls.ContainsKey(toolCallId))
+                            {
+                                toolIndex++;
+                                continue;
+                            }
+
+                            var input = TryExtractReasoningStepToolInput(toolCall, out var args)
+                                ? args
+                                : JsonSerializer.SerializeToElement(new { }, Json);
+                            var toolMetadata = CreateReasoningProviderMetadata(
+                                providerId,
+                                BuildGenericReasoningToolMetadata(step, toolCall));
+                            var accumulator = new GenericReasoningToolCallAccumulator
+                            {
+                                Id = toolCallId,
+                                Name = toolName,
+                                ProviderMetadata = toolMetadata
+                            };
+
+                            state.GenericReasoningToolCalls[toolCallId] = accumulator;
+                            if (!state.PendingGenericReasoningToolCallsByName.TryGetValue(toolName, out var pendingToolCallIds))
+                            {
+                                pendingToolCallIds = [];
+                                state.PendingGenericReasoningToolCallsByName[toolName] = pendingToolCallIds;
+                            }
+
+                            pendingToolCallIds.Add(toolCallId);
+
+                            yield return new AIStreamEvent
+                            {
+                                ProviderId = providerId,
+                                Event = new AIEventEnvelope
+                                {
+                                    Type = "tool-input-start",
+                                    Id = toolCallId,
+                                    Timestamp = timestamp,
+                                    Data = new AIToolInputStartEventData
+                                    {
+                                        ToolName = toolName,
+                                        ProviderExecuted = true,
+                                        ProviderMetadata = toolMetadata
+                                    }
+                                },
+                                Metadata = metadata
+                            };
+
+                            yield return new AIStreamEvent
+                            {
+                                ProviderId = providerId,
+                                Event = new AIEventEnvelope
+                                {
+                                    Type = "tool-input-available",
+                                    Id = toolCallId,
+                                    Timestamp = timestamp,
+                                    Data = new AIToolInputAvailableEventData
+                                    {
+                                        ToolName = toolName,
+                                        Input = input,
+                                        ProviderExecuted = true,
+                                        ProviderMetadata = toolMetadata
+                                    }
+                                },
+                                Metadata = metadata
+                            };
+
+                            toolIndex++;
+                        }
+                    }
+                }
+                else if (string.Equals(role, "tool", StringComparison.OrdinalIgnoreCase)
+                         && TryExtractReasoningStepToolOutput(step, out var outputToolName, out var output))
+                {
+                    var explicitToolCallId = ExtractValue<string>(step, "tool_call_id");
+                    if (TryResolveGenericReasoningToolCall(
+                            state,
+                            explicitToolCallId,
+                            outputToolName,
+                            out var accumulator))
+                    {
+                        accumulator.OutputEmitted = true;
+
+                        yield return new AIStreamEvent
+                        {
+                            ProviderId = providerId,
+                            Event = new AIEventEnvelope
+                            {
+                                Type = "tool-output-available",
+                                Id = accumulator.Id,
+                                Timestamp = timestamp,
+                                Data = new AIToolOutputAvailableEventData
+                                {
+                                    ToolName = accumulator.Name,
+                                    Output = output,
+                                    ProviderExecuted = true,
+                                    ProviderMetadata = accumulator.ProviderMetadata
+                                }
+                            },
+                            Metadata = metadata
+                        };
+                    }
+                }
+
+                stepIndex++;
+            }
+
+            choiceIndex++;
+        }
+    }
+
+    private static AIStreamEvent CreateGenericReasoningEvent(
+        string providerId,
+        string type,
+        string id,
+        DateTimeOffset timestamp,
+        Dictionary<string, object?> metadata,
+        object data)
+        => new()
+        {
+            ProviderId = providerId,
+            Event = new AIEventEnvelope
+            {
+                Type = type,
+                Id = id,
+                Timestamp = timestamp,
+                Data = data
+            },
+            Metadata = metadata
+        };
+
+    private static bool TryGetGenericReasoningSteps(JsonElement choice, out JsonElement reasoningSteps)
+    {
+        reasoningSteps = default;
+
+        if (!TryGetPerplexityReasoningSteps(choice, out reasoningSteps))
+            return false;
+
+        return reasoningSteps.EnumerateArray().Any(step => step.ValueKind == JsonValueKind.Object
+            && (string.Equals(ExtractValue<string>(step, "role"), "assistant", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(ExtractValue<string>(step, "role"), "tool", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static string? ExtractReasoningStepText(JsonElement step)
+    {
+        if (!step.TryGetProperty("reasoning_content", out var reasoningContent))
+            return null;
+
+        return reasoningContent.ValueKind == JsonValueKind.String
+            ? reasoningContent.GetString()
+            : ChatMessageContentExtensions.ToText(reasoningContent);
+    }
+
+    private static bool TryExtractReasoningStepToolInput(JsonElement toolCall, out JsonElement args)
+    {
+        args = default;
+
+        if (!toolCall.TryGetProperty("args", out args)
+            || args.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return false;
+        }
+
+        args = args.Clone();
+        return true;
+    }
+
+    private static bool TryExtractReasoningStepToolOutput(
+        JsonElement step,
+        out string toolName,
+        out JsonElement output)
+    {
+        toolName = string.Empty;
+        output = default;
+
+        if (!step.TryGetProperty("content", out var content)
+            || content.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        toolName = ExtractValue<string>(content, "tool_name") ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(toolName)
+            || !content.TryGetProperty("tool_output", out output)
+            || output.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return false;
+        }
+
+        output = output.Clone();
+        return true;
+    }
+
+    private static bool TryResolveGenericReasoningToolCall(
+        ChatCompletionsStreamMappingState state,
+        string? explicitToolCallId,
+        string toolName,
+        out GenericReasoningToolCallAccumulator accumulator)
+    {
+        accumulator = default!;
+
+        if (!string.IsNullOrWhiteSpace(explicitToolCallId))
+        {
+            if (!state.GenericReasoningToolCalls.TryGetValue(explicitToolCallId, out var explicitlyMatched)
+                || explicitlyMatched.OutputEmitted)
+            {
+                return false;
+            }
+
+            accumulator = explicitlyMatched;
+            RemovePendingGenericReasoningToolCall(state, accumulator.Name, accumulator.Id);
+            return true;
+        }
+
+        if (!state.PendingGenericReasoningToolCallsByName.TryGetValue(toolName, out var pendingToolCallIds))
+            return false;
+
+        while (pendingToolCallIds.Count > 0)
+        {
+            var toolCallId = pendingToolCallIds[0];
+            pendingToolCallIds.RemoveAt(0);
+
+            if (state.GenericReasoningToolCalls.TryGetValue(toolCallId, out var matched)
+                && !matched.OutputEmitted)
+            {
+                accumulator = matched;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void RemovePendingGenericReasoningToolCall(
+        ChatCompletionsStreamMappingState state,
+        string toolName,
+        string toolCallId)
+    {
+        if (state.PendingGenericReasoningToolCallsByName.TryGetValue(toolName, out var pendingToolCallIds))
+            pendingToolCallIds.Remove(toolCallId);
+    }
+
+    private static Dictionary<string, object> BuildGenericReasoningStepMetadata(JsonElement step)
+        => new()
+        {
+            ["step"] = step.Clone(),
+            ["role"] = ExtractValue<string>(step, "role") ?? string.Empty
+        };
+
+    private static Dictionary<string, object> BuildGenericReasoningToolMetadata(JsonElement step, JsonElement toolCall)
+        => new()
+        {
+            ["step"] = step.Clone(),
+            ["tool_call"] = toolCall.Clone()
+        };
+
     private static IEnumerable<AIStreamEvent> EmitPendingToolInputs(
         string providerId,
         DateTimeOffset timestamp,
@@ -1342,11 +1700,25 @@ public static partial class ChatCompletionsUnifiedMapper
         public bool ToolOutputAvailableEmitted { get; set; }
     }
 
+    internal sealed class GenericReasoningToolCallAccumulator
+    {
+        public required string Id { get; init; }
+        public required string Name { get; init; }
+        public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; init; }
+        public bool OutputEmitted { get; set; }
+    }
+
     public sealed class ChatCompletionsStreamMappingState
     {
         internal Dictionary<int, ToolCallAccumulator> PendingToolCalls { get; } = [];
 
         internal Dictionary<string, PerplexityReasoningAccumulator> PerplexityReasoningSteps { get; } = [];
+
+        internal HashSet<string> SeenGenericReasoningSteps { get; } = new(StringComparer.Ordinal);
+
+        internal Dictionary<string, GenericReasoningToolCallAccumulator> GenericReasoningToolCalls { get; } = new(StringComparer.Ordinal);
+
+        internal Dictionary<string, List<string>> PendingGenericReasoningToolCallsByName { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         internal HashSet<string> SeenSourceUrls { get; } = new(StringComparer.OrdinalIgnoreCase);
 
