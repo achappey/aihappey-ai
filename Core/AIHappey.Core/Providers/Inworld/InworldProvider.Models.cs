@@ -359,8 +359,11 @@ public partial class InworldProvider
             "voice"
         };
 
-        AddTag(tags, "gender", voice.Gender);
-        AddTag(tags, "language", voice.LanguageCode);
+        if (!string.IsNullOrEmpty(voice.Gender))
+            AddTag(tags, "gender", voice.Gender);
+
+        if (!string.IsNullOrEmpty(voice.LanguageCode))
+            AddTag(tags, "language", voice.LanguageCode.NormalizeLanguageCode());
 
         return tags;
     }
@@ -374,12 +377,11 @@ public partial class InworldProvider
     private static bool IsValidSpeechVoice(InworldVoice voice)
         => !string.IsNullOrWhiteSpace(voice.VoiceId);
 
-    private List<Model> DeduplicateModels(IEnumerable<Model> models)
-        => models
+    private static List<Model> DeduplicateModels(IEnumerable<Model> models)
+        => [.. models
             .Where(model => !string.IsNullOrWhiteSpace(model.Id))
             .GroupBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First())
-            .ToList();
+            .Select(group => group.First())];
 
     private string BuildInworldProviderModelId(string rawModel, string provider)
         => $"{GetIdentifier()}/{NormalizeProviderSegment(provider)}/{rawModel.Trim()}";
