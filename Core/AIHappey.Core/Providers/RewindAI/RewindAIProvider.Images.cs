@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.RewindAI;
 

@@ -1,8 +1,5 @@
-using AIHappey.Core.AI;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
-using AIHappey.Vercel.Models;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;

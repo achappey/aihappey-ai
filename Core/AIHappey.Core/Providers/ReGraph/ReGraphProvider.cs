@@ -11,7 +11,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.ReGraph;
 

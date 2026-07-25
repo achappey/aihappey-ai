@@ -5,7 +5,6 @@ using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 

@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
