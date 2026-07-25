@@ -52,6 +52,9 @@ public partial class RenderfulProvider
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? string.Empty;
 
+                    if (el.TryGetProperty("type", out var typeEl))
+                        model.Type = MapRenderfulModelType(typeEl.GetString());
+
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
@@ -61,5 +64,21 @@ public partial class RenderfulProvider
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+    }
+
+    private static string MapRenderfulModelType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+            return string.Empty;
+
+        return type.Trim().ToLowerInvariant() switch
+        {
+            "text-to-text" => "language",
+            "text-to-image" or "image-to-image" or "upscale" or "face-swap" => "image",
+            "text-to-video" or "image-to-video" or "video-to-video" or "reference-to-video" or "subject-to-video" or "lip-sync" => "video",
+            "text-to-audio" or "text-to-music" or "audio-to-audio" => "speech",
+            "speech-to-text" => "transcription",
+            _ => type
+        };
     }
 }

@@ -810,7 +810,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | RekaAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Relace | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | RelaxAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
-| Renderful | ❌ | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Renderful | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ |
 | Replicate | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ |
 | Requesty | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ |
 | ResembleAI | ✅ | ❌ | 🟡 | ❌ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ |
