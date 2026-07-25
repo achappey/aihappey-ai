@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "aihorde/aihorde-image",
+      "object": "model",
+      "owned_by": "AI Horde",
+      "name": "aihorde-image",
+      "type": "image",
+      "description": "AI Horde image generation and editing."
+    }
+  ]
+}
