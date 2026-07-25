@@ -98,8 +98,8 @@ public partial class InworldProvider
     }
 
     private static async IAsyncEnumerable<JsonElement> ReadInworldSpeechStreamEnvelopesAsync(
-        Stream stream,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+      Stream stream,
+      [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var buffer = new byte[16 * 1024];
         var pending = new ArrayBufferWriter<byte>();
@@ -111,51 +111,104 @@ public partial class InworldProvider
                 break;
 
             pending.Write(buffer.AsSpan(0, read));
-            var reader = new Utf8JsonReader(pending.WrittenSpan, isFinalBlock: false, state: default);
-            var consumed = 0L;
 
-            while (true)
+            var parsed = ParseCompleteJsonEnvelopes(
+                pending.WrittenMemory,
+                isFinalBlock: false);
+
+            if (parsed.BytesConsumed > 0)
             {
-                var start = reader.BytesConsumed;
-                JsonElement? envelope = null;
-                try
-                {
-                    if (!JsonDocument.TryParseValue(ref reader, out var document))
-                        break;
+                var remaining = pending.WrittenSpan[parsed.BytesConsumed..].ToArray();
 
-                    using (document)
-                        envelope = document.RootElement.Clone();
+                pending = new ArrayBufferWriter<byte>(
+                    Math.Max(remaining.Length, buffer.Length));
 
-                    consumed = reader.BytesConsumed;
-                }
-                catch (JsonException)
-                {
-                    if (start == 0)
-                        throw;
-
-                    consumed = start;
-                    break;
-                }
-
-                if (envelope is { } value)
-                    yield return value;
-            }
-
-            if (consumed > 0)
-            {
-                var remaining = pending.WrittenSpan[(int)consumed..].ToArray();
-                pending = new ArrayBufferWriter<byte>(Math.Max(remaining.Length, buffer.Length));
                 pending.Write(remaining);
             }
+
+            // Utf8JsonReader bestaat hier niet meer.
+            foreach (var envelope in parsed.Envelopes)
+                yield return envelope;
         }
 
-        foreach (var value in pending.WrittenSpan)
-        {
-            if (char.IsWhiteSpace((char)value))
-                continue;
+        // Laatste bytes als final block verwerken.
+        var finalParsed = ParseCompleteJsonEnvelopes(
+            pending.WrittenMemory,
+            isFinalBlock: true);
 
-            throw new InvalidOperationException("Inworld streaming TTS returned an incomplete JSON envelope.");
+        foreach (var envelope in finalParsed.Envelopes)
+            yield return envelope;
+
+        if (finalParsed.BytesConsumed < pending.WrittenCount)
+        {
+            var remaining = pending.WrittenSpan[finalParsed.BytesConsumed..];
+
+            if (!IsWhitespaceOnly(remaining))
+            {
+                throw new InvalidOperationException(
+                    "Inworld streaming TTS returned an incomplete JSON envelope.");
+            }
         }
     }
+
+    private static ParsedJsonEnvelopes ParseCompleteJsonEnvelopes(
+        ReadOnlyMemory<byte> data,
+        bool isFinalBlock)
+    {
+        var envelopes = new List<JsonElement>();
+        var reader = new Utf8JsonReader(
+            data.Span,
+            isFinalBlock,
+            state: default);
+
+        var consumed = 0;
+
+        while (true)
+        {
+            var start = checked((int)reader.BytesConsumed);
+
+            try
+            {
+                if (!JsonDocument.TryParseValue(ref reader, out var document))
+                    break;
+
+                using (document)
+                {
+                    envelopes.Add(document.RootElement.Clone());
+                }
+
+                consumed = checked((int)reader.BytesConsumed);
+            }
+            catch (JsonException) when (!isFinalBlock && start > 0)
+            {
+                // Een eerdere JSON-value was compleet, maar de volgende is
+                // slechts gedeeltelijk ontvangen. Bewaar die voor de volgende read.
+                consumed = start;
+                break;
+            }
+        }
+
+        return new ParsedJsonEnvelopes(envelopes, consumed);
+    }
+
+    private static bool IsWhitespaceOnly(ReadOnlySpan<byte> value)
+    {
+        foreach (var item in value)
+        {
+            if (item is not (byte)' '
+                and not (byte)'\t'
+                and not (byte)'\r'
+                and not (byte)'\n')
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private sealed record ParsedJsonEnvelopes(
+        IReadOnlyList<JsonElement> Envelopes,
+        int BytesConsumed);
 
 }
