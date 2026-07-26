@@ -28,6 +28,7 @@ public partial class GoogleAIProvider
                 ];
 
                 var rawModels = models
+                    .Where(a => a.Name?.StartsWith("imagen-") != true)
                     .Select(a =>
                     {
                         var id = a.Name?.Split("/").LastOrDefault() ?? string.Empty;
@@ -47,7 +48,7 @@ public partial class GoogleAIProvider
                     .Where(a => excludedSubstrings.All(z => a.Id?.Contains(z) != true))
                     .ToList();
 
-                rawModels.AddRange(BuildGoogleSpeechVoiceShortcutModels(rawModels.ToList(), GetIdentifier()));
+                rawModels.AddRange(BuildGoogleSpeechVoiceShortcutModels([.. rawModels], GetIdentifier()));
 
                 var transcriptionModel = rawModels.FirstOrDefault(a => a.Id.EndsWith("gemini-3.5-flash"));
 
