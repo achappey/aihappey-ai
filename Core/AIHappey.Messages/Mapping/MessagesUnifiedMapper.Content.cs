@@ -95,6 +95,7 @@ public static partial class MessagesUnifiedMapper
         {
             Name = tool.Name,
             Description = tool.Description,
+            DeferLoading = tool.DeferLoading,
             InputSchema = SerializeToNullableElement(tool.InputSchema),
             Type = ExtractValue<string>(tool.Metadata, "messages.tool.type") ?? "custom"
         };
