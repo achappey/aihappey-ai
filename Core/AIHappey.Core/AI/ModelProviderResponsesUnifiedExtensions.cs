@@ -3,6 +3,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Unified.Models;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Extensions;
+using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Core.AI;
 
@@ -121,14 +122,25 @@ public static class ModelProviderResponsesUnifiedExtensions
             AIStreamEvent? pendingFinish = null;
             var seenPerplexitySearchSourceUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var openReasoningIds = new HashSet<string>(StringComparer.Ordinal);
+            var hostedToolSearchCalls = new Queue<string>();
+            var registeredHostedToolSearchCalls = new HashSet<string>(StringComparer.Ordinal);
+            var hostedToolSearchOutputIds = new Dictionary<string, string>(StringComparer.Ordinal);
 
             await foreach (var update in modelProvider.ResponsesStreamingAsync(responseRequest, cancellationToken))
             {
                 if (isOpenCode && OpenCodeStreamingCostExtensions.TryGetOpenCodePingCost(update, out var pingCost))
                     latestGatewayCost = pingCost;
 
-                foreach (var evt in update.ToUnifiedStreamEvent(modelProvider.GetIdentifier()))
+                TrackHostedToolSearch(
+                    update,
+                    hostedToolSearchCalls,
+                    registeredHostedToolSearchCalls,
+                    hostedToolSearchOutputIds);
+
+                foreach (var mappedEvent in update.ToUnifiedStreamEvent(modelProvider.GetIdentifier()))
                 {
+                    var evt = NormalizeHostedToolSearchEventId(mappedEvent, update, hostedToolSearchOutputIds);
+
                     if (ShouldSkipDuplicatePerplexitySearchSourceUrl(modelProvider.GetIdentifier(), evt, seenPerplexitySearchSourceUrls))
                         continue;
 
@@ -177,6 +189,74 @@ public static class ModelProviderResponsesUnifiedExtensions
             if (pendingFinish is not null)
                 yield return OpenCodeStreamingCostExtensions.ApplyGatewayCostToFinishEvent(pendingFinish, latestGatewayCost);
         }
+    }
+
+    private static void TrackHostedToolSearch(
+        Responses.Streaming.ResponseStreamPart update,
+        Queue<string> pendingCalls,
+        HashSet<string> registeredCalls,
+        Dictionary<string, string> outputIds)
+    {
+        if (update is not ResponseStreamItemEvent itemEvent
+            || !string.Equals(itemEvent.Item.Execution, "server", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (string.Equals(itemEvent.Item.Type, "tool_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            var callId = itemEvent.Item.CallId ?? itemEvent.Item.Id;
+            if (!string.IsNullOrWhiteSpace(callId) && registeredCalls.Add(callId))
+                pendingCalls.Enqueue(callId);
+            return;
+        }
+
+        if (!string.Equals(itemEvent.Item.Type, "tool_search_output", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(itemEvent.Item.Id)
+            || outputIds.ContainsKey(itemEvent.Item.Id))
+        {
+            return;
+        }
+
+        if (itemEvent.Item.CallId is { Length: > 0 } explicitCallId)
+        {
+            outputIds[itemEvent.Item.Id] = explicitCallId;
+            return;
+        }
+
+        if (pendingCalls.TryDequeue(out var pendingCallId))
+            outputIds[itemEvent.Item.Id] = pendingCallId;
+    }
+
+    private static AIStreamEvent NormalizeHostedToolSearchEventId(
+        AIStreamEvent streamEvent,
+        Responses.Streaming.ResponseStreamPart update,
+        IReadOnlyDictionary<string, string> outputIds)
+    {
+        if (update is not ResponseStreamItemEvent itemEvent
+            || !string.Equals(itemEvent.Item.Type, "tool_search_output", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(itemEvent.Item.Id)
+            || !outputIds.TryGetValue(itemEvent.Item.Id, out var callId)
+            || string.Equals(streamEvent.Event.Id, callId, StringComparison.Ordinal))
+        {
+            return streamEvent;
+        }
+
+        return new AIStreamEvent
+        {
+            ProviderId = streamEvent.ProviderId,
+            Metadata = streamEvent.Metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = streamEvent.Event.Type,
+                Id = callId,
+                Timestamp = streamEvent.Event.Timestamp,
+                Input = streamEvent.Event.Input,
+                Output = streamEvent.Event.Output,
+                Data = streamEvent.Event.Data,
+                Metadata = streamEvent.Event.Metadata
+            }
+        };
     }
 
     private static string NormalizeEventType(string? type)

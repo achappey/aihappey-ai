@@ -597,6 +597,28 @@ public static partial class ResponsesUnifiedMapper
                 ProviderExecuted = hasProgramCaller,
                 Metadata = metadata
             },
+            "tool_search_call" => new AIToolCallContentPart
+            {
+                Type = type,
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = "tool_search",
+                Title = "tool_search",
+                Input = GetValue<object>(map, "arguments") ?? new { },
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = !string.Equals(GetValue<string>(map, "execution"), "client", StringComparison.OrdinalIgnoreCase),
+                Metadata = metadata
+            },
+            "tool_search_output" => new AIToolCallContentPart
+            {
+                Type = type,
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = "tool_search",
+                Title = "tool_search",
+                Output = GetValue<object>(map, "tools") ?? Array.Empty<object>(),
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = !string.Equals(GetValue<string>(map, "execution"), "client", StringComparison.OrdinalIgnoreCase),
+                Metadata = metadata
+            },
             "program" => CreateUnifiedProgramToolPart(
                 providerId,
                 rawItem,

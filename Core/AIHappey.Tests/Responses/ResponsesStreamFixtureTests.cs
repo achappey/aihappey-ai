@@ -31,6 +31,55 @@ public sealed class ResponsesStreamFixtureTests
     private const string OpenAiImageResultsRawFixturePath = "Fixtures/responses/raw/openai-with-image-results-streaming.jsonl";
 
     [Fact]
+    public void Hosted_tool_search_stream_parses_object_arguments_and_correlates_output_to_call_id()
+    {
+        var addedJson = """
+            {"type":"response.output_item.added","item":{"id":"tsc_123","type":"tool_search_call","status":"in_progress","arguments":{},"call_id":null,"execution":"server"},"output_index":1,"sequence_number":88}
+            """;
+        var callDoneJson = """
+            {"type":"response.output_item.done","item":{"id":"tsc_123","type":"tool_search_call","status":"completed","arguments":{"paths":["crm"]},"call_id":null,"execution":"server"},"output_index":1,"sequence_number":89}
+            """;
+        var outputAddedJson = """
+            {"type":"response.output_item.added","item":{"id":"tso_456","type":"tool_search_output","status":"in_progress","call_id":null,"execution":"server","tools":[]},"output_index":2,"sequence_number":90}
+            """;
+        var outputDoneJson = """
+            {"type":"response.output_item.done","item":{"id":"tso_456","type":"tool_search_output","status":"completed","call_id":null,"execution":"server","tools":[{"type":"namespace","name":"crm","description":"CRM tools","tools":[{"type":"function","name":"list_open_orders","defer_loading":true,"parameters":{"type":"object"}}]}]},"output_index":2,"sequence_number":91}
+            """;
+
+        var parts = new[] { addedJson, callDoneJson, outputAddedJson, outputDoneJson }
+            .Select(json => JsonSerializer.Deserialize<ResponseStreamPart>(json)
+                ?? throw new InvalidOperationException("Tool-search stream event did not deserialize."))
+            .ToList();
+
+        var events = parts.SelectMany(part => part.ToUnifiedStreamEvent(ProviderId)).ToList();
+        var start = Assert.IsType<AIToolInputStartEventData>(events.Single(e => e.Event.Type == "tool-input-start").Event.Data);
+        var input = Assert.IsType<AIToolInputAvailableEventData>(events.Single(e => e.Event.Type == "tool-input-available").Event.Data);
+        var output = Assert.IsType<AIToolOutputAvailableEventData>(events.Single(e => e.Event.Type == "tool-output-available").Event.Data);
+
+        Assert.Equal("tsc_123", events.Single(e => e.Event.Type == "tool-input-start").Event.Id);
+        Assert.Equal("tsc_123", events.Single(e => e.Event.Type == "tool-input-available").Event.Id);
+        Assert.Equal("tsc_123", events.Single(e => e.Event.Type == "tool-output-available").Event.Id);
+        Assert.True(start.ProviderExecuted);
+        Assert.True(input.ProviderExecuted);
+        Assert.True(output.ProviderExecuted);
+    }
+
+    [Fact]
+    public void Client_tool_search_stream_is_not_provider_executed_and_uses_call_id()
+    {
+        var json = """
+            {"type":"response.output_item.done","item":{"id":"tsc_client","type":"tool_search_call","status":"completed","arguments":{"goal":"shipping ETA"},"call_id":"call_client_1","execution":"client"},"output_index":0,"sequence_number":1}
+            """;
+        var part = JsonSerializer.Deserialize<ResponseStreamPart>(json)!;
+        var input = Assert.IsType<AIToolInputAvailableEventData>(
+            Assert.Single(part.ToUnifiedStreamEvent(ProviderId)).Event.Data);
+
+        Assert.Equal("call_client_1", Assert.Single(part.ToUnifiedStreamEvent(ProviderId)).Event.Id);
+        Assert.False(input.ProviderExecuted);
+        Assert.Equal("tool_search", input.ToolName);
+    }
+
+    [Fact]
     public void Typed_and_raw_responses_fixtures_produce_the_same_stream_part_types()
     {
         var typed = FixtureFileLoader.LoadResponseTypedFixture(TypedFixturePath);

@@ -139,6 +139,43 @@ public static partial class ResponsesUnifiedMapper
         return new ResponseStreamItem { Type = "message" };
     }
 
+    private static bool IsServerToolSearch(ResponseStreamItem item)
+        => !string.Equals(item.Execution, "client", StringComparison.OrdinalIgnoreCase);
+
+    private static JsonElement ParseStreamArguments(JsonElement? arguments)
+    {
+        if (arguments is not { } value || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return JsonSerializer.SerializeToElement(new { });
+
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            var text = value.GetString();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                try { return JsonDocument.Parse(text).RootElement.Clone(); }
+                catch { return JsonSerializer.SerializeToElement(new { input = text }); }
+            }
+        }
+
+        return value.Clone();
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateToolSearchMetadata(
+        string providerId,
+        ResponseStreamItem item)
+        => new()
+        {
+            [providerId] = new Dictionary<string, object>
+            {
+                ["type"] = item.Type,
+                ["id"] = item.Id ?? string.Empty,
+                ["call_id"] = item.CallId ?? string.Empty,
+                ["execution"] = item.Execution ?? "server",
+                ["status"] = item.Status ?? string.Empty,
+                ["tools"] = item.Tools ?? []
+            }
+        };
+
     private static ResponseStreamContentPart GetResponseStreamContentPart(Dictionary<string, object?> data, string key)
     {
         if (data.TryGetValue(key, out var partObj) && partObj is not null)

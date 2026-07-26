@@ -119,6 +119,12 @@ public static partial class ResponsesUnifiedMapper
             Name = tool.Extra is not null && tool.Extra.TryGetValue("name", out var n) ? n.GetString() ?? tool.Type : tool.Type,
             Description = tool.Extra is not null && tool.Extra.TryGetValue("description", out var d) ? d.GetString() : null,
             InputSchema = tool.Extra is not null && tool.Extra.TryGetValue("parameters", out var p) ? p : null,
+            DeferLoading = tool.Extra is not null && tool.Extra.TryGetValue("defer_loading", out var defer) && defer.ValueKind is JsonValueKind.True or JsonValueKind.False
+                ? defer.GetBoolean()
+                : null,
+            AllowedCallers = tool.Extra is not null && tool.Extra.TryGetValue("allowed_callers", out var callers) && callers.ValueKind == JsonValueKind.Array
+                ? callers.EnumerateArray().Where(static value => value.ValueKind == JsonValueKind.String).Select(static value => value.GetString()!).ToArray()
+                : null,
             Metadata = new Dictionary<string, object?>
             {
                 ["responses.type"] = tool.Type,
@@ -128,10 +134,14 @@ public static partial class ResponsesUnifiedMapper
 
     private static ResponseToolDefinition ToResponsesTool(AIToolDefinition tool)
     {
-        var extra = new Dictionary<string, JsonElement>
-        {
-            ["name"] = JsonSerializer.SerializeToElement(tool.Name, Json)
-        };
+        var extra = ExtractObject<Dictionary<string, JsonElement>>(tool.Metadata, "responses.extra")
+                    is { } preserved
+            ? new Dictionary<string, JsonElement>(preserved, StringComparer.Ordinal)
+            : [];
+
+        var type = ExtractValue<string>(tool.Metadata, "responses.type") ?? "function";
+        if (type is "function" or "namespace" || extra.ContainsKey("name"))
+            extra["name"] = JsonSerializer.SerializeToElement(tool.Name, Json);
 
         if (!string.IsNullOrWhiteSpace(tool.Description))
             extra["description"] = JsonSerializer.SerializeToElement(tool.Description, Json);
@@ -147,7 +157,7 @@ public static partial class ResponsesUnifiedMapper
 
         return new ResponseToolDefinition
         {
-            Type = ExtractValue<string>(tool.Metadata, "responses.type") ?? "function",
+            Type = type,
             Extra = extra
         };
     }

@@ -165,7 +165,7 @@ public static partial class ResponsesUnifiedMapper
             Role = string.Equals(itemState.ItemType, "message", StringComparison.OrdinalIgnoreCase) ? "assistant" : null,
             Name = itemState.ToolName ?? itemState.Title,
             Arguments = itemState.ItemType is "function_call" or "mcp_call"
-                ? itemState.SerializedInput
+                ? JsonSerializer.SerializeToElement(itemState.SerializedInput)
                 : null,
             Content = content is not null
                 ? JsonSerializer.SerializeToElement(content)

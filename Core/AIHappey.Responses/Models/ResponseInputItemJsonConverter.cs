@@ -42,6 +42,24 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize function_call_output.");
         }
 
+        if (string.Equals(type, "tool_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseToolSearchCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize tool_search_call.");
+        }
+
+        if (string.Equals(type, "tool_search_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseToolSearchOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize tool_search_output.");
+        }
+
+        if (string.Equals(type, "additional_tools", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseAdditionalToolsItem>(options)
+                   ?? throw new JsonException("Could not deserialize additional_tools.");
+        }
+
         if (string.Equals(type, "program", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseProgramItem>(options)
@@ -87,6 +105,18 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseFunctionCallOutputItem functionCallOutput:
                 JsonSerializer.Serialize(writer, functionCallOutput, options);
+                return;
+
+            case ResponseToolSearchCallItem toolSearchCall:
+                JsonSerializer.Serialize(writer, toolSearchCall, options);
+                return;
+
+            case ResponseToolSearchOutputItem toolSearchOutput:
+                JsonSerializer.Serialize(writer, toolSearchOutput, options);
+                return;
+
+            case ResponseAdditionalToolsItem additionalTools:
+                JsonSerializer.Serialize(writer, additionalTools, options);
                 return;
 
             case ResponseProgramItem program:

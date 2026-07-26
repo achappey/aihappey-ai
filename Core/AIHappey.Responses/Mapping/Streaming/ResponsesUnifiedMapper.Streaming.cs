@@ -317,6 +317,7 @@ public static partial class ResponsesUnifiedMapper
             case ResponseCreated created:
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
+                ClearToolSearchStreamState();
                 //    yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response, providerId);
                 yield break;
 
@@ -337,12 +338,14 @@ public static partial class ResponsesUnifiedMapper
                     completed.SequenceNumber, completed.Response);
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
+                ClearToolSearchStreamState();
                 yield break;
 
             case ResponseFailed failed:
                 //      yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response, providerId);
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
+                ClearToolSearchStreamState();
                 yield break;
 
             case ResponseReasoningSummaryPartAdded added:
@@ -679,6 +682,24 @@ public static partial class ResponsesUnifiedMapper
                 {
                     yield return CreateTextStartEnvelope(added.Item.Id ?? string.Empty);
                 }
+                else if (added.Item.Type == "tool_search_call")
+                {
+                    var providerExecuted = IsServerToolSearch(added.Item);
+                    yield return CreateToolInputStartEnvelope(
+                        RegisterToolSearchCall(added.Item),
+                        "tool_search",
+                        "tool_search",
+                        providerExecuted,
+                        CreateToolSearchMetadata(providerId, added.Item));
+                    yield break;
+                }
+                else if (added.Item.Type == "tool_search_output")
+                {
+                    RegisterToolSearchOutput(added.Item);
+                    // The paired call emitted the lifecycle start. Output is emitted
+                    // when this item reaches done, after its loaded tools are complete.
+                    yield break;
+                }
                 else if (added.Item.Type.EndsWith(":image_generation"))
                 {
                     yield return CreateToolInputEndEnvelope(
@@ -899,10 +920,7 @@ public static partial class ResponsesUnifiedMapper
 
                         case "function_call":
                             {
-                                var argumentInput =
-                                    !string.IsNullOrEmpty(done.Item.Arguments)
-                                        ? JsonDocument.Parse(done.Item.Arguments).RootElement
-                                        : JsonSerializer.SerializeToElement(new { });
+                                var argumentInput = ParseStreamArguments(done.Item.Arguments);
 
                                 yield return CreateToolInputEndEnvelope(
                                     done.Item.Id ?? string.Empty,
@@ -911,6 +929,30 @@ public static partial class ResponsesUnifiedMapper
                                     done.Item.Name,
                                     false);
 
+                                break;
+                            }
+
+                        case "tool_search_call":
+                            {
+                                var providerExecuted = IsServerToolSearch(done.Item);
+                                yield return CreateToolInputEndEnvelope(
+                                    ResolveRegisteredToolSearchId(done.Item),
+                                    "tool_search",
+                                    ParseStreamArguments(done.Item.Arguments),
+                                    "tool_search",
+                                    providerExecuted,
+                                    CreateToolSearchMetadata(providerId, done.Item));
+                                break;
+                            }
+
+                        case "tool_search_output":
+                            {
+                                var providerExecuted = IsServerToolSearch(done.Item);
+                                yield return CreateToolOutputEnvelope(
+                                    RegisterToolSearchOutput(done.Item),
+                                    done.Item.Tools ?? [],
+                                    providerExecuted: providerExecuted,
+                                    providerMetadata: CreateToolSearchMetadata(providerId, done.Item));
                                 break;
                             }
 

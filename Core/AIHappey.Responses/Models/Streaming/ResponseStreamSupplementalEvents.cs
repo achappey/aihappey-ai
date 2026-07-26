@@ -27,7 +27,13 @@ public class ResponseStreamItem
     public string? CallId { get; init; }
 
     [JsonPropertyName("arguments")]
-    public string? Arguments { get; init; }
+    public JsonElement? Arguments { get; init; }
+
+    [JsonPropertyName("execution")]
+    public string? Execution { get; init; }
+
+    [JsonPropertyName("tools")]
+    public IReadOnlyList<ResponseToolDefinition>? Tools { get; init; }
 
     [JsonPropertyName("max_output_length")]
     public int? MaxOutputLength { get; init; }
