@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 
@@ -62,6 +63,13 @@ public class OpenAIImageGenerationRequest
     [JsonPropertyName("user")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? User { get; set; }
+
+    /// <summary>
+    /// Provider-specific fields to forward alongside the standard OpenAI Images request fields.
+    /// For example, ARK Labs accepts <c>steps</c> for diffusion-step control.
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 /// <summary>
@@ -134,6 +142,12 @@ public class OpenAIImageEditRequest
     [JsonPropertyName("user")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? User { get; set; }
+
+    /// <summary>
+    /// Provider-specific fields to forward alongside the standard OpenAI Images request fields.
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 public class OpenAIImageReference
 {

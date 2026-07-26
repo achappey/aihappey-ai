@@ -37,19 +37,7 @@ public static class ImageCompatibilityExtensions
             Prompt = request.Prompt,
             Size = request.Size,
             N = request.N,
-            ProviderOptions = BuildProviderOptions(providerIdentifier, new()
-            {
-                /*    ["background"] = request.Background,
-                    ["moderation"] = request.Moderation,
-                    ["output_compression"] = request.OutputCompression,
-                    ["output_format"] = request.OutputFormat,
-                    ["partial_images"] = request.PartialImages,
-                    ["quality"] = request.Quality,
-                    ["response_format"] = request.ResponseFormat,
-                    ["stream"] = request.Stream,
-                    ["style"] = request.Style,
-                    ["user"] = request.User*/
-            })
+            ProviderOptions = BuildProviderOptions(providerIdentifier, BuildGenerationProviderOptions(request))
         };
 
     public static async Task<ImageRequest> ToImageRequest(this OpenAIImageEditRequest request, string model, string providerIdentifier, CancellationToken cancellationToken = default)
@@ -61,18 +49,7 @@ public static class ImageCompatibilityExtensions
             N = request.N,
             Files = await ResolveImageFiles(request.ImageFiles, request.Images, cancellationToken),
             Mask = await ResolveImageFile(request.MaskFile, request.Mask, cancellationToken),
-            ProviderOptions = BuildProviderOptions(providerIdentifier, new()
-            {
-                /*    ["background"] = request.Background,
-                    ["input_fidelity"] = request.InputFidelity,
-                    ["moderation"] = request.Moderation,
-                    ["output_compression"] = request.OutputCompression,
-                    ["output_format"] = request.OutputFormat,
-                    ["partial_images"] = request.PartialImages,
-                    ["quality"] = request.Quality,
-                    ["stream"] = request.Stream,
-                    ["user"] = request.User*/
-            })
+            ProviderOptions = BuildProviderOptions(providerIdentifier, BuildEditProviderOptions(request))
         };
 
 
@@ -178,6 +155,54 @@ public static class ImageCompatibilityExtensions
         if (timestamp is { } created && created != default)
             return new DateTimeOffset(DateTime.SpecifyKind(created, DateTimeKind.Utc)).ToUnixTimeSeconds();
         return DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    }
+
+    private static Dictionary<string, object?> BuildGenerationProviderOptions(OpenAIImageGenerationRequest request)
+    {
+        var options = new Dictionary<string, object?>
+        {
+         /*   ["background"] = request.Background,
+            ["moderation"] = request.Moderation,
+            ["output_compression"] = request.OutputCompression,
+            ["output_format"] = request.OutputFormat,
+            ["partial_images"] = request.PartialImages,
+            ["quality"] = request.Quality,
+            ["response_format"] = request.ResponseFormat,
+            ["stream"] = request.Stream,
+            ["style"] = request.Style,
+            ["user"] = request.User*/
+        };
+
+        AddAdditionalProperties(options, request.AdditionalProperties);
+        return options;
+    }
+
+    private static Dictionary<string, object?> BuildEditProviderOptions(OpenAIImageEditRequest request)
+    {
+        var options = new Dictionary<string, object?>
+        {
+          /*  ["background"] = request.Background,
+            ["input_fidelity"] = request.InputFidelity,
+            ["moderation"] = request.Moderation,
+            ["output_compression"] = request.OutputCompression,
+            ["output_format"] = request.OutputFormat,
+            ["partial_images"] = request.PartialImages,
+            ["quality"] = request.Quality,
+            ["stream"] = request.Stream,
+            ["user"] = request.User*/
+        };
+
+        AddAdditionalProperties(options, request.AdditionalProperties);
+        return options;
+    }
+
+    private static void AddAdditionalProperties(Dictionary<string, object?> options, Dictionary<string, JsonElement>? additionalProperties)
+    {
+        foreach (var (name, value) in additionalProperties ?? [])
+        {
+            if (!options.ContainsKey(name))
+                options[name] = value;
+        }
     }
 
     private static Dictionary<string, JsonElement>? BuildProviderOptions(string providerIdentifier, Dictionary<string, object?> options)

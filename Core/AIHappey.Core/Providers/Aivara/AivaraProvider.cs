@@ -20,13 +20,10 @@ public partial class AivaraProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly AsyncCacheHelper _memoryCache;
-
-    public AivaraProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public AivaraProvider(IApiKeyResolver keyResolver, 
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://developer.aivara-ai.com/api/");
     }
