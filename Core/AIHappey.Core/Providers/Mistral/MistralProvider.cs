@@ -7,6 +7,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -43,6 +44,11 @@ public partial class MistralProvider : IModelProvider
 
     private string GetName() => nameof(Mistral);
 
+
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

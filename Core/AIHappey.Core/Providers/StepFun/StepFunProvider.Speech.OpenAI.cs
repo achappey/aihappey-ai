@@ -52,7 +52,7 @@ public partial class StepFunProvider
             await SendStepFunSpeechWebSocketEventAsync(socket, new
             {
                 type = "tts.create",
-                data = BuildStepFunSpeechCreateData(sessionId, voice, responseFormat, options)
+                data = BuildStepFunSpeechCreateData(sessionId, voice!, responseFormat, options)
             }, cancellationToken);
 
             await ReceiveStepFunSpeechSessionCreatedAsync(socket, sessionId, cancellationToken);
