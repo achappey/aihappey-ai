@@ -13,8 +13,6 @@ public partial class AetherProvider
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -39,6 +37,15 @@ public partial class AetherProvider
         var fileName = "audio" + request.MediaType.GetAudioExtension();
         var now = DateTime.UtcNow;
 
+        var metadata = request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerOptions)
+            ? providerOptions
+            : default(JsonElement?);
+        var language = TryGetAetherString(metadata, "language");
+        var prompt = TryGetAetherString(metadata, "prompt");
+        var responseFormat = TryGetAetherString(metadata, "response_format", "responseFormat") ?? "json";
+        var temperature = TryGetAetherFloat(metadata, "temperature");
+
         using var form = new MultipartFormDataContent();
 
         var file = new ByteArrayContent(bytes);
@@ -46,15 +53,19 @@ public partial class AetherProvider
 
         form.Add(file, "file", fileName);
         form.Add(new StringContent(request.Model), "model");
+        AddAetherFormValue(form, "language", language);
+        AddAetherFormValue(form, "prompt", prompt);
+        AddAetherFormValue(form, "response_format", responseFormat);
+        AddAetherFormValue(form, "temperature", temperature?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
+        ApplyAuthHeader();
         using var response = await _client.PostAsync("v1/audio/transcriptions", form, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"Aether transcription failed ({(int)response.StatusCode}): {raw}");
 
-        return ConvertAetherTranscriptionResponse(raw, request.Model, now, response.GetHeaders(),
-            GetIdentifier());
+        return ConvertAetherTranscriptionResponse(raw, request.Model, now, response.GetHeaders(), GetIdentifier());
     }
 
     private static TranscriptionResponse ConvertAetherTranscriptionResponse(string raw,
@@ -134,5 +145,35 @@ public partial class AetherProvider
         }
 
         return 0f;
+    }
+
+    private static string? TryGetAetherString(JsonElement? element, params string[] propertyNames)
+    {
+        if (element is not { ValueKind: JsonValueKind.Object } value)
+            return null;
+
+        foreach (var propertyName in propertyNames)
+        {
+            if (value.TryGetProperty(propertyName, out var property)
+                && property.ValueKind == JsonValueKind.String)
+            {
+                return property.GetString();
+            }
+        }
+
+        return null;
+    }
+
+    private static float? TryGetAetherFloat(JsonElement? element, string propertyName)
+        => element is { ValueKind: JsonValueKind.Object } value
+           && value.TryGetProperty(propertyName, out var property)
+           && property.ValueKind == JsonValueKind.Number
+            ? (float)property.GetDouble()
+            : null;
+
+    private static void AddAetherFormValue(MultipartFormDataContent form, string name, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            form.Add(new StringContent(value), name);
     }
 }
