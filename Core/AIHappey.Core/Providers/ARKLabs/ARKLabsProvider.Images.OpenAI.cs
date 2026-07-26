@@ -1,0 +1,44 @@
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
+using System.Runtime.CompilerServices;
+
+namespace AIHappey.Core.Providers.ARKLabs;
+
+public partial class ARKLabsProvider
+{
+    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleImageGenerationRequestAsync(options, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        ApplyAuthHeader();
+
+        await foreach (var streamEvent in _client.OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(
+            options,
+            cancellationToken: cancellationToken))
+        {
+            yield return streamEvent;
+        }
+    }
+
+    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("ARK Labs does not document OpenAI-compatible image edit support.");
+    }
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("ARK Labs does not document OpenAI-compatible image edit streaming support.");
+    }
+
+}
+

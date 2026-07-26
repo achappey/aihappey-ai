@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AIHappey.Common.Extensions;
@@ -25,9 +26,16 @@ public partial class ARKLabsProvider
             cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(
+        OpenAITranscriptionRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var response = await OpenAITranscriptionRequestAsync(options, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(response.Text))
+            yield return new OpenAITranscriptionTextDelta { Delta = response.Text };
+
+        yield return new OpenAITranscriptionTextDone { Text = response.Text };
     }
 
     public async Task<TranscriptionResponse> TranscriptionRequest(
