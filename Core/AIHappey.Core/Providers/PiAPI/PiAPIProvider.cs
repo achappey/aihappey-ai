@@ -39,6 +39,8 @@ public partial class PiAPIProvider : IModelProvider
             throw new InvalidOperationException($"No {nameof(PiAPI)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        _client.DefaultRequestHeaders.Remove("X-API-Key");
+        _client.DefaultRequestHeaders.Add("X-API-Key", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
