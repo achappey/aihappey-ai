@@ -18,6 +18,10 @@ public class Tool
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? DeferLoading { get; set; }
 
+    [JsonPropertyName("allowed_callers")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<string>? AllowedCallers { get; set; }
+
     [JsonPropertyName("inputSchema")]
     public ToolInputSchema? InputSchema { get; set; }
 }

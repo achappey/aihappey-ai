@@ -139,6 +139,12 @@ public static partial class ResponsesUnifiedMapper
         if (tool.InputSchema is not null)
             extra["parameters"] = JsonSerializer.SerializeToElement(tool.InputSchema, Json);
 
+        if (tool.DeferLoading is not null)
+            extra["defer_loading"] = JsonSerializer.SerializeToElement(tool.DeferLoading, Json);
+
+        if (tool.AllowedCallers is not null)
+            extra["allowed_callers"] = JsonSerializer.SerializeToElement(tool.AllowedCallers, Json);
+
         return new ResponseToolDefinition
         {
             Type = ExtractValue<string>(tool.Metadata, "responses.type") ?? "function",

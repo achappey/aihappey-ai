@@ -132,6 +132,10 @@ public sealed class AIToolDefinition
 
     public object? InputSchema { get; init; }
 
+    public bool? DeferLoading { get; set; }
+
+    public IEnumerable<string>? AllowedCallers { get; set; }
+
     public Dictionary<string, object?>? Metadata { get; init; }
 }
 
@@ -150,6 +154,6 @@ public sealed class AIEventEnvelope
     public object? Data { get; init; }
 
     public Dictionary<string, object?>? Metadata { get; init; }
-    
+
 }
 

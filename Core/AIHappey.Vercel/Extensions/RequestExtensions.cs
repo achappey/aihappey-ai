@@ -93,7 +93,9 @@ public static class RequestExtensions
             Name = tool.Name,
             Description = tool.Description,
             InputSchema = tool.InputSchema,
-            Title = tool.Title
+            Title = tool.Title,
+            AllowedCallers = tool.AllowedCallers,
+            DeferLoading = tool.DeferLoading
         };
 
     public  static T? TryDeserialize<T>(this object? value)
