@@ -241,12 +241,35 @@ public static class ImageCompatibilityExtensions
 
     private static ImageFile ToImageFile(OpenAIImageReference reference)
     {
-        if (string.IsNullOrWhiteSpace(reference.ImageUrl))
-            throw new ArgumentException("Image references require either 'image_url'.");
-        if (!reference.ImageUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException("Only base64 data URL image_url references are supported by this compatibility fallback yet.");
-        var (mediaType, data) = ExtractImagePayload(reference.ImageUrl);
-        return new ImageFile { Type = "file", MediaType = mediaType ?? "image/png", Data = data };
+        if (!string.IsNullOrWhiteSpace(reference.ImageUrl))
+        {
+            if (reference.ImageUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                var (mediaType, data) = ExtractImagePayload(reference.ImageUrl);
+                return new ImageFile { Type = "file", MediaType = mediaType ?? "image/png", Data = data };
+            }
+
+            return new ImageFile
+            {
+                Type = "url",
+                MediaType = "image/*",
+                Data = reference.ImageUrl
+            };
+        }
+
+#pragma warning disable CS0618
+        if (!string.IsNullOrWhiteSpace(reference.FileId))
+        {
+            return new ImageFile
+            {
+                Type = "file_id",
+                MediaType = "image/*",
+                Data = reference.FileId
+            };
+        }
+#pragma warning restore CS0618
+
+        throw new ArgumentException("Image references require either 'image_url' or 'file_id'.");
     }
 
     private static (string? MediaType, string Base64) ExtractImagePayload(string input)
