@@ -6,6 +6,9 @@ namespace AIHappey.Core.Providers.CaseDev;
 
 public partial class CaseDevProvider
 {
+    private const string CaseDevSpeechModelId = "case-tts";
+    private const string CaseDevTranscriptionModelId = "universal-3-pro";
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         var cacheKey = this.GetCacheKey();
@@ -14,6 +17,7 @@ public partial class CaseDevProvider
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
@@ -53,10 +57,82 @@ public partial class CaseDevProvider
                         models.Add(model);
                 }
 
-                return models;
+                models.Add(new Model
+                {
+                    Id = CaseDevSpeechModelId.ToModelId(GetIdentifier()),
+                    Name = CaseDevSpeechModelId,
+                    OwnedBy = "case.dev",
+                    Type = "speech",
+                    Description = "Case.dev text-to-speech synthesis. Supply voice or use a voice-expanded model slug."
+                });
+
+                models.Add(new Model
+                {
+                    Id = CaseDevTranscriptionModelId.ToModelId(GetIdentifier()),
+                    Name = CaseDevTranscriptionModelId,
+                    OwnedBy = "case.dev",
+                    Type = "transcription",
+                    Description = "Case.dev asynchronous speech-to-text transcription."
+                });
+
+                models.AddRange(await ListCaseDevVoiceModelsAsync(ct));
+
+                return models
+                    .GroupBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group.First())
+                    .ToArray();
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
+
+    private async Task<IEnumerable<Model>> ListCaseDevVoiceModelsAsync(CancellationToken cancellationToken)
+    {
+        using var response = await _client.GetAsync("/voice/v1/voices", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return [];
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        var root = document.RootElement;
+        var voices = root.ValueKind == JsonValueKind.Array
+            ? root.EnumerateArray()
+            : root.TryGetProperty("voices", out var voicesElement) && voicesElement.ValueKind == JsonValueKind.Array
+                ? voicesElement.EnumerateArray()
+                : root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array
+                    ? dataElement.EnumerateArray()
+                    : Enumerable.Empty<JsonElement>();
+
+        var models = new List<Model>();
+        foreach (var voice in voices)
+        {
+            var voiceId = ReadCaseDevVoiceString(voice, "voice_id")
+                ?? ReadCaseDevVoiceString(voice, "voiceId")
+                ?? ReadCaseDevVoiceString(voice, "id");
+            if (string.IsNullOrWhiteSpace(voiceId))
+                continue;
+
+            var name = ReadCaseDevVoiceString(voice, "name") ?? voiceId;
+            var description = ReadCaseDevVoiceString(voice, "description");
+            models.Add(new Model
+            {
+                Id = $"{CaseDevSpeechModelId}/{voiceId}".ToModelId(GetIdentifier()),
+                Name = $"{CaseDevSpeechModelId}/{name}",
+                OwnedBy = "case.dev",
+                Type = "speech",
+                Description = string.IsNullOrWhiteSpace(description)
+                    ? $"Case.dev text-to-speech voice '{name}'"
+                    : $"Case.dev text-to-speech voice '{name}'. {description}",
+                Tags = ["voice"]
+            });
+        }
+
+        return models;
+    }
+
+    private static string? ReadCaseDevVoiceString(JsonElement element, string name)
+        => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
 }
