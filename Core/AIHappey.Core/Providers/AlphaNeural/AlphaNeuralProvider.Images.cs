@@ -10,7 +10,7 @@ namespace AIHappey.Core.Providers.AlphaNeural;
 
 public partial class AlphaNeuralProvider
 {
-    private async Task<ImageResponse> ImageRequestAlphaNeural(ImageRequest imageRequest, CancellationToken cancellationToken = default)
+    public async Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
