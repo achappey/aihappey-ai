@@ -8,7 +8,7 @@ public partial class FeatherlessProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"models:{GetIdentifier()}";
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
@@ -41,6 +41,7 @@ public partial class FeatherlessProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                        model.Type = model.Id.GuessModelType();
                     }
 
                     if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
@@ -60,7 +61,7 @@ public partial class FeatherlessProvider
                     if (el.TryGetProperty("model_class", out var modelClassEl))
                         model.Description = modelClassEl.GetString();
 
-                    if (!string.IsNullOrEmpty(model.Id))
+                    if (!string.IsNullOrEmpty(model.Id) && model.Type.Equals("language"))
                         models.Add(model);
                 }
 
