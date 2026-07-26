@@ -4,11 +4,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Mistral;
 

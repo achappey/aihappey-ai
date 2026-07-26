@@ -1,7 +1,4 @@
 using AIHappey.Core.AI;
-using System.Net.Mime;
-using System.Text.Json;
-using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Renderful;

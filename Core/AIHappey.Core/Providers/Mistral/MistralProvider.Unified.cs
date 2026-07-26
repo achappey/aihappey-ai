@@ -5,7 +5,6 @@ using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 

@@ -11,7 +11,6 @@ using AIHappey.Sampling.Mapping;
 using AIHappey.Responses;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Aether;
 

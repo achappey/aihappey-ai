@@ -12,7 +12,6 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 

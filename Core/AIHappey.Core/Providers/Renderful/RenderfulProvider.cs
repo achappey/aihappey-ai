@@ -8,7 +8,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 

@@ -12,7 +12,6 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Sampling.Mapping;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AIgateway;
 

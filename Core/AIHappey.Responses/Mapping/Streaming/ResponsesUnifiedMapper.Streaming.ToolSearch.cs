@@ -1,4 +1,3 @@
-using System.Threading;
 using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Responses.Mapping;

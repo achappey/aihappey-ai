@@ -1,5 +1,4 @@
 using System.Net.Mime;
-using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Interactions;

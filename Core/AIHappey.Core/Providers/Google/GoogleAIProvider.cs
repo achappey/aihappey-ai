@@ -11,7 +11,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
