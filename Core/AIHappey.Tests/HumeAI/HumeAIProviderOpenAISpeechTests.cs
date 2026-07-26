@@ -1,16 +1,60 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Common.Model.Providers.HumeAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.HumeAI;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.HumeAI;
 
 public sealed class HumeAIProviderOpenAISpeechTests
 {
+    [Fact]
+    public async Task SpeechRequest_omits_unset_optional_hume_fields_and_preserves_explicit_empty_timestamp_types()
+    {
+        HttpRequestMessage? captured = null;
+        var provider = CreateProvider(request =>
+        {
+            captured = CloneRequest(request);
+            return JsonResponse("""{"generations":[{"audio":"aHVtZS1hdWRpbw==","generation_id":"generation-1"}],"request_id":"request-1"}""");
+        });
+
+        await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "octave",
+            Text = "Hello Hume",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["humeai"] = JsonSerializer.SerializeToElement(new HumeAISpeechProviderMetadata
+                {
+                    IncludeTimestampTypes = []
+                })
+            }
+        });
+
+        using var document = JsonDocument.Parse(await captured!.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        var utterance = root.GetProperty("utterances")[0];
+
+        Assert.False(root.TryGetProperty("version", out _));
+        Assert.False(root.TryGetProperty("temperature", out _));
+        Assert.False(root.TryGetProperty("num_generations", out _));
+        Assert.False(root.TryGetProperty("split_utterances", out _));
+        Assert.False(root.TryGetProperty("strip_headers", out _));
+        Assert.False(root.TryGetProperty("context", out _));
+        Assert.True(root.TryGetProperty("include_timestamp_types", out var timestampTypes));
+        Assert.Equal(JsonValueKind.Array, timestampTypes.ValueKind);
+        Assert.Equal(0, timestampTypes.GetArrayLength());
+        Assert.False(utterance.TryGetProperty("description", out _));
+        Assert.False(utterance.TryGetProperty("speed", out _));
+        Assert.False(utterance.TryGetProperty("trailing_silence", out _));
+        Assert.False(utterance.TryGetProperty("voice", out _));
+    }
+
     [Fact]
     public async Task OpenAISpeechRequestAsync_delegates_to_json_synthesis_and_decodes_audio()
     {
@@ -35,6 +79,16 @@ public sealed class HumeAIProviderOpenAISpeechTests
         Assert.Equal("audio/mpeg", result.MimeType);
         Assert.Equal("/v0/tts", captured!.RequestUri!.AbsolutePath);
         Assert.Equal("test-key", captured.Headers.GetValues("X-Hume-Api-Key").Single());
+
+        using var document = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        var utterance = root.GetProperty("utterances")[0];
+        Assert.False(root.TryGetProperty("version", out _));
+        Assert.False(root.TryGetProperty("num_generations", out _));
+        Assert.False(root.TryGetProperty("split_utterances", out _));
+        Assert.False(root.TryGetProperty("strip_headers", out _));
+        Assert.False(root.TryGetProperty("include_timestamp_types", out _));
+        Assert.False(utterance.TryGetProperty("trailing_silence", out _));
     }
 
     [Fact]
@@ -91,6 +145,49 @@ public sealed class HumeAIProviderOpenAISpeechTests
         Assert.Equal("Calm", utterance.GetProperty("description").GetString());
         Assert.Equal("voice-1", utterance.GetProperty("voice").GetProperty("id").GetString());
         Assert.Equal("HUME_AI", utterance.GetProperty("voice").GetProperty("provider").GetString());
+    }
+
+    [Fact]
+    public async Task OpenAISpeechStreamingAsync_accepts_raw_newline_delimited_hume_json_events()
+    {
+        var audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("raw-hume-audio"));
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                string.Join('\n',
+                    JsonSerializer.Serialize(new
+                    {
+                        type = "audio",
+                        request_id = "request-1",
+                        generation_id = "generation-1",
+                        snippet_id = "snippet-1",
+                        text = "Hello",
+                        transcribed_text = (string?)null,
+                        chunk_index = 0,
+                        audio,
+                        audio_format = "mp3",
+                        is_last_chunk = false,
+                        utterance_index = 0
+                    }),
+                    JsonSerializer.Serialize(new
+                    {
+                        type = "timestamp",
+                        request_id = "request-1",
+                        generation_id = "generation-1",
+                        snippet_id = "snippet-1",
+                        timestamp = new { text = "Hello" }
+                    })),
+                Encoding.UTF8,
+                "application/json")
+        });
+
+        var events = new List<IAudioSpeechStreamEvent>();
+        await foreach (var item in provider.OpenAISpeechStreamingAsync(StreamRequest()))
+            events.Add(item);
+
+        Assert.Collection(events,
+            item => Assert.Equal(audio, Assert.IsType<AudioSpeechStreamDelta>(item).Audio),
+            item => Assert.IsType<AudioSpeechStreamDone>(item));
     }
 
     [Fact]

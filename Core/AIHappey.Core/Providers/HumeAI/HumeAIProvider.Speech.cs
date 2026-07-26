@@ -141,28 +141,27 @@ public partial class HumeAIProvider
         if (!streaming && metadata?.InstantMode is true)
             warnings.Add(new { type = "ignored", feature = "providerOptions.humeai.instant_mode", reason = "instant_mode is only supported by HumeAI streaming TTS endpoints" });
 
+        var utterance = new Dictionary<string, object?>
+        {
+            ["text"] = request.Text
+        };
+        AddIfNotNull(utterance, "description", FirstNonEmpty(request.Instructions, metadata?.Description));
+        AddIfNotNull(utterance, "speed", request.Speed is null ? null : (double?)request.Speed.Value);
+        AddIfNotNull(utterance, "trailing_silence", metadata?.TrailingSilence);
+        AddIfNotNull(utterance, "voice", voice);
+
         var payload = new Dictionary<string, object?>
         {
-            ["utterances"] = new[]
-            {
-                new Dictionary<string, object?>
-                {
-                    ["text"] = request.Text,
-                    ["description"] = FirstNonEmpty(request.Instructions, metadata?.Description),
-                    ["speed"] = request.Speed is null ? null : (double?)request.Speed.Value,
-                    ["trailing_silence"] = metadata?.TrailingSilence,
-                    ["voice"] = voice
-                }
-            },
-            ["format"] = new Dictionary<string, object?> { ["type"] = outputFormat },
-            ["version"] = version,
-            ["temperature"] = metadata?.Temperature,
-            ["num_generations"] = metadata?.NumGenerations,
-            ["split_utterances"] = metadata?.SplitUtterances,
-            ["strip_headers"] = metadata?.StripHeaders,
-            ["include_timestamp_types"] = NormalizeTimestampTypes(metadata?.IncludeTimestampTypes),
-            ["context"] = BuildContext(metadata)
+            ["utterances"] = new[] { utterance },
+            ["format"] = new Dictionary<string, object?> { ["type"] = outputFormat }
         };
+        AddIfNotNull(payload, "version", version);
+        AddIfNotNull(payload, "temperature", metadata?.Temperature);
+        AddIfNotNull(payload, "num_generations", metadata?.NumGenerations);
+        AddIfNotNull(payload, "split_utterances", metadata?.SplitUtterances);
+        AddIfNotNull(payload, "strip_headers", metadata?.StripHeaders);
+        AddIfNotNull(payload, "include_timestamp_types", NormalizeTimestampTypes(metadata?.IncludeTimestampTypes));
+        AddIfNotNull(payload, "context", BuildContext(metadata));
 
         if (streaming)
             payload["instant_mode"] = metadata?.InstantMode ?? true;
@@ -234,7 +233,7 @@ public partial class HumeAIProvider
 
     private static IReadOnlyList<string>? NormalizeTimestampTypes(IReadOnlyList<string>? timestampTypes)
     {
-        if (timestampTypes is null || timestampTypes.Count == 0)
+        if (timestampTypes is null)
             return null;
 
         return [.. timestampTypes
@@ -264,6 +263,12 @@ public partial class HumeAIProvider
         return null;
     }
 
+    private static void AddIfNotNull(Dictionary<string, object?> dictionary, string key, object? value)
+    {
+        if (value is not null)
+            dictionary[key] = value;
+    }
+
     private static Dictionary<string, object?>? BuildContext(HumeAISpeechProviderMetadata? metadata)
     {
         if (!string.IsNullOrWhiteSpace(metadata?.ContextGenerationId))
@@ -274,13 +279,14 @@ public partial class HumeAIProvider
 
         var utterances = metadata.ContextUtterances
             .Where(u => !string.IsNullOrWhiteSpace(u.Text))
-            .Select(u => new Dictionary<string, object?>
+            .Select(u =>
             {
-                ["text"] = u.Text,
-                ["description"] = u.Description,
-                ["speed"] = u.Speed,
-                ["trailing_silence"] = u.TrailingSilence,
-                ["voice"] = BuildVoiceRef(u.VoiceId, u.VoiceName, NormalizeVoiceProvider(u.VoiceProvider))
+                var utterance = new Dictionary<string, object?> { ["text"] = u.Text };
+                AddIfNotNull(utterance, "description", u.Description);
+                AddIfNotNull(utterance, "speed", u.Speed);
+                AddIfNotNull(utterance, "trailing_silence", u.TrailingSilence);
+                AddIfNotNull(utterance, "voice", BuildVoiceRef(u.VoiceId, u.VoiceName, NormalizeVoiceProvider(u.VoiceProvider)));
+                return utterance;
             })
             .ToArray();
 

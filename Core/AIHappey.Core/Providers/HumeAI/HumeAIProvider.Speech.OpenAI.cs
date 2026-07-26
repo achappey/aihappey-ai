@@ -78,7 +78,26 @@ public partial class HumeAIProvider
                 continue;
             }
             if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
                 dataLines.Add(line["data:".Length..].TrimStart());
+                continue;
+            }
+
+            // Hume may send its documented JSON events as newline-delimited JSON rather than SSE data fields.
+            // Flush a pending SSE event first, then parse this standalone JSON line immediately.
+            if (dataLines.Count > 0)
+            {
+                var pendingEvent = ParseHumeSpeechStreamEvent(eventName, dataLines);
+                eventName = null;
+                dataLines.Clear();
+
+                if (pendingEvent is not null)
+                    yield return pendingEvent;
+            }
+
+            var jsonEvent = ParseHumeSpeechStreamEvent(null, [line]);
+            if (jsonEvent is not null)
+                yield return jsonEvent;
         }
 
         var finalEvent = ParseHumeSpeechStreamEvent(eventName, dataLines);
