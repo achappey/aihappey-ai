@@ -19,12 +19,18 @@ public partial class InfercomProvider
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this._client.OpenAICompatibleTranscriptionRequestAsync(options,
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this._client.OpenAICompatibleTranscriptionStreamingAsync(options,
+            cancellationToken: cancellationToken);
     }
 
 
