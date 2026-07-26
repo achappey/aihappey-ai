@@ -30,7 +30,12 @@ public partial class NEARAIProvider
         {
             Images = result.Images.Select(image => $"data:image/png;base64,{image.Base64}").ToList(),
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(result.Root),
-            Response = new HeaderResponseData { Timestamp = DateTime.UtcNow, Headers = result.Headers, ModelId = request.Model.ToModelId(GetIdentifier()) }
+            Response = new HeaderResponseData
+            {
+                Timestamp = DateTime.UtcNow,
+                Headers = result.Headers,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
         };
     }
 

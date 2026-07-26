@@ -98,8 +98,14 @@ public partial class NEARAIProvider
             Language = NEARAIString(root, "language"),
             DurationInSeconds = (float?)NEARAIDouble(root, "duration"),
             Segments = segments,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
-            Response = new ResponseData { Timestamp = DateTime.UtcNow, Headers = result.Headers, ModelId = (NEARAIString(root, "model") ?? requestedModel).ToModelId(GetIdentifier()), Body = root }
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Response = new ResponseData
+            {
+                Timestamp = DateTime.UtcNow,
+                Headers = result.Headers,
+                ModelId = (NEARAIString(root, "model") ?? requestedModel).ToModelId(GetIdentifier()),
+                Body = root
+            }
         };
     }
 
@@ -120,7 +126,12 @@ public partial class NEARAIProvider
 
     private static string NEARAIAudioFileName(string mediaType) => mediaType.ToLowerInvariant() switch
     {
-        "audio/wav" or "audio/x-wav" => "audio.wav", "audio/webm" => "audio.webm", "audio/flac" => "audio.flac", "audio/ogg" => "audio.ogg", "audio/mp4" or "audio/m4a" => "audio.m4a", _ => "audio.mp3"
+        "audio/wav" or "audio/x-wav" => "audio.wav",
+        "audio/webm" => "audio.webm",
+        "audio/flac" => "audio.flac",
+        "audio/ogg" => "audio.ogg",
+        "audio/mp4" or "audio/m4a" => "audio.m4a",
+        _ => "audio.mp3"
     };
 
     private static string? NEARAIString(JsonElement element, string name) => element.TryGetProperty(name, out var property) && property.ValueKind == JsonValueKind.String ? property.GetString() : null;

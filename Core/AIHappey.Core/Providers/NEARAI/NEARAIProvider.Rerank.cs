@@ -51,13 +51,14 @@ public partial class NEARAIProvider
         return new RerankingResponse
         {
             Ranking = rankings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new RerankResponseData
             {
                 Id = root.TryGetProperty("id", out var id) ? id.GetString() : null,
                 Timestamp = DateTime.UtcNow,
                 Headers = response.GetHeaders(),
-                ModelId = (root.TryGetProperty("model", out var model) ? model.GetString() : request.Model).ToModelId(GetIdentifier()),
+                ModelId = (root.TryGetProperty("model", out var model) ? model.GetString() : request.Model)?.ToModelId(GetIdentifier())
+                    ?? request.Model.ToModelId(GetIdentifier()),
                 Body = root
             }
         };
