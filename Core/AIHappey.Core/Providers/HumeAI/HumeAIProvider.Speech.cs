@@ -21,92 +21,10 @@ public partial class HumeAIProvider
 
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
-
-        if (string.IsNullOrWhiteSpace(request.Text))
-            throw new ArgumentException("Text is required.", nameof(request));
-
-        if (string.IsNullOrWhiteSpace(request.Model))
-            throw new ArgumentException("Model is required.", nameof(request));
-
+        var (payload, outputFormat, warnings) = BuildSpeechPayload(request, streaming: false);
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<HumeAISpeechProviderMetadata>(GetIdentifier());
-        var (baseModelId, modelVoiceProvider, modelVoiceId) = ParseSpeechModel(request.Model);
-
-        if (!string.Equals(baseModelId, BaseSpeechModel, StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException($"Unsupported {ProviderName} speech model '{baseModelId}'. Use '{BaseSpeechModel}'.", nameof(request));
-
-        var outputFormat = NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat) ?? "mp3";
-        var voiceProvider = NormalizeVoiceProvider(modelVoiceProvider ?? metadata?.VoiceProvider);
-        var voiceId = FirstNonEmpty(modelVoiceId, request.Voice, metadata?.VoiceId);
-        var voiceName = string.IsNullOrWhiteSpace(voiceId) ? FirstNonEmpty(metadata?.VoiceName) : null;
-        var voice = BuildVoiceRef(voiceId, voiceName, voiceProvider);
-        var description = FirstNonEmpty(request.Instructions, metadata?.Description);
-        var speed = request.Speed is null ? null : (double?)request.Speed.Value;
-        var version = NormalizeOctaveVersion(metadata?.Version);
-        var trailingSilence = metadata?.TrailingSilence;
-
-        if (!string.IsNullOrWhiteSpace(modelVoiceId))
-        {
-            if (!string.IsNullOrWhiteSpace(request.Voice)
-                && !string.Equals(request.Voice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
-            {
-                warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
-            }
-
-            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
-                && !string.Equals(metadata.VoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
-            {
-                warnings.Add(new { type = "ignored", feature = "providerOptions.humeai.voice_id", reason = "voice is derived from model id" });
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(modelVoiceProvider)
-            && !string.IsNullOrWhiteSpace(metadata?.VoiceProvider)
-            && !string.Equals(NormalizeVoiceProvider(metadata.VoiceProvider), modelVoiceProvider, StringComparison.OrdinalIgnoreCase))
-        {
-            warnings.Add(new { type = "ignored", feature = "providerOptions.humeai.voice_provider", reason = "voice provider is derived from model id" });
-        }
-
-        if (string.Equals(version, "2", StringComparison.Ordinal) && voice is null)
-            throw new ArgumentException("HumeAI Octave version 2 requires a voice. Supply request.voice, providerOptions.humeai.voice_id, providerOptions.humeai.voice_name, or a voice shortcut model.", nameof(request));
-
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            warnings.Add(new { type = "unsupported", feature = "language", reason = "HumeAI TTS language is voice-dependent" });
-
-        if (metadata?.NumGenerations is > 1)
-            warnings.Add(new { type = "partial", feature = "num_generations", reason = "Only the first generation is returned as the normalized audio response; all generation ids are included in provider metadata." });
-
-        if (metadata?.InstantMode is true)
-            warnings.Add(new { type = "ignored", feature = "providerOptions.humeai.instant_mode", reason = "instant_mode is only supported by HumeAI streaming TTS endpoints" });
-
-        var utterance = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["description"] = description,
-            ["speed"] = speed,
-            ["trailing_silence"] = trailingSilence,
-            ["voice"] = voice
-        };
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["utterances"] = new[] { utterance },
-            ["format"] = new Dictionary<string, object?> { ["type"] = outputFormat },
-            ["version"] = version,
-            ["temperature"] = metadata?.Temperature,
-            ["num_generations"] = metadata?.NumGenerations,
-            ["split_utterances"] = metadata?.SplitUtterances,
-            ["strip_headers"] = metadata?.StripHeaders,
-            ["include_timestamp_types"] = NormalizeTimestampTypes(metadata?.IncludeTimestampTypes),
-            ["context"] = BuildContext(metadata)
-        };
-
-        if (metadata?.InstantMode is false)
-            payload["instant_mode"] = false;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v0/tts")
         {
@@ -163,6 +81,95 @@ public partial class HumeAIProvider
                 Body = payload
             }
         };
+    }
+
+    private (Dictionary<string, object?> Payload, string OutputFormat, List<object> Warnings) BuildSpeechPayload(
+        SpeechRequest request,
+        bool streaming)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (string.IsNullOrWhiteSpace(request.Text))
+            throw new ArgumentException("Text is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+
+        var warnings = new List<object>();
+        var metadata = request.GetProviderMetadata<HumeAISpeechProviderMetadata>(GetIdentifier());
+        var (baseModelId, modelVoiceProvider, modelVoiceId) = ParseSpeechModel(request.Model);
+
+        if (!string.Equals(baseModelId, BaseSpeechModel, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"Unsupported {ProviderName} speech model '{baseModelId}'. Use '{BaseSpeechModel}'.", nameof(request));
+
+        var outputFormat = NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat) ?? "mp3";
+        if (outputFormat is not "mp3" and not "wav" and not "pcm")
+            throw new NotSupportedException($"HumeAI TTS response format '{outputFormat}' is not supported.");
+
+        var voiceProvider = NormalizeVoiceProvider(modelVoiceProvider ?? metadata?.VoiceProvider);
+        var voiceId = FirstNonEmpty(modelVoiceId, request.Voice, metadata?.VoiceId);
+        var voiceName = string.IsNullOrWhiteSpace(voiceId) ? FirstNonEmpty(metadata?.VoiceName) : null;
+        var voice = BuildVoiceRef(voiceId, voiceName, voiceProvider);
+        var version = NormalizeOctaveVersion(metadata?.Version);
+
+        if (!string.IsNullOrWhiteSpace(modelVoiceId))
+        {
+            if (!string.IsNullOrWhiteSpace(request.Voice)
+                && !string.Equals(request.Voice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+                warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+
+            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
+                && !string.Equals(metadata.VoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+                warnings.Add(new { type = "ignored", feature = "providerOptions.humeai.voice_id", reason = "voice is derived from model id" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(modelVoiceProvider)
+            && !string.IsNullOrWhiteSpace(metadata?.VoiceProvider)
+            && !string.Equals(NormalizeVoiceProvider(metadata.VoiceProvider), modelVoiceProvider, StringComparison.OrdinalIgnoreCase))
+            warnings.Add(new { type = "ignored", feature = "providerOptions.humeai.voice_provider", reason = "voice provider is derived from model id" });
+
+        if (string.Equals(version, "2", StringComparison.Ordinal) && voice is null)
+            throw new ArgumentException("HumeAI Octave version 2 requires a voice. Supply request.voice, providerOptions.humeai.voice_id, providerOptions.humeai.voice_name, or a voice shortcut model.", nameof(request));
+        if (streaming && metadata?.InstantMode is not false && voice is null)
+            throw new ArgumentException("HumeAI instant-mode streaming requires a voice. Supply request.voice or use a voice shortcut model.", nameof(request));
+        if (streaming && metadata?.InstantMode is not false && metadata?.NumGenerations is > 1)
+            throw new ArgumentException("HumeAI instant-mode streaming supports only one generation.", nameof(request));
+
+        if (!string.IsNullOrWhiteSpace(request.Language))
+            warnings.Add(new { type = "unsupported", feature = "language", reason = "HumeAI TTS language is voice-dependent" });
+        if (!streaming && metadata?.NumGenerations is > 1)
+            warnings.Add(new { type = "partial", feature = "num_generations", reason = "Only the first generation is returned as the normalized audio response; all generation ids are included in provider metadata." });
+        if (!streaming && metadata?.InstantMode is true)
+            warnings.Add(new { type = "ignored", feature = "providerOptions.humeai.instant_mode", reason = "instant_mode is only supported by HumeAI streaming TTS endpoints" });
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["utterances"] = new[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["text"] = request.Text,
+                    ["description"] = FirstNonEmpty(request.Instructions, metadata?.Description),
+                    ["speed"] = request.Speed is null ? null : (double?)request.Speed.Value,
+                    ["trailing_silence"] = metadata?.TrailingSilence,
+                    ["voice"] = voice
+                }
+            },
+            ["format"] = new Dictionary<string, object?> { ["type"] = outputFormat },
+            ["version"] = version,
+            ["temperature"] = metadata?.Temperature,
+            ["num_generations"] = metadata?.NumGenerations,
+            ["split_utterances"] = metadata?.SplitUtterances,
+            ["strip_headers"] = metadata?.StripHeaders,
+            ["include_timestamp_types"] = NormalizeTimestampTypes(metadata?.IncludeTimestampTypes),
+            ["context"] = BuildContext(metadata)
+        };
+
+        if (streaming)
+            payload["instant_mode"] = metadata?.InstantMode ?? true;
+        else if (metadata?.InstantMode is false)
+            payload["instant_mode"] = false;
+
+        return (payload, outputFormat, warnings);
     }
 
     private static (string BaseModelId, string? VoiceProvider, string? VoiceId) ParseSpeechModel(string model)

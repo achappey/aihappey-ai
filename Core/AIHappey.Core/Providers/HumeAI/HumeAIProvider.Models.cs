@@ -59,8 +59,8 @@ public partial class HumeAIProvider
             Id = BaseSpeechModel.ToModelId(GetIdentifier()),
             OwnedBy = ProviderName,
             Type = "speech",
-            Name = "HumeAI Octave",
-            Description = "HumeAI Octave text-to-speech base model. Voice can be supplied via request.voice, providerOptions.humeai.voice_id, providerOptions.humeai.voice_name, or a shortcut model."
+            Name = "HumeAI Octave 2",
+            Description = "HumeAI Octave text-to-speech base model."
         };
     }
 
