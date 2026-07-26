@@ -52,7 +52,7 @@ public partial class ArceeAIProvider
                     }
 
                     if (el.TryGetProperty("name", out var nameEl))
-                        model.Name = nameEl.GetString() ?? model.Id;
+                        model.Name = nameEl.GetString() ?? model.Name;
 
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? string.Empty;
@@ -61,9 +61,6 @@ public partial class ArceeAIProvider
                         v.ValueKind == JsonValueKind.Number
                             ? v.GetInt32()
                             : null;
-
-                    if (el.TryGetProperty("max_output_length", out var maxOutputEl))
-                        model.MaxTokens = maxOutputEl.GetInt32();
 
                     if (el.TryGetProperty("pricing", out var pricingEl) &&
                             pricingEl.ValueKind == JsonValueKind.Object)
