@@ -832,9 +832,19 @@ public static class VercelUnifiedMapper
             && resultProviderMetadata is not null
             && !HasToolInvocationInput(invocation))
         {
+            var resultProviderId = resultProviderMetadata.Keys.FirstOrDefault();
             metadata["messages.provider.result.metadata"] = resultProviderMetadata;
-            metadata["messages.provider.id"] = resultProviderMetadata.Keys.FirstOrDefault();
+            metadata["messages.provider.id"] = resultProviderId;
             metadata["messages.provider.metadata"] = resultProviderMetadata;
+
+            if (!string.IsNullOrWhiteSpace(resultProviderId)
+                && resultProviderMetadata.TryGetValue(resultProviderId, out var resultValues)
+                && resultValues.TryGetValue("type", out var resultBlockType)
+                && resultBlockType is not null)
+            {
+                metadata["messages.block.type"] = resultBlockType.ToString();
+            }
+
             return;
         }
 
@@ -851,10 +861,26 @@ public static class VercelUnifiedMapper
         metadata["messages.provider.metadata"] = providerMetadata;
 
         if (callProviderMetadata is not null)
+        {
             metadata["messages.provider.call.metadata"] = callProviderMetadata;
+            if (callProviderMetadata.TryGetValue(providerId, out var callValues)
+                && callValues.TryGetValue("type", out var callBlockType)
+                && callBlockType is not null)
+            {
+                metadata["messages.call.block.type"] = callBlockType.ToString();
+            }
+        }
 
         if (resultProviderMetadata is not null)
+        {
             metadata["messages.provider.result.metadata"] = resultProviderMetadata;
+            if (resultProviderMetadata.TryGetValue(providerId, out var resultValues)
+                && resultValues.TryGetValue("type", out var resultBlockType)
+                && resultBlockType is not null)
+            {
+                metadata["messages.result.block.type"] = resultBlockType.ToString();
+            }
+        }
 
         if ((callProviderMetadata ?? providerMetadata).TryGetValue(providerId, out var matchedProviderMetadata)
             && matchedProviderMetadata.TryGetValue("type", out var blockType)
