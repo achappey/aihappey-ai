@@ -61,8 +61,20 @@ public static partial class MessagesUnifiedMapper
             JsonSerializer.Serialize(metadata, JsonSerializerOptions.Web)
         );
 
-        List<MessageToolDefinition>? tools = [.. request.Tools?.Select(ToMessageTool).ToList() ?? [],
+        var providerTools = request.Metadata?
+                   .GetMessageToolDefinitions(providerId)
+                   ?? [];
+
+        var codeExecutionType = providerTools
+            .Select(tool => tool.Type)
+            .FirstOrDefault(type =>
+                type?.StartsWith(
+                    "code_execution_",
+                    StringComparison.Ordinal) == true);
+
+        List<MessageToolDefinition>? tools = [.. request.Tools?.Select(a => ToMessageTool(a, codeExecutionType)).ToList() ?? [],
             .. request.Metadata?.GetMessageToolDefinitions(providerId) ?? []];
+
         var container = request.Metadata?
             .GetProviderOption<JsonElement>(providerId, "container");
 
@@ -75,9 +87,12 @@ public static partial class MessagesUnifiedMapper
             Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],
             CacheControl = request.Metadata?
                 .GetProviderOption<CacheControlEphemeral>(providerId, "cache_control"),
-            Container = container is JsonElement je && je.ValueKind != JsonValueKind.Undefined
-                ? je.Clone()
-                : null,
+            // Container = container is JsonElement je && je.ValueKind != JsonValueKind.Undefined
+            //    ? je.Clone()
+            //   : null,
+            Container = container is JsonElement je
+                    ? ToContainerId(je)
+                    : null,
             InferenceGeo = request.Metadata?
                 .GetProviderOption<string>(providerId, "inference_geo"),
             Metadata = metadataObj,
@@ -111,7 +126,43 @@ public static partial class MessagesUnifiedMapper
         providerId.ApplyProviderOptions(metadata, result.AdditionalProperties ??=
                        [], ["tools", "anthropic-beta"]);
 
+        if (!string.IsNullOrEmpty(result.Container))
+            result.AdditionalProperties?.Remove("container");
+
         return result;
+    }
+
+    private static string? ToContainerId(JsonElement container)
+    {
+        if (container.ValueKind == JsonValueKind.String)
+            return container.GetString();
+
+        if (container.ValueKind == JsonValueKind.Object &&
+            container.TryGetProperty("id", out var id) &&
+            id.ValueKind == JsonValueKind.String)
+        {
+            return id.GetString();
+        }
+
+        return null;
+    }
+
+    private static JsonElement? ExtractContainer(JsonElement container)
+    {
+        if (container.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var result = new Dictionary<string, JsonElement>();
+
+        if (container.TryGetProperty("id", out var id))
+            result["id"] = id.Clone();
+
+        if (container.TryGetProperty("skills", out var skills))
+            result["skills"] = skills.Clone();
+
+        return result.Count > 0
+            ? JsonSerializer.SerializeToElement(result)
+            : null;
     }
 
     private static bool IsSystemRole(string? role)

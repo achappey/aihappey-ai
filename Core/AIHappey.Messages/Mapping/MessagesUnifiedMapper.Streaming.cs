@@ -91,6 +91,43 @@ public static partial class MessagesUnifiedMapper
             case "message_start":
                 state.CurrentMessage = part.Message;
                 state.Usage = part.Message?.Usage;
+                state.StopReason = part.Message?.StopReason;
+                state.StopSequence = part.Message?.StopSequence;
+                state.Container = part.Message?.Container;
+
+                foreach (var block in part.Message?.Content ?? [])
+                {
+                    if (!IsToolInputBlock(block.Type))
+                        continue;
+
+                    var compactEventId = ResolveStreamEventId(
+                        block,
+                        $"{part.Message?.Id ?? "msg"}:initial:{block.Type}");
+                    if (!state.EmittedToolInputIds.Add(compactEventId))
+                        continue;
+
+                    var providerExecuted = IsProviderExecutedTool(block.Type);
+                    var providerMetadata = CreateProviderExecutedToolProviderMetadata(
+                        providerId,
+                        providerExecuted,
+                        CreateToolInputProviderMetadata(block));
+
+                    yield return CreateEnvelope("tool-input-start", compactEventId, new AIToolInputStartEventData
+                    {
+                        ToolName = block.Name ?? block.Type,
+                        Title = block.Name,
+                        ProviderExecuted = providerExecuted,
+                        ProviderMetadata = providerMetadata
+                    });
+                    yield return CreateEnvelope("tool-input-available", compactEventId, new AIToolInputAvailableEventData
+                    {
+                        ToolName = block.Name ?? block.Type,
+                        Title = block.Name,
+                        ProviderExecuted = providerExecuted,
+                        Input = block.Input?.Clone() ?? JsonSerializer.SerializeToElement(new { }, Json),
+                        ProviderMetadata = providerMetadata
+                    });
+                }
                 yield break;
 
             case "content_block_start":
@@ -99,6 +136,10 @@ public static partial class MessagesUnifiedMapper
 
                 var blockState = state.GetOrCreate(part.Index.Value, part.ContentBlock, part.Message?.Id ?? state.CurrentMessage?.Id);
                 var eventId = ResolveStreamEventId(part.ContentBlock, blockState.EventId);
+
+                if (IsToolInputBlock(part.ContentBlock.Type)
+                    && !state.EmittedToolInputIds.Add(eventId))
+                    yield break;
 
                 if (part.ContentBlock.Type == "text")
                 {
@@ -135,7 +176,8 @@ public static partial class MessagesUnifiedMapper
                         ProviderExecuted = IsProviderExecutedTool(part.ContentBlock.Type),
                         ProviderMetadata = CreateProviderExecutedToolProviderMetadata(
                             providerId,
-                            IsProviderExecutedTool(part.ContentBlock.Type))
+                            IsProviderExecutedTool(part.ContentBlock.Type),
+                            CreateToolInputProviderMetadata(part.ContentBlock))
                     });
                 }
                 else if (IsToolOutputBlock(part.ContentBlock.Type))
@@ -227,7 +269,10 @@ public static partial class MessagesUnifiedMapper
                         Title = stopState.Block.Name,
                         ProviderExecuted = providerExecuted,
                         Input = ParseToolInput(stopState) ?? JsonSerializer.SerializeToElement(new { }, Json),
-                        ProviderMetadata = CreateProviderExecutedToolProviderMetadata(providerId, providerExecuted)
+                        ProviderMetadata = CreateProviderExecutedToolProviderMetadata(
+                            providerId,
+                            providerExecuted,
+                            CreateToolInputProviderMetadata(stopState.Block))
                     });
                 }
 
@@ -237,6 +282,7 @@ public static partial class MessagesUnifiedMapper
                 state.Usage = MergeUsage(state.Usage, part.Usage);
                 state.StopReason = part.Delta?.StopReason ?? state.StopReason;
                 state.StopSequence = part.Delta?.StopSequence ?? state.StopSequence;
+                state.Container = part.Delta?.Container ?? state.Container;
                 yield break;
 
             case "message_stop":
@@ -246,7 +292,7 @@ public static partial class MessagesUnifiedMapper
                 }
 
                 Dictionary<string, object>? finishMetadata = null;
-                if (part.Metadata is not null || state.Usage is not null)
+                if (part.Metadata is not null || state.Usage is not null || state.Container is not null)
                 {
                     finishMetadata = part.Metadata is null
                         ? []
@@ -254,6 +300,9 @@ public static partial class MessagesUnifiedMapper
 
                     if (state.Usage is not null)
                         finishMetadata["usage"] = state.Usage;
+
+                    if (state.Container is not null)
+                        AddContainerProviderMetadata(finishMetadata, providerId, state.Container);
                 }
 
                 yield return CreateEnvelope("finish", state.CurrentMessage?.Id, new AIFinishEventData
@@ -1126,18 +1175,55 @@ public static partial class MessagesUnifiedMapper
             };
     }
 
+    private static void AddContainerProviderMetadata(
+        Dictionary<string, object> finishMetadata,
+        string providerId,
+        MessagesContainer container)
+    {
+        var providerMetadata = finishMetadata.TryGetValue("providerMetadata", out var existing)
+            ? DeserializeFromObject<Dictionary<string, Dictionary<string, object>>>(existing) ?? []
+            : [];
+        var scopedMetadata = providerMetadata.TryGetValue(providerId, out var scoped)
+            ? scoped
+            : [];
+
+        scopedMetadata["container"] = container;
+        providerMetadata[providerId] = scopedMetadata;
+        finishMetadata["providerMetadata"] = providerMetadata;
+    }
+
     private static Dictionary<string, Dictionary<string, object>>? CreateProviderExecutedToolProviderMetadata(
         string providerId,
         bool providerExecuted,
         Dictionary<string, object>? providerMetadata = null)
     {
-        if (!providerExecuted || string.IsNullOrWhiteSpace(providerId))
+        if (string.IsNullOrWhiteSpace(providerId)
+            || (!providerExecuted && (providerMetadata is null || providerMetadata.Count == 0)))
             return null;
 
         return new Dictionary<string, Dictionary<string, object>>
         {
             [providerId] = providerMetadata ?? []
         };
+    }
+
+    private static Dictionary<string, object> CreateToolInputProviderMetadata(MessageContentBlock block)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = block.Type
+        };
+
+        if (!string.IsNullOrWhiteSpace(block.Id))
+            metadata["id"] = block.Id;
+
+        if (!string.IsNullOrWhiteSpace(block.Name))
+            metadata["name"] = block.Name;
+
+        if (block.Caller is not null)
+            metadata["caller"] = JsonSerializer.SerializeToElement(block.Caller, Json);
+
+        return metadata;
     }
 
     private static Dictionary<string, Dictionary<string, object>>? CreateToolOutputProviderMetadata(

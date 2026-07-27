@@ -471,7 +471,7 @@ public static class VercelUnifiedMapper
         bool? providerExecuted,
         Dictionary<string, Dictionary<string, object>>? providerMetadata)
     {
-        if (providerExecuted != true)
+        if (providerExecuted != true && (providerMetadata is null || providerMetadata.Count == 0))
             return null;
 
         var normalized = new Dictionary<string, Dictionary<string, object>?>();
@@ -482,7 +482,9 @@ public static class VercelUnifiedMapper
                 normalized[key] = value;
         }
 
-        if (!string.IsNullOrWhiteSpace(providerId) && !normalized.ContainsKey(providerId))
+        if (providerExecuted == true
+            && !string.IsNullOrWhiteSpace(providerId)
+            && !normalized.ContainsKey(providerId))
             normalized[providerId] = [];
 
         return normalized.Count == 0 ? null : normalized;
@@ -801,7 +803,7 @@ public static class VercelUnifiedMapper
         if (rawPart is not null)
             metadata["vercel.part.raw"] = JsonSerializer.SerializeToElement(rawPart, rawPart.GetType(), Json);
 
-        if (providerExecuted == true && rawPart is ToolInvocationPart invocation)
+        if (rawPart is ToolInvocationPart invocation)
             AppendMessagesProviderMetadata(metadata, invocation);
 
         return new AIToolCallContentPart
@@ -823,8 +825,20 @@ public static class VercelUnifiedMapper
         Dictionary<string, object?> metadata,
         ToolInvocationPart invocation)
     {
-        var providerMetadata = NormalizeProviderMetadata(invocation.ResultProviderMetadata)
-            ?? NormalizeProviderMetadata(invocation.CallProviderMetadata);
+        var callProviderMetadata = NormalizeProviderMetadata(invocation.CallProviderMetadata);
+        var resultProviderMetadata = NormalizeProviderMetadata(invocation.ResultProviderMetadata);
+
+        if (callProviderMetadata is null
+            && resultProviderMetadata is not null
+            && !HasToolInvocationInput(invocation))
+        {
+            metadata["messages.provider.result.metadata"] = resultProviderMetadata;
+            metadata["messages.provider.id"] = resultProviderMetadata.Keys.FirstOrDefault();
+            metadata["messages.provider.metadata"] = resultProviderMetadata;
+            return;
+        }
+
+        var providerMetadata = callProviderMetadata ?? resultProviderMetadata;
 
         if (providerMetadata is null || providerMetadata.Count == 0)
             return;
@@ -836,12 +850,29 @@ public static class VercelUnifiedMapper
         metadata["messages.provider.id"] = providerId;
         metadata["messages.provider.metadata"] = providerMetadata;
 
-        if (providerMetadata.TryGetValue(providerId, out var matchedProviderMetadata)
+        if (callProviderMetadata is not null)
+            metadata["messages.provider.call.metadata"] = callProviderMetadata;
+
+        if (resultProviderMetadata is not null)
+            metadata["messages.provider.result.metadata"] = resultProviderMetadata;
+
+        if ((callProviderMetadata ?? providerMetadata).TryGetValue(providerId, out var matchedProviderMetadata)
             && matchedProviderMetadata.TryGetValue("type", out var blockType)
             && blockType is not null)
         {
             metadata["messages.block.type"] = blockType.ToString();
         }
+    }
+
+    private static bool HasToolInvocationInput(ToolInvocationPart invocation)
+    {
+        var input = JsonSerializer.SerializeToElement(invocation.Input, Json);
+        return input.ValueKind switch
+        {
+            JsonValueKind.Null or JsonValueKind.Undefined => false,
+            JsonValueKind.Object => input.EnumerateObject().Any(),
+            _ => true
+        };
     }
 
     private static Dictionary<string, Dictionary<string, object>>? NormalizeProviderMetadata(

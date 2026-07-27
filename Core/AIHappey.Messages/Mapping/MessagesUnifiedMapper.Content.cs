@@ -68,6 +68,37 @@ public static partial class MessagesUnifiedMapper
         }
     }
 
+    private static void NormalizeProgrammaticAllowedCallers(
+    List<MessageToolDefinition> tools)
+    {
+        var codeExecutionType = tools
+            .Select(x => x.Type)
+            .FirstOrDefault(type =>
+                type?.StartsWith(
+                    "code_execution_",
+                    StringComparison.Ordinal) == true);
+
+        if (codeExecutionType is null)
+            return;
+
+        foreach (var tool in tools)
+        {
+            if (tool.AllowedCallers is null)
+                continue;
+
+            tool.AllowedCallers =
+            [
+                .. tool.AllowedCallers.Select(caller =>
+                string.Equals(
+                    caller,
+                    "programmatic",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? codeExecutionType
+                    : caller)
+            ];
+        }
+    }
+
     private static AIToolDefinition ToUnifiedTool(MessageToolDefinition tool)
         => new()
         {
@@ -82,13 +113,40 @@ public static partial class MessagesUnifiedMapper
             }
         };
 
-    private static MessageToolDefinition ToMessageTool(AIToolDefinition tool)
+    private static List<string>? MapAllowedCallers(
+        IEnumerable<string>? allowedCallers,
+        string? codeExecutionType)
+    {
+        if (allowedCallers is null)
+            return null;
+
+        return
+        [
+            .. allowedCallers.Select(caller =>
+            string.Equals(
+                caller,
+                "programmatic",
+                StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(codeExecutionType)
+                ? codeExecutionType
+                : caller)
+        ];
+    }
+
+    private static MessageToolDefinition ToMessageTool(AIToolDefinition tool,
+    string? codeExecutionType)
     {
         if (tool.Metadata is not null && tool.Metadata.TryGetValue("messages.tool.raw", out var raw) && raw is not null)
         {
             var hydrated = DeserializeFromObject<MessageToolDefinition>(raw);
             if (hydrated is not null)
+            {
+                hydrated.AllowedCallers = MapAllowedCallers(
+                    hydrated.AllowedCallers,
+                    codeExecutionType);
+
                 return hydrated;
+            }
         }
 
         return new MessageToolDefinition
@@ -96,6 +154,9 @@ public static partial class MessagesUnifiedMapper
             Name = tool.Name,
             Description = tool.Description,
             DeferLoading = tool.DeferLoading,
+            AllowedCallers = MapAllowedCallers(
+                    tool.AllowedCallers,
+                    codeExecutionType),
             InputSchema = SerializeToNullableElement(tool.InputSchema),
             Type = ExtractValue<string>(tool.Metadata, "messages.tool.type") ?? "custom"
         };
@@ -264,14 +325,19 @@ public static partial class MessagesUnifiedMapper
 
         if (!IsToolOutputOnlyPart(toolPart))
         {
+            var toolUseBlock = new MessageContentBlock
+            {
+                Type = "tool_use",
+                Id = toolPart.ToolCallId,
+                Name = toolPart.ToolName ?? toolPart.Title ?? "tool",
+                Input = SerializeToNullableElement(toolPart.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
+            };
+
+            if (TryGetToolCallProviderMetadata(toolPart.Metadata, out var providerMetadata))
+                ApplyToolCallerMetadata(toolUseBlock, providerMetadata);
+
             yield return (
-                new MessageContentBlock
-                {
-                    Type = "tool_use",
-                    Id = toolPart.ToolCallId,
-                    Name = toolPart.ToolName ?? toolPart.Title ?? "tool",
-                    Input = SerializeToNullableElement(toolPart.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
-                },
+                toolUseBlock,
                 null);
         }
 
@@ -309,6 +375,19 @@ public static partial class MessagesUnifiedMapper
     private static bool HasToolOutput(AIToolCallContentPart toolPart)
         => toolPart.Output is not null;
 
+    private static void ApplyToolCallerMetadata(
+        MessageContentBlock block,
+        Dictionary<string, object>? providerMetadata)
+    {
+        if (block.Caller is null
+            && providerMetadata is not null
+            && providerMetadata.TryGetValue("caller", out var caller)
+            && caller is not null)
+        {
+            block.Caller = DeserializeFromObject<MessageCaller>(caller);
+        }
+    }
+
     private static bool IsToolOutputOnlyPart(AIToolCallContentPart toolPart)
         => string.Equals(toolPart.Type, "function_call_output", StringComparison.OrdinalIgnoreCase);
 
@@ -318,7 +397,7 @@ public static partial class MessagesUnifiedMapper
     {
         block = null;
 
-        if (!TryGetMatchingProviderMetadata(toolPart.Metadata, out var providerMetadata))
+        if (!TryGetToolResultProviderMetadata(toolPart.Metadata, out var providerMetadata))
             return false;
 
         var blockType = ExtractValue<string>(toolPart.Metadata, "messages.block.type") ?? "tool_result";
@@ -344,18 +423,32 @@ public static partial class MessagesUnifiedMapper
     {
         block = null;
 
-        if (!TryGetMatchingProviderMetadata(toolPart.Metadata, out var providerMetadata))
+        if (!TryGetProviderExecutedToolCallMetadata(toolPart.Metadata, out var providerMetadata))
+            return false;
+
+        var toolCallId = !string.IsNullOrWhiteSpace(toolPart.ToolCallId)
+            ? toolPart.ToolCallId
+            : providerMetadata.TryGetValue("id", out var metadataId) && metadataId is not null
+                ? metadataId.ToString()
+                : providerMetadata.TryGetValue("tool_use_id", out var toolUseId) && toolUseId is not null
+                    ? toolUseId.ToString()
+                    : null;
+
+        if (string.IsNullOrWhiteSpace(toolCallId))
             return false;
 
         var resultBlockType = ExtractValue<string>(toolPart.Metadata, "messages.block.type") ?? string.Empty;
-        var inputBlockType = ResolveProviderExecutedInputBlockType(resultBlockType, providerMetadata);
+        var inputBlockType = providerMetadata.TryGetValue("type", out var inputType)
+            && IsToolInputBlock(inputType?.ToString())
+                ? inputType!.ToString()!
+                : ResolveProviderExecutedInputBlockType(resultBlockType, providerMetadata);
         if (string.IsNullOrWhiteSpace(inputBlockType))
             return false;
 
         block = new MessageContentBlock
         {
             Type = inputBlockType,
-            Id = toolPart.ToolCallId,
+            Id = toolCallId,
             Name = toolPart.ToolName ?? toolPart.Title ?? ResolveProviderExecutedToolName(resultBlockType),
             Title = SupportsTitleOnProviderExecutedInputBlock(inputBlockType) ? toolPart.Title : null,
             Input = SerializeToNullableElement(toolPart.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
@@ -364,6 +457,29 @@ public static partial class MessagesUnifiedMapper
         ApplyProviderExecutedInputBlockMetadata(block, providerMetadata);
         return true;
     }
+
+    private static bool TryGetToolCallProviderMetadata(
+        Dictionary<string, object?>? metadata,
+        out Dictionary<string, object>? providerMetadata)
+        => TryGetMatchingProviderMetadata(metadata, "messages.provider.call.metadata", out providerMetadata)
+            || (!HasMetadataChannel(metadata, "messages.provider.result.metadata")
+                && TryGetMatchingProviderMetadata(metadata, out providerMetadata));
+
+    private static bool TryGetProviderExecutedToolCallMetadata(
+        Dictionary<string, object?>? metadata,
+        out Dictionary<string, object>? providerMetadata)
+        => TryGetMatchingProviderMetadata(metadata, "messages.provider.call.metadata", out providerMetadata)
+            || TryGetMatchingProviderMetadata(metadata, out providerMetadata);
+
+    private static bool TryGetToolResultProviderMetadata(
+        Dictionary<string, object?>? metadata,
+        out Dictionary<string, object>? providerMetadata)
+        => TryGetMatchingProviderMetadata(metadata, "messages.provider.result.metadata", out providerMetadata)
+            || (!HasMetadataChannel(metadata, "messages.provider.call.metadata")
+                && TryGetMatchingProviderMetadata(metadata, out providerMetadata));
+
+    private static bool HasMetadataChannel(Dictionary<string, object?>? metadata, string key)
+        => metadata is not null && metadata.ContainsKey(key);
 
     private static bool TryExtractProviderExecutedMessagesContent(
         object? output,

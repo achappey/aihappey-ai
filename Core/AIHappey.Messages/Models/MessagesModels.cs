@@ -18,7 +18,7 @@ public sealed class MessagesRequest
     public CacheControlEphemeral? CacheControl { get; set; }
 
     [JsonPropertyName("container")]
-    public JsonElement? Container { get; set; }
+    public string? Container { get; set; }
 
     [JsonPropertyName("inference_geo")]
     public string? InferenceGeo { get; set; }
@@ -814,6 +814,10 @@ public sealed class MessageStreamDelta
     [JsonPropertyName("stop_sequence")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? StopSequence { get; set; }
+
+    [JsonPropertyName("container")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public MessagesContainer? Container { get; set; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }

@@ -16,6 +16,79 @@ public sealed class MessagesUnifiedMapperRequestTests
     private const string AnthropicSkillsToolsFixturePath = "Fixtures/api-chat/raw/anthropic-with-skills-tools-chatrequest.json";
 
     [Fact]
+    public void Vercel_chat_request_reuses_newest_assistant_container_when_request_container_is_absent()
+    {
+        var request = new ChatRequest
+        {
+            Model = "anthropic/test-model",
+            Messages =
+            [
+                CreateUiMessage(Role.assistant, "old", "container_old"),
+                CreateUiMessage(Role.user, "continue"),
+                CreateUiMessage(Role.assistant, "new", "container_new"),
+                CreateUiMessage(Role.user, "continue again")
+            ]
+        };
+
+        var messagesRequest = request.ToUnifiedRequest("anthropic").ToMessagesRequest("anthropic");
+
+    }
+
+    [Fact]
+    public void Vercel_chat_request_explicit_container_wins_over_assistant_history()
+    {
+        var request = new ChatRequest
+        {
+            Model = "anthropic/test-model",
+            ProviderMetadata = new Dictionary<string, JsonElement>
+            {
+                ["anthropic"] = JsonSerializer.SerializeToElement(new
+                {
+                    container = new { id = "container_explicit" }
+                })
+            },
+            Messages = [CreateUiMessage(Role.assistant, "old", "container_history")]
+        };
+
+        var messagesRequest = request.ToUnifiedRequest("anthropic").ToMessagesRequest("anthropic");
+
+    }
+
+    [Fact]
+    public void Vercel_chat_request_without_any_container_remains_without_container()
+    {
+        var request = new ChatRequest
+        {
+            Model = "anthropic/test-model",
+            Messages = [CreateUiMessage(Role.user, "hello")]
+        };
+
+        var messagesRequest = request.ToUnifiedRequest("anthropic").ToMessagesRequest("anthropic");
+
+        Assert.Null(messagesRequest.Container);
+    }
+
+    private static UIMessage CreateUiMessage(Role role, string text, string? containerId = null)
+        => new()
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Role = role,
+            Parts = [new TextUIPart { Text = text }],
+            Metadata = containerId is null
+                ? null
+                : new Dictionary<string, object>
+                {
+                    ["providerMetadata"] = new Dictionary<string, object>
+                    {
+                        ["anthropic"] = new Dictionary<string, object>
+                        {
+                            ["container"] = new { id = containerId }
+                        }
+                    }
+                }
+        };
+
+    [Fact]
     public void ToMessagesRequest_preserves_role_boundaries_for_plain_text_history()
     {
         var request = new AIRequest
@@ -508,6 +581,166 @@ public sealed class MessagesUnifiedMapperRequestTests
 
         var serializedServerToolUseBlock = JsonSerializer.Serialize(serverToolUseBlock, JsonSerializerOptions.Web);
         Assert.DoesNotContain("\"title\":", serializedServerToolUseBlock, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Vercel_call_provider_metadata_reconstructs_anthropic_tool_use_caller()
+    {
+        var request = CreateCallerRoundTripChatRequest(includeCallMetadata: true, includeResultMetadata: false);
+
+        var messagesRequest = request.ToUnifiedRequest("anthropic").ToMessagesRequest("anthropic");
+        var assistant = Assert.Single(messagesRequest.Messages, message => message.Role == "assistant");
+        var toolUse = Assert.Single(assistant.Content.Blocks!, block => block.Type == "tool_use");
+
+        Assert.Equal("code_execution_20260120", toolUse.Caller?.Type);
+        Assert.Equal("srvtoolu_01DzRDvrbd8kQSuXSNADCfHM", toolUse.Caller?.ToolId);
+    }
+
+    [Fact]
+    public void Vercel_result_provider_metadata_alone_does_not_reconstruct_anthropic_tool_use_caller()
+    {
+        var request = CreateCallerRoundTripChatRequest(includeCallMetadata: false, includeResultMetadata: true);
+
+        var messagesRequest = request.ToUnifiedRequest("anthropic").ToMessagesRequest("anthropic");
+        var assistant = Assert.Single(messagesRequest.Messages, message => message.Role == "assistant");
+        var toolUse = Assert.Single(assistant.Content.Blocks!, block => block.Type == "tool_use");
+
+        Assert.Null(toolUse.Caller);
+    }
+
+    [Fact]
+    public void Vercel_tool_parts_reconstruct_server_tool_use_and_caller_linked_tool_use_one_to_one()
+    {
+        const string serverToolUseId = "srvtoolu_01F2XmM4s8uCx5LnZoDDEkww";
+        const string toolUseId = "toolu_019VW9jv7Eciyz4p6bZ2a4rN";
+        var request = new ChatRequest
+        {
+            Model = "anthropic/test-model",
+            Messages =
+            [
+                new UIMessage
+                {
+                    Id = "assistant-two-tool-calls",
+                    Role = Role.assistant,
+                    Parts =
+                    [
+                        new ToolInvocationPart
+                        {
+                            Type = "tool-code_execution",
+                            ToolCallId = serverToolUseId,
+                            Title = "code_execution",
+                            Input = new { code = "print('Africa')" },
+                            State = "input-available",
+                            ProviderExecuted = true,
+                            CallProviderMetadata = CreateToolCallProviderMetadata(
+                                "server_tool_use",
+                                serverToolUseId,
+                                "code_execution")
+                        },
+                        new ToolInvocationPart
+                        {
+                            Type = "tool-github_rest_countries_get_by_region",
+                            ToolCallId = toolUseId,
+                            Title = "github_rest_countries_get_by_region",
+                            Input = new { region = "Africa" },
+                            State = "input-available",
+                            ProviderExecuted = false,
+                            CallProviderMetadata = CreateToolCallProviderMetadata(
+                                "tool_use",
+                                toolUseId,
+                                "github_rest_countries_get_by_region",
+                                new { type = "code_execution_20260120", tool_id = serverToolUseId })
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var messagesRequest = request.ToUnifiedRequest("anthropic").ToMessagesRequest("anthropic");
+        var assistant = Assert.Single(messagesRequest.Messages, message => message.Role == "assistant");
+        var blocks = assistant.Content.Blocks!;
+
+        Assert.Collection(
+            blocks,
+            serverToolUse =>
+            {
+                Assert.Equal("server_tool_use", serverToolUse.Type);
+                Assert.Equal(serverToolUseId, serverToolUse.Id);
+                Assert.Equal("code_execution", serverToolUse.Name);
+                Assert.Equal("print('Africa')", serverToolUse.Input?.GetProperty("code").GetString());
+            },
+            toolUse =>
+            {
+                Assert.Equal("tool_use", toolUse.Type);
+                Assert.Equal(toolUseId, toolUse.Id);
+                Assert.Equal("github_rest_countries_get_by_region", toolUse.Name);
+                Assert.Equal("code_execution_20260120", toolUse.Caller?.Type);
+                Assert.Equal(serverToolUseId, toolUse.Caller?.ToolId);
+            });
+    }
+
+    private static Dictionary<string, Dictionary<string, object>?> CreateToolCallProviderMetadata(
+        string type,
+        string id,
+        string name,
+        object? caller = null)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = type,
+            ["id"] = id,
+            ["name"] = name
+        };
+
+        if (caller is not null)
+            metadata["caller"] = JsonSerializer.SerializeToElement(caller);
+
+        return new Dictionary<string, Dictionary<string, object>?>
+        {
+            ["anthropic"] = metadata
+        };
+    }
+
+    private static ChatRequest CreateCallerRoundTripChatRequest(bool includeCallMetadata, bool includeResultMetadata)
+    {
+        var callerMetadata = new Dictionary<string, Dictionary<string, object>?>
+        {
+            ["anthropic"] = new Dictionary<string, object>
+            {
+                ["caller"] = JsonSerializer.SerializeToElement(new
+                {
+                    type = "code_execution_20260120",
+                    tool_id = "srvtoolu_01DzRDvrbd8kQSuXSNADCfHM"
+                })
+            }
+        };
+
+        return new ChatRequest
+        {
+            Model = "anthropic/test-model",
+            Messages =
+            [
+                new UIMessage
+                {
+                    Id = "assistant-caller",
+                    Role = Role.assistant,
+                    Parts =
+                    [
+                        new ToolInvocationPart
+                        {
+                            Type = "tool-github_rest_countries_get_by_region",
+                            ToolCallId = "toolu_01BY5fVwhzUbJ6kGuebWFKyV",
+                            Title = "github_rest_countries_get_by_region",
+                            Input = new { region = "Africa" },
+                            State = "input-available",
+                            ProviderExecuted = false,
+                            CallProviderMetadata = includeCallMetadata ? callerMetadata : null,
+                            ResultProviderMetadata = includeResultMetadata ? callerMetadata : null
+                        }
+                    ]
+                }
+            ]
+        };
     }
 
     private static Dictionary<string, object?> CreateProviderExecutedMetadata(

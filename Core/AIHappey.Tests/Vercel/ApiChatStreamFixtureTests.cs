@@ -8,6 +8,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Brave;
 using AIHappey.Core.Providers.NinjaChat;
+using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -22,6 +23,49 @@ namespace AIHappey.Tests.Vercel;
 
 public sealed class ApiChatStreamFixtureTests
 {
+
+    [Fact]
+    public void Anthropic_generated_container_is_emitted_in_finish_provider_metadata()
+    {
+        var state = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var parts = new MessageStreamPart[]
+        {
+            new()
+            {
+                Type = "message_start",
+                Message = new MessagesResponse { Id = "msg_container", Model = "claude-test", Role = "assistant" }
+            },
+            new()
+            {
+                Type = "message_delta",
+                Delta = new MessageStreamDelta
+                {
+                    StopReason = "tool_use",
+                    Container = new MessagesContainer
+                    {
+                        Id = "container_generated",
+                        ExpiresAt = "2026-07-27T18:32:50.935817Z"
+                    }
+                }
+            },
+            new() { Type = "message_stop" }
+        };
+
+        var finishEnvelope = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents("anthropic", state))
+            .Single(streamEvent => streamEvent.Event.Type == "finish")
+            .Event;
+        var finishPart = Assert.IsType<FinishUIPart>(
+            VercelUnifiedMapper.ToUIMessagePart(finishEnvelope, "anthropic").Single());
+        var metadata = JsonSerializer.SerializeToElement(finishPart.MessageMetadata, JsonSerializerOptions.Web);
+        var container = metadata
+            .GetProperty("providerMetadata")
+            .GetProperty("anthropic")
+            .GetProperty("container");
+
+        Assert.Equal("container_generated", container.GetProperty("id").GetString());
+        Assert.Equal("2026-07-27T18:32:50.935817Z", container.GetProperty("expires_at").GetString());
+    }
     private const string GitHubRawFixturePath = "Fixtures/chat-completions/raw/github-chat-completions-stream.jsonl";
     private const string GroqErrorRawFixturePath = "Fixtures/chat-completions/raw/groq-error-completions-stream.jsonl";
     private const string NinjaChatEnsembleRawFixturePath = "Fixtures/chat-completions/raw/ninjachat-ensemble-response.jsonl";
@@ -510,7 +554,9 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal("web_search", toolStartPart.ToolName);
         Assert.True(toolStartPart.ProviderExecuted);
         var toolStartProviderMetadata = Assert.Contains(ProviderId, toolStartPart.ProviderMetadata ?? []);
-        Assert.Empty(toolStartProviderMetadata ?? []);
+        Assert.Equal("server_tool_use", Assert.IsType<string>(toolStartProviderMetadata?["type"]));
+        Assert.Equal(toolUseId, Assert.IsType<string>(toolStartProviderMetadata?["id"]));
+        Assert.Equal("web_search", Assert.IsType<string>(toolStartProviderMetadata?["name"]));
 
         var toolInputDeltaParts = uiParts.OfType<ToolCallDeltaPart>().ToList();
         Assert.All(toolInputDeltaParts, part => Assert.Equal(toolUseId, part.ToolCallId));
@@ -521,7 +567,9 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal("web_search", toolCallPart.ToolName);
         Assert.True(toolCallPart.ProviderExecuted);
         var toolCallProviderMetadata = Assert.Contains(ProviderId, toolCallPart.ProviderMetadata ?? []);
-        Assert.Empty(toolCallProviderMetadata ?? []);
+        Assert.Equal("server_tool_use", Assert.IsType<string>(toolCallProviderMetadata?["type"]));
+        Assert.Equal(toolUseId, Assert.IsType<string>(toolCallProviderMetadata?["id"]));
+        Assert.Equal("web_search", Assert.IsType<string>(toolCallProviderMetadata?["name"]));
 
         var toolInput = JsonSerializer.SerializeToElement(toolCallPart.Input, JsonSerializerOptions.Web);
         Assert.Equal("latest news war Iran 2026", toolInput.GetProperty("query").GetString());
@@ -560,6 +608,120 @@ public sealed class ApiChatStreamFixtureTests
         Assert.Equal(19246, providerUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(789, providerUsage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(1, providerUsage.GetProperty("server_tool_use").GetProperty("web_search_requests").GetInt32());
+    }
+
+    [Fact]
+    public void Messages_tool_use_caller_is_preserved_on_both_vercel_tool_input_stream_parts()
+    {
+        const string callerType = "code_execution_20260120";
+        const string callerToolId = "srvtoolu_caller_roundtrip";
+        var state = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var parts = new[]
+        {
+            new MessageStreamPart
+            {
+                Type = "content_block_start",
+                Index = 3,
+                ContentBlock = new MessageContentBlock
+                {
+                    Type = "tool_use",
+                    Id = "toolu_caller_roundtrip",
+                    Name = "github_rest_countries_get_by_region",
+                    Input = JsonSerializer.SerializeToElement(new { region = "Africa" }),
+                    Caller = new MessageCaller { Type = callerType, ToolId = callerToolId }
+                }
+            },
+            new MessageStreamPart { Type = "content_block_stop", Index = 3 }
+        };
+
+        var uiParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, state))
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        var start = Assert.IsType<ToolCallStreamingStartPart>(Assert.Single(uiParts, part => part.Type == "tool-input-start"));
+        var available = Assert.IsType<ToolCallPart>(Assert.Single(uiParts, part => part.Type == "tool-input-available"));
+
+        Assert.False(start.ProviderExecuted);
+        Assert.False(available.ProviderExecuted);
+        AssertCaller(start.ProviderMetadata, callerType, callerToolId);
+        AssertCaller(available.ProviderMetadata, callerType, callerToolId);
+    }
+
+    [Fact]
+    public void Messages_compact_message_start_tool_use_maps_to_normal_vercel_tool_input_parts()
+    {
+        const string toolCallId = "toolu_016ynFSMEe6EejzyDZqCMnor";
+        const string callerToolId = "srvtoolu_018ixtvRGm3cs49hzmi8UkfQ";
+        var state = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var parts = new[]
+        {
+            new MessageStreamPart
+            {
+                Type = "message_start",
+                Message = new MessagesResponse
+                {
+                    Id = "msg_compact_tool_use",
+                    Model = "claude-sonnet-5",
+                    Role = "assistant",
+                    StopReason = "tool_use",
+                    Container = new MessagesContainer { Id = "container_compact" },
+                    Usage = new MessagesUsage { InputTokens = 0, OutputTokens = 0 },
+                    Content =
+                    [
+                        new MessageContentBlock
+                        {
+                            Type = "tool_use",
+                            Id = toolCallId,
+                            Name = "github_rest_countries_get_by_region",
+                            Input = JsonSerializer.SerializeToElement(new { region = "Americas" }),
+                            Caller = new MessageCaller
+                            {
+                                Type = "code_execution_20260120",
+                                ToolId = callerToolId
+                            }
+                        }
+                    ]
+                }
+            },
+            new MessageStreamPart { Type = "message_stop" }
+        };
+
+        var uiParts = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, state))
+            .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(ProviderId))
+            .ToList();
+
+        Assert.Collection(
+            uiParts.Where(part => part.Type.StartsWith("tool-input", StringComparison.Ordinal)).ToList(),
+            part =>
+            {
+                var start = Assert.IsType<ToolCallStreamingStartPart>(part);
+                Assert.Equal(toolCallId, start.ToolCallId);
+                Assert.Equal("github_rest_countries_get_by_region", start.ToolName);
+                AssertCaller(start.ProviderMetadata, "code_execution_20260120", callerToolId);
+            },
+            part =>
+            {
+                var available = Assert.IsType<ToolCallPart>(part);
+                Assert.Equal(toolCallId, available.ToolCallId);
+                Assert.Equal("Americas", JsonSerializer.SerializeToElement(available.Input).GetProperty("region").GetString());
+                AssertCaller(available.ProviderMetadata, "code_execution_20260120", callerToolId);
+            });
+
+        var finish = Assert.IsType<FinishUIPart>(Assert.Single(uiParts, part => part.Type == "finish"));
+        Assert.Equal("tool-calls", finish.FinishReason);
+    }
+
+    private static void AssertCaller(
+        Dictionary<string, Dictionary<string, object>?>? metadata,
+        string expectedType,
+        string expectedToolId)
+    {
+        var providerMetadata = Assert.Contains(ProviderId, metadata ?? []);
+        var caller = Assert.IsType<JsonElement>(providerMetadata?["caller"]);
+        Assert.Equal(expectedType, caller.GetProperty("type").GetString());
+        Assert.Equal(expectedToolId, caller.GetProperty("tool_id").GetString());
     }
 
     [Fact]

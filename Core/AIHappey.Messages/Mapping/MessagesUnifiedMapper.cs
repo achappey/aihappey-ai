@@ -50,6 +50,8 @@ public static partial class MessagesUnifiedMapper
 
         internal readonly HashSet<string> SeenSourceIds = new(StringComparer.OrdinalIgnoreCase);
 
+        internal readonly HashSet<string> EmittedToolInputIds = new(StringComparer.Ordinal);
+
         internal MessagesResponse? CurrentMessage { get; set; }
 
         internal MessagesUsage? Usage { get; set; }
@@ -57,6 +59,8 @@ public static partial class MessagesUnifiedMapper
         internal string? StopReason { get; set; }
 
         internal string? StopSequence { get; set; }
+
+        internal MessagesContainer? Container { get; set; }
 
         internal string? ActiveTextEventId { get; private set; }
 
@@ -104,10 +108,12 @@ public static partial class MessagesUnifiedMapper
         {
             Blocks.Clear();
             SeenSourceIds.Clear();
+            EmittedToolInputIds.Clear();
             CurrentMessage = null;
             Usage = null;
             StopReason = null;
             StopSequence = null;
+            Container = null;
             ActiveTextEventId = null;
             ActiveTextStarted = false;
         }

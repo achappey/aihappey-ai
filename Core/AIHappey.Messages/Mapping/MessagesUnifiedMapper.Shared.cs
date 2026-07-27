@@ -216,6 +216,12 @@ public static partial class MessagesUnifiedMapper
     private static bool TryGetMatchingProviderMetadata(
         Dictionary<string, object?>? metadata,
         out Dictionary<string, object>? providerMetadata)
+        => TryGetMatchingProviderMetadata(metadata, "messages.provider.metadata", out providerMetadata);
+
+    private static bool TryGetMatchingProviderMetadata(
+        Dictionary<string, object?>? metadata,
+        string metadataKey,
+        out Dictionary<string, object>? providerMetadata)
     {
         providerMetadata = null;
 
@@ -223,7 +229,7 @@ public static partial class MessagesUnifiedMapper
         if (string.IsNullOrWhiteSpace(providerId))
             return false;
 
-        var nested = ExtractObject<Dictionary<string, Dictionary<string, object>>>(metadata, "messages.provider.metadata");
+        var nested = ExtractObject<Dictionary<string, Dictionary<string, object>>>(metadata, metadataKey);
         if (nested is null || !nested.TryGetValue(providerId, out var matchedProviderMetadata) || matchedProviderMetadata.Count == 0)
             return false;
 
