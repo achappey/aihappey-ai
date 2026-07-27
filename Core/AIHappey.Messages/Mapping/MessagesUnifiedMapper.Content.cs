@@ -400,14 +400,21 @@ public static partial class MessagesUnifiedMapper
         if (!TryGetToolResultProviderMetadata(toolPart.Metadata, out var providerMetadata))
             return false;
 
-        var blockType = ExtractValue<string>(toolPart.Metadata, "messages.block.type") ?? "tool_result";
+        var blockType = ExtractValue<string>(toolPart.Metadata, "messages.result.block.type")
+            ?? ExtractValue<string>(toolPart.Metadata, "messages.block.type")
+            ?? ResolveProviderMetadataString(providerMetadata, "type")
+            ?? "tool_result";
         if (!TryExtractProviderExecutedMessagesContent(toolPart.Output, blockType, out var content))
             return false;
 
         var raw = ExtractRawBlock(toolPart.Metadata);
-        block = raw ?? new MessageContentBlock();
+        block = raw is not null && string.Equals(raw.Type, blockType, StringComparison.Ordinal)
+            ? raw
+            : new MessageContentBlock();
         block.Type = blockType;
-        block.ToolUseId = toolPart.ToolCallId;
+        block.Id = null;
+        block.ToolUseId = ResolveProviderMetadataString(providerMetadata, "tool_use_id")
+            ?? toolPart.ToolCallId;
         block.Content = content;
         block.IsError = SupportsOuterIsErrorOnToolResultBlock(blockType)
             ? string.Equals(toolPart.State, "output-error", StringComparison.OrdinalIgnoreCase)
@@ -423,25 +430,32 @@ public static partial class MessagesUnifiedMapper
     {
         block = null;
 
+        if (HasMetadataChannel(toolPart.Metadata, "messages.provider.result.metadata")
+            && !HasMetadataChannel(toolPart.Metadata, "messages.provider.call.metadata")
+            && !HasMeaningfulToolInput(toolPart.Input))
+        {
+            return false;
+        }
+
         if (!TryGetProviderExecutedToolCallMetadata(toolPart.Metadata, out var providerMetadata))
             return false;
 
-        var toolCallId = !string.IsNullOrWhiteSpace(toolPart.ToolCallId)
-            ? toolPart.ToolCallId
-            : providerMetadata.TryGetValue("id", out var metadataId) && metadataId is not null
-                ? metadataId.ToString()
-                : providerMetadata.TryGetValue("tool_use_id", out var toolUseId) && toolUseId is not null
-                    ? toolUseId.ToString()
-                    : null;
+        var toolCallId = ResolveProviderMetadataString(providerMetadata, "id")
+            ?? toolPart.ToolCallId;
 
         if (string.IsNullOrWhiteSpace(toolCallId))
             return false;
 
-        var resultBlockType = ExtractValue<string>(toolPart.Metadata, "messages.block.type") ?? string.Empty;
+        var resultBlockType = ExtractValue<string>(toolPart.Metadata, "messages.result.block.type")
+            ?? ExtractValue<string>(toolPart.Metadata, "messages.block.type")
+            ?? string.Empty;
+        var explicitCallBlockType = ExtractValue<string>(toolPart.Metadata, "messages.call.block.type");
         var inputBlockType = providerMetadata.TryGetValue("type", out var inputType)
             && IsToolInputBlock(inputType?.ToString())
                 ? inputType!.ToString()!
-                : ResolveProviderExecutedInputBlockType(resultBlockType, providerMetadata);
+                : IsToolInputBlock(explicitCallBlockType)
+                    ? explicitCallBlockType!
+                    : ResolveProviderExecutedInputBlockType(resultBlockType, providerMetadata);
         if (string.IsNullOrWhiteSpace(inputBlockType))
             return false;
 
@@ -449,13 +463,48 @@ public static partial class MessagesUnifiedMapper
         {
             Type = inputBlockType,
             Id = toolCallId,
-            Name = toolPart.ToolName ?? toolPart.Title ?? ResolveProviderExecutedToolName(resultBlockType),
+            Name = ResolveProviderMetadataString(providerMetadata, "name")
+                ?? ResolveProviderMetadataString(providerMetadata, "tool_name")
+                ?? toolPart.ToolName
+                ?? toolPart.Title
+                ?? ResolveProviderExecutedToolName(resultBlockType),
             Title = SupportsTitleOnProviderExecutedInputBlock(inputBlockType) ? toolPart.Title : null,
             Input = SerializeToNullableElement(toolPart.Input) ?? JsonSerializer.SerializeToElement(new { }, Json)
         };
 
         ApplyProviderExecutedInputBlockMetadata(block, providerMetadata);
         return true;
+    }
+
+    private static bool HasMeaningfulToolInput(object? input)
+    {
+        var json = SerializeToNullableElement(input);
+        return json switch
+        {
+            null => false,
+            { ValueKind: JsonValueKind.Null or JsonValueKind.Undefined } => false,
+            { ValueKind: JsonValueKind.Object } value => value.EnumerateObject().Any(),
+            _ => true
+        };
+    }
+
+    private static string? ResolveProviderMetadataString(
+        Dictionary<string, object>? providerMetadata,
+        string key)
+    {
+        if (providerMetadata is null
+            || !providerMetadata.TryGetValue(key, out var value)
+            || value is null)
+        {
+            return null;
+        }
+
+        return value switch
+        {
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
+            JsonElement json when json.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined => null,
+            _ => value.ToString()
+        };
     }
 
     private static bool TryGetToolCallProviderMetadata(

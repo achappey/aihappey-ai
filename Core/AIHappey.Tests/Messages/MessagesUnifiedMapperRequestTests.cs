@@ -679,6 +679,79 @@ public sealed class MessagesUnifiedMapperRequestTests
             });
     }
 
+    [Theory]
+    [InlineData("tool_search_tool_bm25", "srvtoolu_bm25")]
+    [InlineData("tool_search_tool_regex", "srvtoolu_regex")]
+    public void Vercel_tool_search_call_and_result_round_trip_to_documented_anthropic_shapes(
+        string toolName,
+        string toolCallId)
+    {
+        var callMetadata = CreateToolCallProviderMetadata("server_tool_use", toolCallId, toolName);
+        var resultMetadata = new Dictionary<string, Dictionary<string, object>?>
+        {
+            ["anthropic"] = new Dictionary<string, object>
+            {
+                ["type"] = "tool_search_tool_result",
+                ["tool_use_id"] = toolCallId
+            }
+        };
+        var canonicalContent = JsonSerializer.SerializeToElement(new
+        {
+            type = "tool_search_tool_search_result",
+            tool_references = new[]
+            {
+                new { type = "tool_reference", tool_name = "github_rest_countries_get_detail" },
+                new { type = "tool_reference", tool_name = "github_rest_countries_search_codes" },
+                new { type = "tool_reference", tool_name = "github_rest_countries_get_by_region" }
+            }
+        });
+        var request = new ChatRequest
+        {
+            Model = "anthropic/test-model",
+            Messages =
+            [
+                new UIMessage
+                {
+                    Id = $"assistant-{toolName}",
+                    Role = Role.assistant,
+                    Parts =
+                    [
+                        new ToolInvocationPart
+                        {
+                            Type = $"tool-{toolName}",
+                            ToolCallId = toolCallId,
+                            Title = toolName,
+                            Input = new { query = "countries capital area" },
+                            Output = new { content = Array.Empty<object>(), structuredContent = canonicalContent },
+                            State = "output-available",
+                            ProviderExecuted = true,
+                            CallProviderMetadata = callMetadata,
+                            ResultProviderMetadata = resultMetadata
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var messagesRequest = request.ToUnifiedRequest("anthropic").ToMessagesRequest("anthropic");
+        var assistant = Assert.Single(messagesRequest.Messages, message => message.Role == "assistant");
+        var blocks = assistant.Content.Blocks!;
+
+        var call = Assert.Single(blocks, block => block.Type == "server_tool_use");
+        Assert.Equal(toolCallId, call.Id);
+        Assert.Equal(toolName, call.Name);
+        Assert.Equal("countries capital area", call.Input?.GetProperty("query").GetString());
+
+        var result = Assert.Single(blocks, block => block.Type == "tool_search_tool_result");
+        Assert.Null(result.Id);
+        Assert.Equal(toolCallId, result.ToolUseId);
+        var content = Assert.IsType<JsonElement>(result.Content?.Raw);
+        Assert.Equal("tool_search_tool_search_result", content.GetProperty("type").GetString());
+        var references = content.GetProperty("tool_references");
+        Assert.Equal(3, references.GetArrayLength());
+        Assert.Equal("tool_reference", references[0].GetProperty("type").GetString());
+    }
+
     private static Dictionary<string, Dictionary<string, object>?> CreateToolCallProviderMetadata(
         string type,
         string id,
