@@ -37,7 +37,7 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
             Response.Headers["x-vercel-ai-ui-message-stream"] = "v1";
             chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
             chatRequest.Model = chatRequest.Model.SplitModelId().Model;
-            chatRequest.Messages = chatRequest.Messages.EnsureApprovals();
+            chatRequest.Messages = chatRequest.Messages.NormalizeToolInvocations();
             chatRequest.Headers = Request.Headers
                 .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
                 .GetProviderPassthroughHeaders(provider.GetIdentifier());

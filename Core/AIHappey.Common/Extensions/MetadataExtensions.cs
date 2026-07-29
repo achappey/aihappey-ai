@@ -138,21 +138,32 @@ public static class MetadataExtensions
         return node.Deserialize<T>(JsonSerializerOptions.Web);
     }
 
-    public static List<UIMessage> EnsureApprovals(this List<UIMessage> uIMessages) =>
-   [.. uIMessages.Select(a =>
+    public static List<UIMessage> NormalizeToolInvocations(
+        this List<UIMessage> messages)
+    {
+        foreach (var message in messages)
+        {
+            foreach (var part in message.Parts)
             {
-                a.Parts = [.. a.Parts.Select(z =>
+                if (part is not ToolInvocationPart toolInvocation)
+                    continue;
+
+                if (toolInvocation is
+                    {
+                        State: "approval-responded",
+                        Approval.Approved: false
+                    })
                 {
-                    if(z is ToolInvocationPart toolInvocationPart) {
-                    if(toolInvocationPart.State == "approval-responded" && toolInvocationPart.Approval?.Approved == false)
-                            {
-                                toolInvocationPart.Output = toolInvocationPart.Approval;
-                            }
-                    }
-                return z;
-                })];
+                    toolInvocation.Output = toolInvocation.Approval;
+                }
 
-                return a;
-            })];
+                if (toolInvocation.Output is CallToolResult callToolResult)
+                {
+                    callToolResult.Meta = null;
+                }
+            }
+        }
 
+        return messages;
+    }
 }
