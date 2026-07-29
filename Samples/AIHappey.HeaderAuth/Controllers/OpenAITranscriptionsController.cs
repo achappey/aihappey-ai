@@ -51,51 +51,18 @@ public class OpenAITranscriptionsController(IAIModelProviderResolver resolver) :
                 Response.ContentType = "text/event-stream";
                 Response.Headers.CacheControl = "no-cache";
 
-                try
+
+                await foreach (var streamEvent in
+                    provider.OpenAITranscriptionStreamingAsync(
+                        requestDto,
+                        cancellationToken))
                 {
-                    await foreach (var streamEvent in
-                        provider.OpenAITranscriptionStreamingAsync(
-                            requestDto,
-                            cancellationToken))
-                    {
-                        var json = JsonSerializer.Serialize(
-                            streamEvent,
-                            streamEvent.GetType());
-
-                        await Response.WriteAsync(
-                            $"data: {json}\n\n",
-                            cancellationToken);
-
-                        await Response.Body.FlushAsync(
-                            cancellationToken);
-                    }
-                }
-                catch (NotImplementedException) when (!Response.HasStarted)
-                {
-                    var transcriptionRequest =
-                        await requestDto.ToTranscriptionRequest(
-                            requestDto.Model,
-                            provider.GetIdentifier(),
-                            cancellationToken);
-
-                    var content = await provider.TranscriptionRequest(
-                        transcriptionRequest,
-                        cancellationToken);
+                    var json = JsonSerializer.Serialize(
+                        streamEvent,
+                        streamEvent.GetType());
 
                     await Response.WriteAsync(
-                        $"data: {JsonSerializer.Serialize(
-                            new OpenAITranscriptionTextDelta
-                            {
-                                Delta = content.Text
-                            })}\n\n",
-                        cancellationToken);
-
-                    await Response.WriteAsync(
-                        $"data: {JsonSerializer.Serialize(
-                            new OpenAITranscriptionTextDone
-                            {
-                                Text = content.Text
-                            })}\n\n",
+                        $"data: {json}\n\n",
                         cancellationToken);
 
                     await Response.Body.FlushAsync(
@@ -114,28 +81,11 @@ public class OpenAITranscriptionsController(IAIModelProviderResolver resolver) :
 
             IOpenAITranscriptionResponse response;
 
-            try
-            {
-                response =
-                    await provider.OpenAITranscriptionRequestAsync(
-                        requestDto,
-                        cancellationToken);
-            }
-            catch (NotImplementedException)
-            {
-                var transcriptionRequest =
-                    await requestDto.ToTranscriptionRequest(
-                        requestDto.Model,
-                        provider.GetIdentifier(),
-                        cancellationToken);
 
-                var content = await provider.TranscriptionRequest(
-                    transcriptionRequest,
+            response =
+                await provider.OpenAITranscriptionRequestAsync(
+                    requestDto,
                     cancellationToken);
-
-                response = content.ToOpenAITranscriptionResponse(
-                    responseFormat);
-            }
 
             return responseFormat switch
             {

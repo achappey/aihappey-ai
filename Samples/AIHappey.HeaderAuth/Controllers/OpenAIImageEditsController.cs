@@ -34,17 +34,10 @@ public class OpenAIImageEditsController(IAIModelProviderResolver resolver) : Con
             if (requestDto.Stream == true)
                 return await Stream(requestDto, provider, cancellationToken);
 
-            try
-            {
-                var content = await provider.OpenAIImageEditRequestAsync(requestDto, cancellationToken);
-                return Ok(content);
-            }
-            catch (NotImplementedException)
-            {
-                var imageRequest = await requestDto.ToImageRequest(requestDto.Model, provider.GetIdentifier(), cancellationToken);
-                var content = await provider.ImageRequest(imageRequest, cancellationToken);
-                return Ok(content.ToOpenAIImagesResponse(requestDto));
-            }
+
+            var content = await provider.OpenAIImageEditRequestAsync(requestDto, cancellationToken);
+            return Ok(content);
+
         }
         catch (OperationCanceledException)
         {
@@ -69,20 +62,10 @@ public class OpenAIImageEditsController(IAIModelProviderResolver resolver) : Con
 
         try
         {
-            try
-            {
-                await foreach (var streamEvent in provider.OpenAIImageEditStreamingAsync(requestDto, cancellationToken))
-                    await WriteStreamEvent(streamEvent, cancellationToken);
-            }
-            catch (NotImplementedException) when (
-               !Response.HasStarted)
-            {
-                var imageRequest = await requestDto.ToImageRequest(requestDto.Model!, provider.GetIdentifier(), cancellationToken);
-                var content = await provider.ImageRequest(imageRequest, cancellationToken);
 
-                foreach (var streamEvent in content.ToOpenAIImageEditCompletedEvents(requestDto))
-                    await WriteStreamEvent(streamEvent, cancellationToken);
-            }
+            await foreach (var streamEvent in provider.OpenAIImageEditStreamingAsync(requestDto, cancellationToken))
+                await WriteStreamEvent(streamEvent, cancellationToken);
+
 
             return new EmptyResult();
         }

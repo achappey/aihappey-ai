@@ -28,17 +28,10 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
             if (requestDto.Stream == true)
                 return await Stream(requestDto, provider, cancellationToken);
 
-            try
-            {
-                var content = await provider.OpenAIImageGenerationRequestAsync(requestDto, cancellationToken);
-                return Ok(content);
-            }
-            catch (NotImplementedException)
-            {
-                var imageRequest = requestDto.ToImageRequest(requestDto.Model, provider.GetIdentifier());
-                var content = await provider.ImageRequest(imageRequest, cancellationToken);
-                return Ok(content.ToOpenAIImagesResponse(requestDto));
-            }
+
+            var content = await provider.OpenAIImageGenerationRequestAsync(requestDto, cancellationToken);
+            return Ok(content);
+
         }
         catch (OperationCanceledException)
         {
@@ -57,20 +50,10 @@ public class OpenAIImageGenerationsController(IAIModelProviderResolver resolver)
 
         try
         {
-            try
-            {
-                await foreach (var streamEvent in provider.OpenAIImageGenerationStreamingAsync(requestDto, cancellationToken))
-                    await WriteStreamEvent(streamEvent, cancellationToken);
-            }
-            catch (NotImplementedException) when (
-                !Response.HasStarted)
-            {
-                var imageRequest = requestDto.ToImageRequest(requestDto.Model!, provider.GetIdentifier());
-                var content = await provider.ImageRequest(imageRequest, cancellationToken);
 
-                foreach (var streamEvent in content.ToOpenAIImageGenerationCompletedEvents(requestDto))
-                    await WriteStreamEvent(streamEvent, cancellationToken);
-            }
+            await foreach (var streamEvent in provider.OpenAIImageGenerationStreamingAsync(requestDto, cancellationToken))
+                await WriteStreamEvent(streamEvent, cancellationToken);
+
 
             return new EmptyResult();
         }

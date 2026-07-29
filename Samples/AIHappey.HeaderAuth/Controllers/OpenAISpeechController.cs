@@ -37,45 +37,23 @@ public class OpenAISpeechController(IAIModelProviderResolver resolver) : Control
                 Response.ContentType = "text/event-stream";
                 Response.Headers.CacheControl = "no-cache";
 
-                try
+
+                await foreach (var streamEvent in
+                    provider.OpenAISpeechStreamingAsync(
+                        requestDto,
+                        cancellationToken))
                 {
-                    await foreach (var streamEvent in
-                        provider.OpenAISpeechStreamingAsync(
-                            requestDto,
-                            cancellationToken))
-                    {
-                        var json = JsonSerializer.Serialize(
-                            streamEvent,
-                            streamEvent.GetType());
-
-                        await Response.WriteAsync(
-                            $"data: {json}\n\n",
-                            cancellationToken);
-
-                        await Response.Body.FlushAsync(cancellationToken);
-                    }
-                }
-                catch (NotImplementedException) when (!Response.HasStarted)
-                {
-                    var speechRequest = requestDto.ToSpeechRequest();
-
-                    var content = await provider.SpeechRequest(
-                        speechRequest,
-                        cancellationToken);
+                    var json = JsonSerializer.Serialize(
+                        streamEvent,
+                        streamEvent.GetType());
 
                     await Response.WriteAsync(
-                        $"data: {JsonSerializer.Serialize(new AudioSpeechStreamDelta
-                        {
-                            Audio = content.Audio.Base64
-                        })}\n\n",
-                        cancellationToken);
-
-                    await Response.WriteAsync(
-                        $"data: {JsonSerializer.Serialize(new AudioSpeechStreamDone())}\n\n",
+                        $"data: {json}\n\n",
                         cancellationToken);
 
                     await Response.Body.FlushAsync(cancellationToken);
                 }
+
 
                 await Response.WriteAsync(
                     "data: [DONE]\n\n",
@@ -86,29 +64,13 @@ public class OpenAISpeechController(IAIModelProviderResolver resolver) : Control
                 return new EmptyResult();
             }
 
-            try
-            {
-                var (audio, mimeType) = await provider.OpenAISpeechRequestAsync(
-                    requestDto,
-                    cancellationToken);
 
-                return File(audio, mimeType);
-            }
-            catch (NotImplementedException)
-            {
-                var speechRequest = requestDto.ToSpeechRequest();
+            var (audio, mimeType) = await provider.OpenAISpeechRequestAsync(
+                requestDto,
+                cancellationToken);
 
-                var content = await provider.SpeechRequest(
-                    speechRequest,
-                    cancellationToken);
+            return File(audio, mimeType);
 
-                var audioBytes = Convert.FromBase64String(
-                    content.Audio.Base64);
-
-                return File(
-                    audioBytes,
-                    content.Audio.MimeType);
-            }
         }
         catch (OperationCanceledException)
         {
