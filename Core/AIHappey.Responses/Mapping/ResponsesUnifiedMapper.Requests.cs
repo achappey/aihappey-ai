@@ -113,6 +113,9 @@ public static partial class ResponsesUnifiedMapper
                 };
 
             case ResponseFunctionCallItem call:
+                var callPartMetadata = CreateResponsesReplayMetadata(providerId, call.Type, call.Caller);
+                if (!string.IsNullOrWhiteSpace(call.Namespace))
+                    GetOrCreateProviderScopedMetadata(callPartMetadata, providerId)["namespace"] = call.Namespace;
                 return new AIInputItem
                 {
                     Type = "function_call",
@@ -128,10 +131,7 @@ public static partial class ResponsesUnifiedMapper
                             Input = ParseJsonString(call.Arguments),
                             State = call.Status,
                             ProviderExecuted = false,
-                            Metadata = new Dictionary<string, object?>
-                            {
-                                ["responses.type"] = call.Type
-                            }
+                            Metadata = callPartMetadata
                         }
                     ],
                     Metadata = new Dictionary<string, object?>
@@ -139,12 +139,15 @@ public static partial class ResponsesUnifiedMapper
                         ["id"] = call.Id,
                         ["call_id"] = call.CallId,
                         ["name"] = call.Name,
+                        ["namespace"] = call.Namespace,
                         ["arguments"] = call.Arguments,
-                        ["status"] = call.Status
+                        ["status"] = call.Status,
+                        [providerId] = GetOrCreateProviderScopedMetadata(callPartMetadata, providerId)
                     }
                 };
 
             case ResponseFunctionCallOutputItem output:
+                var outputPartMetadata = CreateResponsesReplayMetadata(providerId, output.Type, output.Caller);
                 return new AIInputItem
                 {
                     Type = "function_call_output",
@@ -158,10 +161,7 @@ public static partial class ResponsesUnifiedMapper
                             Output = ParseJsonString(output.Output),
                             State = output.Status,
                             ProviderExecuted = false,
-                            Metadata = new Dictionary<string, object?>
-                            {
-                                ["responses.type"] = output.Type
-                            }
+                            Metadata = outputPartMetadata
                         }
                     ],
                     Metadata = new Dictionary<string, object?>
@@ -169,9 +169,22 @@ public static partial class ResponsesUnifiedMapper
                         ["id"] = output.Id,
                         ["call_id"] = output.CallId,
                         ["output"] = output.Output,
-                        ["status"] = output.Status
+                        ["status"] = output.Status,
+                        [providerId] = GetOrCreateProviderScopedMetadata(outputPartMetadata, providerId)
                     }
                 };
+
+            case ResponseProgramItem program:
+                return CreateUnifiedProgramInputItem(program, providerId);
+
+            case ResponseProgramOutputItem programOutput:
+                return CreateUnifiedProgramOutputInputItem(programOutput, providerId);
+
+            case ResponseToolSearchCallItem toolSearchCall:
+                return CreateUnifiedToolSearchCallInputItem(toolSearchCall, providerId);
+
+            case ResponseToolSearchOutputItem toolSearchOutput:
+                return CreateUnifiedToolSearchOutputInputItem(toolSearchOutput, providerId);
 
             case ResponseReasoningItem reasoning:
                 var reasoningMetadata = new Dictionary<string, object?>();
@@ -256,7 +269,88 @@ public static partial class ResponsesUnifiedMapper
         for (var i = startIndex; i < items.Count; i++)
             result.AddRange(ToResponsesInputItems(items[i], providerId, preferEncryptedReasoningReplay));
 
-        return MergeConsecutiveUserMessages(result);
+        return MergeConsecutiveUserMessages(MoveProgramOutputsAfterLinkedCalls(result));
+    }
+
+    private static List<ResponseInputItem> MoveProgramOutputsAfterLinkedCalls(IReadOnlyList<ResponseInputItem> items)
+    {
+        var result = new List<ResponseInputItem>(items.Count);
+
+        for (var index = 0; index < items.Count; index++)
+        {
+            if (items[index] is not ResponseProgramItem program)
+            {
+                result.Add(items[index]);
+                continue;
+            }
+
+            result.Add(program);
+            ResponseProgramOutputItem? delayedOutput = null;
+            if (index + 1 < items.Count
+                && items[index + 1] is ResponseProgramOutputItem candidate
+                && string.Equals(candidate.CallId, program.CallId, StringComparison.Ordinal))
+            {
+                delayedOutput = candidate;
+                index++;
+            }
+
+            while (index + 1 < items.Count && IsLinkedProgramReplayItem(items[index + 1], program.CallId))
+                result.Add(items[++index]);
+
+            if (delayedOutput is not null)
+                result.Add(delayedOutput);
+        }
+
+        return result;
+    }
+
+    private static bool IsLinkedProgramReplayItem(ResponseInputItem item, string programCallId)
+        => item switch
+        {
+            ResponseFunctionCallItem call => string.Equals(call.Caller?.CallerId, programCallId, StringComparison.Ordinal),
+            ResponseFunctionCallOutputItem output => string.Equals(output.Caller?.CallerId, programCallId, StringComparison.Ordinal),
+            _ => false
+        };
+
+    private static IEnumerable<ResponseInputItem> CreateResponsesToolReplayItems(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> metadata,
+        string providerId)
+    {
+        var callReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata");
+        var resultReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.result.metadata");
+
+        if (IsProgramToolPart(toolPart) || string.Equals(callReplayType, "program", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return CreateResponseProgramItem(toolPart, metadata, providerId);
+            if (HasToolOutput(toolPart) && string.Equals(resultReplayType, "program_output", StringComparison.OrdinalIgnoreCase))
+                yield return CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+            yield break;
+        }
+
+        if (IsProgramOutputToolPart(toolPart) || string.Equals(resultReplayType, "program_output", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+            yield break;
+        }
+
+        if (IsToolSearchCallPart(toolPart) || string.Equals(callReplayType, "tool_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return CreateResponseToolSearchCallItem(toolPart, metadata, providerId);
+            if (HasToolOutput(toolPart))
+                yield return CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
+            yield break;
+        }
+
+        if (IsToolSearchOutputPart(toolPart) || string.Equals(resultReplayType, "tool_search_output", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
+            yield break;
+        }
+
+        yield return CreateResponseFunctionCallItem(toolPart, metadata, providerId);
+        if (toolPart.IsClientToolCall && HasToolOutput(toolPart))
+            yield return CreateResponseFunctionCallOutputItem(toolPart, metadata, providerId);
     }
 
     private static List<ResponseInputItem> MergeConsecutiveUserMessages(IReadOnlyList<ResponseInputItem> items)
@@ -398,16 +492,48 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "message")
         {
-            foreach (var reasoningPart in SelectReasoningPartsForReplay(reasoningParts, providerId, preferEncryptedReasoningReplay))
+            var selectedReasoningParts = SelectReasoningPartsForReplay(reasoningParts, providerId, preferEncryptedReasoningReplay).ToHashSet();
+            var pendingMessageParts = new List<AIContentPart>();
+
+            foreach (var part in item.Content ?? [])
             {
-                var reasoningItem = CreateResponseReasoningItem(
-                    item,
-                    metadata,
-                    providerId,
-                    reasoningPart,
-                    requireEncryptedContent: preferEncryptedReasoningReplay);
-                if (reasoningItem is not null)
-                    yield return reasoningItem;
+                if (part is AIReasoningContentPart reasoningPart)
+                {
+                    if (pendingMessageParts.Count > 0)
+                    {
+                        yield return CreateResponseInputMessage(item, metadata, pendingMessageParts);
+                        pendingMessageParts.Clear();
+                    }
+
+                    if (selectedReasoningParts.Contains(reasoningPart))
+                    {
+                        var reasoningItem = CreateResponseReasoningItem(
+                            item,
+                            metadata,
+                            providerId,
+                            reasoningPart,
+                            requireEncryptedContent: preferEncryptedReasoningReplay);
+                        if (reasoningItem is not null)
+                            yield return reasoningItem;
+                    }
+
+                    continue;
+                }
+
+                if (part is not AIToolCallContentPart toolPart)
+                {
+                    pendingMessageParts.Add(part);
+                    continue;
+                }
+
+                if (pendingMessageParts.Count > 0)
+                {
+                    yield return CreateResponseInputMessage(item, metadata, pendingMessageParts);
+                    pendingMessageParts.Clear();
+                }
+
+                foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                    yield return replayItem;
             }
 
             if (preferEncryptedReasoningReplay
@@ -423,16 +549,8 @@ public static partial class ResponsesUnifiedMapper
                     yield return reasoningItem;
             }
 
-            if (nonToolParts.Count > 0 || (toolParts.Count == 0 && reasoningParts.Count == 0))
-                yield return CreateResponseInputMessage(item, metadata, nonToolParts);
-
-            foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall))
-            {
-                yield return CreateResponseFunctionCallItem(toolPart, metadata);
-
-                if (HasToolOutput(toolPart))
-                    yield return CreateResponseFunctionCallOutputItem(toolPart, metadata);
-            }
+            if (pendingMessageParts.Count > 0 || ((item.Content?.Count ?? 0) == 0))
+                yield return CreateResponseInputMessage(item, metadata, pendingMessageParts);
 
             yield break;
         }
@@ -442,15 +560,43 @@ public static partial class ResponsesUnifiedMapper
             case "function_call":
                 {
                     var toolPart = toolParts.FirstOrDefault();
-                    if (toolPart is not null && toolPart.IsClientToolCall)
-                        yield return CreateResponseFunctionCallItem(toolPart, metadata);
+                    if (toolPart is not null)
+                        yield return CreateResponseFunctionCallItem(toolPart, metadata, providerId);
                     yield break;
                 }
             case "function_call_output":
                 {
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null && toolPart.IsClientToolCall && HasToolOutput(toolPart))
-                        yield return CreateResponseFunctionCallOutputItem(toolPart, metadata);
+                        yield return CreateResponseFunctionCallOutputItem(toolPart, metadata, providerId);
+                    yield break;
+                }
+            case "program":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                        yield return CreateResponseProgramItem(toolPart, metadata, providerId);
+                    yield break;
+                }
+            case "program_output":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                        yield return CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+                    yield break;
+                }
+            case "tool_search_call":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                        yield return CreateResponseToolSearchCallItem(toolPart, metadata, providerId);
+                    yield break;
+                }
+            case "tool_search_output":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                        yield return CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
                     yield break;
                 }
             case "reasoning":
@@ -735,6 +881,275 @@ public static partial class ResponsesUnifiedMapper
             "developer" => ResponseRole.Developer,
             _ => ResponseRole.User
         };
+
+    private static Dictionary<string, object?> CreateResponsesReplayMetadata(
+        string providerId,
+        string? type,
+        ResponseCaller? caller = null)
+    {
+        var metadata = new Dictionary<string, object?> { ["responses.type"] = type };
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["type"] = type ?? string.Empty;
+        if (caller is not null)
+            providerMetadata["caller"] = JsonSerializer.SerializeToElement(caller, Json);
+        metadata[providerId] = providerMetadata;
+        return metadata;
+    }
+
+    private static AIInputItem CreateUnifiedProgramInputItem(ResponseProgramItem program, string providerId)
+    {
+        var partMetadata = CreateResponsesReplayMetadata(providerId, program.Type);
+        var providerMetadata = GetOrCreateProviderScopedMetadata(partMetadata, providerId);
+        providerMetadata["id"] = program.Id ?? string.Empty;
+        providerMetadata["call_id"] = program.CallId;
+        providerMetadata["fingerprint"] = program.Fingerprint;
+
+        return new AIInputItem
+        {
+            Type = "program",
+            Role = "assistant",
+            Content = [new AIToolCallContentPart
+            {
+                Type = "tool-program",
+                ToolCallId = program.CallId,
+                ToolName = "program",
+                Title = "program",
+                Input = new { code = program.Code },
+                ProviderExecuted = true,
+                Metadata = partMetadata
+            }],
+            Metadata = new Dictionary<string, object?> { [providerId] = providerMetadata }
+        };
+    }
+
+    private static AIInputItem CreateUnifiedProgramOutputInputItem(ResponseProgramOutputItem output, string providerId)
+    {
+        var partMetadata = CreateResponsesReplayMetadata(providerId, output.Type);
+        var providerMetadata = GetOrCreateProviderScopedMetadata(partMetadata, providerId);
+        providerMetadata["id"] = output.Id ?? string.Empty;
+        providerMetadata["call_id"] = output.CallId;
+        providerMetadata["status"] = output.Status ?? string.Empty;
+
+        return new AIInputItem
+        {
+            Type = "program_output",
+            Role = "tool",
+            Content = [new AIToolCallContentPart
+            {
+                Type = "tool-program-output",
+                ToolCallId = output.CallId,
+                ToolName = "program",
+                Title = "program",
+                Output = new { result = output.Result, status = output.Status },
+                State = output.Status,
+                ProviderExecuted = true,
+                Metadata = partMetadata
+            }],
+            Metadata = new Dictionary<string, object?> { [providerId] = providerMetadata }
+        };
+    }
+
+    private static bool IsProgramToolPart(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.Type, "tool-program", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "program", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsProgramOutputToolPart(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.Type, "tool-program-output", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "program_output", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsToolSearchCallPart(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.Type, "tool-search-call", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Type, "tool_search_call", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_call", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsToolSearchOutputPart(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.Type, "tool-search-output", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Type, "tool_search_output", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_output", StringComparison.OrdinalIgnoreCase);
+
+    private static string? ResolveResponsesReplayType(
+        Dictionary<string, object?>? metadata,
+        string providerId,
+        string preferredChannel)
+        => metadata is null
+            ? null
+            : ExtractNestedChannelValue<string>(metadata, preferredChannel, providerId, "type")
+              ?? ExtractNestedChannelValue<string>(metadata, "messages.provider.metadata", providerId, "type")
+              ?? ExtractNestedValue<string>(metadata, providerId, "type");
+
+    private static T? ExtractNestedChannelValue<T>(
+        Dictionary<string, object?> metadata,
+        string channel,
+        string providerId,
+        string key)
+    {
+        if (metadata.TryGetValue(channel, out var channelValue)
+            && TryGetJsonObject(channelValue, out var channelJson)
+            && channelJson.TryGetProperty(providerId, out var providerValue)
+            && TryGetJsonObject(providerValue, out var providerJson)
+            && providerJson.TryGetProperty(key, out var value))
+        {
+            return value.Deserialize<T>(Json);
+        }
+
+        return default;
+    }
+
+    private static AIInputItem CreateUnifiedToolSearchCallInputItem(ResponseToolSearchCallItem call, string providerId)
+    {
+        var metadata = CreateResponsesReplayMetadata(providerId, call.Type);
+        var scoped = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        scoped["id"] = call.Id ?? string.Empty;
+        scoped["execution"] = call.Execution;
+        scoped["call_id"] = call.CallId ?? string.Empty;
+        scoped["status"] = call.Status ?? string.Empty;
+        return new AIInputItem
+        {
+            Type = "tool_search_call",
+            Role = "assistant",
+            Content = [new AIToolCallContentPart
+            {
+                Type = "tool-search-call",
+                ToolCallId = call.CallId ?? call.Id ?? string.Empty,
+                ToolName = "tool_search",
+                Title = "tool_search",
+                Input = call.Arguments.Clone(),
+                State = call.Status,
+                ProviderExecuted = string.Equals(call.Execution, "server", StringComparison.OrdinalIgnoreCase),
+                Metadata = metadata
+            }],
+            Metadata = metadata
+        };
+    }
+
+    private static AIInputItem CreateUnifiedToolSearchOutputInputItem(ResponseToolSearchOutputItem output, string providerId)
+    {
+        var metadata = CreateResponsesReplayMetadata(providerId, output.Type);
+        var scoped = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        scoped["id"] = output.Id ?? string.Empty;
+        scoped["execution"] = output.Execution;
+        scoped["call_id"] = output.CallId ?? string.Empty;
+        scoped["status"] = output.Status ?? string.Empty;
+        return new AIInputItem
+        {
+            Type = "tool_search_output",
+            Role = "tool",
+            Content = [new AIToolCallContentPart
+            {
+                Type = "tool-search-output",
+                ToolCallId = output.CallId ?? output.Id ?? string.Empty,
+                ToolName = "tool_search",
+                Title = "tool_search",
+                Output = output.Tools,
+                State = output.Status,
+                ProviderExecuted = string.Equals(output.Execution, "server", StringComparison.OrdinalIgnoreCase),
+                Metadata = metadata
+            }],
+            Metadata = metadata
+        };
+    }
+
+    private static ResponseToolSearchCallItem CreateResponseToolSearchCallItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+    {
+        var metadata = toolPart.Metadata ?? [];
+        return new ResponseToolSearchCallItem
+        {
+            Id = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
+                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id"),
+            Execution = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "execution")
+                        ?? ExtractNestedValue<string>(metadata, providerId, "execution")
+                        ?? (toolPart.ProviderExecuted == true ? "server" : "client"),
+            CallId = NormalizeNullableCallId(
+                ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "call_id")
+                ?? ExtractNestedValue<string>(metadata, providerId, "call_id")),
+            Status = NormalizeResponsesToolStatus(
+                ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "status")
+                ?? ExtractNestedValue<string>(metadata, providerId, "status")
+                ?? toolPart.State,
+                hasOutput: HasToolOutput(toolPart)),
+            Arguments = JsonSerializer.SerializeToElement(toolPart.Input ?? new { }, Json)
+        };
+    }
+
+    private static ResponseToolSearchOutputItem CreateResponseToolSearchOutputItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+    {
+        var metadata = toolPart.Metadata ?? [];
+        return new ResponseToolSearchOutputItem
+        {
+            Id = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
+                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id"),
+            Execution = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "execution")
+                        ?? ExtractNestedValue<string>(metadata, providerId, "execution")
+                        ?? (toolPart.ProviderExecuted == true ? "server" : "client"),
+            CallId = NormalizeNullableCallId(
+                ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "call_id")
+                ?? ExtractNestedValue<string>(metadata, providerId, "call_id")),
+            Status = NormalizeResponsesToolStatus(
+                ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "status")
+                ?? ExtractNestedValue<string>(metadata, providerId, "status")
+                ?? toolPart.State,
+                hasOutput: true),
+            Tools = toolPart.Output is null
+                ? []
+                : JsonSerializer.Deserialize<List<ResponseToolDefinition>>(JsonSerializer.Serialize(toolPart.Output, Json), Json) ?? []
+        };
+    }
+
+    private static string? NormalizeNullableCallId(string? callId)
+        => string.IsNullOrWhiteSpace(callId) ? null : callId;
+
+    private static ResponseProgramItem CreateResponseProgramItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> metadata,
+        string providerId)
+        => new()
+        {
+            Id = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.call.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(toolPart.Metadata ?? [], providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id"),
+            CallId = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.call.metadata", providerId, "call_id")
+                     ?? toolPart.ToolCallId,
+            Code = ExtractObject<JsonElement>(toolPart.Input is null ? [] : new Dictionary<string, object?> { ["input"] = toolPart.Input }, "input") is { } input
+                   && input.ValueKind == JsonValueKind.Object
+                   && input.TryGetProperty("code", out var code)
+                ? code.GetString() ?? string.Empty
+                : ExtractValue<string>(toolPart.Metadata, "code") ?? string.Empty,
+            Fingerprint = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.call.metadata", providerId, "fingerprint")
+                          ?? ExtractNestedValue<string>(toolPart.Metadata ?? [], providerId, "fingerprint")
+                          ?? ExtractNestedValue<string>(metadata, providerId, "fingerprint")
+                          ?? string.Empty
+        };
+
+    private static ResponseProgramOutputItem CreateResponseProgramOutputItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> metadata,
+        string providerId)
+    {
+        var output = toolPart.Output is null ? default : JsonSerializer.SerializeToElement(toolPart.Output, Json);
+        return new ResponseProgramOutputItem
+        {
+            Id = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.result.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(toolPart.Metadata ?? [], providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id"),
+            CallId = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.result.metadata", providerId, "call_id")
+                     ?? toolPart.ToolCallId,
+            Result = output.ValueKind == JsonValueKind.Object && output.TryGetProperty("result", out var result)
+                ? result.GetString() ?? string.Empty
+                : output.ValueKind == JsonValueKind.String ? output.GetString() ?? string.Empty : string.Empty,
+            Status = NormalizeResponsesToolStatus(
+                ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.result.metadata", providerId, "status")
+                ?? (output.ValueKind == JsonValueKind.Object && output.TryGetProperty("status", out var status) ? status.GetString() : toolPart.State),
+                hasOutput: true)
+        };
+    }
 
     private sealed record CompactionInvocationState(int ItemIndex, string? ItemId, string EncryptedContent);
 }

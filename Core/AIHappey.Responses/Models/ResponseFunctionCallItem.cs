@@ -21,6 +21,10 @@ public sealed class ResponseFunctionCallItem : ResponseInputItem
     [JsonPropertyName("name")]
     public string Name { get; set; } = default!;
 
+    [JsonPropertyName("namespace")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Namespace { get; set; }
+
     [JsonPropertyName("arguments")]
     public string Arguments { get; set; } = "{}";
 
@@ -132,6 +136,10 @@ public sealed class ResponseFunctionCallOutputItem : ResponseInputItem
 
     [JsonPropertyName("status")]
     public string? Status { get; set; }
+
+    [JsonPropertyName("caller")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ResponseCaller? Caller { get; set; }
 }
 
 /// <summary>

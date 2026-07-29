@@ -773,12 +773,22 @@ public static partial class ResponsesUnifiedMapper
                 }
                 else if (added.Item.Type == "function_call")
                 {
+                    var caller = GetAdditionalPropertyValue(added.Item.AdditionalProperties, "caller");
                     yield return CreateToolInputStartEnvelope(
                             added.Item.Id ?? string.Empty,
                              added.Item.Name ?? added.Item.Type,
                              added.Item.Name,
-                             false
-                        );
+                             false,
+                             CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                             {
+                                 ["type"] = "function_call",
+                                 ["id"] = added.Item.Id,
+                                 ["call_id"] = added.Item.CallId,
+                                 ["caller"] = caller,
+                                 ["namespace"] = added.Item.Namespace,
+                                 ["output_index"] = added.OutputIndex
+                             })
+                         );
 
                     yield break;
                 }
@@ -921,13 +931,24 @@ public static partial class ResponsesUnifiedMapper
                         case "function_call":
                             {
                                 var argumentInput = ParseStreamArguments(done.Item.Arguments);
+                                var caller = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "caller");
 
                                 yield return CreateToolInputEndEnvelope(
                                     done.Item.Id ?? string.Empty,
                                     done.Item.Name ?? done.Item.Type,
                                     argumentInput,
                                     done.Item.Name,
-                                    false);
+                                    false,
+                                    CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                                    {
+                                        ["type"] = "function_call",
+                                        ["id"] = done.Item.Id,
+                                        ["call_id"] = done.Item.CallId,
+                                        ["status"] = done.Item.Status,
+                                        ["caller"] = caller,
+                                        ["namespace"] = done.Item.Namespace,
+                                        ["output_index"] = done.OutputIndex
+                                    }));
 
                                 break;
                             }

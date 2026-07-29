@@ -23,6 +23,9 @@ public class ResponseStreamItem
     [JsonPropertyName("name")]
     public string? Name { get; init; }
 
+    [JsonPropertyName("namespace")]
+    public string? Namespace { get; init; }
+
     [JsonPropertyName("call_id")]
     public string? CallId { get; init; }
 

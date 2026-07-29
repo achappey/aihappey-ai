@@ -80,9 +80,6 @@ public static partial class ResponsesUnifiedMapper
             var role = GetValue<string>(map, "role") ?? "assistant";
             var type = GetValue<string>(map, "type") ?? "message";
 
-            if (string.Equals(type, "program_output", StringComparison.OrdinalIgnoreCase))
-                continue;
-
             if (TryCreateToolOutputItem(
                     item,
                     map,
@@ -542,26 +539,51 @@ public static partial class ResponsesUnifiedMapper
 
     private static ResponseFunctionCallItem CreateResponseFunctionCallItem(
         AIToolCallContentPart toolPart,
-        Dictionary<string, object?> metadata)
+        Dictionary<string, object?> metadata,
+        string providerId)
         => new()
         {
             Id = ExtractValue<string>(toolPart.Metadata, "id") ?? ExtractValue<string>(metadata, "id"),
             CallId = toolPart.ToolCallId,
             Name = toolPart.ToolName ?? toolPart.Title ?? ExtractValue<string>(metadata, "name") ?? "unknown",
+            Namespace = ExtractResponsesNamespace(toolPart.Metadata, metadata, providerId),
             Arguments = SerializePayload(toolPart.Input, "{}"),
-            Status = NormalizeResponsesToolStatus(toolPart.State ?? ExtractValue<string>(metadata, "status"), hasOutput: HasToolOutput(toolPart))
+            Status = NormalizeResponsesToolStatus(toolPart.State ?? ExtractValue<string>(metadata, "status"), hasOutput: HasToolOutput(toolPart)),
+            Caller = ExtractResponsesCaller(toolPart.Metadata, metadata, providerId)
         };
 
     private static ResponseFunctionCallOutputItem CreateResponseFunctionCallOutputItem(
         AIToolCallContentPart toolPart,
-        Dictionary<string, object?> metadata)
+        Dictionary<string, object?> metadata,
+        string providerId)
         => new()
         {
             Id = ExtractValue<string>(toolPart.Metadata, "id") ?? ExtractValue<string>(metadata, "id"),
             CallId = toolPart.ToolCallId,
             Output = SerializePayload(CreateToolOutputValue(toolPart), "{}"),
-            Status = NormalizeResponsesToolStatus(toolPart.State ?? ExtractValue<string>(metadata, "status"), hasOutput: true)
+            Status = NormalizeResponsesToolStatus(toolPart.State ?? ExtractValue<string>(metadata, "status"), hasOutput: true),
+            Caller = ExtractResponsesCaller(toolPart.Metadata, metadata, providerId)
         };
+
+    private static ResponseCaller? ExtractResponsesCaller(
+        Dictionary<string, object?>? partMetadata,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+    {
+        var caller = partMetadata is null ? null : ExtractNestedValue<ResponseCaller>(partMetadata, providerId, "caller");
+        caller ??= ExtractNestedValue<ResponseCaller>(itemMetadata, providerId, "caller");
+        return caller;
+    }
+
+    private static string? ExtractResponsesNamespace(
+        Dictionary<string, object?>? partMetadata,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+        => partMetadata is null
+            ? ExtractNestedValue<string>(itemMetadata, providerId, "namespace")
+            : ExtractNestedChannelValue<string>(partMetadata, "messages.provider.call.metadata", providerId, "namespace")
+              ?? ExtractNestedValue<string>(partMetadata, providerId, "namespace")
+              ?? ExtractNestedValue<string>(itemMetadata, providerId, "namespace");
 
     private static bool TryCreateToolOutputItem(
         object rawItem,
@@ -594,7 +616,7 @@ public static partial class ResponsesUnifiedMapper
                 Title = GetValue<string>(map, "name"),
                 Input = ParseJsonString(GetValue<string>(map, "arguments")),
                 State = GetValue<string>(map, "status"),
-                ProviderExecuted = hasProgramCaller,
+                ProviderExecuted = false,
                 Metadata = metadata
             },
             "tool_search_call" => new AIToolCallContentPart
@@ -625,6 +647,21 @@ public static partial class ResponsesUnifiedMapper
                 map,
                 outputIndex,
                 programOutputsByCallId),
+            "program_output" => new AIToolCallContentPart
+            {
+                Type = "tool-program-output",
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = "program",
+                Title = "program",
+                Output = new
+                {
+                    result = GetValue<string>(map, "result") ?? string.Empty,
+                    status = GetValue<string>(map, "status")
+                },
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = true,
+                Metadata = metadata
+            },
             "custom_tool_call" => new AIToolCallContentPart
             {
                 Type = type,
@@ -730,14 +767,8 @@ public static partial class ResponsesUnifiedMapper
             ToolName = "program",
             Title = "program",
             Input = new { code = GetValue<string>(map, "code") ?? string.Empty },
-            Output = outputMap is null
-                ? null
-                : new
-                {
-                    result = GetValue<string>(outputMap, "result") ?? string.Empty,
-                    status = GetValue<string>(outputMap, "status")
-                },
-            State = outputMap is null ? GetValue<string>(map, "status") : GetValue<string>(outputMap, "status"),
+            Output = null,
+            State = GetValue<string>(map, "status"),
             ProviderExecuted = true,
             Metadata = metadata
         };
@@ -759,7 +790,7 @@ public static partial class ResponsesUnifiedMapper
         providerMetadata["type"] = type;
         providerMetadata["output_index"] = outputIndex;
 
-        foreach (var key in new[] { "id", "call_id", "status", "caller", "container_id" })
+        foreach (var key in new[] { "id", "call_id", "status", "caller", "namespace", "container_id" })
         {
             if (map.TryGetValue(key, out var value) && HasMeaningfulValue(value))
                 providerMetadata[key] = CloneIfJsonElement(value)!;
