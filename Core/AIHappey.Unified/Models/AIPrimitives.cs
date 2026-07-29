@@ -132,6 +132,8 @@ public sealed class AIToolDefinition
 
     public object? InputSchema { get; init; }
 
+    public object? OutputSchema { get; init; }
+
     public bool? DeferLoading { get; set; }
 
     public IEnumerable<string>? AllowedCallers { get; set; }

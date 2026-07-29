@@ -23,10 +23,13 @@ public class Tool
     public IEnumerable<string>? AllowedCallers { get; set; }
 
     [JsonPropertyName("inputSchema")]
-    public ToolInputSchema? InputSchema { get; set; }
+    public ToolSchema? InputSchema { get; set; }
+
+    [JsonPropertyName("outputSchema")]
+    public ToolSchema? OutputSchema { get; set; }
 }
 
-public class ToolInputSchema
+public class ToolSchema
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = default!;

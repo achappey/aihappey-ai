@@ -149,6 +149,9 @@ public static partial class ResponsesUnifiedMapper
         if (tool.InputSchema is not null)
             extra["parameters"] = JsonSerializer.SerializeToElement(tool.InputSchema, Json);
 
+        if (tool.OutputSchema is not null)
+            extra["output_schema"] = JsonSerializer.SerializeToElement(tool.OutputSchema, Json);
+
         if (tool.DeferLoading is not null)
             extra["defer_loading"] = JsonSerializer.SerializeToElement(tool.DeferLoading, Json);
 
