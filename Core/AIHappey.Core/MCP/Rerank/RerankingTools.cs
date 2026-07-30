@@ -17,6 +17,8 @@ public class RerankingTools
         Title = "Rerank texts",
         Name = "ai_rerank_texts",
         Idempotent = true,
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(RerankingResponse),
         ReadOnly = true,
         OpenWorld = false)]
     public static async Task<CallToolResult?> AI_RerankTexts(

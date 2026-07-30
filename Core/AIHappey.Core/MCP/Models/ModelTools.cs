@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Net.Mime;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,9 +11,14 @@ namespace AIHappey.Core.MCP.Models;
 public class ModelTools
 {
     [Description("List all available models.")]
-    [McpServerTool(Title = "AI models", Name = "ai_models_list", 
-        Idempotent = true, ReadOnly = true, OpenWorld = false)]
-    public static async Task<ContentBlock?> AIModels_List(
+    [McpServerTool(Title = "AI models",
+        Name = "ai_models_list",
+        Idempotent = true,
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(Core.Models.ModelResponse),
+        ReadOnly = true,
+        OpenWorld = false)]
+    public static async Task<CallToolResult?> AIModels_List(
            IServiceProvider services,
            RequestContext<CallToolRequestParams> _,
            CancellationToken ct = default)
@@ -22,14 +26,9 @@ public class ModelTools
         var s = services.GetRequiredService<IAIModelProviderResolver>();
         var res = await s.ResolveModels(ct);
 
-        return new EmbeddedResourceBlock()
+        return new CallToolResult()
         {
-            Resource = new TextResourceContents()
-            {
-                MimeType = MediaTypeNames.Application.Json,
-                Uri = "ai://models",
-                Text = JsonSerializer.Serialize(res, JsonSerializerOptions.Web)
-            }
+            StructuredContent = JsonSerializer.SerializeToElement(res, JsonSerializerOptions.Web)
         };
     }
 }

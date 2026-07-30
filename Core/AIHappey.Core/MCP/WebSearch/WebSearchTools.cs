@@ -24,18 +24,21 @@ public class WebSearchTools
         "google/gemini-3.5-flash",
         "anthropic/claude-haiku-4-5-20251001",
         "spacexai/grok-4.20-0309-non-reasoning",
-        "mistral/mistral-medium-latest",
-     //   "groq/openai/gpt-oss-20b"
+        "mistral/mistral-medium-latest"
       ];
 
     private static readonly string[] AcademicModelNames = ["perplexity/sonar-reasoning-pro",
         "openai/gpt-5.2",
         "google/gemini-pro-latest",
-        "anthropic/claude-opus-4-7", "spacexai/grok-4.3", "mistral/mistral-large-latest"];
+        "anthropic/claude-opus-4-7",
+        "spacexai/grok-4.3",
+        "mistral/mistral-large-latest"];
 
     [Description("Perform a quick web search using Google AI with Google Search grounding.")]
     [McpServerTool(
         Title = "Google web search",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(ResponseResult),
         Name = "web_search_google",
         ReadOnly = true)]
     public static async Task<CallToolResult?> WebSearch_Google(
@@ -85,7 +88,6 @@ public class WebSearchTools
             var prompt = FormatPrompt(WebSearchPromptTemplate, query);
             var tasks = ModelNames.Select(modelName => ExecuteModelSafelyAsync(
                 serviceProvider,
-                requestContext,
                 modelName,
                 prompt,
                 maxOutputTokens: 10000,
@@ -125,7 +127,6 @@ public class WebSearchTools
             var prompt = FormatPrompt(AcademicSearchPromptTemplate, query);
             var tasks = AcademicModelNames.Select(modelName => ExecuteModelSafelyAsync(
                 serviceProvider,
-                requestContext,
                 modelName,
                 prompt,
                 maxOutputTokens: 10000,
@@ -147,7 +148,6 @@ public class WebSearchTools
 
     private static async Task<ResponseResult?> ExecuteModelSafelyAsync(
         IServiceProvider serviceProvider,
-        RequestContext<CallToolRequestParams> requestContext,
         string modelName,
         string prompt,
         int? maxOutputTokens,
@@ -169,13 +169,8 @@ public class WebSearchTools
             AddDuration(result, startTime);
             return result;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            await requestContext.Server.SendNotificationAsync(
-                $"{modelName} failed: {ex.Message}",
-                LoggingLevel.Error,
-                cancellationToken: CancellationToken.None);
-
             return null;
         }
     }
