@@ -7,6 +7,7 @@ using AIHappey.Core.MCP.Provider;
 using AIHappey.Core.MCP.Realtime;
 using AIHappey.Core.MCP.Rerank;
 using AIHappey.Core.MCP.WebSearch;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.MCP;
 
@@ -120,6 +121,7 @@ public static class CoreMcpDefinitions
             Description: attribute.Description,
             Title: attribute.Title,
             ToolTypes: [providerType],
-            ToolMethodNames: [.. attribute.ToolMethodNames]);
+            ToolMethodNames: [.. attribute.ToolMethodNames],
+            Icons: attribute.Icons);
     }
 }

@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
 using AIHappey.Interactions;
-using AIHappey.Interactions.Mapping;
 using AIHappey.Responses;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -17,6 +16,7 @@ public partial class GoogleAIProvider
         ReadOnly = true,
         Destructive = false,
         UseStructuredContent = true,
+        IconSource = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/1920px-Google_Maps_icon_%282020%29.svg.png",
         OutputSchemaType = typeof(Interaction),
         Idempotent = false,
         OpenWorld = true)]

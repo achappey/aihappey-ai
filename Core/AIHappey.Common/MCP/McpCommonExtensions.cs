@@ -32,6 +32,7 @@ public static class McpCommonExtensions
                         opts.ServerInfo = new Implementation()
                         {
                             Version = "1.0.0",
+                            Icons = serverDef.Icons,
                             Name = GetReversedHostFromPath(ctx.Request) + "/" + serverDef.Name,
                             Title = serverDef.Title ?? serverDef.Name.Replace("-", " "),
                             Description = serverDef.Description
@@ -138,7 +139,7 @@ public static class McpCommonExtensions
                     schema = "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
                     name = $"{rev}/{def.Name}",
                     title = $"{def.Name}",
-                    icons,
+                    icons = def.Icons ?? icons,
                     description = def.Description?.Replace("{host}", host) ?? $"Mcp server {def.Name} on {host}.",
                     remotes = new[]
                     {

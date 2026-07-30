@@ -15,11 +15,15 @@ namespace AIHappey.Core.Providers.OpenAI;
     "AI-OpenAI-WebResearch",
     "AI OpenAI Web Research",
     "Plan, gather sourced web evidence, and synthesize a research report with OpenAI.",
+    ["https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/openai.png",
+    "https://registry.npmmirror.com/@lobehub/icons-static-png/1.74.0/files/light/openai.png"],
     nameof(OpenAIWebResearch_Run))]
 [McpServer(
     "AI-OpenAI-FinancialResearch",
     "AI OpenAI Financial Research",
     "Perform sourced financial research with fundamentals, risks, report writing, and verification.",
+   ["https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/openai.png",
+    "https://registry.npmmirror.com/@lobehub/icons-static-png/1.74.0/files/light/openai.png"],
     nameof(OpenAIFinancialResearch_Run))]
 public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedModelProvider, IProviderMcpServers
 {

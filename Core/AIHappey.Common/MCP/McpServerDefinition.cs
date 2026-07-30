@@ -1,3 +1,5 @@
+using ModelContextProtocol.Protocol;
+
 namespace AIHappey.Common.MCP;
 
 public record McpServerDefinition(
@@ -6,4 +8,5 @@ public record McpServerDefinition(
     string? Title,
     Type[]? PromptTypes = null,
     Type[]? ToolTypes = null,
-    string[]? ToolMethodNames = null);
+    string[]? ToolMethodNames = null,
+    Icon[]? Icons = null);

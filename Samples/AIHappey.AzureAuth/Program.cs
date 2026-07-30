@@ -142,19 +142,13 @@ var allMcpServers = CoreMcpDefinitions.GetDefinitions()
         g.First().Title,
         [.. g.SelectMany(d => d.PromptTypes ?? [])],
         [.. g.SelectMany(d => d.ToolTypes ?? [])],
-        [.. g.SelectMany(d => d.ToolMethodNames ?? [])]
+        [.. g.SelectMany(d => d.ToolMethodNames ?? [])],
+        g.Select(d => d.Icons).FirstOrDefault(serverIcons => serverIcons is { Length: > 0 })
     ))
     .ToList();
 
 builder.Services.AddMcpServers(allMcpServers);
-
-//BACKGROUND WORKER TELEMETRY
-//builder.Services.AddSingleton<ChatTelemetryQueue>();
-//builder.Services.AddHostedService<ChatTelemetryWorker>();
-
-//builder.Services.AddSingleton<AIModelProviderResolver>();
 builder.Services.AddControllers();
-
 builder.Services.AddControllers().AddJsonOptions(o =>
   {
       o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -169,7 +163,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapMcpEndpoints(allMcpServers, true);
-app.MapMcpRegistry(allMcpServers, [new { src = builder.Configuration.GetValue<string>("DarkIcon"), theme = "dark" },
+app.MapMcpRegistry(allMcpServers, 
+    [new { src = builder.Configuration.GetValue<string>("DarkIcon"), theme = "dark" },
     new { src = builder.Configuration.GetValue<string>("LightIcon"), theme = "light" }]);
 
 app.Run();

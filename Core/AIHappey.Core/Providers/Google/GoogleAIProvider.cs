@@ -19,6 +19,7 @@ namespace AIHappey.Core.Providers.Google;
     "AI-Google-Maps",
     "AI Google Maps",
     "Use Google Maps grounding for places, routing, distances, and location context.",
+    ["https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/1920px-Google_Maps_icon_%282020%29.svg.png"],
     nameof(GoogleMaps_Ask))]
 public partial class GoogleAIProvider
     : IModelProvider, IProviderMcpServers
@@ -83,7 +84,7 @@ public partial class GoogleAIProvider
 
     public string GetIdentifier() => GoogleExtensions.Identifier();
 
-   
+
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
@@ -224,10 +225,10 @@ public partial class GoogleAIProvider
         }
     }
 
-  
 
 
-    
 
-  
+
+
+
 }
