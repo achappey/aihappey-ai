@@ -1,6 +1,5 @@
 using AIHappey.Core.AI;
 using AIHappey.Messages;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
@@ -11,7 +10,6 @@ using AIHappey.Core.Contracts;
 using System.Globalization;
 using AIHappey.Unified.Models;
 using AIHappey.ChatCompletions.Mapping;
-using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 
@@ -51,10 +49,7 @@ public partial class PerplexityProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

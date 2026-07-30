@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -51,10 +50,7 @@ public partial class MonicaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Monica).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

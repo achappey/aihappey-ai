@@ -12,7 +12,6 @@ using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.DeAPI;
 
@@ -59,8 +58,7 @@ public partial class DeAPIProvider : IModelProvider
     public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

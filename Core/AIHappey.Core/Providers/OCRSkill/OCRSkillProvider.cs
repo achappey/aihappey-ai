@@ -5,7 +5,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.OCRSkill;
 
@@ -36,8 +35,7 @@ public sealed partial class OCRSkillProvider(IApiKeyResolver keyResolver, IHttpC
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

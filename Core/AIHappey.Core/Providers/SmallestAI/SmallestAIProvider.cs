@@ -8,7 +8,6 @@ using AIHappey.Core.Models;
 using AIHappey.Responses.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
@@ -65,10 +64,7 @@ public partial class SmallestAIProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await ListModelsInternal(cancellationToken);
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

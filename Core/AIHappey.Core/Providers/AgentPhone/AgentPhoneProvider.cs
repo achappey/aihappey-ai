@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -121,10 +120,7 @@ public partial class AgentPhoneProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {

@@ -7,7 +7,6 @@ using AIHappey.Core.MCP.Provider;
 using AIHappey.Core.MCP.Realtime;
 using AIHappey.Core.MCP.Rerank;
 using AIHappey.Core.MCP.WebSearch;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.MCP;
 

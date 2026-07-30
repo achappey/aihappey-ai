@@ -9,7 +9,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
-using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 
@@ -71,10 +70,7 @@ public sealed partial class GoogleTranslateProvider : IModelProvider, IUnifiedMo
             yield return streamEvent.ToChatCompletionUpdate();
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

@@ -2,13 +2,11 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
@@ -61,10 +59,7 @@ public sealed partial class TinfoilProvider(IApiKeyResolver keyResolver, IHttpCl
                     options, cancellationToken: cancellationToken);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

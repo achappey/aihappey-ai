@@ -10,9 +10,7 @@ using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.AI21;
@@ -62,10 +60,7 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();

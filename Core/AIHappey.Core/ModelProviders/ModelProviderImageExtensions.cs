@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using ModelContextProtocol.Protocol;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
@@ -84,72 +83,6 @@ public static class ModelProviderImageExtensions
         yield return "stop".ToFinishUIPart(chatRequest.Model.ToModelId(modelProvider.GetIdentifier()),
              0, 0, 0, null);
     }
-
-    [Obsolete("MCP Sampling obsolete")]
-    public static async Task<CreateMessageResult> ImageSamplingAsync(
-              this IModelProvider modelProvider,
-              CreateMessageRequestParams chatRequest,
-              CancellationToken cancellationToken = default)
-    {
-        var input = string.Join("\n\n", chatRequest
-            .Messages
-            .Where(a => a.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(z => z.Content.OfType<TextContentBlock>())
-            .Select(a => a.Text));
-
-        var inputImages = chatRequest
-                .Messages
-                .Where(a => a.Role == ModelContextProtocol.Protocol.Role.User)
-                .SelectMany(z => z.Content.OfType<ImageContentBlock>());
-
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            throw new Exception("No prompt provided.");
-        }
-
-        var model = chatRequest.GetModel();
-
-        if (string.IsNullOrWhiteSpace(model))
-        {
-            throw new Exception("No model provided.");
-        }
-
-        var imageRequest = new ImageRequest
-        {
-            Model = model,
-            Prompt = input,
-            ProviderOptions = chatRequest.Metadata?
-                .ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => JsonSerializer.SerializeToElement(kvp.Value)
-                ),
-            Files = inputImages.Select(a => new ImageFile()
-            {
-                MediaType = a.MimeType,
-                Data = Convert.ToBase64String(a.Data.ToArray())
-            })
-        };
-
-        var result = await modelProvider.ImageRequest(imageRequest, cancellationToken) ?? throw new Exception("No result.");
-
-        return result.ToCreateMessageResult();
-    }
-
-    public static ImageContentBlock ToImageContentBlock(
-        this string image)
-             => new()
-             {
-                 MimeType = image.ExtractMimeTypeAndBase64().MimeType!,
-                 Data = Convert.FromBase64String(image.ExtractMimeTypeAndBase64().Base64!)
-             };
-
-    public static CreateMessageResult ToCreateMessageResult(
-        this ImageResponse result)
-        => new()
-        {
-            Content = [.. result.Images?.Select(a => a.ToImageContentBlock()).ToList() ?? []],
-            Model = result.Response.ModelId
-        };
 
     /// <summary>
     /// Extracts MIME type and raw Base64 from a data URL or prefixed string.

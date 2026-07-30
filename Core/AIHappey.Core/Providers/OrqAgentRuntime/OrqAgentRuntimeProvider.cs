@@ -4,7 +4,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.OrqAgentRuntime;
@@ -39,13 +38,6 @@ public partial class OrqAgentRuntimeProvider : IModelProvider
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key.Trim());
     }
-
- 
-
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 

@@ -7,7 +7,6 @@ using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 
@@ -43,8 +42,7 @@ public partial class PicsartProvider : IModelProvider
     public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
         => this.StreamImageAsync(chatRequest, cancellationToken);

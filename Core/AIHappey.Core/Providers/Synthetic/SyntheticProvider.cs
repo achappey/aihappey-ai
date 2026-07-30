@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -7,7 +6,6 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
@@ -63,15 +61,7 @@ public partial class SyntheticProvider : IModelProvider
                     cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(Synthetic).ToLowerInvariant();
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToSamplingResult();
-    }
+    public string GetIdentifier() => nameof(Synthetic).ToLowerInvariant();  
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

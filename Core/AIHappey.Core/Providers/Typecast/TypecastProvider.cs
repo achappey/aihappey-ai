@@ -7,7 +7,6 @@ using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Typecast;
@@ -45,8 +44,7 @@ public partial class TypecastProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

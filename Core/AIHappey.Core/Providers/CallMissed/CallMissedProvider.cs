@@ -8,7 +8,6 @@ using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 
@@ -63,8 +62,7 @@ public partial class CallMissedProvider : IModelProvider
 
     public string GetIdentifier() => "callmissed";
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

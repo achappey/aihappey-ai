@@ -4,7 +4,6 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Core.AI;
 using System.Text.Json;
-using ModelContextProtocol.Protocol;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Responses.Extensions;
@@ -62,10 +61,7 @@ public partial class AlibabaProvider : IModelProvider
                     cancellationToken: cancellationToken);
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => TranscriptionRequestInternal(imageRequest, cancellationToken);

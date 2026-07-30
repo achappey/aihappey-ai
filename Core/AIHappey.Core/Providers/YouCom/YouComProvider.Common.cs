@@ -160,30 +160,6 @@ public partial class YouComProvider
         return string.Join("\n\n", lines);
     }
 
-    private static string BuildPromptFromSamplingMessages(IEnumerable<SamplingMessage>? messages)
-    {
-        var all = messages?.ToList() ?? [];
-        if (all.Count == 0)
-            return string.Empty;
-
-        var lines = new List<string>();
-        foreach (var msg in all)
-        {
-            var role = msg.Role switch
-            {
-                ModelContextProtocol.Protocol.Role.Assistant => "assistant",
-                ModelContextProtocol.Protocol.Role.User => "user",
-                _ => "user"
-            };
-
-            var text = msg.ToText() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(text))
-                lines.Add($"{role}: {text}");
-        }
-
-        return string.Join("\n\n", lines);
-    }
-
     private static string BuildPromptFromCompletionMessages(IEnumerable<ChatMessage>? messages)
     {
         var all = messages?.ToList() ?? [];
@@ -329,36 +305,6 @@ public partial class YouComProvider
             merged["sources"] = sourceArray;
 
         return merged;
-    }
-
-    private static JsonObject BuildSamplingMeta(YouComExecutionResult result)
-    {
-        var meta = new JsonObject
-        {
-            ["inputTokens"] = 0,
-            ["outputTokens"] = 0,
-            ["totalTokens"] = 0,
-            ["youcomEndpoint"] = result.Endpoint
-        };
-
-        if (result.RuntimeMs is not null)
-            meta["runtimeMs"] = result.RuntimeMs.Value;
-
-        if (result.Sources.Count > 0)
-        {
-            meta["sources"] = JsonSerializer.SerializeToNode(
-                result.Sources.Select(source => new
-                {
-                    url = source.Url,
-                    title = source.Title,
-                    snippets = source.Snippets,
-                    sourceType = source.SourceType,
-                    citationUri = source.CitationUri
-                }),
-                Json);
-        }
-
-        return meta;
     }
 
     private static object BuildChatUsage()
@@ -662,7 +608,7 @@ public partial class YouComProvider
         using var reader = new StreamReader(stream);
 
         var dataLines = new List<string>();
-         string? line;
+        string? line;
         while (!cancellationToken.IsCancellationRequested &&
                (line = await reader.ReadLineAsync(cancellationToken)) != null)
         {
@@ -819,18 +765,6 @@ public partial class YouComProvider
                     Message = string.IsNullOrWhiteSpace(result.Error) ? "You.com agent run did not finish successfully." : result.Error
                 },
             Output = BuildResponseOutput(result)
-        };
-    }
-
-    private static CreateMessageResult ToSamplingResult(YouComExecutionResult result)
-    {
-        return new CreateMessageResult
-        {
-            Model = result.Model,
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            StopReason = result.FinishReason,
-            Content = [result.Text.ToTextContentBlock()],
-            Meta = BuildSamplingMeta(result)
         };
     }
 

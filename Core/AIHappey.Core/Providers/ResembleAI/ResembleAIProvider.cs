@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.Messages;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -45,10 +44,7 @@ public partial class ResembleAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(ResembleAI).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
        => throw new NotSupportedException();

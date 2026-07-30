@@ -22,8 +22,6 @@ public interface IModelProvider
 
     Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default);
 
-    Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default);
-
     IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default);
 
     Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default);

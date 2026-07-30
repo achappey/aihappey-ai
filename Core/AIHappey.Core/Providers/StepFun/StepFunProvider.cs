@@ -1,11 +1,9 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Messages.Mapping;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Mapping;
@@ -64,14 +62,7 @@ public partial class StepFunProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(StepFun).ToLowerInvariant();
-
-    public Task<CreateMessageResult> SamplingAsync(
-    CreateMessageRequestParams chatRequest,
-    CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
+  
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 

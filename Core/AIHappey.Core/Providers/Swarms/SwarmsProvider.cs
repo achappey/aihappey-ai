@@ -3,7 +3,6 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Swarms;
@@ -38,10 +37,7 @@ public partial class SwarmsProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Swarms).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
@@ -10,7 +9,6 @@ using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.StealthGPT;
@@ -60,13 +58,6 @@ public partial class StealthGPTProvider : IModelProvider, IUnifiedModelProvider
     }
 
     public string GetIdentifier() => nameof(StealthGPT).ToLowerInvariant();
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken);
-
-        return result.ToSamplingResult();
-    }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

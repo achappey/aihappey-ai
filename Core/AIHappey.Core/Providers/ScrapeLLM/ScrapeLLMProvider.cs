@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Messages.Mapping;
@@ -10,7 +9,6 @@ using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.ScrapeLLM;
@@ -61,10 +59,7 @@ public partial class ScrapeLLMProvider : IModelProvider
 
     public string GetIdentifier() => nameof(ScrapeLLM).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
@@ -70,12 +69,7 @@ public partial class AIMLProvider : IModelProvider
     }
 
     public string GetIdentifier() => AIMLExtensions.GetIdentifier();
-
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken = default)
-    {
-       throw new NotSupportedException();
-    }
+    
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
     {

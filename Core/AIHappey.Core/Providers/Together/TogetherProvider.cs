@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -8,7 +7,6 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Core.AI;
-using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 
@@ -47,10 +45,7 @@ public partial class TogetherProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Together).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {

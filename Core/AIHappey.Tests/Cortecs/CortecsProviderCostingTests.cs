@@ -12,7 +12,6 @@ using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Tests.Cortecs;
 
@@ -260,9 +259,6 @@ public class CortecsProviderCostingTests
             => throw new NotSupportedException();
 
         public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-            => throw new NotSupportedException();
-
-        public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
         public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)

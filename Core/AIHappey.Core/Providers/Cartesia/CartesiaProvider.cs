@@ -10,7 +10,6 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Cartesia;
 
@@ -107,8 +106,7 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
         }
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,

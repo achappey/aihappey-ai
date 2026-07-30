@@ -12,7 +12,6 @@ using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Tests.Orchestration;
 
@@ -416,8 +415,6 @@ public sealed class StorageBackedModelProviderResolverTests
         public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
 
         public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
-
-        public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
 
         public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
 

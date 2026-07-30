@@ -3,7 +3,6 @@ using AIHappey.Responses.Extensions;
 using System.Text.Json;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
-using AIHappey.Responses.Mapping;
 
 namespace AIHappey.Core.Providers.Perplexity;
 

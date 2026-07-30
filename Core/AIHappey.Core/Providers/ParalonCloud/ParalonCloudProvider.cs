@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -11,7 +10,6 @@ using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 
 namespace AIHappey.Core.Providers.ParalonCloud;
 
@@ -54,15 +52,7 @@ public partial class ParalonCloudProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(ParalonCloud).ToLowerInvariant();
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-     cancellationToken);
-
-        return result.ToSamplingResult();
-    }
+    public string GetIdentifier() => nameof(ParalonCloud).ToLowerInvariant();   
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

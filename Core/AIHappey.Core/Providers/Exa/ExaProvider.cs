@@ -6,7 +6,6 @@ using AIHappey.Messages;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Messages.Mapping;
-using ModelContextProtocol.Protocol;
 
 
 namespace AIHappey.Core.Providers.Exa;
@@ -46,10 +45,7 @@ public partial class ExaProvider : IModelProvider, IUnifiedModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)

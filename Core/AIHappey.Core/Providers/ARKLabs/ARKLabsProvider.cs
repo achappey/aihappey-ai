@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
@@ -58,10 +57,7 @@ public partial class ARKLabsProvider : IModelProvider
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
     }
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -1,8 +1,6 @@
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.AI;
@@ -43,10 +41,7 @@ public partial class IONOSProvider : IModelProvider
 
     public string GetIdentifier() => nameof(IONOS).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

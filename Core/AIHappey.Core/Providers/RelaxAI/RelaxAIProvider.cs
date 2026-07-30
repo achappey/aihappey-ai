@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
@@ -6,7 +5,6 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
@@ -42,20 +40,7 @@ public partial class RelaxAIProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(RelaxAI).ToLowerInvariant();
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        if (chatRequest.GetModel()?.Contains("voxtral", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            throw new NotImplementedException();
-        }
-
-        var result = await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-                   cancellationToken);
-
-        return result.ToSamplingResult();
-    }
-
+ 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 

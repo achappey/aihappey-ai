@@ -5,7 +5,6 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Noiz;
@@ -42,8 +41,7 @@ public partial class NoizProvider : IModelProvider
 
     public string GetIdentifier() => "noiz";
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
@@ -53,8 +52,7 @@ public partial class AudixaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Audixa).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

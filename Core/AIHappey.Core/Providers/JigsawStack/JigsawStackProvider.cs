@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
@@ -34,10 +33,7 @@ public partial class JigsawStackProvider : IModelProvider
 
     public string GetIdentifier() => nameof(JigsawStack).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

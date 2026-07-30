@@ -1,6 +1,4 @@
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
-using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Common.Model;
 using AIHappey.Core.Contracts;
@@ -35,22 +33,7 @@ public partial class NLPCloudProvider : IModelProvider
     }
 
 
-    public string GetIdentifier() => nameof(NLPCloud).ToLowerInvariant();
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var modelId = chatRequest.GetModel();
-        ArgumentException.ThrowIfNullOrEmpty(modelId);
-
-        var kind = GetModelKind(modelId, out _);
-        if (kind == NLPCloudModelKind.Translation)
-            return await TranslateSamplingAsync(chatRequest, modelId, cancellationToken);
-
-        throw new NotImplementedException();
-    }
+    public string GetIdentifier() => nameof(NLPCloud).ToLowerInvariant();   
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
         => TranscriptionRequestInternal(request, cancellationToken);

@@ -1,11 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.LectoAI;
 
@@ -189,37 +187,6 @@ public sealed partial class LectoAIProvider
         using var doc = JsonDocument.Parse(body);
         var translated = ExtractTranslations(doc.RootElement, texts.Count);
         return translated;
-    }
-
-    internal async Task<CreateMessageResult> TranslateSamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        string modelId,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var targetLanguage = GetTranslateTargetLanguageFromModel(modelId);
-
-        var texts = chatRequest.Messages
-            .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(m => m.Content.OfType<TextContentBlock>())
-            .Select(b => b.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
-
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translated = await TranslateAsync(texts, targetLanguage, cancellationToken);
-        var joined = string.Join("\n", translated);
-
-        return new CreateMessageResult
-        {
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            Model = modelId,
-            StopReason = "stop",
-            Content = [joined.ToTextContentBlock()]
-        };
     }
 
     internal async Task<ResponseResult> TranslateResponsesAsync(

@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
@@ -41,12 +40,7 @@ public partial class SiliconFlowProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(SiliconFlow).ToLowerInvariant();
-
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-     throw new NotSupportedException();
-    }
-
+ 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);

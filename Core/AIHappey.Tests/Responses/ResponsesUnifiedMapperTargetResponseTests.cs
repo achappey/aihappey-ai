@@ -3,7 +3,6 @@ using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 

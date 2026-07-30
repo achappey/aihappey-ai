@@ -124,20 +124,6 @@ public static class MetadataExtensions
         return element.Deserialize<T>(JsonSerializerOptions.Web);
     }
 
-    public static T? GetProviderMetadata<T>(this CreateMessageRequestParams chatRequest, string providerId)
-    {
-        if (chatRequest.Metadata is not JsonObject meta)
-            return default;
-
-        if (!meta.TryGetPropertyValue(providerId, out var node))
-            return default;
-
-        if (node is null)
-            return default;
-
-        return node.Deserialize<T>(JsonSerializerOptions.Web);
-    }
-
     public static List<UIMessage> NormalizeToolInvocations(
         this List<UIMessage> messages)
     {

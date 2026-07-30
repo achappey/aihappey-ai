@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -7,7 +6,6 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
-using AIHappey.Sampling.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
@@ -71,13 +69,7 @@ public partial class ClankieProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Clankie).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-              cancellationToken);
-
-        return result.ToSamplingResult();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

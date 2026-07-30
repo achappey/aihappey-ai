@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
@@ -50,8 +49,7 @@ public partial class BriaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Bria).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

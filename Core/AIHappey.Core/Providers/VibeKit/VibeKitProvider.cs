@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -11,7 +10,6 @@ using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.VibeKit;
@@ -70,10 +68,7 @@ public partial class VibeKitProvider : IModelProvider
 
     public string GetIdentifier() => nameof(VibeKit).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

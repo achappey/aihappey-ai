@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.Messages;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -44,8 +43,7 @@ public partial class SpeechifyProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Speechify).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

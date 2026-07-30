@@ -1,12 +1,10 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
-using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.LectoAI;
 
@@ -75,19 +73,7 @@ public sealed partial class LectoAIProvider : IModelProvider
         ApplyAuthHeader();
         return await ListTranslationModelsAsync(cancellationToken);
     }
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        // Ensure key is present on request-time.
-        ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var modelId = chatRequest.GetModel();
-        ArgumentException.ThrowIfNullOrEmpty(modelId);
-
-        return await TranslateSamplingAsync(chatRequest, modelId, cancellationToken);
-    }
-
+   
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

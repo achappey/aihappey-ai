@@ -1,11 +1,9 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
@@ -61,10 +59,7 @@ public partial class PortkeyProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Portkey).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {

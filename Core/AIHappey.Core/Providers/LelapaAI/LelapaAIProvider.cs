@@ -1,5 +1,3 @@
-using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Messages.Mapping;
@@ -10,7 +8,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.LelapaAI;
@@ -62,66 +59,7 @@ public partial class LelapaAIProvider : IModelProvider
         }
     }
 
-    public string GetIdentifier() => nameof(LelapaAI).ToLowerInvariant();
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var modelId = chatRequest.GetModel()
-            ?? throw new ArgumentException("Model is required.", nameof(chatRequest));
-
-        var metadata = chatRequest.Metadata is null
-            ? null
-            : chatRequest.Metadata.ToObjectDictionary();
-
-        var unifiedRequest = new AIHappey.Unified.Models.AIRequest
-        {
-            ProviderId = GetIdentifier(),
-            Model = modelId,
-            Metadata = metadata,
-            Input = new AIHappey.Unified.Models.AIInput
-            {
-                Items =
-                [
-                    .. chatRequest.Messages
-                        .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
-                        .Select(m => new AIHappey.Unified.Models.AIInputItem
-                        {
-                            Role = "user",
-                            Content =
-                            [
-                                .. m.Content
-                                    .OfType<TextContentBlock>()
-                                    .Where(block => !string.IsNullOrWhiteSpace(block.Text))
-                                    .Select(block => new AIHappey.Unified.Models.AITextContentPart
-                                    {
-                                        Text = block.Text,
-                                        Type = "text",
-                                    })
-                            ]
-                        })
-                ]
-            }
-        };
-
-        var response = await ExecuteUnifiedAsync(unifiedRequest, cancellationToken);
-        var text = response.Output?.Items?
-            .SelectMany(item => item.Content ?? [])
-            .OfType<AIHappey.Unified.Models.AITextContentPart>()
-            .Select(part => part.Text)
-            .FirstOrDefault() ?? string.Empty;
-
-        return new CreateMessageResult
-        {
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            Model = modelId,
-            StopReason = "stop",
-            Content = [text.ToTextContentBlock()]
-        };
-    }
-
+    public string GetIdentifier() => nameof(LelapaAI).ToLowerInvariant();   
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

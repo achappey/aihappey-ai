@@ -2,11 +2,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.NLPCloud;
 
@@ -138,42 +136,7 @@ public partial class NLPCloudProvider
         if (!string.IsNullOrWhiteSpace(result))
             yield return result;
     }
-
-    internal async Task<CreateMessageResult> TranslateSamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        string modelId,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(chatRequest);
-
-        var targetLanguage = GetTranslationTargetLanguageFromModel(modelId);
-
-        var texts = chatRequest.Messages
-            .Where(m => m.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(m => m.Content.OfType<TextContentBlock>())
-            .Select(b => b.Text)
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
-
-        if (texts.Count == 0)
-            throw new Exception("No prompt provided.");
-
-        var translations = new List<string>(texts.Count);
-        foreach (var text in texts)
-        {
-            translations.Add(await SendTranslationAsync(modelId, text, targetLanguage, cancellationToken));
-        }
-
-        var joined = string.Join("\n", translations);
-        return new CreateMessageResult
-        {
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            Model = modelId,
-            StopReason = "stop",
-            Content = [joined.ToTextContentBlock()]
-        };
-    }
-
+   
     internal async Task<ResponseResult> TranslateResponsesAsync(
         ResponseRequest options,
         CancellationToken cancellationToken)

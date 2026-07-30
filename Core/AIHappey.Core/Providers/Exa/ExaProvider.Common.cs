@@ -3,8 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Extensions;
-using AIHappey.Core.AI;
-using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.Exa;
 
@@ -225,53 +223,6 @@ public partial class ExaProvider
         return JsonSerializer.Serialize(content, JsonWeb);
     }
 
-    private static ResponseInput BuildResponseInputFromSampling(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest)
-    {
-        var items = new List<ResponseInputItem>();
-
-        foreach (var msg in chatRequest.Messages)
-        {
-            var parts = msg.Content
-                .OfType<ModelContextProtocol.Protocol.TextContentBlock>()
-                .Select(a => new InputTextPart(a.Text))
-                .Cast<ResponseContentPart>()
-                .ToList();
-
-            if (parts.Count == 0)
-            {
-                var text = msg.ToText();
-                if (!string.IsNullOrWhiteSpace(text))
-                    parts.Add(new InputTextPart(text));
-            }
-
-            if (parts.Count == 0)
-                continue;
-
-            var role = msg.Role == ModelContextProtocol.Protocol.Role.Assistant
-                ? ResponseRole.Assistant
-                : ResponseRole.User;
-
-            items.Add(new ResponseInputMessage
-            {
-                Role = role,
-                Content = new ResponseMessageContent(parts)
-            });
-        }
-
-        return new ResponseInput(items);
-    }
-
-    private static Dictionary<string, object?>? JsonElementObjectToDictionary(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-            return null;
-
-        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var prop in element.EnumerateObject())
-            result[prop.Name] = JsonSerializer.Deserialize<object>(prop.Value.GetRawText(), JsonWeb);
-
-        return result;
-    }
 
     private static JsonObject? JsonElementObjectToJsonObject(JsonElement element)
         => element.ValueKind == JsonValueKind.Object

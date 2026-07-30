@@ -50,9 +50,6 @@ internal sealed class FixtureChatCompletionStreamModelProvider : IModelProvider
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => throw CreateUnsupportedException();
 
-    public Task<ModelContextProtocol.Protocol.CreateMessageResult> SamplingAsync(ModelContextProtocol.Protocol.CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw CreateUnsupportedException();
-
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
         => throw CreateUnsupportedException();
 

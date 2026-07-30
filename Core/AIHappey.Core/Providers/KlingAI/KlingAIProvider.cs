@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
@@ -54,8 +53,7 @@ public partial class KlingAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(KlingAI).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
         => SpeechRequestInternal(request, cancellationToken);

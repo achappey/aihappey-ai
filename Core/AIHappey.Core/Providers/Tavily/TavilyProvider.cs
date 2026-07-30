@@ -7,10 +7,8 @@ using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 
@@ -59,11 +57,7 @@ public partial class TavilyProvider : IModelProvider, IUnifiedModelProvider
         }
     }
 
-    public string GetIdentifier() => nameof(Tavily).ToLowerInvariant();
-
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            .ToSamplingResult();
+    public string GetIdentifier() => nameof(Tavily).ToLowerInvariant();  
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

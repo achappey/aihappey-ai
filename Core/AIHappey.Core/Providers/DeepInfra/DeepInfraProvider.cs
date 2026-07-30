@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
@@ -67,13 +66,6 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         {
             yield return EnrichChatCompletionUpdateWithGatewayCost(update);
         }
-    }
-
-    public Task<CreateMessageResult> SamplingAsync(
-        CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)

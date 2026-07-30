@@ -9,7 +9,6 @@ using AIHappey.Vercel.Models;
 using AIHappey.Messages.Mapping;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
@@ -64,10 +63,7 @@ public partial class OrqRouterProvider : IModelProvider
             relativeUrl: "v2/router/chat/completions",
             cancellationToken: cancellationToken);
     }
-
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

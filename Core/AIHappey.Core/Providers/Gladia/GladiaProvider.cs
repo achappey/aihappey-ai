@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using AIHappey.ChatCompletions.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -53,10 +52,7 @@ public partial class GladiaProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Gladia).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {

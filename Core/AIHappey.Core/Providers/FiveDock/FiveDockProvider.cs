@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -10,7 +9,6 @@ using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.FiveDock;
@@ -61,10 +59,7 @@ public partial class FiveDockProvider : IModelProvider
     public string GetIdentifier() => nameof(FiveDock).ToLowerInvariant();
 
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 

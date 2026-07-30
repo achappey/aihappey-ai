@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Bytez;
 
@@ -123,53 +122,6 @@ public partial class BytezProvider
         return null;
     }
 
-    private async Task<CreateMessageResult> VideoSamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        var input = string.Join("\n\n", chatRequest
-            .Messages
-            .Where(a => a.Role == ModelContextProtocol.Protocol.Role.User)
-            .SelectMany(z => z.Content.OfType<TextContentBlock>())
-            .Select(a => a.Text));
-
-        if (string.IsNullOrWhiteSpace(input))
-            throw new Exception("No prompt provided.");
-
-        var model = chatRequest.GetModel();
-        if (string.IsNullOrWhiteSpace(model))
-            throw new Exception("No model provided.");
-
-        var videoRequest = new VideoRequest
-        {
-            Model = model,
-            Prompt = input,
-            ProviderOptions = chatRequest.Metadata?
-           .ToDictionary(
-               kvp => kvp.Key,
-               kvp => JsonSerializer.SerializeToElement(kvp.Value, JsonSerializerOptions.Web)
-           )
-        };
-
-        var result = await this.VideoRequest(videoRequest, cancellationToken) ?? throw new Exception("No result.");
-        var firstVideo = result.Videos?.FirstOrDefault() ?? throw new Exception("No video generated.");
-
-        return new CreateMessageResult
-        {
-            Model = result.Response.ModelId,
-            StopReason = "unknown",
-            Role = ModelContextProtocol.Protocol.Role.Assistant,
-            Content =
-            [
-                new EmbeddedResourceBlock
-                {
-                    Resource = new BlobResourceContents
-                    {
-                        Uri = "bytez://video/output",
-                        MimeType = firstVideo.MediaType,
-                        Blob = Convert.FromBase64String(firstVideo.Data)
-                    }
-                }
-            ]
-        };
-    }
+   
 }
 

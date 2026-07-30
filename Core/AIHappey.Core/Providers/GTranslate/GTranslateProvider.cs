@@ -12,7 +12,6 @@ using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.GTranslate;
 
@@ -158,8 +157,5 @@ public partial class GTranslateProvider : IModelProvider, IUnifiedModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 }

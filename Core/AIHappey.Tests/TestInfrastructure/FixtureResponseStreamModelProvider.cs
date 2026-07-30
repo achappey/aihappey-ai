@@ -7,7 +7,6 @@ using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Tests.TestInfrastructure;
 
@@ -50,10 +49,7 @@ internal sealed class FixtureResponseStreamModelProvider : IModelProvider
 
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => throw CreateUnsupportedException();
-
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-        => throw CreateUnsupportedException();
-
+  
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
         => throw CreateUnsupportedException();
 

@@ -61,14 +61,6 @@ public static class ModelContextExtensions
       }
    }
 
-
-   public static string? GetModel(this CreateMessageRequestParams messageRequestParams) =>
-      messageRequestParams.ModelPreferences?.Hints?.FirstOrDefault()?.Name?.SplitModelId().Model;
-
-   public static string? ToText(this SamplingMessage result) =>
-         string.Join("\n\n", result.Content.OfType<TextContentBlock>().Select(a => a.Text));
-
-
    public static TextContentBlock ToTextContentBlock(this string text)
       => new()
       {

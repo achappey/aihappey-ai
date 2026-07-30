@@ -7,7 +7,6 @@ using AIHappey.Vercel.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 using AIHappey.Core.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -47,10 +46,7 @@ public sealed partial class AzureProvider(
         return endpoint;
     }
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();

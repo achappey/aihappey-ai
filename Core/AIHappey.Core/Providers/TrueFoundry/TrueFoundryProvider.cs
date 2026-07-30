@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -8,7 +7,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Responses.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
@@ -60,10 +58,7 @@ public partial class TrueFoundryProvider : IModelProvider
     }
     public string GetIdentifier() => nameof(TrueFoundry).ToLowerInvariant();
 
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => TrueFoundryTranscriptionRequest(imageRequest, cancellationToken);

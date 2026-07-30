@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -12,7 +11,6 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
@@ -81,10 +79,7 @@ public partial class ParallelProvider : IModelProvider, IUnifiedModelProvider
 
     public string GetIdentifier() => nameof(Parallel).ToLowerInvariant();
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

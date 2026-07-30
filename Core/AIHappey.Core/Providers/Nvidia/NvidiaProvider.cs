@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using ModelContextProtocol.Protocol;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Mapping;
@@ -10,7 +9,6 @@ using AIHappey.Vercel.Extensions;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
-using AIHappey.Sampling.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
 
@@ -58,10 +56,7 @@ public partial class NvidiaProvider(IApiKeyResolver keyResolver, IHttpClientFact
     }
 
     // ChatCompletions endpoint is not used by the Vercel UI stream (`/api/chat`).
-    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
