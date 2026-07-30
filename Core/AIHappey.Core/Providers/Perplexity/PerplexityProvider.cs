@@ -10,6 +10,7 @@ using System.Text.Json;
 using AIHappey.Core.Contracts;
 using System.Globalization;
 using AIHappey.Unified.Models;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Sampling.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
@@ -50,30 +51,18 @@ public partial class PerplexityProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
+    public Task<CreateMessageResult> SamplingAsync(CreateMessageRequestParams chatRequest, CancellationToken cancellationToken = default)
     {
-        var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
-          cancellationToken);
-
-        return result.ToSamplingResult();
+        throw new NotSupportedException();
     }
-
-    //  public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    //         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
 
-        var (requestOptions, extraRootProperties) = PrepareChatCompletionRequest(options);
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+         cancellationToken);
 
-        var result = await this.GetChatCompletion(_client,
-                    requestOptions,
-                    relativeUrl: "v1/sonar",
-                    cancellationToken: cancellationToken,
-                    extraRootProperties: extraRootProperties);
-
-        return await EnrichChatCompletionImagesAsync(result, cancellationToken);
+        return result.ToChatCompletion();
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
@@ -100,88 +89,20 @@ public partial class PerplexityProvider : IModelProvider
      ChatCompletionOptions options,
      [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        var (requestOptions, extraRootProperties) = PrepareChatCompletionRequest(options);
-        var downloadedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        await foreach (var update in this.GetChatCompletions(_client,
-            requestOptions,
-            relativeUrl: "v1/sonar",
-            extraRootProperties: extraRootProperties,
-            cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            if (TryGetImagesFromAdditionalProperties(update.AdditionalProperties, out var imagesElement))
-            {
-                var newImages = new List<PerplexityDownloadedImage>();
-
-                foreach (var imageElement in imagesElement.EnumerateArray())
-                {
-                    var url = ExtractImageUrl(imageElement);
-                    if (string.IsNullOrWhiteSpace(url) || !downloadedUrls.Add(url))
-                        continue;
-
-                    var downloaded = await TryDownloadPerplexityImageAsync(imageElement, cancellationToken);
-                    if (downloaded is not null)
-                        newImages.Add(downloaded);
-                }
-
-                if (newImages.Count > 0)
-                {
-                    update.AdditionalProperties ??= new(StringComparer.OrdinalIgnoreCase);
-                    update.AdditionalProperties["downloaded_images"] =
-                        BuildDownloadedImagesElement(newImages);
-                }
-            }
-
-            yield return update;
+            yield return part.ToChatCompletionUpdate();
         }
-    }
-
-    private (ChatCompletionOptions Request, JsonElement? ExtraRootProperties) PrepareChatCompletionRequest(ChatCompletionOptions options)
-    {
-        var extra = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
-        var additionalProperties = new Dictionary<string, JsonElement>();
-
-        if (TryGetProviderMetadataElement(options.Metadata, out var providerMetadata))
-        {
-            foreach (var prop in providerMetadata.EnumerateObject())
-            {
-                if (!extra.ContainsKey(prop.Name))
-                    extra[prop.Name] = prop.Value.Clone();
-            }
-        }
-
-        additionalProperties = extra.Count > 0 ? extra : null;
-        options.Metadata = null;
-
-        JsonElement? extraRoot = additionalProperties is { Count: > 0 }
-            ? JsonSerializer.SerializeToElement(additionalProperties, JsonSerializerOptions.Web)
-            : null;
-
-        return (options, extraRoot);
-    }
-
-    private bool TryGetProviderMetadataElement(Dictionary<string, object?>? metadata, out JsonElement providerMetadata)
-    {
-        providerMetadata = default;
-
-        if (metadata is null || !metadata.TryGetValue(GetIdentifier(), out var value) || value is null)
-            return false;
-
-        providerMetadata = value switch
-        {
-            JsonElement je => je,
-            _ => JsonSerializer.SerializeToElement(value, JsonSerializerOptions.Web)
-        };
-
-        return providerMetadata.ValueKind == JsonValueKind.Object;
     }
 
     private static bool UsesResponsesPreset(string? model)
         => string.Equals(model, "fast-search", StringComparison.OrdinalIgnoreCase)
             || string.Equals(model, "pro-search", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "advanced-deep-research", StringComparison.OrdinalIgnoreCase)            
+            || string.Equals(model, "advanced-deep-research", StringComparison.OrdinalIgnoreCase)
             || string.Equals(model, "deep-research", StringComparison.OrdinalIgnoreCase);
 
 
@@ -283,55 +204,13 @@ public partial class PerplexityProvider : IModelProvider
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        if (request.Model?.StartsWith($"sonar") != true)
-        {
-            return this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
-        }
-
-        return this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        if (request.Model?.StartsWith($"sonar") != true)
-        {
-            return this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
-        }
-
-        return this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
-    }
-
-    private async Task<ChatCompletion> EnrichChatCompletionImagesAsync(
-        ChatCompletion response,
-        CancellationToken cancellationToken)
-    {
-        if (!TryGetImagesFromAdditionalProperties(response.AdditionalProperties, out var imagesElement))
-            return response;
-
-        var downloaded = await DownloadPerplexityImagesAsync(imagesElement, cancellationToken);
-        if (downloaded.Count == 0)
-            return response;
-
-        response.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
-        response.AdditionalProperties["downloaded_images"] = BuildDownloadedImagesElement(downloaded);
-        return response;
-    }
-
-    private async Task<ChatCompletionUpdate> EnrichChatCompletionUpdateImagesAsync(
-        ChatCompletionUpdate update,
-        CancellationToken cancellationToken)
-    {
-        if (!TryGetImagesFromAdditionalProperties(update.AdditionalProperties, out var imagesElement))
-            return update;
-
-        var downloaded = await DownloadPerplexityImagesAsync(imagesElement, cancellationToken);
-        if (downloaded.Count == 0)
-            return update;
-
-        update.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
-        update.AdditionalProperties["downloaded_images"] = BuildDownloadedImagesElement(downloaded);
-        return update;
+        return this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
     private async Task<List<PerplexityDownloadedImage>> DownloadPerplexityImagesAsync(
@@ -525,7 +404,7 @@ public partial class PerplexityProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {

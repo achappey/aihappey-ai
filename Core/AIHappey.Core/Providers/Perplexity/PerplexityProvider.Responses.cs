@@ -11,14 +11,6 @@ public partial class PerplexityProvider
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (options.Model?.StartsWith($"sonar") == true)
-        {
-            var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-                  cancellationToken);
-
-            return result.ToResponseResult();
-        }
-
         ApplyAuthHeader();
 
         var request = PrepareResponsesRequest(options);
@@ -42,21 +34,6 @@ public partial class PerplexityProvider
         ResponseRequest options,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-
-        if (options.Model?.StartsWith($"sonar") == true)
-        {
-            var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
-
-            await foreach (var part in this.StreamUnifiedAsync(
-                unifiedRequest,
-                cancellationToken))
-            {
-                yield return part.ToResponseStreamPart();
-            }
-
-            yield break;
-        }
-
         ApplyAuthHeader();
 
         var request = PrepareResponsesRequest(options);

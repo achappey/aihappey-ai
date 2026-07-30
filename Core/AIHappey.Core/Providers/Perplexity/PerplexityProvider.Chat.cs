@@ -18,8 +18,6 @@ public partial class PerplexityProvider
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
         var emittedImageKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Dictionary<string, object?>? lastMetadata = null;
-
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
             cancellationToken))

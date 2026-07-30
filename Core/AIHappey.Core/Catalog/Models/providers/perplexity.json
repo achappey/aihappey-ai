@@ -2,46 +2,6 @@
   "object": "list",
   "data": [
     {
-      "id": "perplexity/sonar",
-      "object": "model",
-      "owned_by": "Perplexity",
-      "name": "Sonar",
-      "type": "language",
-      "description": "Fast Perplexity model optimized for real-time web search and grounded responses.",
-      "context_window": 200000,
-      "max_tokens": 4096
-    },
-    {
-      "id": "perplexity/sonar-pro",
-      "object": "model",
-      "owned_by": "Perplexity",
-      "name": "Sonar Pro",
-      "type": "language",
-      "description": "Higher quality Sonar model with improved reasoning and deeper web retrieval.",
-      "context_window": 200000,
-      "max_tokens": 4096
-    },
-    {
-      "id": "perplexity/sonar-reasoning-pro",
-      "object": "model",
-      "owned_by": "Perplexity",
-      "name": "Sonar Reasoning Pro",
-      "type": "language",
-      "description": "Advanced reasoning model combining Sonar search with multi-step analytical capabilities.",
-      "context_window": 200000,
-      "max_tokens": 4096
-    },
-    {
-      "id": "perplexity/sonar-deep-research",
-      "object": "model",
-      "owned_by": "Perplexity",
-      "name": "Sonar Deep Research",
-      "type": "language",
-      "description": "Research-oriented Sonar model designed for long, multi-source investigative queries.",
-      "context_window": 200000,
-      "max_tokens": 4096
-    },
-    {
       "id": "perplexity/fast-search",
       "object": "model",
       "description": "Optimized for fast, straightforward queries without reasoning overhead.",
