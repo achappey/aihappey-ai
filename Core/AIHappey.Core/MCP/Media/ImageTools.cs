@@ -18,6 +18,8 @@ public class ImageTools
         Name = "ai_images_generate",
         Idempotent = false,
         ReadOnly = false,
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(ImageResponse),
         OpenWorld = false)]
     public static async Task<CallToolResult?> AI_ImageGenerate(
         [Description("AI model identifier")] string model,
@@ -73,13 +75,7 @@ public class ImageTools
             return new CallToolResult
             {
                 Content = [.. blocks],
-                StructuredContent = JsonSerializer.SerializeToElement(new
-                {
-                    modelId = result.Response?.ModelId,
-                    timestamp = result.Response?.Timestamp,
-                    warnings = result.Warnings,
-                    providerMetadata = result.ProviderMetadata
-                }, JsonSerializerOptions.Web)
+                StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web)
             };
         });
 }

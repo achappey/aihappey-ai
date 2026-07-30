@@ -74,14 +74,7 @@ public class SpeechTools
                         MimeType = result.Audio.MimeType,
                         Data = Convert.FromBase64String(result.Audio.Base64)
                     }
-                ],
-                StructuredContent = JsonSerializer.SerializeToElement(new
-                {
-                    modelId = result.Response?.ModelId,
-                    timestamp = result.Response?.Timestamp,
-                    warnings = result.Warnings,
-                    providerMetadata = result.ProviderMetadata
-                }, JsonSerializerOptions.Web)
+                ]
             };
         });
 

@@ -17,8 +17,10 @@ public class TranscriptionTools
         Title = "Create transcription",
         Name = "ai_audio_transcriptions_create",
         Idempotent = false,
-        ReadOnly = false,
-        OpenWorld = false)]
+        ReadOnly = true,
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(TranscriptionResponse),
+        OpenWorld = true)]
     public static async Task<CallToolResult?> AI_AudioTranscriptionsCreate(
         [Description("AI model identifier")] string model,
         [Description("Publicly accessible http(s) URL to the audio file. Only public URLs work.")] string audioUrl,
@@ -55,7 +57,7 @@ public class TranscriptionTools
             var result = await provider.TranscriptionRequest(request, ct);
             if (string.IsNullOrWhiteSpace(result.Text))
                 throw new InvalidOperationException("Provider returned no transcription text.");
-        
+
             return new CallToolResult
             {
                 Content =
