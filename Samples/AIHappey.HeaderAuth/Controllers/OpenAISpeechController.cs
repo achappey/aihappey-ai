@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
-using AIHappey.Core.Extensions;
 using System.Text.Json;
 
 namespace AIHappey.HeaderAuth.Controllers;
