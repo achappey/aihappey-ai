@@ -21,6 +21,12 @@ namespace AIHappey.Core.Providers.Google;
     "Use Google Maps grounding for places, routing, distances, and location context.",
     ["https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/1920px-Google_Maps_icon_%282020%29.svg.png"],
     nameof(GoogleMaps_Ask))]
+[McpServer(
+    "AI-Google-YouTube",
+    "AI Google YouTube",
+    "Ask Gemini to analyze, summarize, or extract information from a YouTube video.",
+    ["https://www.youtube.com/s/desktop/014dbbed/img/favicon_144x144.png"],
+    nameof(GoogleYouTube_Ask))]
 public partial class GoogleAIProvider
     : IModelProvider, IProviderMcpServers
 {
