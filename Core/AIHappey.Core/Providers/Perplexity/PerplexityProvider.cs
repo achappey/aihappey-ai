@@ -100,10 +100,12 @@ public partial class PerplexityProvider : IModelProvider
     }
 
     private static bool UsesResponsesPreset(string? model)
-        => string.Equals(model, "fast-search", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "pro-search", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "advanced-deep-research", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "deep-research", StringComparison.OrdinalIgnoreCase);
+        => string.Equals(model, "fast", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model, "low", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model, "medium", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model, "wide-research", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model, "high", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model, "xhigh", StringComparison.OrdinalIgnoreCase);
 
 
     private static decimal? TryGetPerplexityTotalCost(JsonElement usage)
