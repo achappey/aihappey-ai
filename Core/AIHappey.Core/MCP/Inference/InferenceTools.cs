@@ -1,10 +1,13 @@
 using System.ComponentModel;
+using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.MCP.Telemetry;
 using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
 using Microsoft.Extensions.DependencyInjection;
+using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -13,11 +16,13 @@ namespace AIHappey.Core.MCP.Inference;
 [McpServerToolType]
 public class InferenceTools
 {
-    [Description("Execute a non-streaming AI inference request using the unified responses endpoint.")]
+    [Description("Execute an AI inference request using the unified responses endpoint. Each standard MCP progress notification contains the accumulated text for one response item while it streams.")]
     [McpServerTool(
         Title = "AI inference",
         Name = "ai_inference_execute",
         Destructive = false,
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(ResponseResult),
         Idempotent = false,
         ReadOnly = true,
         OpenWorld = false)]
@@ -51,10 +56,30 @@ public class InferenceTools
                 Instructions = instructions,
                 MaxOutputTokens = maxOutputTokens,
                 Store = false,
-                Stream = false
+                Stream = true
             };
 
-            var result = await provider.ResponsesAsync(request, ct);
+            ResponseResult? result = null;
+            var progress = 1;
+            var itemBuffers = new Dictionary<string, StringBuilder>();
+
+            await foreach (var part in provider.ResponsesStreamingAsync(request, ct))
+            {
+                var completedItemMessage = GetCompletedItemMessage(part, itemBuffers);
+                if (completedItemMessage is not null)
+                {
+                    await SendProgressNotificationAsync(requestContext, progress++, completedItemMessage);
+                }
+
+                if (part is ResponseCompleted completed)
+                {
+                    result = completed.Response;
+                }
+            }
+
+            if (result is null)
+                throw new InvalidOperationException("The inference stream completed without a 'response.completed' event.");
+
             await services.TrackMcpResponsesTelemetryAsync(result, provider, request.Temperature ?? 1, startedAt, ct);
 
             return new CallToolResult
@@ -62,5 +87,117 @@ public class InferenceTools
                 StructuredContent = JsonSerializer.SerializeToElement(result, ResponseJson.Default)
             };
         });
+
+    private static async Task SendProgressNotificationAsync(
+        RequestContext<CallToolRequestParams> requestContext,
+        int progress,
+        string message)
+    {
+        var progressToken = requestContext.Params?.ProgressToken;
+        if (progressToken is null)
+            return;
+
+        await requestContext.Server.SendNotificationAsync(
+            "notifications/progress",
+            new ProgressNotificationParams
+            {
+                ProgressToken = progressToken.Value,
+                Progress = new ProgressNotificationValue
+                {
+                    Progress = progress,
+                    Message = message
+                }
+            },
+            cancellationToken: CancellationToken.None);
+    }
+
+    private static string? GetCompletedItemMessage(
+        ResponseStreamPart part,
+        Dictionary<string, StringBuilder> itemBuffers)
+    {
+        switch (part)
+        {
+            case ResponseReasoningTextDelta reasoningDelta:
+                return AppendDelta(itemBuffers, GetItemKey("reasoning", reasoningDelta), reasoningDelta.Delta);
+
+            case ResponseReasoningSummaryTextDelta summaryDelta:
+                return AppendDelta(itemBuffers, GetItemKey("reasoning-summary", summaryDelta, summaryDelta.SummaryIndex), summaryDelta.Delta);
+
+            case ResponseOutputTextDelta outputTextDelta:
+                return AppendDelta(itemBuffers, GetItemKey(
+                    "text",
+                    outputTextDelta.ItemId,
+                    outputTextDelta.Outputindex,
+                    outputTextDelta.ContentIndex),
+                    outputTextDelta.Delta);
+
+            case ResponseRefusalDelta refusalDelta:
+                return AppendDelta(itemBuffers, GetItemKey("refusal", refusalDelta), refusalDelta.Delta);
+
+            case ResponseReasoningTextDone reasoningDone:
+                return GetCompletedText(itemBuffers, GetItemKey("reasoning", reasoningDone), reasoningDone.Text);
+
+            case ResponseReasoningSummaryTextDone summaryDone:
+                return GetCompletedText(itemBuffers, GetItemKey("reasoning-summary", summaryDone, summaryDone.SummaryIndex), summaryDone.Text);
+
+            case ResponseOutputTextDone outputTextDone:
+                return GetCompletedText(itemBuffers, GetItemKey(
+                    "text",
+                    outputTextDone.ItemId,
+                    outputTextDone.Outputindex,
+                    outputTextDone.ContentIndex),
+                    outputTextDone.Text);
+
+            case ResponseRefusalDone refusalDone:
+                return GetCompletedText(itemBuffers, GetItemKey("refusal", refusalDone), refusalDone.Refusal);
+
+            default:
+                return null;
+        }
+    }
+
+    private static string? AppendDelta(Dictionary<string, StringBuilder> itemBuffers, string key, string? delta)
+    {
+        if (string.IsNullOrEmpty(delta))
+            return null;
+
+        if (!itemBuffers.TryGetValue(key, out var buffer))
+        {
+            buffer = new StringBuilder();
+            itemBuffers[key] = buffer;
+        }
+
+        buffer.Append(delta);
+        return buffer.ToString();
+    }
+
+    private static string? GetCompletedText(
+        Dictionary<string, StringBuilder> itemBuffers,
+        string key,
+        string? completedText)
+    {
+        itemBuffers.Remove(key, out var buffer);
+
+        if (buffer is { Length: > 0 })
+        {
+            var accumulatedText = buffer.ToString();
+            return !string.Equals(completedText, accumulatedText, StringComparison.Ordinal)
+                ? completedText
+                : null;
+        }
+
+        return completedText;
+    }
+
+    private static string GetItemKey(string kind, ResponseStreamItemContentEvent item, int? summaryIndex = null)
+        => GetItemKey(kind, item.ItemId, item.OutputIndex, item.ContentIndex, summaryIndex);
+
+    private static string GetItemKey(
+        string kind,
+        string itemId,
+        int outputIndex,
+        int contentIndex,
+        int? summaryIndex = null)
+        => $"{kind}:{itemId}:{outputIndex}:{contentIndex}:{summaryIndex}";
 }
 
