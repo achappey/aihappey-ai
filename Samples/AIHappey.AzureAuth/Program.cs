@@ -141,7 +141,8 @@ var allMcpServers = CoreMcpDefinitions.GetDefinitions()
         g.First().Description,
         g.First().Title,
         [.. g.SelectMany(d => d.PromptTypes ?? [])],
-        [.. g.SelectMany(d => d.ToolTypes ?? [])]
+        [.. g.SelectMany(d => d.ToolTypes ?? [])],
+        [.. g.SelectMany(d => d.ToolMethodNames ?? [])]
     ))
     .ToList();
 

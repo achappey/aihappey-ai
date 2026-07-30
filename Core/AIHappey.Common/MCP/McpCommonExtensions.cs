@@ -70,7 +70,10 @@ public static class McpCommonExtensions
                         // Build Tools
                         if (serverDef.ToolTypes != null)
                         {
-                            var tools = BuildTools(ctx.RequestServices, serverDef.ToolTypes);
+                            var tools = BuildTools(
+                                ctx.RequestServices,
+                                serverDef.ToolTypes,
+                                serverDef.ToolMethodNames);
 
                             opts.Handlers.ListToolsHandler = async (_, _ct) =>
                             {
@@ -205,15 +208,23 @@ public static class McpCommonExtensions
         return list;
     }
 
-    private static List<McpServerTool> BuildTools(IServiceProvider sp, Type[] types)
+    private static List<McpServerTool> BuildTools(
+        IServiceProvider sp,
+        Type[] types,
+        IReadOnlyCollection<string>? methodNames)
     {
         var list = new List<McpServerTool>();
+        var selectedMethods = methodNames is { Count: > 0 }
+            ? methodNames.ToHashSet(StringComparer.Ordinal)
+            : null;
+
         foreach (var t in types)
         {
             var methods = t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
             foreach (var mi in methods)
             {
                 if (mi.GetCustomAttribute<McpServerToolAttribute>() is null) continue;
+                if (selectedMethods is not null && !selectedMethods.Contains(mi.Name)) continue;
 
                 McpServerTool tool = mi.IsStatic
                     ? McpServerTool.Create(mi, target: null, new McpServerToolCreateOptions { Services = sp })
@@ -224,6 +235,20 @@ public static class McpCommonExtensions
                 list.Add(tool);
             }
         }
+
+        if (selectedMethods is not null)
+        {
+            var discoveredNames = types
+                .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
+                .Where(method => method.GetCustomAttribute<McpServerToolAttribute>() is not null)
+                .Select(method => method.Name)
+                .ToHashSet(StringComparer.Ordinal);
+            var missing = selectedMethods.Where(name => !discoveredNames.Contains(name)).ToArray();
+
+            if (missing.Length > 0)
+                throw new InvalidOperationException($"MCP tool methods not found: {string.Join(", ", missing)}.");
+        }
+
         return list;
     }
 }

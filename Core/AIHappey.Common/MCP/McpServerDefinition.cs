@@ -5,4 +5,5 @@ public record McpServerDefinition(
     string? Description,
     string? Title,
     Type[]? PromptTypes = null,
-    Type[]? ToolTypes = null);
+    Type[]? ToolTypes = null,
+    string[]? ToolMethodNames = null);

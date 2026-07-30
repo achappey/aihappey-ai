@@ -75,7 +75,8 @@ if (!string.IsNullOrWhiteSpace(headerModelListingStorage?.ConnectionString))
         builder.Services.AddHostedService<StorageBackedModelRefreshWorker>();
 }
 
-builder.Services.AddMcpServers(CoreMcpDefinitions.GetDefinitions());
+var allMcpServers = CoreMcpDefinitions.GetDefinitions().ToList();
+builder.Services.AddMcpServers(allMcpServers);
 
 builder.Services.AddControllers().AddJsonOptions(o =>
   {
@@ -85,8 +86,8 @@ builder.Services.AddControllers().AddJsonOptions(o =>
 var app = builder.Build();
 
 app.UseCors();
-app.MapMcpEndpoints(CoreMcpDefinitions.GetDefinitions(), false);
-app.MapMcpRegistry(CoreMcpDefinitions.GetDefinitions());
+app.MapMcpEndpoints(allMcpServers, false);
+app.MapMcpRegistry(allMcpServers);
 app.MapControllers();
 
 app.Run();
