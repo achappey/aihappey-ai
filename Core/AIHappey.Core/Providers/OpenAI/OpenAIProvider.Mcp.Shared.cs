@@ -12,7 +12,7 @@ namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
-    private const string DefaultResearchModel = "gpt-5.4";
+    private const string DefaultResearchModel = "gpt-5.6-luna";
 
     private async Task<string> RunResearchResponseAsync(
         IServiceProvider services,
