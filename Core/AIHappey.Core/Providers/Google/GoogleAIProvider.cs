@@ -11,11 +11,17 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
+using AIHappey.Common.MCP;
 
 namespace AIHappey.Core.Providers.Google;
 
+[McpServer(
+    "AI-Google-Maps",
+    "AI Google Maps",
+    "Use Google Maps grounding for places, routing, distances, and location context.",
+    nameof(GoogleMaps_Ask))]
 public partial class GoogleAIProvider
-    : IModelProvider
+    : IModelProvider, IProviderMcpServers
 {
     private readonly AsyncCacheHelper _memoryCache;
     private readonly ILogger<GoogleAIProvider> _logger;
