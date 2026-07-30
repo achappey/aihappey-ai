@@ -7,10 +7,21 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using AIHappey.Common.MCP;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
-public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedModelProvider
+[McpServer(
+    "AI-OpenAI-WebResearch",
+    "AI OpenAI Web Research",
+    "Plan, gather sourced web evidence, and synthesize a research report with OpenAI.",
+    nameof(OpenAIWebResearch_Run))]
+[McpServer(
+    "AI-OpenAI-FinancialResearch",
+    "AI OpenAI Financial Research",
+    "Perform sourced financial research with fundamentals, risks, report writing, and verification.",
+    nameof(OpenAIFinancialResearch_Run))]
+public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedModelProvider, IProviderMcpServers
 {
     private readonly HttpClient _client;
     private readonly AsyncCacheHelper _memoryCache;
