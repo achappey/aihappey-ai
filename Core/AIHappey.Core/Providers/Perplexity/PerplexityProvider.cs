@@ -173,7 +173,7 @@ public partial class PerplexityProvider : IModelProvider
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
@@ -213,219 +213,47 @@ public partial class PerplexityProvider : IModelProvider
         return this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
-    private async Task<List<PerplexityDownloadedImage>> DownloadPerplexityImagesAsync(
-        JsonElement imagesElement,
-        CancellationToken cancellationToken)
-    {
-        var list = new List<PerplexityDownloadedImage>();
-
-        if (imagesElement.ValueKind != JsonValueKind.Array)
-            return list;
-
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var imageElement in imagesElement.EnumerateArray())
-        {
-            var sourceUrl = ExtractImageUrl(imageElement);
-            if (string.IsNullOrWhiteSpace(sourceUrl) || !seen.Add(sourceUrl))
-                continue;
-
-            var downloaded = await TryDownloadPerplexityImageAsync(imageElement, cancellationToken);
-            if (downloaded is not null)
-                list.Add(downloaded);
-        }
-
-        return list;
-    }
-
-    private async Task<PerplexityDownloadedImage?> TryDownloadPerplexityImageAsync(
-        JsonElement imageElement,
-        CancellationToken cancellationToken)
-    {
-        var imageUrl = ExtractImageUrl(imageElement);
-        if (string.IsNullOrWhiteSpace(imageUrl))
-            return null;
-
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-
-            using var request = new HttpRequestMessage(HttpMethod.Get, imageUrl);
-            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-            if (bytes.Length == 0)
-                return null;
-
-            var mediaType = response.Content.Headers.ContentType?.MediaType
-                            ?? GuessImageMediaType(imageUrl)
-                            ?? "image/png";
-
-            var base64 = Convert.ToBase64String(bytes);
-            var dataUrl = $"data:{mediaType};base64,{base64}";
-
-            var title = imageElement.ValueKind == JsonValueKind.Object
-                ? TryGetString(imageElement, "title")
-                : null;
-
-            var originUrl = imageElement.ValueKind == JsonValueKind.Object
-                ? TryGetString(imageElement, "origin_url")
-                : null;
-
-            var filename = BuildImageFilename(title, mediaType);
-
-            return new PerplexityDownloadedImage
-            {
-                DataUrl = dataUrl,
-                MediaType = mediaType,
-                Filename = filename,
-                OriginUrl = originUrl,
-                Title = title,
-                Width = imageElement.ValueKind == JsonValueKind.Object ? TryGetInt32(imageElement, "width") : null,
-                Height = imageElement.ValueKind == JsonValueKind.Object ? TryGetInt32(imageElement, "height") : null
-            };
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static JsonElement BuildDownloadedImagesElement(List<PerplexityDownloadedImage> images)
-    {
-        var payload = images.Select(image => new Dictionary<string, object?>
-        {
-            ["data_url"] = image.DataUrl,
-            ["media_type"] = image.MediaType,
-            ["filename"] = image.Filename,
-            ["origin_url"] = image.OriginUrl,
-            ["title"] = image.Title,
-            ["width"] = image.Width,
-            ["height"] = image.Height
-        }).ToList();
-
-        return JsonSerializer.SerializeToElement(payload, JsonSerializerOptions.Web);
-    }
-
-    private static bool TryGetImagesFromAdditionalProperties(
-        Dictionary<string, JsonElement>? additionalProperties,
-        out JsonElement imagesElement)
-    {
-        if (additionalProperties is not null
-            && additionalProperties.TryGetValue("images", out imagesElement)
-            && imagesElement.ValueKind == JsonValueKind.Array)
-        {
-            return true;
-        }
-
-        imagesElement = default;
-        return false;
-    }
-
-    private static string? ExtractImageUrl(JsonElement imageElement)
-    {
-        if (imageElement.ValueKind == JsonValueKind.Object)
-        {
-            return TryGetString(imageElement, "image_url")
-                ?? TryGetString(imageElement, "url");
-        }
-
-        if (imageElement.ValueKind == JsonValueKind.String)
-            return imageElement.GetString();
-
-        return null;
-    }
-
-    private static string BuildImageFilename(string? title, string mediaType)
-    {
-        var ext = mediaType.ToLowerInvariant() switch
-        {
-            "image/png" => "png",
-            "image/jpeg" => "jpg",
-            "image/jpg" => "jpg",
-            "image/webp" => "webp",
-            "image/gif" => "gif",
-            "image/svg+xml" => "svg",
-            _ => "bin"
-        };
-
-        var safeTitle = string.IsNullOrWhiteSpace(title)
-            ? "perplexity-image"
-            : string.Concat(title.Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')).Trim('-');
-
-        if (string.IsNullOrWhiteSpace(safeTitle))
-            safeTitle = "perplexity-image";
-
-        return $"{safeTitle}.{ext}";
-    }
-
-    private static string? GuessImageMediaType(string url)
-    {
-        var lower = url.ToLowerInvariant();
-
-        if (lower.Contains(".png")) return "image/png";
-        if (lower.Contains(".jpg") || lower.Contains(".jpeg")) return "image/jpeg";
-        if (lower.Contains(".webp")) return "image/webp";
-        if (lower.Contains(".gif")) return "image/gif";
-        if (lower.Contains(".svg")) return "image/svg+xml";
-
-        return null;
-    }
-
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
 
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    private sealed class PerplexityDownloadedImage
-    {
-        public required string DataUrl { get; init; }
-        public required string MediaType { get; init; }
-        public required string Filename { get; init; }
-        public string? OriginUrl { get; init; }
-        public string? Title { get; init; }
-        public int? Width { get; init; }
-        public int? Height { get; init; }
-
-    }
 }
 
