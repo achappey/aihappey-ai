@@ -81,7 +81,7 @@ public partial class VivgridProvider
         {
             Ranking = ranking,
             Warnings = warnings,
-            ProviderMetadata = BuildVivgridProviderMetadata(root),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,

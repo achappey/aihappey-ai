@@ -90,14 +90,7 @@ public partial class ZeroEntropyProvider
         return new RerankingResponse
         {
             Ranking = results,
-            ProviderMetadata = providerKey.CreatePrimitiveProviderMetadata(new
-            {
-                total_bytes = TryGetInt64(root, "total_bytes"),
-                total_tokens = TryGetInt64(root, "total_tokens"),
-                actual_latency_mode = TryGetString(root, "actual_latency_mode"),
-                e2e_latency = TryGetDecimal(root, "e2e_latency"),
-                inference_latency = TryGetDecimal(root, "inference_latency")
-            }),
+            ProviderMetadata = providerKey.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
