@@ -16,6 +16,38 @@
       "name": "Nova",
       "type": "language",
       "description": "Everything Darwin does, plus automatic skill use: image, video & 3D generation, biometrics, emotion AI, vision, speech, deep search, and any skill your organization registers."
+    },
+    {
+      "id": "mimicxai/Nova",
+      "object": "model",
+      "owned_by": "MIMICXAI",
+      "name": "Nova",
+      "type": "speech",
+      "description": "Everything Darwin does, plus automatic skill use: image, video & 3D generation, biometrics, emotion AI, vision, speech, deep search, and any skill your organization registers."
+    },
+    {
+      "id": "mimicxai/Nova",
+      "object": "model",
+      "owned_by": "MIMICXAI",
+      "name": "Nova",
+      "type": "image",
+      "description": "Everything Darwin does, plus automatic skill use: image, video & 3D generation, biometrics, emotion AI, vision, speech, deep search, and any skill your organization registers."
+    },
+    {
+      "id": "mimicxai/Nova",
+      "object": "model",
+      "owned_by": "MIMICXAI",
+      "name": "Nova",
+      "type": "video",
+      "description": "Everything Darwin does, plus automatic skill use: image, video & 3D generation, biometrics, emotion AI, vision, speech, deep search, and any skill your organization registers."
+    },
+    {
+      "id": "mimicxai/Nova",
+      "object": "model",
+      "owned_by": "MIMICXAI",
+      "name": "Nova",
+      "type": "transcription",
+      "description": "Everything Darwin does, plus automatic skill use: image, video & 3D generation, biometrics, emotion AI, vision, speech, deep search, and any skill your organization registers."
     }
   ]
 }
