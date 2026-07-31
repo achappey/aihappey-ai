@@ -19,6 +19,7 @@ using AIHappey.Core.Providers.Modal;
 using AIHappey.Core.Storage;
 using Microsoft.Extensions.Caching.Memory;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using AIHappey.Core.Providers.Foundry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,9 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["AzureAd:ClientSecret"])
 {
     builder.Configuration["AzureAd:ClientSecret"] = legacyAzureAdSecret;
 }
+
+builder.Services.Configure<FoundryProviderOptions>(
+    builder.Configuration.GetSection("AIServices:Foundry"));
 
 builder.Services.Configure<AmazonProviderOptions>(
     builder.Configuration.GetSection("AIServices:AmazonBedrock"));
@@ -163,7 +167,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapMcpEndpoints(allMcpServers, true);
-app.MapMcpRegistry(allMcpServers, 
+app.MapMcpRegistry(allMcpServers,
     [new { src = builder.Configuration.GetValue<string>("DarkIcon"), theme = "dark" },
     new { src = builder.Configuration.GetValue<string>("LightIcon"), theme = "light" }]);
 

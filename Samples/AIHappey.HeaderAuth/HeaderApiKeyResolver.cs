@@ -580,7 +580,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["episcloud"] = "X-EpisCloud-Key",
             ["cognitivessai"] = "X-CognitivessAI-Key",
             ["summa"] = "X-SUMMA-Key",
-            ["meshapi"] = "X-MeshAPI-Key"
+            ["meshapi"] = "X-MeshAPI-Key",
+            ["foundry"] = "X-Foundry-Key"
 
         };
 

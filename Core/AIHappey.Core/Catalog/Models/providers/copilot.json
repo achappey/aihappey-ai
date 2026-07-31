@@ -2,7 +2,7 @@
   "object": "list",
   "data": [
     {
-      "id": "microsoft/copilot",
+      "id": "copilot/copilot",
       "object": "model",
       "owned_by": "Microsoft",
       "name": "Microsoft 365 Copilot",

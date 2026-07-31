@@ -12,9 +12,9 @@ using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.Microsoft;
+namespace AIHappey.Core.Providers.Copilot;
 
-public partial class MicrosoftProvider : IModelProvider
+public partial class CopilotProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -23,7 +23,7 @@ public partial class MicrosoftProvider : IModelProvider
     private readonly HttpClient _client;
 
 
-    public MicrosoftProvider(IApiKeyResolver keyResolver,
+    public CopilotProvider(IApiKeyResolver keyResolver,
         IMicrosoftGraphTokenResolver graphTokenResolver,
         IHttpClientFactory httpClientFactory)
     {
@@ -76,9 +76,9 @@ public partial class MicrosoftProvider : IModelProvider
         yield break;
     }
 
-    public string GetIdentifier() => nameof(Microsoft).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Copilot).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

@@ -18,7 +18,6 @@ using AIHappey.Core.Providers.Inworld;
 using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
-using AIHappey.Core.Providers.Microsoft;
 using AIHappey.Core.Providers.Novita;
 using AIHappey.Core.Providers.Nvidia;
 using AIHappey.Core.Providers.Nscale;
@@ -579,6 +578,8 @@ using AIHappey.Core.Providers.CognitivessAI;
 using AIHappey.Core.Providers.SUMMA;
 using AIHappey.Core.Providers.MeshAPI;
 using AIHappey.Core.Providers.Lara;
+using AIHappey.Core.Providers.Foundry;
+using AIHappey.Core.Providers.Copilot;
 
 namespace AIHappey.Core.AI;
 
@@ -615,7 +616,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AlibabaProvider>();
         services.AddSingleton<IModelProvider, CohereProvider>();
         services.AddSingleton<IModelProvider, MistralProvider>();
-        services.AddSingleton<IModelProvider, MicrosoftProvider>();
+        services.AddSingleton<IModelProvider, CopilotProvider>();
         services.AddSingleton<IModelProvider, AnthropicProvider>();
         services.AddSingleton<IModelProvider, GoogleAIProvider>();
         services.AddSingleton<IModelProvider, JinaProvider>();
@@ -853,7 +854,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SkillBossProvider>();
         services.AddSingleton<IModelProvider, NexusifyProvider>();
         services.AddSingleton<IModelProvider, LitAIProvider>();
-        services.AddSingleton<IModelProvider, PixCodeProvider>();      
+        services.AddSingleton<IModelProvider, PixCodeProvider>();
         services.AddSingleton<IModelProvider, FullAIProvider>();
         services.AddSingleton<IModelProvider, APIPodProvider>();
         services.AddSingleton<IModelProvider, TokenFluxProvider>();
@@ -1019,7 +1020,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ShengsuanyunProvider>();
         services.AddSingleton<IModelProvider, OpenSourceAIHubProvider>();
         services.AddSingleton<IModelProvider, CitadelisProvider>();
-        services.AddSingleton<IModelProvider, FinoraProvider>();        
+        services.AddSingleton<IModelProvider, FinoraProvider>();
         services.AddSingleton<IModelProvider, GeekAIProvider>();
         services.AddSingleton<IModelProvider, AIMagicxProvider>();
         services.AddSingleton<IModelProvider, OctagonProvider>();
@@ -1081,7 +1082,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RuncrateProvider>();
         services.AddSingleton<IModelProvider, MuleRouterProvider>();
         services.AddSingleton<IModelProvider, MixlayerProvider>();
-        services.AddSingleton<IModelProvider, AllTokenProvider>();        
+        services.AddSingleton<IModelProvider, AllTokenProvider>();
         services.AddSingleton<IModelProvider, HelyxAIProvider>();
         services.AddSingleton<IModelProvider, AnyRouterProvider>();
         services.AddSingleton<IModelProvider, FredProvider>();
@@ -1184,6 +1185,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SUMMAProvider>();
         services.AddSingleton<IModelProvider, MeshAPIProvider>();
         services.AddSingleton<IModelProvider, LaraProvider>();
+        services.AddSingleton<IModelProvider, FoundryProvider>();
     }
 }
 

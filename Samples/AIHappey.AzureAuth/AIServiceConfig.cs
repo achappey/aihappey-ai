@@ -11,7 +11,7 @@ public class AIServiceConfig
     public ProviderConfig? Groq { get; set; }
     public ProviderConfig? SpaceXAI { get; set; }
     public ProviderConfig? Together { get; set; }
-    public ProviderConfig? Microsoft { get; set; }
+    public ProviderConfig? Copilot { get; set; }
     public ProviderConfig? Cohere { get; set; }
     public ProviderConfig? Jina { get; set; }
     public ProviderConfig? Runway { get; set; }
@@ -579,6 +579,7 @@ public class AIServiceConfig
     public ProviderConfig? CognitivessAI { get; set; }
     public ProviderConfig? SUMMA { get; set; }
     public ProviderConfig? MeshAPI { get; set; }
+    public ProviderConfig? Foundry { get; set; }
     
 }
 

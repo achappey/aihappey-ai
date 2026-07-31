@@ -6,11 +6,11 @@ using AIHappey.Common.Extensions;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
-namespace AIHappey.Core.Providers.Microsoft;
+namespace AIHappey.Core.Providers.Copilot;
 
-public partial class MicrosoftProvider
+public partial class CopilotProvider
 {
-    private const string CopilotModelId = "microsoft/copilot";
+    private const string CopilotModelId = "copilot/copilot";
     private const string CopilotConversationToolName = "create_conversation";
     private const string CopilotConversationEndpoint = "beta/copilot/conversations";
 

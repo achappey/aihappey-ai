@@ -3,12 +3,12 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
 
-namespace AIHappey.Core.Providers.Microsoft;
+namespace AIHappey.Core.Providers.Foundry;
 
-public partial class MicrosoftProvider
+public partial class FoundryProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
-       [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
@@ -21,7 +21,5 @@ public partial class MicrosoftProvider
                 yield return uiPart;
             }
         }
-
-        yield break;
     }
 }
