@@ -73,14 +73,14 @@ public partial class IONOSProvider
         return new RerankingResponse
         {
             Ranking = ranking,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 Id = root.TryGetId(),
                 Headers = response.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = raw
+                Body = root.Clone()
             }
         };
     }
