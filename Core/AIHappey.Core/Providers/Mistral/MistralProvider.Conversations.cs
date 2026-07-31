@@ -45,9 +45,10 @@ public partial class MistralProvider
         {
             AgentId = target.AgentId,
             Model = target.Model,
-            Instructions = string.IsNullOrWhiteSpace(instructions) ? null : instructions,
+            Instructions = target.AgentId != null ? null :
+                string.IsNullOrWhiteSpace(instructions) ? null : instructions,
             Inputs = inputs,
-            CompletionArgs = IsEmpty(completionArgs) ? null : completionArgs,
+            CompletionArgs = target.AgentId != null ? null : IsEmpty(completionArgs) ? null : completionArgs,
             Tools = IsEmpty(tools) ? null : tools,
             Stream = stream,
             Store = false
