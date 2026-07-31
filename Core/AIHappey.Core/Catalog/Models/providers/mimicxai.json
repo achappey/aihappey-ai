@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "mimicxai/Darwin",
+      "object": "model",
+      "owned_by": "MIMICXAI",
+      "name": "Darwin",
+      "type": "language",
+      "description": "A chat & reasoning LLM. Text conversation, planning, and text-based skills. Never generates media."
+    },
+    {
+      "id": "mimicxai/Nova",
+      "object": "model",
+      "owned_by": "MIMICXAI",
+      "name": "Nova",
+      "type": "language",
+      "description": "Everything Darwin does, plus automatic skill use: image, video & 3D generation, biometrics, emotion AI, vision, speech, deep search, and any skill your organization registers."
+    }
+  ]
+}
