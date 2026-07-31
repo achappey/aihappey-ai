@@ -59,13 +59,6 @@ public partial class SovrGPTProvider : IModelProvider
 
     public string GetIdentifier() => nameof(SovrGPT).ToLowerInvariant();
 
-    
-
-
-
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
