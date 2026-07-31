@@ -97,24 +97,7 @@ public partial class ScalewayProvider
 
         if (!root.TryGetProperty("results", out var resultsEl) || resultsEl.ValueKind != JsonValueKind.Array)
         {
-            warnings.Add(new
-            {
-                type = "provider_response_missing_field",
-                feature = "results",
-                details = "Scaleway rerank response did not contain a 'results' array."
-            });
-
-            return new RerankingResponse
-            {
-                Ranking = [],
-                Warnings = warnings,
-                Response = new()
-                {
-                    Timestamp = now,
-                    ModelId = request.Model.ToModelId(GetIdentifier()),
-                    Body = raw
-                }
-            };
+            throw new Exception("Scaleway rerank response did not contain a 'results' array.");
         }
 
         var ranked = resultsEl
