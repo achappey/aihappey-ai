@@ -698,6 +698,17 @@ public static partial class ResponsesUnifiedMapper
                 ProviderExecuted = true,
                 Metadata = metadata
             },
+            "web_search_call" => new AIToolCallContentPart
+            {
+                Type = "tool-web_search_call",
+                ToolCallId = GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = "web_search",
+                Title = "web_search",
+                Input = GetValue<object>(map, "action") ?? new { },
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = true,
+                Metadata = metadata
+            },
             _ => null
         };
 
@@ -790,7 +801,7 @@ public static partial class ResponsesUnifiedMapper
         providerMetadata["type"] = type;
         providerMetadata["output_index"] = outputIndex;
 
-        foreach (var key in new[] { "id", "call_id", "status", "caller", "namespace", "container_id" })
+        foreach (var key in new[] { "id", "call_id", "status", "caller", "namespace", "container_id", "action" })
         {
             if (map.TryGetValue(key, out var value) && HasMeaningfulValue(value))
                 providerMetadata[key] = CloneIfJsonElement(value)!;

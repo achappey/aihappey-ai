@@ -757,6 +757,23 @@ public static partial class ResponsesUnifiedMapper
 
                     yield break;
                 }
+                else if (added.Item.Type == "web_search_call")
+                {
+                    yield return CreateToolInputStartEnvelope(
+                        added.Item.Id ?? string.Empty,
+                        "web_search",
+                        "web_search",
+                        providerExecuted: true,
+                        providerMetadata: CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                        {
+                            ["type"] = "web_search_call",
+                            ["id"] = added.Item.Id,
+                            ["status"] = added.Item.Status,
+                            ["output_index"] = added.OutputIndex
+                        }));
+
+                    yield break;
+                }
                 else if (added.Item.Type == "mcp_call")
                 {
                     var label = added.Item.AdditionalProperties?.TryGetValue("server_label", out var server_label) == true ? server_label.ToString() : string.Empty;
@@ -1243,6 +1260,15 @@ public static partial class ResponsesUnifiedMapper
 
                                 var act = action.Value;
 
+                                var replayMetadata = CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                                {
+                                    ["type"] = "web_search_call",
+                                    ["id"] = done.Item.Id,
+                                    ["status"] = done.Item.Status,
+                                    ["action"] = act.Clone(),
+                                    ["output_index"] = done.OutputIndex
+                                });
+
                                 act.TryGetProperty("type", out var typeProp);
                                 var actionType = typeProp.GetString();
 
@@ -1297,10 +1323,11 @@ public static partial class ResponsesUnifiedMapper
 
                                 yield return CreateToolInputEndEnvelope(
                                     done.Item.Id ?? string.Empty,
-                                    done.Item.Name ?? done.Item.Type,
+                                    "web_search",
                                     inputContent,
-                                    $"{done.Item.Name} {actionType}",
-                                    providerExecuted: true);
+                                    $"web_search {actionType}",
+                                    providerExecuted: true,
+                                    providerMetadata: replayMetadata);
 
                                 Dictionary<string, object?>? outputContent = null;
 
@@ -1321,7 +1348,9 @@ public static partial class ResponsesUnifiedMapper
                                 yield return CreateToolOutputEnvelope(
                                     done.Item.Id ?? string.Empty,
                                     outputContent ?? [],
-                                    providerExecuted: true);
+                                    toolName: "web_search",
+                                    providerExecuted: true,
+                                    providerMetadata: replayMetadata);
 
                                 break;
                             }

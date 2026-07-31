@@ -42,6 +42,12 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize function_call_output.");
         }
 
+        if (string.Equals(type, "web_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseWebSearchCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize web_search_call.");
+        }
+
         if (string.Equals(type, "tool_search_call", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseToolSearchCallItem>(options)
@@ -105,6 +111,10 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseFunctionCallOutputItem functionCallOutput:
                 JsonSerializer.Serialize(writer, functionCallOutput, options);
+                return;
+
+            case ResponseWebSearchCallItem webSearchCall:
+                JsonSerializer.Serialize(writer, webSearchCall, options);
                 return;
 
             case ResponseToolSearchCallItem toolSearchCall:

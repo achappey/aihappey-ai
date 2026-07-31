@@ -174,6 +174,33 @@ public static partial class ResponsesUnifiedMapper
                     }
                 };
 
+            case ResponseWebSearchCallItem webSearch:
+                var webSearchMetadata = CreateResponsesReplayMetadata(providerId, webSearch.Type);
+                var webSearchScopedMetadata = GetOrCreateProviderScopedMetadata(webSearchMetadata, providerId);
+                webSearchScopedMetadata["id"] = webSearch.Id;
+                webSearchScopedMetadata["status"] = webSearch.Status;
+                webSearchScopedMetadata["action"] = webSearch.Action.Clone();
+                return new AIInputItem
+                {
+                    Type = "web_search_call",
+                    Role = "assistant",
+                    Content =
+                    [
+                        new AIToolCallContentPart
+                        {
+                            Type = "tool-web_search_call",
+                            ToolCallId = webSearch.Id,
+                            ToolName = "web_search",
+                            Title = "web_search",
+                            Input = webSearch.Action.Clone(),
+                            State = webSearch.Status,
+                            ProviderExecuted = true,
+                            Metadata = webSearchMetadata
+                        }
+                    ],
+                    Metadata = webSearchMetadata
+                };
+
             case ResponseProgramItem program:
                 return CreateUnifiedProgramInputItem(program, providerId);
 
@@ -319,6 +346,14 @@ public static partial class ResponsesUnifiedMapper
     {
         var callReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata");
         var resultReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.result.metadata");
+
+        if (IsProviderExecutedWebSearchToolPart(toolPart, callReplayType, resultReplayType))
+        {
+            var webSearchCall = CreateValidResponseWebSearchCallItem(toolPart, metadata, providerId);
+            if (webSearchCall is not null)
+                yield return webSearchCall;
+            yield break;
+        }
 
         if (IsProgramToolPart(toolPart) || string.Equals(callReplayType, "program", StringComparison.OrdinalIgnoreCase))
         {
@@ -569,6 +604,17 @@ public static partial class ResponsesUnifiedMapper
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null && toolPart.IsClientToolCall && HasToolOutput(toolPart))
                         yield return CreateResponseFunctionCallOutputItem(toolPart, metadata, providerId);
+                    yield break;
+                }
+            case "web_search_call":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                    {
+                        var webSearchCall = CreateValidResponseWebSearchCallItem(toolPart, metadata, providerId);
+                        if (webSearchCall is not null)
+                            yield return webSearchCall;
+                    }
                     yield break;
                 }
             case "program":
@@ -966,6 +1012,92 @@ public static partial class ResponsesUnifiedMapper
         => string.Equals(toolPart.Type, "tool-search-output", StringComparison.OrdinalIgnoreCase)
            || string.Equals(toolPart.Type, "tool_search_output", StringComparison.OrdinalIgnoreCase)
            || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_output", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsProviderExecutedWebSearchToolPart(
+        AIToolCallContentPart toolPart,
+        string? callReplayType,
+        string? resultReplayType)
+    {
+        if (toolPart.ProviderExecuted != true)
+            return false;
+
+        return string.Equals(callReplayType, "web_search_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(resultReplayType, "web_search_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.ToolName, "web_search", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.ToolName, "web_search_call", StringComparison.OrdinalIgnoreCase)
+               || toolPart.Type.Contains("web_search", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static ResponseWebSearchCallItem? CreateValidResponseWebSearchCallItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+    {
+        var metadata = toolPart.Metadata ?? [];
+        var type = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "type")
+                   ?? ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "type")
+                   ?? ExtractNestedValue<string>(metadata, providerId, "type")
+                   ?? ExtractNestedValue<string>(itemMetadata, providerId, "type");
+
+        // A web-search-looking UI tool is never converted to a generic function
+        // call. Native replay requires explicit metadata from this provider.
+        if (!string.Equals(type, "web_search_call", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var id = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "id")
+                 ?? ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
+                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id");
+        var status = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "status")
+                     ?? ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "status")
+                     ?? ExtractNestedValue<string>(metadata, providerId, "status")
+                     ?? ExtractNestedValue<string>(itemMetadata, providerId, "status");
+        var action = ExtractNestedChannelValue<JsonElement>(metadata, "messages.provider.call.metadata", providerId, "action");
+        if (action.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            action = ExtractNestedChannelValue<JsonElement>(metadata, "messages.provider.result.metadata", providerId, "action");
+        if (action.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            action = ExtractNestedValue<JsonElement>(metadata, providerId, "action");
+        if (action.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            action = ExtractNestedValue<JsonElement>(itemMetadata, providerId, "action");
+
+        if (string.IsNullOrWhiteSpace(id)
+            || !string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)
+            || !IsValidWebSearchAction(action))
+        {
+            return null;
+        }
+
+        return new ResponseWebSearchCallItem
+        {
+            Id = id,
+            Status = "completed",
+            Action = action.Clone()
+        };
+    }
+
+    private static bool IsValidWebSearchAction(JsonElement action)
+    {
+        if (action.ValueKind != JsonValueKind.Object
+            || !action.TryGetProperty("type", out var typeProperty)
+            || typeProperty.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        return typeProperty.GetString() switch
+        {
+            "search" => HasNonEmptyWebSearchActionString(action, "query"),
+            "open_page" => HasNonEmptyWebSearchActionString(action, "url"),
+            "find_in_page" => HasNonEmptyWebSearchActionString(action, "url")
+                              && HasNonEmptyWebSearchActionString(action, "pattern"),
+            _ => false
+        };
+    }
+
+    private static bool HasNonEmptyWebSearchActionString(JsonElement action, string propertyName)
+        => action.TryGetProperty(propertyName, out var property)
+           && property.ValueKind == JsonValueKind.String
+           && !string.IsNullOrWhiteSpace(property.GetString());
 
     private static string? ResolveResponsesReplayType(
         Dictionary<string, object?>? metadata,
