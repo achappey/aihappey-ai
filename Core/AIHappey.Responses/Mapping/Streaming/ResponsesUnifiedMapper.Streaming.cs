@@ -559,18 +559,27 @@ public static partial class ResponsesUnifiedMapper
                                                   );
                 yield break;
             case ResponseCodeInterpreterCallDone responseCodeInterpreterCallDone:
+                var codeInterpreterItemId = responseCodeInterpreterCallDone.ItemId ?? string.Empty;
                 yield return CreateToolInputDeltaEnvelope(
-                                     responseCodeInterpreterCallDone.ItemId ?? string.Empty,
+                                     codeInterpreterItemId,
                                      "\"}");
 
                 yield return CreateToolInputEndEnvelope(
-                                                      responseCodeInterpreterCallDone.ItemId ?? string.Empty,
+                                                      codeInterpreterItemId,
                                                       "code_interpreter",
                                                       new
                                                       {
                                                           code = responseCodeInterpreterCallDone.Code
                                                       },
-                                                      providerExecuted: true
+                                                      providerExecuted: true,
+                                                      providerMetadata: CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                                                      {
+                                                          ["type"] = "code_interpreter_call",
+                                                          ["id"] = codeInterpreterItemId,
+                                                          ["item_id"] = codeInterpreterItemId,
+                                                          ["code"] = responseCodeInterpreterCallDone.Code,
+                                                          ["output_index"] = responseCodeInterpreterCallDone.OutputIndex
+                                                      })
                                                   );
                 yield break;
 
@@ -850,14 +859,27 @@ public static partial class ResponsesUnifiedMapper
                 }
                 else if (added.Item.Type == "code_interpreter_call")
                 {
+                    var itemId = added.Item.Id ?? string.Empty;
+                    var codeInterpreterMetadata = CreateProviderMetadata(providerId, new Dictionary<string, object?>
+                    {
+                        ["type"] = "code_interpreter_call",
+                        ["id"] = itemId,
+                        ["item_id"] = itemId,
+                        ["status"] = added.Item.Status,
+                        ["container_id"] = GetAdditionalPropertyValue(added.Item.AdditionalProperties, "container_id"),
+                        ["caller"] = GetAdditionalPropertyValue(added.Item.AdditionalProperties, "caller"),
+                        ["output_index"] = added.OutputIndex
+                    });
+
                     yield return CreateToolInputStartEnvelope(
-                             added.Item.Id ?? string.Empty,
+                             itemId,
                              "code_interpreter",
-                             providerExecuted: true
+                             providerExecuted: true,
+                             providerMetadata: codeInterpreterMetadata
                         );
 
                     yield return CreateToolInputDeltaEnvelope(
-                      added.Item.Id ?? string.Empty,
+                      itemId,
                       $"{{ \"code\": \""
                  );
 

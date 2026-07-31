@@ -49,6 +49,7 @@ public static partial class ResponsesUnifiedMapper
             ["container_id"] = containerId,
             ["caller"] = caller,
             ["output_index"] = done.OutputIndex,
+            ["outputs"] = outputs,
             ["authoritative_completion"] = authoritative
         });
 

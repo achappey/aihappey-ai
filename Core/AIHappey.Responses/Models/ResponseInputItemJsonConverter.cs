@@ -78,6 +78,12 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize program_output.");
         }
 
+        if (string.Equals(type, "code_interpreter_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseCodeInterpreterCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize code_interpreter_call.");
+        }
+
         if (string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseReasoningItem>(options)
@@ -135,6 +141,10 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseProgramOutputItem programOutput:
                 JsonSerializer.Serialize(writer, programOutput, options);
+                return;
+
+            case ResponseCodeInterpreterCallItem codeInterpreterCall:
+                JsonSerializer.Serialize(writer, codeInterpreterCall, options);
                 return;
 
             case ResponseReasoningItem reasoning:

@@ -174,6 +174,38 @@ public static partial class ResponsesUnifiedMapper
                     }
                 };
 
+            case ResponseCodeInterpreterCallItem codeInterpreter:
+                var codeInterpreterMetadata = CreateResponsesReplayMetadata(providerId, codeInterpreter.Type, codeInterpreter.Caller);
+                var codeInterpreterProviderMetadata = GetOrCreateProviderScopedMetadata(codeInterpreterMetadata, providerId);
+                codeInterpreterProviderMetadata["id"] = codeInterpreter.Id;
+                codeInterpreterProviderMetadata["item_id"] = codeInterpreter.Id;
+                codeInterpreterProviderMetadata["code"] = codeInterpreter.Code;
+                codeInterpreterProviderMetadata["container_id"] = codeInterpreter.ContainerId;
+                codeInterpreterProviderMetadata["outputs"] = codeInterpreter.Outputs.Clone();
+                codeInterpreterProviderMetadata["status"] = codeInterpreter.Status;
+
+                return new AIInputItem
+                {
+                    Type = "code_interpreter_call",
+                    Role = "assistant",
+                    Content =
+                    [
+                        new AIToolCallContentPart
+                        {
+                            Type = "tool-code_interpreter",
+                            ToolCallId = codeInterpreter.Id,
+                            ToolName = "code_interpreter",
+                            Title = "code_interpreter",
+                            Input = new { code = codeInterpreter.Code },
+                            Output = codeInterpreter.Outputs.Clone(),
+                            State = codeInterpreter.Status,
+                            ProviderExecuted = true,
+                            Metadata = codeInterpreterMetadata
+                        }
+                    ],
+                    Metadata = codeInterpreterMetadata
+                };
+
             case ResponseWebSearchCallItem webSearch:
                 var webSearchMetadata = CreateResponsesReplayMetadata(providerId, webSearch.Type);
                 var webSearchScopedMetadata = GetOrCreateProviderScopedMetadata(webSearchMetadata, providerId);
@@ -352,6 +384,14 @@ public static partial class ResponsesUnifiedMapper
             var webSearchCall = CreateValidResponseWebSearchCallItem(toolPart, metadata, providerId);
             if (webSearchCall is not null)
                 yield return webSearchCall;
+            yield break;
+        }
+
+        if (IsCodeInterpreterToolPart(toolPart, callReplayType, resultReplayType))
+        {
+            var codeInterpreterCall = CreateResponseCodeInterpreterCallItem(toolPart, metadata, providerId);
+            if (codeInterpreterCall is not null)
+                yield return codeInterpreterCall;
             yield break;
         }
 
@@ -614,6 +654,17 @@ public static partial class ResponsesUnifiedMapper
                         var webSearchCall = CreateValidResponseWebSearchCallItem(toolPart, metadata, providerId);
                         if (webSearchCall is not null)
                             yield return webSearchCall;
+                    }
+                    yield break;
+                }
+            case "code_interpreter_call":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                    {
+                        var codeInterpreterCall = CreateResponseCodeInterpreterCallItem(toolPart, metadata, providerId);
+                        if (codeInterpreterCall is not null)
+                            yield return codeInterpreterCall;
                     }
                     yield break;
                 }
@@ -1026,6 +1077,122 @@ public static partial class ResponsesUnifiedMapper
                || string.Equals(toolPart.ToolName, "web_search", StringComparison.OrdinalIgnoreCase)
                || string.Equals(toolPart.ToolName, "web_search_call", StringComparison.OrdinalIgnoreCase)
                || toolPart.Type.Contains("web_search", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsCodeInterpreterToolPart(
+        AIToolCallContentPart toolPart,
+        string? callReplayType,
+        string? resultReplayType)
+        => toolPart.ProviderExecuted == true
+           && (string.Equals(callReplayType, "code_interpreter_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(resultReplayType, "code_interpreter_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.Type, "tool-code_interpreter", StringComparison.OrdinalIgnoreCase));
+
+    private static ResponseCodeInterpreterCallItem? CreateResponseCodeInterpreterCallItem(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+    {
+        var callMetadata = ExtractNestedChannelMap(toolPart.Metadata, "messages.provider.call.metadata", providerId);
+        var resultMetadata = ExtractNestedChannelMap(toolPart.Metadata, "messages.provider.result.metadata", providerId);
+        var directMetadata = toolPart.Metadata is null ? null : ExtractObjectMap(toolPart.Metadata, providerId);
+        var itemProviderMetadata = ExtractObjectMap(itemMetadata, providerId);
+
+        object? Read(string key)
+            => GetMapValue(resultMetadata, key)
+               ?? GetMapValue(callMetadata, key)
+               ?? GetMapValue(directMetadata, key)
+               ?? GetMapValue(itemProviderMetadata, key);
+
+        var id = Read("item_id")?.ToString()
+                 ?? Read("id")?.ToString()
+                 ?? toolPart.ToolCallId;
+        var code = Read("code")?.ToString() ?? ExtractCodeInterpreterCode(toolPart.Input);
+        var containerId = Read("container_id")?.ToString();
+        var status = Read("status")?.ToString() ?? toolPart.State ?? "completed";
+        var caller = TryConvert<ResponseCaller>(Read("caller"));
+        var outputsValue = Read("outputs") ?? ExtractCodeInterpreterOutputs(toolPart.Output);
+
+        if (string.IsNullOrWhiteSpace(id)
+            || string.IsNullOrWhiteSpace(containerId)
+            || outputsValue is null)
+        {
+            return null;
+        }
+
+        return new ResponseCodeInterpreterCallItem
+        {
+            Id = id,
+            Code = code ?? string.Empty,
+            ContainerId = containerId,
+            Outputs = JsonSerializer.SerializeToElement(outputsValue, Json),
+            Status = string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase) ? "completed" : status,
+            Caller = caller
+        };
+    }
+
+    private static Dictionary<string, object?>? ExtractNestedChannelMap(
+        Dictionary<string, object?>? metadata,
+        string channel,
+        string providerId)
+    {
+        if (metadata is null || !metadata.TryGetValue(channel, out var channelValue))
+            return null;
+
+        return ExtractObjectMap(ToJsonMap(channelValue), providerId);
+    }
+
+    private static Dictionary<string, object?>? ExtractObjectMap(
+        Dictionary<string, object?> metadata,
+        string key)
+    {
+        if (!metadata.TryGetValue(key, out var value) || value is null)
+            return null;
+
+        var map = ToJsonMap(value);
+        return map.Count == 0 ? null : map;
+    }
+
+    private static object? GetMapValue(Dictionary<string, object?>? map, string key)
+        => map is not null && map.TryGetValue(key, out var value) && HasMeaningfulValue(value) ? value : null;
+
+    private static string? ExtractCodeInterpreterCode(object? input)
+    {
+        var inputMap = ToJsonMap(input);
+        return GetValue<string>(inputMap, "code") ?? input as string;
+    }
+
+    private static object? ExtractCodeInterpreterOutputs(object? output)
+    {
+        var outputMap = ToJsonMap(output);
+        if (outputMap.TryGetValue("outputs", out var outputs))
+            return outputs;
+
+        if (outputMap.TryGetValue("structuredContent", out var structuredContent))
+        {
+            var structuredMap = ToJsonMap(structuredContent);
+            if (structuredMap.TryGetValue("outputs", out outputs))
+                return outputs;
+        }
+
+        return output;
+    }
+
+    private static T? TryConvert<T>(object? value) where T : class
+    {
+        if (value is null)
+            return null;
+        if (value is T typed)
+            return typed;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, Json), Json);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static ResponseWebSearchCallItem? CreateValidResponseWebSearchCallItem(
