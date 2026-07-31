@@ -56,14 +56,16 @@ public partial class MistralProvider
 
     private string NormalizeReportedModel(string? upstreamModel, ConversationTarget target)
     {
-        if (!string.IsNullOrWhiteSpace(target.AgentId))
-            return target.ExposedModelId;
-
         var normalized = NormalizeMistralModelId(upstreamModel);
         return string.IsNullOrWhiteSpace(normalized)
             ? target.ExposedModelId
             : normalized;
     }
+
+    private string ResolveExposedResponseModel(ConversationTarget target, string? upstreamModel)
+        => !string.IsNullOrWhiteSpace(target.AgentId)
+            ? target.ExposedModelId
+            : NormalizeReportedModel(upstreamModel, target);
 
     private string NormalizeMistralModelId(string? model)
     {

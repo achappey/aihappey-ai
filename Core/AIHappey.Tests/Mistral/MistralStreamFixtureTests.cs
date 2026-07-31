@@ -18,6 +18,49 @@ public sealed class MistralStreamFixtureTests
     private const string ConversationWithWebSearchToolCallsFixturePath = "Fixtures/mistral/raw/conversation-with-web-search-tool-calls.jsonl";
 
     [Fact]
+    public async Task Agent_stream_uses_reported_model_for_cost_and_preserves_agent_model()
+    {
+        const string agentId = "ag_019a5437729a717e878e65d42e9d1647";
+        const string stream = """
+            event: message.output.delta
+            data: {"type":"message.output.delta","model":"mistral-large-latest","agent_id":"ag_019a5437729a717e878e65d42e9d1647","content":"Hello"}
+
+            event: conversation.response.done
+            data: {"type":"conversation.response.done","usage":{"prompt_tokens":1234,"completion_tokens":59,"total_tokens":1293}}
+
+            """;
+        var provider = CreateProvider(_ => CreateStreamingResponse(stream));
+        var request = CreateAgentRequest(agentId);
+
+        var events = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(request));
+        var finish = Assert.IsType<AIFinishEventData>(events.Single(e => e.Event.Type == "finish").Event.Data);
+
+        Assert.Equal($"mistral/agent/{agentId}", finish.Model);
+        Assert.Equal(0.0007055m, finish.MessageMetadata?.Gateway?.Cost);
+        Assert.Equal(1234, finish.InputTokens);
+        Assert.Equal(59, finish.OutputTokens);
+    }
+
+    [Fact]
+    public async Task Agent_non_streaming_response_uses_reported_model_for_cost_and_preserves_agent_model()
+    {
+        const string agentId = "ag_019a5437729a717e878e65d42e9d1647";
+        const string body = """
+            {"conversation_id":"conv_1","outputs":[{"type":"message.output","model":"mistral-large-latest","agent_id":"ag_019a5437729a717e878e65d42e9d1647","role":"assistant","content":"Hello"}],"usage":{"prompt_tokens":1234,"completion_tokens":59,"total_tokens":1293}}
+            """;
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        });
+
+        var response = await provider.ExecuteUnifiedAsync(CreateAgentRequest(agentId));
+
+        Assert.Equal($"mistral/agent/{agentId}", response.Model);
+        var gateway = Assert.IsType<Dictionary<string, object?>>(response.Metadata?["gateway"]);
+        Assert.Equal(0.0007055m, gateway["cost"]);
+    }
+
+    [Fact]
     public async Task Raw_conversation_stream_fixture_populates_finish_message_metadata_model_from_stream_model()
     {
         var provider = CreateProviderFromFixture(BasicConversationStreamFixturePath);
@@ -99,7 +142,19 @@ public sealed class MistralStreamFixtureTests
     private static MistralProvider CreateProviderFromFixture(string fixturePath)
     {
         var fixtureText = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(fixturePath));
-        var handler = new StaticResponseHttpMessageHandler(_ => CreateStreamingResponse(fixtureText));
+        return CreateProvider(_ => CreateStreamingResponse(fixtureText));
+    }
+
+    private static AIRequest CreateAgentRequest(string agentId) => new()
+    {
+        ProviderId = "mistral",
+        Model = $"agent/{agentId}",
+        Input = new AIInput { Text = "Hoi" }
+    };
+
+    private static MistralProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
+    {
+        var handler = new StaticResponseHttpMessageHandler(responder);
         var httpClientFactory = new StaticHttpClientFactory(new HttpClient(handler));
         var cache = new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions()));
 

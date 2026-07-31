@@ -40,7 +40,7 @@ public partial class MistralProvider : IModelProvider
         var responseEventId = request.Id ?? Guid.NewGuid().ToString("n");
         var textStarted = false;
         var finishEmitted = false;
-        var activeModel = target.ExposedModelId;
+        var billableModel = target.Model;
         var lastTimestamp = DateTimeOffset.UtcNow;
         var responseMetadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
@@ -68,7 +68,9 @@ public partial class MistralProvider : IModelProvider
 
                 case "message.output.delta":
                     {
-                        activeModel = NormalizeReportedModel(evt.GetString("model"), target);
+                        var reportedModel = NormalizeMistralModelId(evt.GetString("model"));
+                        if (!string.IsNullOrWhiteSpace(reportedModel))
+                            billableModel = reportedModel;
 
                         foreach (var part in EnumerateContentParts(evt.GetNode("content")))
                         {
@@ -373,7 +375,7 @@ public partial class MistralProvider : IModelProvider
                 case "conversation.response.done":
                     {
                         usage = ExtractUsage(evt.GetNode("usage"));
-                        responseMetadata = EnrichMetadataWithGatewayCost(responseMetadata, usage, activeModel);
+                        responseMetadata = EnrichMetadataWithGatewayCost(responseMetadata, usage, billableModel);
 
                         if (!string.IsNullOrWhiteSpace(evt.GetString("conversation_id")))
                             responseMetadata["mistral.conversation_id"] = evt.GetString("conversation_id");
@@ -424,7 +426,8 @@ public partial class MistralProvider : IModelProvider
                         activeToolExecutions.Clear();
                         activeToolExecutionOrder.Clear();
 
-                        yield return CreateFinishStreamEvent(providerId, responseEventId, lastTimestamp, activeModel, usage, responseMetadata);
+                        yield return CreateFinishStreamEvent(providerId, responseEventId, lastTimestamp,
+                            ResolveExposedResponseModel(target, billableModel), usage, responseMetadata);
                         finishEmitted = true;
                         break;
                     }
@@ -463,7 +466,7 @@ public partial class MistralProvider : IModelProvider
 
         if (!finishEmitted)
         {
-            responseMetadata = EnrichMetadataWithGatewayCost(responseMetadata, usage, activeModel);
+            responseMetadata = EnrichMetadataWithGatewayCost(responseMetadata, usage, billableModel);
 
             foreach (var pendingToolCallId in activeToolExecutionOrder.ToList())
             {
@@ -507,7 +510,8 @@ public partial class MistralProvider : IModelProvider
                     responseMetadata);
             }
 
-            yield return CreateFinishStreamEvent(providerId, responseEventId, lastTimestamp, activeModel, usage, responseMetadata);
+            yield return CreateFinishStreamEvent(providerId, responseEventId, lastTimestamp,
+                ResolveExposedResponseModel(target, billableModel), usage, responseMetadata);
         }
     }
 
@@ -700,17 +704,29 @@ public partial class MistralProvider : IModelProvider
         }
 
         var usage = ExtractUsage(response.Usage);
+        var primaryOutput = GetPrimaryMessageOutput(response);
+        var reportedModel = NormalizeMistralModelId(GetString(primaryOutput, "model"));
+        var billableModel = string.IsNullOrWhiteSpace(reportedModel) ? target.Model : reportedModel;
+        var responseMetadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["mistral.requested_model"] = request.Model,
+            ["mistral.target_model"] = target.Model,
+            ["mistral.target_agent_id"] = target.AgentId,
+            ["mistral.reported_model"] = string.IsNullOrWhiteSpace(reportedModel) ? null : reportedModel
+        };
+        responseMetadata = EnrichMetadataWithGatewayCost(responseMetadata, usage, billableModel);
 
         return new AIResponse
         {
             ProviderId = GetIdentifier(),
-            Model = $"{GetIdentifier()}/{request.Model}",
+            Model = $"{GetIdentifier()}/{ResolveExposedResponseModel(target, billableModel)}",
             Status = "completed",
             Output = new AIOutput
             {
                 Items = outputItems,
             },
-            Usage = CreateUsageObject(usage)
+            Usage = CreateUsageObject(usage),
+            Metadata = responseMetadata
         };
     }
 
