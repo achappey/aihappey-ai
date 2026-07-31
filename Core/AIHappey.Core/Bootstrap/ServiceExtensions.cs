@@ -216,7 +216,6 @@ using AIHappey.Core.Providers.Dandolo;
 using AIHappey.Core.Providers.Glio;
 using AIHappey.Core.Providers.Gradium;
 using AIHappey.Core.Providers.VoiceAI;
-using AIHappey.Core.Providers.PixelDojo;
 using AIHappey.Core.Providers.NavyAI;
 using AIHappey.Core.Providers.NEARAI;
 using AIHappey.Core.Providers.Parallel;
@@ -767,7 +766,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HeyGenProvider>();
         services.AddSingleton<IModelProvider, CartesiaProvider>();
         services.AddSingleton<IModelProvider, LOVOProvider>();
-        //services.AddSingleton<IModelProvider, EverypixelLabsProvider>();
+        //services.AddSingleton<IModelProvider, EverypixeLabsProvider>();
         services.AddSingleton<IModelProvider, VerbatikProvider>();
         services.AddSingleton<IModelProvider, SmallestAIProvider>();
         services.AddSingleton<IModelProvider, OrqAgentRuntimeProvider>();
@@ -818,7 +817,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ElectronHubProvider>();
         services.AddSingleton<IModelProvider, DandoloProvider>();
         services.AddSingleton<IModelProvider, GlioProvider>();
-        services.AddSingleton<IModelProvider, PixelDojoProvider>();
         services.AddSingleton<IModelProvider, NavyAIProvider>();
         services.AddSingleton<IModelProvider, NEARAIProvider>();
         services.AddSingleton<IModelProvider, ParallelProvider>();

@@ -214,8 +214,7 @@ public class AIServiceConfig
     public ProviderConfig? ReGraph { get; set; }
     public ProviderConfig? ElectronHub { get; set; }
     public ProviderConfig? Dandolo { get; set; }
-    public ProviderConfig? Glio { get; set; }
-    public ProviderConfig? PixelDojo { get; set; }
+    public ProviderConfig? Glio { get; set; }   
     public ProviderConfig? NavyAI { get; set; }
     public ProviderConfig? NEARAI { get; set; }
     public ProviderConfig? Parallel { get; set; }
