@@ -60,9 +60,6 @@ public partial class GladiaProvider
         var jobId = createJob.Id;
         var resultJson = await PollUntilDoneAsync(jobId, cancellationToken);
         var currentModel = await this.GetModel(request.Model, cancellationToken);
-        //currentModel.Pricing.Input
-        //    var result = ConvertTranscriptionResponse(resultJson,
-        //       request.Model.ToModelId(GetIdentifier()), now, createJob.RequestBody);
 
         var result = ConvertTranscriptionResponse(
                 resultJson,
