@@ -8,6 +8,7 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderTranscriptionExtensions
 {
+    [Obsolete("Use unified model stream")]
     public static async IAsyncEnumerable<UIMessagePart> StreamTranscriptionAsync(this IModelProvider modelProvider,
       ChatRequest chatRequest,
       [EnumeratorCancellation] CancellationToken cancellationToken = default)
