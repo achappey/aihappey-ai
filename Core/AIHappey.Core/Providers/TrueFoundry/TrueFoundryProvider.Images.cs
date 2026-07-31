@@ -276,7 +276,7 @@ public partial class TrueFoundryProvider
         return content;
     }
 
-    private string GetTrueFoundryImageFilename(ImageFile file, int index, string prefix = "image")
+    private static string GetTrueFoundryImageFilename(ImageFile file, int index, string prefix = "image")
     {
         var extension = file.MediaType?.Trim().ToLowerInvariant() switch
         {

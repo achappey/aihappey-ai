@@ -113,10 +113,6 @@ public partial class TrueFoundryProvider
                     Headers = headers,
                     ModelId = model.ToModelId(GetIdentifier()),
                     Body = raw
-                },
-                Request = new TranscriptionRequestItem
-                {
-                    Body = JsonSerializer.Serialize(requestFields, JsonSerializerOptions.Web)
                 }
             };
         }
@@ -138,17 +134,13 @@ public partial class TrueFoundryProvider
                     : null,
                 Segments = segments,
                 Warnings = warnings,
-                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
+                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
                 Response = new ResponseData
                 {
                     Timestamp = timestamp,
                     Headers = headers,
                     ModelId = model.ToModelId(GetIdentifier()),
                     Body = root
-                },
-                Request = new TranscriptionRequestItem
-                {
-                    Body = JsonSerializer.Serialize(requestFields, JsonSerializerOptions.Web)
                 }
             };
         }
