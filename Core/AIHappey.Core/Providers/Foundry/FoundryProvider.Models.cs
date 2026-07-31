@@ -42,11 +42,11 @@ public partial class FoundryProvider
 
                 foreach (var el in arr)
                 {
-
                     if (el.TryGetProperty("lifecycle_status", out var statusEl)
-                        && statusEl.GetString()?.Equals("preview") == false
-                        && statusEl.GetString()?.Equals("generally-available") == false)
+                        && statusEl.GetString() is not ("preview" or "generally-available"))
+                    {
                         continue;
+                    }
 
                     Model model = new();
 
