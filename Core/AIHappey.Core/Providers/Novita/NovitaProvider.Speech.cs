@@ -1,3 +1,4 @@
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Novita;
@@ -23,4 +24,15 @@ public partial class NovitaProvider
 
         return SpeechRequestAsyncTxt2Speech(request, cancellationToken); // <- your existing method (task_id + polling)
     }
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
 }
