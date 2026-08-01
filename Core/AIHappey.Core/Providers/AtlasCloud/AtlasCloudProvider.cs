@@ -19,11 +19,15 @@ public partial class AtlasCloudProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public AtlasCloudProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public AtlasCloudProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.atlascloud.ai/api");
+        _client.BaseAddress = new Uri("https://api.atlascloud.ai/api/");
     }
 
     private void ApplyAuthHeader()
@@ -54,7 +58,7 @@ public partial class AtlasCloudProvider : IModelProvider
 
     public string GetIdentifier() => nameof(AtlasCloud).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -87,12 +91,8 @@ public partial class AtlasCloudProvider : IModelProvider
         }
     }
 
-
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-      => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -154,7 +154,7 @@ public partial class AtlasCloudProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
