@@ -1,5 +1,7 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
@@ -9,6 +11,18 @@ namespace AIHappey.Core.Providers.CallMissed;
 
 public partial class CallMissedProvider
 {
+
+    
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+    
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
@@ -69,7 +83,7 @@ public partial class CallMissedProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"CallMissed STT failed ({(int)resp.StatusCode}): {raw}");
 
-        return ConvertTranscriptionResponse(raw, request.Model, now, providerOptions);
+        return ConvertTranscriptionResponse(raw, request.Model, now, providerOptions, resp.GetHeaders());
     }
 
     private static bool TryConvertFormScalar(JsonElement value, out string scalar)
@@ -99,7 +113,8 @@ public partial class CallMissedProvider
         string raw,
         string model,
         DateTime timestamp,
-        JsonElement providerOptions)
+        JsonElement providerOptions,
+        Dictionary<string, string> headers)
     {
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
@@ -139,21 +154,14 @@ public partial class CallMissedProvider
             Language = language,
             DurationInSeconds = duration,
             Segments = segments,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    endpoint = "v1/audio/transcriptions",
-                    request = providerOptions.ValueKind == JsonValueKind.Object
-                        ? JsonSerializer.Deserialize<object>(providerOptions.GetRawText(), JsonSerializerOptions.Web)
-                        : null
-                })
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
             {
                 Timestamp = timestamp,
-                ModelId = ReadTranscriptionString(root, "model") ?? model,
-                Body = raw
+                Headers = headers,
+                ModelId = ReadTranscriptionString(root, "model")?.ToModelId(GetIdentifier())
+                    ?? model.ToModelId(GetIdentifier()),
+                Body = root.Clone()
             }
         };
     }

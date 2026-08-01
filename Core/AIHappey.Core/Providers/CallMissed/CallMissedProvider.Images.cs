@@ -1,5 +1,7 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
@@ -103,17 +105,36 @@ public partial class CallMissedProvider
             Warnings = warnings,
             ProviderMetadata = new Dictionary<string, JsonElement>
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    endpoint = "v1/images/generations",
-                    responseCount = images.Count
-                })
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(root.Clone())
             },
-            Response = new ()
+            Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
+
+
+    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
 }
