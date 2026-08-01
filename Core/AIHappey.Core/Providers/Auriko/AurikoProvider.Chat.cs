@@ -18,7 +18,7 @@ public partial class AurikoProvider
         {
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                yield return uiPart;
+                yield return EnrichFinishPartWithGatewayCost(uiPart);
             }
         }
     }

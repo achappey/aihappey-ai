@@ -57,9 +57,18 @@ public partial class AurikoProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        string? lastFinishReason = null;
         await foreach (var update in this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken))
         {
+            NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+
+            // Auriko appends a second routing-summary usage chunk after the real
+            // terminal chunk. It has no estimated_cost and would overwrite the
+            // authoritative raw usage in the unified stream accumulator.
+            if (IsRoutingSummaryUsageUpdate(update))
+                continue;
+
             yield return EnrichChatCompletionUpdateWithGatewayCost(update);
         }
     }
@@ -145,8 +154,17 @@ public partial class AurikoProvider : IModelProvider
         };
     }
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+            request,
+            cancellationToken: cancellationToken))
+        {
+            yield return EnrichUnifiedFinishEventWithGatewayCost(streamEvent);
+        }
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
