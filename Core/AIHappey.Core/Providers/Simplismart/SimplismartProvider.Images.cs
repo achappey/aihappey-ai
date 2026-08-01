@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
@@ -65,13 +64,13 @@ public partial class SimplismartProvider
         if (options.N.HasValue) payload["num_images_per_prompt"] = options.N.Value;
         SimplismartApplySize(payload, options.Size);
 
-        var result = await SimplismartPostJsonAsync(SimplismartFluxEndpoint, payload, cancellationToken);
+        var (Body, Headers) = await SimplismartPostJsonAsync(SimplismartFluxEndpoint, payload, cancellationToken);
         return new OpenAIImagesResponse
         {
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             OutputFormat = "png",
             Size = options.Size,
-            Data = SimplismartReadStringArray(result.Body, "images")
+            Data = SimplismartReadStringArray(Body, "images")
                 .Select(image => new OpenAIImageData { B64Json = image })
                 .ToList()
         };

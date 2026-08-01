@@ -2,12 +2,32 @@
   "object": "list",
   "data": [
     {
-      "id": "recraft/recraftv2",
+      "id": "recraft/recraftv4_1",
       "object": "model",
       "owned_by": "Recraft",
-      "name": "Recraft V2",
-      "type": "image",
-      "description": "Recraft V2 is an image generation model released in March 2024 and the first model trained from scratch by Recraft. With 20 billion parameters, it was a breakthrough in human anatomical accuracy and the first to support brand consistency and brand color inputs. It also introduced vector image generation (SVG output), as well as minimalistic icon and illustration styles."
+      "name": "Recraft V4.1",
+      "type": "image"
+    },
+    {
+      "id": "recraft/recraftv4_1_pro",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft V4.1 Pro",
+      "type": "image"
+    },
+    {
+      "id": "recraft/recraftv4",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft V4",
+      "type": "image"
+    },
+    {
+      "id": "recraft/recraftv4_pro",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft V4 Pro",
+      "type": "image"
     },
     {
       "id": "recraft/recraftv3",
@@ -16,6 +36,14 @@
       "name": "Recraft V3",
       "type": "image",
       "description": "Recraft V3 is an image generation model released in October 2024. It ranked first for five consecutive months on the Artificial Analysis public benchmark on Hugging Face, maintaining a clear lead over models from Midjourney, OpenAI, and others. V3 introduced major advances in photorealism and text rendering. It was the first Recraft model to generate mid-size text accurately and, as of 2025, is the only model capable of placing text at specific positions in an image."
+    },
+    {
+      "id": "recraft/recraftv2",
+      "object": "model",
+      "owned_by": "Recraft",
+      "name": "Recraft V2",
+      "type": "image",
+      "description": "Recraft V2 is an image generation model released in March 2024 and the first model trained from scratch by Recraft. With 20 billion parameters, it was a breakthrough in human anatomical accuracy and the first to support brand consistency and brand color inputs. It also introduced vector image generation (SVG output), as well as minimalistic icon and illustration styles."
     },
     {
       "id": "recraft/vectorize",
