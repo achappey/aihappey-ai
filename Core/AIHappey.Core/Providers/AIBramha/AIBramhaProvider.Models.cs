@@ -57,6 +57,8 @@ public partial class AIBramhaProvider
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? string.Empty;
 
+                    model.Type = model.Name?.Contains("[IMAGE_GEN]") == true ? "image" : model.Id.GuessModelType();
+                    
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
