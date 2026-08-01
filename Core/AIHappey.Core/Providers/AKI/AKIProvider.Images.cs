@@ -107,11 +107,31 @@ public partial class AKIProvider
         if (images.Count == 0)
             throw new InvalidOperationException("AKI image generation returned no images.");
 
+        var providerMetadata = new Dictionary<string, JsonElement>();
+
+        foreach (var propertyName in new[]
+        {
+            "seed",
+            "prompt_length",
+            "model_name",
+            "total_duration",
+            "compute_duration",
+            "ep_version"
+        })
+        {
+            if (root.TryGetProperty(propertyName, out var value)
+                && value.ValueKind is not JsonValueKind.Null
+                and not JsonValueKind.Undefined)
+            {
+                providerMetadata[propertyName] = value.Clone();
+            }
+        }
+
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMetadata),
             Response = new()
             {
                 Timestamp = now,

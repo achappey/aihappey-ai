@@ -72,13 +72,7 @@ public partial class BlackForestLabsProvider
         if (images.Count == 0)
             throw new InvalidOperationException("BlackForestLabs result did not contain any images.");
 
-        var metadata = results.Select(result => new
-        {
-            id = result.TaskId,
-            polling_url = result.PollingUri.AbsoluteUri,
-            submit = result.Submit,
-            result = result.Terminal
-        }).ToArray();
+
         var totalCost = results.Any(result => result.Cost.HasValue)
             ? results.Sum(result => result.Cost ?? 0m)
             : (decimal?)null;
@@ -88,7 +82,7 @@ public partial class BlackForestLabsProvider
             Images = images,
             Warnings = warnings,
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(
-                JsonSerializer.SerializeToElement(metadata, JsonOptions),
+                null,
                 costs: totalCost),
             Response = new()
             {
