@@ -17,7 +17,14 @@ public partial class BlackForestLabsProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record BflResult(string Status, JsonElement Root);
+    private sealed record BflPollResult(string Status, JsonElement Root);
+
+    private sealed record BflGenerationResult(
+        string TaskId,
+        Uri PollingUri,
+        decimal? Cost,
+        JsonElement Submit,
+        JsonElement Terminal);
 
     public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
@@ -51,24 +58,36 @@ public partial class BlackForestLabsProvider
         var outputFormat = TryGetOutputFormat(payload) ?? "jpeg";
         var mime = MapOutputFormatToMimeType(outputFormat);
         var images = new List<string>();
-        var results = new List<JsonElement>(imageCount);
+        var results = new List<BflGenerationResult>(imageCount);
         for (var index = 0; index < imageCount; index++)
         {
             var final = await SubmitAndPollAsync(endpoint, payload, cancellationToken);
-            var generatedImages = await ExtractImagesAsync(final.Root, mime, cancellationToken);
+            var generatedImages = await ExtractImagesAsync(final.Terminal, mime, cancellationToken);
             images.AddRange(generatedImages);
-            results.Add(final.Root);
+            results.Add(final);
         }
 
         if (images.Count == 0)
             throw new InvalidOperationException("BlackForestLabs result did not contain any images.");
+
+        var metadata = results.Select(result => new
+        {
+            id = result.TaskId,
+            polling_url = result.PollingUri.AbsoluteUri,
+            submit = result.Submit,
+            result = result.Terminal
+        }).ToArray();
+        var totalCost = results.Any(result => result.Cost.HasValue)
+            ? results.Sum(result => result.Cost ?? 0m)
+            : (decimal?)null;
 
         return new ImageResponse
         {
             Images = images,
             Warnings = warnings,
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(
-                results.Count == 1 ? results[0] : JsonSerializer.SerializeToElement(results, JsonOptions)),
+                JsonSerializer.SerializeToElement(metadata, JsonOptions),
+                costs: totalCost),
             Response = new()
             {
                 Timestamp = now,
@@ -152,7 +171,7 @@ public partial class BlackForestLabsProvider
         }
     }
 
-    private async Task<BflResult> SubmitAndPollAsync(
+    private async Task<BflGenerationResult> SubmitAndPollAsync(
         string endpoint,
         Dictionary<string, object?> payload,
         CancellationToken cancellationToken)
@@ -169,11 +188,18 @@ public partial class BlackForestLabsProvider
             throw new InvalidOperationException($"BlackForestLabs submit failed ({(int)submitResp.StatusCode}): {submitRaw}");
 
         using var submitDoc = JsonDocument.Parse(submitRaw);
-        var taskId = submitDoc.RootElement.TryGetString("id")
-                     ?? throw new InvalidOperationException("BlackForestLabs response missing id.");
+        var submitRoot = submitDoc.RootElement.Clone();
+        var taskId = submitRoot.TryGetString("id")
+                      ?? throw new InvalidOperationException("BlackForestLabs response missing id.");
+        var pollingUri = ResolvePollingUri(submitRoot, taskId);
+        var cost = submitRoot.TryGetProperty("cost", out var costElement) &&
+                   costElement.ValueKind == JsonValueKind.Number &&
+                   costElement.TryGetDecimal(out var parsedCost)
+            ? (decimal?)(parsedCost / 100m)
+            : null;
 
         var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollResultAsync(taskId, ct),
+            poll: ct => PollResultAsync(taskId, pollingUri, ct),
             isTerminal: result => IsTerminalStatus(result.Status),
             interval: TimeSpan.FromSeconds(2),
             timeout: TimeSpan.FromMinutes(10),
@@ -181,24 +207,46 @@ public partial class BlackForestLabsProvider
             cancellationToken: cancellationToken);
 
         if (!string.Equals(final.Status, "Ready", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"BlackForestLabs task failed (status={final.Status}, id={taskId}).");
+            throw new InvalidOperationException(
+                $"BlackForestLabs task failed (status={final.Status}, id={taskId}, pollingUrl={pollingUri}): {final.Root.GetRawText()}");
 
-        return final;
+        return new BflGenerationResult(taskId, pollingUri, cost, submitRoot, final.Root);
     }
 
-    private async Task<BflResult> PollResultAsync(string taskId, CancellationToken cancellationToken)
+    private Uri ResolvePollingUri(JsonElement submitRoot, string taskId)
     {
-        var url = $"v1/get_result?id={Uri.EscapeDataString(taskId)}";
-        using var pollResp = await _client.GetAsync(url, cancellationToken);
+        var pollingUrl = submitRoot.TryGetString("polling_url");
+        if (!string.IsNullOrWhiteSpace(pollingUrl))
+        {
+            if (!Uri.TryCreate(pollingUrl, UriKind.Absolute, out var suppliedUri) ||
+                (!string.Equals(suppliedUri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
+                 !string.Equals(suppliedUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException(
+                    $"BlackForestLabs response contained an invalid polling_url for task {taskId}: {pollingUrl}");
+            }
+
+            return suppliedUri;
+        }
+
+        return new Uri(
+            _client.BaseAddress ?? throw new InvalidOperationException("BlackForestLabs client is missing its base address."),
+            $"v1/get_result?id={Uri.EscapeDataString(taskId)}");
+    }
+
+    private async Task<BflPollResult> PollResultAsync(string taskId, Uri pollingUri, CancellationToken cancellationToken)
+    {
+        using var pollResp = await _client.GetAsync(pollingUri, cancellationToken);
         var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
         if (!pollResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"BlackForestLabs polling failed ({(int)pollResp.StatusCode}): {pollRaw}");
+            throw new InvalidOperationException(
+                $"BlackForestLabs polling failed ({(int)pollResp.StatusCode}, id={taskId}, pollingUrl={pollingUri}): {pollRaw}");
 
         using var pollDoc = JsonDocument.Parse(pollRaw);
         var root = pollDoc.RootElement.Clone();
         var status = root.TryGetString("status") ?? "unknown";
 
-        return new BflResult(status, root);
+        return new BflPollResult(status, root);
     }
 
     private static bool IsTerminalStatus(string? status)
