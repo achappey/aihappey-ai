@@ -1,5 +1,6 @@
 using AIHappey.Common.Model.Providers.Ideogram;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -24,12 +25,12 @@ public partial class IdeogramProvider
 
         return model switch
         {
-            "ideogram/ideogram-v3" => RouteV3Async(request, cancellationToken),
-            "ideogram/ideogram-v4" => RouteV4Async(request, cancellationToken),
-            "ideogram/ideogram-v3/generate-transparent" => GenerateTransparentV3Async(request, cancellationToken),
-            "ideogram/ideogram-v3/reframe" => ReframeV3Async(request, cancellationToken),
-            "ideogram/ideogram-v3/replace-background" => ReplaceBackgroundV3Async(request, cancellationToken),
-            "ideogram/upscale" => UpscaleAsync(request, cancellationToken),
+            "ideogram-v3" => RouteV3Async(request, cancellationToken),
+            "ideogram-v4" => RouteV4Async(request, cancellationToken),
+            "ideogram-v3/generate-transparent" => GenerateTransparentV3Async(request, cancellationToken),
+            "ideogram-v3/reframe" => ReframeV3Async(request, cancellationToken),
+            "ideogram-v3/replace-background" => ReplaceBackgroundV3Async(request, cancellationToken),
+            "upscale" => UpscaleAsync(request, cancellationToken),
             _ => throw new NotSupportedException($"Ideogram image model '{model}' is not supported.")
         };
     }
@@ -748,10 +749,12 @@ public partial class IdeogramProvider
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(doc.RootElement.Clone()),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -780,10 +783,12 @@ public partial class IdeogramProvider
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(doc.RootElement.Clone()),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

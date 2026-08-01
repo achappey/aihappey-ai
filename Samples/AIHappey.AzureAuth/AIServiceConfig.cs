@@ -132,7 +132,7 @@ public class AIServiceConfig
     public ProviderConfig? Tavily { get; set; }
     public ProviderConfig? OpenCodeGo { get; set; }
     public ProviderConfig? OpenCodeZen { get; set; }
-    public ProviderConfig? Haimaker { get; set; }   
+    public ProviderConfig? Haimaker { get; set; }
     public ProviderConfig? Monica { get; set; }
     public ProviderConfig? CAMBAI { get; set; }
     public ProviderConfig? Morpheus { get; set; }
@@ -190,9 +190,9 @@ public class AIServiceConfig
     public ProviderConfig? NetMind { get; set; }
     public ProviderConfig? APIyi { get; set; }
     public ProviderConfig? Thaura { get; set; }
-    public ProviderConfig? Modal { get; set; }   
+    public ProviderConfig? Modal { get; set; }
     public ProviderConfig? ModelsLab { get; set; }
-    public ProviderConfig? Hicap { get; set; }   
+    public ProviderConfig? Hicap { get; set; }
     public ProviderConfig? MegaLLM { get; set; }
     public ProviderConfig? Infron { get; set; }
     public ProviderConfig? LongCat { get; set; }
@@ -214,7 +214,7 @@ public class AIServiceConfig
     public ProviderConfig? ReGraph { get; set; }
     public ProviderConfig? ElectronHub { get; set; }
     public ProviderConfig? Dandolo { get; set; }
-    public ProviderConfig? Glio { get; set; }   
+    public ProviderConfig? Glio { get; set; }
     public ProviderConfig? NavyAI { get; set; }
     public ProviderConfig? NEARAI { get; set; }
     public ProviderConfig? Parallel { get; set; }
@@ -232,7 +232,7 @@ public class AIServiceConfig
     public ProviderConfig? Eachlabs { get; set; }
     public ProviderConfig? Valyu { get; set; }
     public ProviderConfig? LaoZhang { get; set; }
-    public ProviderConfig? JiekouAI { get; set; }    
+    public ProviderConfig? JiekouAI { get; set; }
     public ProviderConfig? LiteRouter { get; set; }
     public ProviderConfig? ARWriter { get; set; }
     public ProviderConfig? Qiniu { get; set; }
@@ -250,7 +250,7 @@ public class AIServiceConfig
     public ProviderConfig? SkillBoss { get; set; }
     public ProviderConfig? Nexusify { get; set; }
     public ProviderConfig? LitAI { get; set; }
-    public ProviderConfig? PixCode { get; set; }   
+    public ProviderConfig? PixCode { get; set; }
     public ProviderConfig? AiMo { get; set; }
     public ProviderConfig? TokenLab { get; set; }
     public ProviderConfig? APIPod { get; set; }
@@ -400,7 +400,7 @@ public class AIServiceConfig
     public ProviderConfig? EmberCloud { get; set; }
     public ProviderConfig? Fortytwo { get; set; }
     public ProviderConfig? Oraicle { get; set; }
-    public ProviderConfig? Foureverland { get; set; }    
+    public ProviderConfig? Foureverland { get; set; }
     public ProviderConfig? Key4U { get; set; }
     public ProviderConfig? FiveDock { get; set; }
     public ProviderConfig? Magisterium { get; set; }
@@ -409,19 +409,18 @@ public class AIServiceConfig
     public ProviderConfig? OrbGPU { get; set; }
     public ProviderConfig? OpenGateway { get; set; }
     public ProviderConfig? OmniaKey { get; set; }
-    public ProviderConfig? NebulaBlock { get; set; }
     public ProviderConfig? Nouswise { get; set; }
     public ProviderConfig? Shengsuanyun { get; set; }
     public ProviderConfig? OpenSourceAIHub { get; set; }
     public ProviderConfig? Citadelis { get; set; }
-    public ProviderConfig? Finora { get; set; }    
+    public ProviderConfig? Finora { get; set; }
     public ProviderConfig? GeekAI { get; set; }
     public ProviderConfig? AIMagicx { get; set; }
     public ProviderConfig? Octagon { get; set; }
     public ProviderConfig? Nataris { get; set; }
     public ProviderConfig? TheRouterAI { get; set; }
     public ProviderConfig? GateMind { get; set; }
-    public ProviderConfig? LXG2IT { get; set; }  
+    public ProviderConfig? LXG2IT { get; set; }
     public ProviderConfig? Aichixia { get; set; }
     public ProviderConfig? EuGPT { get; set; }
     public ProviderConfig? TEAI { get; set; }
@@ -473,7 +472,7 @@ public class AIServiceConfig
     public ProviderConfig? Runcrate { get; set; }
     public ProviderConfig? MuleRouter { get; set; }
     public ProviderConfig? Mixlayer { get; set; }
-    public ProviderConfig? AllToken { get; set; }    
+    public ProviderConfig? AllToken { get; set; }
     public ProviderConfig? HelyxAI { get; set; }
     public ProviderConfig? AnyRouter { get; set; }
     public ProviderConfig? Fred { get; set; }
@@ -578,7 +577,7 @@ public class AIServiceConfig
     public ProviderConfig? SUMMA { get; set; }
     public ProviderConfig? MeshAPI { get; set; }
     public ProviderConfig? Foundry { get; set; }
-    
+
 }
 
 public class ProviderConfig
