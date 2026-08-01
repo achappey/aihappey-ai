@@ -1,7 +1,7 @@
 {
   "object": "list",
   "data": [
-    {
+       {
       "id": "friendli/google/gemma-4-31B-it",
       "object": "model",
       "owned_by": "Friendli",
@@ -9,31 +9,17 @@
       "type": "language"
     },
     {
+      "id": "friendli/zai-org/GLM-5.2",
+      "object": "model",
+      "owned_by": "Friendli",
+      "name": "GLM-5.2",
+      "type": "language"
+    },
+    {
       "id": "friendli/zai-org/GLM-5.1",
       "object": "model",
       "owned_by": "Friendli",
       "name": "GLM-5.1",
-      "type": "language"
-    },
-    {
-      "id": "friendli/zai-org/GLM-5",
-      "object": "model",
-      "owned_by": "Friendli",
-      "name": "GLM-5",
-      "type": "language"
-    },
-    {
-      "id": "friendli/meta-llama/Llama-3.3-70B-Instruct",
-      "object": "model",
-      "owned_by": "Friendli",
-      "name": "Llama-3.3-70B-Instruct",
-      "type": "language"
-    },
-    {
-      "id": "friendli/meta-llama/Llama-3.1-8B-Instruct",
-      "object": "model",
-      "owned_by": "Friendli",
-      "name": "Llama-3.1-8B-Instruct",
       "type": "language"
     },
     {
