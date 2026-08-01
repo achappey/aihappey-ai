@@ -35,9 +35,6 @@ public partial class SynexaProvider
         var input = new Dictionary<string, object?>
         {
             ["prompt"] = request.Prompt,
-            ["negative_prompt"] = null,
-            ["num_inference_steps"] = null,
-            ["guidance_scale"] = null
         };
 
         if (!string.IsNullOrWhiteSpace(request.Size))
