@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using System.Globalization;
 
 namespace AIHappey.Core.Providers.Foundry;
 
@@ -52,8 +53,26 @@ public partial class FoundryProvider
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        var modelName = idEl.GetString() ?? "";
+
+                        // MAI-Image-2.5-Flash-2026-06-02
+                        // becomes:
+                        // MAI-Image-2.5-Flash
+                        if (modelName.StartsWith("MAI-", StringComparison.OrdinalIgnoreCase)
+                            && modelName.Length > 11
+                            && modelName[^11] == '-'
+                            && DateOnly.TryParseExact(
+                                modelName.AsSpan(modelName.Length - 10),
+                                "yyyy-MM-dd",
+                                CultureInfo.InvariantCulture,
+                                DateTimeStyles.None,
+                                out _))
+                        {
+                            modelName = modelName[..^11];
+                        }
+
+                        model.Id = modelName.ToModelId(GetIdentifier());
+                        model.Name = modelName;
                     }
 
                     model.Created = el.TryGetProperty("created_at", out var v) &&

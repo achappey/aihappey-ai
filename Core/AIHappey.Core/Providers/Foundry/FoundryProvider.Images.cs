@@ -224,7 +224,8 @@ public partial class FoundryProvider
 
         ApplyAuthHeader();
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
-            isMaiModel ? FoundryMaiImageEditEndpoint : FoundryImageEditEndpoint) { Content = form };
+            isMaiModel ? FoundryMaiImageEditEndpoint : FoundryImageEditEndpoint)
+        { Content = form };
         return await FoundrySendImageRequestAsync(httpRequest, "edit", cancellationToken);
     }
 
@@ -273,7 +274,8 @@ public partial class FoundryProvider
         }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
-            isMaiModel ? FoundryMaiImageEditEndpoint : FoundryImageEditEndpoint) { Content = form };
+            isMaiModel ? FoundryMaiImageEditEndpoint : FoundryImageEditEndpoint)
+        { Content = form };
         return await FoundrySendImageRequestAsync(httpRequest, "edit", cancellationToken);
     }
 
