@@ -7,13 +7,9 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Core.Extensions;
-using AIHappey.Common.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
-using System.Text;
 using System.Text.Json;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OneInfer;
 
@@ -25,6 +21,10 @@ public partial class OneInferProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
+    private readonly SemaphoreSlim _tokenLock = new(1, 1);
+    private string? _accessToken;
+    private string? _accessTokenApiKey;
+
     public OneInferProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
@@ -34,19 +34,52 @@ public partial class OneInferProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.oneinfer.ai/");
     }
 
-    private void ApplyAuthHeader()
+    private async Task ApplyAuthHeaderAsync(CancellationToken cancellationToken = default)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(OneInfer)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        if (!string.Equals(_accessTokenApiKey, key, StringComparison.Ordinal) || string.IsNullOrWhiteSpace(_accessToken))
+        {
+            await _tokenLock.WaitAsync(cancellationToken);
+            try
+            {
+                if (!string.Equals(_accessTokenApiKey, key, StringComparison.Ordinal) || string.IsNullOrWhiteSpace(_accessToken))
+                {
+                    using var request = new HttpRequestMessage(
+                        HttpMethod.Post,
+                        $"v1/ula/oauth-authentication?api_key={Uri.EscapeDataString(key)}");
+                    using var response = await _client.SendAsync(request, cancellationToken);
+                    var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                    if (!response.IsSuccessStatusCode)
+                        throw new InvalidOperationException($"OneInfer authentication failed ({(int)response.StatusCode}): {raw}");
+
+                    using var document = JsonDocument.Parse(raw);
+                    if (!document.RootElement.TryGetProperty("access_token", out var tokenElement)
+                        || string.IsNullOrWhiteSpace(tokenElement.GetString()))
+                    {
+                        throw new InvalidOperationException("OneInfer authentication response contained no access_token.");
+                    }
+
+                    _accessToken = tokenElement.GetString();
+                    _accessTokenApiKey = key;
+                }
+            }
+            finally
+            {
+                _tokenLock.Release();
+            }
+        }
+
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        await ApplyAuthHeaderAsync(cancellationToken);
 
         return await this.GetChatCompletion(_client,
              options,
@@ -54,122 +87,19 @@ public partial class OneInferProvider : IModelProvider
              cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        await ApplyAuthHeaderAsync(cancellationToken);
 
-        return this.GetChatCompletions(_client,
+        await foreach (var update in this.GetChatCompletions(_client,
                     options,
                     relativeUrl: "v1/ula/chat/completions",
-                    cancellationToken: cancellationToken);
+                    cancellationToken: cancellationToken))
+            yield return update;
     }
 
     public string GetIdentifier() => nameof(OneInfer).ToLowerInvariant();
-
-    
-
-
-    public async Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.Model))
-            throw new ArgumentException("Model is required.", nameof(request));
-        if (string.IsNullOrWhiteSpace(request.MediaType))
-            throw new ArgumentException("MediaType is required.", nameof(request));
-
-        var audioString = request.Audio switch
-        {
-            JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
-            _ => request.Audio?.ToString()
-        };
-
-        if (string.IsNullOrWhiteSpace(audioString))
-            throw new ArgumentException("Audio is required.", nameof(request));
-
-        var audioBytes = Convert.FromBase64String(audioString.RemoveDataUrlPrefix());
-        var fileName = "audio" + request.MediaType.GetAudioExtension();
-        var now = DateTime.UtcNow;
-        var warnings = new List<object>();
-        var metadata = GetOneInferProviderOptions(request.ProviderOptions);
-        var requestFields = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["model"] = request.Model,
-            ["file"] = new
-            {
-                fileName,
-                mediaType = request.MediaType,
-                bytes = audioBytes.LongLength
-            }
-        };
-
-        using var form = new MultipartFormDataContent();
-        var file = new ByteArrayContent(audioBytes);
-        file.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
-
-        form.Add(file, "file", fileName);
-        form.Add(new StringContent(request.Model, Encoding.UTF8), "model");
-        AddOneInferMultipartMetadata(form, metadata, requestFields, "file", "model");
-
-        using var response = await _client.PostAsync("v1/ula/generate-audio", form, cancellationToken);
-        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"OneInfer transcription failed ({(int)response.StatusCode}): {raw}");
-
-        if (!TryParseOneInferJson(raw, out var document))
-        {
-            return new TranscriptionResponse
-            {
-                Text = raw,
-                Warnings = warnings,
-                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
-                Response = new ResponseData
-                {
-                    Timestamp = now,
-                    Headers = response.GetHeaders(),
-                    ModelId = request.Model.ToModelId(GetIdentifier()),
-                    Body = raw
-                },
-                Request = new TranscriptionRequestItem
-                {
-                    Body = JsonSerializer.Serialize(requestFields, OneInferJsonOptions)
-                }
-            };
-        }
-
-        using (document)
-        {
-            var root = document.RootElement.Clone();
-            var data = OneInferGetData(root);
-            var text = OneInferTryGetString(data, "text", "transcript") ?? string.Empty;
-            var language = OneInferTryGetString(data, "language") ?? OneInferTryGetString(metadata, "language");
-
-            return new TranscriptionResponse
-            {
-                Text = text,
-                Language = language,
-                DurationInSeconds = OneInferTryGetFloat(data, "duration", "durationInSeconds", "duration_seconds"),
-                Segments = ParseOneInferTranscriptionSegments(data),
-                Warnings = warnings,
-                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
-                Response = new ResponseData
-                {
-                    Timestamp = ReadOneInferUnixTimestamp(data, "created") ?? now,
-                    Headers = response.GetHeaders(),
-                    ModelId = request.Model.ToModelId(GetIdentifier()),
-                    Body = root
-                },
-                Request = new TranscriptionRequestItem
-                {
-                    Body = JsonSerializer.Serialize(requestFields, OneInferJsonOptions)
-                }
-            };
-        }
-    }
-
-  
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -200,7 +130,7 @@ public partial class OneInferProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
- 
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -233,45 +163,4 @@ public partial class OneInferProvider : IModelProvider
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    
-
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

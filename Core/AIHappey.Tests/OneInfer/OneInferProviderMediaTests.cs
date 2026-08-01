@@ -281,11 +281,45 @@ public sealed class OneInferProviderMediaTests
 
     private static OneInferProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {
-        var handler = new StaticResponseHttpMessageHandler(responder);
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post
+                && request.RequestUri?.AbsolutePath == "/v1/ula/oauth-authentication")
+            {
+                return JsonResponse(new { access_token = "test-access-token" });
+            }
+
+            return responder(request);
+        });
         var httpClientFactory = new StaticHttpClientFactory(new HttpClient(handler));
         var cache = new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions()));
 
         return new OneInferProvider(new StaticApiKeyResolver(), cache, httpClientFactory);
+    }
+
+    [Fact]
+    public async Task Inference_exchanges_api_key_once_and_uses_access_token()
+    {
+        var requests = new List<HttpRequestMessage>();
+        var provider = CreateProvider(request =>
+        {
+            requests.Add(CloneRequest(request));
+            return JsonResponse(new
+            {
+                data = new
+                {
+                    audios = new[] { new { base64_data = "YXVkaW8=", format = "mp3", mime_type = "audio/mpeg" } }
+                }
+            });
+        });
+
+        var input = new SpeechRequest { Model = "bulbul:v3", Text = "Hello", OutputFormat = "mp3" };
+        await provider.SpeechRequest(input);
+        await provider.SpeechRequest(input);
+
+        Assert.Equal(2, requests.Count);
+        Assert.All(requests, request => Assert.Equal("Bearer", request.Headers.Authorization?.Scheme));
+        Assert.All(requests, request => Assert.Equal("test-access-token", request.Headers.Authorization?.Parameter));
     }
 
     private static Dictionary<string, JsonElement> ProviderOptions(object metadata)

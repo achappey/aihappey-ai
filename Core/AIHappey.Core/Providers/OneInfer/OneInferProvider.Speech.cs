@@ -1,19 +1,39 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.OneInfer;
 
 public partial class OneInferProvider
 {
+
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        return response.ToOpenAISpeechAudio();
+    }
+
+    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        foreach (var streamEvent in response.ToOpenAISpeechStreamEvents())
+            yield return streamEvent;
+    }
+
+
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        await ApplyAuthHeaderAsync(cancellationToken);
 
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))

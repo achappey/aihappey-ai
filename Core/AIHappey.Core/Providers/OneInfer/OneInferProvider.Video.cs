@@ -13,7 +13,7 @@ public partial class OneInferProvider
 {
     public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        await ApplyAuthHeaderAsync(cancellationToken);
 
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))

@@ -1,19 +1,50 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.OneInfer;
 
 public partial class OneInferProvider
 {
+
+
+    public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        var response = await ImageRequest(options.ToImageRequest(options.Model, GetIdentifier()), cancellationToken);
+        return response.ToOpenAIImagesResponse(options);
+    }
+
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        var response = await ImageRequest(options.ToImageRequest(options.Model, GetIdentifier()), cancellationToken);
+        foreach (var streamEvent in response.ToOpenAIImageGenerationCompletedEvents(options))
+            yield return streamEvent;
+    }
+
+    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("OneInfer does not document an image edit endpoint.");
+    }
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException("OneInfer does not document an image edit endpoint.");
+    }
+
+
     public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        await ApplyAuthHeaderAsync(cancellationToken);
 
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
