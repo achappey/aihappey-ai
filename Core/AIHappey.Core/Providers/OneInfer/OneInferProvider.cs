@@ -46,25 +46,36 @@ public partial class OneInferProvider : IModelProvider
             await _tokenLock.WaitAsync(cancellationToken);
             try
             {
-                if (!string.Equals(_accessTokenApiKey, key, StringComparison.Ordinal) || string.IsNullOrWhiteSpace(_accessToken))
+                if (!string.Equals(_accessTokenApiKey, key, StringComparison.Ordinal)
+                        || string.IsNullOrWhiteSpace(_accessToken))
                 {
                     using var request = new HttpRequestMessage(
                         HttpMethod.Post,
                         $"v1/ula/oauth-authentication?api_key={Uri.EscapeDataString(key)}");
+
                     using var response = await _client.SendAsync(request, cancellationToken);
                     var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
                     if (!response.IsSuccessStatusCode)
-                        throw new InvalidOperationException($"OneInfer authentication failed ({(int)response.StatusCode}): {raw}");
-
-                    using var document = JsonDocument.Parse(raw);
-                    if (!document.RootElement.TryGetProperty("access_token", out var tokenElement)
-                        || string.IsNullOrWhiteSpace(tokenElement.GetString()))
                     {
-                        throw new InvalidOperationException("OneInfer authentication response contained no access_token.");
+                        throw new InvalidOperationException(
+                            $"OneInfer authentication failed ({(int)response.StatusCode}): {raw}");
                     }
 
-                    _accessToken = tokenElement.GetString();
+                    using var document = JsonDocument.Parse(raw);
+                    var root = document.RootElement;
+
+                    if (!root.TryGetProperty("data", out var dataElement)
+                        || dataElement.ValueKind != JsonValueKind.Object
+                        || !dataElement.TryGetProperty("access_token", out var tokenElement)
+                        || tokenElement.ValueKind != JsonValueKind.String
+                        || string.IsNullOrWhiteSpace(tokenElement.GetString()))
+                    {
+                        throw new InvalidOperationException(
+                            $"OneInfer authentication response contained no access_token: {raw}");
+                    }
+
+                    _accessToken = tokenElement.GetString()!;
                     _accessTokenApiKey = key;
                 }
             }

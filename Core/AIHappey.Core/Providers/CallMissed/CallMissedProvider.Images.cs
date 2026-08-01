@@ -103,10 +103,7 @@ public partial class CallMissedProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(root.Clone())
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
