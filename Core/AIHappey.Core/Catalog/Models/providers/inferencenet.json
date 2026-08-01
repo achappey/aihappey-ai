@@ -2,48 +2,301 @@
   "object": "list",
   "data": [
     {
-      "id": "inferencenet/meta-llama/llama-3.1-8b-instruct/fp-8",
-      "object": "model",
-      "owned_by": "Meta",
-      "name": "llama-3.1-8b-instruct/fp-8",
-      "type": "language",
-      "description": "Llama 3.1 8B Instruct (FP8)"
-    },
-    {
-      "id": "inferencenet/inference-net/schematron-3b",
+      "id": "inferencenet/inference-net/schematron-v2-small",
       "object": "model",
       "owned_by": "Inference.net",
-      "name": "Schematron 3B",
+      "name": "Schematron V2 Small",
       "type": "language",
-      "description": "Schematron-3B is a state-of-the-art large language model designed for reasoning and complex problem-solving tasks, with a focus on accuracy and efficiency in various domains, offering advanced capabilities for structured output generation and complex reasoning.",
+      "description": "Schematron V2 Small is an efficient text-generation model by InferenceNet with support for JSON and structured outputs.",
       "context_window": 125000
     },
     {
-      "id": "inferencenet/inference-net/schematron-8b",
+      "id": "inferencenet/inference-net/schematron-v2-turbo",
       "object": "model",
       "owned_by": "Inference.net",
-      "name": "Schematron 8B",
+      "name": "Schematron V2 Turbo",
       "type": "language",
-      "description": "Schematron-8B is a state-of-the-art large language model designed for reasoning and complex problem-solving tasks, with a focus on accuracy and efficiency in various domains, offering advanced capabilities for structured output generation and complex reasoning.",
+      "description": "Schematron V2 Turbo is a fast and cost-efficient text-generation model by InferenceNet with support for JSON and structured outputs.",
       "context_window": 125000
     },
     {
-      "id": "inferencenet/google/gemma-3-27b-instruct/bf-16",
+      "id": "inferencenet/glm-5.2",
+      "object": "model",
+      "owned_by": "Z.ai",
+      "name": "GLM-5.2",
+      "type": "language",
+      "description": "GLM-5.2 is a text-to-text language model by Z.ai with a large context window and support for long-form generation.",
+      "context_window": 195000
+    },
+    {
+      "id": "inferencenet/nvidia/nemotron3-super",
+      "object": "model",
+      "owned_by": "NVIDIA",
+      "name": "Nemotron 3 Super",
+      "type": "language",
+      "description": "Nemotron 3 Super is a large-context text-generation model by NVIDIA with support for tools, JSON, and structured outputs.",
+      "context_window": 1000000
+    },
+    {
+      "id": "inferencenet/claude-haiku-4-5",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude Haiku 4.5",
+      "type": "language",
+      "description": "Claude Haiku 4.5 is a multimodal language model by Anthropic supporting text and image input, tool use, and text generation.",
+      "context_window": 195000
+    },
+    {
+      "id": "inferencenet/claude-opus-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude Opus 4.6",
+      "type": "language",
+      "description": "Claude Opus 4.6 is a multimodal language model by Anthropic supporting text and image input, tool use, and long-context generation.",
+      "context_window": 977000
+    },
+    {
+      "id": "inferencenet/claude-opus-4-7",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude Opus 4.7",
+      "type": "language",
+      "description": "Claude Opus 4.7 is a multimodal language model by Anthropic supporting text and image input, tool use, and long-context generation.",
+      "context_window": 977000
+    },
+    {
+      "id": "inferencenet/claude-opus-4-8",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude Opus 4.8",
+      "type": "language",
+      "description": "Claude Opus 4.8 is a multimodal language model by Anthropic supporting text and image input, tool use, and long-context generation.",
+      "context_window": 977000
+    },
+    {
+      "id": "inferencenet/claude-opus-5",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude Opus 5",
+      "type": "language",
+      "description": "Claude Opus 5 is a multimodal language model by Anthropic supporting text and image input, tool use, and long-context generation.",
+      "context_window": 977000
+    },
+    {
+      "id": "inferencenet/claude-sonnet-4-6",
+      "object": "model",
+      "owned_by": "Anthropic",
+      "name": "Claude Sonnet 4.6",
+      "type": "language",
+      "description": "Claude Sonnet 4.6 is a multimodal language model by Anthropic supporting text and image input, tool use, and long-context generation.",
+      "context_window": 977000
+    },
+    {
+      "id": "inferencenet/gemini-2.5-flash",
       "object": "model",
       "owned_by": "Google",
-      "name": "Google Gemma 3",
+      "name": "Gemini 2.5 Flash",
       "type": "language",
-      "description": "Gemma 3 is a versatile, lightweight, multimodal open-source model family by Google DeepMind, primed for text and image processing and text generation, supporting over 140 languages with a 128K context window, designed for easy deployment in resource-constrained environments.",
+      "description": "Gemini 2.5 Flash is a multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-2.5-flash-lite",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 2.5 Flash Lite",
+      "type": "language",
+      "description": "Gemini 2.5 Flash Lite is an efficient multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-2.5-pro",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 2.5 Pro",
+      "type": "language",
+      "description": "Gemini 2.5 Pro is a multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-3-flash-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 3 Flash Preview",
+      "type": "language",
+      "description": "Gemini 3 Flash Preview is a multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-3.1-flash-lite",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 3.1 Flash Lite",
+      "type": "language",
+      "description": "Gemini 3.1 Flash Lite is an efficient multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-3.1-pro-preview",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 3.1 Pro Preview",
+      "type": "language",
+      "description": "Gemini 3.1 Pro Preview is a multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-3.5-flash",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 3.5 Flash",
+      "type": "language",
+      "description": "Gemini 3.5 Flash is a multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-3.5-flash-lite",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 3.5 Flash-Lite",
+      "type": "language",
+      "description": "Gemini 3.5 Flash-Lite is an efficient multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gemini-3.6-flash",
+      "object": "model",
+      "owned_by": "Google",
+      "name": "Gemini 3.6 Flash",
+      "type": "language",
+      "description": "Gemini 3.6 Flash is a multimodal language model by Google supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
+    },
+    {
+      "id": "inferencenet/gpt-4.1",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4.1",
+      "type": "language",
+      "description": "GPT-4.1 is a multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1023000
+    },
+    {
+      "id": "inferencenet/gpt-4.1-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4.1 Mini",
+      "type": "language",
+      "description": "GPT-4.1 Mini is an efficient multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1023000
+    },
+    {
+      "id": "inferencenet/gpt-4.1-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4.1 Nano",
+      "type": "language",
+      "description": "GPT-4.1 Nano is a compact multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1023000
+    },
+    {
+      "id": "inferencenet/gpt-4o",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-4o",
+      "type": "language",
+      "description": "GPT-4o is a multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
       "context_window": 125000
     },
     {
-      "id": "inferencenet/inference-net/cliptagger-12b",
+      "id": "inferencenet/gpt-4o-mini",
       "object": "model",
-      "owned_by": "Inference.net",
-      "name": "ClipTagger 12B",
+      "owned_by": "OpenAI",
+      "name": "GPT-4o Mini",
       "type": "language",
-      "description": "ClipTagger-12b is a highly efficient, open-source 12-billion parameter vision-language model designed for scalable video understanding, providing frontier-quality performance through schema-consistent JSON outputs for video frames at a fraction of the cost of leading closed-source models.",
-      "context_window": 8000
+      "description": "GPT-4o Mini is an efficient multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 125000
+    },
+    {
+      "id": "inferencenet/gpt-5-mini",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5 Mini",
+      "type": "language",
+      "description": "GPT-5 Mini is a multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 391000
+    },
+    {
+      "id": "inferencenet/gpt-5-nano",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5 Nano",
+      "type": "language",
+      "description": "GPT-5 Nano is a compact multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 391000
+    },
+    {
+      "id": "inferencenet/gpt-5.4",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5.4",
+      "type": "language",
+      "description": "GPT-5.4 is a long-context multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1025000
+    },
+    {
+      "id": "inferencenet/gpt-5.5",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5.5",
+      "type": "language",
+      "description": "GPT-5.5 is a long-context multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1025000
+    },
+    {
+      "id": "inferencenet/gpt-5.6-luna",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5.6 Luna",
+      "type": "language",
+      "description": "GPT-5.6 Luna is an efficient long-context multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1025000
+    },
+    {
+      "id": "inferencenet/gpt-5.6-sol",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5.6 Sol",
+      "type": "language",
+      "description": "GPT-5.6 Sol is a long-context multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1025000
+    },
+    {
+      "id": "inferencenet/gpt-5.6-terra",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "GPT-5.6 Terra",
+      "type": "language",
+      "description": "GPT-5.6 Terra is a long-context multimodal language model by OpenAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1025000
+    },
+    {
+      "id": "inferencenet/grok-4.5",
+      "object": "model",
+      "owned_by": "xAI",
+      "name": "Grok 4.5",
+      "type": "language",
+      "description": "Grok 4.5 is a multimodal reasoning model by xAI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 488000
+    },
+    {
+      "id": "inferencenet/kimi-k3",
+      "object": "model",
+      "owned_by": "Moonshot AI",
+      "name": "Kimi K3",
+      "type": "language",
+      "description": "Kimi K3 is a long-context multimodal reasoning model by Moonshot AI supporting tools, JSON, structured outputs, and text and image input.",
+      "context_window": 1024000
     }
   ]
 }
