@@ -5,6 +5,7 @@ using AIHappey.Vercel.Extensions;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.AlphaNeural;
 
@@ -46,9 +47,11 @@ public partial class AlphaNeuralProvider
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };

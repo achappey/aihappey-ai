@@ -137,6 +137,7 @@ public partial class InfomaniakProvider
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(doc.RootElement.Clone()),
             Response = new ()
             {
                 Timestamp = now,
