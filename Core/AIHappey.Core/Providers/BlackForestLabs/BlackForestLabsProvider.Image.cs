@@ -35,8 +35,8 @@ public partial class BlackForestLabsProvider
             throw new ArgumentException("Model is required.", nameof(request));
 
         var model = request.Model.Trim().ToLowerInvariant();
-        if (!IsFlux2Model(model))
-            throw new NotSupportedException($"BlackForestLabs image model '{request.Model}' is not supported. Only FLUX.2 models are available.");
+        if (!IsSupportedImageModel(model))
+            throw new NotSupportedException($"BlackForestLabs image model '{request.Model}' is not supported.");
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
@@ -45,13 +45,15 @@ public partial class BlackForestLabsProvider
         if (imageCount < 1)
             throw new ArgumentOutOfRangeException(nameof(request.N), "n must be greater than zero.");
 
-        if (request.Mask is not null)
+        if (request.Mask is not null && !IsEraseModel(model))
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        if (string.IsNullOrWhiteSpace(request.Prompt))
+        if (IsFlux2Model(model) && string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var payload = BuildPayload(request, model, warnings);
+        var payload = IsFluxToolModel(model)
+            ? BuildFluxToolPayload(request, model)
+            : BuildPayload(request, model, warnings);
         MergeProviderOptions(payload, request);
 
         var endpoint = ResolveEndpoint(model);
@@ -127,6 +129,46 @@ public partial class BlackForestLabsProvider
 
         var maxImages = IsFlux2KleinModel(model) ? 4 : 8;
         AddInputImages(payload, request.Files, warnings, maxImages);
+        return payload;
+    }
+
+    private static Dictionary<string, object?> BuildFluxToolPayload(ImageRequest request, string model)
+    {
+        var source = request.Files?.FirstOrDefault()
+            ?? throw new ArgumentException($"An input image is required for '{model}'.", nameof(request));
+        var payload = new Dictionary<string, object?>();
+
+        if (IsOutpaintingModel(model))
+        {
+            var normalizedSize = request.Size?.Replace(":", "x", StringComparison.OrdinalIgnoreCase);
+            (int? width, int? height) dimensions = string.IsNullOrWhiteSpace(normalizedSize)
+                ? (null, null)
+                : (new ImageRequest { Size = normalizedSize }.GetImageWidth(),
+                    new ImageRequest { Size = normalizedSize }.GetImageHeight());
+
+            if (dimensions.width is null || dimensions.height is null)
+                throw new ArgumentException("A valid size containing width and height is required for outpainting.", nameof(request));
+
+            payload["input_image"] = NormalizeImageData(source);
+            payload["width"] = dimensions.width;
+            payload["height"] = dimensions.height;
+            if (!string.IsNullOrWhiteSpace(request.Prompt))
+                payload["prompt"] = request.Prompt;
+        }
+        else
+        {
+            payload["image"] = NormalizeImageData(source);
+            if (IsEraseModel(model))
+            {
+                var mask = request.Mask
+                    ?? throw new ArgumentException("A mask is required for erase.", nameof(request));
+                payload["mask"] = NormalizeImageData(mask);
+            }
+        }
+
+        if (request.Seed is not null && !IsOutpaintingModel(model))
+            payload["seed"] = request.Seed;
+
         return payload;
     }
 
@@ -356,8 +398,23 @@ public partial class BlackForestLabsProvider
             "flux-2-pro" => "v1/flux-2-pro",
             "flux-2-pro-preview" => "v1/flux-2-pro-preview",
             "flux-2-flex" => "v1/flux-2-flex",
+            "flux-tools/outpainting-v1" => "v1/flux-tools/outpainting-v1",
+            "flux-tools/erase-v1" => "v1/flux-tools/erase-v1",
+            "flux-tools/deblur-v1" => "v1/flux-tools/deblur-v1",
             _ => throw new NotSupportedException($"BlackForestLabs image model '{model}' is not supported.")
         };
+
+    private static bool IsSupportedImageModel(string model)
+        => IsFlux2Model(model) || IsFluxToolModel(model);
+
+    private static bool IsFluxToolModel(string model)
+        => model is "flux-tools/outpainting-v1" or "flux-tools/erase-v1" or "flux-tools/deblur-v1";
+
+    private static bool IsOutpaintingModel(string model)
+        => model is "flux-tools/outpainting-v1";
+
+    private static bool IsEraseModel(string model)
+        => model is "flux-tools/erase-v1";
 
     private static bool IsFlux2Model(string model)
         => model is "flux-2-max"

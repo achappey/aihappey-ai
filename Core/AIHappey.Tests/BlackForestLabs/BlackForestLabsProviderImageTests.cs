@@ -78,6 +78,89 @@ public sealed class BlackForestLabsProviderImageTests
         Assert.Equal("https://api.bfl.ai/v1/get_result?id=fallback-task", pollUri?.AbsoluteUri);
     }
 
+    [Theory]
+    [InlineData("flux-tools/outpainting-v1", "/v1/flux-tools/outpainting-v1")]
+    [InlineData("flux-tools/erase-v1", "/v1/flux-tools/erase-v1")]
+    [InlineData("flux-tools/deblur-v1", "/v1/flux-tools/deblur-v1")]
+    public async Task ImageRequest_RoutesFluxToolsAndMapsSpecializedPayloads(string model, string expectedPath)
+    {
+        Uri? submitUri = null;
+        JsonElement payload = default;
+        var provider = CreateProvider(request =>
+        {
+            if (request.Method == HttpMethod.Post)
+            {
+                submitUri = request.RequestUri;
+                payload = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
+                return Json(HttpStatusCode.OK, """{"id":"tool-task"}""");
+            }
+
+            return Json(HttpStatusCode.OK,
+                """{"id":"tool-task","status":"Ready","result":{"sample":"data:image/png;base64,AQID"}}""");
+        });
+
+        var request = new ImageRequest
+        {
+            Model = model,
+            Prompt = model.EndsWith("outpainting-v1", StringComparison.Ordinal) ? "Extend the sky" : null!,
+            Size = "1024x768",
+            Seed = 42,
+            Files = [new ImageFile { MediaType = "image/png", Data = "data:image/png;base64,SOURCE" }],
+            Mask = model.EndsWith("erase-v1", StringComparison.Ordinal)
+                ? new ImageFile { MediaType = "image/png", Data = "data:image/png;base64,MASK" }
+                : null,
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["blackforestlabs"] = JsonSerializer.SerializeToElement(new { output_format = "webp", safety_tolerance = 3 })
+            }
+        };
+
+        await provider.ImageRequest(request);
+
+        Assert.Equal(expectedPath, submitUri?.AbsolutePath);
+        Assert.Equal("webp", payload.GetProperty("output_format").GetString());
+        Assert.Equal(3, payload.GetProperty("safety_tolerance").GetInt32());
+
+        if (model.EndsWith("outpainting-v1", StringComparison.Ordinal))
+        {
+            Assert.Equal("SOURCE", payload.GetProperty("input_image").GetString());
+            Assert.Equal(1024, payload.GetProperty("width").GetInt32());
+            Assert.Equal(768, payload.GetProperty("height").GetInt32());
+            Assert.Equal("Extend the sky", payload.GetProperty("prompt").GetString());
+            Assert.False(payload.TryGetProperty("seed", out _));
+        }
+        else
+        {
+            Assert.Equal("SOURCE", payload.GetProperty("image").GetString());
+            Assert.Equal(42, payload.GetProperty("seed").GetInt32());
+            Assert.False(payload.TryGetProperty("prompt", out _));
+            if (model.EndsWith("erase-v1", StringComparison.Ordinal))
+                Assert.Equal("MASK", payload.GetProperty("mask").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task ImageRequest_ValidatesFluxToolRequiredInputs()
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));
+        var source = new ImageFile { MediaType = "image/png", Data = "SOURCE" };
+
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.ImageRequest(new ImageRequest
+        {
+            Model = "flux-tools/deblur-v1"
+        }));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.ImageRequest(new ImageRequest
+        {
+            Model = "flux-tools/erase-v1",
+            Files = [source]
+        }));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.ImageRequest(new ImageRequest
+        {
+            Model = "flux-tools/outpainting-v1",
+            Files = [source]
+        }));
+    }
+
     private static BlackForestLabsProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => new(new StaticApiKeyResolver(), new StaticHttpClientFactory(
             new HttpClient(new StaticResponseHttpMessageHandler(responder))));
