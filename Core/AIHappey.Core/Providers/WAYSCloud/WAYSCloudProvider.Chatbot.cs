@@ -89,20 +89,31 @@ public partial class WAYSCloudProvider
             throw new InvalidOperationException($"WAYSCloud chatbot stream failed ({(int)resp.StatusCode}): {rawError}");
         }
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        await using var stream =
+       await resp.Content.ReadAsStreamAsync(cancellationToken);
+
         using var reader = new StreamReader(stream);
 
-        while (!reader.EndOfStream)
+        while (true)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             var line = await reader.ReadLineAsync(cancellationToken);
-            if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+
+            if (line is null)
+                break;
+
+            if (string.IsNullOrWhiteSpace(line)
+                || !line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
                 continue;
+            }
 
             var data = line[5..].Trim();
+
             if (string.IsNullOrWhiteSpace(data))
                 continue;
+
+            if (data.Equals("[DONE]", StringComparison.OrdinalIgnoreCase))
+                break;
 
             using var eventDoc = JsonDocument.Parse(data);
             var root = eventDoc.RootElement;
