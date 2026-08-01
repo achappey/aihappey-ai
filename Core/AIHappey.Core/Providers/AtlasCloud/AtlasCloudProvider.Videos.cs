@@ -12,7 +12,7 @@ namespace AIHappey.Core.Providers.AtlasCloud;
 public partial class AtlasCloudProvider
 {
     private const string AtlasCloudGenerateVideoEndpoint = "https://api.atlascloud.ai/api/v1/model/generateVideo";
-    private const string AtlasCloudVideoResultEndpointBase = "https://api.atlascloud.ai/api/v1/model/result/";
+    private const string AtlasCloudVideoResultEndpointBase = "https://api.atlascloud.ai/api/v1/model/prediction/";
     private const string DefaultVideoMimeType = "video/mp4";
 
     private static readonly JsonSerializerOptions AtlasCloudVideoJson = new(JsonSerializerDefaults.Web)
@@ -89,17 +89,11 @@ public partial class AtlasCloudProvider
         if (videos.Count == 0)
             throw new InvalidOperationException("AtlasCloud video task completed but returned no videos.");
 
-        Dictionary<string, JsonElement>? providerMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new Dictionary<string, JsonElement>
-        {
-            ["create"] = createTask.Root.Clone(),
-            ["result"] = finalTask.Root.Clone()
-        });
-
         return new VideoResponse
         {
             Videos = videos,
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = ResolveTimestamp(finalTask.Root, now),
@@ -126,21 +120,37 @@ public partial class AtlasCloudProvider
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement.Clone();
 
-        var id = root.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
-            ? idEl.GetString()
-            : null;
+        var source = root.TryGetProperty("data", out var dataEl)
+            && dataEl.ValueKind == JsonValueKind.Object
+                ? dataEl
+                : root;
 
-        var status = root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String
-            ? statusEl.GetString()
-            : null;
+        var id = source.TryGetProperty("id", out var idEl)
+            && idEl.ValueKind == JsonValueKind.String
+                ? idEl.GetString()
+                : null;
+
+        var status = source.TryGetProperty("status", out var statusEl)
+            && statusEl.ValueKind == JsonValueKind.String
+                ? statusEl.GetString()
+                : null;
 
         return new AtlasCloudVideoTaskResult(id, status, root);
     }
 
     private async Task<List<VideoResponseFile>> ExtractVideosAsync(JsonElement root, CancellationToken cancellationToken)
     {
-        if (!root.TryGetProperty("outputs", out var outputsEl) || outputsEl.ValueKind != JsonValueKind.Array)
+        var source = root.TryGetProperty("data", out var dataEl)
+           && dataEl.ValueKind == JsonValueKind.Object
+               ? dataEl
+               : root;
+
+        if (!source.TryGetProperty("outputs", out var outputsEl)
+            || outputsEl.ValueKind != JsonValueKind.Array)
+        {
             return [];
+        }
+
 
         List<VideoResponseFile> videos = [];
         foreach (var output in outputsEl.EnumerateArray())

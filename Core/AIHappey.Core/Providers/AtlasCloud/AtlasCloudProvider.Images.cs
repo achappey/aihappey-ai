@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.AtlasCloud;
@@ -11,7 +12,7 @@ namespace AIHappey.Core.Providers.AtlasCloud;
 public partial class AtlasCloudProvider
 {
     private const string AtlasCloudGenerateImageEndpoint = "https://api.atlascloud.ai/api/v1/model/generateImage";
-    private const string AtlasCloudImageResultEndpointBase = "https://api.atlascloud.ai/api/v1/model/result/";
+    private const string AtlasCloudImageResultEndpointBase = "https://api.atlascloud.ai/api/v1/model/prediction/";
     private const string DefaultOutputMimeType = MediaTypeNames.Image.Png;
 
     private static readonly JsonSerializerOptions AtlasCloudImageJson = new(JsonSerializerDefaults.Web)
@@ -95,6 +96,7 @@ public partial class AtlasCloudProvider
         {
             Images = images,
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = ResolveTimestamp(task.Root, now),
@@ -121,13 +123,20 @@ public partial class AtlasCloudProvider
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement.Clone();
 
-        var id = root.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
-            ? idEl.GetString()
-            : null;
+        var source = root.TryGetProperty("data", out var dataEl)
+            && dataEl.ValueKind == JsonValueKind.Object
+                ? dataEl
+                : root;
 
-        var status = root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String
-            ? statusEl.GetString()
-            : null;
+        var id = source.TryGetProperty("id", out var idEl)
+            && idEl.ValueKind == JsonValueKind.String
+                ? idEl.GetString()
+                : null;
+
+        var status = source.TryGetProperty("status", out var statusEl)
+            && statusEl.ValueKind == JsonValueKind.String
+                ? statusEl.GetString()
+                : null;
 
         return new AtlasCloudImageTaskResult(id, status, root);
     }
@@ -137,14 +146,29 @@ public partial class AtlasCloudProvider
            || string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasOutputs(JsonElement root)
-        => root.TryGetProperty("outputs", out var outputsEl)
-           && outputsEl.ValueKind == JsonValueKind.Array
-           && outputsEl.GetArrayLength() > 0;
+    {
+        var source = root.TryGetProperty("data", out var dataEl)
+            && dataEl.ValueKind == JsonValueKind.Object
+                ? dataEl
+                : root;
+
+        return source.TryGetProperty("outputs", out var outputsEl)
+            && outputsEl.ValueKind == JsonValueKind.Array
+            && outputsEl.GetArrayLength() > 0;
+    }
 
     private async Task<List<string>> ExtractImagesAsDataUrlsAsync(JsonElement root, CancellationToken cancellationToken)
     {
-        if (!root.TryGetProperty("outputs", out var outputsEl) || outputsEl.ValueKind != JsonValueKind.Array)
+        var source = root.TryGetProperty("data", out var dataEl)
+            && dataEl.ValueKind == JsonValueKind.Object
+                ? dataEl
+                : root;
+
+        if (!source.TryGetProperty("outputs", out var outputsEl)
+            || outputsEl.ValueKind != JsonValueKind.Array)
+        {
             return [];
+        }
 
         List<string> images = [];
         foreach (var output in outputsEl.EnumerateArray())

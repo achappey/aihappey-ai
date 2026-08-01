@@ -27,7 +27,7 @@ public partial class AtlasCloudProvider : IModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.atlascloud.ai/api/");
+        _client.BaseAddress = new Uri("https://api.atlascloud.ai/");
     }
 
     private void ApplyAuthHeader()
