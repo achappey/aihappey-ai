@@ -17,6 +17,8 @@ public partial class FoundryProvider
 {
     private const string FoundryImageGenerationEndpoint = "openai/v1/images/generations?api-version=preview";
     private const string FoundryImageEditEndpoint = "openai/v1/images/edits?api-version=preview";
+    private const string FoundryMaiImageGenerationEndpoint = "mai/v1/images/generations";
+    private const string FoundryMaiImageEditEndpoint = "mai/v1/images/edits";
 
     public async Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
@@ -31,8 +33,11 @@ public partial class FoundryProvider
         if (request.Seed.HasValue)
             warnings.Add(new { type = "unsupported", feature = "seed" });
 
-        var outputFormat = FoundryReadMetadataString(metadata, "output_format") ?? "png";
-        var size = request.Size ?? FoundryResolveImageSize(request.AspectRatio, warnings);
+        var isMaiModel = FoundryIsMaiImageModel(request.Model);
+        var outputFormat = isMaiModel ? "png" : FoundryReadMetadataString(metadata, "output_format") ?? "png";
+        var size = request.Size ?? (isMaiModel
+            ? FoundryResolveMaiImageSize(request.AspectRatio, warnings)
+            : FoundryResolveImageSize(request.AspectRatio, warnings));
         var options = files.Length == 0
             ? await FoundryGenerateImagesAsync(request, metadata, size, outputFormat, cancellationToken)
             : await FoundryEditImagesAsync(request, files, metadata, size, outputFormat, cancellationToken);
@@ -71,6 +76,9 @@ public partial class FoundryProvider
         ApplyAuthHeader();
 
         var requestOptions = FoundryForceBase64(options);
+        if (FoundryIsMaiImageModel(requestOptions.Model))
+            return (await FoundrySendMaiImageGenerationAsync(requestOptions, cancellationToken)).Response;
+
         return await _client.OpenAICompatibleImageGenerationRequestAsync(
             requestOptions,
             FoundryImageGenerationEndpoint,
@@ -82,6 +90,27 @@ public partial class FoundryProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        if (FoundryIsMaiImageModel(options.Model))
+        {
+            var response = (await FoundrySendMaiImageGenerationAsync(FoundryForceBase64(options), cancellationToken)).Response;
+            foreach (var image in response.Data ?? [])
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!string.IsNullOrWhiteSpace(image.B64Json))
+                    yield return new OpenAIImageGenerationCompleted
+                    {
+                        B64Json = image.B64Json,
+                        CreatedAt = response.Created,
+                        Size = options.Size,
+                        OutputFormat = "png",
+                        Usage = response.Usage
+                    };
+            }
+
+            yield break;
+        }
+
         await foreach (var streamEvent in _client.OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(
             FoundryForceBase64(options),
             FoundryImageGenerationEndpoint,
@@ -134,16 +163,32 @@ public partial class FoundryProvider
         string outputFormat,
         CancellationToken cancellationToken)
     {
-        var payload = FoundryMetadataToDictionary(metadata);
-        payload["model"] = request.Model;
-        payload["prompt"] = request.Prompt;
-        payload["n"] = request.N;
-        payload["size"] = size;
-        payload["output_format"] = outputFormat;
-        payload["response_format"] = "b64_json";
+        var isMaiModel = FoundryIsMaiImageModel(request.Model);
+        Dictionary<string, object?> payload;
+        if (isMaiModel)
+        {
+            var (width, height) = FoundryResolveMaiDimensions(size);
+            payload = new Dictionary<string, object?>
+            {
+                ["model"] = request.Model,
+                ["prompt"] = request.Prompt,
+                ["width"] = width,
+                ["height"] = height
+            };
+        }
+        else
+        {
+            payload = FoundryMetadataToDictionary(metadata);
+            payload["model"] = request.Model;
+            payload["prompt"] = request.Prompt;
+            payload["n"] = request.N;
+            payload["size"] = size;
+            payload["response_format"] = "b64_json";
+        }
 
         ApplyAuthHeader();
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, FoundryImageGenerationEndpoint)
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
+            isMaiModel ? FoundryMaiImageGenerationEndpoint : FoundryImageGenerationEndpoint)
         {
             Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, MediaTypeNames.Application.Json)
         };
@@ -158,23 +203,28 @@ public partial class FoundryProvider
         string outputFormat,
         CancellationToken cancellationToken)
     {
+        var isMaiModel = FoundryIsMaiImageModel(request.Model);
         using var form = new MultipartFormDataContent();
-        FoundryAddImageMetadata(form, metadata, "model", "prompt", "image", "mask", "size", "n", "output_format", "response_format");
+        if (!isMaiModel)
+            FoundryAddImageMetadata(form, metadata, "model", "prompt", "image", "mask", "size", "n", "output_format", "response_format");
         FoundryAddImageString(form, "model", request.Model);
         FoundryAddImageString(form, "prompt", request.Prompt);
-        FoundryAddImageString(form, "n", request.N?.ToString(CultureInfo.InvariantCulture));
-        FoundryAddImageString(form, "size", size);
-        FoundryAddImageString(form, "output_format", outputFormat);
-        FoundryAddImageString(form, "response_format", "b64_json");
+        if (!isMaiModel)
+        {
+            FoundryAddImageString(form, "n", request.N?.ToString(CultureInfo.InvariantCulture));
+            FoundryAddImageString(form, "size", size);
+            FoundryAddImageString(form, "response_format", "b64_json");
+        }
 
         for (var index = 0; index < files.Count; index++)
             form.Add(FoundryCreateImageContent(files[index]), "image", FoundryImageFileName(files[index], index));
 
-        if (request.Mask is not null)
+        if (!isMaiModel && request.Mask is not null)
             form.Add(FoundryCreateImageContent(request.Mask), "mask", FoundryImageFileName(request.Mask, 0, "mask"));
 
         ApplyAuthHeader();
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, FoundryImageEditEndpoint) { Content = form };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
+            isMaiModel ? FoundryMaiImageEditEndpoint : FoundryImageEditEndpoint) { Content = form };
         return await FoundrySendImageRequestAsync(httpRequest, "edit", cancellationToken);
     }
 
@@ -182,22 +232,26 @@ public partial class FoundryProvider
         OpenAIImageEditRequest options,
         CancellationToken cancellationToken)
     {
+        var isMaiModel = FoundryIsMaiImageModel(options.Model);
         using var form = new MultipartFormDataContent();
         FoundryAddImageString(form, "model", options.Model);
         FoundryAddImageString(form, "prompt", options.Prompt);
-        FoundryAddImageString(form, "background", options.Background);
-        FoundryAddImageString(form, "input_fidelity", options.InputFidelity);
-        FoundryAddImageString(form, "moderation", options.Moderation);
-        FoundryAddImageString(form, "n", options.N?.ToString(CultureInfo.InvariantCulture));
-        FoundryAddImageString(form, "output_compression", options.OutputCompression?.ToString(CultureInfo.InvariantCulture));
-        FoundryAddImageString(form, "output_format", options.OutputFormat ?? "png");
-        FoundryAddImageString(form, "quality", options.Quality);
-        FoundryAddImageString(form, "size", options.Size);
-        FoundryAddImageString(form, "user", options.User);
-        FoundryAddImageString(form, "response_format", "b64_json");
+        if (!isMaiModel)
+        {
+            FoundryAddImageString(form, "background", options.Background);
+            FoundryAddImageString(form, "input_fidelity", options.InputFidelity);
+            FoundryAddImageString(form, "moderation", options.Moderation);
+            FoundryAddImageString(form, "n", options.N?.ToString(CultureInfo.InvariantCulture));
+            FoundryAddImageString(form, "output_compression", options.OutputCompression?.ToString(CultureInfo.InvariantCulture));
+            FoundryAddImageString(form, "output_format", options.OutputFormat ?? "png");
+            FoundryAddImageString(form, "quality", options.Quality);
+            FoundryAddImageString(form, "size", options.Size);
+            FoundryAddImageString(form, "user", options.User);
+            FoundryAddImageString(form, "response_format", "b64_json");
 
-        foreach (var property in options.AdditionalProperties ?? [])
-            FoundryAddImageString(form, property.Key, property.Value.ToString());
+            foreach (var property in options.AdditionalProperties ?? [])
+                FoundryAddImageString(form, property.Key, property.Value.ToString());
+        }
 
         for (var index = 0; index < (options.ImageFiles?.Length ?? 0); index++)
         {
@@ -209,7 +263,7 @@ public partial class FoundryProvider
             form.Add(content, "image", string.IsNullOrWhiteSpace(file.FileName) ? $"image-{index}.png" : file.FileName);
         }
 
-        if (options.MaskFile is not null)
+        if (!isMaiModel && options.MaskFile is not null)
         {
             var content = new StreamContent(options.MaskFile.OpenReadStream());
             content.Headers.ContentType = MediaTypeHeaderValue.Parse(string.IsNullOrWhiteSpace(options.MaskFile.ContentType)
@@ -218,8 +272,30 @@ public partial class FoundryProvider
             form.Add(content, "mask", string.IsNullOrWhiteSpace(options.MaskFile.FileName) ? "mask.png" : options.MaskFile.FileName);
         }
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, FoundryImageEditEndpoint) { Content = form };
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
+            isMaiModel ? FoundryMaiImageEditEndpoint : FoundryImageEditEndpoint) { Content = form };
         return await FoundrySendImageRequestAsync(httpRequest, "edit", cancellationToken);
+    }
+
+    private async Task<FoundryImageResult> FoundrySendMaiImageGenerationAsync(
+        OpenAIImageGenerationRequest options,
+        CancellationToken cancellationToken)
+    {
+        var (width, height) = FoundryResolveMaiDimensions(options.Size);
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = options.Model,
+            ["prompt"] = options.Prompt,
+            ["width"] = width,
+            ["height"] = height
+        };
+
+        ApplyAuthHeader();
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, FoundryMaiImageGenerationEndpoint)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, MediaTypeNames.Application.Json)
+        };
+        return await FoundrySendImageRequestAsync(httpRequest, "generation", cancellationToken);
     }
 
     private async Task<FoundryImageResult> FoundrySendImageRequestAsync(
@@ -314,6 +390,48 @@ public partial class FoundryProvider
         if (size is null)
             warnings.Add(new { type = "unsupported", feature = "aspectRatio", details = aspectRatio });
         return size;
+    }
+
+    private static bool FoundryIsMaiImageModel(string? model)
+        => model?.StartsWith("MAI-Image-", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static string? FoundryResolveMaiImageSize(string? aspectRatio, List<object> warnings)
+    {
+        if (string.IsNullOrWhiteSpace(aspectRatio))
+            return null;
+
+        var size = aspectRatio.Trim().ToLowerInvariant() switch
+        {
+            "1:1" => "1024x1024",
+            "2:3" => "768x1152",
+            "3:4" => "768x1024",
+            "9:16" => "768x1344",
+            "3:2" => "1152x768",
+            "4:3" => "1024x768",
+            "16:9" => "1344x768",
+            _ => null
+        };
+        if (size is null)
+            warnings.Add(new { type = "unsupported", feature = "aspectRatio", details = aspectRatio });
+        return size;
+    }
+
+    private static (int Width, int Height) FoundryResolveMaiDimensions(string? size)
+    {
+        if (string.IsNullOrWhiteSpace(size))
+            return (1024, 1024);
+
+        var dimensions = size.Split('x', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (dimensions.Length != 2
+            || !int.TryParse(dimensions[0], NumberStyles.None, CultureInfo.InvariantCulture, out var width)
+            || !int.TryParse(dimensions[1], NumberStyles.None, CultureInfo.InvariantCulture, out var height))
+            throw new ArgumentException($"MAI image size '{size}' must use the '<width>x<height>' format.", nameof(size));
+
+        if (width < 768 || height < 768 || (long)width * height > 1_048_576)
+            throw new ArgumentOutOfRangeException(nameof(size), size,
+                "MAI image width and height must each be at least 768 pixels and the total pixel count must not exceed 1,048,576.");
+
+        return (width, height);
     }
 
     private static void FoundryAddImageMetadata(MultipartFormDataContent form, JsonElement metadata, params string[] excluded)
