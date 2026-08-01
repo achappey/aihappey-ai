@@ -30,6 +30,14 @@ public partial class VogentProvider
                         OwnedBy = ProviderName,
                         Type = "speech",
                         Description = $"{ProviderName} TTS."
+                    },
+                    new Model
+                    {
+                        Id = MultiSpeakerBaseSpeechModel.ToModelId(GetIdentifier()),
+                        Name = MultiSpeakerBaseSpeechModel,
+                        OwnedBy = ProviderName,
+                        Type = "speech",
+                        Description = $"{ProviderName} TTS Multispeaker."
                     }
                 };
 

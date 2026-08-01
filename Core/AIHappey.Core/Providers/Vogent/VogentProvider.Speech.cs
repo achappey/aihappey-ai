@@ -12,6 +12,7 @@ public partial class VogentProvider
 {
     private const string ProviderName = "Vogent";
     private const string BaseSpeechModel = "tts";
+    private const string MultiSpeakerBaseSpeechModel = "tts/multispeaker";
 
     private async Task<SpeechResponse> SpeechRequestInternal(SpeechRequest request, CancellationToken cancellationToken = default)
     {
@@ -25,45 +26,89 @@ public partial class VogentProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<VogentSpeechProviderMetadata>(GetIdentifier());
-        var (baseModelId, modelVoiceId) = ParseSpeechModelAndVoice(request.Model);
+        var prepared = PrepareSpeechRequest(request, warnings);
 
-        if (!string.Equals(baseModelId, BaseSpeechModel, StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException($"{ProviderName} speech model '{request.Model}' is not supported.");
+        using var resp = await _client.PostAsJsonAsync(prepared.Endpoint, prepared.Payload, JsonSerializerOptions.Web, cancellationToken);
+        var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
 
-        var voiceId = (modelVoiceId ?? request.Voice ?? metadata?.VoiceId)?.Trim();
-        if (string.IsNullOrWhiteSpace(voiceId))
-            throw new ArgumentException("Voice is required. Provide request.voice, providerOptions.vogent.voiceId, or a model like 'vogent/tts/{voiceId}'.", nameof(request));
-
-        if (!string.IsNullOrWhiteSpace(modelVoiceId)
-            && !string.IsNullOrWhiteSpace(request.Voice)
-            && !string.Equals(request.Voice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+        if (!resp.IsSuccessStatusCode)
         {
-            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+            var body = System.Text.Encoding.UTF8.GetString(bytes);
+            throw new InvalidOperationException($"{ProviderName} TTS failed ({(int)resp.StatusCode}): {body}");
         }
 
-        if (!string.IsNullOrWhiteSpace(modelVoiceId)
-            && !string.IsNullOrWhiteSpace(metadata?.VoiceId)
-            && !string.Equals(metadata.VoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+        var resolvedFormat = ResolveSpeechFormat(prepared.Format);
+
+        return new SpeechResponse
         {
-            warnings.Add(new { type = "ignored", feature = "providerOptions.vogent.voiceId", reason = "voice is derived from model id" });
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Audio = new SpeechAudioResponse
+            {
+                Base64 = Convert.ToBase64String(bytes),
+                MimeType = ResolveSpeechMimeType(resolvedFormat, resp.Content.Headers.ContentType?.MediaType),
+                Format = resolvedFormat
+            },
+            Warnings = warnings,
+            Request = new()
+            {
+                Body = prepared.Payload
+            },
+            Response = new ResponseData
+            {
+                Timestamp = now,
+                Headers = resp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
+    private PreparedVogentSpeechRequest PrepareSpeechRequest(SpeechRequest request, List<object>? warnings = null)
+    {
+        var rawMetadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<VogentSpeechProviderMetadata>(GetIdentifier());
+        var model = ParseSpeechModel(request.Model);
+        var payload = CopyProviderMetadata(rawMetadata);
+
+        if (!string.IsNullOrWhiteSpace(model.VoiceId)
+            && !string.IsNullOrWhiteSpace(request.Voice)
+            && !string.Equals(request.Voice.Trim(), model.VoiceId, StringComparison.OrdinalIgnoreCase))
+        {
+            warnings?.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.VoiceId)
+            && !string.IsNullOrWhiteSpace(metadata?.VoiceId)
+            && !string.Equals(metadata.VoiceId.Trim(), model.VoiceId, StringComparison.OrdinalIgnoreCase))
+        {
+            warnings?.Add(new { type = "ignored", feature = "providerOptions.vogent.voiceId", reason = "voice is derived from model id" });
         }
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
-            warnings.Add(new { type = "unsupported", feature = "instructions" });
+            warnings?.Add(new { type = "unsupported", feature = "instructions" });
 
         if (request.Speed is not null)
-            warnings.Add(new { type = "unsupported", feature = "speed" });
+            warnings?.Add(new { type = "unsupported", feature = "speed" });
 
         if (!string.IsNullOrWhiteSpace(request.Language))
-            warnings.Add(new { type = "unsupported", feature = "language" });
+            warnings?.Add(new { type = "unsupported", feature = "language" });
+
+        if (model.IsMultispeaker)
+        {
+            var lines = metadata?.Lines;
+            ValidateMultispeakerLines(lines, nameof(request));
+            payload["lines"] = lines!.Select(ToMultispeakerPayloadLine).ToArray();
+        }
+        else
+        {
+            var voiceId = (model.VoiceId ?? request.Voice ?? metadata?.VoiceId)?.Trim();
+            if (string.IsNullOrWhiteSpace(voiceId))
+                throw new ArgumentException("Voice is required. Provide request.voice, providerOptions.vogent.voiceId, or a model like 'vogent/tts/{voiceId}'.", nameof(request));
+
+            payload["text"] = request.Text;
+            payload["voiceId"] = voiceId;
+        }
 
         var format = BuildOutputFormat(request.OutputFormat, metadata);
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["voiceId"] = voiceId,
-        };
 
         if (format is not null)
             payload["format"] = format;
@@ -79,16 +124,14 @@ public partial class VogentProvider
                 .ToArray();
         }
 
-        using var resp = await _client.PostAsJsonAsync("api/tts", payload, JsonSerializerOptions.Web, cancellationToken);
-        var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
+        return new PreparedVogentSpeechRequest(
+            model.IsMultispeaker ? "api/tts/multispeaker" : "api/tts",
+            payload,
+            format);
+    }
 
-        if (!resp.IsSuccessStatusCode)
-        {
-            var body = System.Text.Encoding.UTF8.GetString(bytes);
-            throw new InvalidOperationException($"{ProviderName} TTS failed ({(int)resp.StatusCode}): {body}");
-        }
-
-        var resolvedFormat = format?.OutputType?.ToLowerInvariant() switch
+    private static string ResolveSpeechFormat(VogentOutputFormat? format)
+        => format?.OutputType?.ToLowerInvariant() switch
         {
             "raw_pcm16" => "pcm",
             "wav_pcm16" => "wav",
@@ -96,27 +139,38 @@ public partial class VogentProvider
             _ => "wav"
         };
 
-        return new SpeechResponse
+    private static Dictionary<string, object?> CopyProviderMetadata(JsonElement metadata)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return payload;
+
+        foreach (var property in metadata.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+
+        return payload;
+    }
+
+    private static Dictionary<string, string> ToMultispeakerPayloadLine(VogentMultispeakerLine line)
+        => new()
         {
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
-            Audio = new SpeechAudioResponse
-            {
-                Base64 = Convert.ToBase64String(bytes),
-                MimeType = ResolveSpeechMimeType(resolvedFormat, resp.Content.Headers.ContentType?.MediaType),
-                Format = resolvedFormat
-            },
-            Warnings = warnings,
-            Request = new()
-            {
-                Body = payload
-            },
-            Response = new ResponseData
-            {
-                Timestamp = now,
-                Headers = resp.GetHeaders(),
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
+            ["text"] = line.Text.Trim(),
+            ["voiceId"] = line.VoiceId.Trim()
         };
+
+    private static void ValidateMultispeakerLines(
+        IReadOnlyCollection<VogentMultispeakerLine>? lines,
+        string parameterName)
+    {
+        if (lines is not { Count: > 0 })
+            throw new ArgumentException("Vogent multispeaker speech requires providerOptions.vogent.lines.", parameterName);
+
+        if (lines.Any(line => line is null
+                              || string.IsNullOrWhiteSpace(line.Text)
+                              || string.IsNullOrWhiteSpace(line.VoiceId)))
+        {
+            throw new ArgumentException("Every Vogent multispeaker line requires non-empty text and voiceId values.", parameterName);
+        }
     }
 
     private static VogentOutputFormat? BuildOutputFormat(string? outputFormat, VogentSpeechProviderMetadata? metadata)
@@ -161,18 +215,33 @@ public partial class VogentProvider
         };
     }
 
-    private static (string BaseModelId, string? VoiceId) ParseSpeechModelAndVoice(string model)
+    private static VogentSpeechModel ParseSpeechModel(string model)
     {
         var raw = model.Trim();
+        var providerPrefix = ProviderName.ToLowerInvariant() + "/";
+        if (raw.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            raw = raw[providerPrefix.Length..];
+
+        if (string.Equals(raw, MultiSpeakerBaseSpeechModel, StringComparison.OrdinalIgnoreCase))
+            return new VogentSpeechModel(true, null);
 
         var parts = raw.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return parts.Length switch
         {
-            1 => (parts[0], null),
-            2 => (parts[0], parts[1]),
-            _ => throw new ArgumentException("Vogent speech model must be either 'tts' or 'tts/{voiceId}'.", nameof(model))
+            1 when string.Equals(parts[0], BaseSpeechModel, StringComparison.OrdinalIgnoreCase)
+                => new VogentSpeechModel(false, null),
+            2 when string.Equals(parts[0], BaseSpeechModel, StringComparison.OrdinalIgnoreCase)
+                => new VogentSpeechModel(false, parts[1]),
+            _ => throw new ArgumentException("Vogent speech model must be 'tts', 'tts/{voiceId}', or 'tts/multispeaker'.", nameof(model))
         };
     }
+
+    private sealed record VogentSpeechModel(bool IsMultispeaker, string? VoiceId);
+
+    private sealed record PreparedVogentSpeechRequest(
+        string Endpoint,
+        Dictionary<string, object?> Payload,
+        VogentOutputFormat? Format);
 
     private sealed class VogentOutputFormat
     {

@@ -15,6 +15,18 @@ public sealed class VogentSpeechProviderMetadata
 
     [JsonPropertyName("voiceOptionValues")]
     public List<VogentSpeechOptionValue>? VoiceOptionValues { get; set; }
+
+    [JsonPropertyName("lines")]
+    public List<VogentMultispeakerLine>? Lines { get; set; }
+}
+
+public sealed class VogentMultispeakerLine
+{
+    [JsonPropertyName("text")]
+    public string Text { get; set; } = null!;
+
+    [JsonPropertyName("voiceId")]
+    public string VoiceId { get; set; } = null!;
 }
 
 public sealed class VogentSpeechOptionValue
