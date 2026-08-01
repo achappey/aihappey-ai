@@ -4,13 +4,10 @@ using System.Net.Http.Headers;
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Vercel.Models;
-using AIHappey.Messages.Mapping;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
 using System.Globalization;
 using AIHappey.Unified.Models;
-using AIHappey.ChatCompletions.Mapping;
-using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Perplexity;
@@ -18,12 +15,12 @@ namespace AIHappey.Core.Providers.Perplexity;
 public partial class PerplexityProvider : IModelProvider
 {
     private readonly string BASE_URL = "https://api.perplexity.ai/";
+    private const string AgentModelPrefix = "agent/";
+    private const string RouterModelPrefix = "router/";
 
     public string GetIdentifier() => nameof(Perplexity).ToLowerInvariant();
 
     private readonly IApiKeyResolver _keyResolver;
-
-    private readonly IHttpClientFactory _httpClientFactory;
 
     private readonly HttpClient _client;
 
@@ -34,7 +31,6 @@ public partial class PerplexityProvider : IModelProvider
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
-        _httpClientFactory = httpClientFactory;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri(BASE_URL);
     }
@@ -49,16 +45,7 @@ public partial class PerplexityProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    
 
-    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-         cancellationToken);
-
-        return result.ToChatCompletion();
-    }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
     {
@@ -80,19 +67,26 @@ public partial class PerplexityProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
-     ChatCompletionOptions options,
-     [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            yield return part.ToChatCompletionUpdate();
-        }
+        return await this.GetChatCompletion(_client,
+             options,
+             relativeUrl: "router/v1/chat/completions",
+             cancellationToken: cancellationToken);
     }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return this.GetChatCompletions(_client,
+                    options,
+                    relativeUrl: "router/v1/chat/completions",
+                    cancellationToken: cancellationToken);
+    }
+
 
     private static bool UsesResponsesPreset(string? model)
         => string.Equals(model, "fast", StringComparison.OrdinalIgnoreCase)
@@ -173,41 +167,119 @@ public partial class PerplexityProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(
+       MessagesRequest request,
+       Dictionary<string, string> headers,
+       CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToMessagesResponse();
+        return await this.GetMessage(_client,
+            request,
+            headers: headers,
+            relativeUrl: "router/v1/messages",
+            cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+        MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
-
-        yield break;
+        return this.GetMessages(_client,
+            request,
+            headers: headers,
+            relativeUrl: "router/v1/messages",
+            cancellationToken: cancellationToken);
     }
 
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        return this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        var (route, upstreamRequest) = PrepareUnifiedRequest(request);
+
+        return route == PerplexityRoute.Agent
+            ? this.ExecuteUnifiedViaResponsesAsync(upstreamRequest, cancellationToken: cancellationToken)
+            : this.ExecuteUnifiedViaChatCompletionsAsync(upstreamRequest, cancellationToken: cancellationToken);
     }
 
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        return this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        var (route, upstreamRequest) = PrepareUnifiedRequest(request);
+
+        return route == PerplexityRoute.Agent
+            ? this.StreamUnifiedViaResponsesAsync(upstreamRequest, cancellationToken: cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(upstreamRequest, cancellationToken: cancellationToken);
+    }
+
+    private (PerplexityRoute Route, AIRequest Request) PrepareUnifiedRequest(AIRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var model = request.Model?.Trim();
+        if (string.IsNullOrWhiteSpace(model))
+            throw new ArgumentException(
+                $"A Perplexity unified model must use the '{AgentModelPrefix}' or '{RouterModelPrefix}' route prefix.",
+                nameof(request));
+
+        var providerPrefix = GetIdentifier() + "/";
+        if (model.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            model = model[providerPrefix.Length..];
+
+        PerplexityRoute route;
+        string upstreamModel;
+
+        if (model.StartsWith(AgentModelPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            route = PerplexityRoute.Agent;
+            upstreamModel = model[AgentModelPrefix.Length..].Trim();
+        }
+        else if (model.StartsWith(RouterModelPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            route = PerplexityRoute.Router;
+            upstreamModel = model[RouterModelPrefix.Length..].Trim();
+        }
+        else
+        {
+            throw new ArgumentException(
+                $"Unsupported Perplexity unified model '{request.Model}'. Use '{AgentModelPrefix}<model>' or '{RouterModelPrefix}<model>'.",
+                nameof(request));
+        }
+
+        if (string.IsNullOrWhiteSpace(upstreamModel))
+            throw new ArgumentException("The Perplexity route prefix must be followed by an upstream model id.", nameof(request));
+
+        return (route, CloneUnifiedRequest(request, upstreamModel));
+    }
+
+    private static AIRequest CloneUnifiedRequest(AIRequest request, string model)
+        => new()
+        {
+            ProviderId = request.ProviderId,
+            Model = model,
+            Id = request.Id,
+            Instructions = request.Instructions,
+            Input = request.Input,
+            Temperature = request.Temperature,
+            TopP = request.TopP,
+            MaxOutputTokens = request.MaxOutputTokens,
+            MaxToolCalls = request.MaxToolCalls,
+            Stream = request.Stream,
+            ParallelToolCalls = request.ParallelToolCalls,
+            ToolChoice = request.ToolChoice,
+            ResponseFormat = request.ResponseFormat,
+            Tools = request.Tools,
+            Metadata = request.Metadata,
+            Headers = request.Headers
+        };
+
+    private enum PerplexityRoute
+    {
+        Agent,
+        Router
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
