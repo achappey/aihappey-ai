@@ -45,16 +45,23 @@ public partial class AurikoProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
+
+        return EnrichChatCompletionWithGatewayCost(response);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var update in this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken))
+        {
+            yield return EnrichChatCompletionUpdateWithGatewayCost(update);
+        }
     }
 
     public string GetIdentifier() => nameof(Auriko).ToLowerInvariant();
@@ -121,8 +128,22 @@ public partial class AurikoProvider : IModelProvider
         }
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(
+            request,
+            cancellationToken: cancellationToken);
+
+        return new AIResponse
+        {
+            ProviderId = response.ProviderId,
+            Model = response.Model,
+            Status = response.Status,
+            Output = response.Output,
+            Usage = response.Usage,
+            Metadata = ModelCostMetadataEnricher.AddCost(response.Metadata, GetGatewayCost(response.Usage))
+        };
+    }
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
