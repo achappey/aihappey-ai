@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.Synexa;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -65,21 +66,11 @@ public partial class SynexaProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-                    predictionId = completed.Id,
-                    status = completed.Status,
-                    output = completed.Output.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
-                        ? default(object)
-                        : completed.Output.Clone()
-                })
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }

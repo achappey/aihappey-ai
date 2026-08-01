@@ -66,8 +66,8 @@ public partial class SynexaProvider
             ? "poll"
             : "block";
 
-        var intervalMs = Math.Clamp(wait?.IntervalMs ?? 500, 100, 5000);
-        var timeoutSeconds = Math.Clamp(wait?.TimeoutSeconds ?? 60, 10, 600);
+        var intervalMs = Math.Clamp(wait?.IntervalMs ?? 2000, 100, 5000);
+        var timeoutSeconds = Math.Clamp(wait?.TimeoutSeconds ?? 120, 10, 600);
         return (waitType, intervalMs, timeoutSeconds);
     }
 
