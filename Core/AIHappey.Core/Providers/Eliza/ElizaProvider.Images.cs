@@ -11,8 +11,6 @@ namespace AIHappey.Core.Providers.Eliza;
 
 public partial class ElizaProvider
 {
-    private const string ElizaDefaultImageModel = "google/gemini-2.5-flash-image";
-
     private static readonly JsonSerializerOptions ElizaImageJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -29,9 +27,7 @@ public partial class ElizaProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var model = string.IsNullOrWhiteSpace(request.Model)
-            ? ElizaDefaultImageModel
-            : request.Model.Trim();
+        var model = request.Model.Trim();
         var aspectRatio = ResolveElizaAspectRatio(request, metadata, warnings);
         var numImages = ResolveElizaNumImages(request.N, metadata, warnings);
         var sourceImage = ResolveElizaSourceImage(request, metadata, warnings);
@@ -59,10 +55,23 @@ public partial class ElizaProvider
             ["prompt"] = request.Prompt,
             ["model"] = model,
             ["aspectRatio"] = aspectRatio,
-            ["numImages"] = numImages,
-            ["stylePreset"] = string.IsNullOrWhiteSpace(stylePreset) ? null : stylePreset,
-            ["sourceImage"] = sourceImage
+            ["numImages"] = numImages
         };
+
+        if (!string.IsNullOrEmpty(aspectRatio))
+        {
+            payload["aspectRatio"] = aspectRatio;
+        }
+
+        if (!string.IsNullOrEmpty(stylePreset))
+        {
+            payload["stylePreset"] = stylePreset;
+        }
+
+        if (!string.IsNullOrEmpty(sourceImage))
+        {
+            payload["sourceImage"] = sourceImage;
+        }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/generate-image")
         {
