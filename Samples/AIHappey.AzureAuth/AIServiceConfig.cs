@@ -513,7 +513,6 @@ public class AIServiceConfig
     public ProviderConfig? InferenceSpace { get; set; }
     public ProviderConfig? Virouter { get; set; }
     public ProviderConfig? ScrapeLLM { get; set; }
-    public ProviderConfig? UUMuse { get; set; }
     public ProviderConfig? FreeInference { get; set; }
     public ProviderConfig? LLMTR { get; set; }
     public ProviderConfig? LLMStats { get; set; }
