@@ -1,6 +1,7 @@
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Decart;
@@ -65,9 +66,11 @@ public partial class DecartProvider
         {
             Images = [image],
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };

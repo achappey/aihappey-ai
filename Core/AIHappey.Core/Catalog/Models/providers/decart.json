@@ -2,76 +2,52 @@
     "object": "list",
     "data": [
         {
-            "id": "decart/lucy-pro-t2i",
+            "id": "decart/lucy-image-2",
             "object": "model",
             "owned_by": "Decart",
-            "name": "Lucy Pro T2I",
+            "name": "Lucy Image 2",
             "type": "image",
-            "description": "Generate images from text."
+            "description": "Edit image from image using Lucy Image 2 model."
         },
         {
-            "id": "decart/lucy-pro-i2i",
+            "id": "decart/lucy-image-latest",
             "object": "model",
             "owned_by": "Decart",
-            "name": "Lucy Pro I2I",
+            "name": "Lucy Image Latest",
             "type": "image",
-            "description": "Edit and transform images."
+            "description": "Edit image from image using the latest Lucy Image model."
         },
         {
-            "id": "decart/lucy-pro-t2v",
+            "id": "decart/lucy-2.5",
             "object": "model",
             "owned_by": "Decart",
-            "name": "Lucy Pro T2V",
+            "name": "Lucy 2.5",
             "type": "video",
-            "description": "Generate videos from text."
+            "description": "Edit video using Lucy 2.5 model with optional prompt and reference image. Supports self-anchoring."
         },
         {
-            "id": "decart/lucy-pro-i2v",
+            "id": "decart/lucy-2.1",
             "object": "model",
             "owned_by": "Decart",
-            "name": "Lucy Pro I2V",
+            "name": "Lucy 2.1",
             "type": "video",
-            "description": "Animate images."
+            "description": "Edit video using Lucy 2.1 model with optional prompt and reference image"
         },
         {
-            "id": "decart/lucy-pro-v2v",
+            "id": "decart/lucy-vton-3",
             "object": "model",
             "owned_by": "Decart",
-            "name": "Lucy Pro V2V",
+            "name": "Lucy VTON 3",
             "type": "video",
-            "description": "Transform and edit videos."
+            "description": "Edit video with virtual try-on using the Lucy VTON 3 model"
         },
         {
-            "id": "decart/lucy-fast-v2v",
+            "id": "decart/lucy-restyle-2",
             "object": "model",
             "owned_by": "Decart",
-            "name": "Lucy Fast V2V",
+            "name": "Lucy Restyle 2",
             "type": "video",
-            "description": "Transform and edit videos (fast)."
-        },
-        {
-            "id": "decart/lucy-dev-i2v",
-            "object": "model",
-            "owned_by": "Decart",
-            "name": "Lucy Dev I2V",
-            "type": "video",
-            "description": "Animate images (faster)."
-        },
-        {
-            "id": "decart/lucy-motion",
-            "object": "model",
-            "owned_by": "Decart",
-            "name": "Lucy Motion",
-            "type": "video",
-            "description": "Trajectory-based image animation."
-        },
-        {
-            "id": "decart/lucy-restyle-v2v",
-            "object": "model",
-            "owned_by": "Decart",
-            "name": "Lucy Restyle V2V",
-            "type": "video",
-            "description": "Long-form video restyling."
+            "description": "Restyle video using Lucy Restyle 2 model."
         }
     ]
 }
