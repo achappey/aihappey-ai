@@ -5,6 +5,7 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.OVHcloud;
 
@@ -90,10 +91,10 @@ public partial class OVHcloudProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"OVHcloud STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertOvhResponse(json, request.Model);
+        return ConvertOvhResponse(json, request.Model, GetIdentifier());
     }
 
-    private static TranscriptionResponse ConvertOvhResponse(string json, string model)
+    private static TranscriptionResponse ConvertOvhResponse(string json, string model, string providerId)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -135,11 +136,12 @@ public partial class OVHcloudProvider
                 ? (float)durationEl.GetDouble()
                 : null,
             Segments = segments,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = model,
-                Body = json
+                ModelId = model.ToModelId(providerId),
+                Body = root.Clone()
             }
         };
     }

@@ -148,9 +148,14 @@ public partial class OVHcloudProvider
             Warnings = warnings,
             ProviderMetadata = GetIdentifier()
                 .CreatePrimitiveProviderMetadata(),
+            Request = new()
+            {
+                Body = payload,
+            },
             Response = new()
             {
                 Timestamp = now,
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
