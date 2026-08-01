@@ -78,6 +78,78 @@ public sealed class SpaceXAIVideoPayloadTests
         Assert.Equal("data:image/png;base64,raw-base64", payload.GetProperty("image").GetProperty("url").GetString());
     }
 
+    [Fact]
+    public void BuildXaiVideoPayloadPassesThroughAllRawXaiFields()
+    {
+        var payload = BuildPayload(new VideoRequest
+        {
+            Model = "grok-imagine-video-1.5",
+            Prompt = "<AUDIO_0> narrates the scene",
+            ProviderOptions = ProviderOptions("""
+                {
+                  "reference_audios": [{ "voice_id": "eve" }],
+                  "future_option": { "enabled": true }
+                }
+                """)
+        });
+
+        Assert.Equal("eve", payload.GetProperty("reference_audios")[0].GetProperty("voice_id").GetString());
+        Assert.True(payload.GetProperty("future_option").GetProperty("enabled").GetBoolean());
+    }
+
+    [Fact]
+    public void BuildXaiVideoPayloadStandardFieldsOverrideRawProviderFields()
+    {
+        var payload = BuildPayload(new VideoRequest
+        {
+            Model = "grok-imagine-video-1.5",
+            Prompt = "standard prompt",
+            Duration = 12,
+            Resolution = "1080p",
+            AspectRatio = "9:16",
+            Image = Image("image/png", "standard-image"),
+            InputReferences = [Image("image/jpeg", "standard-reference")],
+            ProviderOptions = ProviderOptions("""
+                {
+                  "model": "wrong-model",
+                  "prompt": "wrong prompt",
+                  "duration": 3,
+                  "resolution": "480p",
+                  "aspect_ratio": "1:1",
+                  "image": { "file_id": "wrong-image" },
+                  "reference_images": [{ "file_id": "wrong-reference" }]
+                }
+                """)
+        });
+
+        Assert.Equal("grok-imagine-video-1.5", payload.GetProperty("model").GetString());
+        Assert.Equal("standard prompt", payload.GetProperty("prompt").GetString());
+        Assert.Equal(12, payload.GetProperty("duration").GetInt32());
+        Assert.Equal("1080p", payload.GetProperty("resolution").GetString());
+        Assert.Equal("9:16", payload.GetProperty("aspect_ratio").GetString());
+        Assert.Equal("data:image/png;base64,standard-image", payload.GetProperty("image").GetProperty("url").GetString());
+        Assert.Equal("data:image/jpeg;base64,standard-reference", payload.GetProperty("reference_images")[0].GetProperty("url").GetString());
+    }
+
+    [Fact]
+    public void BuildXaiVideoPayloadPreservesRawFileIdMediaObjects()
+    {
+        var payload = BuildPayload(new VideoRequest
+        {
+            Model = "grok-imagine-video-1.5",
+            Prompt = "use Files API inputs",
+            ProviderOptions = ProviderOptions("""
+                {
+                  "image": { "file_id": "file-start" },
+                  "reference_images": [{ "file_id": "file-reference" }]
+                }
+                """)
+        });
+
+        Assert.Equal("file-start", payload.GetProperty("image").GetProperty("file_id").GetString());
+        Assert.Equal("file-reference", payload.GetProperty("reference_images")[0].GetProperty("file_id").GetString());
+    }
+
     private static JsonElement BuildPayload(VideoRequest request)
     {
         var method = typeof(SpaceXAIProvider).GetMethod("BuildXaiVideoPayload", BindingFlags.NonPublic | BindingFlags.Static)
@@ -99,5 +171,11 @@ public sealed class SpaceXAIVideoPayloadTests
         {
             MediaType = mediaType!,
             Data = data
+        };
+
+    private static Dictionary<string, JsonElement> ProviderOptions(string json)
+        => new()
+        {
+            ["spacexai"] = JsonDocument.Parse(json).RootElement.Clone()
         };
 }

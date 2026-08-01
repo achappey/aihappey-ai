@@ -5,11 +5,15 @@ using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Diagnostics;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
 public partial class SpaceXAIProvider
 {
+    private static readonly TimeSpan XaiVideoPollTimeout = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan XaiVideoPollInterval = TimeSpan.FromSeconds(2);
+
     private static readonly JsonSerializerOptions VideoJson = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -21,6 +25,7 @@ public partial class SpaceXAIProvider
         ApplyAuthHeader();
         var now = DateTime.UtcNow;
         List<object> warnings = [];
+        var providerOptions = GetXaiVideoProviderOptions(request);
 
         if (request.Fps is not null)
         {
@@ -49,7 +54,16 @@ public partial class SpaceXAIProvider
             });
         }
 
-        var payload = BuildXaiVideoPayload(request);
+        if (request.FrameImages?.Any() == true)
+        {
+            warnings.Add(new
+            {
+                type = "unsupported",
+                feature = "frameImages"
+            });
+        }
+
+        var payload = BuildXaiVideoPayloadCore(request, providerOptions);
 
         var json = JsonSerializer.Serialize(payload, VideoJson);
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/videos/generations")
@@ -68,11 +82,11 @@ public partial class SpaceXAIProvider
         if (string.IsNullOrWhiteSpace(requestId))
             throw new Exception("xAI video generation returned no request_id.");
 
-        const int maxAttempts = 60;
-        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        var stopwatch = Stopwatch.StartNew();
+        while (stopwatch.Elapsed < XaiVideoPollTimeout)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            await Task.Delay(XaiVideoPollInterval, cancellationToken);
 
             using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/videos/{requestId}");
             using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
@@ -147,6 +161,9 @@ public partial class SpaceXAIProvider
                     ProviderMetadata = GetIdentifier()
                         .CreatePrimitiveProviderMetadata(new
                         {
+                            requestId,
+                            status,
+                            model = root.TryGetProperty("model", out var modelEl) ? modelEl.GetString() : null,
                             usage = usageClone,
                             video = videoWithoutUrl
                         }, cost),
@@ -158,22 +175,37 @@ public partial class SpaceXAIProvider
                 };
             }
 
-            throw new Exception($"xAI video generation failed with status '{status}'.");
+            if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
+                throw CreateXaiVideoFailure(requestId, root);
+
+            if (string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException($"xAI video request '{requestId}' expired before completion.");
+
+            throw new InvalidOperationException($"xAI video request '{requestId}' returned unknown status '{status}'.");
         }
 
-        throw new TimeoutException("Timed out waiting for xAI video generation result.");
+        throw new TimeoutException($"Timed out after {XaiVideoPollTimeout.TotalMinutes:0} minutes waiting for xAI video request '{requestId}'.");
     }
 
     private static Dictionary<string, object?> BuildXaiVideoPayload(VideoRequest request)
+        => BuildXaiVideoPayloadCore(request, GetXaiVideoProviderOptions(request));
+
+    private static Dictionary<string, object?> BuildXaiVideoPayloadCore(VideoRequest request, JsonElement providerOptions)
     {
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["prompt"] = request.Prompt,
-            ["duration"] = request.Duration,
-            ["resolution"] = request.Resolution,
-            ["aspect_ratio"] = request.AspectRatio
-        };
+        ArgumentNullException.ThrowIfNull(request);
+
+        var payload = CreateXaiVideoProviderPassthrough(providerOptions);
+
+        // Standard VideoRequest fields are authoritative when they are available.
+        payload["model"] = request.Model;
+        payload["prompt"] = request.Prompt;
+
+        if (request.Duration is not null)
+            payload["duration"] = request.Duration;
+        if (!string.IsNullOrWhiteSpace(request.Resolution))
+            payload["resolution"] = request.Resolution;
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
+            payload["aspect_ratio"] = request.AspectRatio;
 
         if (request.Image is not null)
             payload["image"] = ToXaiVideoImage(request.Image);
@@ -183,6 +215,51 @@ public partial class SpaceXAIProvider
             payload["reference_images"] = referenceImages;
 
         return payload;
+    }
+
+    private static Dictionary<string, object?> CreateXaiVideoProviderPassthrough(JsonElement providerOptions)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (providerOptions.ValueKind != JsonValueKind.Object)
+            return payload;
+
+        foreach (var property in providerOptions.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+
+        return payload;
+    }
+
+    private static JsonElement GetXaiVideoProviderOptions(VideoRequest request)
+    {
+        if (request.ProviderOptions is null
+            || !request.ProviderOptions.TryGetValue(SpaceXAIRequestExtensions.SpaceXAIIdentifier, out var providerOptions))
+        {
+            return default;
+        }
+
+        return providerOptions;
+    }
+
+    private static Exception CreateXaiVideoFailure(string requestId, JsonElement root)
+    {
+        string? code = null;
+        string? message = null;
+
+        if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
+        {
+            code = error.TryGetProperty("code", out var codeEl) && codeEl.ValueKind == JsonValueKind.String
+                ? codeEl.GetString()
+                : null;
+            message = error.TryGetProperty("message", out var messageEl) && messageEl.ValueKind == JsonValueKind.String
+                ? messageEl.GetString()
+                : null;
+        }
+
+        var detail = !string.IsNullOrWhiteSpace(code) && !string.IsNullOrWhiteSpace(message)
+            ? $" [{code}]: {message}"
+            : !string.IsNullOrWhiteSpace(message) ? $": {message}" : ".";
+
+        return new InvalidOperationException($"xAI video request '{requestId}' failed{detail}");
     }
 
     private static Dictionary<string, object?> ToXaiVideoImage(VideoFile image)
