@@ -395,6 +395,14 @@ public static partial class ResponsesUnifiedMapper
             yield break;
         }
 
+        if (IsHostedShellToolPart(toolPart, callReplayType, resultReplayType))
+        {
+            var shellReplayItems = CreateResponseShellReplayItems(toolPart, metadata, providerId);
+            foreach (var shellReplayItem in shellReplayItems)
+                yield return shellReplayItem;
+            yield break;
+        }
+
         if (IsProgramToolPart(toolPart) || string.Equals(callReplayType, "program", StringComparison.OrdinalIgnoreCase))
         {
             yield return CreateResponseProgramItem(toolPart, metadata, providerId);
@@ -665,6 +673,17 @@ public static partial class ResponsesUnifiedMapper
                         var codeInterpreterCall = CreateResponseCodeInterpreterCallItem(toolPart, metadata, providerId);
                         if (codeInterpreterCall is not null)
                             yield return codeInterpreterCall;
+                    }
+                    yield break;
+                }
+            case "shell_call":
+            case "shell_call_output":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                    {
+                        foreach (var shellReplayItem in CreateResponseShellReplayItems(toolPart, metadata, providerId))
+                            yield return shellReplayItem;
                     }
                     yield break;
                 }
@@ -1087,6 +1106,133 @@ public static partial class ResponsesUnifiedMapper
            && (string.Equals(callReplayType, "code_interpreter_call", StringComparison.OrdinalIgnoreCase)
                || string.Equals(resultReplayType, "code_interpreter_call", StringComparison.OrdinalIgnoreCase)
                || string.Equals(toolPart.Type, "tool-code_interpreter", StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsHostedShellToolPart(
+        AIToolCallContentPart toolPart,
+        string? callReplayType,
+        string? resultReplayType)
+        => toolPart.ProviderExecuted == true
+           && (string.Equals(callReplayType, "shell_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(resultReplayType, "shell_call_output", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.Type, "tool-shell_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.ToolName, "shell_call", StringComparison.OrdinalIgnoreCase));
+
+    private static IReadOnlyList<ResponseInputItem> CreateResponseShellReplayItems(
+        AIToolCallContentPart toolPart,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+    {
+        var callMetadata = ExtractNestedChannelMap(toolPart.Metadata, "messages.provider.call.metadata", providerId);
+        var resultMetadata = ExtractNestedChannelMap(toolPart.Metadata, "messages.provider.result.metadata", providerId);
+
+        if (!HasMapType(callMetadata, "shell_call")
+            || !HasMapType(resultMetadata, "shell_call_output"))
+        {
+            return [];
+        }
+
+        var callId = GetMapValue(callMetadata, "call_id")?.ToString();
+        var outputCallId = GetMapValue(resultMetadata, "call_id")?.ToString();
+        var itemId = GetMapValue(callMetadata, "id")?.ToString()
+                     ?? GetMapValue(callMetadata, "item_id")?.ToString();
+        var outputItemId = GetMapValue(resultMetadata, "id")?.ToString()
+                           ?? GetMapValue(resultMetadata, "output_item_id")?.ToString();
+        var action = TryConvertValue<ResponseShellCallAction>(GetMapValue(callMetadata, "action"));
+        var output = TryConvertValue<List<ResponseShellCallOutputChunk>>(GetMapValue(resultMetadata, "output"));
+
+        if (string.IsNullOrWhiteSpace(callId)
+            || !string.Equals(callId, outputCallId, StringComparison.Ordinal)
+            || string.IsNullOrWhiteSpace(itemId)
+            || string.IsNullOrWhiteSpace(outputItemId)
+            || action is null
+            || action.Commands.Count == 0
+            || output is null)
+        {
+            return [];
+        }
+
+        var environment = TryConvertShellEnvironment(GetMapValue(callMetadata, "environment"));
+        var callStatus = GetMapValue(callMetadata, "status")?.ToString() ?? toolPart.State ?? "completed";
+        var outputStatus = GetMapValue(resultMetadata, "status")?.ToString() ?? "completed";
+
+        return
+        [
+            new ResponseShellCallItem
+            {
+                Id = itemId,
+                CallId = callId,
+                Status = callStatus,
+                CreatedBy = GetMapValue(callMetadata, "created_by")?.ToString(),
+                Action = action,
+                Environment = environment
+            },
+            new ResponseShellCallOutputItem
+            {
+                Id = outputItemId,
+                CallId = callId,
+                Status = outputStatus,
+                CreatedBy = GetMapValue(resultMetadata, "created_by")?.ToString(),
+                MaxOutputLength = TryConvertScalar<int?>(GetMapValue(resultMetadata, "max_output_length")),
+                Output = output
+            }
+        ];
+    }
+
+    private static bool HasMapType(Dictionary<string, object?>? metadata, string expectedType)
+        => string.Equals(
+            GetMapValue(metadata, "type")?.ToString(),
+            expectedType,
+            StringComparison.OrdinalIgnoreCase);
+
+    private static T? TryConvertValue<T>(object? value) where T : class
+    {
+        if (value is null)
+            return null;
+
+        if (value is T typed)
+            return typed;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, Json), Json);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static T TryConvertScalar<T>(object? value)
+    {
+        if (value is null)
+            return default!;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, Json), Json)!;
+        }
+        catch
+        {
+            return default!;
+        }
+    }
+
+    private static ResponseShellCallEnvironment? TryConvertShellEnvironment(object? value)
+    {
+        if (value is null)
+            return null;
+
+        try
+        {
+            return JsonSerializer.Deserialize<ResponseShellCallEnvironment>(
+                JsonSerializer.Serialize(value, Json),
+                Json);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static ResponseCodeInterpreterCallItem? CreateResponseCodeInterpreterCallItem(
         AIToolCallContentPart toolPart,

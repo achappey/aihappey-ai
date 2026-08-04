@@ -919,7 +919,7 @@ public static partial class ResponsesUnifiedMapper
 
                         case "shell_call":
                             {
-                                foreach (var env in CreateShellToolInputAvailableEnvelopes(done.Item, done.OutputIndex))
+                                foreach (var env in CreateShellToolInputAvailableEnvelopes(providerId, done.Item, done.OutputIndex))
                                     yield return env;
 
                                 break;

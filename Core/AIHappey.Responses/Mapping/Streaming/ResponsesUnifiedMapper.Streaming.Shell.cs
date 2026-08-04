@@ -283,7 +283,10 @@ public static partial class ResponsesUnifiedMapper
         yield return CreateToolInputDeltaEnvelope(accumulator.ItemId, "\"");
     }
 
-    private static IEnumerable<AIEventEnvelope> CreateShellToolInputAvailableEnvelopes(ResponseStreamItem item, int outputIndex)
+    private static IEnumerable<AIEventEnvelope> CreateShellToolInputAvailableEnvelopes(
+        string providerId,
+        ResponseStreamItem item,
+        int outputIndex)
     {
         var state = GetShellStreamState();
         var callId = TryGetItemString(item, "call_id");
@@ -333,7 +336,8 @@ public static partial class ResponsesUnifiedMapper
             "shell_call",
             input,
             "shell_call",
-            providerExecuted: true);
+            providerExecuted: true,
+            providerMetadata: CreateShellToolCallProviderMetadata(providerId, item, input));
 
         if (!string.IsNullOrWhiteSpace(accumulator.CallId))
         {
@@ -430,7 +434,12 @@ public static partial class ResponsesUnifiedMapper
             CreateShellCallToolResult(accumulator),
             preliminary: true,
             providerExecuted: true,
-            providerMetadata: CreateShellToolOutputProviderMetadata(providerId, accumulator.ToolItemId, accumulator.CallId, accumulator.OutputItemId));
+            providerMetadata: CreateShellToolOutputProviderMetadata(
+                providerId,
+                accumulator.ToolItemId,
+                accumulator.CallId,
+                accumulator.OutputItemId,
+                accumulator));
     }
 
     private static IEnumerable<AIEventEnvelope> CreateShellToolOutputFinalEnvelopes(
@@ -454,6 +463,7 @@ public static partial class ResponsesUnifiedMapper
         accumulator.OutputItemId = item.Id ?? accumulator.OutputItemId;
         accumulator.CallId = callId ?? accumulator.CallId;
         accumulator.Status = item.Status ?? accumulator.Status;
+        accumulator.CreatedBy = TryGetItemString(item, "created_by") ?? accumulator.CreatedBy;
         accumulator.MaxOutputLength = TryGetItemInt(item, "max_output_length") ?? accumulator.MaxOutputLength;
 
         if (string.IsNullOrWhiteSpace(accumulator.CallId)
@@ -503,7 +513,12 @@ public static partial class ResponsesUnifiedMapper
             CreateShellCallToolResult(accumulator),
             preliminary: false,
             providerExecuted: true,
-            providerMetadata: CreateShellToolOutputProviderMetadata(providerId, accumulator.ToolItemId, accumulator.CallId, accumulator.OutputItemId));
+            providerMetadata: CreateShellToolOutputProviderMetadata(
+                providerId,
+                accumulator.ToolItemId,
+                accumulator.CallId,
+                accumulator.OutputItemId,
+                accumulator));
 
         if (hasValidOutputIndex)
             state.OutputsByOutputIndex.Remove(outputIndex);
@@ -706,19 +721,83 @@ public static partial class ResponsesUnifiedMapper
         string providerId,
         string toolUseId,
         string? callId,
-        string? outputItemId)
-        => new()
+        string? outputItemId,
+        ShellOutputAccumulator? accumulator = null)
+    {
+        var metadata = new Dictionary<string, object>
         {
-            [providerId] = new Dictionary<string, object>
-            {
-                ["type"] = "tool_result",
-                ["tool_name"] = "shell_call",
-                ["title"] = "shell_call",
-                ["tool_use_id"] = toolUseId,
-                ["call_id"] = callId ?? string.Empty,
-                ["output_item_id"] = outputItemId ?? string.Empty
-            }
+            ["type"] = "shell_call_output",
+            ["tool_name"] = "shell_call",
+            ["title"] = "shell_call",
+            ["tool_use_id"] = toolUseId,
+            ["call_id"] = callId ?? string.Empty,
+            ["id"] = outputItemId ?? string.Empty,
+            ["output_item_id"] = outputItemId ?? string.Empty
         };
+
+        if (accumulator is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(accumulator.Status))
+                metadata["status"] = accumulator.Status;
+
+            if (!string.IsNullOrWhiteSpace(accumulator.CreatedBy))
+                metadata["created_by"] = accumulator.CreatedBy;
+
+            if (accumulator.MaxOutputLength.HasValue)
+                metadata["max_output_length"] = accumulator.MaxOutputLength.Value;
+
+            metadata["output"] = CreateShellOutputChunks(accumulator);
+        }
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = metadata
+        };
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateShellToolCallProviderMetadata(
+        string providerId,
+        ResponseStreamItem item,
+        JsonElement input)
+    {
+        var metadata = new Dictionary<string, object>
+        {
+            ["type"] = "shell_call",
+            ["tool_name"] = "shell_call",
+            ["title"] = "shell_call",
+            ["id"] = item.Id ?? string.Empty,
+            ["item_id"] = item.Id ?? string.Empty,
+            ["call_id"] = item.CallId ?? string.Empty,
+            ["action"] = TryGetItemJson(item, "action", out var action) ? action : input.Clone()
+        };
+
+        if (!string.IsNullOrWhiteSpace(item.Status))
+            metadata["status"] = item.Status;
+
+        if (TryGetItemJson(item, "environment", out var environment))
+            metadata["environment"] = environment;
+
+        var createdBy = TryGetItemString(item, "created_by");
+        if (!string.IsNullOrWhiteSpace(createdBy))
+            metadata["created_by"] = createdBy;
+
+        return new Dictionary<string, Dictionary<string, object>>
+        {
+            [providerId] = metadata
+        };
+    }
+
+    private static List<Dictionary<string, object?>> CreateShellOutputChunks(ShellOutputAccumulator accumulator)
+        => accumulator.Chunks
+            .OrderBy(chunk => chunk.Key)
+            .Select(chunk => new Dictionary<string, object?>
+            {
+                ["stdout"] = chunk.Value.Stdout.ToString(),
+                ["stderr"] = chunk.Value.Stderr.ToString(),
+                ["created_by"] = chunk.Value.CreatedBy,
+                ["outcome"] = chunk.Value.Outcome
+            })
+            .ToList();
 
     private sealed class ResponseShellStreamState
     {
@@ -757,6 +836,8 @@ public static partial class ResponsesUnifiedMapper
         public string? ToolItemId { get; set; }
 
         public string? CallId { get; set; }
+
+        public string? CreatedBy { get; set; }
 
         public string? Status { get; set; }
 

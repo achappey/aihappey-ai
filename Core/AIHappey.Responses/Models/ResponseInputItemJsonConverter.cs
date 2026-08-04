@@ -84,6 +84,18 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize code_interpreter_call.");
         }
 
+        if (string.Equals(type, "shell_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseShellCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize shell_call.");
+        }
+
+        if (string.Equals(type, "shell_call_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseShellCallOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize shell_call_output.");
+        }
+
         if (string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseReasoningItem>(options)
@@ -145,6 +157,14 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseCodeInterpreterCallItem codeInterpreterCall:
                 JsonSerializer.Serialize(writer, codeInterpreterCall, options);
+                return;
+
+            case ResponseShellCallItem shellCall:
+                JsonSerializer.Serialize(writer, shellCall, options);
+                return;
+
+            case ResponseShellCallOutputItem shellCallOutput:
+                JsonSerializer.Serialize(writer, shellCallOutput, options);
                 return;
 
             case ResponseReasoningItem reasoning:
