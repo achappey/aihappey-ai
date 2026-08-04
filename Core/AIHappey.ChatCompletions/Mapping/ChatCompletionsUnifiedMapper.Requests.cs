@@ -61,7 +61,9 @@ public static partial class ChatCompletionsUnifiedMapper
         };
     }
 
-    public static ChatCompletionOptions ToChatCompletionOptions(this AIRequest request, string providerId, bool enforceFlatContent = false)
+    public static ChatCompletionOptions ToChatCompletionOptions(this AIRequest request, 
+        string providerId, 
+        bool enforceFlatContent = false)
     {
         ArgumentNullException.ThrowIfNull(request);
 
