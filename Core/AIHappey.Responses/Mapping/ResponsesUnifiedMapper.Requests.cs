@@ -281,22 +281,24 @@ public static partial class ResponsesUnifiedMapper
                 };
 
             case ResponseImageGenerationCallItem imageGen:
+                var imageGenerationMetadata = CreateResponsesReplayMetadata(providerId, imageGen.Type);
+                var imageGenerationProviderMetadata = GetOrCreateProviderScopedMetadata(imageGenerationMetadata, providerId);
+                imageGenerationProviderMetadata["id"] = imageGen.Id;
+                imageGenerationProviderMetadata["result"] = imageGen.Result;
+                imageGenerationProviderMetadata["status"] = imageGen.Status;
                 return new AIInputItem
                 {
                     Type = "image_generation_call",
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["id"] = imageGen.Id,
-                        ["result"] = imageGen.Result,
-                        ["status"] = imageGen.Status
-                    }
+                    Metadata = imageGenerationMetadata
                 };
 
             case ResponseItemReference reference:
+                var referenceMetadata = CreateResponsesReplayMetadata(providerId, reference.Type);
+                GetOrCreateProviderScopedMetadata(referenceMetadata, providerId)["id"] = reference.Id;
                 return new AIInputItem
                 {
                     Type = "item_reference",
-                    Metadata = new Dictionary<string, object?> { ["id"] = reference.Id }
+                    Metadata = referenceMetadata
                 };
 
             default:
@@ -376,8 +378,10 @@ public static partial class ResponsesUnifiedMapper
         Dictionary<string, object?> metadata,
         string providerId)
     {
-        var callReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata");
-        var resultReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.result.metadata");
+        var callReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata")
+                             ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata");
+        var resultReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.result.metadata")
+                               ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.result.metadata");
 
         if (IsProviderExecutedWebSearchToolPart(toolPart, callReplayType, resultReplayType))
         {
@@ -405,31 +409,55 @@ public static partial class ResponsesUnifiedMapper
 
         if (IsProgramToolPart(toolPart) || string.Equals(callReplayType, "program", StringComparison.OrdinalIgnoreCase))
         {
-            yield return CreateResponseProgramItem(toolPart, metadata, providerId);
+            var program = CreateResponseProgramItem(toolPart, metadata, providerId);
+            if (program is not null)
+                yield return program;
+
             if (HasToolOutput(toolPart) && string.Equals(resultReplayType, "program_output", StringComparison.OrdinalIgnoreCase))
-                yield return CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+            {
+                var programOutput = CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+                if (programOutput is not null)
+                    yield return programOutput;
+            }
             yield break;
         }
 
         if (IsProgramOutputToolPart(toolPart) || string.Equals(resultReplayType, "program_output", StringComparison.OrdinalIgnoreCase))
         {
-            yield return CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+            var programOutput = CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+            if (programOutput is not null)
+                yield return programOutput;
             yield break;
         }
 
         if (IsToolSearchCallPart(toolPart) || string.Equals(callReplayType, "tool_search_call", StringComparison.OrdinalIgnoreCase))
         {
-            yield return CreateResponseToolSearchCallItem(toolPart, metadata, providerId);
+            var toolSearchCall = CreateResponseToolSearchCallItem(toolPart, metadata, providerId);
+            if (toolSearchCall is not null)
+                yield return toolSearchCall;
             if (HasToolOutput(toolPart))
-                yield return CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
+            {
+                var toolSearchOutput = CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
+                if (toolSearchOutput is not null)
+                    yield return toolSearchOutput;
+            }
             yield break;
         }
 
         if (IsToolSearchOutputPart(toolPart) || string.Equals(resultReplayType, "tool_search_output", StringComparison.OrdinalIgnoreCase))
         {
-            yield return CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
+            var toolSearchOutput = CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
+            if (toolSearchOutput is not null)
+                yield return toolSearchOutput;
             yield break;
         }
+
+        // Provider-executed UI tool parts are descriptive conversation artifacts,
+        // not client function calls. Only the explicitly recognized native items
+        // above may be replayed to Responses. Falling back to a function_call here
+        // creates an unmatched call because no client function output is emitted.
+        if (toolPart.IsProviderToolCall)
+            yield break;
 
         yield return CreateResponseFunctionCallItem(toolPart, metadata, providerId);
         if (toolPart.IsClientToolCall && HasToolOutput(toolPart))
@@ -643,7 +671,7 @@ public static partial class ResponsesUnifiedMapper
             case "function_call":
                 {
                     var toolPart = toolParts.FirstOrDefault();
-                    if (toolPart is not null)
+                    if (toolPart is not null && toolPart.IsClientToolCall)
                         yield return CreateResponseFunctionCallItem(toolPart, metadata, providerId);
                     yield break;
                 }
@@ -659,9 +687,8 @@ public static partial class ResponsesUnifiedMapper
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null)
                     {
-                        var webSearchCall = CreateValidResponseWebSearchCallItem(toolPart, metadata, providerId);
-                        if (webSearchCall is not null)
-                            yield return webSearchCall;
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
                     }
                     yield break;
                 }
@@ -670,9 +697,8 @@ public static partial class ResponsesUnifiedMapper
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null)
                     {
-                        var codeInterpreterCall = CreateResponseCodeInterpreterCallItem(toolPart, metadata, providerId);
-                        if (codeInterpreterCall is not null)
-                            yield return codeInterpreterCall;
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
                     }
                     yield break;
                 }
@@ -682,8 +708,8 @@ public static partial class ResponsesUnifiedMapper
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null)
                     {
-                        foreach (var shellReplayItem in CreateResponseShellReplayItems(toolPart, metadata, providerId))
-                            yield return shellReplayItem;
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
                     }
                     yield break;
                 }
@@ -691,28 +717,40 @@ public static partial class ResponsesUnifiedMapper
                 {
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null)
-                        yield return CreateResponseProgramItem(toolPart, metadata, providerId);
+                    {
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
+                    }
                     yield break;
                 }
             case "program_output":
                 {
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null)
-                        yield return CreateResponseProgramOutputItem(toolPart, metadata, providerId);
+                    {
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
+                    }
                     yield break;
                 }
             case "tool_search_call":
                 {
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null)
-                        yield return CreateResponseToolSearchCallItem(toolPart, metadata, providerId);
+                    {
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
+                    }
                     yield break;
                 }
             case "tool_search_output":
                 {
                     var toolPart = toolParts.FirstOrDefault();
                     if (toolPart is not null)
-                        yield return CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
+                    {
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
+                    }
                     yield break;
                 }
             case "reasoning":
@@ -742,19 +780,43 @@ public static partial class ResponsesUnifiedMapper
                 }
             case "image_generation_call":
                 {
+                    if (!string.Equals(
+                            ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata"),
+                            "image_generation_call",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        yield break;
+                    }
+
+                    var result = ExtractNestedValue<string>(metadata, providerId, "result");
+                    if (string.IsNullOrWhiteSpace(result))
+                        yield break;
+
                     yield return new ResponseImageGenerationCallItem
                     {
-                        Id = ExtractValue<string>(metadata, "id"),
-                        Result = ExtractValue<string>(metadata, "result") ?? string.Empty,
-                        Status = ExtractValue<string>(metadata, "status")
+                        Id = ExtractNestedValue<string>(metadata, providerId, "id"),
+                        Result = result,
+                        Status = ExtractNestedValue<string>(metadata, providerId, "status")
                     };
                     yield break;
                 }
             case "item_reference":
                 {
+                    if (!string.Equals(
+                            ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata"),
+                            "item_reference",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        yield break;
+                    }
+
+                    var id = ExtractNestedValue<string>(metadata, providerId, "id");
+                    if (string.IsNullOrWhiteSpace(id))
+                        yield break;
+
                     yield return new ResponseItemReference
                     {
-                        Id = ExtractValue<string>(metadata, "id") ?? string.Empty
+                        Id = id
                     };
                     yield break;
                 }
@@ -1066,22 +1128,26 @@ public static partial class ResponsesUnifiedMapper
     }
 
     private static bool IsProgramToolPart(AIToolCallContentPart toolPart)
-        => string.Equals(toolPart.Type, "tool-program", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "program", StringComparison.OrdinalIgnoreCase);
+        => toolPart.ProviderExecuted == true
+           && (string.Equals(toolPart.Type, "tool-program", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "program", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsProgramOutputToolPart(AIToolCallContentPart toolPart)
-        => string.Equals(toolPart.Type, "tool-program-output", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "program_output", StringComparison.OrdinalIgnoreCase);
+        => toolPart.ProviderExecuted == true
+           && (string.Equals(toolPart.Type, "tool-program-output", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "program_output", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsToolSearchCallPart(AIToolCallContentPart toolPart)
-        => string.Equals(toolPart.Type, "tool-search-call", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(toolPart.Type, "tool_search_call", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_call", StringComparison.OrdinalIgnoreCase);
+        => toolPart.ProviderExecuted == true
+           && (string.Equals(toolPart.Type, "tool-search-call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.Type, "tool_search_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_call", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsToolSearchOutputPart(AIToolCallContentPart toolPart)
-        => string.Equals(toolPart.Type, "tool-search-output", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(toolPart.Type, "tool_search_output", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_output", StringComparison.OrdinalIgnoreCase);
+        => toolPart.ProviderExecuted == true
+           && (string.Equals(toolPart.Type, "tool-search-output", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.Type, "tool_search_output", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_output", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsProviderExecutedWebSearchToolPart(
         AIToolCallContentPart toolPart,
@@ -1243,6 +1309,13 @@ public static partial class ResponsesUnifiedMapper
         var resultMetadata = ExtractNestedChannelMap(toolPart.Metadata, "messages.provider.result.metadata", providerId);
         var directMetadata = toolPart.Metadata is null ? null : ExtractObjectMap(toolPart.Metadata, providerId);
         var itemProviderMetadata = ExtractObjectMap(itemMetadata, providerId);
+
+        var replayType = GetMapValue(callMetadata, "type")?.ToString()
+                         ?? GetMapValue(resultMetadata, "type")?.ToString()
+                         ?? GetMapValue(directMetadata, "type")?.ToString()
+                         ?? GetMapValue(itemProviderMetadata, "type")?.ToString();
+        if (!string.Equals(replayType, "code_interpreter_call", StringComparison.OrdinalIgnoreCase))
+            return null;
 
         object? Read(string key)
             => GetMapValue(resultMetadata, key)
@@ -1494,23 +1567,42 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static ResponseToolSearchCallItem CreateResponseToolSearchCallItem(
+    private static ResponseToolSearchCallItem? CreateResponseToolSearchCallItem(
         AIToolCallContentPart toolPart,
         Dictionary<string, object?> itemMetadata,
         string providerId)
     {
         var metadata = toolPart.Metadata ?? [];
+        var type = ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata")
+                   ?? ResolveResponsesReplayType(itemMetadata, providerId, "messages.provider.call.metadata");
+        if (!string.Equals(type, "tool_search_call", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var execution = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "execution")
+                        ?? ExtractNestedValue<string>(metadata, providerId, "execution")
+                        ?? ExtractNestedValue<string>(itemMetadata, providerId, "execution");
+        var id = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
+                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id");
+        var callId = NormalizeNullableCallId(
+            ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "call_id")
+            ?? ExtractNestedValue<string>(metadata, providerId, "call_id")
+            ?? ExtractNestedValue<string>(itemMetadata, providerId, "call_id"));
+
+        if (string.IsNullOrWhiteSpace(execution)
+            || (string.Equals(execution, "server", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(id))
+            || (string.Equals(execution, "client", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(callId))
+            || (!string.Equals(execution, "server", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(execution, "client", StringComparison.OrdinalIgnoreCase)))
+        {
+            return null;
+        }
+
         return new ResponseToolSearchCallItem
         {
-            Id = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "id")
-                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
-                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id"),
-            Execution = ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "execution")
-                        ?? ExtractNestedValue<string>(metadata, providerId, "execution")
-                        ?? (toolPart.ProviderExecuted == true ? "server" : "client"),
-            CallId = NormalizeNullableCallId(
-                ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "call_id")
-                ?? ExtractNestedValue<string>(metadata, providerId, "call_id")),
+            Id = id,
+            Execution = execution,
+            CallId = callId,
             Status = NormalizeResponsesToolStatus(
                 ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "status")
                 ?? ExtractNestedValue<string>(metadata, providerId, "status")
@@ -1520,77 +1612,144 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static ResponseToolSearchOutputItem CreateResponseToolSearchOutputItem(
+    private static ResponseToolSearchOutputItem? CreateResponseToolSearchOutputItem(
         AIToolCallContentPart toolPart,
         Dictionary<string, object?> itemMetadata,
         string providerId)
     {
         var metadata = toolPart.Metadata ?? [];
+        var type = ResolveResponsesReplayType(metadata, providerId, "messages.provider.result.metadata")
+                   ?? ResolveResponsesReplayType(itemMetadata, providerId, "messages.provider.result.metadata");
+        if (!string.Equals(type, "tool_search_output", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var execution = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "execution")
+                        ?? ExtractNestedValue<string>(metadata, providerId, "execution")
+                        ?? ExtractNestedValue<string>(itemMetadata, providerId, "execution");
+        var id = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
+                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id");
+        var callId = NormalizeNullableCallId(
+            ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "call_id")
+            ?? ExtractNestedValue<string>(metadata, providerId, "call_id")
+            ?? ExtractNestedValue<string>(itemMetadata, providerId, "call_id"));
+
+        if (string.IsNullOrWhiteSpace(execution)
+            || (string.Equals(execution, "server", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(id))
+            || (string.Equals(execution, "client", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(callId))
+            || (!string.Equals(execution, "server", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(execution, "client", StringComparison.OrdinalIgnoreCase)))
+        {
+            return null;
+        }
+
+        List<ResponseToolDefinition>? tools;
+        try
+        {
+            tools = toolPart.Output is null
+                ? null
+                : JsonSerializer.Deserialize<List<ResponseToolDefinition>>(JsonSerializer.Serialize(toolPart.Output, Json), Json);
+        }
+        catch
+        {
+            return null;
+        }
+
+        if (tools is null)
+            return null;
+
         return new ResponseToolSearchOutputItem
         {
-            Id = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "id")
-                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
-                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id"),
-            Execution = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "execution")
-                        ?? ExtractNestedValue<string>(metadata, providerId, "execution")
-                        ?? (toolPart.ProviderExecuted == true ? "server" : "client"),
-            CallId = NormalizeNullableCallId(
-                ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "call_id")
-                ?? ExtractNestedValue<string>(metadata, providerId, "call_id")),
+            Id = id,
+            Execution = execution,
+            CallId = callId,
             Status = NormalizeResponsesToolStatus(
                 ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "status")
                 ?? ExtractNestedValue<string>(metadata, providerId, "status")
                 ?? toolPart.State,
                 hasOutput: true),
-            Tools = toolPart.Output is null
-                ? []
-                : JsonSerializer.Deserialize<List<ResponseToolDefinition>>(JsonSerializer.Serialize(toolPart.Output, Json), Json) ?? []
+            Tools = tools
         };
     }
 
     private static string? NormalizeNullableCallId(string? callId)
         => string.IsNullOrWhiteSpace(callId) ? null : callId;
 
-    private static ResponseProgramItem CreateResponseProgramItem(
+    private static ResponseProgramItem? CreateResponseProgramItem(
         AIToolCallContentPart toolPart,
         Dictionary<string, object?> metadata,
         string providerId)
-        => new()
+    {
+        var partMetadata = toolPart.Metadata ?? [];
+        var type = ResolveResponsesReplayType(partMetadata, providerId, "messages.provider.call.metadata")
+                   ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata");
+        if (!string.Equals(type, "program", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var id = ExtractNestedChannelValue<string>(partMetadata, "messages.provider.call.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(partMetadata, providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id");
+        var callId = ExtractNestedChannelValue<string>(partMetadata, "messages.provider.call.metadata", providerId, "call_id")
+                     ?? ExtractNestedValue<string>(partMetadata, providerId, "call_id");
+        var fingerprint = ExtractNestedChannelValue<string>(partMetadata, "messages.provider.call.metadata", providerId, "fingerprint")
+                          ?? ExtractNestedValue<string>(partMetadata, providerId, "fingerprint")
+                          ?? ExtractNestedValue<string>(metadata, providerId, "fingerprint");
+
+        if (string.IsNullOrWhiteSpace(id)
+            || string.IsNullOrWhiteSpace(callId)
+            || string.IsNullOrWhiteSpace(fingerprint))
         {
-            Id = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.call.metadata", providerId, "id")
-                 ?? ExtractNestedValue<string>(toolPart.Metadata ?? [], providerId, "id")
-                 ?? ExtractNestedValue<string>(metadata, providerId, "id"),
-            CallId = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.call.metadata", providerId, "call_id")
-                     ?? toolPart.ToolCallId,
+            return null;
+        }
+
+        return new ResponseProgramItem
+        {
+            Id = id,
+            CallId = callId,
             Code = ExtractObject<JsonElement>(toolPart.Input is null ? [] : new Dictionary<string, object?> { ["input"] = toolPart.Input }, "input") is { } input
                    && input.ValueKind == JsonValueKind.Object
                    && input.TryGetProperty("code", out var code)
                 ? code.GetString() ?? string.Empty
                 : ExtractValue<string>(toolPart.Metadata, "code") ?? string.Empty,
-            Fingerprint = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.call.metadata", providerId, "fingerprint")
-                          ?? ExtractNestedValue<string>(toolPart.Metadata ?? [], providerId, "fingerprint")
-                          ?? ExtractNestedValue<string>(metadata, providerId, "fingerprint")
-                          ?? string.Empty
+            Fingerprint = fingerprint
         };
+    }
 
-    private static ResponseProgramOutputItem CreateResponseProgramOutputItem(
+    private static ResponseProgramOutputItem? CreateResponseProgramOutputItem(
         AIToolCallContentPart toolPart,
         Dictionary<string, object?> metadata,
         string providerId)
     {
+        var partMetadata = toolPart.Metadata ?? [];
+        var type = ResolveResponsesReplayType(partMetadata, providerId, "messages.provider.result.metadata")
+                   ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.result.metadata");
+        if (!string.Equals(type, "program_output", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var id = ExtractNestedChannelValue<string>(partMetadata, "messages.provider.result.metadata", providerId, "id")
+                 ?? ExtractNestedValue<string>(partMetadata, providerId, "id")
+                 ?? ExtractNestedValue<string>(metadata, providerId, "id");
+        var callId = ExtractNestedChannelValue<string>(partMetadata, "messages.provider.result.metadata", providerId, "call_id")
+                     ?? ExtractNestedValue<string>(partMetadata, providerId, "call_id");
         var output = toolPart.Output is null ? default : JsonSerializer.SerializeToElement(toolPart.Output, Json);
+        var result = output.ValueKind == JsonValueKind.Object && output.TryGetProperty("result", out var resultValue)
+            ? resultValue.GetString()
+            : output.ValueKind == JsonValueKind.String ? output.GetString() : null;
+
+        if (string.IsNullOrWhiteSpace(id)
+            || string.IsNullOrWhiteSpace(callId)
+            || result is null)
+        {
+            return null;
+        }
+
         return new ResponseProgramOutputItem
         {
-            Id = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.result.metadata", providerId, "id")
-                 ?? ExtractNestedValue<string>(toolPart.Metadata ?? [], providerId, "id")
-                 ?? ExtractNestedValue<string>(metadata, providerId, "id"),
-            CallId = ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.result.metadata", providerId, "call_id")
-                     ?? toolPart.ToolCallId,
-            Result = output.ValueKind == JsonValueKind.Object && output.TryGetProperty("result", out var result)
-                ? result.GetString() ?? string.Empty
-                : output.ValueKind == JsonValueKind.String ? output.GetString() ?? string.Empty : string.Empty,
+            Id = id,
+            CallId = callId,
+            Result = result,
             Status = NormalizeResponsesToolStatus(
-                ExtractNestedChannelValue<string>(toolPart.Metadata ?? [], "messages.provider.result.metadata", providerId, "status")
+                ExtractNestedChannelValue<string>(partMetadata, "messages.provider.result.metadata", providerId, "status")
                 ?? (output.ValueKind == JsonValueKind.Object && output.TryGetProperty("status", out var status) ? status.GetString() : toolPart.State),
                 hasOutput: true)
         };
