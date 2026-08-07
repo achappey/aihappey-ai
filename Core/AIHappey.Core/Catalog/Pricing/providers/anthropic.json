@@ -43,12 +43,6 @@
       "output": "0.000025"
     }
   },
-  "anthropic/claude-opus-4-1-20250805": {
-    "pricing": {
-      "input": "0.000015",
-      "output": "0.000075"
-    }
-  },
   "anthropic/claude-opus-4-20250514": {
     "pricing": {
       "input": "0.000015",

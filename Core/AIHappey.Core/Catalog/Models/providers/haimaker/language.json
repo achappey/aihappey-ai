@@ -170,14 +170,6 @@
             "description": "Claude Opus 4.1."
         },
         {
-            "id": "haimaker/anthropic/claude-opus-4-1-20250805",
-            "object": "model",
-            "owned_by": "Haimaker",
-            "name": "anthropic/claude-opus-4-1-20250805",
-            "type": "language",
-            "description": "Claude Opus 4.1 (2025-08-05)."
-        },
-        {
             "id": "haimaker/anthropic/claude-opus-4-5",
             "object": "model",
             "owned_by": "Haimaker",

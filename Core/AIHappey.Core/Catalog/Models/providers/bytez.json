@@ -163,13 +163,6 @@
             "type": "language"
         },
         {
-            "id": "bytez/anthropic/claude-opus-4-1-20250805",
-            "object": "model",
-            "owned_by": "Anthropic",
-            "name": "claude-opus-4-1-20250805",
-            "type": "language"
-        },
-        {
             "id": "bytez/anthropic/claude-opus-4-20250514",
             "object": "model",
             "owned_by": "Anthropic",
