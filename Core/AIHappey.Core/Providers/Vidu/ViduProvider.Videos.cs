@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Vidu;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -19,7 +20,7 @@ public partial class ViduProvider
 
     private sealed record ViduVideoCreationResult(string State, JsonElement RawRoot);
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -65,53 +66,62 @@ public partial class ViduProvider
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("Vidu response missing task_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollCreationsAsync(taskId, ct),
-            isTerminal: r => r.State is "success" or "failed",
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (completed.State == "failed")
-            throw new InvalidOperationException($"Vidu video task failed (task_id={taskId}).");
-
-        var creationUrl = TryGetFirstCreationUrl(completed.RawRoot);
-        if (string.IsNullOrWhiteSpace(creationUrl))
-            throw new InvalidOperationException($"Vidu video task completed but returned no creation url (task_id={taskId}).");
-
-        using var fileResp = await _client.GetAsync(creationUrl, cancellationToken);
-        var fileBytes = await fileResp.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!fileResp.IsSuccessStatusCode)
+        return new VideoOperationStartResult
         {
-            var err = Encoding.UTF8.GetString(fileBytes);
-            throw new InvalidOperationException($"Vidu video download failed ({(int)fileResp.StatusCode}): {err}");
-        }
-
-        var mediaType = fileResp.Content.Headers.ContentType?.MediaType
-            ?? GuessVideoMediaType(creationUrl)
-            ?? "video/mp4";
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(fileBytes)
-                }
-            ],
+            Operation = taskId,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = completed.RawRoot.Clone()
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, state = "pending" }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        var result = await PollCreationsAsync(operation, cancellationToken);
+        var model = result.RawRoot.TryGetProperty("model", out var modelElement) && modelElement.ValueKind == JsonValueKind.String
+            ? modelElement.GetString()
+            : null;
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(model) ? GetIdentifier() : model.ToModelId(GetIdentifier())
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId = operation, state = result.State });
+
+        if (string.Equals(result.State, "failed", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationErrorResult { Error = $"Vidu video task failed (task_id={operation}).", ProviderMetadata = metadata, Response = response };
+
+        if (!string.Equals(result.State, "success", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var creationUrl = TryGetFirstCreationUrl(result.RawRoot);
+        if (string.IsNullOrWhiteSpace(creationUrl))
+            return new VideoOperationErrorResult { Error = $"Vidu video task completed but returned no creation url (task_id={operation}).", ProviderMetadata = metadata, Response = response };
+
+        using var fileResp = await _client.GetAsync(creationUrl, cancellationToken);
+        var fileBytes = await fileResp.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!fileResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Vidu video download failed ({(int)fileResp.StatusCode}): {Encoding.UTF8.GetString(fileBytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData
+            {
+                Type = "base64",
+                MediaType = fileResp.Content.Headers.ContentType?.MediaType ?? GuessVideoMediaType(creationUrl) ?? "video/mp4",
+                Data = Convert.ToBase64String(fileBytes)
+            }],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 

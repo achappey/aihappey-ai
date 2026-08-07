@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Zai;
@@ -16,7 +17,7 @@ public partial class ZaiProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -101,64 +102,68 @@ public partial class ZaiProvider
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("Z.AI video generation returned no id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            async token =>
-            {
-                using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v4/async-result/{taskId}");
-                using var pollResp = await _client.SendAsync(pollReq, token);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(token);
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"Z.AI async-result failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return (root: pollDoc.RootElement.Clone(), raw: pollRaw);
-            },
-            result =>
-            {
-                var status = TryGetStatus(result.root);
-                return string.Equals(status, "SUCCESS", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "FAIL", StringComparison.OrdinalIgnoreCase);
-            },
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(5),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        var status = TryGetStatus(completed.root);
-        if (!string.Equals(status, "SUCCESS", StringComparison.OrdinalIgnoreCase))
+        return new VideoOperationStartResult
         {
-            throw new InvalidOperationException($"Z.AI video generation failed with status '{status}'.");
-        }
-
-        var videoUrl = TryGetFirstVideoUrl(completed.root);
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException("Z.AI video result contained no video url.");
-
-        var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
-        var mediaType = GuessVideoMediaType(videoUrl) ?? "video/mp4";
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["zai"] = completed.root.Clone()
-        };
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = taskId,
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = taskId, status = TryGetStatus(root) ?? "PROCESSING" }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v4/async-result/{Uri.EscapeDataString(operation)}");
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Z.AI async-result failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var result = pollDoc.RootElement.Clone();
+        var status = TryGetStatus(result);
+        var model = result.TryGetProperty("model", out var modelElement) && modelElement.ValueKind == JsonValueKind.String ? modelElement.GetString() : null;
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(model) ? GetIdentifier() : model.ToModelId(GetIdentifier())
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = operation, status });
+
+        if (string.Equals(status, "FAIL", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationErrorResult { Error = $"Z.AI video generation failed (id={operation}).", ProviderMetadata = metadata, Response = response };
+
+        if (!string.Equals(status, "SUCCESS", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var videoUrl = TryGetFirstVideoUrl(result);
+        if (string.IsNullOrWhiteSpace(videoUrl))
+            return new VideoOperationErrorResult { Error = $"Z.AI video task '{operation}' succeeded but returned no video url.", ProviderMetadata = metadata, Response = response };
+
+        using var videoResponse = await _client.GetAsync(videoUrl, cancellationToken);
+        var bytes = await videoResponse.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!videoResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Z.AI video download failed ({(int)videoResponse.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData
+            {
+                Type = "base64",
+                MediaType = videoResponse.Content.Headers.ContentType?.MediaType ?? GuessVideoMediaType(videoUrl) ?? "video/mp4",
+                Data = Convert.ToBase64String(bytes)
+            }],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 
