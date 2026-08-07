@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.MiniMax;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.MiniMax;
@@ -16,7 +17,7 @@ public partial class MiniMaxProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -66,67 +67,65 @@ public partial class MiniMaxProvider
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("MiniMax video generation returned no task_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            async token =>
-            {
-                using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/query/video_generation?task_id={taskId}");
-                using var pollResp = await _client.SendAsync(pollReq, token);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(token);
-
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"MiniMax video_generation poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return (root: pollDoc.RootElement.Clone(), raw: pollRaw);
-            },
-            result =>
-            {
-                var status = TryGetStatus(result.root);
-                return string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "Fail", StringComparison.OrdinalIgnoreCase);
-            },
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(5),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        EnsureBaseResponseOk(completed.root, "video_generation_query");
-
-        var finalStatus = TryGetStatus(completed.root);
-        if (!string.Equals(finalStatus, "Success", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"MiniMax video generation failed with status '{finalStatus}'.");
-
-        var fileId = completed.root.TryGetProperty("file_id", out var fileEl) ? fileEl.ToString() : null;
-        if (string.IsNullOrWhiteSpace(fileId))
-            throw new InvalidOperationException("MiniMax video generation result contained no file_id.");
-
-        var downloadUrl = await ResolveDownloadUrlAsync(fileId, cancellationToken);
-        var videoBytes = await _client.GetByteArrayAsync(downloadUrl, cancellationToken);
-        var mediaType = GuessVideoMediaType(downloadUrl) ?? "video/mp4";
-
-        return new VideoResponse
+        return new VideoOperationStartResult
         {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = taskId,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new
-                {
-
-                }, JsonSerializerOptions.Web)
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status = "Preparing" }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/query/video_generation?task_id={Uri.EscapeDataString(operation)}");
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"MiniMax video_generation poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        EnsureBaseResponseOk(root, "video_generation_query");
+        var status = TryGetStatus(root);
+        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId = operation, status });
+
+        if (string.Equals(status, "Fail", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationErrorResult { Error = $"MiniMax video generation failed (task_id={operation}).", ProviderMetadata = metadata, Response = response };
+
+        if (!string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var fileId = root.TryGetProperty("file_id", out var fileElement) ? fileElement.ToString() : null;
+        if (string.IsNullOrWhiteSpace(fileId))
+            return new VideoOperationErrorResult { Error = $"MiniMax task '{operation}' succeeded but returned no file_id.", ProviderMetadata = metadata, Response = response };
+
+        var downloadUrl = await ResolveDownloadUrlAsync(fileId, cancellationToken);
+        using var videoResponse = await _client.GetAsync(downloadUrl, cancellationToken);
+        var bytes = await videoResponse.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!videoResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"MiniMax video download failed ({(int)videoResponse.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData
+            {
+                Type = "base64",
+                MediaType = videoResponse.Content.Headers.ContentType?.MediaType ?? GuessVideoMediaType(downloadUrl) ?? "video/mp4",
+                Data = Convert.ToBase64String(bytes)
+            }],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 

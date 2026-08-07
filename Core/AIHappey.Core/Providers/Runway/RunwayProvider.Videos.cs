@@ -37,7 +37,7 @@ public partial class RunwayProvider
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -104,28 +104,86 @@ public partial class RunwayProvider
         var node = JsonNode.Parse(body);
         var taskId = ExtractTaskId(node);
 
-        var (bytes, mimeType, outputUrl, lastResult) = await WaitForTaskAndDownloadFirstOutputAsync(taskId, cancellationToken);
-        var resolvedMime = !string.IsNullOrWhiteSpace(mimeType)
-            ? mimeType!
-            : GuessMimeFromUrl(outputUrl) ?? "video/mp4";
-
-        return new VideoResponse
+        return new VideoOperationStartResult
         {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = resolvedMime,
-                    Data = Convert.ToBase64String(bytes)
-                }
-            ],
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Operation = taskId,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = taskId, status = "PENDING" }),
             Warnings = warnings,
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        using var responseMessage = await _client.GetAsync($"v1/tasks/{Uri.EscapeDataString(operation)}", cancellationToken);
+        var raw = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
+        if (!responseMessage.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Runway task poll failed ({(int)responseMessage.StatusCode}): {raw}");
+
+        var root = JsonNode.Parse(raw);
+        var status = root?["status"]?.ToString();
+        var model = root?["model"]?.ToString();
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(model) ? GetIdentifier() : model.ToModelId(GetIdentifier())
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = operation, status });
+
+        if (string.Equals(status, "FAILED", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "CANCELED", StringComparison.OrdinalIgnoreCase))
+        {
+            var failure = root?["failure"]?.ToString() ?? "Unknown failure.";
+            var failureCode = root?["failureCode"]?.ToString();
+            return new VideoOperationErrorResult
+            {
+                Error = string.IsNullOrWhiteSpace(failureCode) ? $"Runway task failed: {failure}" : $"Runway task failed: {failure} ({failureCode})",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (!string.Equals(status, "SUCCEEDED", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var outputUrl = ExtractFirstOutputUrl(root);
+        if (string.IsNullOrWhiteSpace(outputUrl))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Runway task '{operation}' succeeded but returned no output.",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        using var outputResponse = await _client.GetAsync(outputUrl, cancellationToken);
+        var bytes = await outputResponse.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!outputResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Runway output download failed ({(int)outputResponse.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos =
+            [
+                new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    MediaType = outputResponse.Content.Headers.ContentType?.MediaType ?? GuessMimeFromUrl(outputUrl) ?? "video/mp4",
+                    Data = Convert.ToBase64String(bytes)
+                }
+            ],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 
