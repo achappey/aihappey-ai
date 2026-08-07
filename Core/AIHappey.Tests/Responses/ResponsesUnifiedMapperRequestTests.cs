@@ -255,6 +255,146 @@ public sealed class ResponsesUnifiedMapperRequestTests
         Assert.Equal("opaque-reasoning-state", reasoningItem.EncryptedContent);
     }
 
+    [Fact]
+    public void Client_tool_search_output_from_call_only_metadata_omits_id_and_preserves_call_id()
+    {
+        var request = CreateClientToolSearchRequest(
+            resultMetadata: null,
+            output: CreateClientToolSearchOutput("lookup_order"));
+
+        var responseRequest = request.ToResponseRequest("openai");
+        var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(responseRequest.Input?.Items);
+        var call = Assert.Single(inputItems.OfType<ResponseToolSearchCallItem>());
+        var output = Assert.Single(inputItems.OfType<ResponseToolSearchOutputItem>());
+
+        Assert.Equal("tsc_call_item_123", call.Id);
+        Assert.Equal("call_tool_search_123", call.CallId);
+        Assert.Null(output.Id);
+        Assert.Equal("client", output.Execution);
+        Assert.Equal("call_tool_search_123", output.CallId);
+        Assert.Equal("completed", output.Status);
+        Assert.Single(output.Tools);
+
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(output, JsonSerializerOptions.Web));
+        var root = document.RootElement;
+        Assert.False(root.TryGetProperty("id", out _));
+        Assert.Equal("tool_search_output", root.GetProperty("type").GetString());
+        Assert.Equal("client", root.GetProperty("execution").GetString());
+        Assert.Equal("call_tool_search_123", root.GetProperty("call_id").GetString());
+        Assert.Equal("lookup_order", root.GetProperty("tools")[0].GetProperty("name").GetString());
+        Assert.Equal("object", root.GetProperty("tools")[0].GetProperty("parameters").GetProperty("type").GetString());
+    }
+
+    [Theory]
+    [InlineData("tso_output_item_123", "tso_output_item_123")]
+    [InlineData("tsc_call_item_456", null)]
+    [InlineData("output_item_without_native_prefix", null)]
+    public void Client_tool_search_output_retains_only_genuine_result_metadata_output_ids(
+        string resultId,
+        string? expectedId)
+    {
+        var request = CreateClientToolSearchRequest(
+            resultMetadata: CreateToolSearchProviderMetadata(
+                type: "tool_search_output",
+                id: resultId,
+                execution: "client",
+                callId: "call_tool_search_123",
+                status: "completed"),
+            output: CreateClientToolSearchOutput("lookup_order"));
+
+        var output = Assert.Single(
+            Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(
+                    request.ToResponseRequest("openai").Input?.Items)
+                .OfType<ResponseToolSearchOutputItem>());
+
+        Assert.Equal(expectedId, output.Id);
+        Assert.Equal("call_tool_search_123", output.CallId);
+    }
+
+    [Fact]
+    public void Client_tool_search_output_ignores_other_provider_result_metadata()
+    {
+        var otherProviderResultMetadata = new Dictionary<string, object?>
+        {
+            ["messages.provider.result.metadata"] = new Dictionary<string, object?>
+            {
+                ["anthropic"] = new Dictionary<string, object?>
+                {
+                    ["type"] = "tool_search_output",
+                    ["id"] = "tso_anthropic_output",
+                    ["execution"] = "client",
+                    ["call_id"] = "call_anthropic"
+                }
+            }
+        };
+        var request = CreateClientToolSearchRequest(
+            resultMetadata: otherProviderResultMetadata,
+            output: CreateClientToolSearchOutput("lookup_order"));
+
+        var output = Assert.Single(
+            Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(
+                    request.ToResponseRequest("openai").Input?.Items)
+                .OfType<ResponseToolSearchOutputItem>());
+
+        Assert.Null(output.Id);
+        Assert.Equal("call_tool_search_123", output.CallId);
+    }
+
+    [Fact]
+    public void Client_tool_search_output_allows_an_empty_loaded_tool_set()
+    {
+        var request = CreateClientToolSearchRequest(
+            resultMetadata: null,
+            output: new
+            {
+                structuredContent = new
+                {
+                    selectedTools = Array.Empty<object>()
+                }
+            });
+
+        var output = Assert.Single(
+            Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(
+                    request.ToResponseRequest("openai").Input?.Items)
+                .OfType<ResponseToolSearchOutputItem>());
+
+        Assert.Null(output.Id);
+        Assert.Empty(output.Tools);
+        Assert.Equal("call_tool_search_123", output.CallId);
+    }
+
+    [Fact]
+    public void Hosted_tool_search_output_preserves_its_native_tso_id()
+    {
+        var callMetadata = CreateToolSearchProviderMetadata(
+            type: "tool_search_call",
+            id: "tsc_hosted_call",
+            execution: "server",
+            callId: null,
+            status: "completed");
+        var resultMetadata = CreateToolSearchProviderMetadata(
+            type: "tool_search_output",
+            id: "tso_hosted_output",
+            execution: "server",
+            callId: null,
+            status: "completed");
+        foreach (var entry in resultMetadata)
+            callMetadata[entry.Key] = entry.Value;
+
+        var request = CreateToolSearchRequest(
+            metadata: callMetadata,
+            output: CreateClientToolSearchOutput("lookup_order"),
+            providerExecuted: true);
+        var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(
+            request.ToResponseRequest("openai").Input?.Items);
+
+        Assert.Equal("tsc_hosted_call", Assert.Single(inputItems.OfType<ResponseToolSearchCallItem>()).Id);
+        var output = Assert.Single(inputItems.OfType<ResponseToolSearchOutputItem>());
+        Assert.Equal("tso_hosted_output", output.Id);
+        Assert.Equal("server", output.Execution);
+        Assert.Null(output.CallId);
+    }
+
     private static List<string> LoadEncryptedContents(string json)
     {
         using var document = JsonDocument.Parse(json);
@@ -284,5 +424,123 @@ public sealed class ResponsesUnifiedMapperRequestTests
             .SelectMany(message => message.GetProperty("parts").EnumerateArray())
             .Count(part => part.TryGetProperty("type", out var type) && type.GetString() == "reasoning");
     }
+
+    private static AIRequest CreateClientToolSearchRequest(
+        Dictionary<string, object?>? resultMetadata,
+        object output)
+    {
+        var metadata = CreateToolSearchProviderMetadata(
+            type: "tool_search_call",
+            id: "tsc_call_item_123",
+            execution: "client",
+            callId: "call_tool_search_123",
+            status: "completed");
+        if (resultMetadata is not null)
+        {
+            foreach (var entry in resultMetadata)
+                metadata[entry.Key] = entry.Value;
+        }
+
+        return CreateToolSearchRequest(metadata, output, providerExecuted: false);
+    }
+
+    private static AIRequest CreateToolSearchRequest(
+        Dictionary<string, object?> metadata,
+        object output,
+        bool providerExecuted)
+        => new()
+        {
+            Model = "openai/test-model",
+            ProviderId = "openai",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Type = "message",
+                        Role = "assistant",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-search-call",
+                                ToolCallId = "call_tool_search_123",
+                                ToolName = "tool_search",
+                                Input = new { goal = "find an order lookup tool" },
+                                Output = output,
+                                State = "output-available",
+                                ProviderExecuted = providerExecuted,
+                                Metadata = metadata
+                            }
+                        ],
+                        Metadata = metadata
+                    }
+                ]
+            }
+        };
+
+    private static Dictionary<string, object?> CreateToolSearchProviderMetadata(
+        string type,
+        string? id,
+        string execution,
+        string? callId,
+        string status)
+    {
+        var providerMetadata = new Dictionary<string, object?>
+        {
+            ["type"] = type,
+            ["execution"] = execution,
+            ["status"] = status
+        };
+        if (id is not null)
+            providerMetadata["id"] = id;
+        if (callId is not null)
+            providerMetadata["call_id"] = callId;
+
+        var channel = string.Equals(type, "tool_search_output", StringComparison.Ordinal)
+            ? "messages.provider.result.metadata"
+            : "messages.provider.call.metadata";
+        return new Dictionary<string, object?>
+        {
+            [channel] = new Dictionary<string, object?>
+            {
+                ["openai"] = providerMetadata
+            }
+        };
+    }
+
+    private static object CreateClientToolSearchOutput(string toolName)
+        => new
+        {
+            content = new[]
+            {
+                new
+                {
+                    type = "text",
+                    text = $"Selected 1 tool: {toolName}"
+                }
+            },
+            structuredContent = new
+            {
+                selectedTools = new[]
+                {
+                    new
+                    {
+                        name = toolName,
+                        description = "Looks up an order.",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                orderId = new { type = "string" }
+                            },
+                            required = new[] { "orderId" }
+                        }
+                    }
+                }
+            }
+        };
 
 }

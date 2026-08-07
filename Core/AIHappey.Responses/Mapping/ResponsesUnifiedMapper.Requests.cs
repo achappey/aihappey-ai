@@ -1138,14 +1138,13 @@ public static partial class ResponsesUnifiedMapper
                || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "program_output", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsToolSearchCallPart(AIToolCallContentPart toolPart)
-        => toolPart.ProviderExecuted == true
-           && (string.Equals(toolPart.Type, "tool-search-call", StringComparison.OrdinalIgnoreCase)
+        => (string.Equals(toolPart.Type, "tool-search-call", StringComparison.OrdinalIgnoreCase)
                || string.Equals(toolPart.Type, "tool_search_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(toolPart.ToolName, "tool_search", StringComparison.OrdinalIgnoreCase)
                || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_call", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsToolSearchOutputPart(AIToolCallContentPart toolPart)
-        => toolPart.ProviderExecuted == true
-           && (string.Equals(toolPart.Type, "tool-search-output", StringComparison.OrdinalIgnoreCase)
+        => (string.Equals(toolPart.Type, "tool-search-output", StringComparison.OrdinalIgnoreCase)
                || string.Equals(toolPart.Type, "tool_search_output", StringComparison.OrdinalIgnoreCase)
                || string.Equals(ExtractValue<string>(toolPart.Metadata, "responses.type"), "tool_search_output", StringComparison.OrdinalIgnoreCase));
 
@@ -1619,18 +1618,39 @@ public static partial class ResponsesUnifiedMapper
     {
         var metadata = toolPart.Metadata ?? [];
         var type = ResolveResponsesReplayType(metadata, providerId, "messages.provider.result.metadata")
-                   ?? ResolveResponsesReplayType(itemMetadata, providerId, "messages.provider.result.metadata");
+                   ?? ResolveResponsesReplayType(itemMetadata, providerId, "messages.provider.result.metadata")
+                   ?? (HasToolOutput(toolPart)
+                       ? ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata")
+                         ?? ResolveResponsesReplayType(itemMetadata, providerId, "messages.provider.call.metadata")
+                       : null);
+        if (HasToolOutput(toolPart)
+            && string.Equals(type, "tool_search_call", StringComparison.OrdinalIgnoreCase))
+        {
+            type = "tool_search_output";
+        }
         if (!string.Equals(type, "tool_search_output", StringComparison.OrdinalIgnoreCase))
             return null;
 
         var execution = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "execution")
+                        ?? ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "execution")
                         ?? ExtractNestedValue<string>(metadata, providerId, "execution")
                         ?? ExtractNestedValue<string>(itemMetadata, providerId, "execution");
-        var id = ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "id")
-                 ?? ExtractNestedValue<string>(metadata, providerId, "id")
-                 ?? ExtractNestedValue<string>(itemMetadata, providerId, "id");
+        var resultId = ExtractNestedChannelValue<string>(
+                           metadata,
+                           "messages.provider.result.metadata",
+                           providerId,
+                           "id")
+                       ?? ExtractNestedChannelValue<string>(
+                           itemMetadata,
+                           "messages.provider.result.metadata",
+                           providerId,
+                           "id");
+        var id = resultId?.StartsWith("tso_", StringComparison.Ordinal) == true
+            ? resultId
+            : null;
         var callId = NormalizeNullableCallId(
             ExtractNestedChannelValue<string>(metadata, "messages.provider.result.metadata", providerId, "call_id")
+            ?? ExtractNestedChannelValue<string>(metadata, "messages.provider.call.metadata", providerId, "call_id")
             ?? ExtractNestedValue<string>(metadata, providerId, "call_id")
             ?? ExtractNestedValue<string>(itemMetadata, providerId, "call_id"));
 
@@ -1646,9 +1666,24 @@ public static partial class ResponsesUnifiedMapper
         List<ResponseToolDefinition>? tools;
         try
         {
-            tools = toolPart.Output is null
-                ? null
-                : JsonSerializer.Deserialize<List<ResponseToolDefinition>>(JsonSerializer.Serialize(toolPart.Output, Json), Json);
+            if (toolPart.Output is null)
+            {
+                tools = null;
+            }
+            else
+            {
+                var output = JsonSerializer.SerializeToElement(toolPart.Output, Json);
+                var payload = output.ValueKind == JsonValueKind.Object
+                    && output.TryGetProperty("structuredContent", out var structuredContent)
+                    && structuredContent.ValueKind == JsonValueKind.Object
+                    ? structuredContent
+                    : output;
+                var toolsElement = payload.ValueKind == JsonValueKind.Object
+                    && payload.TryGetProperty("selectedTools", out var selectedTools)
+                    ? selectedTools
+                    : payload;
+                tools = DeserializeClientToolSearchOutputTools(toolsElement);
+            }
         }
         catch
         {
@@ -1670,6 +1705,55 @@ public static partial class ResponsesUnifiedMapper
                 hasOutput: true),
             Tools = tools
         };
+    }
+
+    private static List<ResponseToolDefinition>? DeserializeClientToolSearchOutputTools(JsonElement toolsElement)
+    {
+        if (toolsElement.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var tools = new List<ResponseToolDefinition>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var tool in toolsElement.EnumerateArray())
+        {
+            if (tool.ValueKind != JsonValueKind.Object
+                || !tool.TryGetProperty("name", out var nameElement)
+                || nameElement.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var name = nameElement.GetString();
+            if (string.IsNullOrWhiteSpace(name) || !seen.Add(name))
+                continue;
+
+            var nativeTool = new Dictionary<string, object?>
+            {
+                ["type"] = "function",
+                ["name"] = name
+            };
+            if (tool.TryGetProperty("description", out var description)
+                && description.ValueKind == JsonValueKind.String)
+            {
+                nativeTool["description"] = description.GetString();
+            }
+
+            nativeTool["parameters"] = tool.TryGetProperty("inputSchema", out var inputSchema)
+                && inputSchema.ValueKind == JsonValueKind.Object
+                ? inputSchema.Clone()
+                : JsonSerializer.SerializeToElement(new { type = "object", properties = new { } }, Json);
+
+            var definition = JsonSerializer.Deserialize<ResponseToolDefinition>(
+                JsonSerializer.Serialize(nativeTool, Json),
+                Json);
+            if (definition is not null)
+                tools.Add(definition);
+
+            if (tools.Count == 10)
+                break;
+        }
+
+        return tools;
     }
 
     private static string? NormalizeNullableCallId(string? callId)

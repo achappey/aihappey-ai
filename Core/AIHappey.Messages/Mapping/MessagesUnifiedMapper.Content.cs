@@ -362,6 +362,12 @@ public static partial class MessagesUnifiedMapper
 
     private static MessagesContent ToMessageToolOutputContent(AIToolCallContentPart toolPart)
     {
+        if (string.Equals(toolPart.ToolName, "client_tool_search", StringComparison.Ordinal)
+            && TryCreateClientToolSearchReferences(toolPart.Output, out var references))
+        {
+            return new MessagesContent(references);
+        }
+
         return toolPart.Output switch
         {
             null => new MessagesContent(string.Empty),
@@ -370,6 +376,55 @@ public static partial class MessagesUnifiedMapper
             string text => new MessagesContent(text),
             _ => new MessagesContent(JsonSerializer.SerializeToElement(toolPart.Output, Json).GetRawText())
         };
+    }
+
+    private static bool TryCreateClientToolSearchReferences(
+        object? output,
+        out List<MessageContentBlock> references)
+    {
+        references = [];
+        if (output is null)
+            return true;
+
+        try
+        {
+            var element = JsonSerializer.SerializeToElement(output, Json);
+            var payload = element.ValueKind == JsonValueKind.Object
+                && element.TryGetProperty("structuredContent", out var structuredContent)
+                && structuredContent.ValueKind == JsonValueKind.Object
+                ? structuredContent
+                : element;
+            if (payload.ValueKind != JsonValueKind.Object
+                || !payload.TryGetProperty("selectedTools", out var selectedTools)
+                || selectedTools.ValueKind != JsonValueKind.Array)
+            {
+                return false;
+            }
+
+            foreach (var tool in selectedTools.EnumerateArray())
+            {
+                if (tool.ValueKind != JsonValueKind.Object
+                    || !tool.TryGetProperty("name", out var nameElement)
+                    || nameElement.ValueKind != JsonValueKind.String
+                    || string.IsNullOrWhiteSpace(nameElement.GetString()))
+                {
+                    continue;
+                }
+
+                references.Add(new MessageContentBlock
+                {
+                    Type = "tool_reference",
+                    ToolName = nameElement.GetString()
+                });
+            }
+
+            return true;
+        }
+        catch
+        {
+            references = [];
+            return false;
+        }
     }
 
     private static bool HasToolOutput(AIToolCallContentPart toolPart)
