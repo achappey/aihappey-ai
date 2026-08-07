@@ -16,6 +16,18 @@ public partial class GoogleAIProvider
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+
+    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+
     public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -106,7 +118,7 @@ public partial class GoogleAIProvider
 
         var videoBytes = await downloadResp.Content.ReadAsByteArrayAsync(cancellationToken);
         var mediaType = downloadResp.Content.Headers.ContentType?.MediaType ?? "video/mp4";
-     
+
         return new VideoResponse
         {
             Videos =
