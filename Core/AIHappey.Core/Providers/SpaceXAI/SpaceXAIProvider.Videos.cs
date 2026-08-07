@@ -5,66 +5,31 @@ using AIHappey.Vercel.Models;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Diagnostics;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
 public partial class SpaceXAIProvider
 {
-    private static readonly TimeSpan XaiVideoPollTimeout = TimeSpan.FromMinutes(10);
-    private static readonly TimeSpan XaiVideoPollInterval = TimeSpan.FromSeconds(2);
-
     private static readonly JsonSerializerOptions VideoJson = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Prompt))
+            throw new ArgumentException("Prompt is required.", nameof(request));
+
         ApplyAuthHeader();
         var now = DateTime.UtcNow;
-        List<object> warnings = [];
+        var warnings = GetXaiVideoWarnings(request);
         var providerOptions = GetXaiVideoProviderOptions(request);
-
-        if (request.Fps is not null)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "fps"
-            });
-        }
-
-        if (request.N is not null && request.N > 1)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "n"
-            });
-        }
-
-        if (request.Seed is not null)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "seed"
-            });
-        }
-
-        if (request.FrameImages?.Any() == true)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "frameImages"
-            });
-        }
-
         var payload = BuildXaiVideoPayloadCore(request, providerOptions);
-
         var json = JsonSerializer.Serialize(payload, VideoJson);
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/videos/generations")
         {
@@ -82,109 +47,155 @@ public partial class SpaceXAIProvider
         if (string.IsNullOrWhiteSpace(requestId))
             throw new Exception("xAI video generation returned no request_id.");
 
-        var stopwatch = Stopwatch.StartNew();
-        while (stopwatch.Elapsed < XaiVideoPollTimeout)
+        return new VideoOperationStartResult
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            await Task.Delay(XaiVideoPollInterval, cancellationToken);
-
-            using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/videos/{requestId}");
-            using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
-            var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
-
-            if (!pollResp.IsSuccessStatusCode)
-                throw new Exception(string.IsNullOrWhiteSpace(pollRaw) ? pollResp.ReasonPhrase : pollRaw);
-
-            using var pollDoc = JsonDocument.Parse(pollRaw);
-            var root = pollDoc.RootElement;
-
-            var status = root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() : null;
-            if (string.Equals(status, "pending", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(status))
-                continue;
-
-            if (string.Equals(status, "done", StringComparison.OrdinalIgnoreCase))
+            Operation = requestId,
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
             {
-                var videoUrl = TryGetVideoUrl(root);
-                if (string.IsNullOrWhiteSpace(videoUrl))
-                    throw new Exception("xAI video result contained no video url.");
+                requestId,
+                status = "pending"
+            }),
+            Response = CreateXaiVideoResponseData(request.Model, now)
+        };
+    }
 
-                var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
-                var providerKey = GetIdentifier();
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-                JsonElement? usageClone = null;
-                if (root.TryGetProperty("usage", out var usageEl)
-                    && usageEl.ValueKind == JsonValueKind.Object)
-                {
-                    usageClone = usageEl.Clone();
-                }
+        ApplyAuthHeader();
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/videos/{Uri.EscapeDataString(operation)}");
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
 
-                JsonElement? videoWithoutUrl = null;
-                if (root.TryGetProperty("video", out var videoEl)
-                    && videoEl.ValueKind == JsonValueKind.Object)
-                {
-                    var videoMetadata = new Dictionary<string, object?>();
+        if (!pollResp.IsSuccessStatusCode)
+            throw new Exception(string.IsNullOrWhiteSpace(pollRaw) ? pollResp.ReasonPhrase : pollRaw);
 
-                    foreach (var property in videoEl.EnumerateObject())
-                    {
-                        if (string.Equals(property.Name, "url", StringComparison.OrdinalIgnoreCase))
-                            continue;
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement;
+        var status = root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() : null;
+        var model = root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String
+            ? modelEl.GetString()
+            : null;
+        var response = CreateXaiVideoResponseData(model, DateTime.UtcNow);
 
-                        videoMetadata[property.Name] = property.Value.Clone();
-                    }
-
-                    videoWithoutUrl = JsonSerializer.SerializeToElement(videoMetadata, JsonSerializerOptions.Web);
-                }
-
-
-                decimal? cost = null;
-
-                if (root.TryGetProperty("usage", out var gatewayUsageEl)
-                    && gatewayUsageEl.ValueKind == JsonValueKind.Object
-                    && gatewayUsageEl.TryGetProperty("cost_in_usd_ticks", out var costTicksEl)
-                    && costTicksEl.ValueKind == JsonValueKind.Number
-                    && costTicksEl.TryGetDecimal(out var costTicks))
-                {
-                    cost = costTicks / UsdTicksPerDollar;
-                }
-
-                return new VideoResponse
-                {
-                    Videos =
-                    [
-                        new VideoResponseFile
-                        {
-                            MediaType = "video/mp4",
-                            Data = Convert.ToBase64String(videoBytes)
-                        }
-                    ],
-                    Warnings = warnings,
-                    ProviderMetadata = GetIdentifier()
-                        .CreatePrimitiveProviderMetadata(new
-                        {
-                            requestId,
-                            status,
-                            model = root.TryGetProperty("model", out var modelEl) ? modelEl.GetString() : null,
-                            usage = usageClone,
-                            video = videoWithoutUrl
-                        }, cost),
-                    Response = new()
-                    {
-                        Timestamp = now,
-                        ModelId = request.Model.ToModelId(GetIdentifier())
-                    }
-                };
-            }
-
-            if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
-                throw CreateXaiVideoFailure(requestId, root);
-
-            if (string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException($"xAI video request '{requestId}' expired before completion.");
-
-            throw new InvalidOperationException($"xAI video request '{requestId}' returned unknown status '{status}'.");
+        if (string.Equals(status, "pending", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(status))
+        {
+            return new VideoOperationPendingResult
+            {
+                ProviderMetadata = CreateXaiVideoStatusMetadata(operation, status, root),
+                Response = response
+            };
         }
 
-        throw new TimeoutException($"Timed out after {XaiVideoPollTimeout.TotalMinutes:0} minutes waiting for xAI video request '{requestId}'.");
+        if (string.Equals(status, "done", StringComparison.OrdinalIgnoreCase))
+        {
+            var videoUrl = TryGetVideoUrl(root);
+            if (string.IsNullOrWhiteSpace(videoUrl))
+                return CreateXaiVideoError(operation, "xAI video result contained no video url.", model, root);
+
+            var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
+            return new VideoOperationCompletedResult
+            {
+                Videos =
+                [
+                    new VideoOperationVideoData
+                    {
+                        Type = "base64",
+                        MediaType = "video/mp4",
+                        Data = Convert.ToBase64String(videoBytes)
+                    }
+                ],
+                Warnings = [],
+                ProviderMetadata = CreateXaiVideoStatusMetadata(operation, status, root),
+                Response = response
+            };
+        }
+
+        if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
+            return CreateXaiVideoError(operation, CreateXaiVideoFailure(operation, root).Message, model, root);
+
+        if (string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase))
+            return CreateXaiVideoError(operation, $"xAI video request '{operation}' expired before completion.", model, root);
+
+        return CreateXaiVideoError(operation, $"xAI video request '{operation}' returned unknown status '{status}'.", model, root);
+    }
+
+    private static List<object> GetXaiVideoWarnings(VideoRequest request)
+    {
+        List<object> warnings = [];
+        if (request.Fps is not null)
+            warnings.Add(new { type = "unsupported", feature = "fps" });
+        if (request.N is not null && request.N > 1)
+            warnings.Add(new { type = "unsupported", feature = "n" });
+        if (request.Seed is not null)
+            warnings.Add(new { type = "unsupported", feature = "seed" });
+        if (request.FrameImages?.Any() == true)
+            warnings.Add(new { type = "unsupported", feature = "frameImages" });
+
+        return warnings;
+    }
+
+    private HeaderResponseData CreateXaiVideoResponseData(string? model, DateTime timestamp)
+        => new()
+        {
+            Timestamp = timestamp,
+            ModelId = string.IsNullOrWhiteSpace(model)
+                ? GetIdentifier()
+                : model.ToModelId(GetIdentifier())
+        };
+
+    private VideoOperationErrorResult CreateXaiVideoError(
+        string operation,
+        string error,
+        string? model,
+        JsonElement root)
+        => new()
+        {
+            Error = error,
+            ProviderMetadata = CreateXaiVideoStatusMetadata(operation, root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() : null, root),
+            Response = CreateXaiVideoResponseData(model, DateTime.UtcNow)
+        };
+
+    private Dictionary<string, JsonElement> CreateXaiVideoStatusMetadata(string requestId, string? status, JsonElement root)
+    {
+        JsonElement? usageClone = null;
+        if (root.TryGetProperty("usage", out var usageEl) && usageEl.ValueKind == JsonValueKind.Object)
+            usageClone = usageEl.Clone();
+
+        JsonElement? videoWithoutUrl = null;
+        if (root.TryGetProperty("video", out var videoEl) && videoEl.ValueKind == JsonValueKind.Object)
+        {
+            var videoMetadata = new Dictionary<string, object?>();
+            foreach (var property in videoEl.EnumerateObject())
+            {
+                if (!string.Equals(property.Name, "url", StringComparison.OrdinalIgnoreCase))
+                    videoMetadata[property.Name] = property.Value.Clone();
+            }
+
+            videoWithoutUrl = JsonSerializer.SerializeToElement(videoMetadata, JsonSerializerOptions.Web);
+        }
+
+        decimal? cost = null;
+        if (root.TryGetProperty("usage", out var gatewayUsageEl)
+            && gatewayUsageEl.ValueKind == JsonValueKind.Object
+            && gatewayUsageEl.TryGetProperty("cost_in_usd_ticks", out var costTicksEl)
+            && costTicksEl.ValueKind == JsonValueKind.Number
+            && costTicksEl.TryGetDecimal(out var costTicks))
+        {
+            cost = costTicks / UsdTicksPerDollar;
+        }
+
+        return GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            requestId,
+            status,
+            model = root.TryGetProperty("model", out var modelEl) ? modelEl.GetString() : null,
+            usage = usageClone,
+            video = videoWithoutUrl
+        }, cost);
     }
 
     private static Dictionary<string, object?> BuildXaiVideoPayload(VideoRequest request)

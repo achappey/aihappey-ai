@@ -153,7 +153,7 @@ public sealed class VideoOperationErrorResult : VideoOperationStatusResult
 }
 
 /// <summary>
-/// Vercel VideoModelV4 video data. URL results use <see cref="Url"/>;
+/// Vercel VideoModelV4 video data.
 /// base64 and binary results use <see cref="Data"/>. Binary values may be
 /// represented by a byte array and are serialized by System.Text.Json.
 /// </summary>
@@ -161,10 +161,6 @@ public sealed class VideoOperationVideoData
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = null!;
-
-    [JsonPropertyName("url")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Url { get; set; }
 
     [JsonPropertyName("data")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

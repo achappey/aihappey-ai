@@ -22,7 +22,7 @@ public partial class AtlasCloudProvider
 
     private sealed record AtlasCloudVideoTaskResult(string? Id, string? Status, JsonElement Root);
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -39,6 +39,95 @@ public partial class AtlasCloudProvider
         if (request.N is not null && request.N > 1)
             warnings.Add(new { type = "unsupported", feature = "n", details = "AtlasCloud endpoint returns provider-defined output count in this integration." });
 
+        var payload = BuildAtlasCloudVideoPayload(request);
+        var json = JsonSerializer.Serialize(payload, AtlasCloudVideoJson);
+        using var createReq = new HttpRequestMessage(HttpMethod.Post, AtlasCloudGenerateVideoEndpoint)
+        {
+            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
+        };
+
+        using var createResp = await _client.SendAsync(createReq, cancellationToken);
+        var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!createResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"AtlasCloud video request failed ({(int)createResp.StatusCode}): {createRaw}");
+
+        var createTask = ParseVideoTaskResult(createRaw);
+        if (string.IsNullOrWhiteSpace(createTask.Id))
+            throw new InvalidOperationException("AtlasCloud video response contained no request id for polling.");
+
+        return new VideoOperationStartResult
+        {
+            Operation = createTask.Id,
+            Warnings = warnings,
+            ProviderMetadata = CreateAtlasCloudVideoMetadata(createTask),
+            Response = CreateAtlasCloudVideoResponseData(request.Model, ResolveTimestamp(createTask.Root, now))
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        var task = await PollVideoResultAsync(operation, cancellationToken);
+        var model = TryGetAtlasCloudVideoModel(task.Root);
+        var response = CreateAtlasCloudVideoResponseData(model, ResolveTimestamp(task.Root, DateTime.UtcNow));
+        var metadata = CreateAtlasCloudVideoMetadata(task, operation);
+
+        if (string.Equals(task.Status, "failed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(task.Status, "error", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"AtlasCloud video task '{operation}' failed: {task.Root.GetRawText()}",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (HasOutputs(task.Root))
+        {
+            var videos = await ExtractOperationVideosAsync(task.Root, cancellationToken);
+            if (videos.Count == 0)
+            {
+                return new VideoOperationErrorResult
+                {
+                    Error = $"AtlasCloud video task '{operation}' completed but returned no usable videos.",
+                    ProviderMetadata = metadata,
+                    Response = response
+                };
+            }
+
+            return new VideoOperationCompletedResult
+            {
+                Videos = videos,
+                Warnings = [],
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (string.Equals(task.Status, "completed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(task.Status, "succeeded", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"AtlasCloud video task '{operation}' completed but returned no videos.",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        return new VideoOperationPendingResult
+        {
+            ProviderMetadata = metadata,
+            Response = response
+        };
+    }
+
+    private Dictionary<string, object?> BuildAtlasCloudVideoPayload(VideoRequest request)
+    {
         var payload = new Dictionary<string, object?>
         {
             ["model"] = request.Model,
@@ -53,53 +142,7 @@ public partial class AtlasCloudProvider
             payload["image"] = NormalizeVideoImageInput(request.Image);
 
         MergeProviderOptions(payload, request, GetIdentifier());
-
-        var json = JsonSerializer.Serialize(payload, AtlasCloudVideoJson);
-        using var createReq = new HttpRequestMessage(HttpMethod.Post, AtlasCloudGenerateVideoEndpoint)
-        {
-            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        using var createResp = await _client.SendAsync(createReq, cancellationToken);
-        var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
-        if (!createResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"AtlasCloud video request failed ({(int)createResp.StatusCode}): {createRaw}");
-
-        var createTask = ParseVideoTaskResult(createRaw);
-        var finalTask = createTask;
-
-        if (!HasOutputs(finalTask.Root))
-        {
-            if (string.IsNullOrWhiteSpace(finalTask.Id))
-                throw new InvalidOperationException("AtlasCloud video response contained no outputs and no request id for polling.");
-
-            finalTask = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-                poll: ct => PollVideoResultAsync(finalTask.Id, ct),
-                isTerminal: r => IsTerminalStatus(r.Status),
-                interval: TimeSpan.FromSeconds(2),
-                timeout: TimeSpan.FromMinutes(5),
-                maxAttempts: null,
-                cancellationToken: cancellationToken);
-        }
-
-        if (string.Equals(finalTask.Status, "failed", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"AtlasCloud video task failed: {finalTask.Root.GetRawText()}");
-
-        var videos = await ExtractVideosAsync(finalTask.Root, cancellationToken);
-        if (videos.Count == 0)
-            throw new InvalidOperationException("AtlasCloud video task completed but returned no videos.");
-
-        return new VideoResponse
-        {
-            Videos = videos,
-            Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
-            Response = new()
-            {
-                Timestamp = ResolveTimestamp(finalTask.Root, now),
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
-        };
+        return payload;
     }
 
     private async Task<AtlasCloudVideoTaskResult> PollVideoResultAsync(string requestId, CancellationToken cancellationToken)
@@ -138,7 +181,7 @@ public partial class AtlasCloudProvider
         return new AtlasCloudVideoTaskResult(id, status, root);
     }
 
-    private async Task<List<VideoResponseFile>> ExtractVideosAsync(JsonElement root, CancellationToken cancellationToken)
+    private async Task<List<VideoOperationVideoData>> ExtractOperationVideosAsync(JsonElement root, CancellationToken cancellationToken)
     {
         var source = root.TryGetProperty("data", out var dataEl)
            && dataEl.ValueKind == JsonValueKind.Object
@@ -152,7 +195,7 @@ public partial class AtlasCloudProvider
         }
 
 
-        List<VideoResponseFile> videos = [];
+        List<VideoOperationVideoData> videos = [];
         foreach (var output in outputsEl.EnumerateArray())
         {
             if (output.ValueKind != JsonValueKind.String)
@@ -162,20 +205,21 @@ public partial class AtlasCloudProvider
             if (string.IsNullOrWhiteSpace(value))
                 continue;
 
-            videos.Add(await NormalizeVideoOutputAsync(value, cancellationToken));
+            videos.Add(await NormalizeVideoOperationOutputAsync(value, cancellationToken));
         }
 
         return videos;
     }
 
-    private async Task<VideoResponseFile> NormalizeVideoOutputAsync(string output, CancellationToken cancellationToken)
+    private async Task<VideoOperationVideoData> NormalizeVideoOperationOutputAsync(string output, CancellationToken cancellationToken)
     {
         var value = output.Trim();
 
         if (TryParseDataUrl(value, out var dataUrlMediaType, out var dataUrlData))
         {
-            return new VideoResponseFile
+            return new VideoOperationVideoData
             {
+                Type = "base64",
                 MediaType = string.IsNullOrWhiteSpace(dataUrlMediaType) ? DefaultVideoMimeType : dataUrlMediaType,
                 Data = dataUrlData
             };
@@ -192,18 +236,49 @@ public partial class AtlasCloudProvider
                 ?? GuessVideoMediaType(value)
                 ?? DefaultVideoMimeType;
 
-            return new VideoResponseFile
+            return new VideoOperationVideoData
             {
+                Type = "base64",
                 MediaType = mediaType,
                 Data = Convert.ToBase64String(bytes)
             };
         }
 
-        return new VideoResponseFile
+        return new VideoOperationVideoData
         {
+            Type = "base64",
             MediaType = DefaultVideoMimeType,
             Data = value
         };
+    }
+
+    private HeaderResponseData CreateAtlasCloudVideoResponseData(string? model, DateTime timestamp)
+        => new()
+        {
+            Timestamp = timestamp,
+            ModelId = string.IsNullOrWhiteSpace(model)
+                ? GetIdentifier()
+                : model.ToModelId(GetIdentifier())
+        };
+
+    private Dictionary<string, JsonElement> CreateAtlasCloudVideoMetadata(
+        AtlasCloudVideoTaskResult task,
+        string? fallbackId = null)
+        => GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            id = string.IsNullOrWhiteSpace(task.Id) ? fallbackId : task.Id,
+            status = task.Status
+        });
+
+    private static string? TryGetAtlasCloudVideoModel(JsonElement root)
+    {
+        var source = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Object
+            ? dataEl
+            : root;
+
+        return source.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String
+            ? modelEl.GetString()
+            : null;
     }
 
     private static string NormalizeVideoImageInput(VideoFile image)
