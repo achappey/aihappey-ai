@@ -69,4 +69,15 @@ public interface IModelProvider
     Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
 
     IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
+
+   /* Task<VideoOperationStartResult> StartVideoOperation(
+       this IModelProvider provider,
+       VideoRequest request,
+       CancellationToken cancellationToken = default);
+
+    Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        this IModelProvider provider,
+        string operation,
+        CancellationToken cancellationToken = default);*/
+
 }
