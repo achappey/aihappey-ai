@@ -158,4 +158,14 @@ public partial class StealthGPTProvider : IModelProvider, IUnifiedModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

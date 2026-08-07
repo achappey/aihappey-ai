@@ -8,11 +8,13 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderVideoExtensions
 {
-    public static async IAsyncEnumerable<UIMessagePart> StreamVideoAsync(this IModelProvider modelProvider,
+    public static IAsyncEnumerable<UIMessagePart> StreamVideoAsync(this IModelProvider modelProvider,
       ChatRequest chatRequest,
-      [EnumeratorCancellation] CancellationToken cancellationToken = default)
+       CancellationToken cancellationToken = default)
     {
-        var prompt = string.Join("\n", chatRequest.Messages?
+
+        throw new NotImplementedException();
+        /*var prompt = string.Join("\n", chatRequest.Messages?
             .LastOrDefault(m => m.Role == Role.user)
             ?.Parts?.OfType<TextUIPart>().Select(a => a.Text) ?? []);
 
@@ -65,7 +67,7 @@ public static class ModelProviderVideoExtensions
         }
 
         // 4. Finish
-        yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, null);
+        yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, null);*/
     }
 
 }

@@ -54,6 +54,15 @@ public partial class MIMICXAIProvider : IModelProvider, IUnifiedModelProvider
         await foreach (var streamEvent in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
             foreach (var part in streamEvent.ToMessageStreamParts())
                 yield return part;
-    } 
+    }
 
+    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

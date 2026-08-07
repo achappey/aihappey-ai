@@ -9,7 +9,7 @@ namespace AIHappey.Core.ModelProviders;
 /// </summary>
 public static class ModelProviderVideoOperationExtensions
 {
-    public static Task<VideoOperationStartResult> StartVideoOperation(
+  /*  public static Task<VideoOperationStartResult> StartVideoOperation(
         this IModelProvider provider,
         VideoRequest request,
         CancellationToken cancellationToken = default)
@@ -21,5 +21,5 @@ public static class ModelProviderVideoOperationExtensions
         string operation,
         CancellationToken cancellationToken = default)
         => throw new NotSupportedException(
-            $"Provider '{provider.GetIdentifier()}' does not support asynchronous video generation yet.");
+            $"Provider '{provider.GetIdentifier()}' does not support asynchronous video generation yet.");*/
 }

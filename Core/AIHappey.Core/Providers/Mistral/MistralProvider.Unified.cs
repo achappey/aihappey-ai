@@ -6,6 +6,7 @@ using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Mistral;
@@ -1093,7 +1094,13 @@ public partial class MistralProvider : IModelProvider
     private static List<JsonNode> ResolveProviderConversationTools(MistralProviderMetadata? metadata)
         => MistralExtensions.ResolveProviderConversationTools(metadata);
 
-   
+    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
-    
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -178,6 +178,16 @@ public partial class AssemblyAIProvider : IModelProvider
 
         yield return new OpenAITranscriptionTextDone { Text = response.Text };
     }
+
+    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 

@@ -34,8 +34,6 @@ public interface IModelProvider
 
     Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default);
 
-    Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default);
-
     Task<MessagesResponse> MessagesAsync(
         MessagesRequest request,
         Dictionary<string, string> headers,
@@ -70,14 +68,12 @@ public interface IModelProvider
 
     IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
 
-   /* Task<VideoOperationStartResult> StartVideoOperation(
-       this IModelProvider provider,
+    Task<VideoOperationStartResult> StartVideoOperation(
        VideoRequest request,
        CancellationToken cancellationToken = default);
 
     Task<VideoOperationStatusResult> GetVideoOperationStatus(
-        this IModelProvider provider,
         string operation,
-        CancellationToken cancellationToken = default);*/
+        CancellationToken cancellationToken = default);
 
 }
