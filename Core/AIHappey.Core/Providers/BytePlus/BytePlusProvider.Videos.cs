@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.BytePlus;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.BytePlus;
@@ -16,7 +17,7 @@ public partial class BytePlusProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -65,66 +66,96 @@ public partial class BytePlusProvider
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("BytePlus video generation returned no id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            async token =>
-            {
-                using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v3/contents/generations/tasks/{taskId}");
-                using var pollResp = await _client.SendAsync(pollReq, token);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(token);
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"BytePlus video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return pollDoc.RootElement.Clone();
-            },
-            result =>
-            {
-                var status = TryGetStatus(result);
-                return string.Equals(status, "succeeded", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase);
-            },
-            interval: TimeSpan.FromSeconds(5),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        var finalStatus = TryGetStatus(completed);
-        if (!string.Equals(finalStatus, "succeeded", StringComparison.OrdinalIgnoreCase))
+        return new VideoOperationStartResult
         {
-            var error = completed.TryGetProperty("error", out var errEl) ? errEl.ToString() : "Unknown error";
-            throw new InvalidOperationException($"BytePlus video generation failed: {error}");
-        }
-
-        var videoUrl = TryGetVideoUrl(completed);
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException("BytePlus video result contained no video_url.");
-
-        var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
-        var mediaType = GuessVideoMediaType(videoUrl) ?? "video/mp4";
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            ["byteplus"] = completed.Clone()
-        };
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = taskId,
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+            {
+                id = taskId,
+                status = TryGetStatus(root) ?? "pending"
+            }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v3/contents/generations/tasks/{Uri.EscapeDataString(operation)}");
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"BytePlus video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        var status = TryGetStatus(root);
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = TryGetBytePlusVideoModel(root)?.ToModelId(GetIdentifier()) ?? GetIdentifier()
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = operation, status });
+
+        if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase))
+        {
+            var error = root.TryGetProperty("error", out var errorElement) ? errorElement.ToString() : "Unknown error";
+            return new VideoOperationErrorResult
+            {
+                Error = $"BytePlus video task '{operation}' {status}: {error}",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (!string.Equals(status, "succeeded", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationPendingResult
+            {
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        var videoUrl = TryGetVideoUrl(root);
+        if (string.IsNullOrWhiteSpace(videoUrl))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"BytePlus video task '{operation}' succeeded but returned no video_url.",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
+        var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!videoResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"BytePlus video download failed ({(int)videoResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos =
+            [
+                new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    MediaType = videoResp.Content.Headers.ContentType?.MediaType ?? GuessVideoMediaType(videoUrl) ?? "video/mp4",
+                    Data = Convert.ToBase64String(videoBytes)
+                }
+            ],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 
@@ -273,6 +304,11 @@ public partial class BytePlusProvider
             ? statusEl.GetString()
             : null;
     }
+
+    private static string? TryGetBytePlusVideoModel(JsonElement root)
+        => root.TryGetProperty("model", out var modelElement) && modelElement.ValueKind == JsonValueKind.String
+            ? modelElement.GetString()
+            : null;
 
     private static string? TryGetVideoUrl(JsonElement root)
     {

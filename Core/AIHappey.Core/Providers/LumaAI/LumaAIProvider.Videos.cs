@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -8,7 +9,7 @@ namespace AIHappey.Core.Providers.LumaAI;
 
 public partial class LumaAIProvider
 {
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -79,56 +80,78 @@ public partial class LumaAIProvider
         var generationId = TryGetString(createRoot, "id")
             ?? throw new InvalidOperationException("Luma video response missing generation id.");
 
-        var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollGenerationAsync(generationId, ct),
-            isTerminal: r => r.State is "completed" or "failed",
-            interval: TimeSpan.FromSeconds(2),
-            timeout: null,
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (final.State == "failed")
+        return new VideoOperationStartResult
         {
-            var failureReason = TryGetString(final.Root, "failure_reason") ?? "Unknown failure.";
-            throw new InvalidOperationException($"Luma video generation failed (id={generationId}): {failureReason}");
-        }
-
-        var videoUrl = GetGenerationOutputUrl(final.Root, "video");
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException($"Luma video generation completed but no video output was found (id={generationId}).");
-
-        using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
-        var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!videoResp.IsSuccessStatusCode)
-        {
-            var err = Encoding.UTF8.GetString(videoBytes);
-            throw new InvalidOperationException($"Luma video download failed ({(int)videoResp.StatusCode}): {err}");
-        }
-
-        var mediaType = videoResp.Content.Headers.ContentType?.MediaType
-            ?? GuessVideoMediaType(videoUrl)
-            ?? "video/mp4";
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = generationId,
             Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = final.Root.Clone()
-            },
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = generationId, state = TryGetString(createRoot, "state") ?? "pending" }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        var result = await PollGenerationAsync(operation, cancellationToken);
+        var model = TryGetString(result.Root, "model");
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(model) ? GetIdentifier() : model.ToModelId(GetIdentifier())
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = operation, state = result.State });
+
+        if (string.Equals(result.State, "failed", StringComparison.OrdinalIgnoreCase))
+        {
+            var failureReason = TryGetString(result.Root, "failure_reason") ?? "Unknown failure.";
+            return new VideoOperationErrorResult
+            {
+                Error = $"Luma video generation failed (id={operation}): {failureReason}",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (!string.Equals(result.State, "completed", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var videoUrl = GetGenerationOutputUrl(result.Root, "video");
+        if (string.IsNullOrWhiteSpace(videoUrl))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Luma video generation completed but no video output was found (id={operation}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
+        var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!videoResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Luma video download failed ({(int)videoResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos =
+            [
+                new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    MediaType = videoResp.Content.Headers.ContentType?.MediaType ?? GuessVideoMediaType(videoUrl) ?? "video/mp4",
+                    Data = Convert.ToBase64String(videoBytes)
+                }
+            ],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 
