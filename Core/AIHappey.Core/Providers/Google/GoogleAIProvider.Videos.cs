@@ -10,6 +10,8 @@ namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
 {
+    private const string GoogleVeoOperationTokenPrefix = "veo_";
+
     private static readonly JsonSerializerOptions GoogleVideoJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -17,18 +19,9 @@ public partial class GoogleAIProvider
     };
 
 
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -37,13 +30,10 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var key = _keyResolver.Resolve(GetIdentifier());
-        if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No Google API key.");
+        if (request.Model.Contains("omni", StringComparison.OrdinalIgnoreCase))
+            return await StartOmniVideoOperation(request, cancellationToken);
 
-        if (request.Model.Contains("omni"))
-            return await OmniVideoRequest(request, cancellationToken);
-
+        ApplyAuthHeader();
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
@@ -56,21 +46,15 @@ public partial class GoogleAIProvider
         if (request.Seed is not null)
             warnings.Add(new { type = "unsupported", feature = "seed" });
 
-        using var http = new HttpClient
-        {
-            BaseAddress = new Uri("https://generativelanguage.googleapis.com/v1beta/")
-        };
-
         var payload = BuildVideoPayload(request, warnings);
         var json = JsonSerializer.Serialize(payload, GoogleVideoJson);
 
-        using var createReq = new HttpRequestMessage(HttpMethod.Post, $"models/{request.Model}:predictLongRunning")
+        using var createReq = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{request.Model}:predictLongRunning")
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
-        createReq.Headers.Add("x-goog-api-key", key);
 
-        using var createResp = await http.SendAsync(createReq, cancellationToken);
+        using var createResp = await _client.SendAsync(createReq, cancellationToken);
         var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
         if (!createResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Google video create failed ({(int)createResp.StatusCode}): {createRaw}");
@@ -81,35 +65,92 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(operationName))
             throw new InvalidOperationException("Google video generation returned no operation name.");
 
-        var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            async token =>
+        return new VideoOperationStartResult
+        {
+            Operation = EncodeVeoOperation(operationName),
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
             {
-                using var pollReq = new HttpRequestMessage(HttpMethod.Get, operationName);
-                pollReq.Headers.Add("x-goog-api-key", key);
-                using var pollResp = await http.SendAsync(pollReq, token);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(token);
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"Google video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+                operation = operationName,
+                done = false
+            }),
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
 
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return pollDoc.RootElement.Clone();
-            },
-            result => result.TryGetProperty("done", out var doneEl) && doneEl.ValueKind == JsonValueKind.True,
-            interval: TimeSpan.FromSeconds(5),
-            timeout: null,
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        if (final.TryGetProperty("error", out var errorEl) && errorEl.ValueKind != JsonValueKind.Null)
-            throw new InvalidOperationException($"Google video generation failed: {errorEl}");
+        return operation.StartsWith("v1_", StringComparison.OrdinalIgnoreCase)
+            ? GetOmniVideoOperationStatus(operation, cancellationToken)
+            : GetVeoVideoOperationStatus(operation, cancellationToken);
+    }
 
-        var videoUri = TryGetVideoUri(final);
+    private async Task<VideoOperationStatusResult> GetVeoVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+        var googleOperation = DecodeVeoOperation(operation);
+
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, CreateVeoOperationUri(googleOperation));
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Google video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        var done = root.TryGetProperty("done", out var doneEl) && doneEl.ValueKind == JsonValueKind.True;
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            operation,
+            done
+        });
+        
+        var response = CreateGoogleVideoResponseData(
+            TryGetVeoVideoModel(root) ?? TryGetVeoVideoModelFromOperation(googleOperation));
+
+        if (!done)
+        {
+            return new VideoOperationPendingResult
+            {
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (root.TryGetProperty("error", out var errorEl) && errorEl.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Google video generation failed: {errorEl}",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        var videoUri = TryGetVideoUri(root);
         if (string.IsNullOrWhiteSpace(videoUri))
-            throw new InvalidOperationException("Google video result contained no video uri.");
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = "Google video operation completed but returned no video uri.",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
 
         using var downloadReq = new HttpRequestMessage(HttpMethod.Get, videoUri);
-        downloadReq.Headers.Add("x-goog-api-key", key);
-        using var downloadResp = await http.SendAsync(downloadReq, cancellationToken);
+        using var downloadResp = await _client.SendAsync(downloadReq, cancellationToken);
         if (!downloadResp.IsSuccessStatusCode)
         {
             var raw = await downloadResp.Content.ReadAsStringAsync(cancellationToken);
@@ -117,27 +158,111 @@ public partial class GoogleAIProvider
         }
 
         var videoBytes = await downloadResp.Content.ReadAsByteArrayAsync(cancellationToken);
-        var mediaType = downloadResp.Content.Headers.ContentType?.MediaType ?? "video/mp4";
-
-        return new VideoResponse
+        return new VideoOperationCompletedResult
         {
             Videos =
             [
-                new VideoResponseFile
+                new VideoOperationVideoData
                 {
-                    MediaType = mediaType,
+                    Type = "base64",
+                    MediaType = downloadResp.Content.Headers.ContentType?.MediaType ?? "video/mp4",
                     Data = Convert.ToBase64String(videoBytes)
                 }
             ],
-            Warnings = warnings,
-            ProviderMetadata = GoogleExtensions.Identifier()
-                .CreatePrimitiveProviderMetadata(),
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
+    }
+
+    private HeaderResponseData CreateGoogleVideoResponseData(string? model = null)
+        => new()
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(model)
+                ? GetIdentifier()
+                : model.ToModelId(GetIdentifier())
+        };
+
+    private static string? TryGetVeoVideoModel(JsonElement root)
+    {
+        if (root.TryGetProperty("metadata", out var metadata)
+            && metadata.ValueKind == JsonValueKind.Object
+            && metadata.TryGetProperty("model", out var model)
+            && model.ValueKind == JsonValueKind.String)
+        {
+            return model.GetString();
+        }
+
+        return null;
+    }
+
+    private static string? TryGetVeoVideoModelFromOperation(string operation)
+    {
+        const string modelsPrefix = "models/";
+        const string operationsSeparator = "/operations/";
+
+        var normalized = operation.Trim().TrimStart('/');
+        if (normalized.StartsWith("v1beta/", StringComparison.OrdinalIgnoreCase))
+            normalized = normalized["v1beta/".Length..];
+
+        if (!normalized.StartsWith(modelsPrefix, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var modelStart = modelsPrefix.Length;
+        var operationIndex = normalized.IndexOf(
+            operationsSeparator,
+            modelStart,
+            StringComparison.OrdinalIgnoreCase);
+
+        return operationIndex > modelStart
+            ? normalized[modelStart..operationIndex]
+            : null;
+    }
+
+    private static string CreateVeoOperationUri(string operation)
+    {
+        var normalized = operation.Trim();
+        if (Uri.TryCreate(normalized, UriKind.Absolute, out _))
+            return normalized;
+
+        normalized = normalized.TrimStart('/');
+        return normalized.StartsWith("v1beta/", StringComparison.OrdinalIgnoreCase)
+            ? normalized
+            : $"v1beta/{normalized}";
+    }
+
+    private static string EncodeVeoOperation(string operation)
+    {
+        var bytes = Encoding.UTF8.GetBytes(operation);
+        var base64Url = Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+        return GoogleVeoOperationTokenPrefix + base64Url;
+    }
+
+    private static string DecodeVeoOperation(string operation)
+    {
+        if (!operation.StartsWith(GoogleVeoOperationTokenPrefix, StringComparison.OrdinalIgnoreCase))
+            return Uri.UnescapeDataString(operation);
+
+        var base64Url = operation[GoogleVeoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            return Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The Google Veo operation token is invalid.", nameof(operation), ex);
+        }
     }
 
     private static Dictionary<string, object?> BuildVideoPayload(VideoRequest request, List<object> warnings)

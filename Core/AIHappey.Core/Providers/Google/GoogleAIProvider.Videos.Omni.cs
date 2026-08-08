@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using AIHappey.Common.Model.Providers.Google;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -23,7 +24,9 @@ public partial class GoogleAIProvider
     };
 
 
-    public async Task<VideoResponse> OmniVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    private async Task<VideoOperationStartResult> StartOmniVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -66,47 +69,143 @@ public partial class GoogleAIProvider
 
         using var document = JsonDocument.Parse(raw);
         var root = document.RootElement.Clone();
+        var interactionId = TryGetString(root, "id");
+        if (string.IsNullOrWhiteSpace(interactionId))
+            throw new InvalidOperationException("Google Omni video generation returned no interaction id.");
 
-        if (!TryExtractGoogleOmniVideo(root, out var base64, out var videoUri, out var mimeType))
-            throw new InvalidOperationException("Google Omni video result contained no video output.");
 
-        if (string.IsNullOrWhiteSpace(base64))
+        return new VideoOperationStartResult
         {
-            if (string.IsNullOrWhiteSpace(videoUri))
-                throw new InvalidOperationException("Google Omni video result contained no inline data or downloadable uri.");
-
-            (base64, mimeType) = await DownloadGoogleOmniVideoUriAsync(videoUri, mimeType, cancellationToken);
-        }
-
-        mimeType = string.IsNullOrWhiteSpace(mimeType) ? "video/mp4" : mimeType;
-
-        var providerMetadata = new Dictionary<string, JsonElement>
-        {
-            [GetIdentifier()] = JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
-            {
-                ["request"] = JsonSerializer.SerializeToElement(payload, GoogleVideoJson),
-                ["interaction"] = root.Clone()
-            }, JsonSerializerOptions.Web)
-        };
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mimeType,
-                    Data = base64
-                }
-            ],
+            Operation = interactionId,
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private async Task<VideoOperationStatusResult> GetOmniVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        using var httpRequest = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{InteractionsRelativeUrl}/{Uri.EscapeDataString(operation)}");
+        httpRequest.Headers.Accept.Clear();
+        httpRequest.Headers.Accept.ParseAdd(MediaTypeNames.Application.Json);
+
+        using var responseMessage = await _client.SendAsync(
+            httpRequest,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        var raw = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
+        if (!responseMessage.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Google Omni video poll failed ({(int)responseMessage.StatusCode}): {raw}");
+
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var status = TryGetString(root, "status");
+        var model = TryGetString(root, "model");
+        var providerMetadata = CreateGoogleOmniVideoStatusMetadata(operation, status, root);
+        var response = CreateGoogleVideoResponseData(model);
+
+        if (!IsTerminalInteractionStatus(status))
+        {
+            return new VideoOperationPendingResult
+            {
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        if (!string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = CreateGoogleOmniVideoFailure(operation, status, root),
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        if (!TryExtractGoogleOmniVideo(root, out var base64, out var videoUri, out var mimeType))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Google Omni video interaction '{operation}' completed but returned no video output.",
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(base64))
+        {
+            if (string.IsNullOrWhiteSpace(videoUri))
+            {
+                return new VideoOperationErrorResult
+                {
+                    Error = $"Google Omni video interaction '{operation}' completed but returned no inline data or downloadable uri.",
+                    ProviderMetadata = providerMetadata,
+                    Response = response
+                };
+            }
+
+            (base64, mimeType) = await DownloadGoogleOmniVideoUriAsync(videoUri, mimeType, cancellationToken);
+        }
+
+        var providerResultMetadata = new Dictionary<string, JsonElement>();
+
+        if (root.TryGetProperty("usage", out var usage))
+            providerMetadata[GetIdentifier()] = usage.Clone();
+
+        return new VideoOperationCompletedResult
+        {
+            Videos =
+            [
+                new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    MediaType = string.IsNullOrWhiteSpace(mimeType) ? "video/mp4" : mimeType,
+                    Data = base64
+                }
+            ],
+            Warnings = [],
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerResultMetadata),
+            Response = response
+        };
+    }
+
+    private Dictionary<string, JsonElement> CreateGoogleOmniVideoStatusMetadata(
+        string operation,
+        string? status,
+        JsonElement interaction)
+        => new()
+        {
+            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+                interactionId = operation,
+                status,
+                interaction
+            }, JsonSerializerOptions.Web)
+        };
+
+    private static string CreateGoogleOmniVideoFailure(
+        string operation,
+        string? status,
+        JsonElement root)
+    {
+        var error = root.TryGetProperty("error", out var errorElement)
+            ? errorElement.ToString()
+            : null;
+
+        return string.IsNullOrWhiteSpace(error)
+            ? $"Google Omni video interaction '{operation}' ended with status '{status}'."
+            : $"Google Omni video interaction '{operation}' ended with status '{status}': {error}";
     }
 
     private static JsonObject BuildOmniVideoPayload(VideoRequest request, ICollection<object> warnings)
@@ -121,12 +220,12 @@ public partial class GoogleAIProvider
         payload["model"] = NormalizeGoogleModelOrAgentId(request.Model);
         payload["input"] = BuildOmniVideoInput(request, metadataElement, warnings);
         payload["stream"] = false;
-        payload["background"] = false;
-        payload["store"] = false;
+        payload["background"] = true;
+        payload["store"] = true;
 
-        WarnIfBooleanProviderOptionWasTrue(metadataElement, warnings, "stream");
-        WarnIfBooleanProviderOptionWasTrue(metadataElement, warnings, "background");
-        WarnIfBooleanProviderOptionWasTrue(metadataElement, warnings, "store");
+        WarnIfBooleanProviderOptionWasOverridden(metadataElement, warnings, "stream", expected: false);
+        WarnIfBooleanProviderOptionWasOverridden(metadataElement, warnings, "background", expected: true);
+        WarnIfBooleanProviderOptionWasOverridden(metadataElement, warnings, "store", expected: true);
 
         var previousInteractionId = metadata?.PreviousInteractionId
             ?? metadata?.PreviousInteractionIdCamel
@@ -545,10 +644,15 @@ public partial class GoogleAIProvider
         return match.Success ? $"files/{match.Groups[1].Value}" : null;
     }
 
-    private static void WarnIfBooleanProviderOptionWasTrue(JsonElement metadata, ICollection<object> warnings, string propertyName)
+    private static void WarnIfBooleanProviderOptionWasOverridden(
+        JsonElement metadata,
+        ICollection<object> warnings,
+        string propertyName,
+        bool expected)
     {
         if (!TryGetProperty(metadata, propertyName, out var property)
-            || property.ValueKind != JsonValueKind.True)
+            || property.ValueKind is not (JsonValueKind.True or JsonValueKind.False)
+            || property.GetBoolean() == expected)
         {
             return;
         }
@@ -557,7 +661,7 @@ public partial class GoogleAIProvider
         {
             type = "ignored",
             feature = $"providerOptions.google.{propertyName}",
-            reason = "Google Omni video endpoint forces fast synchronous non-streaming generation with storage disabled. Use the chat/interactions path for conversational stored editing."
+            reason = "Google Omni video operations force background stored generation with streaming disabled so they can be polled asynchronously."
         });
     }
 

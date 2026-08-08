@@ -9,7 +9,7 @@ namespace AIHappey.Tests.Google;
 public sealed class GoogleOmniVideoPayloadTests
 {
     [Fact]
-    public void BuildOmniVideoPayloadUsesSynchronousVideoDefaultsAndHighReasoning()
+    public void BuildOmniVideoPayloadUsesAsynchronousVideoDefaultsAndHighReasoning()
     {
         var (payload, warnings) = BuildPayload(new VideoRequest
         {
@@ -21,8 +21,8 @@ public sealed class GoogleOmniVideoPayloadTests
         Assert.Equal("gemini-omni-flash-preview", payload.GetProperty("model").GetString());
         Assert.Equal("A beautiful sunset over a calm ocean.", payload.GetProperty("input").GetString());
         Assert.False(payload.GetProperty("stream").GetBoolean());
-        Assert.False(payload.GetProperty("background").GetBoolean());
-        Assert.False(payload.GetProperty("store").GetBoolean());
+        Assert.True(payload.GetProperty("background").GetBoolean());
+        Assert.True(payload.GetProperty("store").GetBoolean());
         Assert.Equal("video", payload.GetProperty("response_format").GetProperty("type").GetString());
         Assert.Equal("9:16", payload.GetProperty("response_format").GetProperty("aspect_ratio").GetString());
         Assert.Equal("high", payload.GetProperty("generation_config").GetProperty("thinking_level").GetString());
@@ -85,6 +85,8 @@ public sealed class GoogleOmniVideoPayloadTests
                     delivery = "uri",
                     task = "edit",
                     stream = true,
+                    background = false,
+                    store = false,
                     generation_config = new
                     {
                         thinking_level = "low",
@@ -97,9 +99,13 @@ public sealed class GoogleOmniVideoPayloadTests
         Assert.Equal("v1_previous", payload.GetProperty("previous_interaction_id").GetString());
         Assert.Equal("uri", payload.GetProperty("response_format").GetProperty("delivery").GetString());
         Assert.False(payload.GetProperty("stream").GetBoolean());
+        Assert.True(payload.GetProperty("background").GetBoolean());
+        Assert.True(payload.GetProperty("store").GetBoolean());
         Assert.Equal("high", payload.GetProperty("generation_config").GetProperty("thinking_level").GetString());
         Assert.Equal("edit", payload.GetProperty("generation_config").GetProperty("video_config").GetProperty("task").GetString());
         Assert.Contains(warnings, warning => warning.ToString()!.Contains("stream", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(warnings, warning => warning.ToString()!.Contains("background", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(warnings, warning => warning.ToString()!.Contains("store", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

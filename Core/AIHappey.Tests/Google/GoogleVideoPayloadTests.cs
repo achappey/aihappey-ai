@@ -133,6 +133,39 @@ public sealed class GoogleVideoPayloadTests
         Assert.Equal("webp-base64", inlineData.GetProperty("data").GetString());
     }
 
+    [Fact]
+    public void VeoOperationTokenRoundTripsGoogleResourceNameWithoutPathSeparators()
+    {
+        const string resourceName = "models/veo-3.1-lite-generate-preview/operations/7d18gfsszegz";
+        var token = InvokeStringHelper("EncodeVeoOperation", resourceName);
+
+        Assert.StartsWith("veo_", token, StringComparison.Ordinal);
+        Assert.DoesNotContain('/', token);
+        Assert.DoesNotContain('+', token);
+        Assert.DoesNotContain('=', token);
+        Assert.Equal(resourceName, InvokeStringHelper("DecodeVeoOperation", token));
+    }
+
+    [Fact]
+    public void DecodeVeoOperationSupportsLegacyUrlEncodedResourceName()
+    {
+        const string resourceName = "models/veo-3.1-lite-generate-preview/operations/7d18gfsszegz";
+        var encoded = Uri.EscapeDataString(resourceName);
+
+        Assert.Equal(resourceName, InvokeStringHelper("DecodeVeoOperation", encoded));
+    }
+
+    [Theory]
+    [InlineData("models/veo-3.1-lite-generate-preview/operations/7d18gfsszegz")]
+    [InlineData("v1beta/models/veo-3.1-lite-generate-preview/operations/7d18gfsszegz")]
+    [InlineData("/v1beta/models/veo-3.1-lite-generate-preview/operations/7d18gfsszegz")]
+    public void VeoModelIsExtractedFromGoogleOperationResourceName(string operation)
+    {
+        Assert.Equal(
+            "veo-3.1-lite-generate-preview",
+            InvokeNullableStringHelper("TryGetVeoVideoModelFromOperation", operation));
+    }
+
     private static (JsonElement Payload, List<object> Warnings) BuildPayload(VideoRequest request)
     {
         var warnings = new List<object>();
@@ -159,4 +192,20 @@ public sealed class GoogleVideoPayloadTests
             MediaType = mediaType,
             Data = data
         };
+
+    private static string InvokeStringHelper(string methodName, string value)
+    {
+        var method = typeof(GoogleAIProvider).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new MissingMethodException(nameof(GoogleAIProvider), methodName);
+
+        return (string)method.Invoke(null, [value])!;
+    }
+
+    private static string? InvokeNullableStringHelper(string methodName, string value)
+    {
+        var method = typeof(GoogleAIProvider).GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new MissingMethodException(nameof(GoogleAIProvider), methodName);
+
+        return (string?)method.Invoke(null, [value]);
+    }
 }
