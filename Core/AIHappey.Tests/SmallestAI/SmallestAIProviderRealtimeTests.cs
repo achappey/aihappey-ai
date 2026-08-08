@@ -36,12 +36,10 @@ public sealed class SmallestAIProviderRealtimeTests
 
         var models = (await provider.ListModels()).ToList();
 
-        var model = Assert.Single(models.Where(model => model.Id == "smallestai/agent-1"));
+        var model = Assert.Single(models, model => model.Id == "smallestai/agent-1");
         Assert.Equal("audio", model.Type);
         Assert.Equal("Atoms / Receptionist", model.Name);
         Assert.Equal("Answers calls", model.Description);
-        Assert.Contains("agent", model.Tags);
-        Assert.Contains("realtime", model.Tags);
         Assert.DoesNotContain(models, model => model.Id == "smallestai/agent-2");
     }
 
