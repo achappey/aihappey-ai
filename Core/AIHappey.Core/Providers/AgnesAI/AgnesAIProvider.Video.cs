@@ -11,6 +11,17 @@ namespace AIHappey.Core.Providers.AgnesAI;
 
 public partial class AgnesAIProvider
 {
+
+    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private async Task<VideoResponse> AgnesVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
