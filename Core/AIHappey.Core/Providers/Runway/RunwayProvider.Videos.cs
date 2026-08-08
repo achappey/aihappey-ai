@@ -12,6 +12,7 @@ namespace AIHappey.Core.Providers.Runway;
 
 public partial class RunwayProvider
 {
+    private const string RunwayVideoOperationTokenPrefix = "rwv1_";
     private const string RunwayAvatarModel = "avatar";
     private const string RunwayAvatarApiModel = "gwm1_avatars";
     private const string RunwayAvatarEndpoint = "v1/avatar_videos";
@@ -106,7 +107,7 @@ public partial class RunwayProvider
 
         return new VideoOperationStartResult
         {
-            Operation = taskId,
+            Operation = EncodeRunwayVideoOperation(taskId, request.Model),
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = taskId, status = "PENDING" }),
             Warnings = warnings,
             Response = new()
@@ -122,8 +123,11 @@ public partial class RunwayProvider
         if (string.IsNullOrWhiteSpace(operation))
             throw new ArgumentException("A video operation is required.", nameof(operation));
 
+        var operationData = DecodeRunwayVideoOperation(operation);
+        var taskId = operationData.TaskId;
+
         ApplyAuthHeader();
-        using var responseMessage = await _client.GetAsync($"v1/tasks/{Uri.EscapeDataString(operation)}", cancellationToken);
+        using var responseMessage = await _client.GetAsync($"v1/tasks/{Uri.EscapeDataString(taskId)}", cancellationToken);
         var raw = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
         if (!responseMessage.IsSuccessStatusCode)
             throw new InvalidOperationException($"Runway task poll failed ({(int)responseMessage.StatusCode}): {raw}");
@@ -134,9 +138,13 @@ public partial class RunwayProvider
         var response = new HeaderResponseData
         {
             Timestamp = DateTime.UtcNow,
-            ModelId = string.IsNullOrWhiteSpace(model) ? GetIdentifier() : model.ToModelId(GetIdentifier())
+            ModelId = !string.IsNullOrWhiteSpace(operationData.Model)
+                ? operationData.Model.ToModelId(GetIdentifier())
+                : !string.IsNullOrWhiteSpace(model)
+                    ? model.ToModelId(GetIdentifier())
+                    : GetIdentifier()
         };
-        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = operation, status });
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { id = taskId, status });
 
         if (string.Equals(status, "FAILED", StringComparison.OrdinalIgnoreCase)
             || string.Equals(status, "CANCELED", StringComparison.OrdinalIgnoreCase))
@@ -159,7 +167,7 @@ public partial class RunwayProvider
         {
             return new VideoOperationErrorResult
             {
-                Error = $"Runway task '{operation}' succeeded but returned no output.",
+                Error = $"Runway task '{taskId}' succeeded but returned no output.",
                 ProviderMetadata = metadata,
                 Response = response
             };
@@ -186,6 +194,50 @@ public partial class RunwayProvider
             Response = response
         };
     }
+
+    private static string EncodeRunwayVideoOperation(string taskId, string? model)
+    {
+        var json = JsonSerializer.Serialize(new RunwayVideoOperationData(taskId, model), VideoJsonOpts);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+        return RunwayVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static RunwayVideoOperationData DecodeRunwayVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(RunwayVideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new RunwayVideoOperationData(Uri.UnescapeDataString(operation), null);
+
+        var base64Url = operation[RunwayVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<RunwayVideoOperationData>(json, VideoJsonOpts);
+            if (data is null || string.IsNullOrWhiteSpace(data.TaskId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Runway video operation token is invalid.", nameof(operation));
+
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The Runway video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The Runway video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
+    private sealed record RunwayVideoOperationData(string TaskId, string? Model);
 
     private static string ResolveVideoEndpoint(bool isImage, bool isVideo)
     {
