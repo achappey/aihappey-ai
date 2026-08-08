@@ -20,6 +20,14 @@
             "created": 1739577600
         },
         {
+            "id": "minimax/MiniMax-H3",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "MiniMax-H3",
+            "type": "video",
+            "description": "Hailuo-03 multimodal video generation model supporting text, first/last frame, and image/video/audio references with up to 2K output."
+        },
+        {
             "id": "minimax/MiniMax-Hailuo-2.3",
             "object": "model",
             "owned_by": "MiniMax",
@@ -153,22 +161,52 @@
             "description": "Speech synthesis model in the Speech-01 family (Turbo variant)."
         },
         {
-            "id": "minimax/music-2.5",
+            "id": "minimax/music-3.0",
             "object": "model",
             "owned_by": "MiniMax",
-            "name": "music-2.5",
+            "name": "music-3.0",
             "type": "speech",
-            "description": "Text-to-music model with human-like emotional vocals and enhanced multi-instrument performance; designed for professional studio quality and cohesive musical structure.",
-            "created": 1768521600
+            "description": "Recommended text-to-music model supporting lyrics generation and instrumental music."
         },
         {
-            "id": "minimax/music-2.0",
+            "id": "minimax/music-2.6",
             "object": "model",
             "owned_by": "MiniMax",
-            "name": "music-2.0",
+            "name": "music-2.6",
             "type": "speech",
-            "description": "Text-to-music model focused on enhanced musicality with natural vocals and smooth melodies, delivering richer emotional expression and stronger tone control.",
-            "created": 1761696000
+            "description": "Previous-generation text-to-music model supporting lyrics generation and instrumental music."
+        },
+        {
+            "id": "minimax/music-cover",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "music-cover",
+            "type": "speech",
+            "description": "Music cover generation model using reference audio or a preprocessed cover feature."
+        },
+        {
+            "id": "minimax/music-3.0-free",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "music-3.0-free",
+            "type": "speech",
+            "description": "Free-tier variant of the recommended music-3.0 text-to-music model."
+        },
+        {
+            "id": "minimax/music-2.6-free",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "music-2.6-free",
+            "type": "speech",
+            "description": "Free-tier variant of the music-2.6 text-to-music model."
+        },
+        {
+            "id": "minimax/music-cover-free",
+            "object": "model",
+            "owned_by": "MiniMax",
+            "name": "music-cover-free",
+            "type": "speech",
+            "description": "Free-tier music cover generation model using reference audio or a preprocessed cover feature."
         }
     ]
 }
