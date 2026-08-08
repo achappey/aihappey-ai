@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.Alibaba;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Alibaba;
@@ -17,14 +18,22 @@ public partial class AlibabaProvider
 
     private const string DashScopeVideoPath = "/api/v1/services/aigc/video-generation/video-synthesis";
 
-    private async Task<VideoResponse> WanVideoRequest(
-        VideoRequest request,
-        AlibabaVideoProviderMetadata? providerMetadata,
-        string modelName,
-        List<object> warnings,
-        DateTime now,
-        CancellationToken cancellationToken)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
+        ApplyAuthHeader();
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+
+        var now = DateTime.UtcNow;
+        List<object> warnings = [];
+        AlibabaVideoProviderMetadata? providerMetadata = null;
+        if (request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerElement)
+            && providerElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+            providerMetadata = providerElement.Deserialize<AlibabaVideoProviderMetadata>(JsonSerializerOptions.Web);
+
+        var modelName = request.Model;
         // Singapore/intl only for now.
         var baseUrl = DefaultDashScopeBaseUrl;
 
@@ -63,81 +72,58 @@ public partial class AlibabaProvider
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("Wan video generation returned no task_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            async token =>
-            {
-                using var pollReq = new HttpRequestMessage(HttpMethod.Get, new Uri($"{baseUrl}/api/v1/tasks/{taskId}"));
-                using var pollResp = await _client.SendAsync(pollReq, token);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(token);
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"Wan video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return (root: pollDoc.RootElement.Clone(), raw: pollRaw);
-            },
-            result =>
-            {
-                var status = TryGetTaskStatus(result.root);
-                return string.Equals(status, "SUCCEEDED", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "FAILED", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "CANCELED", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "UNKNOWN", StringComparison.OrdinalIgnoreCase);
-            },
-            interval: TimeSpan.FromSeconds(15),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        var finalStatus = TryGetTaskStatus(completed.root);
-        if (!string.Equals(finalStatus, "SUCCEEDED", StringComparison.OrdinalIgnoreCase))
+        return new VideoOperationStartResult
         {
-            var error = TryGetErrorMessage(completed.root) ?? "Unknown error";
-            throw new InvalidOperationException($"Wan video generation failed: {error}");
-        }
-
-        var videoUrl = TryGetVideoUrl(completed.root);
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException("Wan video result contained no video_url.");
-
-        var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
-        var mediaType = GuessVideoMediaType(videoUrl) ?? "video/mp4";
-
-        Dictionary<string, JsonElement>? providerMeta = null;
-        try
-        {
-            var meta = new Dictionary<string, JsonElement>
-            {
-                ["create"] = createDoc.RootElement.Clone(),
-                ["poll"] = completed.root.Clone()
-            };
-
-            providerMeta = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(meta, JsonSerializerOptions.Web)
-            };
-        }
-        catch
-        {
-            // best-effort only
-        }
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = taskId,
             Warnings = warnings,
-            ProviderMetadata = providerMeta,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status = "PENDING" }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, new Uri($"{DefaultDashScopeBaseUrl}/api/v1/tasks/{Uri.EscapeDataString(operation)}"));
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Wan video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        var status = TryGetTaskStatus(root);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId = operation, status });
+        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
+
+        if (string.Equals(status, "FAILED", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "CANCELED", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "UNKNOWN", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationErrorResult { Error = $"Wan video generation failed: {TryGetErrorMessage(root) ?? status ?? "Unknown error"}", ProviderMetadata = metadata, Response = response };
+
+        if (!string.Equals(status, "SUCCEEDED", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var videoUrl = TryGetVideoUrl(root);
+        if (string.IsNullOrWhiteSpace(videoUrl))
+            return new VideoOperationErrorResult { Error = "Wan video result contained no video_url.", ProviderMetadata = metadata, Response = response };
+
+        using var videoResponse = await _client.GetAsync(videoUrl, cancellationToken);
+        var bytes = await videoResponse.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!videoResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Wan video download failed ({(int)videoResponse.StatusCode}).");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData { Type = "base64", MediaType = videoResponse.Content.Headers.ContentType?.MediaType ?? GuessVideoMediaType(videoUrl) ?? "video/mp4", Data = Convert.ToBase64String(bytes) }],
+            Warnings = [], ProviderMetadata = metadata, Response = response
         };
     }
 

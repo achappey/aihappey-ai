@@ -1,5 +1,6 @@
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -17,7 +18,7 @@ public partial class AI302Provider
 
     private sealed record AI302VideoFetchResult(string Status, string Raw, JsonElement Root);
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -67,50 +68,50 @@ public partial class AI302Provider
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("302.AI video generation returned no task_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => FetchVideoTaskAsync(taskId, ct),
-            isTerminal: r => IsTerminalStatus(r.Status),
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
+        return new VideoOperationStartResult
+        {
+            Operation = taskId,
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status = "pending" }),
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
 
-        if (IsFailedStatus(completed.Status))
-            throw new InvalidOperationException($"302.AI video generation failed with status '{completed.Status}' (task_id={taskId}). Response: {completed.Raw}");
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        var videoUrl = TryGetVideoUrl(completed.Root);
+        ApplyAuthHeader();
+        var task = await FetchVideoTaskAsync(operation, cancellationToken);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId = operation, status = task.Status });
+        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
+
+        if (IsFailedStatus(task.Status))
+            return new VideoOperationErrorResult { Error = $"302.AI video generation failed with status '{task.Status}' (task_id={operation}). Response: {task.Raw}", ProviderMetadata = metadata, Response = response };
+
+        if (!IsTerminalStatus(task.Status))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var videoUrl = TryGetVideoUrl(task.Root);
         if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException($"302.AI video task completed but returned no video url (task_id={taskId}).");
+            return new VideoOperationErrorResult { Error = $"302.AI video task completed but returned no video url (task_id={operation}).", ProviderMetadata = metadata, Response = response };
 
         using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
         var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!videoResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"302.AI video download failed ({(int)videoResp.StatusCode}).");
 
-        var mediaType = videoResp.Content.Headers.ContentType?.MediaType
-            ?? GuessVideoMediaType(videoUrl)
-            ?? "video/mp4";
-
-        return new VideoResponse
+        return new VideoOperationCompletedResult
         {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = completed.Root.Clone()
-            },
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
+            Videos = [new VideoOperationVideoData { Type = "base64", MediaType = videoResp.Content.Headers.ContentType?.MediaType ?? GuessVideoMediaType(videoUrl) ?? "video/mp4", Data = Convert.ToBase64String(videoBytes) }],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 

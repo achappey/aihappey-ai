@@ -95,24 +95,6 @@ public partial class AlibabaProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        var now = DateTime.UtcNow;
-        List<object> warnings = [];
-        AlibabaVideoProviderMetadata? providerMetadata = null;
-        if (request.ProviderOptions is not null
-            && request.ProviderOptions.TryGetValue(GetIdentifier(),
-                out var providerElement)
-            && providerElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-        {
-            providerMetadata = providerElement.Deserialize<AlibabaVideoProviderMetadata>(JsonSerializerOptions.Web);
-        }
-
-        return WanVideoRequest(request, providerMetadata, request.Model, warnings, now, cancellationToken);
-    }
-
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
@@ -185,14 +167,5 @@ public partial class AlibabaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
 
