@@ -12,6 +12,8 @@ namespace AIHappey.Core.Providers.MiniMax;
 
 public partial class MiniMaxProvider
 {
+    private const string MiniMaxVideoOperationTokenPrefix = "mmv1_";
+
     private static readonly JsonSerializerOptions VideoJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -69,7 +71,7 @@ public partial class MiniMaxProvider
 
         return new VideoOperationStartResult
         {
-            Operation = taskId,
+            Operation = EncodeMiniMaxVideoOperation(taskId, request.Model),
             Warnings = warnings,
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status = "Preparing" }),
             Response = new()
@@ -85,8 +87,11 @@ public partial class MiniMaxProvider
         if (string.IsNullOrWhiteSpace(operation))
             throw new ArgumentException("A video operation is required.", nameof(operation));
 
+        var operationData = DecodeMiniMaxVideoOperation(operation);
+        var taskId = operationData.TaskId;
+
         ApplyAuthHeader();
-        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/query/video_generation?task_id={Uri.EscapeDataString(operation)}");
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/query/video_generation?task_id={Uri.EscapeDataString(taskId)}");
         using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
         var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
         if (!pollResp.IsSuccessStatusCode)
@@ -96,18 +101,24 @@ public partial class MiniMaxProvider
         var root = pollDoc.RootElement.Clone();
         EnsureBaseResponseOk(root, "video_generation_query");
         var status = TryGetStatus(root);
-        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
-        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId = operation, status });
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(operationData.Model)
+                ? GetIdentifier()
+                : operationData.Model.ToModelId(GetIdentifier())
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status });
 
         if (string.Equals(status, "Fail", StringComparison.OrdinalIgnoreCase))
-            return new VideoOperationErrorResult { Error = $"MiniMax video generation failed (task_id={operation}).", ProviderMetadata = metadata, Response = response };
+            return new VideoOperationErrorResult { Error = $"MiniMax video generation failed (task_id={taskId}).", ProviderMetadata = metadata, Response = response };
 
         if (!string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase))
             return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
 
         var fileId = root.TryGetProperty("file_id", out var fileElement) ? fileElement.ToString() : null;
         if (string.IsNullOrWhiteSpace(fileId))
-            return new VideoOperationErrorResult { Error = $"MiniMax task '{operation}' succeeded but returned no file_id.", ProviderMetadata = metadata, Response = response };
+            return new VideoOperationErrorResult { Error = $"MiniMax task '{taskId}' succeeded but returned no file_id.", ProviderMetadata = metadata, Response = response };
 
         var downloadUrl = await ResolveDownloadUrlAsync(fileId, cancellationToken);
         using var videoResponse = await _client.GetAsync(downloadUrl, cancellationToken);
@@ -128,6 +139,50 @@ public partial class MiniMaxProvider
             Response = response
         };
     }
+
+    private static string EncodeMiniMaxVideoOperation(string taskId, string model)
+    {
+        var json = JsonSerializer.Serialize(new MiniMaxVideoOperationData(taskId, model), VideoJson);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+        return MiniMaxVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static MiniMaxVideoOperationData DecodeMiniMaxVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(MiniMaxVideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new MiniMaxVideoOperationData(Uri.UnescapeDataString(operation), null);
+
+        var base64Url = operation[MiniMaxVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<MiniMaxVideoOperationData>(json, VideoJson);
+            if (data is null || string.IsNullOrWhiteSpace(data.TaskId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The MiniMax video operation token is invalid.", nameof(operation));
+
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The MiniMax video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The MiniMax video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
+    private sealed record MiniMaxVideoOperationData(string TaskId, string? Model);
 
     private static Dictionary<string, object?> BuildMiniMaxVideoPayload(
         VideoRequest request,
