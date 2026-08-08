@@ -1,4 +1,6 @@
 using System.Net.Mime;
+using System.Text;
+using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
@@ -24,31 +26,27 @@ public partial class DecartProvider
         if (imageRequest.N is > 1)
             warnings.Add(new { type = "unsupported", feature = "n" });
 
-        if (imageRequest.Seed is not null)
-            warnings.Add(new { type = "unsupported", feature = "seed" });
-
         if (imageRequest.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        if (imageRequest.Files?.Skip(1).Any() == true)
-            warnings.Add(new { type = "unsupported", feature = "files.additional" });
-
         var endpoint = $"v1/generate/{imageRequest.Model}";
+        var metadata = GetDecartProviderOptions(imageRequest.ProviderOptions, GetIdentifier());
 
         using var form = new MultipartFormDataContent();
-        form.Add(new StringContent(imageRequest.Prompt), "prompt");
+        form.Add(new StringContent(imageRequest.Prompt, Encoding.UTF8), "prompt");
         form.Add(new StringContent(ResolveResolution(imageRequest)), "resolution");
+        if (imageRequest.Seed is not null)
+            form.Add(new StringContent(imageRequest.Seed.Value.ToString()), "seed");
 
-        if (imageRequest.Files?.Any() == true)
-        {
-            var input = imageRequest.Files?.FirstOrDefault()
-                ?? throw new InvalidOperationException("Lucy Pro I2I requires one input image in files[0].");
+        var input = imageRequest.Files?.FirstOrDefault(file =>
+            file.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true)
+            ?? throw new ArgumentException("An image input is required in files.", nameof(imageRequest));
 
-            var bytes = Convert.FromBase64String(input.Data);
-            var data = new ByteArrayContent(bytes);
-            data.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(input.MediaType);
-            form.Add(data, "data", "input-image");
-        }
+        form.Add(ToByteArrayContent(
+            new VideoFile { Data = input.Data, MediaType = input.MediaType },
+            requiredPrefix: "image/"), "data", "input-image");
+
+        AddDecartBooleanOption(form, metadata, "enhance_prompt");
 
         using var resp = await _client.PostAsync(endpoint, form, cancellationToken);
         var bytesOut = await resp.Content.ReadAsByteArrayAsync(cancellationToken);

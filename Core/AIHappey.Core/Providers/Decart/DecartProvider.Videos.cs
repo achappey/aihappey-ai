@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -11,19 +10,10 @@ namespace AIHappey.Core.Providers.Decart;
 
 public partial class DecartProvider
 {
-    private sealed class DecartVideoProviderMetadata
-    {
-        [JsonPropertyName("trajectory")]
-        public JsonElement? Trajectory { get; set; }
-
-        [JsonPropertyName("referenceImage")]
-        public VideoFile? ReferenceImage { get; set; }
-
-        [JsonPropertyName("enhancePrompt")]
-        public bool? EnhancePrompt { get; set; }
-    }
+    private const string DecartVideoOperationTokenPrefix = "dcv1_";
 
     private sealed record DecartJobState(string Status, JsonElement Root);
+    private sealed record DecartVideoOperationData(string JobId, string? Model);
 
     public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
@@ -44,9 +34,9 @@ public partial class DecartProvider
 
         var model = request.Model.Trim();
         var endpoint = $"v1/jobs/{model}";
-        var metadata = GetVideoProviderMetadata<DecartVideoProviderMetadata>(request, GetIdentifier());
+        var metadata = GetDecartProviderOptions(request.ProviderOptions, GetIdentifier());
 
-        using var form = BuildDecartVideoForm(model, endpoint, request, metadata, warnings);
+        using var form = BuildDecartVideoForm(request, metadata, warnings);
 
         using var createResp = await _client.PostAsync(endpoint, form, cancellationToken);
         var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
@@ -58,11 +48,12 @@ public partial class DecartProvider
         if (string.IsNullOrWhiteSpace(jobId))
             throw new InvalidOperationException("Decart video request did not return job_id.");
 
+        var createRoot = createDoc.RootElement.Clone();
         return new VideoOperationStartResult
         {
-            Operation = jobId,
+            Operation = EncodeDecartVideoOperation(jobId, request.Model),
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { jobId, status = "queued" }),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { jobId, status = "queued", job = createRoot }),
             Response = new()
             {
                 Timestamp = now,
@@ -76,10 +67,18 @@ public partial class DecartProvider
         if (string.IsNullOrWhiteSpace(operation))
             throw new ArgumentException("A video operation is required.", nameof(operation));
 
+        var operationData = DecodeDecartVideoOperation(operation);
+        var jobId = operationData.JobId;
         ApplyAuthHeader();
-        var job = await PollDecartJobAsync(operation, cancellationToken);
-        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { jobId = operation, status = job.Status });
-        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
+        var job = await PollDecartJobAsync(jobId, cancellationToken);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { jobId, status = job.Status, job = job.Root });
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(operationData.Model)
+                ? GetIdentifier()
+                : operationData.Model.ToModelId(GetIdentifier())
+        };
 
         if (!string.Equals(job.Status, "completed", StringComparison.OrdinalIgnoreCase))
         {
@@ -89,7 +88,7 @@ public partial class DecartProvider
             return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
         }
 
-        using var contentResp = await _client.GetAsync($"v1/jobs/{Uri.EscapeDataString(operation)}/content", cancellationToken);
+        using var contentResp = await _client.GetAsync($"v1/jobs/{Uri.EscapeDataString(jobId)}/content", cancellationToken);
         var videoBytes = await contentResp.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!contentResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Decart video download failed ({(int)contentResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
@@ -101,11 +100,49 @@ public partial class DecartProvider
         };
     }
 
+    private static string EncodeDecartVideoOperation(string jobId, string model)
+    {
+        var json = JsonSerializer.Serialize(new DecartVideoOperationData(jobId, model), JsonSerializerOptions.Web);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return DecartVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static DecartVideoOperationData DecodeDecartVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(DecartVideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new DecartVideoOperationData(Uri.UnescapeDataString(operation), null);
+
+        var base64Url = operation[DecartVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<DecartVideoOperationData>(json, JsonSerializerOptions.Web);
+            if (data is null || string.IsNullOrWhiteSpace(data.JobId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Decart video operation token is invalid.", nameof(operation));
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The Decart video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The Decart video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
     private static MultipartFormDataContent BuildDecartVideoForm(
-        string model,
-        string endpoint,
         VideoRequest request,
-        DecartVideoProviderMetadata? metadata,
+        JsonElement metadata,
         List<object> warnings)
     {
         var form = new MultipartFormDataContent();
@@ -113,92 +150,28 @@ public partial class DecartProvider
         if (request.Duration is not null)
             warnings.Add(new { type = "unsupported", feature = "duration" });
 
-        var supportsSeed = string.Equals(model, "lucy-motion", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "lucy-restyle-v2v", StringComparison.OrdinalIgnoreCase);
+        var inputs = new[] { request.Image }
+            .Concat(request.InputReferences ?? [])
+            .Where(file => file is not null)
+            .Cast<VideoFile>()
+            .ToArray();
+        var video = inputs.FirstOrDefault(file => file.MediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true)
+            ?? throw new ArgumentException("A video input is required in image or inputReferences.", nameof(request));
 
+        form.Add(ToByteArrayContent(video, requiredPrefix: "video/"), "data", "input-video");
+
+        if (!string.IsNullOrWhiteSpace(request.Prompt))
+            form.Add(new StringContent(request.Prompt, Encoding.UTF8), "prompt");
         if (request.Seed is not null)
-        {
-            if (supportsSeed)
-                form.Add(new StringContent(request.Seed.Value.ToString()), "seed");
-            else
-                warnings.Add(new { type = "unsupported", feature = "seed" });
-        }
-
+            form.Add(new StringContent(request.Seed.Value.ToString()), "seed");
         form.Add(new StringContent(ResolveVideoResolution(request, warnings)), "resolution");
 
-        var isTextToVideo = string.Equals(model, "lucy-pro-t2v", StringComparison.OrdinalIgnoreCase);
-        var isImageToVideo = string.Equals(model, "lucy-pro-i2v", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "lucy-dev-i2v", StringComparison.OrdinalIgnoreCase);
-        var isMotion = string.Equals(model, "lucy-motion", StringComparison.OrdinalIgnoreCase);
-        var isVideoToVideo = string.Equals(model, "lucy-pro-v2v", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "lucy-fast-v2v", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model, "lucy-restyle-v2v", StringComparison.OrdinalIgnoreCase);
+        var reference = inputs.FirstOrDefault(file => file.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true);
+        if (reference is not null)
+            form.Add(ToByteArrayContent(reference, requiredPrefix: "image/"), "reference_image", "reference-image");
 
-        if (isTextToVideo)
-        {
-            if (string.IsNullOrWhiteSpace(request.Prompt))
-                throw new ArgumentException("Prompt is required for text-to-video.", nameof(request));
-
-            form.Add(new StringContent(request.Prompt), "prompt");
-
-            if (request.Image is not null)
-                warnings.Add(new { type = "unsupported", feature = "image" });
-        }
-        else if (isImageToVideo)
-        {
-            if (string.IsNullOrWhiteSpace(request.Prompt))
-                throw new ArgumentException("Prompt is required for image-to-video.", nameof(request));
-
-            var input = request.Image ?? throw new ArgumentException("Image input is required for image-to-video.", nameof(request));
-            form.Add(ToByteArrayContent(input, requiredPrefix: "image/"), "data", "input-image");
-            form.Add(new StringContent(request.Prompt), "prompt");
-        }
-        else if (isMotion)
-        {
-            var input = request.Image ?? throw new ArgumentException("Image input is required for lucy-motion.", nameof(request));
-            form.Add(ToByteArrayContent(input, requiredPrefix: "image/"), "data", "input-image");
-
-            if (metadata?.Trajectory is null || metadata.Trajectory.Value.ValueKind != JsonValueKind.Array)
-                throw new ArgumentException("Trajectory is required for lucy-motion in providerOptions.decart.trajectory.", nameof(request));
-
-            form.Add(new StringContent(metadata.Trajectory.Value.GetRawText(), Encoding.UTF8, MediaTypeNames.Application.Json), "trajectory");
-
-            if (!string.IsNullOrWhiteSpace(request.Prompt))
-                warnings.Add(new { type = "unsupported", feature = "prompt" });
-        }
-        else if (isVideoToVideo)
-        {
-            if (string.IsNullOrWhiteSpace(request.Prompt))
-                throw new ArgumentException("Prompt is required for video-to-video models.", nameof(request));
-
-            var input = request.Image ?? throw new ArgumentException("Video input is required for video-to-video models.", nameof(request));
-            form.Add(ToByteArrayContent(input, requiredPrefix: "video/"), "data", "input-video");
-            form.Add(new StringContent(request.Prompt), "prompt");
-
-            if (metadata?.ReferenceImage is not null)
-            {
-                if (string.Equals(model, "lucy-pro-v2v", StringComparison.OrdinalIgnoreCase))
-                {
-                    form.Add(ToByteArrayContent(metadata.ReferenceImage, requiredPrefix: "image/"), "reference_image", "reference-image");
-                }
-                else
-                {
-                    warnings.Add(new { type = "unsupported", feature = "reference_image" });
-                }
-            }
-
-            if (metadata?.EnhancePrompt is not null)
-            {
-                if (string.Equals(model, "lucy-restyle-v2v", StringComparison.OrdinalIgnoreCase))
-                    form.Add(new StringContent(metadata.EnhancePrompt.Value ? "true" : "false"), "enhance_prompt");
-                else
-                    warnings.Add(new { type = "unsupported", feature = "enhance_prompt" });
-            }
-        }
-        else
-        {
-            throw new NotSupportedException($"Unsupported Decart endpoint '{endpoint}'.");
-        }
+        AddDecartBooleanOption(form, metadata, "enhance_prompt");
+        AddDecartBooleanOption(form, metadata, "self_anchor");
 
         return form;
     }
@@ -299,18 +272,24 @@ public partial class DecartProvider
         return "720p";
     }
 
-    private static T? GetVideoProviderMetadata<T>(VideoRequest request, string providerId)
+    private static JsonElement GetDecartProviderOptions(Dictionary<string, JsonElement>? providerOptions, string providerId)
     {
-        if (request.ProviderOptions is null)
-            return default;
+        if (providerOptions is not null
+            && providerOptions.TryGetValue(providerId, out var element)
+            && element.ValueKind == JsonValueKind.Object)
+            return element;
 
-        if (!request.ProviderOptions.TryGetValue(providerId, out var element))
-            return default;
+        return default;
+    }
 
-        if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
-            return default;
+    private static void AddDecartBooleanOption(MultipartFormDataContent form, JsonElement options, string name)
+    {
+        if (options.ValueKind != JsonValueKind.Object
+            || !options.TryGetProperty(name, out var value)
+            || value.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
+            return;
 
-        return element.Deserialize<T>(JsonSerializerOptions.Web);
+        form.Add(new StringContent(value.GetBoolean() ? "true" : "false"), name);
     }
 }
 
