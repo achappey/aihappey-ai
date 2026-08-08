@@ -55,12 +55,12 @@ public partial class HeyGenProvider
             ["text"] = request.Text,
             ["voice_id"] = voiceId,
             ["input_type"] = inputType,
-            ["speed"] = speed?.ToString("0.###", CultureInfo.InvariantCulture),
+            ["speed"] = speed,
             ["language"] = language,
             ["locale"] = locale
         };
 
-        var ttsJson = await PostJsonAndReadAsync("v1/audio/text_to_speech", payload, cancellationToken);
+        var ttsJson = await PostJsonAndReadAsync("v3/voices/speech", payload, cancellationToken);
 
         using var ttsDoc = JsonDocument.Parse(ttsJson);
         EnsureNoHeyGenApiError(ttsDoc.RootElement, ttsJson);

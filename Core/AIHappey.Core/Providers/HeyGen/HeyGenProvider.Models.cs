@@ -26,13 +26,21 @@ public partial class HeyGenProvider
                 voices.AddRange(await GetVoicesByTypeAsync("private", cancellationToken));
 
                 var voiceModels = BuildDynamicVoiceModels(voices);
+                var styles = await GetVideoAgentStylesAsync(cancellationToken);
+                var styleModels = BuildDynamicStyleModels(styles);
 
-                return [..voiceModels, new Model() {
-            Type = "video",
-            Id = "video_agent".ToModelId(GetIdentifier()),
-            Name = "Video Agent",
-            Description = "Generate videos with a one-shot prompt to Video Agent."
-        }];
+                return [
+                    ..voiceModels,
+                    new Model
+                    {
+                        Type = "video",
+                        Id = "video_agent".ToModelId(GetIdentifier()),
+                        OwnedBy = ProviderName,
+                        Name = "Video Agent",
+                        Description = "Generate videos with a one-shot prompt using HeyGen Video Agent v3."
+                    },
+                    ..styleModels
+                ];
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
@@ -47,7 +55,7 @@ public partial class HeyGenProvider
 
         for (var page = 0; page < 1000; page++)
         {
-            var path = $"v1/audio/voices?type={Uri.EscapeDataString(type)}&limit={limit}";
+            var path = $"v3/voices?type={Uri.EscapeDataString(type)}&engine=starfish&limit={limit}";
             if (!string.IsNullOrWhiteSpace(token))
                 path += $"&token={Uri.EscapeDataString(token)}";
 
@@ -73,6 +81,80 @@ public partial class HeyGenProvider
             .Where(IsValidVoice)
             .GroupBy(v => v.Id, StringComparer.OrdinalIgnoreCase)
             .Select(g => MergeVoiceGroup(g))];
+    }
+
+    private async Task<IReadOnlyList<HeyGenVideoAgentStyle>> GetVideoAgentStylesAsync(CancellationToken cancellationToken)
+    {
+        const int limit = 100;
+        string? token = null;
+        var all = new List<HeyGenVideoAgentStyle>();
+
+        for (var page = 0; page < 1000; page++)
+        {
+            var path = $"v3/video-agents/styles?limit={limit}";
+            if (!string.IsNullOrWhiteSpace(token))
+                path += $"&token={Uri.EscapeDataString(token)}";
+
+            using var response = await _client.GetAsync(path, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException($"{ProviderName} Video Agent styles list failed ({(int)response.StatusCode}): {body}");
+
+            using var document = JsonDocument.Parse(body);
+            EnsureNoHeyGenApiError(document.RootElement, body);
+            all.AddRange(ParseVideoAgentStyles(document.RootElement));
+
+            token = TryFindNextToken(document.RootElement);
+            if (string.IsNullOrWhiteSpace(token))
+                break;
+        }
+
+        return [.. all
+            .Where(style => !string.IsNullOrWhiteSpace(style.Id))
+            .GroupBy(style => style.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())];
+    }
+
+    private static IReadOnlyList<HeyGenVideoAgentStyle> ParseVideoAgentStyles(JsonElement root)
+    {
+        var data = TryGetPropertyIgnoreCase(root, "data", out var dataElement)
+            ? dataElement
+            : root;
+        if (data.ValueKind != JsonValueKind.Array)
+            return [];
+
+        var styles = new List<HeyGenVideoAgentStyle>();
+        foreach (var item in data.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var id = ReadString(item, "style_id");
+            var name = ReadString(item, "name");
+            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name))
+                continue;
+
+            var tags = new List<string>();
+            if (TryGetPropertyIgnoreCase(item, "tags", out var tagsElement)
+                && tagsElement.ValueKind == JsonValueKind.Array)
+            {
+                tags.AddRange(tagsElement.EnumerateArray()
+                    .Where(tag => tag.ValueKind == JsonValueKind.String)
+                    .Select(tag => tag.GetString())
+                    .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                    .Select(tag => tag!));
+            }
+
+            styles.Add(new HeyGenVideoAgentStyle
+            {
+                Id = id.Trim(),
+                Name = name.Trim(),
+                AspectRatio = ReadString(item, "aspect_ratio"),
+                Tags = tags
+            });
+        }
+
+        return styles;
     }
 
     private static IReadOnlyList<HeyGenVoice> ParseVoices(JsonElement root, string catalogType)
@@ -194,6 +276,19 @@ public partial class HeyGenProvider
                 Tags = BuildVoiceTags(v)
             });
 
+    private IEnumerable<Model> BuildDynamicStyleModels(IEnumerable<HeyGenVideoAgentStyle> styles)
+        => styles.Select(style => new Model
+        {
+            Id = $"video_agent/{style.Id}".ToModelId(GetIdentifier()),
+            OwnedBy = ProviderName,
+            Type = "video",
+            Name = $"Video Agent — {style.Name}",
+            Description = string.IsNullOrWhiteSpace(style.AspectRatio)
+                ? $"Generate a video using the HeyGen '{style.Name}' Video Agent style."
+                : $"Generate a video using the HeyGen '{style.Name}' Video Agent style ({style.AspectRatio}).",
+            Tags = ["video-agent", "style", .. style.Tags]
+        });
+
     private static IEnumerable<string> BuildVoiceTags(HeyGenVoice voice)
     {
         var tags = new List<string>() { "voice" };
@@ -273,6 +368,14 @@ public partial class HeyGenProvider
         public string? Language { get; set; }
         public string? Gender { get; set; }
         public string? CatalogType { get; set; }
+    }
+
+    private sealed class HeyGenVideoAgentStyle
+    {
+        public string Id { get; set; } = null!;
+        public string Name { get; set; } = null!;
+        public string? AspectRatio { get; set; }
+        public IReadOnlyList<string> Tags { get; set; } = [];
     }
 }
 
