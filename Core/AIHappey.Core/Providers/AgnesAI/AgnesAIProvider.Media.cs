@@ -254,7 +254,11 @@ public partial class AgnesAIProvider
 
     private async Task<(byte[] Bytes, string MediaType)> DownloadAgnesBinaryAsync(string url, string defaultMediaType, CancellationToken cancellationToken)
     {
-        using var response = await _client.GetAsync(url, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var response = await _mediaClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
         var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)

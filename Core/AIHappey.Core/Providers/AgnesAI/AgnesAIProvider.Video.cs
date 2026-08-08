@@ -133,12 +133,12 @@ public partial class AgnesAIProvider
             };
         }
 
-        var videoUrl = TryGetAgnesVideoMetadataUrl(root);
+        var videoUrl = TryGetAgnesVideoUrl(root);
         if (string.IsNullOrWhiteSpace(videoUrl))
         {
             return new VideoOperationErrorResult
             {
-                Error = $"Agnes video task completed but metadata.url was missing (video_id={operationData.VideoId}).",
+                Error = $"Agnes video task completed but no video URL was returned (video_id={operationData.VideoId}).",
                 ProviderMetadata = providerMetadata,
                 Response = response
             };
@@ -287,12 +287,23 @@ public partial class AgnesAIProvider
                 ? value
                 : null;
 
-    private static string? TryGetAgnesVideoMetadataUrl(JsonElement root)
-        => root.ValueKind == JsonValueKind.Object
-            && root.TryGetProperty("metadata", out var metadata)
+    private static string? TryGetAgnesVideoUrl(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+            return null;
+
+        // The production /agnesapi response currently returns the generated
+        // video URL at the top level. Keep metadata.url support because it is
+        // the response shape documented by Agnes.
+        var directUrl = root.TryGetString("url", "video_url", "videoUrl");
+        if (!string.IsNullOrWhiteSpace(directUrl))
+            return directUrl;
+
+        return root.TryGetProperty("metadata", out var metadata)
             && metadata.ValueKind == JsonValueKind.Object
-                ? metadata.TryGetString("url")
+                ? metadata.TryGetString("url", "video_url", "videoUrl")
                 : null;
+    }
 
     private sealed record AgnesVideoOperationData(string VideoId, string? Model);
 }

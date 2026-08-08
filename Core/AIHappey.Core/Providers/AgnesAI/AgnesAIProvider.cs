@@ -21,6 +21,8 @@ public partial class AgnesAIProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly HttpClient _mediaClient;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public AgnesAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
@@ -30,6 +32,10 @@ public partial class AgnesAIProvider : IModelProvider
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://apihub.agnes-ai.com/");
+        // Keep media downloads isolated from the API client. HttpClient follows
+        // redirects by default, while this separate instance prevents the Agnes
+        // bearer token from being sent to public output/CDN hosts.
+        _mediaClient = httpClientFactory.CreateClient();
     }
 
     private void ApplyAuthHeader()

@@ -90,6 +90,28 @@ public sealed class AgnesAIProviderMediaTests
     }
 
     [Fact]
+    public async Task Media_download_does_not_forward_agnes_authorization()
+    {
+        var provider = CreateProvider(request =>
+        {
+            if (request.Method == HttpMethod.Post)
+                return JsonResponse("""{"data":[{"url":"https://cdn.example.com/image.png"}]}""");
+
+            Assert.Null(request.Headers.Authorization);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent([1, 2, 3])
+            };
+        });
+
+        await provider.ImageRequest(new ImageRequest
+        {
+            Model = "agnes-image-2.0-flash",
+            Prompt = "public output"
+        });
+    }
+
+    [Fact]
     public async Task StartAndStatusVideo_use_opaque_model_preserving_video_id_operation()
     {
         string? createJson = null;
@@ -111,7 +133,7 @@ public sealed class AgnesAIProviderMediaTests
             }
 
             pollPath = request.RequestUri?.PathAndQuery;
-            return JsonResponse("""{"task_id":"task_1","video_id":"video_1","model":"agnes-video-v2.0","status":"completed","progress":100,"metadata":{"url":"https://cdn.example.com/video.mp4"}}""");
+            return JsonResponse("""{"task_id":"task_1","video_id":"video_1","model":"agnes-video-v2.0","status":"completed","progress":100,"url":"https://cdn.example.com/video.mp4"}""");
         });
 
         var started = await provider.StartVideoOperation(new VideoRequest
@@ -218,7 +240,7 @@ public sealed class AgnesAIProviderMediaTests
         => new(
             new StaticApiKeyResolver(),
             new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
-            new StaticHttpClientFactory(new HttpClient(new StaticResponseHttpMessageHandler(responder))));
+            new StaticHttpClientFactory(responder));
 
     private static HttpResponseMessage JsonResponse(string json)
         => new(HttpStatusCode.OK)
@@ -241,9 +263,10 @@ public sealed class AgnesAIProviderMediaTests
         public string? Resolve(string provider) => "test-key";
     }
 
-    private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
+    private sealed class StaticHttpClientFactory(Func<HttpRequestMessage, HttpResponseMessage> responder) : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => httpClient;
+        public HttpClient CreateClient(string name)
+            => new(new StaticResponseHttpMessageHandler(responder));
     }
 
     private sealed class StaticResponseHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
