@@ -1,36 +1,68 @@
-using System.Net.Mime;
-using System.Text;
-using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Core.AI;
+using System.Runtime.CompilerServices;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.AgnesAI;
 
 public partial class AgnesAIProvider
 {
-
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
+        OpenAIImageGenerationRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        return response.ToOpenAIImagesResponse(options);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        foreach (var streamEvent in response.ToOpenAIImageGenerationCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
+        OpenAIImageEditRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageEditRequest();
+
+        var response = await ImageRequest(
+            await options.ToImageRequest(options.Model, GetIdentifier(), cancellationToken),
+            cancellationToken);
+
+        return response.ToOpenAIImagesResponse(options);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+        OpenAIImageEditRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        options.ValidateOpenAIImageEditRequest();
 
+        var response = await ImageRequest(
+            await options.ToImageRequest(options.Model, GetIdentifier(), cancellationToken),
+            cancellationToken);
+
+        foreach (var streamEvent in response.ToOpenAIImageEditCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
+    }
 }

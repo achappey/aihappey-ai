@@ -102,7 +102,7 @@ public partial class AgnesAIProvider : IModelProvider
         => AgnesImageRequest(request, cancellationToken);
 
     public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => AgnesVideoRequest(request, cancellationToken);
+        => throw new NotSupportedException("Agnes video generation uses StartVideoOperation and GetVideoOperationStatus.");
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {

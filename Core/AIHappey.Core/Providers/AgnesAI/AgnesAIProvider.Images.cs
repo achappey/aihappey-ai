@@ -33,7 +33,6 @@ public partial class AgnesAIProvider
 
         var payload = CreateAgnesPayload(
             metadata,
-            "tags",
             "image",
             "images",
             "image_url",
@@ -42,6 +41,8 @@ public partial class AgnesAIProvider
             "imageUrls",
             "extra_body",
             "extraBody",
+            "return_base64",
+            "returnBase64",
             "response_format",
             "responseFormat");
 
@@ -52,11 +53,20 @@ public partial class AgnesAIProvider
         if (!string.IsNullOrWhiteSpace(size))
             payload["size"] = size;
 
+        var ratio = ResolveAgnesImageRatio(request, metadata);
+        if (!string.IsNullOrWhiteSpace(ratio))
+            payload["ratio"] = ratio;
+
         if (request.Seed is not null)
             payload["seed"] = request.Seed.Value;
 
+        // Agnes supports a top-level Base64 preference for generation and
+        // extra_body.response_format for all workflows. Request both so edits
+        // and generations consistently avoid an additional download when possible.
+        payload["return_base64"] = true;
+
         var extraBody = CreateAgnesExtraBody(metadata, "image", "images", "image_urls", "imageUrls", "response_format", "responseFormat");
-        extraBody["response_format"] = ResolveAgnesImageResponseFormat(metadata, warnings);
+        extraBody["response_format"] = "b64_json";
 
         var imageUrls = ResolveAgnesImageInputUrls(request, metadata, warnings);
         if (imageUrls.Count > 0)
@@ -64,10 +74,6 @@ public partial class AgnesAIProvider
 
         if (extraBody.Count > 0)
             payload["extra_body"] = extraBody;
-
-        var tags = ResolveAgnesTags(metadata, includeImg2Img: imageUrls.Count > 0);
-        if (tags.Count > 0)
-            payload["tags"] = tags;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/images/generations")
         {
@@ -85,17 +91,25 @@ public partial class AgnesAIProvider
 
         using var document = JsonDocument.Parse(raw);
         var root = document.RootElement.Clone();
-        var outputUrls = ExtractAgnesImageOutputUrls(root);
+        var outputs = ExtractAgnesImageOutputs(root);
 
-        if (outputUrls.Count == 0)
-            throw new InvalidOperationException("Agnes image response missing 'data[].url'.");
+        if (outputs.Count == 0)
+            throw new InvalidOperationException("Agnes image response missing 'data[].b64_json' or 'data[].url'.");
 
-        var images = new List<string>(outputUrls.Count);
-        foreach (var outputUrl in outputUrls)
+        var images = new List<string>(outputs.Count);
+        foreach (var output in outputs)
         {
+            if (!string.IsNullOrWhiteSpace(output.Base64))
+            {
+                images.Add(output.Base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    ? output.Base64
+                    : output.Base64.ToDataUrl(MediaTypeNames.Image.Png));
+                continue;
+            }
+
             var (bytes, mediaType) = await DownloadAgnesBinaryAsync(
-                outputUrl,
-                GuessAgnesImageMediaType(outputUrl) ?? MediaTypeNames.Image.Png,
+                output.Url!,
+                GuessAgnesImageMediaType(output.Url) ?? MediaTypeNames.Image.Png,
                 cancellationToken);
 
             images.Add(Convert.ToBase64String(bytes).ToDataUrl(mediaType));

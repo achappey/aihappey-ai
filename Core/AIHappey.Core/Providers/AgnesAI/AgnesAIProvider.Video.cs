@@ -11,18 +11,11 @@ namespace AIHappey.Core.Providers.AgnesAI;
 
 public partial class AgnesAIProvider
 {
+    private const string AgnesVideoOperationTokenPrefix = "agv1_";
 
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    private async Task<VideoResponse> AgnesVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -32,15 +25,160 @@ public partial class AgnesAIProvider
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var now = DateTime.UtcNow;
         var warnings = new List<object>();
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var payload = BuildAgnesVideoPayload(request, metadata, warnings);
 
+        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/videos")
+        {
+            Content = new StringContent(
+                JsonSerializer.Serialize(payload, AgnesJsonOptions),
+                Encoding.UTF8,
+                MediaTypeNames.Application.Json)
+        };
+
+        using var createResponse = await _client.SendAsync(createRequest, cancellationToken);
+        var createRaw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!createResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Agnes video create failed ({(int)createResponse.StatusCode}): {createRaw}");
+
+        using var createDocument = JsonDocument.Parse(createRaw);
+        var createRoot = createDocument.RootElement.Clone();
+        var videoId = createRoot.TryGetString("video_id");
+        var taskId = createRoot.TryGetString("task_id", "id");
+
+        if (string.IsNullOrWhiteSpace(videoId))
+            throw new InvalidOperationException("Agnes video create response missing 'video_id'.");
+
+        return new VideoOperationStartResult
+        {
+            Operation = EncodeAgnesVideoOperation(videoId, request.Model),
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+            {
+                videoId,
+                taskId,
+                status = createRoot.TryGetString("status") ?? "queued",
+                create = createRoot
+            }),
+            Response = new()
+            {
+                Timestamp = DateTime.UtcNow,
+                Headers = createResponse.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var operationData = DecodeAgnesVideoOperation(operation);
+        ApplyAuthHeader();
+
+        var path = $"agnesapi?video_id={Uri.EscapeDataString(operationData.VideoId)}";
+        if (!string.IsNullOrWhiteSpace(operationData.Model))
+            path += $"&model_name={Uri.EscapeDataString(operationData.Model)}";
+
+        using var pollRequest = new HttpRequestMessage(HttpMethod.Get, path);
+        using var pollResponse = await _client.SendAsync(pollRequest, cancellationToken);
+        var pollRaw = await pollResponse.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!pollResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Agnes video poll failed ({(int)pollResponse.StatusCode}): {pollRaw}");
+
+        using var pollDocument = JsonDocument.Parse(pollRaw);
+        var root = pollDocument.RootElement.Clone();
+        var status = root.TryGetString("status") ?? "queued";
+        var modelId = string.IsNullOrWhiteSpace(operationData.Model)
+            ? GetIdentifier()
+            : operationData.Model.ToModelId(GetIdentifier());
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            Headers = pollResponse.GetHeaders(),
+            ModelId = modelId
+        };
+        var providerMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            videoId = operationData.VideoId,
+            taskId = root.TryGetString("task_id", "id"),
+            status,
+            progress = TryGetAgnesVideoProgress(root),
+            retrieve = root
+        });
+
+        if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Agnes video generation failed (video_id={operationData.VideoId}): {GetAgnesVideoError(root)}",
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        if (!string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationPendingResult
+            {
+                Warnings = [],
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        var videoUrl = TryGetAgnesVideoMetadataUrl(root);
+        if (string.IsNullOrWhiteSpace(videoUrl))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Agnes video task completed but metadata.url was missing (video_id={operationData.VideoId}).",
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        var (bytes, mediaType) = await DownloadAgnesBinaryAsync(
+            videoUrl,
+            GuessAgnesVideoMediaType(videoUrl) ?? "video/mp4",
+            cancellationToken);
+
+        return new VideoOperationCompletedResult
+        {
+            Videos =
+            [
+                new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    MediaType = mediaType,
+                    Data = Convert.ToBase64String(bytes)
+                }
+            ],
+            Warnings = [],
+            ProviderMetadata = providerMetadata,
+            Response = response
+        };
+    }
+
+    private static Dictionary<string, object?> BuildAgnesVideoPayload(
+        VideoRequest request,
+        JsonElement metadata,
+        List<object> warnings)
+    {
         if (request.Duration is not null)
-            warnings.Add(new { type = "unsupported", feature = "duration", details = "Agnes video generation uses num_frames rather than a generic duration field. Use providerOptions.agnesai.num_frames when needed." });
+            warnings.Add(new { type = "unsupported", feature = "duration", details = "Agnes video generation uses num_frames and frame_rate." });
 
         if (request.N is not null)
-            warnings.Add(new { type = "unsupported", feature = "n", details = "Agnes video generation docs do not define a generic output count parameter." });
+            warnings.Add(new { type = "unsupported", feature = "n" });
+
+        if (request.GenerateAudio is not null)
+            warnings.Add(new { type = "unsupported", feature = "generateAudio" });
 
         var payload = CreateAgnesPayload(
             metadata,
@@ -81,13 +219,9 @@ public partial class AgnesAIProvider
         var mode = ResolveAgnesVideoMode(metadata);
 
         if (imageUrls.Count == 1 && extraBody.Count == 0 && !string.Equals(mode, "keyframes", StringComparison.OrdinalIgnoreCase))
-        {
             payload["image"] = imageUrls[0];
-        }
         else if (imageUrls.Count > 0)
-        {
             extraBody["image"] = imageUrls;
-        }
 
         if (!string.IsNullOrWhiteSpace(mode))
         {
@@ -100,84 +234,65 @@ public partial class AgnesAIProvider
         if (extraBody.Count > 0)
             payload["extra_body"] = extraBody;
 
-        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/videos")
-        {
-            Content = new StringContent(
-                JsonSerializer.Serialize(payload, AgnesJsonOptions),
-                Encoding.UTF8,
-                MediaTypeNames.Application.Json)
-        };
-
-        using var createResponse = await _client.SendAsync(createRequest, cancellationToken);
-        var createRaw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!createResponse.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Agnes video create failed ({(int)createResponse.StatusCode}): {createRaw}");
-
-        using var createDocument = JsonDocument.Parse(createRaw);
-        var createRoot = createDocument.RootElement.Clone();
-        var taskId = createRoot.TryGetString("id");
-
-        if (string.IsNullOrWhiteSpace(taskId))
-            throw new InvalidOperationException("Agnes video create response missing 'id'.");
-
-        var terminal = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollAgnesVideoTaskAsync(taskId, ct),
-            isTerminal: status => AgnesVideoStatusIsTerminal(status.Status),
-            interval: TimeSpan.FromSeconds(Math.Max(1, ResolveAgnesPollIntervalSeconds(metadata))),
-            timeout: TimeSpan.FromMinutes(Math.Max(1, ResolveAgnesPollTimeoutMinutes(metadata))),
-            maxAttempts: ResolveAgnesPollMaxAttempts(metadata),
-            cancellationToken: cancellationToken);
-
-        if (!string.Equals(terminal.Status, "completed", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Agnes video generation failed with status '{terminal.Status}': {GetAgnesVideoError(terminal.Root)}");
-
-        var videoUrl = terminal.Root.TryGetString("video_url", "videoUrl");
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException("Agnes video response missing 'video_url'.");
-
-        var (bytes, mediaType) = await DownloadAgnesBinaryAsync(
-            videoUrl,
-            GuessAgnesVideoMediaType(videoUrl) ?? "video/mp4",
-            cancellationToken);
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(bytes)
-                }
-            ],
-            Warnings = warnings,
-            ProviderMetadata = GetIdentifier()
-            .CreatePrimitiveProviderMetadata(new
-            {
-                create = createRoot,
-                retrieve = terminal.Root
-            }),
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
-        };
+        return payload;
     }
 
-    private async Task<AgnesVideoTaskStatus> PollAgnesVideoTaskAsync(string taskId, CancellationToken cancellationToken)
+    private static string EncodeAgnesVideoOperation(string videoId, string model)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"v1/videos/{taskId}");
-        using var response = await _client.SendAsync(request, cancellationToken);
-        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        var json = JsonSerializer.Serialize(new AgnesVideoOperationData(videoId, model), AgnesJsonOptions);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
 
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Agnes video poll failed ({(int)response.StatusCode}): {raw}");
-
-        using var document = JsonDocument.Parse(raw);
-        var root = document.RootElement.Clone();
-        var status = root.TryGetString("status") ?? "queued";
-        return new AgnesVideoTaskStatus(status, root);
+        return AgnesVideoOperationTokenPrefix + base64Url;
     }
+
+    private static AgnesVideoOperationData DecodeAgnesVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(AgnesVideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new AgnesVideoOperationData(Uri.UnescapeDataString(operation), null);
+
+        var base64Url = operation[AgnesVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<AgnesVideoOperationData>(json, AgnesJsonOptions);
+            if (data is null || string.IsNullOrWhiteSpace(data.VideoId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Agnes video operation token is invalid.", nameof(operation));
+
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The Agnes video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The Agnes video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
+    private static int? TryGetAgnesVideoProgress(JsonElement root)
+        => root.ValueKind == JsonValueKind.Object
+            && root.TryGetProperty("progress", out var progress)
+            && progress.ValueKind == JsonValueKind.Number
+            && progress.TryGetInt32(out var value)
+                ? value
+                : null;
+
+    private static string? TryGetAgnesVideoMetadataUrl(JsonElement root)
+        => root.ValueKind == JsonValueKind.Object
+            && root.TryGetProperty("metadata", out var metadata)
+            && metadata.ValueKind == JsonValueKind.Object
+                ? metadata.TryGetString("url")
+                : null;
+
+    private sealed record AgnesVideoOperationData(string VideoId, string? Model);
 }

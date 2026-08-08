@@ -9,8 +9,6 @@ namespace AIHappey.Core.Providers.AgnesAI;
 
 public partial class AgnesAIProvider
 {
-    private sealed record AgnesVideoTaskStatus(string Status, JsonElement Root);
-
     private static readonly JsonSerializerOptions AgnesJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -64,38 +62,24 @@ public partial class AgnesAIProvider
 
     private static List<string> ResolveAgnesImageInputUrls(ImageRequest request, JsonElement metadata, List<object> warnings)
     {
-        var urls = new List<string>();
-        var unsupportedLocalFiles = 0;
+        var inputs = new List<string>();
 
         foreach (var file in request.Files ?? [])
         {
-            if (LooksLikeHttpUrl(file.Data))
-                urls.Add(file.Data.Trim());
+            if (string.IsNullOrWhiteSpace(file.Data))
+                throw new ArgumentException("Agnes image input data is required.", nameof(request));
+
+            var data = file.Data.Trim();
+            if (LooksLikeHttpUrl(data) || LooksLikeDataUri(data))
+                inputs.Add(data);
+            else if (!string.IsNullOrWhiteSpace(file.MediaType))
+                inputs.Add(data.ToDataUrl(file.MediaType));
             else
-                unsupportedLocalFiles++;
+                throw new ArgumentException("Agnes raw image input requires a media type.", nameof(request));
         }
 
-        urls.AddRange(ReadAgnesConfiguredImageUrls(metadata));
-        var distinctUrls = DistinctAgnesUrls(urls);
-
-        if (unsupportedLocalFiles > 0 && distinctUrls.Count == 0)
-        {
-            throw new ArgumentException(
-                "Agnes image editing requires public image URLs via providerOptions.agnesai.extra_body.image or providerOptions.agnesai.image_urls; raw file uploads are not supported.",
-                nameof(request));
-        }
-
-        if (unsupportedLocalFiles > 0)
-        {
-            warnings.Add(new
-            {
-                type = "ignored",
-                feature = "files",
-                details = "Agnes image editing accepts public image URLs only; local file uploads were ignored in favor of supplied Agnes image URLs."
-            });
-        }
-
-        return distinctUrls;
+        inputs.AddRange(ReadAgnesConfiguredImageUrls(metadata));
+        return DistinctAgnesImageInputs(inputs);
     }
 
     private static List<string> ResolveAgnesVideoInputUrls(VideoRequest request, JsonElement metadata, List<object> warnings)
@@ -152,38 +136,6 @@ public partial class AgnesAIProvider
         return urls;
     }
 
-    private static List<string> ResolveAgnesTags(JsonElement metadata, bool includeImg2Img)
-    {
-        var tags = ReadStringList(metadata, "tags");
-
-        if (includeImg2Img && !tags.Contains("img2img", StringComparer.OrdinalIgnoreCase))
-            tags.Add("img2img");
-
-        return tags
-            .Where(tag => !string.IsNullOrWhiteSpace(tag))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    private static string ResolveAgnesImageResponseFormat(JsonElement metadata, List<object> warnings)
-    {
-        var requested = ReadNestedString(metadata, new[] { "extra_body", "extraBody" }, "response_format", "responseFormat")
-            ?? ReadString(metadata, "response_format", "responseFormat");
-
-        if (!string.IsNullOrWhiteSpace(requested)
-            && !string.Equals(requested, "url", StringComparison.OrdinalIgnoreCase))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "response_format",
-                details = $"Agnes currently documents response_format=url; requested '{requested}' was replaced with 'url'."
-            });
-        }
-
-        return "url";
-    }
-
     private static string? ResolveAgnesImageSize(ImageRequest request, JsonElement metadata, List<object> warnings)
     {
         if (!string.IsNullOrWhiteSpace(request.Size))
@@ -207,6 +159,11 @@ public partial class AgnesAIProvider
 
         return ReadString(metadata, "size");
     }
+
+    private static string? ResolveAgnesImageRatio(ImageRequest request, JsonElement metadata)
+        => !string.IsNullOrWhiteSpace(request.AspectRatio)
+            ? request.AspectRatio
+            : ReadString(metadata, "ratio", "aspect_ratio", "aspectRatio");
 
     private static (int width, int height)? ResolveAgnesVideoSize(VideoRequest request, JsonElement metadata, List<object> warnings)
     {
@@ -254,24 +211,6 @@ public partial class AgnesAIProvider
         => ReadNestedString(metadata, new[] { "extra_body", "extraBody" }, "mode")
             ?? ReadString(metadata, "mode");
 
-    private static int ResolveAgnesPollIntervalSeconds(JsonElement metadata)
-        => ReadInt(metadata, "poll_interval_seconds", "pollIntervalSeconds") ?? 5;
-
-    private static int ResolveAgnesPollTimeoutMinutes(JsonElement metadata)
-        => ReadInt(metadata, "poll_timeout_minutes", "pollTimeoutMinutes") ?? 10;
-
-    private static int? ResolveAgnesPollMaxAttempts(JsonElement metadata)
-        => ReadInt(metadata, "poll_max_attempts", "pollMaxAttempts");
-
-    private static bool AgnesVideoStatusIsTerminal(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-            return false;
-
-        return string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase);
-    }
-
     private static string GetAgnesVideoError(JsonElement root)
     {
         if (root.ValueKind != JsonValueKind.Object)
@@ -286,15 +225,15 @@ public partial class AgnesAIProvider
         return "Unknown error";
     }
 
-    private static List<string> ExtractAgnesImageOutputUrls(JsonElement root)
+    private static List<AgnesImageOutput> ExtractAgnesImageOutputs(JsonElement root)
     {
-        var urls = new List<string>();
+        var outputs = new List<AgnesImageOutput>();
 
         if (root.ValueKind != JsonValueKind.Object
             || !root.TryGetProperty("data", out var data)
             || data.ValueKind != JsonValueKind.Array)
         {
-            return urls;
+            return outputs;
         }
 
         foreach (var item in data.EnumerateArray())
@@ -302,12 +241,15 @@ public partial class AgnesAIProvider
             if (item.ValueKind != JsonValueKind.Object)
                 continue;
 
+            var base64 = item.TryGetString("b64_json");
             var url = item.TryGetString("url");
-            if (LooksLikeHttpUrl(url))
-                urls.Add(url!);
+            if (!string.IsNullOrWhiteSpace(base64))
+                outputs.Add(new AgnesImageOutput(base64, null));
+            else if (LooksLikeHttpUrl(url))
+                outputs.Add(new AgnesImageOutput(null, url));
         }
 
-        return DistinctAgnesUrls(urls);
+        return outputs;
     }
 
     private async Task<(byte[] Bytes, string MediaType)> DownloadAgnesBinaryAsync(string url, string defaultMediaType, CancellationToken cancellationToken)
@@ -354,9 +296,20 @@ public partial class AgnesAIProvider
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+    private static List<string> DistinctAgnesImageInputs(IEnumerable<string> inputs)
+        => inputs
+            .Where(input => LooksLikeHttpUrl(input) || LooksLikeDataUri(input))
+            .Select(input => input.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
     private static bool LooksLikeHttpUrl(string? value)
         => Uri.TryCreate(value, UriKind.Absolute, out var uri)
            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+
+    private static bool LooksLikeDataUri(string? value)
+        => !string.IsNullOrWhiteSpace(value)
+            && value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase);
 
     private static List<string> ReadStringList(JsonElement element, params string[] names)
     {
@@ -460,4 +413,6 @@ public partial class AgnesAIProvider
 
         return null;
     }
+
+    private sealed record AgnesImageOutput(string? Base64, string? Url);
 }
