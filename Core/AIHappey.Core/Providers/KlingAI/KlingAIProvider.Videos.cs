@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.KlingAI;
@@ -16,7 +17,7 @@ public partial class KlingAIProvider
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -64,26 +65,58 @@ public partial class KlingAIProvider
 
         EnsureKlingOk(createRoot, "video_create");
         var taskId = ExtractVideoTaskId(createRoot);
-        var final = await PollVideoTaskAsync(endpoint, taskId, cancellationToken);
-        var (videoBytes, mediaType) = await ExtractVideoAsync(final, cancellationToken);
 
-        return new VideoResponse
+        return new VideoOperationStartResult
         {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = $"{endpoint.TrimEnd('/')}/{Uri.EscapeDataString(taskId)}",
             Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status = "submitted", endpoint }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        using var pollResp = await _client.GetAsync(operation, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"KlingAI video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        EnsureKlingOk(root, "video_status");
+        var status = GetVideoTaskStatus(root);
+        var taskId = operation[(operation.LastIndexOf('/') + 1)..];
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status });
+        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
+
+        if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationErrorResult { Error = TryGetVideoStatusMessage(root) ?? "KlingAI video task failed.", ProviderMetadata = metadata, Response = response };
+
+        if (!string.Equals(status, "succeed", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        try
+        {
+            var (videoBytes, mediaType) = await ExtractVideoAsync(root, cancellationToken);
+            return new VideoOperationCompletedResult
+            {
+                Videos = [new VideoOperationVideoData { Type = "base64", MediaType = mediaType, Data = Convert.ToBase64String(videoBytes) }],
+                Warnings = [], ProviderMetadata = metadata, Response = response
+            };
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new VideoOperationErrorResult { Error = ex.Message, ProviderMetadata = metadata, Response = response };
+        }
     }
 
     private static string ResolveVideoEndpoint(VideoRequest request)
@@ -146,41 +179,6 @@ public partial class KlingAIProvider
         }
 
         return payload;
-    }
-
-    private async Task<JsonElement> PollVideoTaskAsync(string endpoint, string taskId, CancellationToken cancellationToken)
-    {
-        var pollEndpoint = endpoint.TrimEnd('/') + "/" + taskId;
-
-        var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: async ct =>
-            {
-                using var pollResp = await _client.GetAsync(pollEndpoint, ct);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(ct);
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"KlingAI video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return pollDoc.RootElement.Clone();
-            },
-            isTerminal: r =>
-            {
-                var status = GetVideoTaskStatus(r);
-                return status is "succeed" or "failed";
-            },
-            interval: TimeSpan.FromSeconds(5),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        var status = GetVideoTaskStatus(final);
-        if (status == "failed")
-        {
-            var msg = TryGetVideoStatusMessage(final) ?? "KlingAI video task failed.";
-            throw new InvalidOperationException(msg);
-        }
-
-        return final;
     }
 
     private async Task<(byte[] Bytes, string MediaType)> ExtractVideoAsync(JsonElement root, CancellationToken cancellationToken)
