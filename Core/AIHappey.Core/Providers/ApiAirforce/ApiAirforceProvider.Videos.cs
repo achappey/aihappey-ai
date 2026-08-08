@@ -23,11 +23,31 @@ public partial class ApiAirforceProvider
         var mode = inputs.Count == 0 ? "text" : request.InputReferences?.Any() == true ? "reference" : "image";
         var payload = new Dictionary<string, object?>
         {
-            ["model"] = NormalizeModelId(request.Model), ["prompt"] = request.Prompt, ["mode"] = mode,
-            ["duration_seconds"] = request.Duration, ["aspect_ratio"] = request.AspectRatio,
-            ["quality"] = request.Resolution, ["input_images"] = inputs.Count == 0 ? null : inputs,
-            ["sound"] = request.GenerateAudio, ["seed"] = request.Seed
+            ["model"] = NormalizeModelId(request.Model),
+            ["prompt"] = request.Prompt,
         };
+
+        if (mode is not null)
+            payload["mode"] = mode;
+
+        if (request.Duration is not null)
+            payload["duration_seconds"] = request.Duration;
+
+        if (request.AspectRatio is not null)
+            payload["aspect_ratio"] = request.AspectRatio;
+
+        if (request.Resolution is not null)
+            payload["quality"] = request.Resolution;
+
+        if (inputs.Count > 0)
+            payload["input_images"] = inputs;
+
+        if (request.GenerateAudio is not null)
+            payload["sound"] = request.GenerateAudio;
+
+        if (request.Seed is not null)
+            payload["seed"] = request.Seed;
+
         var blocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "model", "prompt", "mode", "duration_seconds", "aspect_ratio", "quality", "input_images"
@@ -106,7 +126,9 @@ public partial class ApiAirforceProvider
         return new VideoOperationCompletedResult
         {
             Videos = [new VideoOperationVideoData { Type = "base64", Data = downloaded.Value.Base64, MediaType = downloaded.Value.MediaType }],
-            Warnings = [], ProviderMetadata = metadata, Response = responseData
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = responseData
         };
     }
 

@@ -35,10 +35,6 @@ public partial class ApiAirforceProvider
 
                 foreach (var el in arr)
                 {
-                    if (el.TryGetProperty("supports_chat", out var supportsChatEl)
-                        && supportsChatEl.ValueKind is JsonValueKind.False)
-                        continue;
-
                     Model model = new();
 
                     if (el.TryGetProperty("id", out var idEl))
@@ -54,8 +50,6 @@ public partial class ApiAirforceProvider
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-                
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
