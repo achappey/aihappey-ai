@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -16,7 +17,7 @@ public partial class HeyGenProvider
         JsonElement Root,
         string Raw);
 
-    private async Task<VideoResponse> HeyGenVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -45,66 +46,49 @@ public partial class HeyGenProvider
             ?? ReadString(generateDoc.RootElement, "videoId")
             ?? throw new InvalidOperationException($"{ProviderName} video create response missing video_id: {generateRaw}");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollHeyGenVideoStatusAsync(videoId, ct),
-            isTerminal: result => result.IsTerminal,
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
+        return new VideoOperationStartResult
+        {
+            Operation = videoId,
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { videoId, status = "pending" }),
+            Response = new ()
+            {
+                Timestamp = now,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
 
-        if (!completed.IsCompleted)
-            throw new InvalidOperationException($"{ProviderName} video generation failed with status '{completed.Status ?? "unknown"}': {completed.Raw}");
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        var statusData = GetHeyGenVideoDataElement(completed.Root);
-        var videoUrl = ReadString(statusData, "video_url")
-            ?? ReadString(statusData, "videoUrl")
-            ?? throw new InvalidOperationException($"{ProviderName} completed video status response missing video_url: {completed.Raw}");
+        ApplyAuthHeader();
+        var result = await PollHeyGenVideoStatusAsync(operation, cancellationToken);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { videoId = operation, status = result.Status });
+        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
+
+        if (result.IsTerminal && !result.IsCompleted)
+            return new VideoOperationErrorResult { Error = $"{ProviderName} video generation failed with status '{result.Status ?? "unknown"}': {result.Raw}", ProviderMetadata = metadata, Response = response };
+
+        if (!result.IsCompleted)
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var statusData = GetHeyGenVideoDataElement(result.Root);
+        var videoUrl = ReadString(statusData, "video_url") ?? ReadString(statusData, "videoUrl");
+        if (string.IsNullOrWhiteSpace(videoUrl))
+            return new VideoOperationErrorResult { Error = $"{ProviderName} completed video status response missing video_url: {result.Raw}", ProviderMetadata = metadata, Response = response };
 
         using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
         var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!videoResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"{ProviderName} video download failed ({(int)videoResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
 
-        var mediaType = videoResp.Content.Headers.ContentType?.MediaType
-            ?? GuessHeyGenVideoMediaType(videoUrl)
-            ?? "video/mp4";
-
-        var providerMetadata = new JsonObject
+        return new VideoOperationCompletedResult
         {
-            ["generate_endpoint"] = "v1/video_agent/generate",
-            ["status_endpoint"] = "v1/video_status.get",
-            ["video_id"] = videoId,
-            ["status"] = completed.Status,
-            ["video_url"] = videoUrl,
-            ["content_type"] = mediaType,
-            ["create_response"] = JsonNode.Parse(generateDoc.RootElement.GetRawText()),
-            ["status_response"] = JsonNode.Parse(completed.Root.GetRawText())
-        };
-
-        if (metadata.ValueKind == JsonValueKind.Object)
-            providerMetadata["passthrough"] = JsonNode.Parse(metadata.GetRawText());
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(providerMetadata, JsonSerializerOptions.Web)
-            },
-            Response = new ()
-            {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
+            Videos = [new VideoOperationVideoData { Type = "base64", MediaType = videoResp.Content.Headers.ContentType?.MediaType ?? GuessHeyGenVideoMediaType(videoUrl) ?? "video/mp4", Data = Convert.ToBase64String(videoBytes) }],
+            Warnings = [], ProviderMetadata = metadata, Response = response
         };
     }
 

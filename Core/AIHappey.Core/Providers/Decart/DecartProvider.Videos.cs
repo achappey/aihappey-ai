@@ -25,7 +25,7 @@ public partial class DecartProvider
 
     private sealed record DecartJobState(string Status, JsonElement Root);
 
-    public async Task<VideoResponse> DecartVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -58,47 +58,46 @@ public partial class DecartProvider
         if (string.IsNullOrWhiteSpace(jobId))
             throw new InvalidOperationException("Decart video request did not return job_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollDecartJobAsync(jobId, ct),
-            isTerminal: s => IsTerminalStatus(s.Status),
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (!string.Equals(completed.Status, "completed", StringComparison.OrdinalIgnoreCase))
+        return new VideoOperationStartResult
         {
-            var error = TryReadErrorMessage(completed.Root);
-            throw new InvalidOperationException($"Decart video job failed with status '{completed.Status}': {error}");
-        }
-
-        using var contentResp = await _client.GetAsync($"v1/jobs/{jobId}/content", cancellationToken);
-        var videoBytes = await contentResp.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!contentResp.IsSuccessStatusCode)
-        {
-            var text = Encoding.UTF8.GetString(videoBytes);
-            throw new InvalidOperationException($"Decart video download failed ({(int)contentResp.StatusCode}): {text}");
-        }
-
-        var mediaType = contentResp.Content.Headers.ContentType?.MediaType ?? "video/mp4";
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = jobId,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(completed.Root.Clone()),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { jobId, status = "queued" }),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        var job = await PollDecartJobAsync(operation, cancellationToken);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { jobId = operation, status = job.Status });
+        var response = new HeaderResponseData { Timestamp = DateTime.UtcNow, ModelId = GetIdentifier() };
+
+        if (!string.Equals(job.Status, "completed", StringComparison.OrdinalIgnoreCase))
+        {
+            if (IsTerminalStatus(job.Status))
+                return new VideoOperationErrorResult { Error = $"Decart video job failed with status '{job.Status}': {TryReadErrorMessage(job.Root)}", ProviderMetadata = metadata, Response = response };
+
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+        }
+
+        using var contentResp = await _client.GetAsync($"v1/jobs/{Uri.EscapeDataString(operation)}/content", cancellationToken);
+        var videoBytes = await contentResp.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!contentResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Decart video download failed ({(int)contentResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData { Type = "base64", MediaType = contentResp.Content.Headers.ContentType?.MediaType ?? "video/mp4", Data = Convert.ToBase64String(videoBytes) }],
+            Warnings = [], ProviderMetadata = metadata, Response = response
         };
     }
 
