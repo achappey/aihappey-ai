@@ -10,7 +10,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Zai;
 
-public partial class ZaiProvider 
+public partial class ZaiProvider
 {
     private static readonly JsonSerializerOptions ZaiVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -148,7 +148,9 @@ public partial class ZaiProvider
         if (string.IsNullOrWhiteSpace(videoUrl))
             return new VideoOperationErrorResult { Error = $"Z.AI video task '{operation}' succeeded but returned no video url.", ProviderMetadata = metadata, Response = response };
 
-        using var videoResponse = await _client.GetAsync(videoUrl, cancellationToken);
+        // Z.AI returns a pre-signed object-storage URL. Sending the provider's
+        // bearer token alongside its query-string signature invalidates it.
+        using var videoResponse = await _downloadClient.GetAsync(videoUrl, cancellationToken);
         var bytes = await videoResponse.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!videoResponse.IsSuccessStatusCode)
             throw new InvalidOperationException($"Z.AI video download failed ({(int)videoResponse.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
@@ -199,18 +201,20 @@ public partial class ZaiProvider
         if ((isViduText || isViduReference) && !string.IsNullOrWhiteSpace(aspectRatio))
             payload["aspect_ratio"] = aspectRatio;
 
+        var withAudio = request.GenerateAudio;
+        if (withAudio is not null)
+            payload["with_audio"] = withAudio;
+
+        var fps = request.Fps;
+        if (fps is not null)
+            payload["fps"] = fps;
+
         if (isCogVideo)
         {
             var quality = metadata?.Quality;
             if (!string.IsNullOrWhiteSpace(quality))
                 payload["quality"] = quality;
 
-            var fps = request.Fps;
-            if (fps is not null)
-                payload["fps"] = fps;
-
-            if (metadata?.WithAudio is not null)
-                payload["with_audio"] = metadata.WithAudio;
         }
         else if (isViduText)
         {
@@ -225,8 +229,6 @@ public partial class ZaiProvider
             if (!string.IsNullOrWhiteSpace(metadata?.MovementAmplitude))
                 payload["movement_amplitude"] = metadata!.MovementAmplitude;
 
-            if (metadata?.WithAudio is not null)
-                payload["with_audio"] = metadata.WithAudio;
         }
         else
         {

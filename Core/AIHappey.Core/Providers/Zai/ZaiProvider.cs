@@ -19,11 +19,14 @@ public partial class ZaiProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly HttpClient _downloadClient;
+
     public ZaiProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.z.ai/api/paas/");
+        _downloadClient = httpClientFactory.CreateClient();
     }
 
     private void ApplyAuthHeader()
