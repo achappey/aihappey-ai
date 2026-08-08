@@ -18,14 +18,16 @@ public partial class MiniMaxProvider
 
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
-        if (request.Model.Contains("music"))
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!string.IsNullOrWhiteSpace(request.Model)
+            && NormalizeModelName(request.Model).StartsWith("music-", StringComparison.OrdinalIgnoreCase))
         {
             return await MusicRequest(request, cancellationToken);
         }
 
         ApplyAuthHeader();
 
-        ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Text))

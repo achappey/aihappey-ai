@@ -29,7 +29,7 @@ public partial class MiniMaxProvider
 
         var request = options.ToSpeechRequest();
         var metadata = request.GetProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
-        var isMusic = request.Model.Contains("music", StringComparison.OrdinalIgnoreCase);
+        var isMusic = NormalizeModelName(request.Model).StartsWith("music-", StringComparison.OrdinalIgnoreCase);
         var payload = isMusic
             ? BuildMusicPayload(request, metadata, stream: true)
             : BuildSpeechPayload(request, metadata, stream: true);

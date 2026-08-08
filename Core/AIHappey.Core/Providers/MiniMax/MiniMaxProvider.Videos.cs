@@ -13,6 +13,7 @@ namespace AIHappey.Core.Providers.MiniMax;
 public partial class MiniMaxProvider
 {
     private const string MiniMaxVideoOperationTokenPrefix = "mmv1_";
+    private const string MiniMaxVideoV2OperationTokenPrefix = "mmv2_";
 
     private static readonly JsonSerializerOptions VideoJson = new(JsonSerializerDefaults.Web)
     {
@@ -26,6 +27,9 @@ public partial class MiniMaxProvider
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
+
+        if (IsMiniMaxH3Model(request.Model))
+            return await StartH3VideoOperation(request, cancellationToken);
 
         var now = DateTime.UtcNow;
         List<object> warnings = [];
@@ -90,6 +94,10 @@ public partial class MiniMaxProvider
         var operationData = DecodeMiniMaxVideoOperation(operation);
         var taskId = operationData.TaskId;
 
+        if (string.Equals(operationData.Version, "v2", StringComparison.OrdinalIgnoreCase)
+            || IsMiniMaxH3Model(operationData.Model))
+            return await GetH3VideoOperationStatus(operationData, cancellationToken);
+
         ApplyAuthHeader();
         using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/query/video_generation?task_id={Uri.EscapeDataString(taskId)}");
         using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
@@ -151,12 +159,26 @@ public partial class MiniMaxProvider
         return MiniMaxVideoOperationTokenPrefix + base64Url;
     }
 
+    private static string EncodeMiniMaxVideoV2Operation(string taskId, string model)
+    {
+        var json = JsonSerializer.Serialize(new MiniMaxVideoOperationData(taskId, model, "v2"), VideoJson);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+        return MiniMaxVideoV2OperationTokenPrefix + base64Url;
+    }
+
     private static MiniMaxVideoOperationData DecodeMiniMaxVideoOperation(string operation)
     {
-        if (!operation.StartsWith(MiniMaxVideoOperationTokenPrefix, StringComparison.Ordinal))
+        var isV1 = operation.StartsWith(MiniMaxVideoOperationTokenPrefix, StringComparison.Ordinal);
+        var isV2 = operation.StartsWith(MiniMaxVideoV2OperationTokenPrefix, StringComparison.Ordinal);
+        if (!isV1 && !isV2)
             return new MiniMaxVideoOperationData(Uri.UnescapeDataString(operation), null);
 
-        var base64Url = operation[MiniMaxVideoOperationTokenPrefix.Length..]
+        var prefixLength = isV2 ? MiniMaxVideoV2OperationTokenPrefix.Length : MiniMaxVideoOperationTokenPrefix.Length;
+        var base64Url = operation[prefixLength..]
             .Replace('-', '+')
             .Replace('_', '/');
         var padding = base64Url.Length % 4;
@@ -170,7 +192,7 @@ public partial class MiniMaxProvider
             if (data is null || string.IsNullOrWhiteSpace(data.TaskId) || string.IsNullOrWhiteSpace(data.Model))
                 throw new ArgumentException("The MiniMax video operation token is invalid.", nameof(operation));
 
-            return data;
+            return isV2 ? data with { Version = "v2" } : data;
         }
         catch (FormatException ex)
         {
@@ -182,7 +204,11 @@ public partial class MiniMaxProvider
         }
     }
 
-    private sealed record MiniMaxVideoOperationData(string TaskId, string? Model);
+    private sealed record MiniMaxVideoOperationData(string TaskId, string? Model, string? Version = null);
+
+    private static bool IsMiniMaxH3Model(string? model)
+        => !string.IsNullOrWhiteSpace(model)
+            && string.Equals(NormalizeModelName(model), "MiniMax-H3", StringComparison.OrdinalIgnoreCase);
 
     private static Dictionary<string, object?> BuildMiniMaxVideoPayload(
         VideoRequest request,

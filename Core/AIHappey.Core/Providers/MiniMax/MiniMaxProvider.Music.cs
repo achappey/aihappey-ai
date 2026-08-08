@@ -11,6 +11,15 @@ namespace AIHappey.Core.Providers.MiniMax;
 
 public partial class MiniMaxProvider
 {
+    private static readonly HashSet<string> SupportedMiniMaxMusicModels = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "music-3.0",
+        "music-2.6",
+        "music-cover",
+        "music-3.0-free",
+        "music-2.6-free",
+        "music-cover-free"
+    };
 
     public async Task<SpeechResponse> MusicRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
@@ -114,34 +123,51 @@ public partial class MiniMaxProvider
         MiniMaxSpeechProviderMetadata? metadata,
         bool stream)
     {
-        var normalizedModel = request.Model.Trim().ToLowerInvariant();
+        var normalizedModel = NormalizeModelName(request.Model).ToLowerInvariant();
+        if (!SupportedMiniMaxMusicModels.Contains(normalizedModel))
+            throw new ArgumentException($"Unsupported MiniMax music model '{request.Model}'.", nameof(request));
+
         var isCover = normalizedModel.StartsWith("music-cover", StringComparison.Ordinal);
         var isInstrumental = metadata?.IsInstrumental ?? false;
         var lyrics = metadata?.Lyrics?.Trim();
         var prompt = request.Text?.Trim();
         var audioBase64 = metadata?.AudioBase64?.Trim();
+        var audioUrl = metadata?.AudioUrl?.Trim();
         var coverFeatureId = metadata?.CoverFeatureId?.Trim();
 
         if (isCover)
         {
-            if (!string.IsNullOrWhiteSpace(audioBase64)
-                && Uri.TryCreate(audioBase64, UriKind.Absolute, out var uri)
-                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
-            {
-                throw new NotSupportedException("MiniMax music cover audio must be base64 encoded; remote audio URLs are not supported.");
-            }
+            if (!string.IsNullOrWhiteSpace(audioUrl)
+                && (!Uri.TryCreate(audioUrl, UriKind.Absolute, out var uri)
+                    || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)))
+                throw new ArgumentException("MiniMax music cover audio_url must be an absolute HTTP or HTTPS URL.", nameof(request));
 
-            if (string.IsNullOrWhiteSpace(audioBase64) == string.IsNullOrWhiteSpace(coverFeatureId))
-                throw new ArgumentException("MiniMax music cover requires exactly one of providerOptions.minimax.audio_base64 or providerOptions.minimax.cover_feature_id.", nameof(request));
+            var sourceCount = (string.IsNullOrWhiteSpace(audioUrl) ? 0 : 1)
+                + (string.IsNullOrWhiteSpace(audioBase64) ? 0 : 1)
+                + (string.IsNullOrWhiteSpace(coverFeatureId) ? 0 : 1);
+            if (sourceCount != 1)
+                throw new ArgumentException("MiniMax music cover requires exactly one of providerOptions.minimax.audio_url, audio_base64, or cover_feature_id.", nameof(request));
 
             if (string.IsNullOrWhiteSpace(prompt) || prompt.Length is < 10 or > 300)
                 throw new ArgumentException("MiniMax music cover prompt must contain 10 to 300 characters.", nameof(request));
 
             if (!string.IsNullOrWhiteSpace(coverFeatureId) && (string.IsNullOrWhiteSpace(lyrics) || lyrics.Length is < 10 or > 1000))
                 throw new ArgumentException("MiniMax music cover with cover_feature_id requires 10 to 1000 lyric characters.", nameof(request));
+
+            if (!string.IsNullOrWhiteSpace(lyrics) && lyrics.Length is < 10 or > 1000)
+                throw new ArgumentException("MiniMax music cover lyrics must contain 10 to 1000 characters.", nameof(request));
+
+            if (metadata?.LyricsOptimizer is not null || metadata?.IsInstrumental is not null)
+                throw new ArgumentException("lyrics_optimizer and is_instrumental are not supported by MiniMax music cover models.", nameof(request));
         }
         else
         {
+            if (!string.IsNullOrWhiteSpace(audioUrl) || !string.IsNullOrWhiteSpace(audioBase64) || !string.IsNullOrWhiteSpace(coverFeatureId))
+                throw new ArgumentException("Reference audio and cover_feature_id are only supported by MiniMax music cover models.", nameof(request));
+
+            if (!string.IsNullOrWhiteSpace(prompt) && prompt.Length > 2000)
+                throw new ArgumentException("MiniMax music prompt must not exceed 2000 characters.", nameof(request));
+
             if (isInstrumental && (string.IsNullOrWhiteSpace(prompt) || prompt.Length > 2000))
                 throw new ArgumentException("Instrumental MiniMax music requires a prompt of 1 to 2000 characters.", nameof(request));
 
@@ -153,24 +179,34 @@ public partial class MiniMaxProvider
         }
 
         var format = (request.OutputFormat ?? metadata?.AudioSetting?.Format ?? "mp3").Trim().ToLowerInvariant();
-        format = format is "mp3" or "wav" or "pcm" ? format : "mp3";
+        if (format is not ("mp3" or "wav" or "pcm"))
+            throw new ArgumentException("MiniMax music format must be mp3, wav, or pcm.", nameof(request));
+
+        var sampleRate = metadata?.AudioSetting?.SampleRate;
+        if (sampleRate is not null && sampleRate is not (16000 or 24000 or 32000 or 44100))
+            throw new ArgumentException("MiniMax music sample_rate must be 16000, 24000, 32000, or 44100.", nameof(request));
+
+        var bitrate = metadata?.AudioSetting?.Bitrate;
+        if (bitrate is not null && bitrate is not (32000 or 64000 or 128000 or 256000))
+            throw new ArgumentException("MiniMax music bitrate must be 32000, 64000, 128000, or 256000.", nameof(request));
 
         return new Dictionary<string, object?>
         {
-            ["model"] = request.Model,
+            ["model"] = normalizedModel,
             ["prompt"] = prompt,
             ["lyrics"] = lyrics,
             ["stream"] = stream,
             ["output_format"] = "hex",
             ["lyrics_optimizer"] = metadata?.LyricsOptimizer,
             ["is_instrumental"] = isInstrumental,
+            ["audio_url"] = audioUrl,
             ["audio_base64"] = audioBase64,
             ["cover_feature_id"] = coverFeatureId,
             ["audio_setting"] = new Dictionary<string, object?>
             {
                 ["format"] = format,
-                ["sample_rate"] = metadata?.AudioSetting?.SampleRate,
-                ["bitrate"] = metadata?.AudioSetting?.Bitrate
+                ["sample_rate"] = sampleRate,
+                ["bitrate"] = bitrate
             }
         };
     }

@@ -38,6 +38,9 @@ public sealed class MiniMaxSpeechProviderMetadata
     [JsonPropertyName("audio_base64")]
     public string? AudioBase64 { get; set; }
 
+    [JsonPropertyName("audio_url")]
+    public string? AudioUrl { get; set; }
+
     [JsonPropertyName("cover_feature_id")]
     public string? CoverFeatureId { get; set; }
 }
