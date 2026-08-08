@@ -133,7 +133,9 @@ public partial class LumaAIProvider
             };
         }
 
-        using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
+        // Luma returns a pre-signed object-storage URL. Sending the provider's
+        // bearer token alongside its query-string signature invalidates it.
+        using var videoResp = await _downloadClient.GetAsync(videoUrl, cancellationToken);
         var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!videoResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Luma video download failed ({(int)videoResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");

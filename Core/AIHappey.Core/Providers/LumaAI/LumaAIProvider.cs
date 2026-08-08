@@ -15,11 +15,14 @@ public partial class LumaAIProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly HttpClient _downloadClient;
+
     public LumaAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://agents.lumalabs.ai/");
+        _downloadClient = httpClientFactory.CreateClient();
     }
 
     private void ApplyAuthHeader()
