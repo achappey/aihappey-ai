@@ -154,7 +154,9 @@ public partial class ApiAirforceProvider
         => format switch
         {
             "mp3" => "audio/mpeg",
+            "mp3_44100_128" or "mp3_44100_192" => "audio/mpeg",
             "wav" => "audio/wav",
+            "pcm_22050" or "pcm_24000" or "pcm_44100" or "ulaw_8000" => "audio/wav",
             "ogg" => "audio/ogg",
             "flac" => "audio/flac",
             "aac" => "audio/aac",

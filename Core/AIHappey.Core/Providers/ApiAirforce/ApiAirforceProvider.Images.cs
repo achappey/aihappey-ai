@@ -24,7 +24,7 @@ public partial class ApiAirforceProvider
 
         var blocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "model", "prompt", "n", "size", "response_format", "aspectRatio", "aspect_ratio", "image_urls", "images"
+            "model", "prompt", "n", "size", "response_format", "aspect_ratio", "input_images", "seed"
         };
 
         var payload = new Dictionary<string, object?>
@@ -40,22 +40,14 @@ public partial class ApiAirforceProvider
         if (!string.IsNullOrWhiteSpace(request.Size))
             payload["size"] = request.Size;
 
-        if (model.StartsWith("dirtberry", StringComparison.OrdinalIgnoreCase))
-        {
-            if (!string.IsNullOrWhiteSpace(request.AspectRatio))
-                payload["aspect_ratio"] = request.AspectRatio;
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
+            payload["aspect_ratio"] = request.AspectRatio;
 
-            if (request.Files?.Any() == true)
-                payload["images"] = request.Files.Select(ToDataUrl).ToArray();
-        }
-        else
-        {
-            if (!string.IsNullOrWhiteSpace(request.AspectRatio))
-                payload["aspectRatio"] = request.AspectRatio;
+        if (request.Seed is not null)
+            payload["seed"] = request.Seed.Value;
 
-            if (request.Files?.Any() == true)
-                payload["image_urls"] = request.Files.Select(ToDataUrl).ToArray();
-        }
+        if (request.Files?.Any() == true)
+            payload["input_images"] = request.Files.Select(file => new Dictionary<string, string> { ["b64_json"] = StripDataUrl(ToDataUrl(file)) }).ToArray();
 
         MergeRawProviderOptions(payload, request.ProviderOptions, GetIdentifier(), blocked);
 
@@ -87,9 +79,6 @@ public partial class ApiAirforceProvider
     {
         var warnings = new List<object>();
 
-        if (request.Seed is not null)
-            AddUnsupportedWarning(warnings, "seed", "ApiAirforce docs do not publish a generic seed parameter for these media models.");
-
         if (request.Mask is not null)
             AddUnsupportedWarning(warnings, "mask", "ApiAirforce media generation does not document mask uploads.");
 
@@ -113,6 +102,12 @@ public partial class ApiAirforceProvider
         }
 
         return warnings;
+    }
+
+    private static string StripDataUrl(string value)
+    {
+        var comma = value.IndexOf(',');
+        return value.StartsWith("data:", StringComparison.OrdinalIgnoreCase) && comma >= 0 ? value[(comma + 1)..] : value;
     }
 
     private async Task<List<string>> ExtractImagesAsync(JsonElement root, CancellationToken cancellationToken)

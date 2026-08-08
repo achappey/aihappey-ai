@@ -1,3 +1,5 @@
+using System.Net.Mime;
+using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
@@ -10,129 +12,95 @@ public partial class ApiAirforceProvider
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Voice))
+            throw new ArgumentException("Voice is required.", nameof(request));
 
-        var model = NormalizeModelId(request.Model);
-        if (!model.StartsWith("suno-", StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException($"ApiAirforce speech is currently implemented only for Suno models. Received '{request.Model}'.");
-
-        var now = DateTime.UtcNow;
-        var warnings = BuildSpeechWarnings(request);
-        var providerOptions = TryGetProviderOptions(request.ProviderOptions, GetIdentifier());
-        var responseFormat = ResolveResponseFormat(providerOptions, "url")!;
+        var format = ResolveApiAirforceSpeechFormat(request.OutputFormat);
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = NormalizeModelId(request.Model),
+            ["input"] = request.Text,
+            ["voice"] = request.Voice,
+            ["response_format"] = format,
+            ["speed"] = request.Speed,
+            ["language_code"] = request.Language
+        };
 
         var blocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "model", "prompt", "response_format"
+            "model", "input", "voice", "response_format", "speed", "language_code"
         };
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = model,
-            ["prompt"] = request.Text,
-            ["response_format"] = responseFormat
-        };
-
         MergeRawProviderOptions(payload, request.ProviderOptions, GetIdentifier(), blocked);
 
-        payload["model"] = model;
-        payload["prompt"] = request.Text;
-        payload["response_format"] = responseFormat;
-
-        var root = await SendMediaGenerationAsync(payload, cancellationToken);
-        var audio = await ExtractAudioAsync(root, ResolveAudioFormat(request.OutputFormat), cancellationToken);
+        var result = await SendApiAirforceSpeechAsync(payload, format, cancellationToken);
+        var warnings = new List<object>();
+        if (!string.IsNullOrWhiteSpace(request.Instructions))
+            AddUnsupportedWarning(warnings, "instructions", "Use providerOptions.apiairforce.voice_settings for provider-specific voice control.");
 
         return new SpeechResponse
         {
-            Audio = audio,
-            Warnings = warnings,
-            ProviderMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(),
-            Request = new()
+            Audio = new SpeechAudioResponse
             {
-                Body = payload
+                Base64 = Convert.ToBase64String(result.Audio),
+                MimeType = result.MimeType,
+                Format = format
             },
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            Request = new SpeechRequestItem { Body = payload },
             Response = new ResponseData
             {
-                Timestamp = now,
+                Timestamp = DateTime.UtcNow,
                 ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = root.Clone()
+                Headers = result.Headers,
+                Body = payload
             }
         };
     }
 
-    private static List<object> BuildSpeechWarnings(SpeechRequest request)
+    private async Task<ApiAirforceSpeechResult> SendApiAirforceSpeechAsync(
+        Dictionary<string, object?> payload,
+        string responseFormat,
+        CancellationToken cancellationToken)
     {
-        var warnings = new List<object>();
-
-        if (!string.IsNullOrWhiteSpace(request.Voice))
-            AddUnsupportedWarning(warnings, "voice", "Suno music generation does not use the standard speech voice parameter.");
-
-        if (request.Speed is not null)
-            AddUnsupportedWarning(warnings, "speed");
-
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            AddUnsupportedWarning(warnings, "language");
-
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
-            AddUnsupportedWarning(warnings, "instructions", "Use providerOptions.apiairforce.style or custom Suno parameters instead.");
-
-        return warnings;
-    }
-
-    private async Task<SpeechAudioResponse> ExtractAudioAsync(JsonElement root, string fallbackFormat, CancellationToken cancellationToken)
-    {
-        if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
-            throw new InvalidOperationException("ApiAirforce speech generation returned no data array.");
-
-        foreach (var item in dataEl.EnumerateArray())
+        ApplyAuthHeader();
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
-            var base64 = TryGetString(item, "b64_json")
-                ?? TryGetString(item, "audio_base64")
-                ?? TryGetString(item, "base64")
-                ?? TryGetString(item, "data");
+            Content = new StringContent(
+                JsonSerializer.Serialize(payload, ApiAirforceMediaJsonOptions),
+                Encoding.UTF8,
+                MediaTypeNames.Application.Json)
+        };
+        using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"ApiAirforce speech failed ({(int)response.StatusCode} {response.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
 
-            var format = ResolveAudioFormat(
-                TryGetString(item, "format")
-                ?? TryGetString(item, "audio_format")
-                ?? fallbackFormat);
-
-            if (!string.IsNullOrWhiteSpace(base64))
-            {
-                return new SpeechAudioResponse
-                {
-                    Base64 = base64,
-                    MimeType = ResolveAudioMimeType(format),
-                    Format = format
-                };
-            }
-
-            var url = TryGetString(item, "url");
-            if (string.IsNullOrWhiteSpace(url))
-                continue;
-
-            var downloaded = await TryFetchAsBase64Async(url, cancellationToken);
-            if (downloaded is not null)
-            {
-                return new SpeechAudioResponse
-                {
-                    Base64 = downloaded.Value.Base64,
-                    MimeType = downloaded.Value.MediaType,
-                    Format = ResolveAudioFormat(format, Path.GetExtension(url).Trim('.'))
-                };
-            }
-
-            var inferredMediaType = GuessMediaTypeFromUrl(url, ResolveAudioMimeType(format));
-            return new SpeechAudioResponse
-            {
-                Base64 = url,
-                MimeType = inferredMediaType,
-                Format = ResolveAudioFormat(format)
-            };
-        }
-
-        throw new InvalidOperationException("ApiAirforce speech generation returned no audio output.");
+        return new ApiAirforceSpeechResult(
+            bytes,
+            response.Content.Headers.ContentType?.MediaType ?? ResolveAudioMimeType(responseFormat),
+            response.GetHeaders());
     }
+
+    private static string ResolveApiAirforceSpeechFormat(string? format)
+    {
+        if (string.IsNullOrWhiteSpace(format))
+            return "mp3";
+
+        return format.Trim().ToLowerInvariant() switch
+        {
+            "mpeg" => "mp3",
+            "wav" or "wave" => "pcm_24000",
+            "pcm" => "pcm_24000",
+            "ulaw" => "ulaw_8000",
+            _ => format.Trim().ToLowerInvariant()
+        };
+    }
+
+    private sealed record ApiAirforceSpeechResult(
+        byte[] Audio,
+        string MimeType,
+        Dictionary<string, string> Headers);
 }

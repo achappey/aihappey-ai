@@ -1,3 +1,5 @@
+using System.Net.Mime;
+using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
@@ -7,140 +9,116 @@ namespace AIHappey.Core.Providers.ApiAirforce;
 
 public partial class ApiAirforceProvider
 {
-    private async Task<VideoResponse> VideoRequestApiAirforce(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var model = NormalizeModelId(request.Model);
-        var now = DateTime.UtcNow;
-        var warnings = BuildVideoWarnings(request, model);
-        var providerOptions = TryGetProviderOptions(request.ProviderOptions, GetIdentifier());
-        var responseFormat = ResolveResponseFormat(providerOptions, "url")!;
+        var inputs = new List<Dictionary<string, string>>();
+        if (request.Image is not null) inputs.Add(ToApiAirforceVideoInput(request.Image));
+        inputs.AddRange((request.InputReferences ?? []).Select(ToApiAirforceVideoInput));
+        inputs.AddRange((request.FrameImages ?? []).Select(frame => ToApiAirforceVideoInput(frame.Image)));
 
-        var blocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "model", "prompt", "response_format", "resolution", "aspectRatio", "duration", "image_urls", "wan_image_url"
-        };
-
+        var mode = inputs.Count == 0 ? "text" : request.InputReferences?.Any() == true ? "reference" : "image";
         var payload = new Dictionary<string, object?>
         {
-            ["model"] = model,
-            ["prompt"] = request.Prompt,
-            ["response_format"] = responseFormat
+            ["model"] = NormalizeModelId(request.Model), ["prompt"] = request.Prompt, ["mode"] = mode,
+            ["duration_seconds"] = request.Duration, ["aspect_ratio"] = request.AspectRatio,
+            ["quality"] = request.Resolution, ["input_images"] = inputs.Count == 0 ? null : inputs,
+            ["sound"] = request.GenerateAudio, ["seed"] = request.Seed
         };
-
-        if (!string.IsNullOrWhiteSpace(request.Resolution))
-            payload["resolution"] = request.Resolution;
-
-        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
-            payload["aspectRatio"] = request.AspectRatio;
-
-        if (request.Duration is > 0 && model.StartsWith("wan-", StringComparison.OrdinalIgnoreCase))
-            payload["duration"] = request.Duration.Value;
-
-        if (request.Image is not null)
+        var blocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            if (model.StartsWith("wan-", StringComparison.OrdinalIgnoreCase))
-                payload["wan_image_url"] = ToDataUrl(request.Image);
-            else
-                payload["image_urls"] = new[] { ToDataUrl(request.Image) };
-        }
-
+            "model", "prompt", "mode", "duration_seconds", "aspect_ratio", "quality", "input_images"
+        };
         MergeRawProviderOptions(payload, request.ProviderOptions, GetIdentifier(), blocked);
 
-        payload["model"] = model;
-        payload["prompt"] = request.Prompt;
-        payload["response_format"] = responseFormat;
-
-        var root = await SendMediaGenerationAsync(payload, cancellationToken);
-        var videos = await ExtractVideosAsync(root, cancellationToken);
-
-        if (videos.Count == 0)
-            throw new InvalidOperationException("ApiAirforce video generation returned no video outputs.");
-
-        return new VideoResponse
+        ApplyAuthHeader();
+        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/video/generations")
         {
-            Videos = videos,
+            Content = new StringContent(JsonSerializer.Serialize(payload, ApiAirforceMediaJsonOptions), Encoding.UTF8, MediaTypeNames.Application.Json)
+        };
+        using var response = await _client.SendAsync(createRequest, cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"ApiAirforce video generation failed ({(int)response.StatusCode} {response.StatusCode}): {raw}");
+
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var taskId = TryGetString(root, "task_id");
+        if (string.IsNullOrWhiteSpace(taskId))
+            throw new InvalidOperationException("ApiAirforce video generation returned no task_id.");
+
+        var warnings = new List<object>();
+        if (request.Fps is not null) AddUnsupportedWarning(warnings, "fps");
+        if (request.N is > 1) AddUnsupportedWarning(warnings, "n");
+        return new VideoOperationStartResult
+        {
+            Operation = taskId,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
-            Response = new ()
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
+            Response = new HeaderResponseData
             {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier())
+                Timestamp = DateTime.UtcNow,
+                ModelId = request.Model.ToModelId(GetIdentifier()),
+                Headers = response.GetHeaders()
             }
         };
     }
 
-    private static List<object> BuildVideoWarnings(VideoRequest request, string model)
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        var warnings = new List<object>();
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        if (request.Seed is not null)
-            AddUnsupportedWarning(warnings, "seed", "ApiAirforce docs do not publish a generic seed parameter for video generation.");
+        ApplyAuthHeader();
+        using var response = await _client.GetAsync($"v1/video/tasks/{Uri.EscapeDataString(operation)}", cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"ApiAirforce video task failed ({(int)response.StatusCode} {response.StatusCode}): {raw}");
 
-        if (request.Fps is not null)
-            AddUnsupportedWarning(warnings, "fps");
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var status = TryGetString(root, "status")?.ToLowerInvariant();
+        var model = TryGetString(root, "model");
+        var responseData = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(model) ? GetIdentifier() : model.ToModelId(GetIdentifier()),
+            Headers = response.GetHeaders()
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(root);
 
-        if (request.N is not null)
-            AddUnsupportedWarning(warnings, "n", "ApiAirforce docs do not publish multi-video generation for these models.");
+        if (status is "failed" or "expired")
+            return new VideoOperationErrorResult { Error = TryGetString(root, "error") ?? status, ProviderMetadata = metadata, Response = responseData };
+        if (status != "completed")
+            return new VideoOperationPendingResult { Warnings = [], ProviderMetadata = metadata, Response = responseData };
 
-        if (request.Duration is not null && !model.StartsWith("wan-", StringComparison.OrdinalIgnoreCase))
-            AddUnsupportedWarning(warnings, "duration", "Only Wan models document duration.");
+        var resultUrl = TryGetString(root, "result_url");
+        if (string.IsNullOrWhiteSpace(resultUrl))
+            return new VideoOperationErrorResult { Error = $"ApiAirforce video task '{operation}' completed without result_url.", ProviderMetadata = metadata, Response = responseData };
 
-        return warnings;
+        var downloaded = await TryFetchAsBase64Async(resultUrl, cancellationToken);
+        if (downloaded is null)
+            return new VideoOperationErrorResult { Error = $"ApiAirforce video result '{operation}' could not be downloaded.", ProviderMetadata = metadata, Response = responseData };
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData { Type = "base64", Data = downloaded.Value.Base64, MediaType = downloaded.Value.MediaType }],
+            Warnings = [], ProviderMetadata = metadata, Response = responseData
+        };
     }
 
-    private async Task<List<VideoResponseFile>> ExtractVideosAsync(JsonElement root, CancellationToken cancellationToken)
+    private Task<VideoResponse> VideoRequestApiAirforce(VideoRequest request, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException("ApiAirforce video generation is asynchronous. Use StartVideoOperation and GetVideoOperationStatus.");
+
+    private static Dictionary<string, string> ToApiAirforceVideoInput(VideoFile image)
     {
-        var videos = new List<VideoResponseFile>();
-
-        if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
-            return videos;
-
-        foreach (var item in dataEl.EnumerateArray())
-        {
-            var base64 = TryGetString(item, "b64_json")
-                ?? TryGetString(item, "base64")
-                ?? TryGetString(item, "data");
-
-            if (!string.IsNullOrWhiteSpace(base64))
-            {
-                videos.Add(new VideoResponseFile
-                {
-                    Type = "base64",
-                    Data = base64,
-                    MediaType = "video/mp4"
-                });
-                continue;
-            }
-
-            var url = TryGetString(item, "url");
-            if (string.IsNullOrWhiteSpace(url))
-                continue;
-
-            var downloaded = await TryFetchAsBase64Async(url, cancellationToken);
-            if (downloaded is not null)
-            {
-                videos.Add(new VideoResponseFile
-                {
-                    Type = "base64",
-                    Data = downloaded.Value.Base64,
-                    MediaType = downloaded.Value.MediaType
-                });
-                continue;
-            }
-
-            videos.Add(new VideoResponseFile
-            {
-                Type = "base64",
-                Data = url,
-                MediaType = GuessMediaTypeFromUrl(url, "video/mp4")
-            });
-        }
-
-        return videos;
+        if (string.IsNullOrWhiteSpace(image.Data))
+            throw new ArgumentException("Video input image data is required.", nameof(image));
+        if (image.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || image.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return new Dictionary<string, string> { ["url"] = image.Data };
+        return new Dictionary<string, string> { ["b64_json"] = StripDataUrl(ToDataUrl(image)) };
     }
 }
