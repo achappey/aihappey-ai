@@ -33,6 +33,15 @@ public partial class HeyGenProvider
                     ..voiceModels,
                     new Model
                     {
+                        Type = "language",
+                        Id = "video_agent/chat".ToModelId(GetIdentifier()),
+                        OwnedBy = ProviderName,
+                        Name = "Video Agent Chat",
+                        Description = "Create and revise HeyGen videos conversationally with a persistent Video Agent v3 session.",
+                        Tags = ["video-agent", "chat", "multimodal"]
+                    },
+                    new Model
+                    {
                         Type = "video",
                         Id = "video_agent".ToModelId(GetIdentifier()),
                         OwnedBy = ProviderName,
