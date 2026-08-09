@@ -8,6 +8,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.DeepSeek;
 
@@ -55,25 +56,31 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         throw new NotImplementedException();
     }
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(
-        Responses.ResponseRequest options,
-        CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        return (await ExecuteUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
-            .ToResponseResult();
+        ApplyAuthHeader();
+
+        var response = await this.GetResponse(_client,
+                   options,
+                   relativeUrl: "responses",
+                   cancellationToken: cancellationToken);
+
+        return response;
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
-        Responses.ResponseRequest options,
+        ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
+        ApplyAuthHeader();
+
+        await foreach (var update in this.GetResponses(_client,
+           options,
+           relativeUrl: "responses",
+           cancellationToken: cancellationToken))
         {
-            yield return part.ToResponseStreamPart();
+
+            yield return update;
         }
     }
 
@@ -82,7 +89,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         throw new NotImplementedException();
     }
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(
          MessagesRequest request,
@@ -148,7 +155,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
