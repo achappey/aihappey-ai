@@ -65,7 +65,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
                    relativeUrl: "responses",
                    cancellationToken: cancellationToken);
 
-        return response;
+        return this.EnrichResponseWithCatalogGatewayCost(response, options.Model);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
@@ -79,6 +79,8 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
            relativeUrl: "responses",
            cancellationToken: cancellationToken))
         {
+            if (update is Responses.Streaming.ResponseCompleted completed)
+                this.EnrichResponseWithCatalogGatewayCost(completed.Response, options.Model);
 
             yield return update;
         }
@@ -98,32 +100,49 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
     {
         ApplyAuthHeader();
 
-        return await this.GetMessage(_client,
+        var response = await this.GetMessage(_client,
             request,
             relativeUrl: "anthropic/v1/messages",
             headers: headers,
             cancellationToken: cancellationToken);
+
+        return this.EnrichMessagesResponseWithCatalogGatewayCost(response, request.Model);
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
         MessagesRequest request,
         Dictionary<string, string> headers,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetMessages(_client,
+        await foreach (var part in this.GetMessages(_client,
             request,
             relativeUrl: "anthropic/v1/messages",
             headers: headers,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken))
+        {
+            yield return this.EnrichMessageStreamPartWithCatalogGatewayCost(part, request.Model);
+        }
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-    => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        return this.EnrichUnifiedResponseWithCatalogGatewayCost(response, request.Model);
+    }
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+                           request,
+                           cancellationToken: cancellationToken))
+        {
+            yield return this.EnrichUnifiedStreamEventWithCatalogGatewayCost(streamEvent, request.Model);
+        }
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {

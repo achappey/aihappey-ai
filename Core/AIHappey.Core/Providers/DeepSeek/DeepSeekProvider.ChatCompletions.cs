@@ -1,5 +1,6 @@
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.DeepSeek;
 
@@ -9,20 +10,29 @@ public sealed partial class DeepSeekProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
+        var response = await this.GetChatCompletion(_client,
              options,
              relativeUrl: "chat/completions",
              cancellationToken: cancellationToken);
+
+        return this.EnrichChatCompletionWithCatalogGatewayCost(response, options.Model);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options,
-                    relativeUrl: "chat/completions",
-                    cancellationToken: cancellationToken);
+        string? lastFinishReason = null;
+        await foreach (var update in this.GetChatCompletions(_client,
+                           options,
+                           relativeUrl: "chat/completions",
+                           cancellationToken: cancellationToken))
+        {
+            CatalogPricingCostingExtensions.NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
+            yield return this.EnrichChatCompletionUpdateWithCatalogGatewayCost(update, options.Model);
+        }
     }
 }
 
