@@ -25,9 +25,13 @@ public partial class DeAPIProvider : IModelProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public DeAPIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+       private readonly AsyncCacheHelper _memoryCache;
+
+    public DeAPIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.deapi.ai/");
     }

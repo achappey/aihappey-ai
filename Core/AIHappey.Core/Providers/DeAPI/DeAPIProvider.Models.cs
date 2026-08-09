@@ -8,56 +8,69 @@ public partial class DeAPIProvider
 {
     private async Task<IEnumerable<Model>> ListModelsDeapi(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
-        ApplyAuthHeader();
+        var cacheKey = this.GetCacheKey(key);
 
-        using var req = new HttpRequestMessage(HttpMethod.Get, "api/v1/client/models?per_page=200&page=1");
-        using var resp = await _client.SendAsync(req, cancellationToken);
-        var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"DeAPI models failed ({(int)resp.StatusCode}): {raw}");
-
-        using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement;
-
-        var items = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-            ? dataEl.EnumerateArray()
-            : Enumerable.Empty<JsonElement>();
-
-        var models = new List<Model>();
-        foreach (var item in items)
-        {
-            var slug = item.TryGetProperty("slug", out var slugEl) && slugEl.ValueKind == JsonValueKind.String
-                ? slugEl.GetString()
-                : null;
-
-            if (string.IsNullOrWhiteSpace(slug))
-                continue;
-
-            var name = item.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String
-                ? nameEl.GetString() ?? slug
-                : slug;
-
-            var description = item.TryGetProperty("description", out var descEl) && descEl.ValueKind == JsonValueKind.String
-                ? descEl.GetString()
-                : null;
-
-            var type = ResolveModelType(item);
-
-            models.Add(new Model
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                Id = slug.ToModelId(GetIdentifier()),
-                Name = name,
-                Description = description,
-                Type = type,
-                OwnedBy = "deapi.ai"
-            });
-        }
+                ApplyAuthHeader();
 
-        models.AddRange(await this.ListModels(_keyResolver.Resolve(GetIdentifier())));
-        return models;
+                using var req = new HttpRequestMessage(HttpMethod.Get, "api/v1/client/models?per_page=200&page=1");
+                using var resp = await _client.SendAsync(req, cancellationToken);
+                var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
+                if (!resp.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"DeAPI models failed ({(int)resp.StatusCode}): {raw}");
+
+                using var doc = JsonDocument.Parse(raw);
+                var root = doc.RootElement;
+
+                var items = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                    ? dataEl.EnumerateArray()
+                    : Enumerable.Empty<JsonElement>();
+
+                var models = new List<Model>();
+                foreach (var item in items)
+                {
+                    var slug = item.TryGetProperty("slug", out var slugEl) && slugEl.ValueKind == JsonValueKind.String
+                        ? slugEl.GetString()
+                        : null;
+
+                    if (string.IsNullOrWhiteSpace(slug))
+                        continue;
+
+                    var name = item.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String
+                        ? nameEl.GetString() ?? slug
+                        : slug;
+
+                    var description = item.TryGetProperty("description", out var descEl) && descEl.ValueKind == JsonValueKind.String
+                        ? descEl.GetString()
+                        : null;
+
+                    var type = ResolveModelType(item);
+
+                    models.Add(new Model
+                    {
+                        Id = slug.ToModelId(GetIdentifier()),
+                        Name = name,
+                        Description = description,
+                        Type = type,
+                        OwnedBy = "deapi.ai"
+                    });
+                }
+
+                models.AddRange(await this.ListModels(_keyResolver.Resolve(GetIdentifier())));
+                return models;
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
     private static string ResolveModelType(JsonElement item)
