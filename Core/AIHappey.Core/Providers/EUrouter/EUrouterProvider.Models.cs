@@ -173,6 +173,8 @@ public partial class EUrouterProvider
                         OwnedBy = providerSlug,
                         Description = description,
                         ContextWindow = contextLength,
+                        Type = exposedModelId.Contains("voxtral") ?
+                            "language" : exposedModelId.GuessModelType()
                     };
 
                     if (inputPrice.HasValue && outputPrice.HasValue &&
