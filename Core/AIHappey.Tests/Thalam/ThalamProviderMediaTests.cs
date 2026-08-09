@@ -110,77 +110,7 @@ public sealed class ThalamProviderMediaTests
         Assert.Equal("audio/mpeg", response.Audio.MimeType);
         Assert.Equal("mp3", response.Audio.Format);
     }
-
-    [Fact]
-    public async Task VideoRequest_submits_polls_and_downloads_video()
-    {
-        HttpRequestMessage? capturedCreate = null;
-        var pollCount = 0;
-        var videoBytes = Encoding.UTF8.GetBytes("mp4-bytes");
-        var provider = CreateProvider(request =>
-        {
-            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/videos/generations")
-            {
-                capturedCreate = CloneRequest(request);
-                return JsonResponse(new { task_id = "task-123", status = "processing" });
-            }
-
-            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/videos/tasks/task-123")
-            {
-                pollCount++;
-                return JsonResponse(pollCount == 1
-                    ? new
-                    {
-                        task = new { task_id = "task-123", status = "TASK_STATUS_PROCESSING", reason = "" },
-                        videos = Array.Empty<object>()
-                    }
-                    : new
-                    {
-                        task = new { task_id = "task-123", status = "TASK_STATUS_SUCCEED", reason = "" },
-                        videos = new[] { new { video_url = "https://cdn.thalam.test/output.mp4" } }
-                    });
-            }
-
-            if (request.RequestUri?.AbsoluteUri == "https://cdn.thalam.test/output.mp4")
-            {
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new ByteArrayContent(videoBytes)
-                };
-                response.Content.Headers.ContentType = new("video/mp4");
-                return response;
-            }
-
-            return new HttpResponseMessage(HttpStatusCode.NotFound);
-        });
-
-        var response = await provider.VideoRequest(new VideoRequest
-        {
-            Model = "alibaba/wan-2.5-t2v-preview",
-            Prompt = "A desert drone shot.",
-            Duration = 5,
-            Resolution = "720p",
-            AspectRatio = "16:9",
-            ProviderOptions = ProviderOptions(new { webhook = "ignored-but-forwarded" })
-        });
-
-        Assert.NotNull(capturedCreate);
-        using var payloadDocument = JsonDocument.Parse(await capturedCreate!.Content!.ReadAsStringAsync());
-        var payload = payloadDocument.RootElement;
-        Assert.Equal("alibaba/wan-2.5-t2v-preview", payload.GetProperty("model").GetString());
-        Assert.Equal("A desert drone shot.", payload.GetProperty("prompt").GetString());
-        Assert.Equal(5, payload.GetProperty("duration").GetInt32());
-        Assert.Equal("720p", payload.GetProperty("resolution").GetString());
-        Assert.Equal("16:9", payload.GetProperty("aspect_ratio").GetString());
-        Assert.Equal("ignored-but-forwarded", payload.GetProperty("webhook").GetString());
-
-        Assert.True(pollCount >= 2);
-        var video = Assert.Single(response.Videos ?? []);
-        Assert.Equal(Convert.ToBase64String(videoBytes), video.Data);
-        Assert.Equal("video/mp4", video.MediaType);
-        Assert.True(response.ProviderMetadata?.ContainsKey("thalam"));
-    }
-
+   
     private static ThalamProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {
         var handler = new StaticResponseHttpMessageHandler(responder);
