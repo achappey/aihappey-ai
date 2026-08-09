@@ -1,15 +1,14 @@
 using AIHappey.Core.AI;
 using System.Net.Http.Headers;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
-using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.LLMGateway;
 
@@ -42,30 +41,44 @@ public partial class LLMGatewayProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        {
+            var response = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+            return response.ToChatCompletion();
+        }
+
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in StreamUnifiedAsync(
+                               options.ToUnifiedRequest(GetIdentifier()),
+                               cancellationToken).WithCancellation(cancellationToken))
+                yield return streamEvent.ToChatCompletionUpdate();
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var update in this.GetChatCompletions(
+                           _client,
+                           options,
+                           cancellationToken: cancellationToken))
+            yield return update;
     }
 
     public string GetIdentifier() => nameof(LLMGateway).ToLowerInvariant();
 
     
-
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
@@ -118,61 +131,28 @@ public partial class LLMGatewayProvider : IModelProvider
             cancellationToken: cancellationToken);
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
-
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
-
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(request);
+
+        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    
-
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
