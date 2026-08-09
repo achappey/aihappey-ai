@@ -141,8 +141,5 @@ public sealed partial class DeepgramProvider
         return await Task.FromResult(res);
     }
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    
 }
