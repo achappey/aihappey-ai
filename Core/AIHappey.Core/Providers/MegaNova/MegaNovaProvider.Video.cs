@@ -10,14 +10,14 @@ namespace AIHappey.Core.Providers.MegaNova;
 
 public partial class MegaNovaProvider
 {
+    private const string MegaNovaVideoOperationTokenPrefix = "mnv1_";
+
     private static readonly JsonSerializerOptions MegaNovaVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record MegaNovaVideoPollResult(string Status, string Raw, JsonElement Root);
-
-    private async Task<VideoResponse> VideoRequestMegaNova(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -27,8 +27,7 @@ public partial class MegaNovaProvider
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var now = DateTime.UtcNow;
-        var warnings = new List<object>();
+        List<object> warnings = [];
         var metadata = GetMegaNovaProviderMetadata(request, GetIdentifier());
         var payload = BuildMegaNovaVideoPayload(request, metadata, warnings);
         var createJson = JsonSerializer.Serialize(payload, MegaNovaVideoJsonOptions);
@@ -51,22 +50,74 @@ public partial class MegaNovaProvider
         var generationId = TryGetMegaNovaVideoId(createRoot)
             ?? throw new InvalidOperationException("MegaNova video generation returned no id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollMegaNovaVideoAsync(generationId, ct),
-            isTerminal: result => IsMegaNovaVideoTerminal(result.Status),
-            interval: TimeSpan.FromSeconds(10),
-            timeout: TimeSpan.FromMinutes(15),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (IsMegaNovaVideoFailed(completed.Status))
+        return new VideoOperationStartResult
         {
-            var error = TryGetMegaNovaString(completed.Root, "error", "message", "failure_reason", "failureReason") ?? completed.Raw;
-            throw new InvalidOperationException($"MegaNova video generation failed with status '{completed.Status}': {error}");
+            Operation = EncodeMegaNovaVideoOperation(generationId, request.Model.Trim()),
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+            {
+                generationId,
+                status = TryGetMegaNovaString(createRoot, "status", "state") ?? "submitted",
+                create = createRoot
+            }),
+            Response = new HeaderResponseData
+            {
+                Timestamp = DateTime.UtcNow,
+                Headers = createResponse.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var operationData = DecodeMegaNovaVideoOperation(operation);
+        ApplyAuthHeader();
+
+        using var response = await _client.GetAsync(
+            $"v1/videos/generations/{Uri.EscapeDataString(operationData.GenerationId)}",
+            cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"MegaNova video status failed ({(int)response.StatusCode}): {raw}");
+
+        using var doc = JsonDocument.Parse(raw);
+        var root = doc.RootElement.Clone();
+        var status = TryGetMegaNovaString(root, "status", "state") ?? "unknown";
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            generationId = operationData.GenerationId,
+            status,
+            poll = root
+        });
+        var responseData = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            Headers = response.GetHeaders(),
+            ModelId = string.IsNullOrWhiteSpace(operationData.Model)
+                ? GetIdentifier()
+                : operationData.Model.ToModelId(GetIdentifier())
+        };
+
+        if (IsMegaNovaVideoFailed(status))
+        {
+            var error = TryGetMegaNovaString(root, "error", "message", "failure_reason", "failureReason") ?? raw;
+            return new VideoOperationErrorResult
+            {
+                Error = $"MegaNova video generation failed with status '{status}': {error}",
+                ProviderMetadata = metadata,
+                Response = responseData
+            };
         }
 
+        if (!IsMegaNovaVideoCompleted(status))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = responseData };
+
         using var streamResponse = await _client.GetAsync(
-            $"v1/videos/generations/{Uri.EscapeDataString(generationId)}/stream",
+            $"v1/videos/generations/{Uri.EscapeDataString(operationData.GenerationId)}/stream",
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
         var videoBytes = await streamResponse.Content.ReadAsByteArrayAsync(cancellationToken);
@@ -78,46 +129,67 @@ public partial class MegaNovaProvider
                 : $"MegaNova video download failed ({(int)streamResponse.StatusCode}): {error}");
         }
 
-        var contentType = streamResponse.Content.Headers.ContentType?.MediaType ?? "video/mp4";
-        var providerMeta = new
-        {
-            create = createRoot,
-            poll = completed.Root
-        };
-
-        return new VideoResponse
+        responseData.Headers = streamResponse.GetHeaders();
+        return new VideoOperationCompletedResult
         {
             Videos =
             [
-                new VideoResponseFile
+                new VideoOperationVideoData
                 {
-                    MediaType = contentType,
+                    Type = "base64",
+                    MediaType = streamResponse.Content.Headers.ContentType?.MediaType ?? "video/mp4",
                     Data = Convert.ToBase64String(videoBytes)
                 }
             ],
-            Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerMeta),
-            Response = new HeaderResponseData
-            {
-                Timestamp = now,
-                Headers = streamResponse.GetHeaders(),
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = responseData
         };
     }
 
-    private async Task<MegaNovaVideoPollResult> PollMegaNovaVideoAsync(string generationId, CancellationToken cancellationToken)
+    private static string EncodeMegaNovaVideoOperation(string generationId, string model)
     {
-        using var response = await _client.GetAsync($"v1/videos/generations/{Uri.EscapeDataString(generationId)}", cancellationToken);
-        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"MegaNova video status failed ({(int)response.StatusCode}): {raw}");
+        var json = JsonSerializer.Serialize(new MegaNovaVideoOperationData(generationId, model), MegaNovaVideoJsonOptions);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
 
-        using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement.Clone();
-        var status = TryGetMegaNovaString(root, "status", "state") ?? "unknown";
-        return new MegaNovaVideoPollResult(status, raw, root);
+        return MegaNovaVideoOperationTokenPrefix + base64Url;
     }
+
+    private static MegaNovaVideoOperationData DecodeMegaNovaVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(MegaNovaVideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new MegaNovaVideoOperationData(Uri.UnescapeDataString(operation), null);
+
+        var base64Url = operation[MegaNovaVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<MegaNovaVideoOperationData>(json, MegaNovaVideoJsonOptions);
+            if (data is null || string.IsNullOrWhiteSpace(data.GenerationId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The MegaNova video operation token is invalid.", nameof(operation));
+
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The MegaNova video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The MegaNova video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
+    private sealed record MegaNovaVideoOperationData(string GenerationId, string? Model);
 
     private static Dictionary<string, object?> BuildMegaNovaVideoPayload(VideoRequest request, JsonElement metadata, List<object> warnings)
     {
@@ -171,7 +243,7 @@ public partial class MegaNovaProvider
     private static string? TryGetMegaNovaVideoId(JsonElement root)
         => TryGetMegaNovaString(root, "id", "generation_id", "generationId", "task_id", "taskId");
 
-    private static bool IsMegaNovaVideoTerminal(string? status)
+    private static bool IsMegaNovaVideoCompleted(string? status)
     {
         if (string.IsNullOrWhiteSpace(status))
             return false;
@@ -179,11 +251,7 @@ public partial class MegaNovaProvider
         return status.Equals("completed", StringComparison.OrdinalIgnoreCase)
             || status.Equals("complete", StringComparison.OrdinalIgnoreCase)
             || status.Equals("succeeded", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("success", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("failed", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("error", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("canceled", StringComparison.OrdinalIgnoreCase);
+            || status.Equals("success", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsMegaNovaVideoFailed(string? status)

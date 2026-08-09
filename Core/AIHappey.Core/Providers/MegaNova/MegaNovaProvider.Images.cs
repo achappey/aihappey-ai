@@ -100,7 +100,7 @@ public partial class MegaNovaProvider
             payload["mask"] = imageRequest.Mask.Data;
 
         var json = JsonSerializer.Serialize(payload, ImageJsonOptions);
-        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/images/generation")
+        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/images/generations")
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
