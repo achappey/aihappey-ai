@@ -125,10 +125,7 @@ public partial class TextSynthProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => TextSynthImageRequest(request, cancellationToken);
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
+    
 
     private string ExtractProviderLocalModelId(string modelId)
     {
