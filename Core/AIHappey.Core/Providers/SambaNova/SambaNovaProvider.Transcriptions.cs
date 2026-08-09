@@ -5,11 +5,26 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.SambaNova;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
 public partial class SambaNovaProvider
 {
+
+    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionRequestAsync(options, cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleTranscriptionStreamingAsync(options, cancellationToken: cancellationToken);
+    }
 
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
