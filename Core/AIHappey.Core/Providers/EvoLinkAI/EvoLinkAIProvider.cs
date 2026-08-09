@@ -96,10 +96,7 @@ public partial class EvoLinkAIProvider : IModelProvider
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-        => throw new NotSupportedException();
-
-
-    
+        => throw new NotSupportedException();    
 
     public async Task<MessagesResponse> MessagesAsync(
       MessagesRequest request,
