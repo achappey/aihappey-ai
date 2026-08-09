@@ -11,17 +11,18 @@ namespace AIHappey.Core.Providers.GMICloud;
 
 public partial class GMICloudProvider
 {
+    private const string GMICloudVideoOperationTokenPrefix = "gmiv1_";
+
     private static readonly JsonSerializerOptions GMICloudVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record GMICloudVideoFetchResult(string Status, string Raw, JsonElement Root);
+    private sealed record GMICloudVideoOperationData(string RequestId, string Model);
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -70,59 +71,144 @@ public partial class GMICloudProvider
         var requestId = TryGetString(createRoot, "request_id")
             ?? throw new InvalidOperationException("GMICloud video create response missing request_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => FetchGMICloudVideoRequestAsync(requestId, ct),
-            isTerminal: r => IsTerminalGMICloudVideoStatus(r.Status),
-            interval: TimeSpan.FromSeconds(3),
-            timeout: TimeSpan.FromMinutes(15),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
+        var status = TryGetString(createRoot, "status") ?? "unknown";
+        return new VideoOperationStartResult
+        {
+            Operation = EncodeGMICloudVideoOperation(requestId, request.Model),
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+            {
+                requestId,
+                status,
+                request = createRoot
+            }),
+            Response = new()
+            {
+                Timestamp = now,
+                Headers = createResp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
 
-        if (IsFailedGMICloudVideoStatus(completed.Status))
-            throw new InvalidOperationException($"GMICloud video generation failed with status '{completed.Status}' (request_id={requestId}): {completed.Raw}");
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        var videoUrl = TryGetGMICloudVideoUrl(completed.Root);
+        var operationData = DecodeGMICloudVideoOperation(operation);
+        ApplyAuthHeader();
+
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get,
+            $"https://console.gmicloud.ai/api/v1/ie/requestqueue/apikey/requests/{Uri.EscapeDataString(operationData.RequestId)}");
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"GMICloud video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        var status = TryGetString(root, "status") ?? "unknown";
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            requestId = operationData.RequestId,
+            status,
+            request = root
+        });
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            Headers = pollResp.GetHeaders(),
+            // The submitted model is authoritative. GMICloud polling may omit
+            // the model or report a routed model rather than the caller's ID.
+            ModelId = operationData.Model.ToModelId(GetIdentifier())
+        };
+
+        if (IsFailedGMICloudVideoStatus(status))
+            return new VideoOperationErrorResult
+            {
+                Error = $"GMICloud video generation failed with status '{status}' (request_id={operationData.RequestId}): {pollRaw}",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+
+        if (!IsSuccessfulGMICloudVideoStatus(status))
+            return new VideoOperationPendingResult
+            {
+                Warnings = [],
+                ProviderMetadata = metadata,
+                Response = response
+            };
+
+        var videoUrl = TryGetGMICloudVideoUrl(root);
         if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException($"GMICloud video generation completed but returned no video_url (request_id={requestId}).");
+            return new VideoOperationErrorResult
+            {
+                Error = $"GMICloud video generation completed but returned no video_url (request_id={operationData.RequestId}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
 
         using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
         var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!videoResp.IsSuccessStatusCode)
-        {
-            var error = Encoding.UTF8.GetString(videoBytes);
-            throw new InvalidOperationException($"GMICloud video download failed ({(int)videoResp.StatusCode}): {error}");
-        }
+            throw new InvalidOperationException($"GMICloud video download failed ({(int)videoResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
 
-        var mediaType = videoResp.Content.Headers.ContentType?.MediaType
-            ?? GuessGMICloudVideoMediaType(videoUrl)
-            ?? "video/mp4";
-
-        return new VideoResponse
+        return new VideoOperationCompletedResult
         {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
+            Videos = [new VideoOperationVideoData
             {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
-                {
-                    ["create"] = createRoot,
-                    ["result"] = completed.Root.Clone()
-                }, JsonSerializerOptions.Web)
-            },
-            Response = new()
-            {
-                Timestamp = now,
-                Headers = videoResp.GetHeaders(),
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
+                Type = "base64",
+                MediaType = videoResp.Content.Headers.ContentType?.MediaType
+                    ?? GuessGMICloudVideoMediaType(videoUrl)
+                    ?? "video/mp4",
+                Data = Convert.ToBase64String(videoBytes)
+            }],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
+    }
+
+    private static string EncodeGMICloudVideoOperation(string requestId, string model)
+    {
+        var json = JsonSerializer.Serialize(new GMICloudVideoOperationData(requestId, model), GMICloudVideoJsonOptions);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return GMICloudVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static GMICloudVideoOperationData DecodeGMICloudVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(GMICloudVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The GMICloud video operation token is invalid.", nameof(operation));
+
+        var base64Url = operation[GMICloudVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<GMICloudVideoOperationData>(json, GMICloudVideoJsonOptions);
+            if (data is null || string.IsNullOrWhiteSpace(data.RequestId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The GMICloud video operation token is invalid.", nameof(operation));
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The GMICloud video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The GMICloud video operation token is invalid.", nameof(operation), ex);
+        }
     }
 
     private static Dictionary<string, object?> BuildGMICloudVideoPayload(VideoRequest request)
@@ -153,38 +239,20 @@ public partial class GMICloudProvider
         return payload;
     }
 
-    private async Task<GMICloudVideoFetchResult> FetchGMICloudVideoRequestAsync(string requestId, CancellationToken cancellationToken)
-    {
-        using var fetchReq = new HttpRequestMessage(HttpMethod.Get, $"https://console.gmicloud.ai/api/v1/ie/requestqueue/apikey/requests/{Uri.EscapeDataString(requestId)}");
-        using var fetchResp = await _client.SendAsync(fetchReq, cancellationToken);
-        var fetchRaw = await fetchResp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!fetchResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"GMICloud video poll failed ({(int)fetchResp.StatusCode}): {fetchRaw}");
-
-        using var fetchDoc = JsonDocument.Parse(fetchRaw);
-        var root = fetchDoc.RootElement.Clone();
-        var status = TryGetString(root, "status") ?? "unknown";
-
-        return new GMICloudVideoFetchResult(status, fetchRaw, root);
-    }
-
-    private static bool IsTerminalGMICloudVideoStatus(string? status)
+    private static bool IsSuccessfulGMICloudVideoStatus(string? status)
         => status is not null
             && (status.Equals("success", StringComparison.OrdinalIgnoreCase)
                 || status.Equals("finished", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("completed", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("failed", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("error", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("canceled", StringComparison.OrdinalIgnoreCase));
+                || status.Equals("completed", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsFailedGMICloudVideoStatus(string? status)
         => string.IsNullOrWhiteSpace(status)
-            || status.Equals("failed", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("error", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("canceled", StringComparison.OrdinalIgnoreCase);
+             || status.Equals("failed", StringComparison.OrdinalIgnoreCase)
+             || status.Equals("error", StringComparison.OrdinalIgnoreCase)
+             || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
+             || status.Equals("canceled", StringComparison.OrdinalIgnoreCase)
+             || status.Equals("rejected", StringComparison.OrdinalIgnoreCase)
+             || status.Equals("expired", StringComparison.OrdinalIgnoreCase);
 
     private static string? TryGetGMICloudVideoUrl(JsonElement root)
     {
