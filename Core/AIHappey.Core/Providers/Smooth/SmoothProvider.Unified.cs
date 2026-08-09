@@ -102,7 +102,7 @@ public partial class SmoothProvider
         providerId,
         "text-start",
         streamId,
-        new AITextStartEventData { ProviderMetadata = CreateFlatProviderMetadata(metadata) },
+        new AITextStartEventData { },
         timestamp,
         metadata);
     textStarted = true;
@@ -144,7 +144,7 @@ public partial class SmoothProvider
               providerId,
               "text-delta",
               streamId,
-              new AITextDeltaEventData { Delta = delta, ProviderMetadata = CreateFlatProviderMetadata(metadata) },
+              new AITextDeltaEventData { Delta = delta },
               DateTimeOffset.UtcNow,
               metadata);
         }
@@ -169,8 +169,7 @@ public partial class SmoothProvider
           {
             MediaType = downloadedImage.MediaType,
             Url = downloadedImage.DataUrl,
-            Filename = downloadedImage.FileName,
-            ProviderMetadata = CreateProviderMetadata(metadata)
+            Filename = downloadedImage.FileName
           },
           DateTimeOffset.UtcNow,
           metadata);
@@ -182,7 +181,7 @@ public partial class SmoothProvider
           providerId,
           "text-end",
           streamId,
-          new AITextEndEventData { ProviderMetadata = CreateFlatProviderMetadata(metadata) },
+          new AITextEndEventData {  },
           DateTimeOffset.UtcNow,
           metadata);
     }
