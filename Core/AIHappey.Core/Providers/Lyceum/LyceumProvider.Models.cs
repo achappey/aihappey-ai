@@ -24,6 +24,7 @@ public partial class LyceumProvider
                 var models = new List<Model>();
                 await AddLyceumChatModelsAsync(models, cancellationToken);
                 await AddLyceumImageModelsAsync(models, cancellationToken);
+                await AddLyceumVideoModelsAsync(models, cancellationToken);
 
                 return models.DistinctBy(model => model.Id).ToList();
             },
@@ -114,6 +115,49 @@ public partial class LyceumProvider
                 Id = id.ToModelId(GetIdentifier()),
                 Name = string.IsNullOrWhiteSpace(name) ? id : name,
                 Type = "image",
+                OwnedBy = nameof(Lyceum)
+            });
+        }
+    }
+
+    private async Task AddLyceumVideoModelsAsync(List<Model> models, CancellationToken cancellationToken)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "videos/models");
+        using var resp = await _client.SendAsync(req, cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+            throw new Exception($"Lyceum video models API error: {err}");
+        }
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+            return;
+
+        foreach (var el in doc.RootElement.EnumerateArray())
+        {
+            if (el.ValueKind != JsonValueKind.Object)
+                continue;
+
+            var id = el.TryGetProperty("id", out var idElement) && idElement.ValueKind == JsonValueKind.String
+                ? idElement.GetString()
+                : el.TryGetProperty("model", out var modelElement) && modelElement.ValueKind == JsonValueKind.String
+                    ? modelElement.GetString()
+                    : null;
+            if (string.IsNullOrWhiteSpace(id))
+                continue;
+
+            var name = el.TryGetProperty("name", out var nameElement) && nameElement.ValueKind == JsonValueKind.String
+                ? nameElement.GetString()
+                : id;
+
+            models.Add(new Model
+            {
+                Id = id.ToModelId(GetIdentifier()),
+                Name = string.IsNullOrWhiteSpace(name) ? id : name,
+                Type = "video",
                 OwnedBy = nameof(Lyceum)
             });
         }

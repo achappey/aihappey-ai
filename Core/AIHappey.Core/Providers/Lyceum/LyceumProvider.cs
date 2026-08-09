@@ -20,6 +20,8 @@ public partial class LyceumProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly HttpClient _downloadClient;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public LyceumProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
@@ -29,6 +31,7 @@ public partial class LyceumProvider : IModelProvider
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.lyceum.technology/api/v2/external/");
+        _downloadClient = httpClientFactory.CreateClient();
     }
 
     private void ApplyAuthHeader()
@@ -63,7 +66,7 @@ public partial class LyceumProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Lyceum).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -98,8 +101,6 @@ public partial class LyceumProvider : IModelProvider
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
-
-    
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -138,7 +139,7 @@ public partial class LyceumProvider : IModelProvider
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
-    }    
+    }
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
