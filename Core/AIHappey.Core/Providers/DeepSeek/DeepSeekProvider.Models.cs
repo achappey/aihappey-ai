@@ -62,6 +62,7 @@ public sealed partial class DeepSeekProvider
 
                 return models
                     .Where(m => !string.IsNullOrWhiteSpace(m.Id))
+                    .WithPricing(GetIdentifier())
                     .DistinctBy(m => m.Id)
                     .OrderByDescending(m => m.Created);
 
