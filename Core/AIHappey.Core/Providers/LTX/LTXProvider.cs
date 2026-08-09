@@ -20,16 +20,13 @@ public partial class LTXProvider : IModelProvider
 
     private readonly HttpClient _uploadClient;
 
-    private readonly AsyncCacheHelper _memoryCache;
-
-    public LTXProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public LTXProvider(IApiKeyResolver keyResolver, 
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _uploadClient = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.ltx.video/");
+        _client.BaseAddress = new Uri("https://api.ltx.io/");
     }
 
     private void ApplyAuthHeader()

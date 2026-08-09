@@ -21,7 +21,7 @@
       "owned_by": "LTX",
       "name": "video-to-video-hdr",
       "type": "video",
-      "description": "Utility model id for LTX SDR-to-HDR video conversion. Use providerOptions.ltx.video_uri or providerOptions.ltx.video_data."
+      "description": "Utility model id for LTX SDR-to-HDR video conversion."
     }
   ]
 }

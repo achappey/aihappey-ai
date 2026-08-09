@@ -29,14 +29,7 @@ public sealed class LTXVideoProviderMetadata
     public string? Prompt { get; set; }
 
     /// <summary>
-    /// Image URI to use as image_uri. HTTPS URLs and provider storage URIs are passed through.
-    /// </summary>
-    [JsonPropertyName("image_uri")]
-    public string? ImageUri { get; set; }
-
-    /// <summary>
-    /// Image payload to upload through LTX /v1/upload when image_uri is not directly available.
-    /// Accepts a data URL or base64 payload.
+    /// Base64 image payload. Accepts raw base64 or a data URI.
     /// </summary>
     [JsonPropertyName("image_data")]
     public string? ImageData { get; set; }
@@ -45,13 +38,7 @@ public sealed class LTXVideoProviderMetadata
     public string? ImageMediaType { get; set; }
 
     /// <summary>
-    /// Optional last frame URI. Supported by ltx-2-3 models.
-    /// </summary>
-    [JsonPropertyName("last_frame_uri")]
-    public string? LastFrameUri { get; set; }
-
-    /// <summary>
-    /// Optional last-frame media payload to upload through LTX /v1/upload.
+    /// Optional base64 last-frame payload. Supported by ltx-2-3 models.
     /// </summary>
     [JsonPropertyName("last_frame_data")]
     public string? LastFrameData { get; set; }
@@ -60,14 +47,7 @@ public sealed class LTXVideoProviderMetadata
     public string? LastFrameMediaType { get; set; }
 
     /// <summary>
-    /// Audio URI for audio-to-video.
-    /// </summary>
-    [JsonPropertyName("audio_uri")]
-    public string? AudioUri { get; set; }
-
-    /// <summary>
-    /// Audio payload to upload through LTX /v1/upload for audio-to-video.
-    /// Accepts a data URL or base64 payload.
+    /// Base64 audio payload for audio-to-video. Accepts raw base64 or a data URI.
     /// </summary>
     [JsonPropertyName("audio_data")]
     public string? AudioData { get; set; }
@@ -76,14 +56,7 @@ public sealed class LTXVideoProviderMetadata
     public string? AudioMediaType { get; set; }
 
     /// <summary>
-    /// Video URI for retake, extend, or HDR operations.
-    /// </summary>
-    [JsonPropertyName("video_uri")]
-    public string? VideoUri { get; set; }
-
-    /// <summary>
-    /// Video payload to upload through LTX /v1/upload for retake, extend, or HDR operations.
-    /// Accepts a data URL or base64 payload.
+    /// Base64 video payload for retake, extend, or HDR operations. Accepts raw base64 or a data URI.
     /// </summary>
     [JsonPropertyName("video_data")]
     public string? VideoData { get; set; }
@@ -141,14 +114,4 @@ public sealed class LTXVideoProviderMetadata
     public string? PreferredResultKey { get; set; }
 
     /// <summary>
-    /// Poll interval in seconds for async HDR jobs. Defaults to 5.
-    /// </summary>
-    [JsonPropertyName("poll_interval_seconds")]
-    public double? PollIntervalSeconds { get; set; }
-
-    /// <summary>
-    /// Poll timeout in seconds for async HDR jobs. Defaults to 600.
-    /// </summary>
-    [JsonPropertyName("timeout_seconds")]
-    public double? TimeoutSeconds { get; set; }
 }

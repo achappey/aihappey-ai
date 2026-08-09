@@ -1,10 +1,10 @@
-using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Model.Providers.LTX;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -12,469 +12,373 @@ namespace AIHappey.Core.Providers.LTX;
 
 public partial class LTXProvider
 {
+    private const string LTXVideoOperationTokenPrefix = "ltxv2_";
+
     private static readonly JsonSerializerOptions LTXVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record LTXAsyncJobResult(string Status, string Raw, JsonElement Root);
+    private sealed record LTXVideoOperationData(
+        string JobId,
+        string Endpoint,
+        string Model,
+        string? PreferredResultKey = null);
 
-
-
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-    
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
 
-        var now = DateTime.UtcNow;
-        List<object> warnings = [];
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+
         var metadata = request.GetProviderMetadata<LTXVideoProviderMetadata>(GetIdentifier());
-        var operation = ResolveOperation(request, metadata);
-
-        return operation switch
+        var endpoint = ResolveOperation(request, metadata);
+        var payload = endpoint switch
         {
-            "text-to-video" => await SendSynchronousVideoRequestAsync(
-                request,
-                operation,
-                "v1/text-to-video",
-                await BuildTextToVideoPayloadAsync(request, metadata, cancellationToken),
-                warnings,
-                now,
-                cancellationToken),
-            "image-to-video" => await SendSynchronousVideoRequestAsync(
-                request,
-                operation,
-                "v1/image-to-video",
-                await BuildImageToVideoPayloadAsync(request, metadata, cancellationToken),
-                warnings,
-                now,
-                cancellationToken),
-            "audio-to-video" => await SendSynchronousVideoRequestAsync(
-                request,
-                operation,
-                "v1/audio-to-video",
-                await BuildAudioToVideoPayloadAsync(request, metadata, cancellationToken),
-                warnings,
-                now,
-                cancellationToken),
-            "retake" => await SendSynchronousVideoRequestAsync(
-                request,
-                operation,
-                "v1/retake",
-                await BuildRetakePayloadAsync(request, metadata, cancellationToken),
-                warnings,
-                now,
-                cancellationToken),
-            "extend" => await SendSynchronousVideoRequestAsync(
-                request,
-                operation,
-                "v1/extend",
-                await BuildExtendPayloadAsync(request, metadata, cancellationToken),
-                warnings,
-                now,
-                cancellationToken),
-            "video-to-video-hdr" => await SendHdrRequestAsync(
-                request,
-                metadata,
-                warnings,
-                now,
-                cancellationToken),
-            _ => throw new NotSupportedException($"LTX video operation '{operation}' is not supported.")
-        };
-    }
-
-    private async Task<VideoResponse> SendSynchronousVideoRequestAsync(
-        VideoRequest request,
-        string operation,
-        string endpoint,
-        Dictionary<string, object?> payload,
-        List<object> warnings,
-        DateTime timestamp,
-        CancellationToken cancellationToken)
-    {
-        var json = JsonSerializer.Serialize(payload, LTXVideoJsonOptions);
-        using var ltxRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
-        {
-            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
+            "text-to-video" => BuildTextToVideoPayload(request, metadata),
+            "image-to-video" => BuildImageToVideoPayload(request, metadata),
+            "audio-to-video" => BuildAudioToVideoPayload(request, metadata),
+            "retake" => BuildRetakePayload(request, metadata),
+            "extend" => BuildExtendPayload(request, metadata),
+            "video-to-video-hdr" => BuildHdrPayload(metadata),
+            _ => throw new NotSupportedException($"LTX video operation '{endpoint}' is not supported.")
         };
 
-        using var response = await _client.SendAsync(ltxRequest, cancellationToken);
-        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            ThrowLTXError(operation, response, bytes);
-
-        var mediaType = response.Content.Headers.ContentType?.MediaType
-            ?? GuessMediaType(endpoint)
-            ?? "video/mp4";
-
-        return new VideoResponse
+        using var submitRequest = new HttpRequestMessage(HttpMethod.Post, $"v2/{endpoint}")
         {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(bytes)
-                }
-            ],
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = ToJsonElement(new
-                {
-                })
-            },
-            Response = new()
-            {
-                Timestamp = timestamp,
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
-        };
-    }
-
-    private async Task<VideoResponse> SendHdrRequestAsync(
-        VideoRequest request,
-        LTXVideoProviderMetadata? metadata,
-        List<object> warnings,
-        DateTime timestamp,
-        CancellationToken cancellationToken)
-    {
-        var payload = new Dictionary<string, object?>
-        {
-            ["video_uri"] = await ResolveVideoUriAsync(metadata, cancellationToken)
-        };
-
-        var json = JsonSerializer.Serialize(payload, LTXVideoJsonOptions);
-        using var submitRequest = new HttpRequestMessage(HttpMethod.Post, "v2/video-to-video-hdr")
-        {
-            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
+            Content = new StringContent(
+                JsonSerializer.Serialize(payload, LTXVideoJsonOptions),
+                Encoding.UTF8,
+                MediaTypeNames.Application.Json)
         };
 
         using var submitResponse = await _client.SendAsync(submitRequest, cancellationToken);
         var submitRaw = await submitResponse.Content.ReadAsStringAsync(cancellationToken);
-        if (!submitResponse.IsSuccessStatusCode)
-            ThrowLTXError("video-to-video-hdr", submitResponse, Encoding.UTF8.GetBytes(submitRaw));
+        if (submitResponse.StatusCode != System.Net.HttpStatusCode.Accepted)
+            ThrowLTXError($"{endpoint} submit", submitResponse, Encoding.UTF8.GetBytes(submitRaw));
 
-        using var submitDoc = JsonDocument.Parse(submitRaw);
-        var submitRoot = submitDoc.RootElement.Clone();
-        var jobId = submitRoot.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
-            ? idEl.GetString()
-            : null;
-
+        using var submitDocument = JsonDocument.Parse(submitRaw);
+        var submitRoot = submitDocument.RootElement.Clone();
+        var jobId = TryGetString(submitRoot, "id");
         if (string.IsNullOrWhiteSpace(jobId))
-            throw new InvalidOperationException("LTX HDR submit response missing id.");
+            throw new InvalidOperationException($"LTX {endpoint} submit response missing id.");
 
-        var pollInterval = TimeSpan.FromSeconds(metadata?.PollIntervalSeconds is > 0 ? metadata.PollIntervalSeconds.Value : 5);
-        var timeout = TimeSpan.FromSeconds(metadata?.TimeoutSeconds is > 0 ? metadata.TimeoutSeconds.Value : 600);
-
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollHdrJobAsync(jobId, ct),
-            isTerminal: r => IsTerminalStatus(r.Status),
-            interval: pollInterval,
-            timeout: timeout,
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (completed.Status.Equals("failed", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"LTX HDR job failed (id={jobId}): {TryGetJobError(completed.Root) ?? completed.Raw}");
-
-        var resultUrl = TryGetResultUrl(completed.Root, metadata?.PreferredResultKey);
-        List<VideoResponseFile> files = [];
-
-        if (!string.IsNullOrWhiteSpace(resultUrl))
+        return new VideoOperationStartResult
         {
-            using var fileResponse = await _uploadClient.GetAsync(resultUrl, cancellationToken);
-            var fileBytes = await fileResponse.Content.ReadAsByteArrayAsync(cancellationToken);
-            if (!fileResponse.IsSuccessStatusCode)
-                throw new InvalidOperationException($"LTX HDR result download failed ({(int)fileResponse.StatusCode}): {Encoding.UTF8.GetString(fileBytes)}");
-
-            files.Add(new VideoResponseFile
+            Operation = EncodeVideoOperation(new(
+                jobId,
+                endpoint,
+                request.Model,
+                metadata?.PreferredResultKey)),
+            Warnings = [],
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
             {
-                MediaType = fileResponse.Content.Headers.ContentType?.MediaType
-                    ?? GuessMediaType(resultUrl)
-                    ?? "application/octet-stream",
-                Data = Convert.ToBase64String(fileBytes)
-            });
-        }
-        else
-        {
-            warnings.Add(new { type = "missing_result_url", feature = "video-to-video-hdr" });
-        }
-
-        return new VideoResponse
-        {
-            Videos = files,
-            Warnings = warnings,
-            ProviderMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = ToJsonElement(new
-                {
-
-                })
-            },
+                id = jobId,
+                endpoint,
+                status = "pending",
+                submit = submitRoot
+            }),
             Response = new()
             {
-                Timestamp = timestamp,
+                Timestamp = TryGetDateTime(submitRoot, "created_at") ?? DateTime.UtcNow,
+                Headers = submitResponse.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
 
-    private async Task<Dictionary<string, object?>> BuildTextToVideoPayloadAsync(
-        VideoRequest request,
-        LTXVideoProviderMetadata? metadata,
-        CancellationToken cancellationToken)
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
     {
-        var prompt = ResolvePrompt(request, metadata, required: true, operation: "text-to-video");
-        var model = ResolveModel(request, metadata, required: true);
-        var duration = ResolveIntegerDuration(request, metadata, required: true, operation: "text-to-video");
-        var resolution = ResolveResolution(request, required: true, operation: "text-to-video");
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        await Task.CompletedTask;
+        var operationData = DecodeVideoOperation(operation);
+        ApplyAuthHeader();
 
+        using var pollRequest = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"v2/{operationData.Endpoint}/{Uri.EscapeDataString(operationData.JobId)}");
+        using var pollResponse = await _client.SendAsync(pollRequest, cancellationToken);
+        var pollRaw = await pollResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResponse.IsSuccessStatusCode)
+            ThrowLTXError($"{operationData.Endpoint} status", pollResponse, Encoding.UTF8.GetBytes(pollRaw));
+
+        using var pollDocument = JsonDocument.Parse(pollRaw);
+        var root = pollDocument.RootElement.Clone();
+        var status = TryGetString(root, "status") ?? "unknown";
+        var response = new HeaderResponseData
+        {
+            Timestamp = TryGetDateTime(root, "completed_at")
+                ?? TryGetDateTime(root, "created_at")
+                ?? DateTime.UtcNow,
+            Headers = pollResponse.GetHeaders(),
+            ModelId = operationData.Model.ToModelId(GetIdentifier())
+        };
+        var providerMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            id = operationData.JobId,
+            endpoint = operationData.Endpoint,
+            status,
+            job = root
+        });
+
+        if (status.Equals("pending", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("processing", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationPendingResult
+            {
+                Warnings = [],
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        if (status.Equals("failed", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"LTX {operationData.Endpoint} job failed (id={operationData.JobId}): {TryGetJobError(root) ?? pollRaw}",
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        if (!status.Equals("completed", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"LTX {operationData.Endpoint} job returned unknown status '{status}' (id={operationData.JobId}).",
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        var resultUrl = TryGetResultUrl(root, operationData.PreferredResultKey);
+        if (string.IsNullOrWhiteSpace(resultUrl))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"LTX {operationData.Endpoint} job completed without a result URL (id={operationData.JobId}).",
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        using var downloadResponse = await _uploadClient.GetAsync(resultUrl, cancellationToken);
+        var bytes = await downloadResponse.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!downloadResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"LTX result download failed ({(int)downloadResponse.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
+
+        return new VideoOperationCompletedResult
+        {
+            Videos =
+            [
+                new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    MediaType = downloadResponse.Content.Headers.ContentType?.MediaType
+                        ?? GuessMediaType(resultUrl)
+                        ?? "video/mp4",
+                    Data = Convert.ToBase64String(bytes)
+                }
+            ],
+            Warnings = [],
+            ProviderMetadata = providerMetadata,
+            Response = response
+        };
+    }
+
+    private static Dictionary<string, object?> BuildTextToVideoPayload(
+        VideoRequest request,
+        LTXVideoProviderMetadata? metadata)
+    {
         var result = new Dictionary<string, object?>
         {
-            ["prompt"] = prompt,
-            ["model"] = model,
-            ["duration"] = duration,
-            ["fps"] = request.Fps,
-            ["resolution"] = resolution
+            ["prompt"] = ResolvePrompt(request, metadata, required: true, operation: "text-to-video"),
+            ["model"] = ResolveModel(request, metadata, required: true),
+            ["duration"] = ResolveIntegerDuration(request, metadata, required: true, operation: "text-to-video"),
+            ["resolution"] = ResolveResolution(request, required: true, operation: "text-to-video"),
+            ["fps"] = request.Fps
         };
 
         if (metadata?.GenerateAudio.HasValue == true)
-            result["generate_audio"] = metadata?.GenerateAudio;
-
-        if (!string.IsNullOrEmpty(metadata?.CameraMotion))
-            result["camera_motion"] = metadata?.CameraMotion;
+            result["generate_audio"] = metadata.GenerateAudio.Value;
+        if (!string.IsNullOrWhiteSpace(metadata?.CameraMotion))
+            result["camera_motion"] = metadata.CameraMotion;
 
         return result;
     }
 
-    private async Task<Dictionary<string, object?>> BuildImageToVideoPayloadAsync(
+    private static Dictionary<string, object?> BuildImageToVideoPayload(
         VideoRequest request,
-        LTXVideoProviderMetadata? metadata,
-        CancellationToken cancellationToken)
+        LTXVideoProviderMetadata? metadata)
     {
-        var prompt = ResolvePrompt(request, metadata, required: true, operation: "image-to-video");
-        var model = ResolveModel(request, metadata, required: true);
-        var duration = ResolveIntegerDuration(request, metadata, required: true, operation: "image-to-video");
-        var resolution = ResolveResolution(request, required: true, operation: "image-to-video");
-        var imageUri = await ResolveImageUriAsync(request, metadata, cancellationToken);
-        var lastFrameUri = await ResolveLastFrameUriAsync(metadata, cancellationToken);
-
         var result = new Dictionary<string, object?>
         {
-            ["image_uri"] = imageUri,
-            ["prompt"] = prompt,
-            ["model"] = model,
-            ["duration"] = duration,
-            ["fps"] = request.Fps,
-            ["resolution"] = resolution
+            ["image_uri"] = ResolveRequiredImageDataUri(request, metadata),
+            ["prompt"] = ResolvePrompt(request, metadata, required: true, operation: "image-to-video"),
+            ["model"] = ResolveModel(request, metadata, required: true),
+            ["duration"] = ResolveIntegerDuration(request, metadata, required: true, operation: "image-to-video"),
+            ["resolution"] = ResolveResolution(request, required: true, operation: "image-to-video"),
+            ["fps"] = request.Fps
         };
 
         if (metadata?.GenerateAudio.HasValue == true)
-            result["generate_audio"] = metadata?.GenerateAudio;
-
-        if (!string.IsNullOrEmpty(metadata?.CameraMotion))
-            result["camera_motion"] = metadata?.CameraMotion;
-
-        if (!string.IsNullOrEmpty(lastFrameUri))
-            result["last_frame_uri"] = lastFrameUri;
+            result["generate_audio"] = metadata.GenerateAudio.Value;
+        if (!string.IsNullOrWhiteSpace(metadata?.CameraMotion))
+            result["camera_motion"] = metadata.CameraMotion;
+        if (!string.IsNullOrWhiteSpace(metadata?.LastFrameData))
+            result["last_frame_uri"] = NormalizeDataUri(metadata.LastFrameData, metadata.LastFrameMediaType ?? MediaTypeNames.Image.Png, "last-frame image");
 
         return result;
-
     }
 
-    private async Task<Dictionary<string, object?>> BuildAudioToVideoPayloadAsync(
+    private static Dictionary<string, object?> BuildAudioToVideoPayload(
         VideoRequest request,
-        LTXVideoProviderMetadata? metadata,
-        CancellationToken cancellationToken)
+        LTXVideoProviderMetadata? metadata)
     {
-        var audioUri = await ResolveAudioUriAsync(metadata, cancellationToken);
-        var imageUri = await TryResolveImageUriAsync(request, metadata, cancellationToken);
-        var prompt = ResolvePrompt(request, metadata, required: string.IsNullOrWhiteSpace(imageUri), operation: "audio-to-video");
+        if (string.IsNullOrWhiteSpace(metadata?.AudioData))
+            throw new ArgumentException("providerOptions.ltx.audio_data is required for LTX audio-to-video.", nameof(request));
 
+        var imageUri = TryResolveImageDataUri(request, metadata);
         return new Dictionary<string, object?>
         {
-            ["audio_uri"] = audioUri,
+            ["audio_uri"] = NormalizeDataUri(metadata.AudioData, metadata.AudioMediaType ?? "audio/wav", "audio"),
             ["image_uri"] = imageUri,
-            ["prompt"] = prompt,
+            ["prompt"] = ResolvePrompt(request, metadata, required: imageUri is null, operation: "audio-to-video"),
             ["resolution"] = request.Resolution,
-            ["guidance_scale"] = metadata?.GuidanceScale,
+            ["guidance_scale"] = metadata.GuidanceScale,
             ["model"] = ResolveModel(request, metadata, required: false)
         };
     }
 
-    private async Task<Dictionary<string, object?>> BuildRetakePayloadAsync(
+    private static Dictionary<string, object?> BuildRetakePayload(
         VideoRequest request,
-        LTXVideoProviderMetadata? metadata,
-        CancellationToken cancellationToken)
+        LTXVideoProviderMetadata? metadata)
     {
         var startTime = metadata?.StartTime
             ?? throw new ArgumentException("providerOptions.ltx.start_time is required for LTX retake.", nameof(request));
-        var duration = ResolveDoubleDuration(request, metadata, required: true, operation: "retake");
 
         return new Dictionary<string, object?>
         {
-            ["video_uri"] = await ResolveVideoUriAsync(metadata, cancellationToken),
-            ["prompt"] = ResolvePrompt(request, metadata, required: false, operation: "retake"),
+            ["video_uri"] = ResolveRequiredVideoDataUri(metadata, request),
             ["start_time"] = startTime,
-            ["duration"] = duration,
-            ["mode"] = metadata?.Mode,
+            ["duration"] = ResolveDoubleDuration(request, metadata, required: true, operation: "retake"),
+            ["prompt"] = ResolvePrompt(request, metadata, required: false, operation: "retake"),
+            ["mode"] = metadata.Mode,
             ["resolution"] = request.Resolution,
             ["model"] = ResolveModel(request, metadata, required: false)
         };
     }
 
-    private async Task<Dictionary<string, object?>> BuildExtendPayloadAsync(
+    private static Dictionary<string, object?> BuildExtendPayload(
         VideoRequest request,
-        LTXVideoProviderMetadata? metadata,
-        CancellationToken cancellationToken)
-    {
-        var duration = ResolveDoubleDuration(request, metadata, required: true, operation: "extend");
-
-        return new Dictionary<string, object?>
+        LTXVideoProviderMetadata? metadata)
+        => new()
         {
-            ["video_uri"] = await ResolveVideoUriAsync(metadata, cancellationToken),
+            ["video_uri"] = ResolveRequiredVideoDataUri(metadata, request),
+            ["duration"] = ResolveDoubleDuration(request, metadata, required: true, operation: "extend"),
             ["prompt"] = ResolvePrompt(request, metadata, required: false, operation: "extend"),
-            ["duration"] = duration,
             ["mode"] = metadata?.Mode,
             ["model"] = ResolveModel(request, metadata, required: false),
             ["context"] = metadata?.Context
         };
-    }
 
-    private async Task<string> ResolveImageUriAsync(VideoRequest request, LTXVideoProviderMetadata? metadata, CancellationToken cancellationToken)
-        => await TryResolveImageUriAsync(request, metadata, cancellationToken)
-            ?? throw new ArgumentException("Image input is required for LTX image-to-video.", nameof(request));
+    private static Dictionary<string, object?> BuildHdrPayload(LTXVideoProviderMetadata? metadata)
+        => new()
+        {
+            ["video_uri"] = ResolveRequiredVideoDataUri(metadata, null)
+        };
 
-    private async Task<string?> TryResolveImageUriAsync(VideoRequest request, LTXVideoProviderMetadata? metadata, CancellationToken cancellationToken)
+    private static string ResolveRequiredImageDataUri(VideoRequest request, LTXVideoProviderMetadata? metadata)
+        => TryResolveImageDataUri(request, metadata)
+            ?? throw new ArgumentException("Base64 image input is required for LTX image-to-video.", nameof(request));
+
+    private static string? TryResolveImageDataUri(VideoRequest request, LTXVideoProviderMetadata? metadata)
     {
-        if (!string.IsNullOrWhiteSpace(metadata?.ImageUri))
-            return metadata.ImageUri;
-
         if (!string.IsNullOrWhiteSpace(metadata?.ImageData))
-            return await ResolveUploadedOrRemoteUriAsync(metadata.ImageData, metadata.ImageMediaType ?? MediaTypeNames.Image.Png, cancellationToken);
-
+            return NormalizeDataUri(metadata.ImageData, metadata.ImageMediaType ?? MediaTypeNames.Image.Png, "image");
         if (request.Image is null)
             return null;
 
-        return await ResolveUploadedOrRemoteUriAsync(request.Image.Data, request.Image.MediaType, cancellationToken);
+        return NormalizeDataUri(request.Image.Data, request.Image.MediaType, "image");
     }
 
-    private async Task<string?> ResolveLastFrameUriAsync(LTXVideoProviderMetadata? metadata, CancellationToken cancellationToken)
+    private static string ResolveRequiredVideoDataUri(LTXVideoProviderMetadata? metadata, VideoRequest? request)
     {
-        if (!string.IsNullOrWhiteSpace(metadata?.LastFrameUri))
-            return metadata.LastFrameUri;
-
-        if (string.IsNullOrWhiteSpace(metadata?.LastFrameData))
-            return null;
-
-        return await ResolveUploadedOrRemoteUriAsync(metadata.LastFrameData, metadata.LastFrameMediaType ?? MediaTypeNames.Image.Png, cancellationToken);
-    }
-
-    private async Task<string> ResolveAudioUriAsync(LTXVideoProviderMetadata? metadata, CancellationToken cancellationToken)
-    {
-        if (!string.IsNullOrWhiteSpace(metadata?.AudioUri))
-            return metadata.AudioUri;
-
-        if (string.IsNullOrWhiteSpace(metadata?.AudioData))
-            throw new ArgumentException("providerOptions.ltx.audio_uri or providerOptions.ltx.audio_data is required for LTX audio-to-video.");
-
-        return await ResolveUploadedOrRemoteUriAsync(metadata.AudioData, metadata.AudioMediaType ?? "audio/wav", cancellationToken);
-    }
-
-    private async Task<string> ResolveVideoUriAsync(LTXVideoProviderMetadata? metadata, CancellationToken cancellationToken)
-    {
-        if (!string.IsNullOrWhiteSpace(metadata?.VideoUri))
-            return metadata.VideoUri;
-
         if (string.IsNullOrWhiteSpace(metadata?.VideoData))
-            throw new ArgumentException("providerOptions.ltx.video_uri or providerOptions.ltx.video_data is required for this LTX operation.");
+            throw new ArgumentException("providerOptions.ltx.video_data is required for this LTX operation.", request is null ? null : nameof(request));
 
-        return await ResolveUploadedOrRemoteUriAsync(metadata.VideoData, metadata.VideoMediaType ?? "video/mp4", cancellationToken);
+        return NormalizeDataUri(metadata.VideoData, metadata.VideoMediaType ?? "video/mp4", "video");
     }
 
-    private async Task<string> ResolveUploadedOrRemoteUriAsync(string value, string mediaType, CancellationToken cancellationToken)
+    private static string NormalizeDataUri(string value, string fallbackMediaType, string inputName)
     {
-        if (IsRemoteOrStorageUri(value))
-            return value;
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException($"LTX {inputName} base64 data is required.");
 
-        var (bytes, detectedMediaType) = DecodeMediaPayload(value, mediaType);
-        return await UploadMediaAsync(bytes, detectedMediaType, cancellationToken);
-    }
+        var trimmed = value.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
+            && !uri.Scheme.Equals("data", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"LTX {inputName} accepts base64/data-URI input only; external and storage URIs are not supported.");
 
-    private async Task<string> UploadMediaAsync(byte[] bytes, string mediaType, CancellationToken cancellationToken)
-    {
-        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/upload");
-        using var createResponse = await _client.SendAsync(createRequest, cancellationToken);
-        var createRaw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
-        if (!createResponse.IsSuccessStatusCode)
-            ThrowLTXError("upload", createResponse, Encoding.UTF8.GetBytes(createRaw));
-
-        using var uploadDoc = JsonDocument.Parse(createRaw);
-        var root = uploadDoc.RootElement;
-        var uploadUrl = root.TryGetProperty("upload_url", out var uploadUrlEl) && uploadUrlEl.ValueKind == JsonValueKind.String
-            ? uploadUrlEl.GetString()
-            : null;
-        var storageUri = root.TryGetProperty("storage_uri", out var storageUriEl) && storageUriEl.ValueKind == JsonValueKind.String
-            ? storageUriEl.GetString()
-            : null;
-
-        if (string.IsNullOrWhiteSpace(uploadUrl) || string.IsNullOrWhiteSpace(storageUri))
-            throw new InvalidOperationException("LTX upload response missing upload_url or storage_uri.");
-
-        using var uploadRequest = new HttpRequestMessage(HttpMethod.Put, uploadUrl)
+        if (!trimmed.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
-            Content = new ByteArrayContent(bytes)
-        };
-
-        uploadRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
-        if (root.TryGetProperty("required_headers", out var headersEl) && headersEl.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var header in headersEl.EnumerateObject())
-            {
-                if (header.Value.ValueKind != JsonValueKind.String)
-                    continue;
-
-                AddUploadHeader(uploadRequest, header.Name, header.Value.GetString()!);
-            }
+            Convert.FromBase64String(trimmed);
+            return $"data:{fallbackMediaType};base64,{trimmed}";
         }
 
-        using var uploadResponse = await _uploadClient.SendAsync(uploadRequest, cancellationToken);
-        var uploadBytes = await uploadResponse.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!uploadResponse.IsSuccessStatusCode)
-            throw new InvalidOperationException($"LTX signed upload failed ({(int)uploadResponse.StatusCode}): {Encoding.UTF8.GetString(uploadBytes)}");
+        var comma = trimmed.IndexOf(',');
+        if (comma < 0 || !trimmed[..comma].Contains(";base64", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"LTX {inputName} data URI must contain a base64 payload.");
 
-        return storageUri;
+        Convert.FromBase64String(trimmed[(comma + 1)..]);
+        return trimmed;
     }
 
-    private async Task<LTXAsyncJobResult> PollHdrJobAsync(string jobId, CancellationToken cancellationToken)
+    private static string EncodeVideoOperation(LTXVideoOperationData operation)
     {
-        using var pollRequest = new HttpRequestMessage(HttpMethod.Get, $"v2/video-to-video-hdr/{Uri.EscapeDataString(jobId)}");
-        using var pollResponse = await _client.SendAsync(pollRequest, cancellationToken);
-        var pollRaw = await pollResponse.Content.ReadAsStringAsync(cancellationToken);
-        if (!pollResponse.IsSuccessStatusCode)
-            ThrowLTXError("video-to-video-hdr status", pollResponse, Encoding.UTF8.GetBytes(pollRaw));
+        var json = JsonSerializer.Serialize(operation, LTXVideoJsonOptions);
+        return LTXVideoOperationTokenPrefix + Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
 
-        using var pollDoc = JsonDocument.Parse(pollRaw);
-        var root = pollDoc.RootElement.Clone();
-        var status = root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String
-            ? statusEl.GetString() ?? "unknown"
-            : "unknown";
+    private static LTXVideoOperationData DecodeVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(LTXVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The LTX video operation token is invalid.", nameof(operation));
 
-        return new LTXAsyncJobResult(status, pollRaw, root);
+        var base64 = operation[LTXVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        if (base64.Length % 4 != 0)
+            base64 = base64.PadRight(base64.Length + (4 - base64.Length % 4), '=');
+
+        try
+        {
+            var data = JsonSerializer.Deserialize<LTXVideoOperationData>(
+                Encoding.UTF8.GetString(Convert.FromBase64String(base64)),
+                LTXVideoJsonOptions);
+            if (data is null
+                || string.IsNullOrWhiteSpace(data.JobId)
+                || string.IsNullOrWhiteSpace(data.Model)
+                || !IsSupportedOperation(data.Endpoint))
+                throw new ArgumentException("The LTX video operation token is invalid.", nameof(operation));
+
+            return data;
+        }
+        catch (Exception ex) when (ex is FormatException or JsonException)
+        {
+            throw new ArgumentException("The LTX video operation token is invalid.", nameof(operation), ex);
+        }
     }
 
     private static string ResolveOperation(VideoRequest request, LTXVideoProviderMetadata? metadata)
@@ -482,14 +386,11 @@ public partial class LTXProvider
         var explicitOperation = NormalizeOperation(metadata?.Operation);
         if (!string.IsNullOrWhiteSpace(explicitOperation))
             return explicitOperation;
-
         if (IsHdrModel(request.Model))
             return "video-to-video-hdr";
-
-        if (!string.IsNullOrWhiteSpace(metadata?.AudioUri) || !string.IsNullOrWhiteSpace(metadata?.AudioData))
+        if (!string.IsNullOrWhiteSpace(metadata?.AudioData))
             return "audio-to-video";
-
-        if (request.Image is not null || !string.IsNullOrWhiteSpace(metadata?.ImageUri) || !string.IsNullOrWhiteSpace(metadata?.ImageData))
+        if (request.Image is not null || !string.IsNullOrWhiteSpace(metadata?.ImageData))
             return "image-to-video";
 
         return "text-to-video";
@@ -512,6 +413,10 @@ public partial class LTXProvider
         };
     }
 
+    private static bool IsSupportedOperation(string operation)
+        => operation is "text-to-video" or "image-to-video" or "audio-to-video"
+            or "retake" or "extend" or "video-to-video-hdr";
+
     private static string ResolvePrompt(VideoRequest request, LTXVideoProviderMetadata? metadata, bool required, string operation)
     {
         var prompt = !string.IsNullOrWhiteSpace(metadata?.Prompt) ? metadata.Prompt : request.Prompt;
@@ -527,10 +432,7 @@ public partial class LTXProvider
         if (required && string.IsNullOrWhiteSpace(model))
             throw new ArgumentException("Model is required for LTX video generation.", nameof(request));
 
-        if (IsHdrModel(model))
-            return null;
-
-        return string.IsNullOrWhiteSpace(model) ? null : model;
+        return IsHdrModel(model) || string.IsNullOrWhiteSpace(model) ? null : model;
     }
 
     private static int? ResolveIntegerDuration(VideoRequest request, LTXVideoProviderMetadata? metadata, bool required, string operation)
@@ -538,7 +440,6 @@ public partial class LTXProvider
         var duration = metadata?.Duration is not null
             ? (int)Math.Round(metadata.Duration.Value, MidpointRounding.AwayFromZero)
             : request.Duration;
-
         if (required && duration is null)
             throw new ArgumentException($"Duration is required for LTX {operation}.", nameof(request));
 
@@ -558,7 +459,6 @@ public partial class LTXProvider
     {
         if (required && string.IsNullOrWhiteSpace(request.Resolution))
             throw new ArgumentException($"Resolution is required for LTX {operation}.", nameof(request));
-
         return request.Resolution;
     }
 
@@ -566,7 +466,6 @@ public partial class LTXProvider
     {
         if (string.IsNullOrWhiteSpace(model))
             return string.Empty;
-
         var trimmed = model.Trim();
         var slash = trimmed.IndexOf('/');
         return slash >= 0 ? trimmed[(slash + 1)..] : trimmed;
@@ -580,97 +479,37 @@ public partial class LTXProvider
             || normalized.Contains("video-to-video-hdr", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsRemoteOrStorageUri(string value)
-        => value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("ltx://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("s3://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("gs://", StringComparison.OrdinalIgnoreCase);
+    private static string? TryGetString(JsonElement root, string propertyName)
+        => root.TryGetProperty(propertyName, out var element) && element.ValueKind == JsonValueKind.String
+            ? element.GetString()
+            : null;
 
-    private static (byte[] Bytes, string MediaType) DecodeMediaPayload(string value, string fallbackMediaType)
-    {
-        if (value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-        {
-            var commaIndex = value.IndexOf(',');
-            if (commaIndex < 0)
-                throw new ArgumentException("Invalid data URL supplied to LTX upload.");
-
-            var header = value[5..commaIndex];
-            var semicolon = header.IndexOf(';');
-            var mediaType = semicolon >= 0 ? header[..semicolon] : header;
-            if (string.IsNullOrWhiteSpace(mediaType))
-                mediaType = fallbackMediaType;
-
-            var payload = value[(commaIndex + 1)..];
-            return (Convert.FromBase64String(payload), mediaType);
-        }
-
-        return (Convert.FromBase64String(value), fallbackMediaType);
-    }
-
-    private static void AddUploadHeader(HttpRequestMessage request, string name, string value)
-    {
-        if (name.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
-        {
-            request.Content!.Headers.ContentType = new MediaTypeHeaderValue(value);
-            return;
-        }
-
-        if (name.StartsWith("Content-", StringComparison.OrdinalIgnoreCase))
-            request.Content!.Headers.TryAddWithoutValidation(name, value);
-        else
-            request.Headers.TryAddWithoutValidation(name, value);
-    }
-
-    private static bool IsTerminalStatus(string status)
-        => status.Equals("completed", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("failed", StringComparison.OrdinalIgnoreCase);
+    private static DateTime? TryGetDateTime(JsonElement root, string propertyName)
+        => DateTime.TryParse(TryGetString(root, propertyName), out var value) ? value : null;
 
     private static string? TryGetJobError(JsonElement root)
     {
-        if (root.TryGetProperty("error", out var errorEl))
-        {
-            if (errorEl.ValueKind == JsonValueKind.Object
-                && errorEl.TryGetProperty("message", out var messageEl)
-                && messageEl.ValueKind == JsonValueKind.String)
-                return messageEl.GetString();
-
-            return errorEl.ToString();
-        }
-
-        return null;
+        if (!root.TryGetProperty("error", out var error))
+            return null;
+        if (error.ValueKind == JsonValueKind.Object)
+            return TryGetString(error, "message") ?? error.ToString();
+        return error.ToString();
     }
 
     private static string? TryGetResultUrl(JsonElement root, string? preferredKey)
     {
         if (!root.TryGetProperty("result", out var result) || result.ValueKind != JsonValueKind.Object)
             return null;
-
-        if (!string.IsNullOrWhiteSpace(preferredKey)
-            && result.TryGetProperty(preferredKey, out var preferred)
-            && preferred.ValueKind == JsonValueKind.String)
+        if (!string.IsNullOrWhiteSpace(preferredKey))
         {
-            var value = preferred.GetString();
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
+            var preferred = TryGetString(result, preferredKey);
+            if (!string.IsNullOrWhiteSpace(preferred))
+                return preferred;
         }
 
-        foreach (var key in new[] { "video_url", "output_url", "url", "hdr_video_url", "exr_frames_url" })
+        foreach (var key in new[] { "video_url", "exr_frames_url", "output_url", "url", "hdr_video_url" })
         {
-            if (result.TryGetProperty(key, out var urlEl) && urlEl.ValueKind == JsonValueKind.String)
-            {
-                var value = urlEl.GetString();
-                if (!string.IsNullOrWhiteSpace(value))
-                    return value;
-            }
-        }
-
-        foreach (var property in result.EnumerateObject())
-        {
-            if (property.Value.ValueKind != JsonValueKind.String)
-                continue;
-
-            var value = property.Value.GetString();
+            var value = TryGetString(result, key);
             if (!string.IsNullOrWhiteSpace(value))
                 return value;
         }
@@ -691,49 +530,29 @@ public partial class LTXProvider
     {
         if (string.IsNullOrWhiteSpace(raw))
             return null;
-
         try
         {
-            using var doc = JsonDocument.Parse(raw);
-            var root = doc.RootElement;
+            using var document = JsonDocument.Parse(raw);
+            var root = document.RootElement;
             if (root.TryGetProperty("error", out var error))
-            {
-                if (error.ValueKind == JsonValueKind.Object
-                    && error.TryGetProperty("message", out var messageEl)
-                    && messageEl.ValueKind == JsonValueKind.String)
-                    return messageEl.GetString();
-
-                return error.ToString();
-            }
-
-            if (root.TryGetProperty("message", out var directMessage) && directMessage.ValueKind == JsonValueKind.String)
-                return directMessage.GetString();
+                return error.ValueKind == JsonValueKind.Object ? TryGetString(error, "message") ?? error.ToString() : error.ToString();
+            return TryGetString(root, "message");
         }
         catch (JsonException)
         {
             return null;
         }
-
-        return null;
     }
 
-    private static JsonElement ToJsonElement<T>(T value)
-        => JsonSerializer.SerializeToElement(value, LTXVideoJsonOptions);
-
-    private static string? GuessMediaType(string? urlOrPath)
+    private static string? GuessMediaType(string? url)
     {
-        if (string.IsNullOrWhiteSpace(urlOrPath))
+        if (string.IsNullOrWhiteSpace(url))
             return null;
-
-        if (urlOrPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-            return "application/zip";
-        if (urlOrPath.EndsWith(".webm", StringComparison.OrdinalIgnoreCase))
-            return "video/webm";
-        if (urlOrPath.EndsWith(".mov", StringComparison.OrdinalIgnoreCase))
-            return "video/quicktime";
-        if (urlOrPath.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
-            return "video/mp4";
-
+        var path = Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.AbsolutePath : url;
+        if (path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) return "application/zip";
+        if (path.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)) return "video/webm";
+        if (path.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)) return "video/quicktime";
+        if (path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)) return "video/mp4";
         return null;
     }
 }
