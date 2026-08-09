@@ -14,12 +14,126 @@ namespace AIHappey.Core.Providers.Lumenfall;
 
 public partial class LumenfallProvider
 {
+    private const string LumenfallVideoOperationTokenPrefix = "lfv1_";
+
     private static readonly JsonSerializerOptions LumenfallVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     private sealed record LumenfallVideoFetchResult(string Status, string Raw, JsonElement Root);
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Prompt))
+            throw new ArgumentException("Prompt is required.", nameof(request));
+
+        var now = DateTime.UtcNow;
+        List<object> warnings = [];
+        if (request.Seed is not null)
+            warnings.Add(new { type = "unsupported", feature = "seed" });
+        if (request.Fps is not null)
+            warnings.Add(new { type = "unsupported", feature = "fps" });
+
+        var normalizedN = NormalizeVideoN(request.N, warnings);
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (LumenfallTryGetBool(metadata, "dryRun") == true)
+            throw new NotSupportedException("dryRun does not create a pollable Lumenfall video operation.");
+
+        const string endpoint = "v1/videos";
+        using var createReq = BuildVideoCreateRequest(endpoint, request, metadata, normalizedN, warnings);
+        using var createResp = await _client.SendAsync(createReq, cancellationToken);
+        var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!createResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Lumenfall video create failed ({(int)createResp.StatusCode}) [{endpoint}]: {createRaw}");
+
+        using var createDoc = JsonDocument.Parse(createRaw);
+        var root = createDoc.RootElement.Clone();
+        var videoId = ReadString(root, "id");
+        if (string.IsNullOrWhiteSpace(videoId))
+            throw new InvalidOperationException("Lumenfall video create returned no id.");
+
+        return new VideoOperationStartResult
+        {
+            Operation = EncodeLumenfallVideoOperation(videoId, request.Model),
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
+            Response = new()
+            {
+                Timestamp = ResolveVideoTimestamp(root, now),
+                Headers = createResp.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        ApplyAuthHeader();
+        var operationData = DecodeLumenfallVideoOperation(operation);
+        var fetched = await FetchVideoTaskAsync(operationData.VideoId, cancellationToken);
+        var polledModel = ReadString(fetched.Root, "model");
+        var model = !string.IsNullOrWhiteSpace(operationData.Model) ? operationData.Model : polledModel;
+        var response = new HeaderResponseData
+        {
+            Timestamp = ResolveVideoTimestamp(fetched.Root, DateTime.UtcNow),
+            ModelId = string.IsNullOrWhiteSpace(model)
+                ? GetIdentifier()
+                : model.ToModelId(GetIdentifier())
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(fetched.Root);
+
+        if (IsFailedVideoStatus(fetched.Status))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Lumenfall video generation failed with status '{fetched.Status}' (id={operationData.VideoId}): {TryGetVideoError(fetched.Root)}",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (!string.Equals(fetched.Status, "completed", StringComparison.OrdinalIgnoreCase))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        var outputUrls = TryGetVideoOutputUrls(fetched.Root);
+        if (outputUrls.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Lumenfall video generation completed but returned no output url (id={operationData.VideoId}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        var videos = await DownloadVideoOperationOutputsAsync(outputUrls, cancellationToken);
+        if (videos.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Lumenfall video generation completed but no downloadable outputs were found (id={operationData.VideoId}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = videos,
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
+        };
+    }
 
     private async Task<VideoResponse> VideoRequestLumenfall(VideoRequest request, CancellationToken cancellationToken = default)
     {
@@ -407,6 +521,77 @@ public partial class LumenfallProvider
 
         return videos;
     }
+
+    private async Task<List<VideoOperationVideoData>> DownloadVideoOperationOutputsAsync(
+        IReadOnlyList<string> outputUrls,
+        CancellationToken cancellationToken)
+    {
+        List<VideoOperationVideoData> videos = [];
+        foreach (var outputUrl in outputUrls)
+        {
+            using var outputResp = await _client.GetAsync(outputUrl, cancellationToken);
+            var bytes = await outputResp.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (!outputResp.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Lumenfall video download failed ({(int)outputResp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
+            if (bytes.Length == 0)
+                continue;
+
+            var mediaType = outputResp.Content.Headers.ContentType?.MediaType;
+            if (string.IsNullOrWhiteSpace(mediaType) || !mediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
+                mediaType = GuessVideoMediaType(outputUrl) ?? "video/mp4";
+
+            videos.Add(new VideoOperationVideoData
+            {
+                Type = "base64",
+                MediaType = mediaType,
+                Data = Convert.ToBase64String(bytes)
+            });
+        }
+
+        return videos;
+    }
+
+    private static string EncodeLumenfallVideoOperation(string videoId, string model)
+    {
+        var json = JsonSerializer.Serialize(new LumenfallVideoOperationData(videoId, model), LumenfallVideoJsonOptions);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return LumenfallVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static LumenfallVideoOperationData DecodeLumenfallVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(LumenfallVideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new LumenfallVideoOperationData(Uri.UnescapeDataString(operation), null);
+
+        var base64Url = operation[LumenfallVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<LumenfallVideoOperationData>(json, LumenfallVideoJsonOptions);
+            if (data is null || string.IsNullOrWhiteSpace(data.VideoId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Lumenfall video operation token is invalid.", nameof(operation));
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The Lumenfall video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The Lumenfall video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
+    private sealed record LumenfallVideoOperationData(string VideoId, string? Model);
 
     private static bool IsTerminalVideoStatus(string? status)
     {
