@@ -32,51 +32,46 @@ public partial class DeAPIProvider
 
         var (width, height) = ResolveImageSize(request.Size, request.AspectRatio);
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var guidance = TryGetNumber(metadata, "guidance") ?? 3.5;
-        var steps = (int)(TryGetNumber(metadata, "steps") ?? 4);
-        var seed = request.Seed ?? (int)(TryGetNumber(metadata, "seed") ?? -1);
-        var negativePrompt = metadata.TryGetString("negative_prompt") ?? metadata.TryGetString("negativePrompt");
-        var webhookUrl = metadata.TryGetString("webhook_url") ?? metadata.TryGetString("webhookUrl");
-
         string requestId;
         if (request.Files?.Any() == true)
         {
-            var file = request.Files.First();
-            var bytes = DecodeBase64Payload(file.Data);
-
             using var form = new MultipartFormDataContent();
-            var fileContent = new ByteArrayContent(bytes);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.MediaType);
-            form.Add(fileContent, "image", "input-image" + GetImageExtension(file.MediaType));
-            form.Add(new StringContent(request.Prompt), "prompt");
-            form.Add(new StringContent(request.Model), "model");
-            form.Add(new StringContent(guidance.ToString(System.Globalization.CultureInfo.InvariantCulture)), "guidance");
-            form.Add(new StringContent(steps.ToString(System.Globalization.CultureInfo.InvariantCulture)), "steps");
-            form.Add(new StringContent(seed.ToString(System.Globalization.CultureInfo.InvariantCulture)), "seed");
+            var files = request.Files.ToArray();
+            foreach (var file in files)
+            {
+                var fileContent = new ByteArrayContent(DecodeBase64Payload(file.Data));
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.MediaType);
+                form.Add(fileContent, files.Length == 1 ? "image" : "images[]", "input-image" + GetImageExtension(file.MediaType));
+            }
 
-            if (!string.IsNullOrWhiteSpace(negativePrompt))
-                form.Add(new StringContent(negativePrompt), "negative_prompt");
-            if (!string.IsNullOrWhiteSpace(webhookUrl))
-                form.Add(new StringContent(webhookUrl), "webhook_url");
-
-            requestId = await SubmitMultipartJobAsync("api/v1/client/img2img", form, cancellationToken);
+            var payload = new Dictionary<string, object?> { ["prompt"] = request.Prompt, ["model"] = request.Model };
+            if (request.Seed is not null) payload["seed"] = request.Seed;
+            var resolvedSize = ResolveImageSize(request.Size, request.AspectRatio);
+            if (!string.IsNullOrWhiteSpace(request.Size) || !string.IsNullOrWhiteSpace(request.AspectRatio))
+            {
+                payload["width"] = resolvedSize.width;
+                payload["height"] = resolvedSize.height;
+            }
+            MergeProviderMetadata(payload, metadata);
+            AddFormValues(form, payload, "image", "images[]");
+            requestId = await SubmitMultipartJobAsync("api/v2/images/edits", form, cancellationToken);
         }
         else
         {
             var payload = new Dictionary<string, object?>
             {
                 ["prompt"] = request.Prompt,
-                ["model"] = request.Model,
-                ["width"] = width,
-                ["height"] = height,
-                ["guidance"] = guidance,
-                ["steps"] = steps,
-                ["seed"] = seed,
-                ["negative_prompt"] = negativePrompt,
-                ["webhook_url"] = webhookUrl
+                ["model"] = request.Model
             };
+            if (!string.IsNullOrWhiteSpace(request.Size) || !string.IsNullOrWhiteSpace(request.AspectRatio))
+            {
+                payload["width"] = width;
+                payload["height"] = height;
+            }
+            if (request.Seed is not null) payload["seed"] = request.Seed;
+            MergeProviderMetadata(payload, metadata);
 
-            requestId = await SubmitJsonJobAsync("api/v1/client/txt2img", payload, cancellationToken);
+            requestId = await SubmitJsonJobAsync("api/v2/images/generations", payload, cancellationToken);
         }
 
         var completed = await WaitForJobResultAsync(requestId, cancellationToken);

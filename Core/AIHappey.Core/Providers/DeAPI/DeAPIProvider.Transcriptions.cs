@@ -19,72 +19,31 @@ public partial class DeAPIProvider
 
         var now = DateTime.UtcNow;
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var includeTs = TryGetBoolean(metadata, "include_ts") ?? true;
-        var returnInResponse = TryGetBoolean(metadata, "return_result_in_response") ?? true;
-        var webhookUrl = metadata.TryGetString("webhook_url") ?? metadata.TryGetString("webhookUrl");
-        var language = metadata.TryGetString("language");
-        var format = metadata.TryGetString("format");
-        var videoUrl = metadata.TryGetString("video_url") ?? metadata.TryGetString("videoUrl");
-        var audioUrl = metadata.TryGetString("audio_url") ?? metadata.TryGetString("audioUrl");
-
-        var endpoint = ResolveTranscriptionEndpoint(request.MediaType, videoUrl, audioUrl, request.Model);
-        string requestId;
-
-        if (endpoint is "api/v1/client/img2txt" or "api/v1/client/videofile2txt" or "api/v1/client/audiofile2txt")
+        var payload = new Dictionary<string, object?> { ["model"] = request.Model, ["include_ts"] = false };
+        MergeProviderMetadata(payload, metadata);
+        var sourceUrl = metadata.TryGetString("source_url");
+        using var form = new MultipartFormDataContent();
+        if (!string.IsNullOrWhiteSpace(sourceUrl))
         {
-            var payloadBytes = DecodeBase64Payload(request.Audio.ToString() ?? string.Empty);
-            using var form = new MultipartFormDataContent();
-
-            var fieldName = endpoint switch
-            {
-                "api/v1/client/img2txt" => "image",
-                "api/v1/client/videofile2txt" => "video",
-                _ => "audio"
-            };
-
-            var fileName = endpoint switch
-            {
-                "api/v1/client/img2txt" => "input" + GetImageExtension(request.MediaType),
-                "api/v1/client/videofile2txt" => "input" + GetVideoExtension(request.MediaType),
-                _ => "input" + GetAudioExtension(request.MediaType)
-            };
-
-            var fileContent = new ByteArrayContent(payloadBytes);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
-            form.Add(fileContent, fieldName, fileName);
-            form.Add(new StringContent(request.Model), "model");
-
-            if (endpoint != "api/v1/client/img2txt")
-                form.Add(new StringContent(includeTs ? "true" : "false"), "include_ts");
-
-            if (!string.IsNullOrWhiteSpace(language))
-                form.Add(new StringContent(language), "language");
-            if (!string.IsNullOrWhiteSpace(format))
-                form.Add(new StringContent(format), "format");
-            if (!string.IsNullOrWhiteSpace(webhookUrl))
-                form.Add(new StringContent(webhookUrl), "webhook_url");
-            if (returnInResponse)
-                form.Add(new StringContent("true"), "return_result_in_response");
-
-            requestId = await SubmitMultipartJobAsync(endpoint, form, cancellationToken);
+            payload["source_url"] = sourceUrl;
         }
         else
         {
-            var payload = new Dictionary<string, object?>
-            {
-                ["model"] = request.Model,
-                ["include_ts"] = includeTs,
-                ["return_result_in_response"] = returnInResponse,
-                ["webhook_url"] = webhookUrl
-            };
-
-            if (endpoint == "api/v1/client/vid2txt")
-                payload["video_url"] = videoUrl ?? request.Audio.ToString();
+            var value = request.Audio is JsonElement e && e.ValueKind == JsonValueKind.String ? e.GetString() : request.Audio?.ToString();
+            if (Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https")
+                payload["source_url"] = value;
             else
-                payload["audio_url"] = audioUrl ?? request.Audio.ToString();
-
-            requestId = await SubmitJsonJobAsync(endpoint, payload, cancellationToken);
+            {
+                var bytes = DecodeBase64Payload(value ?? throw new ArgumentException("Audio or source_url is required.", nameof(request)));
+                var file = new ByteArrayContent(bytes);
+                file.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
+                var extension = request.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)
+                    ? GetVideoExtension(request.MediaType) : GetAudioExtension(request.MediaType);
+                form.Add(file, "source_file", "input" + extension);
+            }
         }
+        AddFormValues(form, payload, "source_file");
+        var requestId = await SubmitMultipartJobAsync("api/v2/audio/transcriptions", form, cancellationToken);
 
         var completed = await WaitForJobResultAsync(requestId, cancellationToken);
         var text = ExtractResultText(completed) ?? string.Empty;
@@ -92,7 +51,7 @@ public partial class DeAPIProvider
         return new TranscriptionResponse
         {
             Text = text,
-            Language = language,
+            Language = payload.TryGetValue("lang", out var language) ? language?.ToString() : null,
             Segments = [],
             Warnings = [],
             ProviderMetadata = new Dictionary<string, JsonElement>
@@ -105,24 +64,6 @@ public partial class DeAPIProvider
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
-    }
-
-    private static string ResolveTranscriptionEndpoint(string mediaType, string? videoUrl, string? audioUrl, string model)
-    {
-        if (string.Equals(model, "Nanonets_Ocr_S_F16", StringComparison.OrdinalIgnoreCase)
-            || mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-            return "api/v1/client/img2txt";
-
-        if (!string.IsNullOrWhiteSpace(videoUrl))
-            return "api/v1/client/vid2txt";
-
-        if (!string.IsNullOrWhiteSpace(audioUrl))
-            return "api/v1/client/aud2txt";
-
-        if (mediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-            return "api/v1/client/videofile2txt";
-
-        return "api/v1/client/audiofile2txt";
     }
 
     private static string GetAudioExtension(string? mediaType)

@@ -51,21 +51,21 @@ public partial class DeAPIProvider : IModelProvider
         => await ListModelsDeapi(cancellationToken);
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     
 
     public IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => DeapiImageRequest(request, cancellationToken);
@@ -111,6 +111,75 @@ public partial class DeAPIProvider : IModelProvider
         return ExtractRequestId(raw);
     }
 
+    private static void MergeProviderMetadata(Dictionary<string, object?> payload, JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+    }
+
+    private static void AddFormValues(
+        MultipartFormDataContent form,
+        Dictionary<string, object?> payload,
+        params string[] protectedFields)
+    {
+        var protectedNames = protectedFields.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, value) in payload)
+        {
+            if (value is null || protectedNames.Contains(name))
+                continue;
+
+            AddFormValue(form, name, value);
+        }
+    }
+
+    private static void AddFormValue(MultipartFormDataContent form, string name, object value)
+    {
+        if (value is JsonElement element)
+        {
+            if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                return;
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                    AddFormValue(form, name, item);
+                return;
+            }
+
+            var text = element.ValueKind == JsonValueKind.String
+                ? element.GetString() ?? string.Empty
+                : element.GetRawText();
+            form.Add(new StringContent(text), name);
+            return;
+        }
+
+        if (value is System.Collections.IEnumerable values && value is not string)
+        {
+            foreach (var item in values)
+                if (item is not null)
+                    AddFormValue(form, name, item);
+            return;
+        }
+
+        form.Add(new StringContent(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty), name);
+    }
+
+    private async Task<JsonElement> GetJobAsync(string requestId, CancellationToken cancellationToken)
+    {
+        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"api/v2/jobs/{Uri.EscapeDataString(requestId)}");
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"DeAPI status poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var doc = JsonDocument.Parse(pollRaw);
+        if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object)
+            throw new InvalidOperationException("DeAPI status payload does not include data.");
+        return data.Clone();
+    }
+
     private static string ExtractRequestId(string raw)
     {
         using var doc = JsonDocument.Parse(raw);
@@ -136,18 +205,7 @@ public partial class DeAPIProvider : IModelProvider
         var terminal = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
             async ct =>
             {
-                using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"api/v1/client/request-status/{requestId}");
-                using var pollResp = await _client.SendAsync(pollReq, ct);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(ct);
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"DeAPI status poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var doc = JsonDocument.Parse(pollRaw);
-                var root = doc.RootElement;
-                if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Object)
-                    throw new InvalidOperationException("DeAPI status payload does not include data.");
-
-                return dataEl.Clone();
+                return await GetJobAsync(requestId, ct);
             },
             isTerminal: data =>
             {
@@ -169,9 +227,11 @@ public partial class DeAPIProvider : IModelProvider
 
         if (string.Equals(terminalStatus, "error", StringComparison.OrdinalIgnoreCase))
         {
-            var error = terminal.TryGetProperty("error", out var errorEl)
-                ? errorEl.ToString()
-                : "Unknown DeAPI error";
+            var error = terminal.TryGetProperty("error_message", out var messageEl) && messageEl.ValueKind == JsonValueKind.String
+                ? messageEl.GetString()
+                : terminal.TryGetProperty("error_reason", out var reasonEl) && reasonEl.ValueKind == JsonValueKind.String
+                    ? reasonEl.GetString()
+                    : terminal.TryGetProperty("error_code", out var codeEl) ? codeEl.ToString() : "Unknown DeAPI error";
 
             throw new InvalidOperationException($"DeAPI job failed ({requestId}): {error}");
         }
@@ -269,58 +329,7 @@ public partial class DeAPIProvider : IModelProvider
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
-    }
+    }    
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    
-
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
 

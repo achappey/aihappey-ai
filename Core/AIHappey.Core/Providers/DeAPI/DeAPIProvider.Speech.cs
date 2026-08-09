@@ -22,31 +22,26 @@ public partial class DeAPIProvider
         var now = DateTime.UtcNow;
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
-        var voice = request.Voice ?? metadata.TryGetString("voice") ?? "af_sky";
-        var lang = request.Language ?? metadata.TryGetString("lang") ?? "en-us";
-        var speed = request.Speed ?? (float?)(TryGetNumber(metadata, "speed") ?? 1.0);
-        var format = request.OutputFormat ?? metadata.TryGetString("format") ?? "flac";
-        var sampleRate = (int)(TryGetNumber(metadata, "sample_rate") ?? 24000);
-        var webhookUrl = metadata.TryGetString("webhook_url") ?? metadata.TryGetString("webhookUrl");
-
         var payload = new Dictionary<string, object?>
         {
             ["text"] = request.Text,
-            ["model"] = request.Model,
-            ["voice"] = voice,
-            ["lang"] = lang,
-            ["speed"] = speed,
-            ["format"] = format,
-            ["sample_rate"] = sampleRate,
-            ["webhook_url"] = webhookUrl
+            ["model"] = request.Model
         };
+        if (!string.IsNullOrWhiteSpace(request.Voice)) payload["voice"] = request.Voice;
+        if (!string.IsNullOrWhiteSpace(request.Language)) payload["lang"] = request.Language;
+        if (request.Speed is not null) payload["speed"] = request.Speed;
+        if (!string.IsNullOrWhiteSpace(request.OutputFormat)) payload["format"] = request.OutputFormat;
+        MergeProviderMetadata(payload, metadata);
 
-        var requestId = await SubmitJsonJobAsync("api/v1/client/txt2audio", payload, cancellationToken);
+        using var form = new MultipartFormDataContent();
+        AddFormValues(form, payload, "ref_audio");
+        var requestId = await SubmitMultipartJobAsync("api/v2/audio/speech", form, cancellationToken);
         var completed = await WaitForJobResultAsync(requestId, cancellationToken);
         var resultUrl = GetResultUrl(completed)
             ?? throw new InvalidOperationException($"DeAPI speech result_url missing for request {requestId}.");
 
-        var fallbackMime = ResolveAudioMimeType(format);
+        var format = payload.TryGetValue("format", out var formatValue) ? formatValue?.ToString() : request.OutputFormat;
+        var fallbackMime = ResolveAudioMimeType(format ?? "");
         var (bytesOut, mimeType) = await DownloadResultAsync(resultUrl, fallbackMime, cancellationToken);
 
         return new SpeechResponse
