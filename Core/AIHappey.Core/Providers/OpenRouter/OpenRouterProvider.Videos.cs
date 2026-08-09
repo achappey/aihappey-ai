@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
@@ -9,24 +10,24 @@ namespace AIHappey.Core.Providers.OpenRouter;
 
 public partial class OpenRouterProvider
 {
+    private const string OpenRouterVideoOperationTokenPrefix = "orv1_";
+
     private static readonly JsonSerializerOptions OpenRouterVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record OpenRouterVideoPollResult(string Status, string Raw, JsonElement Root);
+    private sealed record OpenRouterVideoOperationData(string JobId, string Model);
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
-
-        if (string.IsNullOrWhiteSpace(request.Prompt))
-            throw new ArgumentException("Prompt is required.", nameof(request));
 
         var now = DateTime.UtcNow;
         List<object> warnings = [];
@@ -45,7 +46,7 @@ public partial class OpenRouterProvider
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
 
-        using var createResp = await _client.SendAsync(createReq, cancellationToken);
+        using var createResp = await _client.SendAsync(createReq, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!createResp.IsSuccessStatusCode)
@@ -62,69 +63,91 @@ public partial class OpenRouterProvider
         if (string.IsNullOrWhiteSpace(jobId))
             throw new InvalidOperationException("OpenRouter video create response contained no id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollOpenRouterVideoAsync(jobId, createRoot, ct),
-            isTerminal: r => IsOpenRouterVideoTerminalStatus(r.Status),
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (!IsOpenRouterVideoSuccessStatus(completed.Status))
+        return new VideoOperationStartResult
         {
-            var error = ReadOpenRouterVideoString(completed.Root, "error");
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(error)
-                ? $"OpenRouter video generation failed with status '{completed.Status}' (id={jobId}). Response: {completed.Raw}"
-                : $"OpenRouter video generation failed with status '{completed.Status}' (id={jobId}): {error}");
-        }
-
-        var videos = await DownloadOpenRouterVideosAsync(jobId, completed.Root, cancellationToken);
-
-        if (videos.Count == 0)
-            throw new InvalidOperationException($"OpenRouter video task completed but returned no downloadable content (id={jobId}).");
-
-
-        var providerKey = GetIdentifier();
-        var providerMetadata = new Dictionary<string, JsonElement>();
-
-        if (completed.Root.TryGetProperty("usage", out var usageEl)
-            && usageEl.ValueKind == JsonValueKind.Object)
-        {
-            providerMetadata[providerKey] = JsonSerializer.SerializeToElement(new
-            {
-                usage = usageEl.Clone()
-            }, JsonSerializerOptions.Web);
-        }
-
-        decimal? cost = null;
-
-        if (completed.Root.TryGetProperty("usage", out var gatewayUsageEl)
-            && gatewayUsageEl.ValueKind == JsonValueKind.Object
-            && gatewayUsageEl.TryGetProperty("cost", out var costEl)
-            && costEl.ValueKind == JsonValueKind.Number
-            && costEl.TryGetDecimal(out var parsedCost))
-        {
-            cost = parsedCost;
-        }
-
-        if (cost is not null)
-        {
-            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new
-            {
-                cost
-            }, JsonSerializerOptions.Web);
-        }
-
-        return new VideoResponse
-        {
-            Videos = videos,
+            Operation = EncodeOpenRouterVideoOperation(jobId, request.Model),
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = BuildOpenRouterVideoProviderMetadata(createRoot),
             Response = new()
             {
                 Timestamp = now,
+                Headers = createResp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        var operationData = DecodeOpenRouterVideoOperation(operation);
+        var jobId = operationData.JobId;
+
+        using var pollReq = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"v1/videos/{Uri.EscapeDataString(jobId)}");
+        using var pollResp = await _client.SendAsync(pollReq, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(pollRaw)
+                ? $"OpenRouter video poll failed ({(int)pollResp.StatusCode})."
+                : $"OpenRouter video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        var status = ReadOpenRouterVideoString(root, "status") ?? "unknown";
+        var metadata = BuildOpenRouterVideoProviderMetadata(root);
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            Headers = pollResp.GetHeaders(),
+            ModelId = operationData.Model.ToModelId(GetIdentifier())
+        };
+
+        if (status.Equals("pending", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("in_progress", StringComparison.OrdinalIgnoreCase))
+        {
+            return new VideoOperationPendingResult
+            {
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (!status.Equals("completed", StringComparison.OrdinalIgnoreCase))
+        {
+            var error = ReadOpenRouterVideoString(root, "error");
+            return new VideoOperationErrorResult
+            {
+                Error = string.IsNullOrWhiteSpace(error)
+                    ? $"OpenRouter video generation ended with status '{status}' (id={jobId})."
+                    : error,
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        var videos = await DownloadOpenRouterVideosAsync(jobId, root, cancellationToken);
+        if (videos.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"OpenRouter video task completed but returned no downloadable content (id={jobId}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = videos,
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 
@@ -132,9 +155,11 @@ public partial class OpenRouterProvider
     {
         var payload = new Dictionary<string, object?>
         {
-            ["model"] = request.Model,
-            ["prompt"] = request.Prompt
+            ["model"] = request.Model
         };
+
+        if (!string.IsNullOrWhiteSpace(request.Prompt))
+            payload["prompt"] = request.Prompt;
 
         if (!string.IsNullOrWhiteSpace(request.AspectRatio))
             payload["aspect_ratio"] = request.AspectRatio;
@@ -147,6 +172,9 @@ public partial class OpenRouterProvider
 
         if (request.Seed is not null)
             payload["seed"] = request.Seed;
+
+        if (request.GenerateAudio is not null)
+            payload["generate_audio"] = request.GenerateAudio;
 
         AddOpenRouterVideoImageInputs(payload, request);
 
@@ -234,29 +262,7 @@ public partial class OpenRouterProvider
             payload[property.Name] = property.Value.Clone();
     }
 
-    private async Task<OpenRouterVideoPollResult> PollOpenRouterVideoAsync(
-        string jobId,
-        JsonElement createRoot,
-        CancellationToken cancellationToken)
-    {
-        var pollPath = ReadOpenRouterVideoString(createRoot, "polling_url")
-            ?? $"v1/videos/{Uri.EscapeDataString(jobId)}";
-
-        using var pollReq = new HttpRequestMessage(HttpMethod.Get, pollPath);
-        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
-        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!pollResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"OpenRouter video poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-        using var pollDoc = JsonDocument.Parse(pollRaw);
-        var root = pollDoc.RootElement.Clone();
-        var status = ReadOpenRouterVideoString(root, "status") ?? "unknown";
-
-        return new OpenRouterVideoPollResult(status, pollRaw, root);
-    }
-
-    private async Task<List<VideoResponseFile>> DownloadOpenRouterVideosAsync(
+    private async Task<List<VideoOperationVideoData>> DownloadOpenRouterVideosAsync(
         string jobId,
         JsonElement completedRoot,
         CancellationToken cancellationToken)
@@ -265,7 +271,7 @@ public partial class OpenRouterProvider
         if (outputCount <= 0)
             outputCount = 1;
 
-        List<VideoResponseFile> videos = [];
+        List<VideoOperationVideoData> videos = [];
         for (var index = 0; index < outputCount; index++)
         {
             using var contentReq = new HttpRequestMessage(
@@ -285,14 +291,88 @@ public partial class OpenRouterProvider
                 ?? GuessOpenRouterVideoMediaType(GetOpenRouterUnsignedUrl(completedRoot, index))
                 ?? "video/mp4";
 
-            videos.Add(new VideoResponseFile
+            videos.Add(new VideoOperationVideoData
             {
+                Type = "base64",
                 MediaType = mediaType,
                 Data = Convert.ToBase64String(bytes)
             });
         }
 
         return videos;
+    }
+
+    private Dictionary<string, JsonElement> BuildOpenRouterVideoProviderMetadata(JsonElement root)
+    {
+        var providerMetadata = new Dictionary<string, JsonElement>
+        {
+            [GetIdentifier()] = JsonSerializer.SerializeToElement(new
+            {
+                id = ReadOpenRouterVideoString(root, "id"),
+                generationId = ReadOpenRouterVideoString(root, "generation_id"),
+                status = ReadOpenRouterVideoString(root, "status"),
+                pollingUrl = ReadOpenRouterVideoString(root, "polling_url"),
+                usage = root.TryGetProperty("usage", out var usage) && usage.ValueKind == JsonValueKind.Object
+                    ? usage.Clone()
+                    : (JsonElement?)null
+            }, JsonSerializerOptions.Web)
+        };
+
+        if (root.TryGetProperty("usage", out var gatewayUsage)
+            && gatewayUsage.ValueKind == JsonValueKind.Object
+            && gatewayUsage.TryGetProperty("cost", out var cost)
+            && cost.ValueKind == JsonValueKind.Number
+            && cost.TryGetDecimal(out var parsedCost))
+        {
+            providerMetadata["gateway"] = JsonSerializer.SerializeToElement(new { cost = parsedCost }, JsonSerializerOptions.Web);
+        }
+
+        return providerMetadata;
+    }
+
+    private static string EncodeOpenRouterVideoOperation(string jobId, string model)
+    {
+        var json = JsonSerializer.Serialize(new OpenRouterVideoOperationData(jobId, model), OpenRouterVideoJsonOptions);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+        return OpenRouterVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static OpenRouterVideoOperationData DecodeOpenRouterVideoOperation(string operation)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        if (!operation.StartsWith(OpenRouterVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The OpenRouter video operation token is invalid.", nameof(operation));
+
+        var base64Url = operation[OpenRouterVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<OpenRouterVideoOperationData>(json, OpenRouterVideoJsonOptions);
+            if (data is null || string.IsNullOrWhiteSpace(data.JobId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The OpenRouter video operation token is invalid.", nameof(operation));
+
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The OpenRouter video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The OpenRouter video operation token is invalid.", nameof(operation), ex);
+        }
     }
 
     private static string NormalizeOpenRouterImageUrl(VideoFile file)
@@ -354,26 +434,6 @@ public partial class OpenRouterProvider
                && property.ValueKind == JsonValueKind.String
             ? property.GetString()
             : null;
-    }
-
-    private static bool IsOpenRouterVideoTerminalStatus(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-            return false;
-
-        return status.Equals("completed", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("failed", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("canceled", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("expired", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool IsOpenRouterVideoSuccessStatus(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-            return false;
-
-        return status.Equals("completed", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? GuessOpenRouterVideoMediaType(string? url)
