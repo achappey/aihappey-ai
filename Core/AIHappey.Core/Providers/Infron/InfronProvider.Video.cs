@@ -12,6 +12,7 @@ namespace AIHappey.Core.Providers.Infron;
 
 public partial class InfronProvider
 {
+    private const string InfronVideoOperationTokenPrefix = "ifv1_";
     private static readonly Uri InfronVideoGenerationsUri = new("https://media.onerouter.pro/v1/videos/generations");
 
     private static readonly JsonSerializerOptions InfronVideoJsonOptions = new(JsonSerializerDefaults.Web)
@@ -19,10 +20,11 @@ public partial class InfronProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<VideoResponse> InfronVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    private sealed record InfronVideoOperationData(string TaskId, string Model);
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -35,16 +37,13 @@ public partial class InfronProvider
         List<object> warnings = [];
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var videoId = ReadInfronVideoOption(metadata, "video_id", "videoId");
-        var isEdit = !string.IsNullOrWhiteSpace(videoId);
-        var endpoint = InfronVideoGenerationsUri;
         var payload = BuildInfronVideoPayload(request, videoId, metadata, warnings);
         var json = JsonSerializer.Serialize(payload, InfronVideoJsonOptions);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InfronVideoGenerationsUri)
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
-
         using var response = await _client.SendAsync(httpRequest, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
@@ -53,29 +52,151 @@ public partial class InfronProvider
                 ? $"Infron video request failed ({(int)response.StatusCode})."
                 : $"Infron video request failed ({(int)response.StatusCode}): {raw}");
 
-        using var doc = JsonDocument.Parse(raw);
-        var createRoot = doc.RootElement.Clone();
-        var terminal = await WaitForInfronMediaTaskAsync("videos", createRoot, metadata, cancellationToken);
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var task = NormalizeInfronMediaTaskResult(root, null, raw);
+        if (string.IsNullOrWhiteSpace(task.TaskId))
+            throw new InvalidOperationException("Infron video request returned no task_id.");
 
-        if (!IsInfronMediaSuccessStatus(terminal.Status) && !HasInfronMediaOutputs(terminal.Root))
-            throw new InvalidOperationException($"Infron video generation failed with status '{terminal.Status}': {GetInfronMediaError(terminal.Root)}");
+        return new VideoOperationStartResult
+        {
+            Operation = EncodeInfronVideoOperation(task.TaskId, request.Model),
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+            {
+                taskId = task.TaskId,
+                status = task.Status,
+                task = root
+            }),
+            Response = new()
+            {
+                Timestamp = ResolveInfronTimestamp(root, now),
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
 
-        var videos = await ExtractInfronVideosAsync(terminal.Root, cancellationToken);
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        if (videos.Count == 0)
-            throw new InvalidOperationException("No valid videos returned from Infron video API.");
+        var operationData = DecodeInfronVideoOperation(operation);
+        ApplyAuthHeader();
+        var task = await PollInfronMediaTaskAsync("videos", operationData.TaskId, metadata: null, cancellationToken);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            taskId = operationData.TaskId,
+            status = task.Status,
+            task = task.Root
+        });
+        var header = new HeaderResponseData
+        {
+            Timestamp = ResolveInfronTimestamp(task.Root, DateTime.UtcNow),
+            // The submitted model is authoritative. Poll responses may omit it or
+            // report a routed/fallback model rather than the caller's model ID.
+            ModelId = operationData.Model.ToModelId(GetIdentifier())
+        };
+
+        if (IsInfronMediaSuccessStatus(task.Status))
+        {
+            var videos = await ExtractInfronVideosAsync(task.Root, cancellationToken);
+            if (videos.Count == 0)
+                return new VideoOperationErrorResult
+                {
+                    Error = $"Infron video task '{operationData.TaskId}' completed but returned no outputs.",
+                    ProviderMetadata = metadata,
+                    Response = header
+                };
+
+            return new VideoOperationCompletedResult
+            {
+                Videos = videos.Select(video => new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    Data = video.Data,
+                    MediaType = video.MediaType
+                }),
+                Warnings = [],
+                ProviderMetadata = metadata,
+                Response = header
+            };
+        }
+
+        if (IsInfronMediaTerminalStatus(task.Status))
+            return new VideoOperationErrorResult
+            {
+                Error = $"Infron video task '{operationData.TaskId}' failed with status '{task.Status}': {GetInfronMediaError(task.Root)}",
+                ProviderMetadata = metadata,
+                Response = header
+            };
+
+        return new VideoOperationPendingResult
+        {
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = header
+        };
+    }
+
+    private static string EncodeInfronVideoOperation(string taskId, string model)
+    {
+        var json = JsonSerializer.Serialize(new InfronVideoOperationData(taskId, model), InfronVideoJsonOptions);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return InfronVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static InfronVideoOperationData DecodeInfronVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(InfronVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The Infron video operation token is invalid.", nameof(operation));
+
+        var base64Url = operation[InfronVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<InfronVideoOperationData>(json, InfronVideoJsonOptions);
+            if (data is null || string.IsNullOrWhiteSpace(data.TaskId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Infron video operation token is invalid.", nameof(operation));
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The Infron video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The Infron video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
+    private async Task<VideoResponse> InfronVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        var started = await StartVideoOperation(request, cancellationToken);
+        var operation = await GetVideoOperationStatus(started.Operation, cancellationToken);
+
+        if (operation is not VideoOperationCompletedResult completed)
+            throw new NotSupportedException("Infron video generation is asynchronous. Use StartVideoOperation and GetVideoOperationStatus.");
 
         return new VideoResponse
         {
-            Videos = videos,
-            Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
-            Response = new()
+            Videos = completed.Videos.Select(video => new VideoResponseFile
             {
-                Timestamp = ResolveInfronTimestamp(terminal.Root, now),
-                ModelId = terminal.Root.TryGetString("model")?.ToModelId(GetIdentifier())
-                    ?? request.Model.ToModelId(GetIdentifier())
-            }
+                Data = video.Data?.ToString() ?? string.Empty,
+                MediaType = video.MediaType
+            }),
+            Warnings = completed.Warnings,
+            ProviderMetadata = completed.ProviderMetadata,
+            Response = completed.Response
         };
     }
 
