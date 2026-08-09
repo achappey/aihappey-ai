@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Net.Mime;
+using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -10,110 +11,184 @@ namespace AIHappey.Core.Providers.Thalam;
 
 public partial class ThalamProvider
 {
-    private sealed record ThalamVideoTaskStatus(string Status, string Raw, JsonElement Root);
+    private const string ThalamVideoOperationTokenPrefix = "tlv1_";
 
-    private async Task<VideoResponse> ThalamVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    private static readonly JsonSerializerOptions ThalamVideoOperationJson = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private sealed record ThalamVideoTaskStatus(string Status, string Raw, JsonElement Root);
+    private sealed record ThalamVideoOperationData(string TaskId, string? Model);
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
-
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var now = DateTime.UtcNow;
-        List<object> warnings = [];
-
-        if (request.Seed is not null)
-            warnings.Add(new { type = "unsupported", feature = "seed" });
-
-        if (request.Fps is not null)
-            warnings.Add(new { type = "unsupported", feature = "fps" });
-
-        if (request.N is not null && request.N > 1)
-            warnings.Add(new { type = "unsupported", feature = "n" });
-
-        if (request.InputReferences?.Any() == true)
-            warnings.Add(new { type = "unsupported", feature = "inputReferences" });
-
-        if (request.FrameImages?.Any() == true)
-            warnings.Add(new { type = "unsupported", feature = "frameImages" });
-
-        var providerOptions = GetThalamProviderOptions(request.ProviderOptions);
-        var payload = BuildThalamVideoPayload(request, providerOptions);
+        var warnings = GetThalamVideoWarnings(request);
+        var payload = BuildThalamVideoPayload(request, GetThalamProviderOptions(request.ProviderOptions));
         var json = JsonSerializer.Serialize(payload, ThalamJsonOptions);
 
         using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/videos/generations")
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
-
         using var createResponse = await _client.SendAsync(createRequest, cancellationToken);
-        var createRaw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
+        var raw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
 
         if (!createResponse.IsSuccessStatusCode)
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(createRaw)
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(raw)
                 ? $"Thalam video generation failed ({(int)createResponse.StatusCode})."
-                : $"Thalam video generation failed ({(int)createResponse.StatusCode}): {createRaw}");
+                : $"Thalam video generation failed ({(int)createResponse.StatusCode}): {raw}");
 
-        using var createDocument = JsonDocument.Parse(createRaw);
-        var createRoot = createDocument.RootElement.Clone();
-        var taskId = createRoot.TryGetString("task_id", "taskId", "id");
-
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var taskId = root.TryGetString("task_id", "taskId", "id");
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("Thalam video generation returned no task_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: token => FetchThalamVideoTaskAsync(taskId, token),
-            isTerminal: result => IsThalamVideoTerminalStatus(result.Status),
-            interval: TimeSpan.FromSeconds(5),
-            timeout: TimeSpan.FromMinutes(15),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (!IsThalamVideoSuccessStatus(completed.Status))
+        return new VideoOperationStartResult
         {
-            var reason = TryGetThalamVideoFailureReason(completed.Root);
-            throw new InvalidOperationException($"Thalam video task failed with status '{completed.Status}' (task_id={taskId}). {reason}".Trim());
-        }
-
-        var videoUrl = TryGetThalamVideoUrl(completed.Root);
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException($"Thalam video task completed but returned no video_url (task_id={taskId}).");
-
-        var downloaded = await DownloadThalamMediaAsync(videoUrl, "video/mp4", cancellationToken);
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = NormalizeThalamVideoMediaType(downloaded.MediaType, videoUrl),
-                    Data = Convert.ToBase64String(downloaded.Bytes)
-                }
-            ],
+            Operation = EncodeThalamVideoOperation(taskId, request.Model),
             Warnings = warnings,
             ProviderMetadata = CreateThalamProviderMetadata(new
             {
                 endpoint = "v1/videos/generations",
-                pollEndpoint = "v1/videos/tasks/{task_id}",
                 taskId,
                 payload,
-                create = createRoot,
-                poll = completed.Root,
-                videoUrl
+                response = root
             }),
             Response = new()
             {
-                Timestamp = now,
+                Timestamp = DateTime.UtcNow,
                 Headers = createResponse.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var operationData = DecodeThalamVideoOperation(operation);
+        ApplyAuthHeader();
+        var result = await FetchThalamVideoTaskAsync(operationData.TaskId, cancellationToken);
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = string.IsNullOrWhiteSpace(operationData.Model)
+                ? GetIdentifier()
+                : operationData.Model.ToModelId(GetIdentifier())
+        };
+        var metadata = CreateThalamProviderMetadata(new
+        {
+            endpoint = "v1/videos/tasks/{task_id}",
+            taskId = operationData.TaskId,
+            status = result.Status,
+            response = result.Root
+        });
+
+        if (!IsThalamVideoTerminalStatus(result.Status))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
+
+        if (!IsThalamVideoSuccessStatus(result.Status))
+        {
+            var reason = TryGetThalamVideoFailureReason(result.Root);
+            var detail = string.IsNullOrWhiteSpace(reason) ? string.Empty : $" {reason}";
+            return new VideoOperationErrorResult
+            {
+                Error = $"Thalam video task failed with status '{result.Status}' (task_id={operationData.TaskId}).{detail}",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        var videoUrl = TryGetThalamVideoUrl(result.Root);
+        if (string.IsNullOrWhiteSpace(videoUrl))
+            return new VideoOperationErrorResult
+            {
+                Error = $"Thalam video task completed but returned no video_url (task_id={operationData.TaskId}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+
+        var downloaded = await DownloadThalamMediaAsync(videoUrl, "video/mp4", cancellationToken);
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData
+            {
+                Type = "base64",
+                MediaType = NormalizeThalamVideoMediaType(downloaded.MediaType, videoUrl),
+                Data = Convert.ToBase64String(downloaded.Bytes)
+            }],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
+        };
+    }
+
+    private static List<object> GetThalamVideoWarnings(VideoRequest request)
+    {
+        List<object> warnings = [];
+        if (request.Seed is not null)
+            warnings.Add(new { type = "unsupported", feature = "seed" });
+        if (request.Fps is not null)
+            warnings.Add(new { type = "unsupported", feature = "fps" });
+        if (request.N is not null && request.N > 1)
+            warnings.Add(new { type = "unsupported", feature = "n" });
+        if (request.InputReferences?.Any() == true)
+            warnings.Add(new { type = "unsupported", feature = "inputReferences" });
+        if (request.FrameImages?.Any() == true)
+            warnings.Add(new { type = "unsupported", feature = "frameImages" });
+        return warnings;
+    }
+
+    private static string EncodeThalamVideoOperation(string taskId, string model)
+    {
+        var json = JsonSerializer.Serialize(new ThalamVideoOperationData(taskId, model), ThalamVideoOperationJson);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return ThalamVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static ThalamVideoOperationData DecodeThalamVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(ThalamVideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new ThalamVideoOperationData(Uri.UnescapeDataString(operation), null);
+
+        var base64Url = operation[ThalamVideoOperationTokenPrefix.Length..]
+            .Replace('-', '+')
+            .Replace('_', '/');
+        var padding = base64Url.Length % 4;
+        if (padding != 0)
+            base64Url = base64Url.PadRight(base64Url.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64Url));
+            var data = JsonSerializer.Deserialize<ThalamVideoOperationData>(json, ThalamVideoOperationJson);
+            if (data is null || string.IsNullOrWhiteSpace(data.TaskId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Thalam video operation token is invalid.", nameof(operation));
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The Thalam video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The Thalam video operation token is invalid.", nameof(operation), ex);
+        }
     }
 
     private static Dictionary<string, object?> BuildThalamVideoPayload(VideoRequest request, JsonElement providerOptions)
