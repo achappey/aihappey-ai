@@ -77,10 +77,11 @@ public partial class DeAPIProvider
 
         return inferenceType switch
         {
-            "txt2img" or "img2img" or "img-rmbg" => "image",
-            "txt2audio" => "speech",
-            "vid2txt" or "video2text" or "videofile2txt" or "aud2txt" or "audio2text" or "audiofile2txt" or "img2txt" => "transcription",
-            "txt2video" or "img2video" or "vid-rmbg" => "video",
+            "txt2img" or "img2img" or "img-rmbg" or "img-upscale" => "image",
+            "txt2audio" or "txt2music" => "speech",
+            "vid2txt" or "video2text" or "videofile2txt"
+                or "aud2txt" or "audio2text" or "audiofile2txt" or "img2txt" => "transcription",
+            "txt2video" or "img2video" or "vid-rmbg" or "vid-upscale" or "video-replace" => "video",
             "txt2embedding" => "embedding",
             _ => "language"
         };
